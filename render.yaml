@@ -14,3 +14,17 @@ services:
         value: production
       - key: PORT
         value: 3000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
+      - key: WHITELIST_API_KEY
+        sync: false
+      # Der Free-Plan hat keinen dauerhaften Speicher: Die Datenbank-Datei geht bei jedem Deploy verloren.
+      # Für dauerhafte Daten auf einen bezahlten Plan wechseln, einen Disk anlegen und DATA_DIR setzen:
+      #   plan: starter
+      #   disk:
+      #     name: portal-data
+      #     mountPath: /var/data
+      #     sizeGB: 1
+      #   envVars: - key: DATA_DIR, value: /var/data

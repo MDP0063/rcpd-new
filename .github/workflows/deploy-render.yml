@@ -24,6 +24,9 @@ jobs:
       - name: TypeScript Check & Production Build
         run: npm run lint && npm run build
 
+      - name: Tests
+        run: npm test
+
       - name: Optional Render Deploy Hook Trigger
         if: github.ref == 'refs/heads/main'
         env:

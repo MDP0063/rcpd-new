@@ -104,22 +104,20 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [editingUid, setEditingUid] = useState<string | null>(null);
-  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   // Quick Own Password / Account Update State (For Admin1)
   const myAdminRecord = adminAccounts.find(a => a.uid === currentUser.uid);
   const [myNewUsername, setMyNewUsername] = useState(
     myAdminRecord?.username || currentUser.username || 'Admin1'
   );
-  const [myNewPassword, setMyNewPassword] = useState(myAdminRecord?.password || '1234');
+  const [myNewPassword, setMyNewPassword] = useState('');
   const [showMyPassword, setShowMyPassword] = useState(false);
 
   React.useEffect(() => {
     if (myAdminRecord) {
       setMyNewUsername(myAdminRecord.username);
-      setMyNewPassword(myAdminRecord.password);
     }
-  }, [myAdminRecord?.username, myAdminRecord?.password]);
+  }, [myAdminRecord?.username]);
 
   // Edit Buffer for any selected account
   const [editUsername, setEditUsername] = useState('');
@@ -171,7 +169,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   const startEditing = (acc: AdminAccountView) => {
     setEditingUid(acc.uid);
     setEditUsername(acc.username);
-    setEditPassword(acc.password);
+    setEditPassword('');
     setEditDisplayName(acc.publicProfile.displayName);
     setEditBadge(acc.publicProfile.badgeNumber);
     setEditCallsign(acc.publicProfile.callsign);
@@ -197,7 +195,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
       body: JSON.stringify({
         adminUid: currentUser.uid,
         username: myNewUsername.trim(),
-        password: myNewPassword
+        ...(myNewPassword ? { password: myNewPassword } : {})
       })
     });
     if (!res.ok) {
@@ -516,7 +514,9 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
               <div className="relative">
                 <input
                   type={showMyPassword ? 'text' : 'password'}
-                  required
+                  minLength={8}
+                  placeholder="Leer lassen = unverändert"
+                  autoComplete="new-password"
                   value={myNewPassword}
                   onChange={e => setMyNewPassword(e.target.value)}
                   className="w-full pl-3 pr-8 py-1.5 text-xs font-mono rounded bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-400"
@@ -623,15 +623,17 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                 <FieldTooltip
                   title="Initiales Login-Passwort"
                   description="Start-Passwort für das neue Konto. Da kein automatischer Passwort-Reset existiert, übermittle dieses Passwort direkt an den Beamten."
-                  hint="Empfehlung: Mindestens 4–8 Zeichen oder numerischer PIN-Code."
+                  hint="Mindestens 8 Zeichen. Gespeichert wird nur ein Hash, das Passwort ist später nicht mehr einsehbar."
                 />
               </label>
               <input
                 type="text"
                 required
+                minLength={8}
+                autoComplete="off"
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
-                placeholder="z.B. 5829"
+                placeholder="mind. 8 Zeichen"
                 className="w-full px-3 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
               />
             </div>
@@ -874,7 +876,6 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
               {filteredAccounts.map(acc => {
                 const officer = acc.publicProfile;
                 const isEditing = editingUid === acc.uid;
-                const isPwVisible = Boolean(showPasswords[acc.uid]);
                 const officerProg = allProgress.filter(p => p.userId === acc.uid);
                 const completedCount = officerProg.filter(
                   p => p.status === 'completed' || p.status === 'passed'
@@ -914,31 +915,10 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                         <div className="text-slate-600 dark:text-slate-300 mt-0.5">{officer.division}</div>
                       </td>
 
-                      {/* Credentials with Toggle */}
+                      {/* Benutzername (Passwörter werden nicht mehr angezeigt) */}
                       <td className="py-3.5 px-4 font-mono whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-900 dark:text-white font-semibold">{acc.username}</span>
-                          <span className="text-slate-400">/</span>
-                          <span className="text-sky-700 dark:text-sky-400 font-semibold">
-                            {isPwVisible ? acc.password : '••••••'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowPasswords(prev => ({
-                                ...prev,
-                                [acc.uid]: !prev[acc.uid]
-                              }))
-                            }
-                            className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                            title="Passwort anzeigen/verbergen"
-                          >
-                            {isPwVisible ? (
-                              <EyeOff className="w-3.5 h-3.5" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
-                            )}
-                          </button>
                         </div>
                       </td>
 
@@ -1059,6 +1039,9 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                                 </label>
                                 <input
                                   type="text"
+                                  minLength={8}
+                                  autoComplete="off"
+                                  placeholder="Leer lassen = unverändert"
                                   value={editPassword}
                                   onChange={e => setEditPassword(e.target.value)}
                                   className="w-full px-3 py-2 text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"

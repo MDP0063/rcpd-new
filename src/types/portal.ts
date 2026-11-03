@@ -46,7 +46,6 @@ export interface UserPrivateProfile {
 export interface AdminAccountView {
   uid: string;
   username: string;
-  password: string;
   isOnline: boolean;
   lastSeenIso: string;
   publicProfile: UserPublicProfile;
