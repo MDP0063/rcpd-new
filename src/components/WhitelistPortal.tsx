@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FileCheck,
   Send,
@@ -42,6 +42,18 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
   const [scenarioResponse, setScenarioResponse] = useState(myExistingApp?.scenarioResponse || '');
   const [penalCodeAck, setPenalCodeAck] = useState(myExistingApp?.penalCodeAck ?? true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync form fields when myExistingApp loads or updates from backend
+  useEffect(() => {
+    if (myExistingApp) {
+      setCharacterName(myExistingApp.characterName);
+      setDateOfBirth(myExistingApp.dateOfBirth);
+      setDiscordTag(myExistingApp.discordTag);
+      setPriorExperience(myExistingApp.priorExperience);
+      setScenarioResponse(myExistingApp.scenarioResponse);
+      setPenalCodeAck(myExistingApp.penalCodeAck);
+    }
+  }, [myExistingApp?.id, myExistingApp?.updatedIso]);
 
   // Admin review states
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -110,22 +122,22 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="text-xs font-medium text-slate-500">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
             California POST · Personalbogen &amp; Whitelist-Akte
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
             Personalbogen &amp; Beförderungsantrag
           </h1>
-          <p className="text-sm text-slate-600 mt-1 max-w-3xl">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">
             Hinterlege hier deine offiziellen Charakterdaten und Einsatzszenarien für die Personalakte.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-mono text-slate-600">
+        <div className="flex items-center gap-3 text-xs font-mono text-slate-600 dark:text-slate-400">
           <span>STATUS:</span>
-          <span className="font-semibold text-slate-900 uppercase">
+          <span className="font-semibold text-slate-900 dark:text-white uppercase">
             {currentUser.whitelistStatus}
           </span>
           <span aria-hidden="true">·</span>
@@ -134,34 +146,34 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200">
+        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                 Personal History Statement (Form 2-251)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {myExistingApp
                   ? `Eingereicht für: ${myExistingApp.characterName} · Status: ${myExistingApp.status.toUpperCase()}`
                   : 'Personalakte vervollständigen'}
               </p>
             </div>
-            <FileCheck className="w-5 h-5 text-sky-600 shrink-0" />
+            <FileCheck className="w-5 h-5 text-sky-600 dark:text-sky-400 shrink-0" />
           </div>
 
           {myExistingApp && myExistingApp.reviewerFeedback && (
-            <div className="mb-6 p-4 rounded-lg bg-sky-50 border border-sky-200">
-              <div className="text-xs font-mono text-sky-700 font-semibold mb-1">
+            <div className="mb-6 p-4 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800">
+              <div className="text-xs font-mono text-sky-700 dark:text-sky-300 font-semibold mb-1">
                 VERMERK DER BEHÖRDENLEITUNG (ADMIN):
               </div>
-              <p className="text-sm text-slate-800">{myExistingApp.reviewerFeedback}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200">{myExistingApp.reviewerFeedback}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmitApplication} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   RP Charaktername (Vor- &amp; Nachname)
                 </label>
                 <input
@@ -170,12 +182,12 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                   disabled={Boolean(isTerminal)}
                   value={characterName}
                   onChange={e => setCharacterName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 disabled:opacity-60"
+                  className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 disabled:opacity-60"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Geburtsdatum
                 </label>
                 <input
@@ -184,13 +196,13 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                   disabled={Boolean(isTerminal)}
                   value={dateOfBirth}
                   onChange={e => setDateOfBirth(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 disabled:opacity-60"
+                  className="w-full px-3.5 py-2 text-sm font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 disabled:opacity-60"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Discord-Kennung
               </label>
               <input
@@ -200,12 +212,12 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                 value={discordTag}
                 onChange={e => setDiscordTag(e.target.value)}
                 placeholder="z.B. officer.miller#0001"
-                className="w-full px-3.5 py-2 text-sm font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 disabled:opacity-60"
+                className="w-full px-3.5 py-2 text-sm font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Bisherige Diensterfahrung &amp; Laufbahn
               </label>
               <textarea
@@ -215,12 +227,12 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                 value={priorExperience}
                 onChange={e => setPriorExperience(e.target.value)}
                 placeholder="Beschreibe deine bisherige Laufbahn..."
-                className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 disabled:opacity-60"
+                className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Stellungnahme / Taktische Fallstudie
               </label>
               <textarea
@@ -230,11 +242,11 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                 value={scenarioResponse}
                 onChange={e => setScenarioResponse(e.target.value)}
                 placeholder="Beschreibe dein Vorgehen im Streifendienst..."
-                className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 disabled:opacity-60"
+                className="w-full px-3.5 py-2 text-sm rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 disabled:opacity-60"
               />
             </div>
 
-            <label className="flex items-start gap-3 text-xs text-slate-700 cursor-pointer">
+            <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
               <input
                 type="checkbox"
                 checked={penalCodeAck}
@@ -249,8 +261,8 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
 
             <div className="pt-2">
               {isTerminal ? (
-                <div className="text-xs font-mono text-slate-600 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-sky-600" />
+                <div className="text-xs font-mono text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                   Akte abgeschlossen ({myExistingApp?.status.toUpperCase()}).
                 </div>
               ) : (
@@ -268,63 +280,63 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
         </div>
 
         {/* Right 5 Cols */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                 {isAdmin ? 'Eingegangene Personalbögen (Admin)' : 'Dein Aktenstatus'}
               </h2>
             </div>
-            <span className="text-xs font-mono text-slate-500 tabular-nums">
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 tabular-nums">
               {applications.length} AKTEN
             </span>
           </div>
 
           {applications.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500">
+            <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
               Noch keine Einträge vorhanden.
             </div>
           ) : (
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {applications.map(app => {
                 const isEditingThis = selectedAppId === app.id;
                 return (
                   <div key={app.id} className="py-4 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-slate-900">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
                           {app.characterName}
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5 font-mono">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
                           {app.applicantName} · DOB {app.dateOfBirth} · {app.discordTag}
                         </div>
                       </div>
 
                       <div className="text-xs font-mono shrink-0">
                         {app.status === 'accepted' && (
-                          <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> ACCEPTED
                           </span>
                         )}
                         {app.status === 'rejected' && (
-                          <span className="text-rose-600 font-semibold flex items-center gap-1">
+                          <span className="text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1">
                             <XCircle className="w-3.5 h-3.5" /> REJECTED
                           </span>
                         )}
                         {app.status !== 'accepted' && app.status !== 'rejected' && (
-                          <span className="text-sky-700 font-semibold flex items-center gap-1">
+                          <span className="text-sky-700 dark:text-sky-400 font-semibold flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" /> {app.status.toUpperCase()}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <p className="text-xs text-slate-600 mt-2 line-clamp-3">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-3">
                       {app.scenarioResponse}
                     </p>
 
                     {isAdmin && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
+                      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                         {!isEditingThis ? (
                           <button
                             type="button"
@@ -333,19 +345,19 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                               setReviewStatus(app.status === 'pending' ? 'accepted' : app.status);
                               setReviewFeedback(app.reviewerFeedback || 'Akte geprüft und freigegeben.');
                             }}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:underline cursor-pointer"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
                           >
                             <Edit3 className="w-3.5 h-3.5" /> Als Admin bearbeiten &amp; Rang zuweisen
                           </button>
                         ) : (
-                          <div className="space-y-3 bg-slate-50 p-3.5 rounded-md border border-slate-200">
+                          <div className="space-y-3 bg-slate-50 dark:bg-slate-950 p-3.5 rounded-md border border-slate-200 dark:border-slate-800">
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="block text-xs text-slate-600 mb-1">Status</label>
+                                <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Status</label>
                                 <select
                                   value={reviewStatus}
                                   onChange={e => setReviewStatus(e.target.value as ApplicationStatus)}
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white border border-slate-300"
+                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                                 >
                                   <option value="under_review">In Prüfung</option>
                                   <option value="accepted">Freigeben</option>
@@ -354,11 +366,11 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                               </div>
                               {reviewStatus === 'accepted' && (
                                 <div>
-                                  <label className="block text-xs text-slate-600 mb-1">Ziel-Rang</label>
+                                  <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Ziel-Rang</label>
                                   <select
                                     value={promoteToRole}
                                     onChange={e => setPromoteToRole(e.target.value as OfficerRole)}
-                                    className="w-full px-2.5 py-1.5 text-xs rounded bg-white border border-slate-300"
+                                    className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                                   >
                                     <option value="trainee">Trainee</option>
                                     <option value="rookie">Rookie</option>
@@ -370,12 +382,12 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-xs text-slate-600 mb-1">Notiz</label>
+                              <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Notiz</label>
                               <textarea
                                 rows={2}
                                 value={reviewFeedback}
                                 onChange={e => setReviewFeedback(e.target.value)}
-                                className="w-full px-2.5 py-1.5 text-xs rounded bg-white border border-slate-300"
+                                className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                               />
                             </div>
 
@@ -390,7 +402,7 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setSelectedAppId(null)}
-                                className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                               >
                                 Abbrechen
                               </button>
@@ -409,3 +421,4 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
     </div>
   );
 };
+

@@ -402,17 +402,17 @@ git push origin ${cleanBranch}`;
   return (
     <div className="space-y-8">
       {/* Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="text-xs font-medium text-slate-500">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
             Systemtechnik · GitHub Repository, Render &amp; Datenbank-Sicherung
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
             GitHub &amp; Render.com Deployment + Datensicherung
           </h1>
-          <p className="text-sm text-slate-600 mt-1 max-w-3xl">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl">
             Exklusiv für dich als Administrator sichtbar. Verbinde dein bestehendes GitHub-Repository für automatische Deployments bei jedem Push auf{' '}
-            <code className="font-mono text-slate-900 font-semibold">{cleanBranch}</code> und sichere deine gesamte Datenbank (Accounts, Passwörter, PDFs &amp; Prüfungen) mit einem Klick.
+            <code className="font-mono text-slate-900 dark:text-sky-400 font-semibold">{cleanBranch}</code> und sichere deine gesamte Datenbank (Accounts, Passwörter, PDFs &amp; Prüfungen) mit einem Klick.
           </p>
         </div>
 
@@ -431,11 +431,11 @@ git push origin ${cleanBranch}`;
 
       {/* Top 4-Card Live Status & Telemetry Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
               <span>EXPRESS BACKEND STATUS</span>
-              <Cloud className="w-4 h-4 text-sky-600" />
+              <Cloud className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             </div>
             <div className="flex items-center gap-2 mt-2">
               <span
@@ -443,67 +443,67 @@ git push origin ${cleanBranch}`;
                   healthInfo ? 'bg-emerald-500' : 'bg-amber-500'
                 }`}
               />
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-base font-bold text-slate-900 dark:text-white">
                 {healthInfo ? `ONLINE (${API_ENDPOINTS.HEALTH})` : 'PRÜFE VERBINDUNG'}
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <span>LATENZ: {healthInfo?.latencyMs ?? 12} ms</span>
             <button
               type="button"
               onClick={runLiveHealthCheck}
-              className="text-sky-600 hover:underline inline-flex items-center gap-1 cursor-pointer"
+              className="text-sky-600 dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" /> Ping
             </button>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
               <span>GITHUB -&gt; RENDER PIPELINE</span>
-              <GitBranch className="w-4 h-4 text-sky-600" />
+              <GitBranch className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             </div>
-            <div className="text-base font-bold text-slate-900 mt-2">
+            <div className="text-base font-bold text-slate-900 dark:text-white mt-2">
               Auto-Deploy auf &quot;{cleanBranch}&quot;
             </div>
           </div>
-          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100 truncate">
+          <div className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 truncate">
             Basis-URL: {effectiveOrigin}
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
               <span>AKTIVE DATENBANK-OBJEKTE</span>
-              <Database className="w-4 h-4 text-emerald-600" />
+              <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div className="text-base font-bold font-mono tabular-nums text-slate-900 mt-2">
+            <div className="text-base font-bold font-mono tabular-nums text-slate-900 dark:text-white mt-2">
               {dbStats?.accountsCount ?? 1} Konten · {dbStats?.modulesCount ?? 0} PDFs ·{' '}
               {dbStats?.examsCount ?? 0} Tests
             </div>
           </div>
-          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+          <div className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             Speichergröße: {dbSizeKb} KB (Max. 25 MB/Upload)
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
               <span>LETZTE DATENSICHERUNG</span>
-              <ShieldCheck className="w-4 h-4 text-sky-600" />
+              <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             </div>
-            <div className="text-sm font-bold font-mono text-slate-900 mt-2 truncate">
+            <div className="text-sm font-bold font-mono text-slate-900 dark:text-white mt-2 truncate">
               {deploymentConfig?.lastBackupExportIso
                 ? new Date(deploymentConfig.lastBackupExportIso).toLocaleString('de-DE')
                 : 'Noch kein Backup geladen'}
             </div>
           </div>
-          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+          <div className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             {deploymentConfig?.lastBackupRestoreIso
               ? `Restore: ${new Date(deploymentConfig.lastBackupRestoreIso).toLocaleDateString('de-DE')}`
               : 'Bereit für 1-Klick Export/Import'}
@@ -512,29 +512,29 @@ git push origin ${cleanBranch}`;
       </div>
 
       {/* SECTION 1: 1-CLICK DATABASE BACKUP & RESTORE VAULT (RENDER FREE TIER PROTECTION) */}
-      <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-6 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div>
-            <div className="text-xs font-medium text-slate-500">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Datensicherung · Backup &amp; Wiederherstellung
             </div>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
               Alle Accounts, Passwörter, Ränge, PDF-Lehrbücher &amp; Code-Prüfungen sichern
             </h2>
-            <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-3xl">
               Im kostenlosen Render-Tarif wird die lokale Festplatte bei einem Server-Neustart oder neuen Git-Push auf den Ausgangszustand zurückgesetzt. Mit diesem Tresor lädst du den kompletten Portal-Zustand als 1-Klick-Datei herunter und stellst ihn jederzeit in Sekunden wieder her.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-md shrink-0">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="flex items-center gap-2 text-xs font-mono text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-3.5 py-2 rounded-md shrink-0">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>Tipp: Vor jedem Git-Push kurz Backup speichern</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Box: 1-Click Export */}
-          <div className="bg-slate-900 text-white rounded-lg p-5 flex flex-col justify-between space-y-5 border border-slate-800">
+          <div className="bg-slate-900 dark:bg-slate-950 text-white rounded-lg p-5 flex flex-col justify-between space-y-5 border border-slate-800">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-sky-400">
                 <span>Schritt A · Komplett-Sicherung exportieren</span>
@@ -566,16 +566,16 @@ git push origin ${cleanBranch}`;
           </div>
 
           {/* Right Box: 1-Click Import / Restore */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col justify-between space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-5 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono text-sky-700 font-semibold">
+              <div className="flex items-center justify-between text-xs font-mono text-sky-700 dark:text-sky-400 font-semibold">
                 <span>Schritt B · Backup-Datei wiederherstellen</span>
                 <Upload className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Gespeicherte .json-Sicherung hochladen &amp; sofort aktivieren
               </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Wähle eine zuvor heruntergeladene Backup-Datei aus. Dein eigener Admin-Zugang bleibt dabei immer geschützt.
               </p>
 
@@ -585,20 +585,20 @@ git push origin ${cleanBranch}`;
                   type="file"
                   accept=".json,application/json"
                   onChange={handleBackupFileSelected}
-                  className="block w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-white file:text-slate-900 hover:file:bg-slate-100 cursor-pointer"
+                  className="block w-full text-xs text-slate-700 dark:text-slate-300 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-semibold file:bg-white dark:file:bg-slate-800 file:text-slate-900 dark:file:text-white hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer"
                 />
               </div>
             </div>
 
             {backupPreview ? (
-              <div className="p-3.5 rounded-md bg-white border border-sky-300 space-y-3">
+              <div className="p-3.5 rounded-md bg-white dark:bg-slate-900 border border-sky-300 dark:border-sky-800 space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-semibold text-slate-900 truncate">
+                  <span className="font-semibold text-slate-900 dark:text-white truncate">
                     Datei: {backupPreview.fileName}
                   </span>
-                  <span className="text-emerald-700 font-semibold">GEPRÜFT &amp; GÜLTIG</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">GEPRÜFT &amp; GÜLTIG</span>
                 </div>
-                <div className="text-xs font-mono text-slate-600">
+                <div className="text-xs font-mono text-slate-600 dark:text-slate-300">
                   Enthält: <strong>{backupPreview.accountsCount}</strong> Konten ·{' '}
                   <strong>{backupPreview.modulesCount}</strong> Lehrbücher (PDFs) ·{' '}
                   <strong>{backupPreview.examsCount}</strong> Prüfungen ·{' '}
@@ -611,7 +611,7 @@ git push origin ${cleanBranch}`;
                       setBackupPreview(null);
                       if (fileInputRef.current) fileInputRef.current.value = '';
                     }}
-                    className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                    className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                   >
                     Abbrechen
                   </button>
@@ -627,8 +627,8 @@ git push origin ${cleanBranch}`;
                 </div>
               </div>
             ) : (
-              <div className="text-xs font-mono text-slate-500 pt-2 border-t border-slate-200">
-                Wähle oben eine <code className="text-slate-800">.json</code> Backup-Datei für die Vorschau aus.
+              <div className="text-xs font-mono text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800">
+                Wähle oben eine <code className="text-slate-800 dark:text-slate-200">.json</code> Backup-Datei für die Vorschau aus.
               </div>
             )}
           </div>
@@ -638,17 +638,17 @@ git push origin ${cleanBranch}`;
       {/* SECTION 2: CONFIGURABLE GITHUB REPOSITORY URL & RENDER SERVICE SETTINGS */}
       <form
         onSubmit={handleSaveDeploymentConfig}
-        className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5 shadow-xs"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div>
-            <div className="text-xs font-medium text-slate-500">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Repository &amp; Render-Konfiguration
             </div>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
               Dein bestehendes GitHub-Repository &amp; deine Render-URL verknüpfen
             </h2>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               Trage hier die URL deines bereits erstellten GitHub-Repos ein. Alle Git-Befehle sowie die Render-Manifeste passen sich sofort automatisch an deine Angaben an.
             </p>
           </div>
@@ -656,16 +656,16 @@ git push origin ${cleanBranch}`;
           <button
             type="submit"
             disabled={savingConfig}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer self-start whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 dark:bg-sky-600 text-white rounded-md hover:bg-slate-800 dark:hover:bg-sky-500 transition-colors cursor-pointer self-start whitespace-nowrap"
           >
-            <Save className="w-3.5 h-3.5 text-sky-400" />
+            <Save className="w-3.5 h-3.5 text-sky-400 dark:text-white" />
             {savingConfig ? 'Synchronisiere...' : 'Einstellungen speichern & synchronisieren'}
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
               Deine bestehende GitHub Repository URL *
             </label>
             <input
@@ -674,12 +674,12 @@ git push origin ${cleanBranch}`;
               value={githubRepoUrl}
               onChange={e => setGithubRepoUrl(e.target.value)}
               placeholder="https://github.com/dein-name/dein-repo.git"
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-600 focus:bg-white dark:focus:bg-slate-900"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
               Auto-Deploy Branch (Standard: main)
             </label>
             <input
@@ -688,12 +688,12 @@ git push origin ${cleanBranch}`;
               value={branchName}
               onChange={e => setBranchName(e.target.value)}
               placeholder="main"
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-600 focus:bg-white dark:focus:bg-slate-900"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
               Deine öffentliche Render-URL (optional)
             </label>
             <input
@@ -701,7 +701,7 @@ git push origin ${cleanBranch}`;
               value={renderServiceUrl}
               onChange={e => setRenderServiceUrl(e.target.value)}
               placeholder="https://ca-post-portal.onrender.com"
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-600 focus:bg-white dark:focus:bg-slate-900"
             />
           </div>
         </div>
@@ -709,7 +709,7 @@ git push origin ${cleanBranch}`;
         {/* Optional Render Deploy Hook Row + Live Links */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2 items-end">
           <div className="lg:col-span-7">
-            <label className="block text-xs font-medium text-slate-700 mb-1">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Optionaler Render Deploy Hook (falls du zusätzlich manuell aus dem Admin-Panel deployen möchtest)
             </label>
             <div className="flex items-center gap-2">
@@ -718,7 +718,7 @@ git push origin ${cleanBranch}`;
                 value={renderDeployHookUrl}
                 onChange={e => setRenderDeployHookUrl(e.target.value)}
                 placeholder="https://api.render.com/deploy/srv-..."
-                className="flex-1 px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+                className="flex-1 px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-600 focus:bg-white dark:focus:bg-slate-900"
               />
               {renderDeployHookUrl.trim() && (
                 <button
@@ -740,9 +740,9 @@ git push origin ${cleanBranch}`;
                 href={githubRepoUrl.replace(/\.git$/, '')}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-300 text-slate-700 hover:bg-slate-100"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
-                <GitBranch className="w-3.5 h-3.5 text-sky-600" />
+                <GitBranch className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                 GitHub Repo öffnen
                 <ExternalLink className="w-3 h-3" />
               </a>
@@ -752,9 +752,9 @@ git push origin ${cleanBranch}`;
                 href={normalizeBaseUrl(renderServiceUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 font-semibold"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 font-semibold"
               >
-                <Globe className="w-3.5 h-3.5 text-sky-600" />
+                <Globe className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                 Render Live-Website öffnen
                 <ExternalLink className="w-3 h-3" />
               </a>
@@ -766,12 +766,12 @@ git push origin ${cleanBranch}`;
       {/* SECTION 3: INTERACTIVE STEP-BY-STEP DEPLOYMENT GUIDE & TAILORED GIT COMMANDS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left 5 Cols: Interactive Step-by-Step Checklist */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs">
-          <div className="border-b border-slate-200 pb-3">
-            <div className="text-xs font-medium text-slate-500">
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5 shadow-xs">
+          <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Einrichtungs-Leitfaden · Schritt für Schritt
             </div>
-            <h2 className="text-base font-bold text-slate-900 mt-0.5">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
               Checkliste für dein GitHub &amp; Render Setup ({completedSteps.length} / {SETUP_STEPS.length} erledigt)
             </h2>
           </div>
@@ -785,8 +785,8 @@ git push origin ${cleanBranch}`;
                   onClick={() => handleToggleChecklistStep(step.id)}
                   className={`p-4 rounded-lg border transition-colors cursor-pointer flex items-start gap-3.5 ${
                     isDone
-                      ? 'border-emerald-300 bg-emerald-50/50'
-                      : 'border-slate-200 bg-white hover:border-sky-300'
+                      ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-sky-300 dark:hover:border-sky-700'
                   }`}
                 >
                   <button
@@ -795,23 +795,23 @@ git push origin ${cleanBranch}`;
                     aria-label={step.title}
                   >
                     {isDone ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-600" />
+                      <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     ) : (
                       <Square className="w-4 h-4 text-slate-400" />
                     )}
                   </button>
                   <div className="space-y-1">
-                    <div className="text-xs font-mono font-semibold text-slate-500">
+                    <div className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">
                       SCHRITT {step.number} {isDone && '· ERLEDIGT'}
                     </div>
                     <div
                       className={`text-xs font-bold ${
-                        isDone ? 'line-through text-slate-500' : 'text-slate-900'
+                        isDone ? 'line-through text-slate-500 dark:text-slate-400' : 'text-slate-900 dark:text-white'
                       }`}
                     >
                       {step.title}
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">{step.description}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
                   </div>
                 </div>
               );
@@ -819,7 +819,7 @@ git push origin ${cleanBranch}`;
           </div>
 
           {/* Quick Render Dashboard Settings Reference */}
-          <div className="p-4 rounded-lg bg-slate-900 text-slate-200 space-y-2 text-xs font-mono">
+          <div className="p-4 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-200 space-y-2 text-xs font-mono">
             <div className="text-sky-400 font-semibold">
               RENDER WEB SERVICE EINSTELLUNGEN (ÜBERSICHT):
             </div>
@@ -845,20 +845,20 @@ git push origin ${cleanBranch}`;
         {/* Right 7 Cols: Tailored Git Commands + Render YAML Blueprint + GitHub Workflow + Live API Tester */}
         <div className="lg:col-span-7 space-y-6">
           {/* Box 1: Initial Git Push to Existing Repo */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-xs font-medium text-slate-500">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Git-Befehle · Erstmaliger Upload ins Repository
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                   Projekt mit deinem GitHub-Repository verbinden &amp; auf &quot;{cleanBranch}&quot; pushen
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => copyText('git_init', gitInitialPushCommands)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer shrink-0"
               >
                 {copiedKey === 'git_init' ? (
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -869,18 +869,18 @@ git push origin ${cleanBranch}`;
               </button>
             </div>
 
-            <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+            <pre className="p-4 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
               {gitInitialPushCommands}
             </pre>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono text-slate-600 font-semibold">
+              <span className="text-xs font-mono text-slate-600 dark:text-slate-400 font-semibold">
                 Befehle für spätere Code-Updates (löst Render Auto-Deploy aus):
               </span>
               <button
                 type="button"
                 onClick={() => copyText('git_update', gitUpdatePushCommands)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 {copiedKey === 'git_update' ? (
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -891,19 +891,19 @@ git push origin ${cleanBranch}`;
               </button>
             </div>
 
-            <pre className="p-3.5 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+            <pre className="p-3.5 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
               {gitUpdatePushCommands}
             </pre>
           </div>
 
           {/* Box 2: Render.yaml Free-Tier Blueprint & GitHub Actions Workflow */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-medium text-slate-500">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Render-Konfiguration · /render.yaml
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                   Synchronisierte Render-Spezifikation (Endpunkt: {API_ENDPOINTS.DEPLOYMENT_MANIFESTS})
                 </h3>
               </div>
@@ -911,7 +911,7 @@ git push origin ${cleanBranch}`;
                 <button
                   type="button"
                   onClick={() => copyText('render_yaml', manifests.renderYaml)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   {copiedKey === 'render_yaml' ? (
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -923,20 +923,20 @@ git push origin ${cleanBranch}`;
               )}
             </div>
 
-            <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+            <pre className="p-4 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
               {manifests?.renderYaml || 'Lade /render.yaml...'}
             </pre>
 
             {manifests?.githubWorkflow && (
               <div className="pt-2 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-600 font-semibold">
+                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400 font-semibold">
                     GitHub Actions Workflow (/.github/workflows/deploy-render.yml):
                   </span>
                   <button
                     type="button"
                     onClick={() => copyText('gh_workflow', manifests.githubWorkflow)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     {copiedKey === 'gh_workflow' ? (
                       <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -946,7 +946,7 @@ git push origin ${cleanBranch}`;
                     Workflow kopieren
                   </button>
                 </div>
-                <pre className="p-3.5 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+                <pre className="p-3.5 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
                   {manifests.githubWorkflow}
                 </pre>
               </div>
@@ -954,16 +954,16 @@ git push origin ${cleanBranch}`;
           </div>
 
           {/* Box 3: Live Game-Server Whitelist Bridge Tester */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <div className="text-xs font-medium text-slate-500">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Externe Schnittstelle · Whitelist-API-Prüfung
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                   REST-Endpunkt: {resolveApiUrl(API_ENDPOINTS.WHITELIST_VERIFY)}
                 </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   Über diese öffentliche URL kann euer Gameserver (z. B. FiveM / RageMP / eigenes RP-System) jederzeit live prüfen, ob ein Officer-Konto freigeschaltet ist.
                 </p>
               </div>
@@ -977,7 +977,7 @@ git push origin ${cleanBranch}`;
             </div>
 
             {whitelistCheckResult && (
-              <pre className="p-4 rounded-lg bg-slate-900 text-emerald-300 text-xs font-mono overflow-x-auto leading-relaxed">
+              <pre className="p-4 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 text-emerald-300 text-xs font-mono overflow-x-auto leading-relaxed">
                 {whitelistCheckResult}
               </pre>
             )}

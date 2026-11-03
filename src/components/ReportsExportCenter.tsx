@@ -259,15 +259,15 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="text-xs font-mono text-sky-600 font-semibold">
-            DIENSTSTELLENLEITUNG · BERICHTSWESEN &amp; DATENEXPORT
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Dienststellenleitung · Berichtswesen &amp; Datenexport
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
             Export- &amp; Berichtsfunktionen (CSV / PDF-Leitungsbericht)
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Erstelle strukturierte Tabellenexporte (Excel/CSV) sowie druckfertige PDF-Berichte über
             Ausbildungsstände, Prüfungsquoten und Personalstatistiken für die Dienststellenleitung.
           </p>
@@ -277,18 +277,18 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
           <button
             type="button"
             onClick={handleExportTrainingCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-md transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md transition-colors cursor-pointer shadow-xs"
           >
-            <FileSpreadsheet className="w-4 h-4 text-sky-600" />
+            <FileSpreadsheet className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             Qualifikationsmatrix (CSV)
           </button>
 
           <button
             type="button"
             onClick={handleExportDetailedGradesCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-md transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md transition-colors cursor-pointer shadow-xs"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Prüfungs- &amp; Notenprotokoll (CSV)
           </button>
 
@@ -305,47 +305,47 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
 
       {/* Summary KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs transition-colors">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
             <span>ERFASSTE BEAMTE</span>
-            <Users className="w-4 h-4 text-sky-600" />
+            <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white mt-2">
             {roster.length}
           </div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {roster.filter(r => r.isOnline).length} aktuell online im Dienst
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs transition-colors">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
             <span>LEHRBÜCHER &amp; MODULE</span>
-            <BookOpen className="w-4 h-4 text-sky-600" />
+            <BookOpen className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white mt-2">
             {modules.length}
           </div>
-          <div className="text-xs text-slate-500 mt-1">Veröffentlichte Handbücher</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Veröffentlichte Handbücher</div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs transition-colors">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
             <span>PRÜFUNGSPROTOKOLLE</span>
-            <ClipboardCheck className="w-4 h-4 text-sky-600" />
+            <ClipboardCheck className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white mt-2">
             {progress.length}
           </div>
-          <div className="text-xs text-slate-500 mt-1">Gespeicherte Nachweise &amp; Noten</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Gespeicherte Nachweise &amp; Noten</div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs transition-colors">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
             <span>Ø BEREITSCHAFTSGRAD</span>
-            <Award className="w-4 h-4 text-sky-600" />
+            <Award className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+          <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white mt-2">
             {officerStats.length > 0
               ? Math.round(
                   officerStats.reduce((acc, s) => acc + s.readinessPercent, 0) /
@@ -354,20 +354,19 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
               : 100}
             %
           </div>
-          <div className="text-xs text-slate-500 mt-1">Durchschnitt über alle Ränge</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Durchschnitt über alle Ränge</div>
         </div>
       </div>
 
       {/* Qualification & Readiness Table */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs transition-colors">
+        <div className="px-6 py-4 bg-slate-900 dark:bg-slate-950 text-white border-b border-transparent dark:border-slate-800 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold tracking-tight">
               Ausbildungs- &amp; Qualifikationsmatrix der Dienststelle
             </h2>
             <p className="text-[11px] text-slate-400">
-              Live-Übersicht über Handbücher, Prüfungen, Durchschnittsnoten und granulare
-              Lehrgangs-Freigaben
+              Übersicht über Handbücher, Prüfungen, Durchschnittsnoten und Lehrgangs-Freigaben
             </p>
           </div>
           <span className="text-xs font-mono text-sky-400">{officerStats.length} BEAMTE</span>
@@ -376,7 +375,7 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono text-slate-500 uppercase">
+              <tr className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 dark:text-slate-400 uppercase">
                 <th className="py-3 px-4">Beamter / Dienstnummer</th>
                 <th className="py-3 px-4">System-Rang &amp; Abteilung</th>
                 <th className="py-3 px-4">Ausbilder-Lehrgänge</th>
@@ -386,49 +385,49 @@ export const ReportsExportCenter: React.FC<ReportsExportCenterProps> = ({
                 <th className="py-3 px-4">Fortschritt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-xs">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
               {officerStats.map(row => {
                 const assignedCourses =
                   row.member.granularPermissions?.assignedCourseCodes || [];
                 return (
-                  <tr key={row.member.uid} className="hover:bg-slate-50/80">
+                  <tr key={row.member.uid} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{row.member.displayName}</div>
-                      <div className="text-[11px] font-mono text-slate-500">
+                      <div className="font-bold text-slate-900 dark:text-white">{row.member.displayName}</div>
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         {row.member.badgeNumber} · {row.member.callsign}
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-mono font-semibold uppercase text-sky-700">
+                      <div className="font-mono font-semibold uppercase text-sky-700 dark:text-sky-400">
                         {row.member.role} ({row.member.rank})
                       </div>
-                      <div className="text-[11px] text-slate-500">{row.member.division}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{row.member.division}</div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-700">
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-700 dark:text-slate-300">
                       {assignedCourses.length > 0
                         ? assignedCourses.includes('*')
                           ? 'ALLE LEHRGÄNGE (*)'
                           : assignedCourses.join(', ')
                         : 'Keine (Standard)'}
                     </td>
-                    <td className="py-3.5 px-4 font-mono tabular-nums">
+                    <td className="py-3.5 px-4 font-mono tabular-nums text-slate-800 dark:text-slate-200">
                       {row.completedMods} / {modules.length}
                     </td>
-                    <td className="py-3.5 px-4 font-mono tabular-nums">
+                    <td className="py-3.5 px-4 font-mono tabular-nums text-slate-800 dark:text-slate-200">
                       {row.passedTestsCount} / {exams.length}
                     </td>
-                    <td className="py-3.5 px-4 font-mono tabular-nums font-semibold">
+                    <td className="py-3.5 px-4 font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                       {row.avgScore > 0 ? `${row.avgScore}%` : '—'}
                     </td>
                     <td className="py-3.5 px-4 w-44">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                           <div
                             className="h-full bg-sky-600"
                             style={{ width: `${row.readinessPercent}%` }}
                           />
                         </div>
-                        <span className="font-mono text-[11px] font-semibold text-slate-700 w-9 text-right">
+                        <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 w-9 text-right">
                           {row.readinessPercent}%
                         </span>
                       </div>

@@ -506,12 +506,179 @@ function createInitialDatabase(): PortalDatabaseState {
     }
   ];
 
+  const defaultModules: TrainingModuleDoc[] = [
+    {
+      id: 'mod_default_sop01',
+      title: 'Streifendienst, Eigensicherung & Funkdisziplin',
+      code: 'SOP-01',
+      category: 'SOP & Policy',
+      minClearance: ROLE_HIERARCHY.trainee.defaultClearance,
+      requiredRole: 'trainee',
+      embedType: 'document',
+      contentMarkdown: `# 1. Grundsätze des Streifendienstes (SOP-01)
+
+Jeder Beamte des California POST Dienstportals vertritt im täglichen Streifendienst die rechtsstaatlichen Grundsätze der Verhältnismäßigkeit, Eigensicherung und professionellen Kommunikation. Vor Beginn jeder Schicht sind Dienstfahrzeug, Funkgerät und persönliche Schutzausrüstung vollständig auf Einsatzbereitschaft zu prüfen.
+
+## 2. Funkdisziplin & 10-Codes im Einsatzfunk
+
+Der Funkverkehr ist sachlich, knapp und eindeutig zu führen. Vor jedem Funkspruch ist das eigene Rufzeichen (Callsign) zu nennen.
+
+- 10-4: Verstanden / Bestätigung der Durchsage
+- 10-7: Außer Dienst / Nicht einsatzbereit
+- 10-8: Im Dienst / Einsatzbereit auf Streife
+- 10-20: Aktueller Standort der Einheit
+- 10-99: Beamter in unmittelbarer Gefahr — Höchste Priorität für alle Einheiten
+
+## 3. Taktische Eigensicherung bei Fahrzeugkontrollen (Traffic Stops)
+
+Bei jeder Verkehrskontrolle ist der Streifenwagen leicht versetzt hinter dem Zielobjekt zu positionieren, um einen sicheren Korridor für die herantretende Kraft zu schaffen. Vor dem Verlassen des Streifenwagens werden Kennzeichen, Fahrzeugtyp und Standort (10-20) an die Leitstelle durchgegeben.`,
+      externalUrl: '',
+      pdfDataUrl: '',
+      pdfFileName: '',
+      interactiveCode: '',
+      estimatedMinutes: 20,
+      authorUid: 'usr_admin_1',
+      updatedIso: nowIso
+    },
+    {
+      id: 'mod_default_pc102',
+      title: 'California Penal Code & Eingriffsrecht im Vollzugsdienst',
+      code: 'PC-102',
+      category: 'California Penal Code',
+      minClearance: ROLE_HIERARCHY.trainee.defaultClearance,
+      requiredRole: 'trainee',
+      embedType: 'document',
+      contentMarkdown: `# 1. Rechtsgrundlagen für freiheitsentziehende Maßnahmen
+
+Eine vorläufige Festnahme (Arrest) setzt einen hinreichenden Tatverdacht (Probable Cause) voraus. Bei einer kurzzeitigen Festhaltung zur Sachverhaltsklärung (Detention / Terry Stop) genügt ein begründeter Anfangsverdacht (Reasonable Suspicion) auf Basis konkreter, artikulierbarer Tatsachen.
+
+## 2. Belehrungspflichten (Miranda Warning)
+
+Vor jeder formellen Vernehmung einer in Gewahrsam befindlichen Person ist die Belehrung vollständig und dokumentiert durchzuführen:
+
+- Sie haben das Recht zu schweigen.
+- Alles, was Sie sagen, kann und wird vor Gericht gegen Sie verwendet werden.
+- Sie haben das Recht, zu jeder Vernehmung einen Verteidiger hinzuzuziehen.
+- Wenn Sie sich keinen Verteidiger leisten können, wird Ihnen auf Staatskosten ein Pflichtverteidiger bestellt.
+
+## 3. Grundsatz der Verhältnismäßigkeit (Use of Force Continuum)
+
+Unmittelbarer Zwang darf nur angewendet werden, soweit mildere Mittel (insbesondere deeskalierende Ansprache und klare Handlungsanweisungen) keinen Erfolg versprechen oder aufgrund einer gegenwärtigen Gefahr nicht möglich sind.`,
+      externalUrl: '',
+      pdfDataUrl: '',
+      pdfFileName: '',
+      interactiveCode: '',
+      estimatedMinutes: 25,
+      authorUid: 'usr_admin_1',
+      updatedIso: nowIso
+    }
+  ];
+
+  const defaultExams: AcademyExamDoc[] = [
+    {
+      id: 'exam_default_test01',
+      title: 'Grundlagenprüfung: Funkdisziplin & Verkehrskontrollen (SOP-01)',
+      moduleCode: 'SOP-01',
+      assessmentStage: 'test',
+      minClearance: ROLE_HIERARCHY.trainee.defaultClearance,
+      passingScore: 70,
+      timeLimitMinutes: 15,
+      examFormat: 'structured_quiz',
+      questionsPayload: JSON.stringify([
+        {
+          id: 'q1',
+          question: 'Welche Angaben müssen der Leitstelle vor dem Verlassen des Streifenwagens bei einer Verkehrskontrolle übermittelt werden?',
+          options: [
+            'Nur der eigene Vorname ohne Standortangabe',
+            'Standort (10-20), Fahrzeugtyp und Kennzeichen des kontrollierten Fahrzeugs',
+            'Eine Meldung erfolgt erst nach Abschluss der gesamten Kontrolle'
+          ],
+          correctIndex: 1,
+          explanation: 'Zur Eigensicherung müssen Standort (10-20), Fahrzeugbeschreibung und Kennzeichen immer vor dem Herantreten durchgegeben werden.'
+        },
+        {
+          id: 'q2',
+          question: 'Welche Bedeutung hat der Funkcode 10-8 im regulären Dienstbetrieb?',
+          options: [
+            'Im Dienst / Einsatzbereit auf Streife',
+            'Schichtende / Außer Dienst',
+            'Anforderung eines Abschleppfahrzeugs'
+          ],
+          correctIndex: 0,
+          explanation: '10-8 meldet die Einheit als einsatzbereit im Streifendienst.'
+        },
+        {
+          id: 'q3',
+          question: 'Wann ist ein Beschuldigter zwingend nach den Miranda-Grundsätzen zu belehren?',
+          options: [
+            'Bei jeder allgemeinen Verkehrskontrolle noch vor der Ausweiskontrolle',
+            'Vor einer formellen Vernehmung in amtlichem Gewahrsam (Custodial Interrogation)',
+            'Nur bei Ordnungswidrigkeiten im ruhenden Verkehr'
+          ],
+          correctIndex: 1,
+          explanation: 'Die Miranda-Belehrung ist zwingend erforderlich, sobald sich eine Person in Gewahrsam befindet und vernommen werden soll.'
+        }
+      ]),
+      interactiveWidgetCode: '',
+      authorUid: 'usr_admin_1',
+      updatedIso: nowIso
+    },
+    {
+      id: 'exam_default_final01',
+      title: 'Offizielle CA-POST Abschlussprüfung: Recht & Einsatztaktik',
+      moduleCode: 'PC-102',
+      assessmentStage: 'final_exam',
+      minClearance: ROLE_HIERARCHY.rookie.defaultClearance,
+      passingScore: 80,
+      timeLimitMinutes: 25,
+      examFormat: 'structured_quiz',
+      questionsPayload: JSON.stringify([
+        {
+          id: 'fq1',
+          question: 'Welcher rechtliche Maßstab ist für eine kurzzeitige Festhaltung zur Sachverhaltsklärung (Terry Stop / Detention) erforderlich?',
+          options: [
+            'Reine Vermutung ohne konkrete Anhaltspunkte',
+            'Begründeter Anfangsverdacht aufgrund konkreter Tatsachen (Reasonable Suspicion)',
+            'Rechtskräftiges Gerichtsurteil'
+          ],
+          correctIndex: 1,
+          explanation: 'Für eine kurzzeitige Festhaltung (Detention) ist Reasonable Suspicion auf Basis konkreter Tatsachen erforderlich.'
+        },
+        {
+          id: 'fq2',
+          question: 'Wie wird der Streifenwagen bei einer regulären Verkehrskontrolle zur Eigensicherung abgestellt?',
+          options: [
+            'Leicht versetzt hinter dem angehaltenen Fahrzeug, um einen geschützten Korridor zu bilden',
+            'Unmittelbar vor der Motorhaube des angehaltenen Fahrzeugs',
+            'Auf der gegenüberliegenden Straßenseite entgegen der Fahrtrichtung'
+          ],
+          correctIndex: 0,
+          explanation: 'Die leicht versetzte Positionierung hinter dem Zielfahrzeug schützt die eingesetzten Kräfte vor dem fließenden Verkehr.'
+        },
+        {
+          id: 'fq3',
+          question: 'Welcher Funkcode signalisiert höchste Dringlichkeit (Beamter in unmittelbarer Gefahr)?',
+          options: [
+            '10-4',
+            '10-20',
+            '10-99'
+          ],
+          correctIndex: 2,
+          explanation: '10-99 steht für einen Beamten in akuter Notlage und hat im Funkverkehr höchste Priorität.'
+        }
+      ]),
+      interactiveWidgetCode: '',
+      authorUid: 'usr_admin_1',
+      updatedIso: nowIso
+    }
+  ];
+
   return {
     version: 3,
     accounts: initialAccounts,
     applications: [],
-    modules: [], // Empty by default so Admin/Colonel can upload PDFs / Textbooks dynamically
-    exams: [], // Empty by default so Admin/Colonel can add Tests & Final Exams as code dynamically
+    modules: defaultModules,
+    exams: defaultExams,
     progress: [],
     announcements: defaultAnnouncements,
     messages: [],
@@ -562,6 +729,12 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
   }
   if (!Array.isArray(state.notifications)) {
     state.notifications = [];
+  }
+  if (!Array.isArray(state.modules) || (state.modules.length === 0 && (!state.progress || state.progress.length === 0))) {
+    state.modules = createInitialDatabase().modules;
+  }
+  if (!Array.isArray(state.exams) || (state.exams.length === 0 && (!state.progress || state.progress.length === 0))) {
+    state.exams = createInitialDatabase().exams;
   }
   for (const acc of state.accounts) {
     if (!acc.publicProfile.granularPermissions) {
@@ -1216,6 +1389,34 @@ async function startServer() {
       );
     }
 
+    // Cascade displayName and badgeNumber updates to related records
+    for (const p of dbState.progress || []) {
+      if (p.userId === target.uid) {
+        p.userName = target.publicProfile.displayName;
+      }
+    }
+    for (const r of dbState.requests || []) {
+      if (r.requesterUid === target.uid) {
+        r.requesterName = target.publicProfile.displayName;
+        r.requesterBadge = target.publicProfile.badgeNumber;
+        r.requesterCurrentRole = target.publicProfile.role;
+      }
+    }
+    for (const appDoc of dbState.applications || []) {
+      if (appDoc.applicantUid === target.uid) {
+        appDoc.applicantName = target.publicProfile.displayName;
+      }
+    }
+    for (const evt of dbState.events || []) {
+      for (const att of evt.attendees || []) {
+        if (att.uid === target.uid) {
+          att.displayName = target.publicProfile.displayName;
+          att.badgeNumber = target.publicProfile.badgeNumber;
+          att.role = target.publicProfile.role;
+        }
+      }
+    }
+
     saveDatabase(dbState);
     res.json({ account: toAdminView(target) });
   });
@@ -1241,6 +1442,10 @@ async function startServer() {
 
     const target = dbState.accounts.find(a => a.uid === targetUid);
     dbState.accounts = dbState.accounts.filter(a => a.uid !== targetUid);
+    dbState.progress = (dbState.progress || []).filter(p => p.userId !== targetUid);
+    for (const evt of dbState.events || []) {
+      evt.attendees = (evt.attendees || []).filter(a => a.uid !== targetUid);
+    }
     if (target) {
       appendAuditLog(
         dbState,
@@ -1348,6 +1553,7 @@ async function startServer() {
         applicantAccount.publicProfile.rank = meta.defaultRank;
         applicantAccount.publicProfile.clearanceLevel = meta.defaultClearance;
         applicantAccount.publicProfile.whitelistStatus = 'whitelisted';
+        applicantAccount.publicProfile.granularPermissions = getDefaultGranularPermissions(nextRole);
       } else if (status === 'rejected') {
         applicantAccount.publicProfile.whitelistStatus = 'revoked';
       }
@@ -2550,7 +2756,11 @@ jobs:
         applicantAcc.publicProfile.role = targetReq.requestedRole;
         applicantAcc.publicProfile.rank = nextMeta.defaultRank;
         applicantAcc.publicProfile.clearanceLevel = nextMeta.defaultClearance;
+        applicantAcc.publicProfile.granularPermissions = getDefaultGranularPermissions(
+          targetReq.requestedRole
+        );
         applicantAcc.publicProfile.updatedIso = nowIso;
+        targetReq.requesterCurrentRole = targetReq.requestedRole;
         rankPromotedNote = ` · Automatisch auf ${targetReq.requestedRole.toUpperCase()} befördert`;
       }
     }

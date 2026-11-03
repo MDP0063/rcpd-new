@@ -686,7 +686,10 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                 {filteredRequests.map(reqDoc => {
                   const isReviewing = reviewingId === reqDoc.id;
                   const canApproveThis =
-                    isAdmin || (isColonel && reqDoc.category !== 'rank_change');
+                    isAdmin ||
+                    ((isColonel ||
+                      Boolean(currentUser.granularPermissions?.canReviewStandardRequests)) &&
+                      reqDoc.category !== 'rank_change');
 
                   return (
                     <React.Fragment key={reqDoc.id}>

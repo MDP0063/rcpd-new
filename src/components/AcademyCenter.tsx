@@ -186,7 +186,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const handleSubmitExam = async (exam: AcademyExamDoc, parsedQuestions: ExamQuestionItem[]) => {
     let scorePercent = customCodeScore;
 
-    if (exam.examFormat === 'structured_quiz' && parsedQuestions.length > 0) {
+    if (parsedQuestions.length > 0) {
+      const unansweredCount = parsedQuestions.filter(q => examAnswers[q.id] === undefined).length;
+      if (unansweredCount > 0) {
+        onStatusToast(
+          `Bitte beantworte zuerst alle ${parsedQuestions.length} Prüfungsfragen (${unansweredCount} noch offen).`
+        );
+        return;
+      }
       let correctCount = 0;
       parsedQuestions.forEach(q => {
         if (examAnswers[q.id] === q.correctIndex) {
@@ -672,6 +679,23 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               {/* Right 8 Cols: Viewer */}
               <div className="lg:col-span-8">
                 {currentModule && (
+                  ROLE_HIERARCHY[currentUser.role].rankOrder >
+                  ROLE_HIERARCHY[currentModule.requiredRole].rankOrder ? (
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 space-y-3 shadow-xs">
+                      <div className="flex items-center gap-2 text-xs font-mono text-rose-600 dark:text-rose-400 font-semibold">
+                        <Lock className="w-4 h-4" /> ZUGRIFF AUF DIESES HANDBUCH GESPERRT
+                      </div>
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                        „{currentModule.title}“ erfordert mindestens den Rang „{currentModule.requiredRole.toUpperCase()}“
+                      </h2>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Dein aktueller System-Rang lautet{' '}
+                        <strong className="uppercase">{currentUser.role}</strong>. Sobald du auf den
+                        erforderlichen Dienstgrad befördert wirst, wird dieses Lehrmodul automatisch
+                        freigeschaltet.
+                      </p>
+                    </div>
+                  ) : (
                   <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                       <div className="space-y-1.5">
@@ -718,20 +742,20 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     {/* Embedded PDF Viewer */}
                     {currentModule.pdfDataUrl && (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono text-slate-600">
+                        <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-300">
                           <span className="flex items-center gap-1.5">
-                            <FileText className="w-4 h-4 text-sky-600" />
+                            <FileText className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                             HOCHGELADENES LEHRBUCH / DOKUMENT: {currentModule.pdfFileName || 'Dokument.pdf'}
                           </span>
                           <a
                             href={currentModule.pdfDataUrl}
                             download={currentModule.pdfFileName || 'lehrbuch.pdf'}
-                            className="text-sky-600 hover:underline font-semibold"
+                            className="text-sky-600 dark:text-sky-400 hover:underline font-semibold"
                           >
                             PDF herunterladen ↓
                           </a>
                         </div>
-                        <div className="rounded-lg overflow-hidden border border-slate-300 bg-slate-100">
+                        <div className="rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
                           <iframe
                             title={currentModule.title}
                             src={currentModule.pdfDataUrl}
@@ -743,15 +767,15 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
                     {/* External Document URL */}
                     {currentModule.externalUrl && (
-                      <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                        <div className="text-xs font-mono text-slate-700 truncate pr-4">
+                      <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <div className="text-xs font-mono text-slate-700 dark:text-slate-300 truncate pr-4">
                           Externe Dokument-Quelle: {currentModule.externalUrl}
                         </div>
                         <a
                           href={currentModule.externalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:underline shrink-0"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline shrink-0"
                         >
                           Dokument öffnen <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -761,10 +785,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     {/* Interactive Code inside Module */}
                     {currentModule.interactiveCode && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono text-slate-500">
+                        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                           INTERAKTIVE CODE-UMGEBUNG
                         </div>
-                        <div className="rounded-lg overflow-hidden border border-slate-300 bg-white">
+                        <div className="rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white">
                           <iframe
                             title={currentModule.title}
                             srcDoc={currentModule.interactiveCode}
@@ -775,6 +799,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
                     )}
                   </article>
+                  )
                 )}
               </div>
             </div>
@@ -786,26 +811,26 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {(activeTab === 'tests' || activeTab === 'final_exams') && (
         <div>
           {activeTab === 'final_exams' && !canAccessFinalExams ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-10 space-y-3 shadow-xs">
-              <div className="flex items-center gap-2 text-xs font-mono text-rose-600 font-semibold">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 text-xs font-mono text-rose-600 dark:text-rose-400 font-semibold">
                 <Lock className="w-4 h-4" /> ZUGRIFF AUF ABSCHLUSSPRÜFUNGEN GESPERRT (RANG TRAINEE)
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Abschlussarbeiten und Abschlussprüfungen sind erst ab dem Rang „Rookie“ freigeschaltet
               </h2>
-              <p className="text-sm text-slate-600 max-w-2xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
                 Als <strong>Trainee</strong> kannst du uneingeschränkt auf alle Lehrbücher, Lehrmaterialien sowie die regulären <strong>Übungstests</strong> zugreifen. Sobald der Administrator deinen Rang auf <strong>Rookie</strong> oder höher setzt, wird dieser Prüfungsbereich freigeschaltet.
               </p>
             </div>
           ) : activeExamList.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-12 text-center space-y-4 shadow-xs">
-              <Terminal className="w-10 h-10 text-sky-600 mx-auto" />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center space-y-4 shadow-xs">
+              <Terminal className="w-10 h-10 text-sky-600 dark:text-sky-400 mx-auto" />
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-slate-900">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   Noch keine {activeTab === 'final_exams' ? 'Abschlussprüfungen' : 'Übungstests'} hinterlegt
                 </h2>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Es sind keine Tests vorprogrammiert. Als Admin oder Colonel kannst du neue Tests und interaktive Prüfungen direkt als Code über die Schaltfläche einbinden.
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                  Als Admin oder Colonel kannst du neue Tests und interaktive Prüfungen direkt über die Schaltfläche einbinden.
                 </p>
               </div>
               {canEditAcademy && (
@@ -817,14 +842,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   }}
                   className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
                 >
-                  <Code2 className="w-4 h-4" /> Jetzt {activeTab === 'final_exams' ? 'Abschlussprüfung' : 'Übungstest'} als Code hinzufügen
+                  <Code2 className="w-4 h-4" /> Jetzt {activeTab === 'final_exams' ? 'Abschlussprüfung' : 'Übungstest'} hinzufügen
                 </button>
               )}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left 4 Cols */}
-              <div className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-4 divide-y divide-slate-200 shadow-xs">
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 divide-y divide-slate-200 dark:divide-slate-800 shadow-xs">
                 {activeExamList.map(ex => {
                   const prog = getExamProgress(ex.id);
                   const isSelected = currentExam?.id === ex.id;
@@ -837,23 +862,25 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         setExamSubmittedResult(null);
                       }}
                       className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
-                        isSelected ? 'bg-sky-50 border border-sky-200' : 'hover:bg-slate-50'
+                        isSelected
+                          ? 'bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+                      <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
                         <span>{ex.moduleCode}</span>
                         <span>·</span>
                         <span>MIN {ex.passingScore}%</span>
                         <span className="ml-auto">
                           {prog?.status === 'passed' ? (
-                            <span className="text-emerald-700 font-semibold">{prog.scorePercent}% PASS</span>
+                            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{prog.scorePercent}% PASS</span>
                           ) : prog?.status === 'failed' ? (
-                            <span className="text-rose-600 font-semibold">{prog.scorePercent}% FAIL</span>
+                            <span className="text-rose-600 dark:text-rose-400 font-semibold">{prog.scorePercent}% FAIL</span>
                           ) : null}
                         </span>
                       </div>
-                      <div className="text-sm font-semibold text-slate-900 mt-1">{ex.title}</div>
-                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">{ex.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
                         <Clock className="w-3 h-3" /> {ex.timeLimitMinutes} Min ·{' '}
                         {ex.assessmentStage === 'final_exam' ? 'Abschlussprüfung (Rookie+)' : 'Übungstest (Trainee+)'}
                       </div>
@@ -865,16 +892,16 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               {/* Right 8 Cols: Active Test / Final Exam Runner */}
               <div className="lg:col-span-8">
                 {currentExam && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
-                    <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-6 shadow-xs">
+                    <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
                       <div>
-                        <div className="text-xs font-mono text-sky-700 font-semibold">
+                        <div className="text-xs font-mono text-sky-700 dark:text-sky-400 font-semibold">
                           {currentExam.assessmentStage === 'final_exam'
                             ? 'Offizielle Abschlussprüfung (Rookie+)'
                             : 'Übungstest (Trainee+)'}{' '}
                           · {currentExam.moduleCode} · Bestehensgrenze {currentExam.passingScore}%
                         </div>
-                        <h2 className="text-xl font-bold text-slate-900 mt-1">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                           {currentExam.title}
                         </h2>
                       </div>
@@ -883,7 +910,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDeleteExam(currentExam.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 rounded-md border border-slate-200 cursor-pointer"
+                          className="p-2 text-slate-400 hover:text-rose-600 rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer"
                           title="Prüfung löschen"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -894,10 +921,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     {/* Sandboxed Interactive Code Widget */}
                     {currentExam.interactiveWidgetCode && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono text-slate-500">
+                        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                           INTERAKTIVE CODE-PRÜFUNGSUMGEBUNG
                         </div>
-                        <div className="rounded-lg overflow-hidden border border-slate-300 bg-slate-50">
+                        <div className="rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-50">
                           <iframe
                             title={currentExam.title}
                             srcDoc={currentExam.interactiveWidgetCode}
@@ -912,8 +939,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <div
                         className={`p-4 rounded-lg border text-xs font-mono font-bold flex items-center justify-between ${
                           examSubmittedResult.passed
-                            ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                            : 'bg-rose-50 border-rose-300 text-rose-800'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                            : 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300'
                         }`}
                       >
                         <span>
@@ -924,7 +951,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
                     )}
 
-                    {/* Optional Structured Questions if provided */}
+                    {/* Structured Questions or Code Score Input */}
                     {(() => {
                       let parsedQuestions: ExamQuestionItem[] = [];
                       try {
@@ -940,9 +967,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                               {parsedQuestions.map((q, idx) => (
                                 <div
                                   key={q.id || idx}
-                                  className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3"
+                                  className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3"
                                 >
-                                  <div className="text-sm font-semibold text-slate-900">
+                                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
                                     {idx + 1}. {q.question}
                                   </div>
                                   <div className="space-y-2">
@@ -953,8 +980,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                                           key={optIdx}
                                           className={`flex items-center gap-3 p-2.5 rounded-md border text-xs cursor-pointer transition-colors ${
                                             selected
-                                              ? 'border-sky-500 bg-sky-50 text-slate-900 font-semibold'
-                                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                                              ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/60 text-slate-900 dark:text-white font-semibold'
+                                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                                           }`}
                                         >
                                           <input
@@ -971,23 +998,29 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                                       );
                                     })}
                                   </div>
+                                  {examSubmittedResult && q.explanation && (
+                                    <div className="text-xs text-slate-600 dark:text-slate-300 pt-2 border-t border-slate-200 dark:border-slate-800">
+                                      <strong className="text-slate-900 dark:text-white">Erläuterung:</strong>{' '}
+                                      {q.explanation}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                              <div className="text-xs text-slate-600">
+                            <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="text-xs text-slate-600 dark:text-slate-300">
                                 Nach Durchführung des eingebetteten Code-Tests kannst du dein erreichtes Ergebnis für das Fortschrittstracking protokollieren:
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-xs font-mono text-slate-600">Ergebnis (%):</span>
+                                <span className="text-xs font-mono text-slate-600 dark:text-slate-300">Ergebnis (%):</span>
                                 <input
                                   type="number"
                                   min={0}
                                   max={100}
                                   value={customCodeScore}
                                   onChange={e => setCustomCodeScore(Number(e.target.value))}
-                                  className="w-20 px-2.5 py-1.5 text-xs font-mono rounded bg-white border border-slate-300 text-slate-900"
+                                  className="w-20 px-2.5 py-1.5 text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                                 />
                               </div>
                             </div>
@@ -1018,20 +1051,20 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {activeTab === 'upload_textbook' && canEditAcademy && (
         <form
           onSubmit={handleCreateModule}
-          className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
         >
-          <div className="pb-4 border-b border-slate-200">
-            <div className="text-xs font-medium text-slate-500">
+          <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Lehrbuch- &amp; Dokumenten-Upload · Freigabe für Admin &amp; Colonel
             </div>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
               Neues Lehrbuch (PDF), SOP-Dokument oder Code-Lehrmaterial hinzufügen
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Titel des Lehrbuchs / Lehrmaterials *
               </label>
               <input
@@ -1040,12 +1073,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 value={modTitle}
                 onChange={e => setModTitle(e.target.value)}
                 placeholder="z.B. California POST Basic Peace Officer Workbook"
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Dokumenten-Code *
               </label>
               <input
@@ -1053,20 +1086,20 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 required
                 value={modCode}
                 onChange={e => setModCode(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Fachbereich
               </label>
               <select
                 value={modCategory}
                 onChange={e => setModCategory(e.target.value as ModuleCategory)}
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               >
                 <option value="SOP & Policy">SOP &amp; Policy</option>
                 <option value="California Penal Code">California Penal Code</option>
@@ -1078,13 +1111,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Sichtbar ab Rang
               </label>
               <select
                 value={modRequiredRole}
                 onChange={e => setModRequiredRole(e.target.value as OfficerRole)}
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               >
                 <option value="trainee">Trainee (Alle Ränge sehen es)</option>
                 <option value="rookie">Rookie+</option>
@@ -1094,13 +1127,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Format-Typ
               </label>
               <select
                 value={modEmbedType}
                 onChange={e => setModEmbedType(e.target.value as ModuleEmbedType)}
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               >
                 <option value="pdf_upload">PDF-Lehrbuch Datei-Upload</option>
                 <option value="external_url">Externe Dokument-URL</option>
@@ -1108,41 +1141,55 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <option value="document">Text-Handbuch</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Lesezeit (Minuten)
+              </label>
+              <input
+                type="number"
+                min={5}
+                max={240}
+                value={modMinutes}
+                onChange={e => setModMinutes(Number(e.target.value))}
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
           </div>
 
           {/* Direct PDF File Input */}
-          <div className="p-4 rounded-lg bg-sky-50/60 border border-sky-200 space-y-2">
-            <label className="block text-xs font-semibold text-slate-900">
+          <div className="p-4 rounded-lg bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 space-y-2">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-white">
               PDF-Lehrbuch oder Dokument direkt von deinem Gerät auswählen
             </label>
             <input
               type="file"
               accept=".pdf,application/pdf,.html,.txt"
               onChange={handleFileUpload}
-              className="block w-full text-xs text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer"
+              className="block w-full text-xs text-slate-700 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer"
             />
             {modPdfFileName && (
-              <div className="text-xs font-mono text-emerald-700 font-semibold">
+              <div className="text-xs font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
                 Bereit zum Einbinden: {modPdfFileName}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Begleittext / Zusammenfassung (Optional)
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Begleittext / Handbuch-Inhalt (Optional)
             </label>
             <textarea
               rows={4}
               value={modMarkdown}
               onChange={e => setModMarkdown(e.target.value)}
               placeholder="Kurze Beschreibung oder Kapitelübersicht zum Lehrbuch..."
-              className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Alternativ: Externe PDF-/Dokument-URL oder HTML/JS-Code (Optional)
             </label>
             <input
@@ -1150,14 +1197,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               value={modExternalUrl}
               onChange={e => setModExternalUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 mb-3"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white mb-3"
             />
             <textarea
               rows={4}
               value={modInteractiveCode}
               onChange={e => setModInteractiveCode(e.target.value)}
               placeholder="Optionaler HTML/JS Code für interaktive Lehrmodule..."
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
 
@@ -1165,7 +1212,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('modules')}
-              className="px-4 py-2 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+              className="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
             >
               Abbrechen
             </button>
@@ -1183,20 +1230,20 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {activeTab === 'add_code_test' && canEditAcademy && (
         <form
           onSubmit={handleCreateExam}
-          className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
         >
-          <div className="pb-4 border-b border-slate-200">
-            <div className="text-xs font-medium text-slate-500">
+          <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Prüfungsverwaltung · Freigabe für Admin &amp; Colonel
             </div>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
               Neuen Übungstest (für Trainee+) oder Abschlussprüfung (ab Rookie+) einbinden
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Titel des Tests / der Abschlussprüfung *
               </label>
               <input
@@ -1205,12 +1252,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 value={examTitle}
                 onChange={e => setExamTitle(e.target.value)}
                 placeholder="z.B. 10-Codes & Funkdisziplin Praxistest"
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Prüfungs-Kennung *
               </label>
               <input
@@ -1218,28 +1265,42 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 required
                 value={examModuleCode}
                 onChange={e => setExamModuleCode(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-sky-700 mb-1">
-                Prüfungs-Stufe (Steuert Trainee-Sichtbarkeit)
+              <label className="block text-xs font-semibold text-sky-700 dark:text-sky-400 mb-1">
+                Prüfungs-Stufe
               </label>
               <select
                 value={examStage}
                 onChange={e => setExamStage(e.target.value as AssessmentStage)}
-                className="w-full px-3.5 py-2 text-xs font-medium rounded-md bg-sky-50 border border-sky-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs font-medium rounded-md bg-sky-50 dark:bg-slate-950 border border-sky-300 dark:border-sky-700 text-slate-900 dark:text-white"
               >
-                <option value="test">Übungstest (Sichtbar für Trainee, Rookie, Officer, Colonel, Admin)</option>
-                <option value="final_exam">Abschlussarbeit / Prüfung (Gesperrt für Trainee — erst ab Rookie+)</option>
+                <option value="test">Übungstest (Ab Trainee)</option>
+                <option value="final_exam">Abschlussprüfung (Ab Rookie+)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Prüfungsformat
+              </label>
+              <select
+                value={examFormat}
+                onChange={e => setExamFormat(e.target.value as 'interactive_code' | 'structured_quiz')}
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+              >
+                <option value="structured_quiz">Multiple-Choice Fragenkatalog</option>
+                <option value="interactive_code">Interaktives HTML/JS Code-Modul</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Bestehensgrenze (%)
               </label>
               <input
@@ -1248,12 +1309,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 max={100}
                 value={examPassingScore}
                 onChange={e => setExamPassingScore(Number(e.target.value))}
-                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Zeitlimit (Minuten)
               </label>
               <input
@@ -1262,18 +1323,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 max={240}
                 value={examTimeLimit}
                 onChange={e => setExamTimeLimit(Number(e.target.value))}
-                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Ausführbarer Prüfungs-Code (HTML / CSS / JavaScript Sandbox) *
+            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+              Ausführbarer Prüfungs-Code (HTML / CSS / JavaScript Sandbox — optional bei reinem Multiple-Choice-Test)
             </label>
             <textarea
-              rows={10}
-              required
+              rows={8}
               value={examWidgetCode}
               onChange={e => setExamWidgetCode(e.target.value)}
               className="w-full px-3.5 py-2.5 text-xs font-mono rounded-md bg-slate-900 text-slate-100 border border-slate-700"
@@ -1281,14 +1341,44 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Optional: Zusätzliche Multiple-Choice-Fragen im JSON-Format (Standard: [] für reinen Code-Test)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Multiple-Choice-Fragen im JSON-Format (Standard: [] für reinen Code-Test)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setExamFormat('structured_quiz');
+                  setExamQuestionsJson(
+                    JSON.stringify(
+                      [
+                        {
+                          id: 'q1',
+                          question: 'Was ist vor dem Verlassen des Streifenwagens bei einer Kontrolle durchzugeben?',
+                          options: [
+                            'Standort (10-20) und Kennzeichen an die Leitstelle',
+                            'Keine Angabe erforderlich',
+                            'Nur die Uhrzeit'
+                          ],
+                          correctIndex: 0,
+                          explanation: 'Standort und Kennzeichen dienen der Eigensicherung.'
+                        }
+                      ],
+                      null,
+                      2
+                    )
+                  );
+                }}
+                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+              >
+                Beispiel-Fragenkatalog einfügen
+              </button>
+            </div>
             <textarea
-              rows={3}
+              rows={4}
               value={examQuestionsJson}
               onChange={e => setExamQuestionsJson(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
 
@@ -1296,7 +1386,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('tests')}
-              className="px-4 py-2 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+              className="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
             >
               Abbrechen
             </button>
@@ -1315,18 +1405,18 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <form
             onSubmit={handleAssignInstructorGrade}
-            className="lg:col-span-7 bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs"
+            className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5 shadow-xs"
           >
-            <div className="pb-4 border-b border-slate-200">
-              <div className="text-xs font-mono text-sky-600 font-semibold">
-                LEHRGANGS-SPEZIFISCHE NOTEN- &amp; STATUSVERGABE
+            <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                Lehrgangs-spezifische Noten- &amp; Statusvergabe
               </div>
-              <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
                 Ausbilder-Bewertung für zugewiesene Lehrgänge eintragen
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Deine freigeschalteten Lehrgangs-Codes:{' '}
-                <strong className="font-mono text-slate-900">
+                <strong className="font-mono text-slate-900 dark:text-white">
                   {rolePermissions.canEditAcademy || assignedCourses.includes('*')
                     ? 'ALLE LEHRGÄNGE (*)'
                     : assignedCourses.join(', ')}
@@ -1336,14 +1426,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Teilnehmer / Beamter auswählen *
                 </label>
                 <select
                   required
                   value={gradeTargetUserUid}
                   onChange={e => setGradeTargetUserUid(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                 >
                   <option value="">-- Bitte Beamten wählen --</option>
                   {roster.map(u => (
@@ -1355,7 +1445,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Lehrgangs-Code (Nur eigene Freigaben) *
                 </label>
                 {!rolePermissions.canEditAcademy &&
@@ -1364,7 +1454,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <select
                     value={gradeCourseCode}
                     onChange={e => setGradeCourseCode(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                    className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                   >
                     {assignedCourses.map(c => (
                       <option key={c} value={c}>
@@ -1379,7 +1469,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     value={gradeCourseCode}
                     onChange={e => setGradeCourseCode(e.target.value)}
                     placeholder="z. B. SOP-01 oder LD-15"
-                    className="w-full px-3.5 py-2 text-xs font-mono uppercase rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                    className="w-full px-3.5 py-2 text-xs font-mono uppercase rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                   />
                 )}
               </div>
@@ -1387,7 +1477,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-1">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Erreichte Punktzahl (%)
                 </label>
                 <input
@@ -1397,12 +1487,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   required
                   value={gradeScorePercent}
                   onChange={e => setGradeScorePercent(Number(e.target.value))}
-                  className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                  className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Lehrgangs-Status
                 </label>
                 <select
@@ -1410,7 +1500,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   onChange={e =>
                     setGradeStatus(e.target.value as 'passed' | 'completed' | 'failed')
                   }
-                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
                 >
                   <option value="passed">Bestanden (PASSED)</option>
                   <option value="completed">Teilnahme abgeschlossen (COMPLETED)</option>
@@ -1420,7 +1510,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Bezeichnung der Prüfung / Praxiseinheit *
               </label>
               <input
@@ -1429,12 +1519,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 value={gradeCourseTitle}
                 onChange={e => setGradeCourseTitle(e.target.value)}
                 placeholder="z. B. Funk- & Taktik-Praxisprüfung SOP-01"
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Ausbilder-Beurteilung / Feedbackvermerk
               </label>
               <textarea
@@ -1442,7 +1532,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 value={gradeFeedback}
                 onChange={e => setGradeFeedback(e.target.value)}
                 placeholder="Kurze Beurteilung der gezeigten Leistung..."
-                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
 
@@ -1459,40 +1549,40 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           </form>
 
           {/* Recent Instructor Evaluations List */}
-          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
-            <div className="pb-3 border-b border-slate-200">
-              <h3 className="text-base font-bold text-slate-900">
+          <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4 shadow-xs">
+            <div className="pb-3 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Letzte Lehrgangs-Bewertungen
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Protokollierte Noten und Statusvergaben im Ausbildungsbereich
               </p>
             </div>
 
-            <div className="divide-y divide-slate-200 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800 max-h-96 overflow-y-auto">
               {userProgress.length === 0 ? (
-                <p className="text-xs text-slate-500 py-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 py-4">
                   Noch keine Bewertungen eingetragen.
                 </p>
               ) : (
                 userProgress.slice(0, 10).map(item => (
                   <div key={item.id} className="py-3 first:pt-0 last:pb-0 space-y-1 text-xs">
-                    <div className="flex items-center justify-between font-semibold text-slate-900">
+                    <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-white">
                       <span>
                         {item.userName} · {item.targetTitle}
                       </span>
                       <span
                         className={`font-mono ${
                           item.status === 'passed' || item.status === 'completed'
-                            ? 'text-emerald-700'
-                            : 'text-rose-600'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
                         }`}
                       >
                         {item.scorePercent}% ({item.status.toUpperCase()})
                       </span>
                     </div>
                     {item.instructorFeedback && (
-                      <div className="text-slate-600 italic">„{item.instructorFeedback}“</div>
+                      <div className="text-slate-600 dark:text-slate-300 italic">„{item.instructorFeedback}“</div>
                     )}
                     <div className="text-[11px] font-mono text-slate-400">
                       {item.evaluatedByName

@@ -1,12 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search,
-  BookOpen,
-  Users,
-  Calendar,
-  ClipboardList,
   ArrowRight,
-  LayoutDashboard,
   X
 } from 'lucide-react';
 import {
@@ -243,33 +238,33 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden transition-colors"
         onClick={e => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 bg-slate-50">
-          <Search className="w-4 h-4 text-sky-600 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+          <Search className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Schnellsuche nach Handbüchern, Prüfungen, Kollegen (Dienstnummer), Terminen oder Formularen..."
-            className="w-full text-sm text-slate-900 bg-transparent focus:outline-none"
+            className="w-full text-sm text-slate-900 dark:text-white bg-transparent focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Results List */}
-        <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+        <div className="max-h-96 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
           {filteredResults.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
+            <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
               Keine Treffer für „{query}“ gefunden.
             </div>
           ) : (
@@ -281,19 +276,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                   onNavigate(item.targetSection);
                   onClose();
                 }}
-                className="w-full px-5 py-3 text-left hover:bg-sky-50/70 flex items-center justify-between gap-4 transition-colors cursor-pointer"
+                className="w-full px-5 py-3 text-left hover:bg-sky-50/70 dark:hover:bg-slate-800 flex items-center justify-between gap-4 transition-colors cursor-pointer"
               >
                 <div className="min-w-0">
-                  <div className="text-[10px] font-mono text-sky-600 font-semibold uppercase">
+                  <div className="text-[10px] font-mono text-sky-600 dark:text-sky-400 font-semibold uppercase">
                     {item.category}
                   </div>
-                  <div className="text-xs font-bold text-slate-900 truncate mt-0.5">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate mt-0.5">
                     {item.title}
                   </div>
-                  <div className="text-[11px] text-slate-500 truncate">{item.subtitle}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.subtitle}</div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs font-mono text-sky-600 shrink-0">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-sky-600 dark:text-sky-400 shrink-0">
                   <span>Öffnen</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
@@ -303,7 +298,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-2.5 bg-slate-900 text-slate-300 text-[11px] font-mono flex items-center justify-between">
+        <div className="px-5 py-2.5 bg-slate-900 dark:bg-slate-950 text-slate-300 border-t border-transparent dark:border-slate-800 text-[11px] font-mono flex items-center justify-between">
           <span>Tastenkombination: Strg+K (oder Cmd+K) zum Öffnen / Schließen</span>
           <span>{filteredResults.length} Ergebnisse</span>
         </div>
