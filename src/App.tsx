@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Shield,
   LayoutDashboard,
@@ -6,69 +6,52 @@ import {
   BookOpen,
   Users,
   GitBranch,
-  LogOut,
   LogIn,
-  Sun,
-  Moon,
   CheckCircle2,
   Award,
-  Clock,
   ArrowRight,
-  Lock
+  Lock,
+  KeyRound,
+  Building2,
+  FileUp,
+  Code2
 } from 'lucide-react';
 import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  User
-} from 'firebase/auth';
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  setDoc,
-  where
-} from 'firebase/firestore';
-import {
-  auth,
-  db,
-  googleProvider,
-  handleFirestoreError,
-  OperationType,
-  sanitizeId
-} from './lib/firebase';
-import {
   AcademyExamDoc,
+  AdminAccountView,
+  ROLE_HIERARCHY,
   TrainingModuleDoc,
-  UserPrivateProfile,
   UserProgressDoc,
   UserPublicProfile,
   WhitelistApplicationDoc
 } from './types/portal';
-import { DEFAULT_EXAMS, DEFAULT_TRAINING_MODULES } from './data/seedData';
 import { WhitelistPortal } from './components/WhitelistPortal';
 import { AcademyCenter } from './components/AcademyCenter';
 import { AdminPersonnelConsole } from './components/AdminPersonnelConsole';
 import { DeploymentPipelineHub } from './components/DeploymentPipelineHub';
 
-type ActiveSection = 'dashboard' | 'whitelist' | 'academy' | 'personnel' | 'deployment';
+type ActiveSection = 'dashboard' | 'academy' | 'whitelist' | 'personnel' | 'deployment';
 
-const BOOTSTRAP_ADMIN_EMAIL = 'marlon.xv0063@gmail.com';
+const SESSION_STORAGE_KEY = 'ca_post_officer_session_uid_v3';
 
 export default function App() {
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [sessionUid, setSessionUid] = useState<string | null>(() =>
+    localStorage.getItem(SESSION_STORAGE_KEY)
+  );
   const [currentUserProfile, setCurrentUserProfile] = useState<UserPublicProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
-  const [darkMode, setDarkMode] = useState(true);
   const [statusToast, setStatusToast] = useState<string | null>(null);
 
-  // Firestore Collections State
+  // Login Form State (Strictly Admin-created accounts; default Admin1 / 1234)
+  const [loginUsername, setLoginUsername] = useState('Admin1');
+  const [loginPassword, setLoginPassword] = useState('1234');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Portal Database State
   const [roster, setRoster] = useState<UserPublicProfile[]>([]);
-  const [privateProfiles, setPrivateProfiles] = useState<UserPrivateProfile[]>([]);
+  const [adminAccounts, setAdminAccounts] = useState<AdminAccountView[]>([]);
   const [applications, setApplications] = useState<WhitelistApplicationDoc[]>([]);
   const [modules, setModules] = useState<TrainingModuleDoc[]>([]);
   const [exams, setExams] = useState<AcademyExamDoc[]>([]);
@@ -76,406 +59,282 @@ export default function App() {
 
   const triggerToast = (msg: string) => {
     setStatusToast(msg);
-    setTimeout(() => setStatusToast(null), 4000);
+    setTimeout(() => setStatusToast(null), 4500);
   };
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  // 1. Auth Listener & Auto-Bootstrap User Profile
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async user => {
-      setAuthUser(user);
-      if (!user) {
-        setCurrentUserProfile(null);
-        setAuthReady(true);
-        return;
-      }
-
-      const isBootstrappedAdmin =
-        user.email === BOOTSTRAP_ADMIN_EMAIL && user.emailVerified === true;
-      const userDocRef = doc(db, 'users', user.uid);
-      const privDocRef = doc(db, 'users_private', user.uid);
+  const fetchPortalState = useCallback(
+    async (uidToLoad?: string | null) => {
+      const targetUid = uidToLoad ?? sessionUid;
+      if (!targetUid) return;
 
       try {
-        const snap = await getDoc(userDocRef);
-        if (!snap.exists()) {
-          const initialProfile: Omit<UserPublicProfile, 'createdAt' | 'updatedAt'> = {
-            uid: user.uid,
-            displayName: (user.displayName || user.email?.split('@')[0] || 'Officer Cadet').slice(0, 80),
-            badgeNumber: isBootstrappedAdmin ? 'CA-0001' : `CA-${Math.floor(1000 + Math.random() * 8999)}`,
-            callsign: isBootstrappedAdmin ? '1-STAFF-1' : '10-CADET',
-            rank: isBootstrappedAdmin ? 'Chief of Police' : 'Civilian Applicant',
-            role: isBootstrappedAdmin ? 'admin' : 'applicant',
-            clearanceLevel: isBootstrappedAdmin ? 10 : 1,
-            division: isBootstrappedAdmin
-              ? 'Office of the Chief of Police (Command Staff)'
-              : 'Recruitment & Background Division',
-            whitelistStatus: isBootstrappedAdmin ? 'whitelisted' : 'pending'
-          };
-
-          await setDoc(userDocRef, {
-            ...initialProfile,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-
-          await setDoc(privDocRef, {
-            uid: user.uid,
-            email: (user.email || 'officer@lapd-post.ca.gov').slice(0, 150),
-            discordTag: 'pending#0001',
-            steamHex: 'steam:pending',
-            supervisorNotes: isBootstrappedAdmin
-              ? 'System Bootstrapped Chief of Police / Master Administrator'
-              : '',
-            updatedAt: serverTimestamp()
-          });
-
-          if (isBootstrappedAdmin) {
-            await setDoc(doc(db, 'admins', user.uid), {
-              uid: user.uid,
-              grantedAt: serverTimestamp()
-            });
+        const res = await fetch(`/api/portal/state?uid=${encodeURIComponent(targetUid)}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          localStorage.removeItem(SESSION_STORAGE_KEY);
+          setSessionUid(null);
+          setCurrentUserProfile(null);
+          setIsAdmin(false);
+          if (errData.error) {
+            setAuthError(errData.error);
           }
+          return;
         }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
-      } finally {
-        setAuthReady(true);
+        const data = await res.json();
+        setCurrentUserProfile(data.currentUser);
+        setIsAdmin(Boolean(data.isAdmin));
+        setRoster(data.roster || []);
+        setAdminAccounts(data.adminAccounts || []);
+        setApplications(data.applications || []);
+        setModules(data.modules || []);
+        setExams(data.exams || []);
+        setUserProgress(data.progress || []);
+      } catch (err) {
+        console.error('Failed to load portal state:', err);
       }
-    });
+    },
+    [sessionUid]
+  );
 
-    return () => unsub();
-  }, []);
-
-  const isAdmin =
-    Boolean(
-      authUser?.email === BOOTSTRAP_ADMIN_EMAIL && authUser?.emailVerified
-    ) || currentUserProfile?.role === 'admin';
-
-  // 2. Real-time Firestore Subscriptions (only when authenticated)
+  // Initial load + 10-second real-time heartbeat polling for online/offline status & live account updates
   useEffect(() => {
-    if (!authReady || !authUser) return;
+    if (!sessionUid) return;
+    fetchPortalState(sessionUid);
+    const interval = setInterval(() => {
+      fetchPortalState(sessionUid);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [sessionUid, fetchPortalState]);
 
-    // Subscribe to all public users
-    const unsubUsers = onSnapshot(
-      query(collection(db, 'users'), where('clearanceLevel', '>=', 0)),
-      snap => {
-        const list: UserPublicProfile[] = [];
-        snap.forEach(d => list.push(d.data() as UserPublicProfile));
-        setRoster(list);
-        const me = list.find(u => u.uid === authUser.uid);
-        if (me) setCurrentUserProfile(me);
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'users')
-    );
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
 
-    // Subscribe to training modules
-    const unsubModules = onSnapshot(
-      query(collection(db, 'training_modules'), where('minClearance', '>=', 0)),
-      async snap => {
-        const list: TrainingModuleDoc[] = [];
-        snap.forEach(d => list.push({ id: d.id, ...(d.data() as Omit<TrainingModuleDoc, 'id'>) }));
-        setModules(list);
-
-        // Auto-seed realistic CA-POST modules if empty and user is Admin
-        if (list.length === 0 && authUser.email === BOOTSTRAP_ADMIN_EMAIL) {
-          for (const m of DEFAULT_TRAINING_MODULES) {
-            const id = sanitizeId(`mod_${m.code}`);
-            await setDoc(doc(db, 'training_modules', id), {
-              ...m,
-              authorUid: authUser.uid,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-            });
-          }
-        }
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'training_modules')
-    );
-
-    // Subscribe to academy exams
-    const unsubExams = onSnapshot(
-      query(collection(db, 'exams'), where('minClearance', '>=', 0)),
-      async snap => {
-        const list: AcademyExamDoc[] = [];
-        snap.forEach(d => list.push({ id: d.id, ...(d.data() as Omit<AcademyExamDoc, 'id'>) }));
-        setExams(list);
-
-        if (list.length === 0 && authUser.email === BOOTSTRAP_ADMIN_EMAIL) {
-          for (const ex of DEFAULT_EXAMS) {
-            const id = sanitizeId(`exam_${ex.moduleCode}`);
-            await setDoc(doc(db, 'exams', id), {
-              ...ex,
-              authorUid: authUser.uid,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-            });
-          }
-        }
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'exams')
-    );
-
-    return () => {
-      unsubUsers();
-      unsubModules();
-      unsubExams();
-    };
-  }, [authReady, authUser]);
-
-  // 3. Role-Scoped Listeners for Applications, Progress, and Private Profiles
-  useEffect(() => {
-    if (!authReady || !authUser || !currentUserProfile) return;
-
-    const appsQuery = isAdmin
-      ? collection(db, 'applications')
-      : query(collection(db, 'applications'), where('applicantUid', '==', authUser.uid));
-
-    const unsubApps = onSnapshot(
-      appsQuery,
-      snap => {
-        const list: WhitelistApplicationDoc[] = [];
-        snap.forEach(d =>
-          list.push({ id: d.id, ...(d.data() as Omit<WhitelistApplicationDoc, 'id'>) })
-        );
-        setApplications(list);
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'applications')
-    );
-
-    const progQuery = isAdmin
-      ? collection(db, 'user_progress')
-      : query(collection(db, 'user_progress'), where('userId', '==', authUser.uid));
-
-    const unsubProg = onSnapshot(
-      progQuery,
-      snap => {
-        const list: UserProgressDoc[] = [];
-        snap.forEach(d =>
-          list.push({ id: d.id, ...(d.data() as Omit<UserProgressDoc, 'id'>) })
-        );
-        setUserProgress(list);
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'user_progress')
-    );
-
-    const privQuery = isAdmin
-      ? collection(db, 'users_private')
-      : query(collection(db, 'users_private'), where('uid', '==', authUser.uid));
-
-    const unsubPriv = onSnapshot(
-      privQuery,
-      snap => {
-        const list: UserPrivateProfile[] = [];
-        snap.forEach(d => list.push(d.data() as UserPrivateProfile));
-        setPrivateProfiles(list);
-      },
-      err => handleFirestoreError(err, OperationType.LIST, 'users_private')
-    );
-
-    return () => {
-      unsubApps();
-      unsubProg();
-      unsubPriv();
-    };
-  }, [authReady, authUser, currentUserProfile, isAdmin]);
-
-  const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error: unknown) {
-      const code = (error as { code?: string })?.code;
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-        triggerToast('Anmeldefenster wurde vorzeitig geschlossen. Bitte wähle dein Google-Konto im Popup aus.');
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: loginUsername.trim(),
+          password: loginPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.error || 'Anmeldung fehlgeschlagen.');
         return;
       }
-      if (code === 'auth/popup-blocked') {
-        triggerToast('Popup wurde vom Browser blockiert. Bitte erlaube Popups für diese Seite.');
-        return;
-      }
-      triggerToast('Anmeldung fehlgeschlagen. Bitte versuche es erneut.');
+
+      const loggedInUser = data.user as UserPublicProfile;
+      localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
+      setSessionUid(loggedInUser.uid);
+      setCurrentUserProfile(loggedInUser);
+      setIsAdmin(Boolean(data.isAdmin));
+      setActiveSection('dashboard');
+      await fetchPortalState(loggedInUser.uid);
+      triggerToast(`Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`);
+    } catch {
+      setAuthError('Verbindung zum Server fehlgeschlagen.');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    triggerToast('Erfolgreich vom Officer Portal abgemeldet.');
+    if (sessionUid) {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: sessionUid })
+      }).catch(() => null);
+    }
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setSessionUid(null);
+    setCurrentUserProfile(null);
+    setIsAdmin(false);
+    setActiveSection('dashboard');
+    triggerToast('Du wurdest erfolgreich abgemeldet.');
   };
 
-  // Unauthenticated Landing & Login Screen
-  if (!authUser || !currentUserProfile) {
+  // ============================================================================
+  // 1. CLEAN WHITE, ANTHRACITE & SKY-BLUE LOGIN WINDOW (NO SELF-REGISTRATION)
+  // ============================================================================
+  if (!sessionUid || !currentUserProfile) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
-        {/* Strict 3-Zone Top Bar Contract */}
-        <header className="flex items-center justify-between gap-8 px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <a
-            href="#top"
-            className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap shrink-0"
-          >
-            CA-POST Officer Portal
-          </a>
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
+        {/* Top Institutional Bar (Anthracite) */}
+        <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-slate-900 text-white border-b border-slate-800">
+          <div className="flex items-center gap-3 whitespace-nowrap shrink-0">
+            <Shield className="w-5 h-5 text-sky-400" />
+            <span className="text-sm font-bold tracking-tight">
+              STATE OF CALIFORNIA · DEPARTMENT OF JUSTICE &amp; POST
+            </span>
+          </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
-            <a href="#features" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0">
-              Whitelist Plattform
-            </a>
-            <a href="#academy" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0">
-              POST Academy LMS
-            </a>
-            <a href="#rbac" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0">
-              Rollen &amp; Clearance
-            </a>
-            <a href="#cicd" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0">
-              Render CI/CD
-            </a>
-          </nav>
+          <div className="hidden md:flex items-center gap-6 text-xs font-mono text-slate-400">
+            <span>OFFICIAL OFFICER &amp; ACADEMY PORTAL</span>
+            <span>·</span>
+            <span>AUTHORIZED ACCESS ONLY</span>
+          </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              className="px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-500 rounded-md hover:bg-amber-400 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              Portal Login (SSO)
-            </button>
+          <div className="text-xs font-mono text-sky-400 font-semibold whitespace-nowrap shrink-0">
+            CA-POST INTRANET
           </div>
         </header>
 
-        {/* Main Hero Split */}
-        {statusToast && (
-          <div className="max-w-7xl w-full mx-auto px-6 pt-6">
-            <div className="p-3.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs font-mono text-amber-700 dark:text-amber-300 flex items-center justify-between">
-              <span>{statusToast}</span>
-              <button
-                type="button"
-                onClick={() => setStatusToast(null)}
-                className="text-amber-500 hover:underline cursor-pointer"
-              >
-                [Schließen]
-              </button>
-            </div>
-          </div>
-        )}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
-              STATE OF CALIFORNIA // COMMISSION ON PEACE OFFICER STANDARDS &amp; TRAINING
-            </div>
-            <h1
-              className="text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight"
-              style={{ textWrap: 'balance' }}
-            >
-              Zentrales Officer-, Whitelist- &amp; Ausbildungsportal für Kalifornisches Law Enforcement Roleplay.
-            </h1>
-            <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-              Unabhängige Backend- und Datenbankplattform zur Verwaltung von Bewerbungen, Officer-Dienstgraden, rollenbasierten Freigabestufen (Clearance Levels) sowie nahtlos eingebundenen Lehrmaterialien und interaktiven Prüfungen.
-            </p>
+        {/* Centered Clean White & Anthracite Login Card */}
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
+            {/* Left 5 Columns: Anthracite Institutional Panel */}
+            <div className="lg:col-span-5 bg-slate-900 text-white p-8 flex flex-col justify-between space-y-8">
+              <div className="space-y-5">
+                <div className="w-11 h-11 rounded-lg bg-sky-500/15 border border-sky-400/30 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-sky-400" />
+                </div>
 
-            <div className="pt-2 flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className="inline-flex items-center gap-2.5 px-6 py-3 text-sm font-semibold text-slate-950 bg-amber-500 hover:bg-amber-400 rounded-md transition-colors cursor-pointer"
-              >
-                <LogIn className="w-4 h-4" />
-                Mit Dienstkonto anmelden &amp; Portal öffnen
-              </button>
-            </div>
+                <div>
+                  <div className="text-xs font-mono text-sky-400 font-semibold">
+                    CALIFORNIA POST // OFFICER PORTAL
+                  </div>
+                  <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
+                    Dienst- &amp; Ausbildungsportal
+                  </h1>
+                  <p className="text-xs text-slate-300 leading-relaxed mt-3">
+                    Zentrale Plattform für Lehrbücher, interaktive Prüfungen, Personalbögen und Dienstverwaltung. Neue Benutzerkonten werden ausschließlich durch den Administrator vergeben und starten standardmäßig im Rang <strong>Trainee</strong>.
+                  </p>
+                </div>
+              </div>
 
-            <div className="pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-6 text-xs font-mono text-slate-500">
-              <div>
-                <div className="text-slate-900 dark:text-slate-100 font-bold text-base tabular-nums">
-                  6 ROLLEN
+              <div className="space-y-2.5 pt-5 border-t border-slate-800 text-xs font-mono">
+                <div className="text-slate-400">SYSTEM-RANGORDNUNG:</div>
+                <div className="text-slate-200 space-y-1 text-[11px]">
+                  <div>1. ADMIN — Vollzugriff &amp; Kontenverwaltung</div>
+                  <div>2. COLONEL — Lehrmaterial &amp; Prüfungen verwalten</div>
+                  <div>3. OFFICER — Vollzugsdienst &amp; alle Prüfungen</div>
+                  <div>4. ROOKIE — Lehrmaterial, Tests &amp; Abschlussarbeit</div>
+                  <div>5. TRAINEE — Lehrmaterial &amp; Übungstests</div>
                 </div>
-                <div>Applicant bis Chief Admin</div>
-              </div>
-              <div>
-                <div className="text-slate-900 dark:text-slate-100 font-bold text-base tabular-nums">
-                  LIVE SANDBOX
-                </div>
-                <div>Dokumente &amp; HTML/JS Code</div>
-              </div>
-              <div>
-                <div className="text-slate-900 dark:text-slate-100 font-bold text-base tabular-nums">
-                  REST BRIDGE
-                </div>
-                <div>Standalone Whitelist API</div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column Preview Specification Card */}
-          <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div>
-                <div className="text-xs font-mono text-amber-500">SYSTEM ARCHITEKTUR</div>
-                <div className="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                  Integrierte Behörden-Module
+            {/* Right 7 Columns: Clean White Login Form */}
+            <div className="lg:col-span-7 p-8 bg-white flex flex-col justify-between">
+              <div className="space-y-6">
+                <div className="border-b border-slate-200 pb-4">
+                  <div className="text-xs font-mono text-sky-600 font-semibold">
+                    DIENSTANMELDUNG // CREDENTIAL AUTHENTICATION
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 mt-0.5">
+                    Mit Benutzername und Passwort anmelden
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Standard-Administrator-Zugang: <code className="font-mono text-slate-800 font-semibold">Admin1</code> / Passwort: <code className="font-mono text-slate-800 font-semibold">1234</code>
+                  </p>
                 </div>
+
+                {authError && (
+                  <div className="p-3.5 rounded-md bg-rose-50 border border-rose-200 text-xs font-mono text-rose-700">
+                    {authError}
+                  </div>
+                )}
+
+                {statusToast && (
+                  <div className="p-3.5 rounded-md bg-sky-50 border border-sky-200 text-xs font-mono text-sky-800">
+                    {statusToast}
+                  </div>
+                )}
+
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Benutzername (User)
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="username"
+                      value={loginUsername}
+                      onChange={e => setLoginUsername(e.target.value)}
+                      placeholder="Admin1"
+                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Passwort
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      value={loginPassword}
+                      onChange={e => setLoginPassword(e.target.value)}
+                      placeholder="••••"
+                      className="w-full px-3.5 py-2.5 text-sm font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-md transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      {authLoading ? 'Anmeldung wird geprüft...' : 'Am Portal anmelden'}
+                    </button>
+                  </div>
+                </form>
               </div>
-              <Shield className="w-6 h-6 text-amber-500" />
-            </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="p-3.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  1. Unabhängiges Whitelist- &amp; Bewerbungssystem
-                </div>
-                <p className="text-slate-500 mt-1">
-                  Bewerber reichen ihr Personal History Statement (Form 2-251) ein. Command Staff genehmigt Bewerbungen mit automatischer Rollen- und Game-Server-Freigabe.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  2. Nahtlose Lehrmaterialien &amp; Interaktive Prüfungen
-                </div>
-                <p className="text-slate-500 mt-1">
-                  Admins binden externe SOP-Dokumente oder ausführbaren HTML/JS-Simulationscode direkt in Lehrmodule und Prüfungen ein — inklusive individuellem Fortschrittstracking.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  3. Rollenbasierte Sichtbarkeit (RBAC) &amp; Render CI/CD
-                </div>
-                <p className="text-slate-500 mt-1">
-                  Unterlagen sind nach Clearance Level (1–10) geschützt. Fertige GitHub Actions &amp; Render Blueprint-Konfiguration für automatisiertes Deployment.
-                </p>
+              <div className="pt-6 mt-6 border-t border-slate-200 text-[11px] font-mono text-slate-500 flex items-center justify-between">
+                <span>Kontenvergabe ausschließlich durch den Administrator</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginUsername('Admin1');
+                    setLoginPassword('1234');
+                    setAuthError(null);
+                  }}
+                  className="text-sky-600 hover:underline cursor-pointer font-semibold"
+                >
+                  Standard-Admin eintragen
+                </button>
               </div>
             </div>
           </div>
         </main>
+
+        <footer className="px-6 py-3 bg-white border-t border-slate-200 text-center text-xs font-mono text-slate-500">
+          State of California Department of Justice · Commission on Peace Officer Standards and Training
+        </footer>
       </div>
     );
   }
 
-  // Computed Metrics for Officer Dashboard
-  const accessibleModules = modules.filter(
-    m => isAdmin || currentUserProfile.clearanceLevel >= m.minClearance
-  );
+  // ============================================================================
+  // 2. AUTHENTICATED PORTAL (CLEAN WHITE + ANTHRACITE + SKY BLUE ACCENTS)
+  // ============================================================================
+  const currentRoleMeta = ROLE_HIERARCHY[currentUserProfile.role] || ROLE_HIERARCHY.trainee;
+  const canEditAcademy = currentRoleMeta.canEditAcademy; // Admin & Colonel
+  const canManageUsers = currentRoleMeta.canManageUsers; // Strictly Admin ONLY
+  const canViewTech = currentRoleMeta.canViewTechPipeline; // Strictly Admin ONLY
+
   const myProgress = userProgress.filter(p => p.userId === currentUserProfile.uid);
   const completedModulesCount = myProgress.filter(
     p => p.targetType === 'module' && p.status === 'completed'
   ).length;
   const passedExamsCount = myProgress.filter(
-    p => p.targetType === 'exam' && p.status === 'passed'
+    p => (p.targetType === 'test' || p.targetType === 'final_exam') && p.status === 'passed'
   ).length;
-  const completionRate =
-    accessibleModules.length > 0
-      ? Math.min(100, Math.round((completedModulesCount / accessibleModules.length) * 100))
-      : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
-      {/* Strict 3-Zone Top Bar Contract */}
-      <header className="flex items-center justify-between gap-8 px-6 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-30">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+      {/* Strict 3-Zone Top Bar Contract (Anthracite Header with Sky Blue Accents) */}
+      <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
         {/* Zone 1: Single text element wordmark */}
         <a
           href="#dashboard"
@@ -483,68 +342,78 @@ export default function App() {
             e.preventDefault();
             setActiveSection('dashboard');
           }}
-          className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap shrink-0"
+          className="text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0"
         >
           CA-POST Officer Portal
         </a>
 
-        {/* Zone 2: 5 concise single-line text navigation links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
+        {/* Zone 2: Role-filtered single-line navigation links */}
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
           <button
             type="button"
             onClick={() => setActiveSection('dashboard')}
-            className={`hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeSection === 'dashboard'
-                ? 'text-amber-600 dark:text-amber-400 underline underline-offset-8'
+                ? 'text-sky-400 underline underline-offset-8 font-semibold'
                 : ''
             }`}
           >
             Dashboard
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveSection('whitelist')}
-            className={`hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeSection === 'whitelist'
-                ? 'text-amber-600 dark:text-amber-400 underline underline-offset-8'
-                : ''
-            }`}
-          >
-            Whitelist &amp; Bewerbung
-          </button>
+
           <button
             type="button"
             onClick={() => setActiveSection('academy')}
-            className={`hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeSection === 'academy'
-                ? 'text-amber-600 dark:text-amber-400 underline underline-offset-8'
+                ? 'text-sky-400 underline underline-offset-8 font-semibold'
                 : ''
             }`}
           >
-            Academy &amp; Prüfungen
+            Lehrmaterial &amp; Prüfungen
           </button>
+
           <button
             type="button"
-            onClick={() => setActiveSection('personnel')}
-            className={`hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeSection === 'personnel'
-                ? 'text-amber-600 dark:text-amber-400 underline underline-offset-8'
+            onClick={() => setActiveSection('whitelist')}
+            className={`hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              activeSection === 'whitelist'
+                ? 'text-sky-400 underline underline-offset-8 font-semibold'
                 : ''
             }`}
           >
-            Personal &amp; Rollen
+            Personalbogen
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveSection('deployment')}
-            className={`hover:text-slate-900 dark:hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeSection === 'deployment'
-                ? 'text-amber-600 dark:text-amber-400 underline underline-offset-8'
-                : ''
-            }`}
-          >
-            GitHub &amp; Render CI/CD
-          </button>
+
+          {/* STRICTLY ADMIN ONLY: User & Role Management */}
+          {canManageUsers && (
+            <button
+              type="button"
+              onClick={() => setActiveSection('personnel')}
+              className={`hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeSection === 'personnel'
+                  ? 'text-sky-400 underline underline-offset-8 font-semibold'
+                  : ''
+              }`}
+            >
+              Admin: Konten &amp; Ränge
+            </button>
+          )}
+
+          {/* STRICTLY ADMIN ONLY: Technical GitHub & Render Pipeline */}
+          {canViewTech && (
+            <button
+              type="button"
+              onClick={() => setActiveSection('deployment')}
+              className={`hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeSection === 'deployment'
+                  ? 'text-sky-400 underline underline-offset-8 font-semibold'
+                  : ''
+              }`}
+            >
+              Technik &amp; CI/CD
+            </button>
+          )}
         </nav>
 
         {/* Zone 3: 1 primary action */}
@@ -552,31 +421,39 @@ export default function App() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="px-3.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
-            Abmelden ({currentUserProfile.badgeNumber})
+            Abmelden ({currentUserProfile.username})
           </button>
         </div>
       </header>
 
-      {/* Workspace Body: Sidebar (260px) + Main Content Viewport */}
       <div className="flex-1 flex">
-        {/* Left Command Sidebar */}
-        <aside className="w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 hidden lg:flex flex-col justify-between">
+        {/* Anthracite Left Command Sidebar */}
+        <aside className="w-64 shrink-0 bg-slate-900 text-slate-200 border-r border-slate-800 p-5 hidden lg:flex flex-col justify-between">
           <div className="space-y-6">
-            {/* Officer Identity Summary (Unboxed Typography) */}
-            <div className="pb-5 border-b border-slate-200 dark:border-slate-800 space-y-1.5">
-              <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
-                {currentUserProfile.badgeNumber} · {currentUserProfile.callsign}
+            {/* Officer Identity Box */}
+            <div className="pb-5 border-b border-slate-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-mono text-sky-400">
+                <span>{currentUserProfile.badgeNumber}</span>
+                <span>{currentUserProfile.callsign}</span>
               </div>
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+              <div className="text-base font-bold text-white truncate">
                 {currentUserProfile.displayName}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {currentUserProfile.rank} · Level {currentUserProfile.clearanceLevel}
+              <div className="text-xs text-slate-400">{currentUserProfile.rank}</div>
+              <div className="pt-2 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400">RANG:</span>
+                <span className="uppercase text-sky-400 font-semibold">
+                  {currentUserProfile.role}
+                </span>
               </div>
-              <div className="text-xs font-mono text-slate-500 pt-1">
-                WHITELIST: <span className="uppercase text-slate-900 dark:text-slate-200 font-semibold">{currentUserProfile.whitelistStatus}</span>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400">STATUS:</span>
+                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  ONLINE
+                </span>
               </div>
             </div>
 
@@ -587,25 +464,12 @@ export default function App() {
                 onClick={() => setActiveSection('dashboard')}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   activeSection === 'dashboard'
-                    ? 'bg-amber-500 text-slate-950 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-sky-600 text-white font-semibold'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                Officer Command Dashboard
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveSection('whitelist')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  activeSection === 'whitelist'
-                    ? 'bg-amber-500 text-slate-950 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <FileCheck className="w-4 h-4" />
-                Whitelist &amp; Bewerbungen
+                Officer Dashboard
               </button>
 
               <button
@@ -613,249 +477,271 @@ export default function App() {
                 onClick={() => setActiveSection('academy')}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   activeSection === 'academy'
-                    ? 'bg-amber-500 text-slate-950 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-sky-600 text-white font-semibold'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
-                POST Academy &amp; Prüfungen
+                Lehrmaterial &amp; Prüfungen
               </button>
 
               <button
                 type="button"
-                onClick={() => setActiveSection('personnel')}
+                onClick={() => setActiveSection('whitelist')}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  activeSection === 'personnel'
-                    ? 'bg-amber-500 text-slate-950 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  activeSection === 'whitelist'
+                    ? 'bg-sky-600 text-white font-semibold'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <Users className="w-4 h-4" />
-                Benutzer- &amp; Rollenverwaltung
+                <FileCheck className="w-4 h-4" />
+                Personalbogen &amp; Akte
               </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveSection('deployment')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  activeSection === 'deployment'
-                    ? 'bg-amber-500 text-slate-950 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <GitBranch className="w-4 h-4" />
-                GitHub &amp; Render CI/CD
-              </button>
+              {/* Strictly Admin Only */}
+              {canManageUsers && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('personnel')}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                    activeSection === 'personnel'
+                      ? 'bg-sky-600 text-white font-semibold'
+                      : 'text-sky-400 hover:bg-slate-800'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Admin: Konten &amp; Ränge
+                </button>
+              )}
+
+              {/* Strictly Admin Only */}
+              {canViewTech && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('deployment')}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                    activeSection === 'deployment'
+                      ? 'bg-sky-600 text-white font-semibold'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <GitBranch className="w-4 h-4" />
+                  Technik &amp; Render CI/CD
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Workspace Theme Switch */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-500">DARSTELLUNG</span>
-            <button
-              type="button"
-              onClick={() => setDarkMode(!darkMode)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-            >
-              {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
-              {darkMode ? 'Light' : 'Dark'}
-            </button>
+          <div className="pt-4 border-t border-slate-800 text-[11px] font-mono text-slate-400 leading-relaxed">
+            <div>BERECHTIGUNGSSTUFE:</div>
+            <div className="text-slate-200 mt-0.5">{currentRoleMeta.label}</div>
           </div>
         </aside>
 
-        {/* Main Viewport */}
+        {/* Main White Content Viewport */}
         <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
           {statusToast && (
-            <div className="p-3.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs font-mono text-amber-700 dark:text-amber-300 flex items-center justify-between">
+            <div className="p-3.5 rounded-lg bg-sky-50 border border-sky-200 text-xs font-mono text-sky-900 flex items-center justify-between shadow-xs">
               <span>{statusToast}</span>
               <button
                 type="button"
                 onClick={() => setStatusToast(null)}
-                className="text-amber-500 hover:underline cursor-pointer"
+                className="text-sky-700 hover:underline font-semibold cursor-pointer"
               >
                 [Schließen]
               </button>
             </div>
           )}
 
-          {/* VIEW 1: DETAILED OFFICER COMMAND DASHBOARD */}
+          {/* VIEW 1: OFFICER DASHBOARD */}
           {activeSection === 'dashboard' && (
             <div className="space-y-8">
-              {/* Officer Shift & Clearance Header */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
                 <div>
-                  <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
-                    METROPOLITAN POLICE DEPARTMENT // CALIFORNIA POST INTRANET
+                  <div className="text-xs font-mono text-sky-600 font-semibold">
+                    CALIFORNIA DEPARTMENT OF JUSTICE &amp; POST // DIENST-DASHBOARD
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-1">
-                    Willkommen im Dienst, {currentUserProfile.rank} {currentUserProfile.displayName}
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
+                    Willkommen im Dienst, {currentUserProfile.displayName}
                   </h1>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
-                    <span>Dienstnummer: {currentUserProfile.badgeNumber}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Callsign: {currentUserProfile.callsign}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Division: {currentUserProfile.division}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Clearance Level {currentUserProfile.clearanceLevel}</span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 flex-wrap font-mono">
+                    <span>BENUTZER: {currentUserProfile.username}</span>
+                    <span>·</span>
+                    <span className="uppercase font-semibold text-slate-800">
+                      RANG: {currentUserProfile.role}
+                    </span>
+                    <span>·</span>
+                    <span>DIENSTNUMMER: {currentUserProfile.badgeNumber}</span>
+                    <span>·</span>
+                    <span>ABTEILUNG: {currentUserProfile.division}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection('academy')}
-                    className="px-4 py-2 text-xs font-semibold bg-amber-500 text-slate-950 rounded-md hover:bg-amber-400 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                  >
-                    Ausbildung &amp; Prüfungen fortsetzen
-                  </button>
+                {/* Direct Admin / Colonel Quick Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {canEditAcademy && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection('academy')}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                    >
+                      <FileUp className="w-3.5 h-3.5 text-sky-400" />
+                      Lehrbücher (PDF) &amp; Code-Tests einbinden
+                    </button>
+                  )}
+                  {canManageUsers && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection('personnel')}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      Admin Panel: Konten &amp; Ränge verwalten
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* 4-Column KPI Telemetry Grid */}
+              {/* 4-Column KPI Strip */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-                  <div className="text-xs font-mono text-slate-500">WHITELIST &amp; DIENSTSTATUS</div>
-                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-2 uppercase">
-                    {currentUserProfile.whitelistStatus}
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+                  <div className="text-xs font-mono text-slate-500">AKTUELLER SYSTEM-RANG</div>
+                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2 uppercase">
+                    {currentUserProfile.role}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{currentUserProfile.rank}</div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+                  <div className="text-xs font-mono text-slate-500">ABSOLVIERTE LEHRBÜCHER</div>
+                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+                    {completedModulesCount} / {modules.length}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
-                    Rolle: {currentUserProfile.role.toUpperCase()} · Level {currentUserProfile.clearanceLevel}
+                    Durchgearbeitete Lehrmaterialien
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-                  <div className="text-xs font-mono text-slate-500">PERSÖNLICHER LERNFORTSCHRITT</div>
-                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-2">
-                    {completionRate}%
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {completedModulesCount} von {accessibleModules.length} freigegebenen Modulen absolviert
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-                  <div className="text-xs font-mono text-slate-500">BESTANDENE POST-PRÜFUNGEN</div>
-                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-2">
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+                  <div className="text-xs font-mono text-slate-500">BESTANDENE TESTS &amp; PRÜFUNGEN</div>
+                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
                     {passedExamsCount} / {exams.length}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
-                    Zertifizierte Prüfungsabschlüsse in deiner Personalakte
+                    {currentUserProfile.role === 'trainee'
+                      ? 'Übungstests (Abschlussprüfung ab Rookie)'
+                      : 'Übungstests & Abschlussprüfungen'}
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-                  <div className="text-xs font-mono text-slate-500">AKTIVE PERSONALAKTEN (ROSTER)</div>
-                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-2">
-                    {roster.length}
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+                  <div className="text-xs font-mono text-slate-500">DIENSTVERZEICHNIS (ONLINE)</div>
+                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+                    {roster.filter(r => r.isOnline).length} / {roster.length}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
-                    {applications.filter(a => a.status === 'pending').length} offene Whitelist-Bewerbungen
+                    Aktive Beamte im Intranet
                   </div>
                 </div>
               </div>
 
               {/* 2-Column Main Operational Overview */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left 7 Cols: Assigned Curriculum & Progress Tracker */}
-                <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-5">
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div>
-                      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                        Dein Ausbildungs- &amp; Prüfungsfortschritt (CA-POST)
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Sichtbarkeit gefiltert nach deiner Berechtigungsstufe (Clearance Level {currentUserProfile.clearanceLevel})
-                      </p>
+                {/* Left 7 Cols: Public Roster & Role Permissions Overview */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-900">
+                          Öffentliches Dienstverzeichnis (Department Roster)
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Übersicht aller registrierten Beamten und Anwärter im Department
+                        </p>
+                      </div>
+                      <span className="text-xs font-mono text-slate-500 tabular-nums">
+                        {roster.length} BEAMTE
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection('academy')}
-                      className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      Academy öffnen <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
 
-                  <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                    {modules.map(mod => {
-                      const unlocked = isAdmin || currentUserProfile.clearanceLevel >= mod.minClearance;
-                      const prog = myProgress.find(
-                        p => p.targetType === 'module' && p.targetId === mod.id
-                      );
-                      return (
-                        <div key={mod.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                              <span>{mod.code}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>{mod.category}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>MIN LEVEL {mod.minClearance}</span>
-                            </div>
-                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
-                              {mod.title}
+                    <div className="divide-y divide-slate-200">
+                      {roster.map(member => (
+                        <div
+                          key={member.uid}
+                          className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4 text-xs"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                member.isOnline ? 'bg-emerald-500' : 'bg-slate-300'
+                              }`}
+                              title={member.isOnline ? 'Online' : 'Offline'}
+                            />
+                            <div>
+                              <div className="font-semibold text-slate-900">
+                                {member.displayName}{' '}
+                                <span className="font-mono text-slate-500 font-normal">
+                                  ({member.badgeNumber} · {member.callsign})
+                                </span>
+                              </div>
+                              <div className="text-slate-500 mt-0.5">{member.division}</div>
                             </div>
                           </div>
 
-                          <div className="shrink-0 font-mono text-xs">
-                            {!unlocked ? (
-                              <span className="text-rose-500 flex items-center gap-1">
-                                <Lock className="w-3.5 h-3.5" /> GESPERRT
-                              </span>
-                            ) : prog?.status === 'completed' ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> ABSOLVIERT
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setActiveSection('academy')}
-                                className="text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                              >
-                                Starten →
-                              </button>
-                            )}
+                          <div className="text-right font-mono shrink-0">
+                            <div className="uppercase font-semibold text-sky-700">
+                              {member.role}
+                            </div>
+                            <div className="text-slate-500 text-[11px]">{member.rank}</div>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Role Permissions Reference Card */}
+                  <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-3 shadow-xs">
+                    <div className="text-xs font-mono text-sky-600 font-semibold">
+                      DEINE RANG-BERECHTIGUNGEN ({currentUserProfile.role.toUpperCase()})
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {currentRoleMeta.permissionsSummary}
+                    </p>
                   </div>
                 </div>
 
-                {/* Right 5 Cols: Recent Certifications & Department Directives */}
+                {/* Right 5 Cols: Academy & Quick Actions */}
                 <div className="lg:col-span-5 space-y-6">
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-                      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                        Letzte Prüfungs- &amp; Lernprotokolle
+                  <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                      <h2 className="text-base font-semibold text-slate-900">
+                        Lernfortschritt &amp; Prüfungsprotokoll
                       </h2>
-                      <Award className="w-4 h-4 text-amber-500" />
+                      <Award className="w-4 h-4 text-sky-600" />
                     </div>
 
                     {userProgress.length === 0 ? (
                       <p className="text-xs text-slate-500 py-4">
-                        Noch keine abgeschlossenen Module oder Prüfungen protokolliert.
+                        Noch keine abgeschlossenen Lehrbücher oder Tests protokolliert.
                       </p>
                     ) : (
-                      <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                      <div className="divide-y divide-slate-200">
                         {userProgress.slice(0, 6).map(item => (
-                          <div key={item.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs">
+                          <div
+                            key={item.id}
+                            className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                          >
                             <div>
-                              <div className="font-semibold text-slate-900 dark:text-slate-100">
-                                {item.targetTitle}
-                              </div>
+                              <div className="font-semibold text-slate-900">{item.targetTitle}</div>
                               <div className="text-slate-500 font-mono mt-0.5">
                                 {item.userName} · {item.targetType.toUpperCase()} · {item.attempts} Versuch(e)
                               </div>
                             </div>
                             <div className="font-mono tabular-nums font-semibold shrink-0">
                               {item.status === 'passed' || item.status === 'completed' ? (
-                                <span className="text-emerald-600 dark:text-emerald-400">
-                                  {item.scorePercent}% OK
-                                </span>
+                                <span className="text-emerald-700">{item.scorePercent}% OK</span>
                               ) : (
-                                <span className="text-rose-500">{item.scorePercent}% FAIL</span>
+                                <span className="text-rose-600">{item.scorePercent}% FAIL</span>
                               )}
                             </div>
                           </div>
@@ -864,34 +750,44 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Quick Command Actions */}
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-3">
-                    <div className="text-xs font-mono text-amber-500">SCHNELLZUGRIFF // PORTAL-FUNKTIONEN</div>
+                  {/* Direct Navigation Panel */}
+                  <div className="bg-slate-900 text-white rounded-lg p-6 space-y-3">
+                    <div className="text-xs font-mono text-sky-400 font-semibold">
+                      SCHNELLZUGRIFF
+                    </div>
                     <div className="grid grid-cols-1 gap-2">
                       <button
                         type="button"
+                        onClick={() => setActiveSection('academy')}
+                        className="w-full text-left px-3.5 py-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center justify-between cursor-pointer"
+                      >
+                        <span>
+                          {canEditAcademy
+                            ? 'Lehrbücher (PDF) hochladen & Tests als Code einbinden'
+                            : 'Lehrbücher, Übungstests & Prüfungen öffnen'}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-sky-400" />
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setActiveSection('whitelist')}
-                        className="w-full text-left px-3.5 py-2.5 rounded border border-slate-200 dark:border-slate-800 hover:border-amber-500 text-xs font-medium flex items-center justify-between cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center justify-between cursor-pointer"
                       >
-                        <span>Whitelist-Bewerbung einreichen oder prüfen</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Personalbogen (Form 2-251) einsehen</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-sky-400" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection('personnel')}
-                        className="w-full text-left px-3.5 py-2.5 rounded border border-slate-200 dark:border-slate-800 hover:border-amber-500 text-xs font-medium flex items-center justify-between cursor-pointer"
-                      >
-                        <span>Benutzerkonten, Dienstgrade &amp; Clearance verwalten</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection('deployment')}
-                        className="w-full text-left px-3.5 py-2.5 rounded border border-slate-200 dark:border-slate-800 hover:border-amber-500 text-xs font-medium flex items-center justify-between cursor-pointer"
-                      >
-                        <span>GitHub Repository &amp; Render.com CI/CD Konfiguration</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
-                      </button>
+
+                      {canManageUsers && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('personnel')}
+                          className="w-full text-left px-3.5 py-2.5 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex items-center justify-between cursor-pointer"
+                        >
+                          <span>Exklusives Admin-Panel: Konten, Passwörter &amp; Ränge</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-white" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -899,42 +795,42 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW 2: WHITELIST & APPLICATION PLATFORM */}
-          {activeSection === 'whitelist' && (
-            <WhitelistPortal
-              currentUser={currentUserProfile}
-              applications={applications}
-              isAdmin={isAdmin}
-              onStatusToast={triggerToast}
-            />
-          )}
-
-          {/* VIEW 3: ACADEMY LEARNING & INTERACTIVE EXAMS */}
+          {/* VIEW 2: ACADEMY (TEXTBOOKS, PRACTICE TESTS, FINAL EXAMS) */}
           {activeSection === 'academy' && (
             <AcademyCenter
               currentUser={currentUserProfile}
               modules={modules}
               exams={exams}
               userProgress={userProgress}
-              isAdmin={isAdmin}
+              onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
               onStatusToast={triggerToast}
             />
           )}
 
-          {/* VIEW 4: ADMIN PERSONNEL & RBAC MANAGEMENT */}
-          {activeSection === 'personnel' && (
+          {/* VIEW 3: WHITELIST & PERSONAL HISTORY STATEMENT */}
+          {activeSection === 'whitelist' && (
+            <WhitelistPortal
+              currentUser={currentUserProfile}
+              applications={applications}
+              isAdmin={isAdmin}
+              onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
+              onStatusToast={triggerToast}
+            />
+          )}
+
+          {/* VIEW 4: STRICTLY ADMIN ONLY — ACCOUNT, PASSWORD, ROLE & LIVE ONLINE CONTROL */}
+          {activeSection === 'personnel' && canManageUsers && (
             <AdminPersonnelConsole
               currentUser={currentUserProfile}
-              roster={roster}
-              privateProfiles={privateProfiles}
+              adminAccounts={adminAccounts}
               allProgress={userProgress}
-              isAdmin={isAdmin}
+              onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
               onStatusToast={triggerToast}
             />
           )}
 
-          {/* VIEW 5: GITHUB & RENDER CI/CD PIPELINE */}
-          {activeSection === 'deployment' && (
+          {/* VIEW 5: STRICTLY ADMIN ONLY — TECHNICAL GITHUB & RENDER PIPELINE */}
+          {activeSection === 'deployment' && canViewTech && (
             <DeploymentPipelineHub onStatusToast={triggerToast} />
           )}
         </main>

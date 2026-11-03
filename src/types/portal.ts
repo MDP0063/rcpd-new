@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type OfficerRole = 'applicant' | 'cadet' | 'officer' | 'fto' | 'supervisor' | 'admin';
-export type WhitelistStatus = 'pending' | 'probation' | 'whitelisted' | 'suspended' | 'revoked';
+export type OfficerRole = 'admin' | 'colonel' | 'officer' | 'rookie' | 'trainee';
+export type WhitelistStatus = 'whitelisted' | 'probation' | 'pending' | 'suspended' | 'revoked';
 export type ApplicationStatus = 'pending' | 'under_review' | 'interview_scheduled' | 'accepted' | 'rejected';
 export type ModuleCategory =
   | 'SOP & Policy'
@@ -10,11 +10,12 @@ export type ModuleCategory =
   | 'Radio & Dispatch'
   | 'Field Training (FTO)'
   | 'Supervisor Directive';
-export type ModuleEmbedType = 'document' | 'external_url' | 'interactive_code';
-export type ExamFormatType = 'structured_quiz' | 'interactive_widget' | 'external_assessment';
+export type ModuleEmbedType = 'pdf_upload' | 'document' | 'external_url' | 'interactive_code';
+export type AssessmentStage = 'test' | 'final_exam';
 
 export interface UserPublicProfile {
   uid: string;
+  username?: string;
   displayName: string;
   badgeNumber: string;
   callsign: string;
@@ -23,6 +24,9 @@ export interface UserPublicProfile {
   clearanceLevel: number;
   division: string;
   whitelistStatus: WhitelistStatus;
+  isOnline?: boolean;
+  lastSeenIso?: string;
+  updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -33,7 +37,18 @@ export interface UserPrivateProfile {
   discordTag: string;
   steamHex: string;
   supervisorNotes: string;
+  updatedIso?: string;
   updatedAt?: Timestamp;
+}
+
+export interface AdminAccountView {
+  uid: string;
+  username: string;
+  password: string;
+  isOnline: boolean;
+  lastSeenIso: string;
+  publicProfile: UserPublicProfile;
+  privateProfile: UserPrivateProfile;
 }
 
 export interface WhitelistApplicationDoc {
@@ -49,6 +64,7 @@ export interface WhitelistApplicationDoc {
   status: ApplicationStatus;
   reviewerUid: string;
   reviewerFeedback: string;
+  updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -63,9 +79,12 @@ export interface TrainingModuleDoc {
   embedType: ModuleEmbedType;
   contentMarkdown: string;
   externalUrl: string;
+  pdfDataUrl?: string;
+  pdfFileName?: string;
   interactiveCode: string;
   estimatedMinutes: number;
   authorUid: string;
+  updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -82,13 +101,15 @@ export interface AcademyExamDoc {
   id: string;
   title: string;
   moduleCode: string;
+  assessmentStage: AssessmentStage; // 'test' (Übungstest: Trainee+) vs 'final_exam' (Abschlussprüfung: Rookie+)
   minClearance: number;
   passingScore: number;
   timeLimitMinutes: number;
-  examFormat: ExamFormatType;
+  examFormat: 'interactive_code' | 'structured_quiz';
   questionsPayload: string;
   interactiveWidgetCode: string;
   authorUid: string;
+  updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -98,20 +119,83 @@ export interface UserProgressDoc {
   userId: string;
   userName: string;
   targetId: string;
-  targetType: 'module' | 'exam';
+  targetType: 'module' | 'test' | 'final_exam';
   targetTitle: string;
   status: 'in_progress' | 'completed' | 'passed' | 'failed';
   scorePercent: number;
   attempts: number;
+  updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
 
-export const ROLE_HIERARCHY: Record<OfficerRole, { label: string; defaultClearance: number; defaultRank: string }> = {
-  applicant: { label: 'Applicant (Bewerber)', defaultClearance: 1, defaultRank: 'Civilian Applicant' },
-  cadet: { label: 'Academy Cadet', defaultClearance: 2, defaultRank: 'POST Cadet' },
-  officer: { label: 'Patrol Officer', defaultClearance: 3, defaultRank: 'Officer II' },
-  fto: { label: 'Field Training Officer (FTO)', defaultClearance: 4, defaultRank: 'Senior Lead Officer' },
-  supervisor: { label: 'Watch Commander / Supervisor', defaultClearance: 5, defaultRank: 'Sergeant I' },
-  admin: { label: 'Command Staff / Administrator', defaultClearance: 10, defaultRank: 'Chief of Police' },
+export const ROLE_HIERARCHY: Record<
+  OfficerRole,
+  {
+    label: string;
+    rankOrder: number;
+    defaultClearance: number;
+    defaultRank: string;
+    permissionsSummary: string;
+    canEditAcademy: boolean;
+    canAccessFinalExams: boolean;
+    canManageUsers: boolean;
+    canViewTechPipeline: boolean;
+  }
+> = {
+  admin: {
+    label: 'Admin (1. Rang — Höchste Instanz)',
+    rankOrder: 1,
+    defaultClearance: 10,
+    defaultRank: 'Chief of Police / System Admin',
+    permissionsSummary: 'Vollzugriff: Kann alle Konten, Passwörter, Rollen, Lehrmaterialien, Tests & Abschlussprüfungen verwalten.',
+    canEditAcademy: true,
+    canAccessFinalExams: true,
+    canManageUsers: true,
+    canViewTechPipeline: true
+  },
+  colonel: {
+    label: 'Colonel (2. Rang — Stellv. Leitung)',
+    rankOrder: 2,
+    defaultClearance: 8,
+    defaultRank: 'Colonel / Deputy Chief',
+    permissionsSummary: 'Kann alle öffentlichen Inhalte sehen sowie Lehrmaterialien, PDFs, Tests und Abschlussprüfungen erstellen & bearbeiten. Keine Benutzerverwaltung.',
+    canEditAcademy: true,
+    canAccessFinalExams: true,
+    canManageUsers: false,
+    canViewTechPipeline: false
+  },
+  officer: {
+    label: 'Officer (3. Rang — Vollzugsdienst)',
+    rankOrder: 3,
+    defaultClearance: 5,
+    defaultRank: 'Patrol Officer',
+    permissionsSummary: 'Zugriff auf Dashboard, Lehrmaterialien, Übungstests und Abschlussprüfungen. Keine Bearbeitungsrechte, keine technischen Menüs.',
+    canEditAcademy: false,
+    canAccessFinalExams: true,
+    canManageUsers: false,
+    canViewTechPipeline: false
+  },
+  rookie: {
+    label: 'Rookie (4. Rang — Anwärter)',
+    rankOrder: 4,
+    defaultClearance: 3,
+    defaultRank: 'Probationary Rookie',
+    permissionsSummary: 'Sieht alle öffentlichen Infos, Lehrmaterialien, Übungstests sowie die Abschlussarbeit / Abschlussprüfung. Keine Bearbeitung.',
+    canEditAcademy: false,
+    canAccessFinalExams: true,
+    canManageUsers: false,
+    canViewTechPipeline: false
+  },
+  trainee: {
+    label: 'Trainee (5. Rang — Standard-Einstieg)',
+    rankOrder: 5,
+    defaultClearance: 1,
+    defaultRank: 'Academy Trainee',
+    permissionsSummary: 'Sieht öffentliche Infos, Lehrmaterialien und Übungstests. KEIN Zugriff auf Abschlussprüfungen/Abschlussarbeiten und Verwaltung.',
+    canEditAcademy: false,
+    canAccessFinalExams: false,
+    canManageUsers: false,
+    canViewTechPipeline: false
+  }
 };

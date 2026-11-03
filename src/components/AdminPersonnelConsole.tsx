@@ -1,32 +1,21 @@
 import React, { useState } from 'react';
 import {
-  Users,
-  Shield,
   Save,
   Search,
-  CheckCircle2,
-  AlertCircle,
-  Lock,
   Plus,
-  Edit2
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Ban,
+  CheckCircle2,
+  Shield
 } from 'lucide-react';
 import {
-  doc,
-  setDoc,
-  updateDoc,
-  serverTimestamp
-} from 'firebase/firestore';
-import {
-  db,
-  handleFirestoreError,
-  OperationType,
-  sanitizeId,
-  VALIDATION_LIMITS
-} from '../lib/firebase';
-import {
+  AdminAccountView,
   OfficerRole,
   ROLE_HIERARCHY,
-  UserPrivateProfile,
   UserProgressDoc,
   UserPublicProfile,
   WhitelistStatus
@@ -34,255 +23,521 @@ import {
 
 interface AdminPersonnelConsoleProps {
   currentUser: UserPublicProfile;
-  roster: UserPublicProfile[];
-  privateProfiles: UserPrivateProfile[];
+  adminAccounts: AdminAccountView[];
   allProgress: UserProgressDoc[];
-  isAdmin: boolean;
+  onRefreshState: () => Promise<void>;
   onStatusToast: (msg: string) => void;
 }
 
 export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   currentUser,
-  roster,
-  privateProfiles,
+  adminAccounts,
   allProgress,
-  isAdmin,
+  onRefreshState,
   onStatusToast
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [editingUid, setEditingUid] = useState<string | null>(null);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
-  // Edit Buffer
+  // Quick Own Password / Account Update State (For Admin1)
+  const myAdminRecord = adminAccounts.find(a => a.uid === currentUser.uid);
+  const [myNewUsername, setMyNewUsername] = useState(myAdminRecord?.username || currentUser.username || 'Admin1');
+  const [myNewPassword, setMyNewPassword] = useState(myAdminRecord?.password || '1234');
+  const [showMyPassword, setShowMyPassword] = useState(false);
+
+  // Edit Buffer for any selected account
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState('');
   const [editBadge, setEditBadge] = useState('');
   const [editCallsign, setEditCallsign] = useState('');
   const [editRank, setEditRank] = useState('');
-  const [editRole, setEditRole] = useState<OfficerRole>('officer');
-  const [editClearance, setEditClearance] = useState<number>(3);
+  const [editRole, setEditRole] = useState<OfficerRole>('trainee');
   const [editDivision, setEditDivision] = useState('');
   const [editWhitelist, setEditWhitelist] = useState<WhitelistStatus>('whitelisted');
+  const [editDiscord, setEditDiscord] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
-  // Create New Officer Account Modal/Form
+  // Create New Account State (Default Role: Trainee)
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newDisplayName, setNewDisplayName] = useState('');
-  const [newBadge, setNewBadge] = useState('CA-4092');
-  const [newCallsign, setNewCallsign] = useState('2-L-40');
-  const [newRole, setNewRole] = useState<OfficerRole>('officer');
-  const [newDivision, setNewDivision] = useState('Metropolitan Patrol Division');
+  const [newBadge, setNewBadge] = useState(`CA-${Math.floor(1000 + Math.random() * 8999)}`);
+  const [newCallsign, setNewCallsign] = useState('10-TRN');
+  const [newRole, setNewRole] = useState<OfficerRole>('trainee'); // Always defaults to Trainee!
+  const [newDivision, setNewDivision] = useState('Training & Evaluation Division');
   const [newWhitelist, setNewWhitelist] = useState<WhitelistStatus>('whitelisted');
+  const [newDiscord, setNewDiscord] = useState('');
 
-  const filteredRoster = roster.filter(u => {
+  const filteredAccounts = adminAccounts.filter(acc => {
+    const u = acc.publicProfile;
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      u.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.badgeNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.callsign.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.division.toLowerCase().includes(searchQuery.toLowerCase());
+      u.displayName.toLowerCase().includes(q) ||
+      acc.username.toLowerCase().includes(q) ||
+      u.badgeNumber.toLowerCase().includes(q) ||
+      u.callsign.toLowerCase().includes(q) ||
+      u.division.toLowerCase().includes(q);
     const matchesRole = roleFilter === 'ALL' ? true : u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
-  const startEditing = (officer: UserPublicProfile) => {
-    const priv = privateProfiles.find(p => p.uid === officer.uid);
-    setEditingUid(officer.uid);
-    setEditBadge(officer.badgeNumber);
-    setEditCallsign(officer.callsign);
-    setEditRank(officer.rank);
-    setEditRole(officer.role);
-    setEditClearance(officer.clearanceLevel);
-    setEditDivision(officer.division);
-    setEditWhitelist(officer.whitelistStatus);
-    setEditNotes(priv?.supervisorNotes || '');
+  const startEditing = (acc: AdminAccountView) => {
+    setEditingUid(acc.uid);
+    setEditUsername(acc.username);
+    setEditPassword(acc.password);
+    setEditDisplayName(acc.publicProfile.displayName);
+    setEditBadge(acc.publicProfile.badgeNumber);
+    setEditCallsign(acc.publicProfile.callsign);
+    setEditRank(acc.publicProfile.rank);
+    setEditRole(acc.publicProfile.role);
+    setEditDivision(acc.publicProfile.division);
+    setEditWhitelist(acc.publicProfile.whitelistStatus);
+    setEditDiscord(acc.privateProfile.discordTag || '');
+    setEditNotes(acc.privateProfile.supervisorNotes || '');
   };
 
-  const handleSaveOfficer = async (uid: string) => {
-    if (!isAdmin) return;
-    const cleanBadge = editBadge.toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20) || 'CA-0001';
-    try {
-      await updateDoc(doc(db, 'users', uid), {
-        badgeNumber: cleanBadge,
-        callsign: editCallsign.trim().slice(0, VALIDATION_LIMITS.CALLSIGN_MAX),
-        rank: editRank.trim().slice(0, VALIDATION_LIMITS.RANK_MAX),
-        role: editRole,
-        clearanceLevel: Math.max(0, Math.min(10, Number(editClearance))),
-        division: editDivision.trim().slice(0, VALIDATION_LIMITS.DIVISION_MAX),
-        whitelistStatus: editWhitelist,
-        updatedAt: serverTimestamp()
-      });
-
-      const existingPriv = privateProfiles.find(p => p.uid === uid);
-      if (existingPriv) {
-        await updateDoc(doc(db, 'users_private', uid), {
-          supervisorNotes: editNotes.slice(0, VALIDATION_LIMITS.NOTES_MAX),
-          updatedAt: serverTimestamp()
-        });
-      }
-
-      if (editRole === 'admin') {
-        await setDoc(doc(db, 'admins', uid), {
-          uid,
-          grantedAt: serverTimestamp()
-        });
-      }
-
-      onStatusToast(`Personalakte (${cleanBadge}) sowie Rollen- und Whitelist-Berechtigungen aktualisiert.`);
-      setEditingUid(null);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `users/${uid}`);
-    }
-  };
-
-  const handleCreateSimulatedOfficer = async (e: React.FormEvent) => {
+  const handleUpdateMyOwnCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin || newDisplayName.trim().length < 2) return;
-    const uid = sanitizeId(`officer_${Date.now()}`);
-    const roleMeta = ROLE_HIERARCHY[newRole];
-    const cleanBadge = newBadge.toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20) || 'CA-1099';
-
     try {
-      await setDoc(doc(db, 'users', uid), {
-        uid,
-        displayName: newDisplayName.trim().slice(0, VALIDATION_LIMITS.DISPLAY_NAME_MAX),
-        badgeNumber: cleanBadge,
-        callsign: newCallsign.trim().slice(0, VALIDATION_LIMITS.CALLSIGN_MAX),
-        rank: roleMeta.defaultRank,
-        role: newRole,
-        clearanceLevel: roleMeta.defaultClearance,
-        division: newDivision.trim().slice(0, VALIDATION_LIMITS.DIVISION_MAX),
-        whitelistStatus: newWhitelist,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+      const res = await fetch(`/api/admin/accounts/${currentUser.uid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          username: myNewUsername.trim(),
+          password: myNewPassword
+        })
       });
-
-      await setDoc(doc(db, 'users_private', uid), {
-        uid,
-        email: `${uid}@lapd-post.ca.gov`,
-        discordTag: `${newDisplayName.toLowerCase().replace(/\s+/g, '.')}#1099`.slice(0, 64),
-        steamHex: 'steam:11000010a94f82c',
-        supervisorNotes: 'Durch Command Staff im Admin-Portal angelegt.',
-        updatedAt: serverTimestamp()
-      });
-
-      setNewDisplayName('');
-      setShowCreateForm(false);
-      onStatusToast(`Neues Benutzerkonto "${newDisplayName}" (${cleanBadge}) in Datenbank angelegt.`);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `users/${uid}`);
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Fehler beim Aktualisieren deiner Admin-Zugangsdaten.');
+        return;
+      }
+      await onRefreshState();
+      onStatusToast(`Deine Admin-Zugangsdaten (${myNewUsername}) wurden in Echtzeit aktualisiert.`);
+    } catch {
+      onStatusToast('Netzwerkfehler beim Speichern deiner Zugangsdaten.');
     }
   };
+
+  const handleSaveAccount = async (uid: string) => {
+    try {
+      const res = await fetch(`/api/admin/accounts/${uid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          username: editUsername.trim(),
+          password: editPassword,
+          displayName: editDisplayName.trim(),
+          badgeNumber: editBadge.trim().toUpperCase(),
+          callsign: editCallsign.trim(),
+          role: editRole,
+          rank: editRank.trim(),
+          division: editDivision.trim(),
+          whitelistStatus: editWhitelist,
+          discordTag: editDiscord.trim(),
+          supervisorNotes: editNotes
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Fehler beim Speichern des Kontos.');
+        return;
+      }
+
+      await onRefreshState();
+      setEditingUid(null);
+      onStatusToast(`Konto "${editUsername}" (Rang: ${editRole.toUpperCase()}) in Echtzeit aktualisiert.`);
+    } catch {
+      onStatusToast('Netzwerkfehler beim Speichern.');
+    }
+  };
+
+  const handleToggleSuspend = async (acc: AdminAccountView) => {
+    if (acc.uid === currentUser.uid) {
+      onStatusToast('Du kannst dein eigenes aktives Administratorkonto nicht suspendieren.');
+      return;
+    }
+    const nextStatus: WhitelistStatus =
+      acc.publicProfile.whitelistStatus === 'suspended' ? 'whitelisted' : 'suspended';
+
+    try {
+      const res = await fetch(`/api/admin/accounts/${acc.uid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          whitelistStatus: nextStatus
+        })
+      });
+      if (res.ok) {
+        await onRefreshState();
+        onStatusToast(
+          nextStatus === 'suspended'
+            ? `Konto "${acc.username}" wurde sofort suspendiert.`
+            : `Suspendierung für "${acc.username}" aufgehoben (Aktiv).`
+        );
+      }
+    } catch {
+      onStatusToast('Fehler beim Ändern des Sperrstatus.');
+    }
+  };
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const roleMeta = ROLE_HIERARCHY[newRole];
+
+    try {
+      const res = await fetch('/api/admin/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          username: newUsername.trim(),
+          password: newPassword,
+          displayName: newDisplayName.trim() || newUsername.trim(),
+          badgeNumber: newBadge.trim().toUpperCase(),
+          callsign: newCallsign.trim(),
+          role: newRole, // Trainee by default
+          rank: roleMeta.defaultRank,
+          division: newDivision.trim(),
+          whitelistStatus: newWhitelist,
+          discordTag: newDiscord.trim() || `${newUsername.trim().toLowerCase()}#0001`,
+          supervisorNotes: 'Vom Administrator persönlich erstellt.'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Konto konnte nicht angelegt werden.');
+        return;
+      }
+
+      await onRefreshState();
+      setNewUsername('');
+      setNewPassword('');
+      setNewDisplayName('');
+      setNewRole('trainee');
+      setNewBadge(`CA-${Math.floor(1000 + Math.random() * 8999)}`);
+      setShowCreateForm(false);
+      onStatusToast(
+        `Neues Konto "${data.account.username}" (Rolle: ${data.account.publicProfile.role.toUpperCase()}) angelegt.`
+      );
+    } catch {
+      onStatusToast('Serverfehler beim Anlegen des Benutzerkontos.');
+    }
+  };
+
+  const handleDeleteAccount = async (uid: string, username: string) => {
+    if (uid === currentUser.uid) {
+      onStatusToast('Du kannst dein eigenes Administratorkonto nicht löschen.');
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/admin/accounts/${uid}?adminUid=${encodeURIComponent(currentUser.uid)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Konto konnte nicht gelöscht werden.');
+        return;
+      }
+      await onRefreshState();
+      setEditingUid(null);
+      onStatusToast(`Benutzerkonto "${username}" wurde dauerhaft gelöscht.`);
+    } catch {
+      onStatusToast('Fehler beim Löschen des Kontos.');
+    }
+  };
+
+  const onlineCount = adminAccounts.filter(a => a.isOnline).length;
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+      {/* Header Banner */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
-            COMMAND STAFF // PERSONNEL & ROLE-BASED ACCESS CONTROL (RBAC)
+          <div className="text-xs font-mono text-sky-600 font-semibold">
+            EXKLUSIVES ADMIN PANEL // ECHTZEIT KONTEN-, PASSWORT- &amp; RANGVERWALTUNG
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-1">
-            Benutzerkonten, Dienstgrade & Nutzergruppen-Verwaltung
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
+            Benutzerkonten, Ränge &amp; Live-Status (Nur für Admin sichtbar)
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl">
-            Zentrale Verwaltung aller registrierten Officers, Bewerber und Nutzergruppen. Änderungen an Rolle oder Clearance Level steuern in Echtzeit die Sichtbarkeit von geheimen Lehrmaterialien und Prüfungen.
+          <p className="text-sm text-slate-600 mt-1 max-w-3xl">
+            Dieser Bereich ist für alle anderen Ränge (inklusive Colonel) vollständig unsichtbar und gesperrt. Alle neuen Konten werden persönlich durch dich angelegt und starten standardmäßig als <strong>Trainee</strong>.
           </p>
         </div>
 
-        {isAdmin && (
+        <div className="flex items-center gap-3 self-start">
           <button
             type="button"
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-amber-500 text-slate-950 rounded-md hover:bg-amber-400 transition-colors cursor-pointer self-start whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
           >
-            <Plus className="w-4 h-4" /> Neues Officer-Konto anlegen
+            <Plus className="w-4 h-4" /> Neues Benutzerkonto anlegen (Standard: Trainee)
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Create Officer Account Drawer */}
-      {isAdmin && showCreateForm && (
+      {/* Top Row: Admin's Own Live Credential Changer + 5-Role Filter Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Admin Own Password & Username Real-time Box */}
         <form
-          onSubmit={handleCreateSimulatedOfficer}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-4"
+          onSubmit={handleUpdateMyOwnCredentials}
+          className="lg:col-span-5 bg-slate-900 text-white rounded-lg p-5 flex flex-col justify-between border border-slate-800"
         >
-          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Neues Benutzerkonto direkt in die Personaldatenbank eintragen
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-mono text-sky-400">
+              <span>MEIN MASTER-ADMIN ZUGANG (ECHTZEIT)</span>
+              <KeyRound className="w-4 h-4" />
+            </div>
+            <div className="text-sm font-semibold text-white">
+              Eigene Anmeldedaten ({currentUser.username}) direkt ändern
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            <input
-              type="text"
-              required
-              value={newDisplayName}
-              onChange={e => setNewDisplayName(e.target.value)}
-              placeholder="Name (z.B. Sgt. Elena Vance)"
-              className="px-3 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100"
-            />
-            <input
-              type="text"
-              required
-              value={newBadge}
-              onChange={e => setNewBadge(e.target.value)}
-              placeholder="Badge (CA-4092)"
-              className="px-3 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100"
-            />
-            <input
-              type="text"
-              required
-              value={newCallsign}
-              onChange={e => setNewCallsign(e.target.value)}
-              placeholder="Callsign (2-L-40)"
-              className="px-3 py-2 text-xs font-mono rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100"
-            />
-            <select
-              value={newRole}
-              onChange={e => setNewRole(e.target.value as OfficerRole)}
-              className="px-3 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100"
-            >
-              <option value="applicant">Applicant (Level 1)</option>
-              <option value="cadet">Academy Cadet (Level 2)</option>
-              <option value="officer">Patrol Officer (Level 3)</option>
-              <option value="fto">FTO Instructor (Level 4)</option>
-              <option value="supervisor">Supervisor (Level 5)</option>
-              <option value="admin">Command Admin (Level 10)</option>
-            </select>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+            <div>
+              <label className="block text-[11px] font-mono text-slate-400 mb-1">
+                ADMIN BENUTZERNAME
+              </label>
+              <input
+                type="text"
+                required
+                value={myNewUsername}
+                onChange={e => setMyNewUsername(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs font-mono rounded bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-slate-400 mb-1">
+                ADMIN PASSWORT
+              </label>
+              <div className="relative">
+                <input
+                  type={showMyPassword ? 'text' : 'password'}
+                  required
+                  value={myNewPassword}
+                  onChange={e => setMyNewPassword(e.target.value)}
+                  className="w-full pl-3 pr-8 py-1.5 text-xs font-mono rounded bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowMyPassword(!showMyPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  {showMyPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+            <span className="text-[11px] font-mono text-slate-400">
+              AKTIV ONLINE: {onlineCount} / {adminAccounts.length} KONTEN
+            </span>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-md hover:bg-emerald-500 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 rounded transition-colors cursor-pointer"
             >
-              Konto speichern
+              Eigenes Passwort &amp; Login speichern
+            </button>
+          </div>
+        </form>
+
+        {/* 5-Role Hierarchy Filter Cards */}
+        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {(['admin', 'colonel', 'officer', 'rookie', 'trainee'] as OfficerRole[]).map(roleKey => {
+            const meta = ROLE_HIERARCHY[roleKey];
+            const count = adminAccounts.filter(a => a.publicProfile.role === roleKey).length;
+            const isSelected = roleFilter === roleKey;
+            return (
+              <div
+                key={roleKey}
+                onClick={() => setRoleFilter(isSelected ? 'ALL' : roleKey)}
+                className={`p-4 rounded-lg border transition-colors cursor-pointer flex flex-col justify-between ${
+                  isSelected
+                    ? 'border-sky-500 bg-sky-50/70'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+                    <span className="uppercase font-semibold text-slate-800">{roleKey}</span>
+                    <span>#{meta.rankOrder}</span>
+                  </div>
+                  <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-2">
+                    {count}
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-2 leading-tight">
+                  {meta.defaultRank}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Create New Account Drawer (Defaults to Trainee) */}
+      {showCreateForm && (
+        <form
+          onSubmit={handleCreateAccount}
+          className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs"
+        >
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <div className="text-xs font-mono text-sky-600 font-semibold">
+                NEUES BENUTZERKONTO ANLEGEN // PERSÖNLICHE ADMIN-VERGABE
+              </div>
+              <h2 className="text-base font-semibold text-slate-900 mt-0.5">
+                Neuen Account erstellen (Startet automatisch als Trainee, sofern nicht anders gewählt)
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Login-Benutzername (User) *
+              </label>
+              <input
+                type="text"
+                required
+                value={newUsername}
+                onChange={e => setNewUsername(e.target.value)}
+                placeholder="z.B. TraineeMiller"
+                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Login-Passwort *
+              </label>
+              <input
+                type="text"
+                required
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="z.B. 5829"
+                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Vollständiger Name (RP Name) *
+              </label>
+              <input
+                type="text"
+                required
+                value={newDisplayName}
+                onChange={e => setNewDisplayName(e.target.value)}
+                placeholder="z.B. Lukas Miller"
+                className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Rang / Rolle (Standard: Trainee)
+              </label>
+              <select
+                value={newRole}
+                onChange={e => setNewRole(e.target.value as OfficerRole)}
+                className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
+              >
+                <option value="trainee">5. Trainee (Standard-Einstieg — Lehrmaterial &amp; Tests)</option>
+                <option value="rookie">4. Rookie (Inkl. Abschlussprüfung)</option>
+                <option value="officer">3. Officer (Regulärer Streifendienst)</option>
+                <option value="colonel">2. Colonel (Kann Lehrmaterialien &amp; Tests bearbeiten)</option>
+                <option value="admin">1. Admin (Vollzugriff)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Dienstnummer (Badge)
+              </label>
+              <input
+                type="text"
+                required
+                value={newBadge}
+                onChange={e => setNewBadge(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Funkrufname (Callsign)
+              </label>
+              <input
+                type="text"
+                required
+                value={newCallsign}
+                onChange={e => setNewCallsign(e.target.value)}
+                className="w-full px-3 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Abteilung / Division
+              </label>
+              <input
+                type="text"
+                required
+                value={newDivision}
+                onChange={e => setNewDivision(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Konto-Status
+              </label>
+              <select
+                value={newWhitelist}
+                onChange={e => setNewWhitelist(e.target.value as WhitelistStatus)}
+                className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              >
+                <option value="whitelisted">Aktiv / Freigeschaltet</option>
+                <option value="probation">Auf Probe (Probation)</option>
+                <option value="suspended">Suspendiert (Login gesperrt)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(false)}
+              className="px-3.5 py-2 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
+            >
+              Benutzerkonto verbindlich anlegen
             </button>
           </div>
         </form>
       )}
 
-      {/* Role & Clearance Matrix Explanation Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-        {(Object.keys(ROLE_HIERARCHY) as OfficerRole[]).map(roleKey => {
-          const meta = ROLE_HIERARCHY[roleKey];
-          const count = roster.filter(r => r.role === roleKey).length;
-          return (
-            <div
-              key={roleKey}
-              onClick={() => setRoleFilter(roleFilter === roleKey ? 'ALL' : roleKey)}
-              className={`p-3.5 rounded-lg border transition-colors cursor-pointer ${
-                roleFilter === roleKey
-                  ? 'border-amber-500 bg-amber-500/10'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-400 dark:hover:border-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-                <span className="uppercase">{roleKey}</span>
-                <span>LVL {meta.defaultClearance}</span>
-              </div>
-              <div className="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 mt-1">
-                {count}
-              </div>
-              <div className="text-xs text-slate-500 truncate mt-0.5">{meta.defaultRank}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Filter Bar */}
+      {/* Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -290,18 +545,18 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Suche nach Officer, Dienstnummer (CA-...), Callsign oder Division..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
+            placeholder="Suche nach Benutzername, Name, Dienstnummer oder Abteilung..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-md bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-500"
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-          <span>ANGEZEIGTE KONTEN: {filteredRoster.length}</span>
+        <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
+          <span>ANGEZEIGTE ACCOUNTS: {filteredAccounts.length}</span>
           {roleFilter !== 'ALL' && (
             <button
               type="button"
               onClick={() => setRoleFilter('ALL')}
-              className="text-amber-500 hover:underline cursor-pointer"
+              className="text-sky-600 hover:underline cursor-pointer"
             >
               [Filter zurücksetzen]
             </button>
@@ -309,230 +564,305 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
         </div>
       </div>
 
-      {/* High-Density Personnel Roster Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+      {/* Real-time Account Control Table */}
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-500 bg-slate-50/60 dark:bg-slate-950/60">
-                <th className="py-3 px-4">BADGE / CALLSIGN</th>
-                <th className="py-3 px-4">OFFICER NAME &amp; DIVISION</th>
-                <th className="py-3 px-4">ROLLE &amp; RANG</th>
-                <th className="py-3 px-4 text-right">CLEARANCE</th>
-                <th className="py-3 px-4">WHITELIST STATUS</th>
-                <th className="py-3 px-4 text-right">ACADEMY FORTSCHRITT</th>
-                <th className="py-3 px-4 text-right">AKTION</th>
+              <tr className="border-b border-slate-200 text-xs font-mono text-slate-600 bg-slate-100/80">
+                <th className="py-3.5 px-4">VERBINDUNG (LIVE)</th>
+                <th className="py-3.5 px-4">BADGE / CALLSIGN</th>
+                <th className="py-3.5 px-4">NAME &amp; ABTEILUNG</th>
+                <th className="py-3.5 px-4">BENUTZERNAME &amp; PASSWORT</th>
+                <th className="py-3.5 px-4">RANG / ROLLE</th>
+                <th className="py-3.5 px-4">KONTO-STATUS</th>
+                <th className="py-3.5 px-4 text-right">FORTSCHRITT</th>
+                <th className="py-3.5 px-4 text-right">ECHTZEIT-AKTIONEN</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
-              {filteredRoster.map(officer => {
-                const isEditing = editingUid === officer.uid;
-                const officerProg = allProgress.filter(p => p.userId === officer.uid);
+            <tbody className="divide-y divide-slate-200 text-xs">
+              {filteredAccounts.map(acc => {
+                const officer = acc.publicProfile;
+                const isEditing = editingUid === acc.uid;
+                const isPwVisible = Boolean(showPasswords[acc.uid]);
+                const officerProg = allProgress.filter(p => p.userId === acc.uid);
                 const completedCount = officerProg.filter(
                   p => p.status === 'completed' || p.status === 'passed'
                 ).length;
-                const priv = privateProfiles.find(p => p.uid === officer.uid);
 
                 return (
-                  <React.Fragment key={officer.uid}>
-                    <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-4 font-mono tabular-nums whitespace-nowrap">
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">
-                          {officer.badgeNumber}
-                        </span>
+                  <React.Fragment key={acc.uid}>
+                    <tr className="hover:bg-slate-50 transition-colors">
+                      {/* Real-time Online / Offline Telemetry */}
+                      <td className="py-3.5 px-4 font-mono whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              acc.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'
+                            }`}
+                          />
+                          <span
+                            className={
+                              acc.isOnline
+                                ? 'text-emerald-700 font-semibold'
+                                : 'text-slate-500'
+                            }
+                          >
+                            {acc.isOnline ? 'ONLINE' : 'OFFLINE'}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono tabular-nums whitespace-nowrap">
+                        <span className="font-semibold text-slate-900">{officer.badgeNumber}</span>
                         <span className="text-slate-400 mx-1.5">·</span>
-                        <span className="text-amber-600 dark:text-amber-400">{officer.callsign}</span>
+                        <span className="text-sky-700 font-medium">{officer.callsign}</span>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">
-                          {officer.displayName}
-                        </div>
-                        <div className="text-slate-500 flex items-center gap-1.5 mt-0.5">
-                          <span>{officer.division}</span>
-                          {priv && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <span className="font-mono">{priv.discordTag}</span>
-                            </>
-                          )}
-                        </div>
+
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-900">{officer.displayName}</div>
+                        <div className="text-slate-500 mt-0.5">{officer.division}</div>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
-                          {officer.rank}
-                        </div>
-                        <div className="font-mono text-slate-500 uppercase">{officer.role}</div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-slate-900 dark:text-slate-100">
-                        LEVEL {officer.clearanceLevel}
-                      </td>
-                      <td className="py-3 px-4 font-mono uppercase whitespace-nowrap">
-                        {officer.whitelistStatus === 'whitelisted' && (
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                            WHITELISTED
+
+                      {/* Credentials with Toggle */}
+                      <td className="py-3.5 px-4 font-mono whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-900 font-semibold">{acc.username}</span>
+                          <span className="text-slate-400">/</span>
+                          <span className="text-sky-700 font-semibold">
+                            {isPwVisible ? acc.password : '••••••'}
                           </span>
-                        )}
-                        {officer.whitelistStatus === 'probation' && (
-                          <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                            PROBATION (FTO)
-                          </span>
-                        )}
-                        {officer.whitelistStatus === 'pending' && (
-                          <span className="text-slate-500">PENDING</span>
-                        )}
-                        {(officer.whitelistStatus === 'suspended' ||
-                          officer.whitelistStatus === 'revoked') && (
-                          <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                            {officer.whitelistStatus}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono tabular-nums">
-                        {completedCount} ZERTIFIKATE
-                      </td>
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        {isAdmin ? (
                           <button
                             type="button"
                             onClick={() =>
-                              isEditing ? setEditingUid(null) : startEditing(officer)
+                              setShowPasswords(prev => ({
+                                ...prev,
+                                [acc.uid]: !prev[acc.uid]
+                              }))
                             }
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded cursor-pointer"
+                            className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                            title="Passwort anzeigen/verbergen"
+                          >
+                            {isPwVisible ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-semibold text-slate-900 uppercase font-mono">
+                          {officer.role}
+                        </div>
+                        <div className="text-slate-500">{officer.rank}</div>
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono uppercase whitespace-nowrap">
+                        {officer.whitelistStatus === 'whitelisted' && (
+                          <span className="text-emerald-700 font-semibold">AKTIV</span>
+                        )}
+                        {officer.whitelistStatus === 'probation' && (
+                          <span className="text-sky-700 font-semibold">AUF PROBE</span>
+                        )}
+                        {officer.whitelistStatus === 'pending' && (
+                          <span className="text-slate-500">AUSSTEHEND</span>
+                        )}
+                        {(officer.whitelistStatus === 'suspended' ||
+                          officer.whitelistStatus === 'revoked') && (
+                          <span className="text-rose-600 font-semibold">SUSPENDIERT</span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums">
+                        {completedCount} Abschlüsse
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-2">
+                          {acc.uid !== currentUser.uid && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSuspend(acc)}
+                              className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors cursor-pointer ${
+                                officer.whitelistStatus === 'suspended'
+                                  ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                                  : 'border-amber-300 text-amber-700 hover:bg-amber-50'
+                              }`}
+                            >
+                              {officer.whitelistStatus === 'suspended'
+                                ? 'Freischalten'
+                                : 'Suspendieren'}
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => (isEditing ? setEditingUid(null) : startEditing(acc))}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded border border-sky-200 cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                            {isEditing ? 'Schließen' : 'Konto verwalten'}
+                            {isEditing ? 'Schließen' : 'Bearbeiten'}
                           </button>
-                        ) : (
-                          <span className="text-slate-400 font-mono">READ-ONLY</span>
-                        )}
+
+                          {acc.uid !== currentUser.uid && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAccount(acc.uid, acc.username)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded border border-transparent hover:border-rose-200 cursor-pointer"
+                              title="Konto löschen"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
 
-                    {/* Expandable Admin Account & Role Editor Row */}
-                    {isAdmin && isEditing && (
-                      <tr className="bg-slate-50 dark:bg-slate-950/90">
-                        <td colSpan={7} className="p-5">
+                    {/* Expandable Full Editor Row */}
+                    {isEditing && (
+                      <tr className="bg-slate-100/90">
+                        <td colSpan={8} className="p-6">
                           <div className="space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                              <div className="text-xs font-mono text-amber-500">
-                                ADMIN BENUTZERKONTO- &amp; RECHTEVERWALTUNG // UID: {officer.uid}
+                            <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                              <div className="text-xs font-mono text-slate-800 font-semibold">
+                                VOLLSTÄNDIGE KONTEN- &amp; RANGBEARBEITUNG // {acc.username}
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Badge Number
+                                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                                  Login-Benutzername
                                 </label>
                                 <input
                                   type="text"
-                                  value={editBadge}
-                                  onChange={e => setEditBadge(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  value={editUsername}
+                                  onChange={e => setEditUsername(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs font-mono rounded bg-white border border-slate-300 text-slate-900"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Funkrufname (Callsign)
+                                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                                  Login-Passwort
                                 </label>
                                 <input
                                   type="text"
-                                  value={editCallsign}
-                                  onChange={e => setEditCallsign(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  value={editPassword}
+                                  onChange={e => setEditPassword(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs font-mono rounded bg-white border border-slate-300 text-slate-900"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Nutzergruppe / Rolle
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Anzeigename (RP Name)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editDisplayName}
+                                  onChange={e => setEditDisplayName(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs rounded bg-white border border-slate-300 text-slate-900"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-semibold text-sky-700 mb-1">
+                                  System-Rang / Rolle
                                 </label>
                                 <select
                                   value={editRole}
                                   onChange={e => {
                                     const r = e.target.value as OfficerRole;
                                     setEditRole(r);
-                                    setEditClearance(ROLE_HIERARCHY[r].defaultClearance);
                                     setEditRank(ROLE_HIERARCHY[r].defaultRank);
                                   }}
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  className="w-full px-3 py-2 text-xs font-medium rounded bg-white border border-sky-400 text-slate-900"
                                 >
-                                  <option value="applicant">Applicant (Bewerber)</option>
-                                  <option value="cadet">Academy Cadet</option>
-                                  <option value="officer">Patrol Officer</option>
-                                  <option value="fto">Field Training Officer (FTO)</option>
-                                  <option value="supervisor">Supervisor / Sergeant</option>
-                                  <option value="admin">Command Staff / Admin</option>
+                                  <option value="trainee">5. Trainee (Nur Lehrmaterial &amp; Tests)</option>
+                                  <option value="rookie">4. Rookie (Inkl. Abschlussprüfung)</option>
+                                  <option value="officer">3. Officer (Vollzugsdienst)</option>
+                                  <option value="colonel">2. Colonel (Darf Lerninhalte &amp; Tests bearbeiten)</option>
+                                  <option value="admin">1. Admin (Vollzugriff)</option>
                                 </select>
                               </div>
 
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Dienstgrad (Rank)
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Dienstnummer (Badge)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editBadge}
+                                  onChange={e => setEditBadge(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs font-mono rounded bg-white border border-slate-300 text-slate-900"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Funkrufname (Callsign)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editCallsign}
+                                  onChange={e => setEditCallsign(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs font-mono rounded bg-white border border-slate-300 text-slate-900"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Dienstgrad-Bezeichnung
                                 </label>
                                 <input
                                   type="text"
                                   value={editRank}
                                   onChange={e => setEditRank(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  className="w-full px-3 py-2 text-xs rounded bg-white border border-slate-300 text-slate-900"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Clearance Level (0–10)
-                                </label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={10}
-                                  value={editClearance}
-                                  onChange={e => setEditClearance(Number(e.target.value))}
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Whitelist-Freigabe
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Konto- &amp; Whitelist-Status
                                 </label>
                                 <select
                                   value={editWhitelist}
                                   onChange={e => setEditWhitelist(e.target.value as WhitelistStatus)}
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  className="w-full px-3 py-2 text-xs rounded bg-white border border-slate-300 text-slate-900"
                                 >
-                                  <option value="pending">Pending (Ausstehend)</option>
-                                  <option value="probation">Probation (Auf Probe)</option>
-                                  <option value="whitelisted">Whitelisted (Aktiv)</option>
-                                  <option value="suspended">Suspended (Suspendiert)</option>
-                                  <option value="revoked">Revoked (Entzogen)</option>
+                                  <option value="whitelisted">Aktiv (Whitelisted)</option>
+                                  <option value="probation">Auf Probe (Probation)</option>
+                                  <option value="suspended">Suspendiert (Login gesperrt)</option>
+                                  <option value="revoked">Widerrufen (Revoked)</option>
                                 </select>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Zugewiesene Division / Bureau
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Abteilung / Division
                                 </label>
                                 <input
                                   type="text"
                                   value={editDivision}
                                   onChange={e => setEditDivision(e.target.value)}
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  className="w-full px-3 py-2 text-xs rounded bg-white border border-slate-300 text-slate-900"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs text-slate-500 mb-1">
-                                  Vertrauliche Supervisor-Aktennotiz (PII-isoliert in /users_private)
+                                <label className="block text-xs font-medium text-slate-700 mb-1">
+                                  Interne Admin-Notiz
                                 </label>
                                 <input
                                   type="text"
                                   value={editNotes}
                                   onChange={e => setEditNotes(e.target.value)}
-                                  placeholder="Interne Notiz (nur für Command Staff sichtbar)..."
-                                  className="w-full px-2.5 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                                  className="w-full px-3 py-2 text-xs rounded bg-white border border-slate-300 text-slate-900"
                                 />
                               </div>
                             </div>
@@ -541,16 +871,16 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setEditingUid(null)}
-                                className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
+                                className="px-3.5 py-2 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
                               >
                                 Abbrechen
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleSaveOfficer(officer.uid)}
-                                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-amber-500 text-slate-950 rounded hover:bg-amber-400 transition-colors cursor-pointer"
+                                onClick={() => handleSaveAccount(acc.uid)}
+                                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
                               >
-                                <Save className="w-3.5 h-3.5" /> Änderungen in Datenbank speichern
+                                <Save className="w-3.5 h-3.5" /> Änderungen in Echtzeit übernehmen
                               </button>
                             </div>
                           </div>
