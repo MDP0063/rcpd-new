@@ -26,6 +26,7 @@ import {
   UserProgressDoc,
   UserPublicProfile
 } from '../types/portal';
+import { API_ENDPOINTS, apiFetch } from '../lib/api';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -144,25 +145,22 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   };
 
   const handleMarkModuleComplete = async (mod: TrainingModuleDoc) => {
-    try {
-      const res = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.uid,
-          targetId: mod.id,
-          targetType: 'module',
-          targetTitle: mod.title,
-          status: 'completed',
-          scorePercent: 100
-        })
-      });
-      if (res.ok) {
-        await onRefreshState();
-        onStatusToast(`Lehrmaterial "${mod.title}" als gelesen/absolviert markiert.`);
-      }
-    } catch {
-      onStatusToast('Fehler beim Speichern des Fortschritts.');
+    const res = await apiFetch(API_ENDPOINTS.PROGRESS, {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: currentUser.uid,
+        targetId: mod.id,
+        targetType: 'module',
+        targetTitle: mod.title,
+        status: 'completed',
+        scorePercent: 100
+      })
+    });
+    if (res.ok) {
+      await onRefreshState();
+      onStatusToast(`Lehrmaterial "${mod.title}" als gelesen/absolviert markiert.`);
+    } else {
+      onStatusToast(res.error || 'Fehler beim Speichern des Fortschritts.');
     }
   };
 
@@ -182,29 +180,27 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     const passed = scorePercent >= exam.passingScore;
     setExamSubmittedResult({ score: scorePercent, passed });
 
-    try {
-      const res = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.uid,
-          targetId: exam.id,
-          targetType: exam.assessmentStage === 'final_exam' ? 'final_exam' : 'test',
-          targetTitle: exam.title,
-          status: passed ? 'passed' : 'failed',
-          scorePercent
-        })
-      });
-      if (res.ok) {
-        await onRefreshState();
-        onStatusToast(
-          passed
-            ? `Erfolgreich bestanden (${scorePercent}%)! Im Fortschrittstracking gespeichert.`
-            : `Nicht bestanden (${scorePercent}% / erforderlich: ${exam.passingScore}%).`
-        );
-      }
-    } catch {
-      onStatusToast('Fehler beim Speichern des Ergebnisses.');
+    const res = await apiFetch(API_ENDPOINTS.PROGRESS, {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: currentUser.uid,
+        targetId: exam.id,
+        targetType: exam.assessmentStage === 'final_exam' ? 'final_exam' : 'test',
+        targetTitle: exam.title,
+        status: passed ? 'passed' : 'failed',
+        scorePercent
+      })
+    });
+
+    if (res.ok) {
+      await onRefreshState();
+      onStatusToast(
+        passed
+          ? `Erfolgreich bestanden (${scorePercent}%)! Im Fortschrittstracking gespeichert.`
+          : `Nicht bestanden (${scorePercent}% / erforderlich: ${exam.passingScore}%).`
+      );
+    } else {
+      onStatusToast(res.error || 'Fehler beim Speichern des Ergebnisses.');
     }
   };
 
@@ -212,10 +208,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     e.preventDefault();
     if (!canEditAcademy) return;
 
-    try {
-      const res = await fetch('/api/academy/modules', {
+    const res = await apiFetch<{ ok: boolean; module: TrainingModuleDoc }>(
+      API_ENDPOINTS.ACADEMY_MODULES,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           actorUid: currentUser.uid,
           title: modTitle,
@@ -230,23 +226,22 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           interactiveCode: modInteractiveCode,
           estimatedMinutes: Number(modMinutes) || 25
         })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Lehrbuch/Dokument konnte nicht gespeichert werden.');
-        return;
       }
-      await onRefreshState();
-      setModTitle('');
-      setModMarkdown('');
-      setModPdfDataUrl('');
-      setModPdfFileName('');
-      onStatusToast(`Lehrmaterial "${data.module.title}" erfolgreich veröffentlicht.`);
-      setActiveTab('modules');
-      setActiveModuleId(data.module.id);
-    } catch {
-      onStatusToast('Serverfehler beim Hochladen des Lehrmaterials.');
+    );
+
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Lehrbuch/Dokument konnte nicht gespeichert werden.');
+      return;
     }
+
+    await onRefreshState();
+    setModTitle('');
+    setModMarkdown('');
+    setModPdfDataUrl('');
+    setModPdfFileName('');
+    onStatusToast(`Lehrmaterial "${res.data.module.title}" erfolgreich veröffentlicht.`);
+    setActiveTab('modules');
+    setActiveModuleId(res.data.module.id);
   };
 
   const handleCreateExam = async (e: React.FormEvent) => {
@@ -262,10 +257,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       }
     }
 
-    try {
-      const res = await fetch('/api/academy/exams', {
+    const res = await apiFetch<{ ok: boolean; exam: AcademyExamDoc }>(
+      API_ENDPOINTS.ACADEMY_EXAMS,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           actorUid: currentUser.uid,
           title: examTitle,
@@ -277,40 +272,49 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           questionsPayload: examQuestionsJson,
           interactiveWidgetCode: examWidgetCode
         })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Test/Prüfung konnte nicht erstellt werden.');
-        return;
       }
-      await onRefreshState();
-      setExamTitle('');
-      onStatusToast(
-        `${examStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} "${data.exam.title}" veröffentlicht.`
-      );
-      setActiveTab(examStage === 'final_exam' ? 'final_exams' : 'tests');
-      setActiveExamId(data.exam.id);
-    } catch {
-      onStatusToast('Serverfehler beim Erstellen des Tests.');
+    );
+
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Test/Prüfung konnte nicht erstellt werden.');
+      return;
     }
+
+    await onRefreshState();
+    setExamTitle('');
+    onStatusToast(
+      `${examStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} "${res.data.exam.title}" veröffentlicht.`
+    );
+    setActiveTab(examStage === 'final_exam' ? 'final_exams' : 'tests');
+    setActiveExamId(res.data.exam.id);
   };
 
   const handleDeleteModule = async (id: string) => {
     if (!canEditAcademy) return;
-    await fetch(`/api/academy/modules/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`, {
-      method: 'DELETE'
-    });
-    await onRefreshState();
-    onStatusToast('Lehrmaterial entfernt.');
+    const res = await apiFetch(
+      `${API_ENDPOINTS.ACADEMY_MODULES}/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`,
+      { method: 'DELETE' }
+    );
+    if (res.ok) {
+      await onRefreshState();
+      onStatusToast('Lehrmaterial entfernt.');
+    } else {
+      onStatusToast(res.error || 'Lehrmaterial konnte nicht gelöscht werden.');
+    }
   };
 
   const handleDeleteExam = async (id: string) => {
     if (!canEditAcademy) return;
-    await fetch(`/api/academy/exams/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`, {
-      method: 'DELETE'
-    });
-    await onRefreshState();
-    onStatusToast('Test / Prüfung entfernt.');
+    const res = await apiFetch(
+      `${API_ENDPOINTS.ACADEMY_EXAMS}/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`,
+      { method: 'DELETE' }
+    );
+    if (res.ok) {
+      await onRefreshState();
+      onStatusToast('Test / Prüfung entfernt.');
+    } else {
+      onStatusToast(res.error || 'Test / Prüfung konnte nicht gelöscht werden.');
+    }
   };
 
   return (

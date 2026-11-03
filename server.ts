@@ -163,8 +163,20 @@ async function startServer() {
   // Increase payload limit to 25MB so Admin/Colonel can upload PDF textbooks directly
   app.use(express.json({ limit: '25mb' }));
 
-  // 1. Health Endpoint
-  app.get('/api/health', (_req, res) => {
+  // Standardized CORS headers for cross-origin or Render deployments using VITE_API_BASE_URL
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
+  // 1. Health Endpoint (Supports both /api/health and /api/v1/health)
+  app.get(['/api/health', '/api/v1/health'], (_req, res) => {
     res.json({
       status: 'operational',
       agency: 'California Department of Justice — POST Officer Portal',
@@ -820,7 +832,7 @@ async function startServer() {
   });
 
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
-  app.get('/api/v1/whitelist/verify', (req, res) => {
+  app.get(['/api/v1/whitelist/verify', '/api/whitelist/verify'], (req, res) => {
     const { badge, username } = req.query;
     const dbState = loadDatabase();
     const found = dbState.accounts.find(
@@ -860,7 +872,7 @@ async function startServer() {
   });
 
   // Generate Render.com Blueprint (Free Tier + Auto-Deploy on main) & GitHub Actions CI/CD manifest
-  app.get('/api/v1/deployment/manifests', (_req, res) => {
+  app.get(['/api/v1/deployment/manifests', '/api/deployment/manifests'], (_req, res) => {
     const dbState = loadDatabase();
     const cfg = ensureDeploymentConfig(dbState);
 
@@ -900,19 +912,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: TypeScript Check & Production Build
         run: npm run lint && npm run build
 
       - name: Optional Render Deploy Hook Trigger
-        if: github.ref == 'refs/heads/${cfg.branchName || 'main'}' && env.RENDER_DEPLOY_HOOK_URL != ''
+        if: github.ref == 'refs/heads/${cfg.branchName || 'main'}'
         env:
           RENDER_DEPLOY_HOOK_URL: \${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"`;
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+          else
+            echo "Kein RENDER_DEPLOY_HOOK_URL Secret gesetzt — Render Auto-Deploy ueber ${cfg.branchName || 'main'} Branch aktiv."
+          fi`;
 
     res.json({
       renderYaml,
@@ -1113,6 +1129,13 @@ jobs:
         error: 'Verbindung zur Render Deploy Hook URL fehlgeschlagen.'
       });
     }
+  });
+
+  // Ensure unknown /api/* requests always return JSON 404 instead of SPA index.html
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({
+      error: `API-Endpunkt nicht gefunden: ${req.method} ${req.originalUrl}`
+    });
   });
 
   const distPath = path.join(__dirname, 'dist');

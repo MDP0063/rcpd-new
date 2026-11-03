@@ -31,6 +31,7 @@ import { WhitelistPortal } from './components/WhitelistPortal';
 import { AcademyCenter } from './components/AcademyCenter';
 import { AdminPersonnelConsole } from './components/AdminPersonnelConsole';
 import { DeploymentPipelineHub } from './components/DeploymentPipelineHub';
+import { API_ENDPOINTS, apiFetch } from './lib/api';
 
 type ActiveSection = 'dashboard' | 'academy' | 'whitelist' | 'personnel' | 'deployment';
 
@@ -73,33 +74,43 @@ export default function App() {
       const targetUid = uidToLoad ?? sessionUid;
       if (!targetUid) return;
 
-      try {
-        const res = await fetch(`/api/portal/state?uid=${encodeURIComponent(targetUid)}`);
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
+      const res = await apiFetch<{
+        currentUser: UserPublicProfile;
+        isAdmin: boolean;
+        roster: UserPublicProfile[];
+        adminAccounts: AdminAccountView[];
+        applications: WhitelistApplicationDoc[];
+        modules: TrainingModuleDoc[];
+        exams: AcademyExamDoc[];
+        progress: UserProgressDoc[];
+        deploymentConfig?: PortalDeploymentConfig;
+        dbStats?: PortalDbStats;
+      }>(`${API_ENDPOINTS.PORTAL_STATE}?uid=${encodeURIComponent(targetUid)}`);
+
+      if (!res.ok || !res.data) {
+        if (res.status === 401 || res.status === 403) {
           localStorage.removeItem(SESSION_STORAGE_KEY);
           setSessionUid(null);
           setCurrentUserProfile(null);
           setIsAdmin(false);
-          if (errData.error) {
-            setAuthError(errData.error);
+          if (res.error) {
+            setAuthError(res.error);
           }
-          return;
         }
-        const data = await res.json();
-        setCurrentUserProfile(data.currentUser);
-        setIsAdmin(Boolean(data.isAdmin));
-        setRoster(data.roster || []);
-        setAdminAccounts(data.adminAccounts || []);
-        setApplications(data.applications || []);
-        setModules(data.modules || []);
-        setExams(data.exams || []);
-        setUserProgress(data.progress || []);
-        setDeploymentConfig(data.deploymentConfig);
-        setDbStats(data.dbStats);
-      } catch (err) {
-        console.error('Failed to load portal state:', err);
+        return;
       }
+
+      const data = res.data;
+      setCurrentUserProfile(data.currentUser);
+      setIsAdmin(Boolean(data.isAdmin));
+      setRoster(data.roster || []);
+      setAdminAccounts(data.adminAccounts || []);
+      setApplications(data.applications || []);
+      setModules(data.modules || []);
+      setExams(data.exams || []);
+      setUserProgress(data.progress || []);
+      setDeploymentConfig(data.deploymentConfig);
+      setDbStats(data.dbStats);
     },
     [sessionUid]
   );
@@ -119,44 +130,40 @@ export default function App() {
     setAuthError(null);
     setAuthLoading(true);
 
-    try {
-      const res = await fetch('/api/auth/login', {
+    const res = await apiFetch<{ user: UserPublicProfile; isAdmin: boolean }>(
+      API_ENDPOINTS.AUTH_LOGIN,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: loginUsername.trim(),
           password: loginPassword
         })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(data.error || 'Anmeldung fehlgeschlagen.');
-        return;
       }
+    );
 
-      const loggedInUser = data.user as UserPublicProfile;
-      localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
-      setSessionUid(loggedInUser.uid);
-      setCurrentUserProfile(loggedInUser);
-      setIsAdmin(Boolean(data.isAdmin));
-      setActiveSection('dashboard');
-      await fetchPortalState(loggedInUser.uid);
-      triggerToast(`Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`);
-    } catch {
-      setAuthError('Verbindung zum Server fehlgeschlagen.');
-    } finally {
-      setAuthLoading(false);
+    setAuthLoading(false);
+
+    if (!res.ok || !res.data) {
+      setAuthError(res.error || 'Anmeldung fehlgeschlagen.');
+      return;
     }
+
+    const loggedInUser = res.data.user;
+    localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
+    setSessionUid(loggedInUser.uid);
+    setCurrentUserProfile(loggedInUser);
+    setIsAdmin(Boolean(res.data.isAdmin));
+    setActiveSection('dashboard');
+    await fetchPortalState(loggedInUser.uid);
+    triggerToast(`Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`);
   };
 
   const handleSignOut = async () => {
     if (sessionUid) {
-      await fetch('/api/auth/logout', {
+      await apiFetch(API_ENDPOINTS.AUTH_LOGOUT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid: sessionUid })
-      }).catch(() => null);
+      });
     }
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setSessionUid(null);

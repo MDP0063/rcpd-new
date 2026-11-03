@@ -1,0 +1,147 @@
+/**
+ * Standardized Base URL & Backend Fetch Configuration
+ * Ensures all frontend components communicate reliably with the Express backend
+ * both in local development, preview containers, and Render.com production deployments.
+ */
+
+export function normalizeBaseUrl(rawBase?: string): string {
+  if (!rawBase) return '';
+  let trimmed = rawBase.trim();
+  if (!trimmed) return '';
+
+  // Remove trailing slashes
+  trimmed = trimmed.replace(/\/+$/, '');
+
+  // If someone configured VITE_API_BASE_URL="https://example.onrender.com/api",
+  // strip the trailing "/api" so "/api/..." paths do not become "/api/api/..."
+  if (trimmed.endsWith('/api')) {
+    trimmed = trimmed.slice(0, -4);
+  }
+
+  return trimmed;
+}
+
+export const API_BASE_URL: string = normalizeBaseUrl(
+  import.meta.env.VITE_API_BASE_URL || ''
+);
+
+/**
+ * Safely constructs a complete backend endpoint URL from a standardized path (e.g. '/api/health').
+ */
+export function resolveApiUrl(endpointPath: string, customBaseOverride?: string): string {
+  const trimmedPath = endpointPath.trim();
+  if (/^https?:\/\//i.test(trimmedPath)) {
+    return trimmedPath;
+  }
+
+  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
+  const base =
+    customBaseOverride !== undefined
+      ? normalizeBaseUrl(customBaseOverride)
+      : API_BASE_URL;
+
+  if (!base) {
+    return normalizedPath;
+  }
+
+  return `${base}${normalizedPath}`;
+}
+
+export interface ApiResponse<T = any> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+  error?: string;
+}
+
+/**
+ * Standardized fetch helper that prevents HTML/JSON parsing crashes during Render cold-starts
+ * and guarantees consistent headers and base URL resolution.
+ */
+export async function apiFetch<T = any>(
+  endpointPath: string,
+  options: RequestInit = {},
+  customBaseOverride?: string
+): Promise<ApiResponse<T>> {
+  const url = resolveApiUrl(endpointPath, customBaseOverride);
+  const headers = new Headers(options.headers || {});
+
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
+  if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    let parsedData: any = null;
+
+    if (contentType.includes('application/json')) {
+      parsedData = await response.json().catch(() => null);
+    } else {
+      const text = await response.text().catch(() => '');
+      try {
+        parsedData = text ? JSON.parse(text) : null;
+      } catch {
+        parsedData = null;
+      }
+    }
+
+    if (!response.ok) {
+      const errorMsg =
+        (parsedData && typeof parsedData === 'object' && parsedData.error) ||
+        `Server-Antwort (${response.status}): Anfrage an ${normalizedEndpointLabel(endpointPath)} fehlgeschlagen.`;
+      return {
+        ok: false,
+        status: response.status,
+        data: parsedData,
+        error: errorMsg
+      };
+    }
+
+    return {
+      ok: true,
+      status: response.status,
+      data: parsedData as T
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      error:
+        err instanceof Error
+          ? `Netzwerkfehler (${err.message})`
+          : 'Verbindung zum Backend-Server fehlgeschlagen.'
+    };
+  }
+}
+
+function normalizedEndpointLabel(endpointPath: string): string {
+  return endpointPath.startsWith('/') ? endpointPath : `/${endpointPath}`;
+}
+
+export const API_ENDPOINTS = {
+  HEALTH: '/api/health',
+  AUTH_LOGIN: '/api/auth/login',
+  AUTH_LOGOUT: '/api/auth/logout',
+  PORTAL_STATE: '/api/portal/state',
+  ADMIN_ACCOUNTS: '/api/admin/accounts',
+  APPLICATIONS: '/api/applications',
+  ADMIN_APPLICATIONS: '/api/admin/applications',
+  ACADEMY_MODULES: '/api/academy/modules',
+  ACADEMY_EXAMS: '/api/academy/exams',
+  PROGRESS: '/api/progress',
+  WHITELIST_VERIFY: '/api/v1/whitelist/verify',
+  DEPLOYMENT_MANIFESTS: '/api/v1/deployment/manifests',
+  ADMIN_DEPLOYMENT_CONFIG: '/api/admin/deployment-config',
+  ADMIN_BACKUP: '/api/admin/backup',
+  ADMIN_RESTORE: '/api/admin/restore',
+  ADMIN_TRIGGER_DEPLOY: '/api/admin/trigger-deploy'
+} as const;

@@ -14,6 +14,7 @@ import {
   UserPublicProfile,
   WhitelistApplicationDoc
 } from '../types/portal';
+import { API_ENDPOINTS, apiFetch } from '../lib/api';
 
 interface WhitelistPortalProps {
   currentUser: UserPublicProfile;
@@ -63,57 +64,48 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
     }
 
     setIsSubmitting(true);
-    try {
-      const res = await fetch('/api/applications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          applicantUid: currentUser.uid,
-          characterName,
-          dateOfBirth,
-          discordTag: discordTag || 'officer#0001',
-          priorExperience,
-          scenarioResponse,
-          penalCodeAck
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Bewerbung konnte nicht gespeichert werden.');
-        return;
-      }
-      await onRefreshState();
-      onStatusToast('Personalbogen erfolgreich eingereicht.');
-    } catch {
-      onStatusToast('Netzwerkfehler beim Senden.');
-    } finally {
-      setIsSubmitting(false);
+    const res = await apiFetch(API_ENDPOINTS.APPLICATIONS, {
+      method: 'POST',
+      body: JSON.stringify({
+        applicantUid: currentUser.uid,
+        characterName,
+        dateOfBirth,
+        discordTag: discordTag || 'officer#0001',
+        priorExperience,
+        scenarioResponse,
+        penalCodeAck
+      })
+    });
+    setIsSubmitting(false);
+
+    if (!res.ok) {
+      onStatusToast(res.error || 'Bewerbung konnte nicht gespeichert werden.');
+      return;
     }
+
+    await onRefreshState();
+    onStatusToast('Personalbogen erfolgreich eingereicht.');
   };
 
   const handleAdminDecision = async (app: WhitelistApplicationDoc) => {
-    try {
-      const res = await fetch(`/api/admin/applications/${app.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          status: reviewStatus,
-          reviewerFeedback: reviewFeedback,
-          promoteToRole
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Fehler bei der Entscheidung.');
-        return;
-      }
-      await onRefreshState();
-      setSelectedAppId(null);
-      onStatusToast(`Akte von ${app.characterName} auf "${reviewStatus.toUpperCase()}" aktualisiert.`);
-    } catch {
-      onStatusToast('Serverfehler.');
+    const res = await apiFetch(`${API_ENDPOINTS.ADMIN_APPLICATIONS}/${app.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        status: reviewStatus,
+        reviewerFeedback: reviewFeedback,
+        promoteToRole
+      })
+    });
+
+    if (!res.ok) {
+      onStatusToast(res.error || 'Fehler bei der Entscheidung.');
+      return;
     }
+
+    await onRefreshState();
+    setSelectedAppId(null);
+    onStatusToast(`Akte von ${app.characterName} auf "${reviewStatus.toUpperCase()}" aktualisiert.`);
   };
 
   return (

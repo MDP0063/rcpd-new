@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   GitBranch,
   Cloud,
@@ -23,6 +23,13 @@ import {
   PortalDeploymentConfig,
   UserPublicProfile
 } from '../types/portal';
+import {
+  API_BASE_URL,
+  API_ENDPOINTS,
+  apiFetch,
+  normalizeBaseUrl,
+  resolveApiUrl
+} from '../lib/api';
 
 interface DeploymentPipelineHubProps {
   currentUser: UserPublicProfile;
@@ -91,6 +98,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
     appUrl: string;
     timestamp: string;
     latencyMs?: number;
+    checkedUrl?: string;
   } | null>(null);
   const [whitelistCheckResult, setWhitelistCheckResult] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -128,26 +136,46 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
     }
   }, [deploymentConfig]);
 
-  const runLiveHealthCheck = async () => {
+  const loadDeploymentManifests = useCallback(async () => {
+    const res = await apiFetch<{
+      renderYaml: string;
+      githubWorkflow: string;
+      deploymentConfig?: PortalDeploymentConfig;
+    }>(API_ENDPOINTS.DEPLOYMENT_MANIFESTS);
+    if (res.ok && res.data) {
+      setManifests({
+        renderYaml: res.data.renderYaml,
+        githubWorkflow: res.data.githubWorkflow
+      });
+    }
+  }, []);
+
+  const runLiveHealthCheck = useCallback(async () => {
     const start = performance.now();
-    try {
-      const res = await fetch('/api/health');
-      const data = await res.json();
-      const latencyMs = Math.round(performance.now() - start);
-      setHealthInfo({ ...data, latencyMs });
-    } catch {
+    const res = await apiFetch<{
+      status: string;
+      agency: string;
+      environment: string;
+      appUrl: string;
+      timestamp: string;
+    }>(API_ENDPOINTS.HEALTH);
+
+    const latencyMs = Math.round(performance.now() - start);
+    if (res.ok && res.data) {
+      setHealthInfo({
+        ...res.data,
+        latencyMs,
+        checkedUrl: resolveApiUrl(API_ENDPOINTS.HEALTH)
+      });
+    } else {
       setHealthInfo(null);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetch('/api/v1/deployment/manifests')
-      .then(r => r.json())
-      .then(data => setManifests(data))
-      .catch(() => null);
-
+    loadDeploymentManifests();
     runLiveHealthCheck();
-  }, []);
+  }, [loadDeploymentManifests, runLiveHealthCheck]);
 
   const copyText = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -159,32 +187,37 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
   const handleSaveDeploymentConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
-    try {
-      const res = await fetch('/api/admin/deployment-config', {
+
+    const normalizedRenderUrl = normalizeBaseUrl(renderServiceUrl);
+    const normalizedBranch = branchName.trim() || 'main';
+
+    const res = await apiFetch<{ ok: boolean; deploymentConfig: PortalDeploymentConfig }>(
+      API_ENDPOINTS.ADMIN_DEPLOYMENT_CONFIG,
+      {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adminUid: currentUser.uid,
           githubRepoUrl: githubRepoUrl.trim(),
-          renderServiceUrl: renderServiceUrl.trim(),
+          renderServiceUrl: normalizedRenderUrl,
           renderDeployHookUrl: renderDeployHookUrl.trim(),
-          branchName: branchName.trim() || 'main',
+          branchName: normalizedBranch,
           autoDeployEnabled: true,
           completedSteps
         })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Fehler beim Speichern der GitHub/Render-Konfiguration.');
-        return;
       }
-      await onRefreshState();
-      onStatusToast('GitHub Repository URL & Render-Konfiguration gespeichert.');
-    } catch {
-      onStatusToast('Netzwerkfehler beim Speichern der Konfiguration.');
-    } finally {
-      setSavingConfig(false);
+    );
+
+    setSavingConfig(false);
+
+    if (!res.ok) {
+      onStatusToast(res.error || 'Fehler beim Speichern der GitHub/Render-Konfiguration.');
+      return;
     }
+
+    setRenderServiceUrl(normalizedRenderUrl);
+    setBranchName(normalizedBranch);
+    await Promise.all([onRefreshState(), loadDeploymentManifests()]);
+    onStatusToast('GitHub Repository URL, Branch & Render-Konfiguration synchronisiert.');
   };
 
   const handleToggleChecklistStep = async (stepId: string) => {
@@ -193,56 +226,49 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
       : [...completedSteps, stepId];
     setCompletedSteps(nextSteps);
 
-    try {
-      await fetch('/api/admin/deployment-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          completedSteps: nextSteps
-        })
-      });
+    const res = await apiFetch(API_ENDPOINTS.ADMIN_DEPLOYMENT_CONFIG, {
+      method: 'PUT',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        completedSteps: nextSteps
+      })
+    });
+
+    if (res.ok) {
       await onRefreshState();
-    } catch {
-      // Ignore silent checklist error
     }
   };
 
   const handleExportBackup = async () => {
     setExportingBackup(true);
-    try {
-      const res = await fetch(
-        `/api/admin/backup?adminUid=${encodeURIComponent(currentUser.uid)}`
-      );
-      const data = (await res.json()) as PortalBackupSnapshot & { error?: string };
-      if (!res.ok) {
-        onStatusToast(data.error || 'Backup-Export fehlgeschlagen.');
-        return;
-      }
+    const backupPath = `${API_ENDPOINTS.ADMIN_BACKUP}?adminUid=${encodeURIComponent(currentUser.uid)}`;
+    const res = await apiFetch<PortalBackupSnapshot>(backupPath);
+    setExportingBackup(false);
 
-      const datePart = new Date().toISOString().slice(0, 10);
-      const fileName = `ca-post-portal-backup-${datePart}.json`;
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json'
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      await onRefreshState();
-      onStatusToast(
-        `Komplett-Backup (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen) heruntergeladen.`
-      );
-    } catch {
-      onStatusToast('Netzwerkfehler beim Erstellen des Datenbank-Backups.');
-    } finally {
-      setExportingBackup(false);
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Backup-Export fehlgeschlagen.');
+      return;
     }
+
+    const data = res.data;
+    const datePart = new Date().toISOString().slice(0, 10);
+    const fileName = `ca-post-portal-backup-${datePart}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    await onRefreshState();
+    onStatusToast(
+      `Komplett-Backup (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen) heruntergeladen.`
+    );
   };
 
   const handleBackupFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,76 +306,78 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
   const handleRestoreBackupNow = async () => {
     if (!backupPreview) return;
     setRestoringBackup(true);
-    try {
-      const res = await fetch('/api/admin/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          snapshot: backupPreview.rawPayload
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Wiederherstellung fehlgeschlagen.');
-        return;
-      }
 
-      setBackupPreview(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      await onRefreshState();
-      onStatusToast(
-        `Backup erfolgreich eingespielt! (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen aktiv).`
-      );
-    } catch {
-      onStatusToast('Serverfehler beim Einspielen des Backups.');
-    } finally {
-      setRestoringBackup(false);
+    const res = await apiFetch<{
+      ok: boolean;
+      restoredAtIso: string;
+      summary: {
+        accountsCount: number;
+        modulesCount: number;
+        examsCount: number;
+      };
+    }>(API_ENDPOINTS.ADMIN_RESTORE, {
+      method: 'POST',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        snapshot: backupPreview.rawPayload
+      })
+    });
+
+    setRestoringBackup(false);
+
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Wiederherstellung fehlgeschlagen.');
+      return;
     }
+
+    setBackupPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    await Promise.all([onRefreshState(), loadDeploymentManifests()]);
+    onStatusToast(
+      `Backup erfolgreich eingespielt! (${res.data.summary.accountsCount} Konten, ${res.data.summary.modulesCount} Lehrbücher, ${res.data.summary.examsCount} Prüfungen aktiv).`
+    );
   };
 
   const handleTriggerRenderDeploy = async () => {
     setTriggeringDeploy(true);
-    try {
-      const res = await fetch('/api/admin/trigger-deploy', {
+    const res = await apiFetch<{ ok: boolean; message: string }>(
+      API_ENDPOINTS.ADMIN_TRIGGER_DEPLOY,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adminUid: currentUser.uid,
           deployHookUrl: renderDeployHookUrl.trim()
         })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Deploy-Hook konnte nicht ausgelöst werden.');
-        return;
       }
-      onStatusToast(data.message || 'Render Deployment wurde ausgelöst.');
-    } catch {
-      onStatusToast('Fehler beim Aufruf des Render Deploy Hooks.');
-    } finally {
-      setTriggeringDeploy(false);
+    );
+    setTriggeringDeploy(false);
+
+    if (!res.ok) {
+      onStatusToast(res.error || 'Deploy-Hook konnte nicht ausgelöst werden.');
+      return;
     }
+    onStatusToast(res.data?.message || 'Render Deployment wurde ausgelöst.');
   };
 
   const handleTestWhitelistEndpoint = async () => {
-    try {
-      const res = await fetch(
-        `/api/v1/whitelist/verify?username=${encodeURIComponent(currentUser.username || 'Admin1')}`
-      );
-      const data = await res.json();
-      setWhitelistCheckResult(JSON.stringify(data, null, 2));
-      onStatusToast('Whitelist-Endpunkt erfolgreich getestet.');
-    } catch {
-      onStatusToast('Fehler beim Testen des Whitelist-Endpunkts.');
+    const verifyPath = `${API_ENDPOINTS.WHITELIST_VERIFY}?username=${encodeURIComponent(
+      currentUser.username || 'Admin1'
+    )}`;
+    const res = await apiFetch<Record<string, unknown>>(verifyPath);
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Fehler beim Testen des Whitelist-Endpunkts.');
+      return;
     }
+    setWhitelistCheckResult(JSON.stringify(res.data, null, 2));
+    onStatusToast(`Whitelist-Endpunkt (${resolveApiUrl(API_ENDPOINTS.WHITELIST_VERIFY)}) erfolgreich getestet.`);
   };
 
   const cleanRepoUrl =
     githubRepoUrl.trim() || 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git';
   const cleanBranch = branchName.trim() || 'main';
+  const effectiveOrigin = API_BASE_URL || window.location.origin;
 
   const gitInitialPushCommands = `# 1. Im lokalen Projektordner Git initialisieren & alle Dateien hinzufügen
 git init
@@ -361,8 +389,8 @@ git branch -M ${cleanBranch}
 git remote remove origin 2>/dev/null || true
 git remote add origin ${cleanRepoUrl}
 
-# 3. Direkt auf GitHub pushen (löst automatisch den Deploy auf Render aus)
-git push -u origin ${cleanBranch}`;
+# 3. Direkt auf GitHub pushen (--force überschreibt eine evtl. vorhandene leere README im neuen Repo)
+git push -u origin ${cleanBranch} --force`;
 
   const gitUpdatePushCommands = `# Spätere Änderungen an Code oder Konfiguration zu GitHub & Render pushen:
 git add .
@@ -383,7 +411,8 @@ git push origin ${cleanBranch}`;
             GitHub &amp; Render.com Auto-Deployment + 1-Klick Backup-Zentrale
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-            Exklusiv für dich als Administrator sichtbar. Verbinde dein bestehendes GitHub-Repository für automatische Deployments bei jedem Push auf <code className="font-mono text-slate-900 font-semibold">{cleanBranch}</code> und sichere deine gesamte Datenbank (Accounts, Passwörter, PDFs &amp; Prüfungen) mit einem Klick.
+            Exklusiv für dich als Administrator sichtbar. Verbinde dein bestehendes GitHub-Repository für automatische Deployments bei jedem Push auf{' '}
+            <code className="font-mono text-slate-900 font-semibold">{cleanBranch}</code> und sichere deine gesamte Datenbank (Accounts, Passwörter, PDFs &amp; Prüfungen) mit einem Klick.
           </p>
         </div>
 
@@ -415,7 +444,7 @@ git push origin ${cleanBranch}`;
                 }`}
               />
               <span className="text-base font-bold text-slate-900">
-                {healthInfo ? 'ONLINE (/api/health)' : 'PRÜFE VERBINDUNG'}
+                {healthInfo ? `ONLINE (${API_ENDPOINTS.HEALTH})` : 'PRÜFE VERBINDUNG'}
               </span>
             </div>
           </div>
@@ -441,8 +470,8 @@ git push origin ${cleanBranch}`;
               Auto-Deploy auf &quot;{cleanBranch}&quot;
             </div>
           </div>
-          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
-            Tarif: Render Free Tier (render.yaml)
+          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100 truncate">
+            Basis-URL: {effectiveOrigin}
           </div>
         </div>
 
@@ -620,7 +649,7 @@ git push origin ${cleanBranch}`;
               Dein bestehendes GitHub-Repository &amp; deine Render-URL verknüpfen
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
-              Trage hier die URL deines bereits erstellten GitHub-Repos ein. Alle Git-Befehle unten passen sich sofort automatisch an deine URL an.
+              Trage hier die URL deines bereits erstellten GitHub-Repos ein. Alle Git-Befehle sowie die Render-Manifeste passen sich sofort automatisch an deine Angaben an.
             </p>
           </div>
 
@@ -630,7 +659,7 @@ git push origin ${cleanBranch}`;
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer self-start whitespace-nowrap"
           >
             <Save className="w-3.5 h-3.5 text-sky-400" />
-            {savingConfig ? 'Speichere...' : 'Einstellungen speichern'}
+            {savingConfig ? 'Synchronisiere...' : 'Einstellungen speichern & synchronisieren'}
           </button>
         </div>
 
@@ -720,7 +749,7 @@ git push origin ${cleanBranch}`;
             )}
             {renderServiceUrl.startsWith('http') && (
               <a
-                href={renderServiceUrl}
+                href={normalizeBaseUrl(renderServiceUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 font-semibold"
@@ -803,6 +832,8 @@ git push origin ${cleanBranch}`;
               <span className="col-span-2 text-emerald-300">npm install &amp;&amp; npm run build</span>
               <span className="text-slate-400">Start Command:</span>
               <span className="col-span-2 text-emerald-300">npm run start</span>
+              <span className="text-slate-400">Health Check:</span>
+              <span className="col-span-2 text-sky-300">{API_ENDPOINTS.HEALTH}</span>
               <span className="text-slate-400">Instance Type:</span>
               <span className="col-span-2 text-white">Free ($0 / Monat)</span>
               <span className="text-slate-400">Auto-Deploy:</span>
@@ -811,7 +842,7 @@ git push origin ${cleanBranch}`;
           </div>
         </div>
 
-        {/* Right 7 Cols: Tailored Git Commands + Render YAML Blueprint + Live API Tester */}
+        {/* Right 7 Cols: Tailored Git Commands + Render YAML Blueprint + GitHub Workflow + Live API Tester */}
         <div className="lg:col-span-7 space-y-6">
           {/* Box 1: Initial Git Push to Existing Repo */}
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
@@ -865,7 +896,7 @@ git push origin ${cleanBranch}`;
             </pre>
           </div>
 
-          {/* Box 2: Render.yaml Free-Tier Blueprint */}
+          {/* Box 2: Render.yaml Free-Tier Blueprint & GitHub Actions Workflow */}
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
@@ -873,7 +904,7 @@ git push origin ${cleanBranch}`;
                   RENDER FREE-TIER KONFIGURATION // /render.yaml
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                  Automatisch im Projekt hinterlegte Render-Spezifikation
+                  Synchronisierte Render-Spezifikation (Endpunkt: {API_ENDPOINTS.DEPLOYMENT_MANIFESTS})
                 </h3>
               </div>
               {manifests && (
@@ -895,6 +926,31 @@ git push origin ${cleanBranch}`;
             <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
               {manifests?.renderYaml || 'Lade /render.yaml...'}
             </pre>
+
+            {manifests?.githubWorkflow && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-600 font-semibold">
+                    GitHub Actions Workflow (/.github/workflows/deploy-render.yml):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyText('gh_workflow', manifests.githubWorkflow)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+                  >
+                    {copiedKey === 'gh_workflow' ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    Workflow kopieren
+                  </button>
+                </div>
+                <pre className="p-3.5 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+                  {manifests.githubWorkflow}
+                </pre>
+              </div>
+            )}
           </div>
 
           {/* Box 3: Live Game-Server Whitelist Bridge Tester */}
@@ -905,7 +961,7 @@ git push origin ${cleanBranch}`;
                   EXTERNE GAME-SERVER SCHNITTSTELLE // WHITELIST API TEST
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                  REST-Endpunkt: /api/v1/whitelist/verify
+                  REST-Endpunkt: {resolveApiUrl(API_ENDPOINTS.WHITELIST_VERIFY)}
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Über diese öffentliche URL kann euer Gameserver (z. B. FiveM / RageMP / eigenes RP-System) jederzeit live prüfen, ob ein Officer-Konto freigeschaltet ist.

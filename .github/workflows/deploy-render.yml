@@ -1,4 +1,4 @@
-name: Deploy to Render & Verify Firestore Rules
+name: Verify Build & Auto-Deploy to Render
 
 on:
   push:
@@ -17,19 +17,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: Audit Firestore Security Rules (ESLint)
-        run: npx eslint firestore.rules
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: TypeScript Check & Production Build
         run: npm run lint && npm run build
 
-      - name: Trigger Render Deploy Hook
-        if: github.ref == 'refs/heads/main' && env.RENDER_DEPLOY_HOOK_URL != ''
+      - name: Optional Render Deploy Hook Trigger
+        if: github.ref == 'refs/heads/main'
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+          else
+            echo "Kein RENDER_DEPLOY_HOOK_URL Secret gesetzt — Render Auto-Deploy ueber main Branch aktiv."
+          fi

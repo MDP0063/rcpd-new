@@ -17,11 +17,13 @@ import {
 import {
   AdminAccountView,
   OfficerRole,
+  PortalBackupSnapshot,
   ROLE_HIERARCHY,
   UserProgressDoc,
   UserPublicProfile,
   WhitelistStatus
 } from '../types/portal';
+import { API_ENDPOINTS, apiFetch } from '../lib/api';
 
 interface AdminPersonnelConsoleProps {
   currentUser: UserPublicProfile;
@@ -104,61 +106,49 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
 
   const handleUpdateMyOwnCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const res = await fetch(`/api/admin/accounts/${currentUser.uid}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          username: myNewUsername.trim(),
-          password: myNewPassword
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Fehler beim Aktualisieren deiner Admin-Zugangsdaten.');
-        return;
-      }
-      await onRefreshState();
-      onStatusToast(`Deine Admin-Zugangsdaten (${myNewUsername}) wurden in Echtzeit aktualisiert.`);
-    } catch {
-      onStatusToast('Netzwerkfehler beim Speichern deiner Zugangsdaten.');
+    const res = await apiFetch(`${API_ENDPOINTS.ADMIN_ACCOUNTS}/${currentUser.uid}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        username: myNewUsername.trim(),
+        password: myNewPassword
+      })
+    });
+    if (!res.ok) {
+      onStatusToast(res.error || 'Fehler beim Aktualisieren deiner Admin-Zugangsdaten.');
+      return;
     }
+    await onRefreshState();
+    onStatusToast(`Deine Admin-Zugangsdaten (${myNewUsername}) wurden in Echtzeit aktualisiert.`);
   };
 
   const handleSaveAccount = async (uid: string) => {
-    try {
-      const res = await fetch(`/api/admin/accounts/${uid}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          username: editUsername.trim(),
-          password: editPassword,
-          displayName: editDisplayName.trim(),
-          badgeNumber: editBadge.trim().toUpperCase(),
-          callsign: editCallsign.trim(),
-          role: editRole,
-          rank: editRank.trim(),
-          division: editDivision.trim(),
-          whitelistStatus: editWhitelist,
-          discordTag: editDiscord.trim(),
-          supervisorNotes: editNotes
-        })
-      });
+    const res = await apiFetch(`${API_ENDPOINTS.ADMIN_ACCOUNTS}/${uid}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        username: editUsername.trim(),
+        password: editPassword,
+        displayName: editDisplayName.trim(),
+        badgeNumber: editBadge.trim().toUpperCase(),
+        callsign: editCallsign.trim(),
+        role: editRole,
+        rank: editRank.trim(),
+        division: editDivision.trim(),
+        whitelistStatus: editWhitelist,
+        discordTag: editDiscord.trim(),
+        supervisorNotes: editNotes
+      })
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Fehler beim Speichern des Kontos.');
-        return;
-      }
-
-      await onRefreshState();
-      setEditingUid(null);
-      onStatusToast(`Konto "${editUsername}" (Rang: ${editRole.toUpperCase()}) in Echtzeit aktualisiert.`);
-    } catch {
-      onStatusToast('Netzwerkfehler beim Speichern.');
+    if (!res.ok) {
+      onStatusToast(res.error || 'Fehler beim Speichern des Kontos.');
+      return;
     }
+
+    await onRefreshState();
+    setEditingUid(null);
+    onStatusToast(`Konto "${editUsername}" (Rang: ${editRole.toUpperCase()}) in Echtzeit aktualisiert.`);
   };
 
   const handleToggleSuspend = async (acc: AdminAccountView) => {
@@ -169,25 +159,23 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     const nextStatus: WhitelistStatus =
       acc.publicProfile.whitelistStatus === 'suspended' ? 'whitelisted' : 'suspended';
 
-    try {
-      const res = await fetch(`/api/admin/accounts/${acc.uid}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminUid: currentUser.uid,
-          whitelistStatus: nextStatus
-        })
-      });
-      if (res.ok) {
-        await onRefreshState();
-        onStatusToast(
-          nextStatus === 'suspended'
-            ? `Konto "${acc.username}" wurde sofort suspendiert.`
-            : `Suspendierung für "${acc.username}" aufgehoben (Aktiv).`
-        );
-      }
-    } catch {
-      onStatusToast('Fehler beim Ändern des Sperrstatus.');
+    const res = await apiFetch(`${API_ENDPOINTS.ADMIN_ACCOUNTS}/${acc.uid}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        adminUid: currentUser.uid,
+        whitelistStatus: nextStatus
+      })
+    });
+
+    if (res.ok) {
+      await onRefreshState();
+      onStatusToast(
+        nextStatus === 'suspended'
+          ? `Konto "${acc.username}" wurde sofort suspendiert.`
+          : `Suspendierung für "${acc.username}" aufgehoben (Aktiv).`
+      );
+    } else {
+      onStatusToast(res.error || 'Fehler beim Ändern des Sperrstatus.');
     }
   };
 
@@ -195,10 +183,10 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     e.preventDefault();
     const roleMeta = ROLE_HIERARCHY[newRole];
 
-    try {
-      const res = await fetch('/api/admin/accounts', {
+    const res = await apiFetch<{ ok: boolean; account: AdminAccountView }>(
+      API_ENDPOINTS.ADMIN_ACCOUNTS,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adminUid: currentUser.uid,
           username: newUsername.trim(),
@@ -213,27 +201,24 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           discordTag: newDiscord.trim() || `${newUsername.trim().toLowerCase()}#0001`,
           supervisorNotes: 'Vom Administrator persönlich erstellt.'
         })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Konto konnte nicht angelegt werden.');
-        return;
       }
+    );
 
-      await onRefreshState();
-      setNewUsername('');
-      setNewPassword('');
-      setNewDisplayName('');
-      setNewRole('trainee');
-      setNewBadge(`CA-${Math.floor(1000 + Math.random() * 8999)}`);
-      setShowCreateForm(false);
-      onStatusToast(
-        `Neues Konto "${data.account.username}" (Rolle: ${data.account.publicProfile.role.toUpperCase()}) angelegt.`
-      );
-    } catch {
-      onStatusToast('Serverfehler beim Anlegen des Benutzerkontos.');
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Konto konnte nicht angelegt werden.');
+      return;
     }
+
+    await onRefreshState();
+    setNewUsername('');
+    setNewPassword('');
+    setNewDisplayName('');
+    setNewRole('trainee');
+    setNewBadge(`CA-${Math.floor(1000 + Math.random() * 8999)}`);
+    setShowCreateForm(false);
+    onStatusToast(
+      `Neues Konto "${res.data.account.username}" (Rolle: ${res.data.account.publicProfile.role.toUpperCase()}) angelegt.`
+    );
   };
 
   const handleDeleteAccount = async (uid: string, username: string) => {
@@ -241,52 +226,42 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
       onStatusToast('Du kannst dein eigenes Administratorkonto nicht löschen.');
       return;
     }
-    try {
-      const res = await fetch(
-        `/api/admin/accounts/${uid}?adminUid=${encodeURIComponent(currentUser.uid)}`,
-        { method: 'DELETE' }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Konto konnte nicht gelöscht werden.');
-        return;
-      }
-      await onRefreshState();
-      setEditingUid(null);
-      onStatusToast(`Benutzerkonto "${username}" wurde dauerhaft gelöscht.`);
-    } catch {
-      onStatusToast('Fehler beim Löschen des Kontos.');
+    const res = await apiFetch(
+      `${API_ENDPOINTS.ADMIN_ACCOUNTS}/${uid}?adminUid=${encodeURIComponent(currentUser.uid)}`,
+      { method: 'DELETE' }
+    );
+    if (!res.ok) {
+      onStatusToast(res.error || 'Konto konnte nicht gelöscht werden.');
+      return;
     }
+    await onRefreshState();
+    setEditingUid(null);
+    onStatusToast(`Benutzerkonto "${username}" wurde dauerhaft gelöscht.`);
   };
 
   const onlineCount = adminAccounts.filter(a => a.isOnline).length;
   const quickRestoreRef = useRef<HTMLInputElement | null>(null);
 
   const handleQuickExportBackup = async () => {
-    try {
-      const res = await fetch(
-        `/api/admin/backup?adminUid=${encodeURIComponent(currentUser.uid)}`
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        onStatusToast(data.error || 'Backup-Export fehlgeschlagen.');
-        return;
-      }
-      const datePart = new Date().toISOString().slice(0, 10);
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ca-post-portal-backup-${datePart}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      await onRefreshState();
-      onStatusToast('Komplettes Datenbank-Backup (Konten, Passwörter, PDFs & Tests) heruntergeladen.');
-    } catch {
-      onStatusToast('Fehler beim Herunterladen des Backups.');
+    const res = await apiFetch<PortalBackupSnapshot>(
+      `${API_ENDPOINTS.ADMIN_BACKUP}?adminUid=${encodeURIComponent(currentUser.uid)}`
+    );
+    if (!res.ok || !res.data) {
+      onStatusToast(res.error || 'Backup-Export fehlgeschlagen.');
+      return;
     }
+    const datePart = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ca-post-portal-backup-${datePart}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    await onRefreshState();
+    onStatusToast('Komplettes Datenbank-Backup (Konten, Passwörter, PDFs & Tests) heruntergeladen.');
   };
 
   const handleQuickRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,22 +271,23 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     reader.onload = async () => {
       try {
         const parsed = JSON.parse(String(reader.result));
-        const res = await fetch('/api/admin/restore', {
+        const res = await apiFetch<{
+          ok: boolean;
+          summary: { accountsCount: number; modulesCount: number; examsCount: number };
+        }>(API_ENDPOINTS.ADMIN_RESTORE, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             adminUid: currentUser.uid,
             snapshot: parsed
           })
         });
-        const data = await res.json();
-        if (!res.ok) {
-          onStatusToast(data.error || 'Backup-Wiederherstellung fehlgeschlagen.');
+        if (!res.ok || !res.data) {
+          onStatusToast(res.error || 'Backup-Wiederherstellung fehlgeschlagen.');
           return;
         }
         await onRefreshState();
         onStatusToast(
-          `Backup wiederhergestellt (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} PDFs, ${data.summary.examsCount} Prüfungen).`
+          `Backup wiederhergestellt (${res.data.summary.accountsCount} Konten, ${res.data.summary.modulesCount} PDFs, ${res.data.summary.examsCount} Prüfungen).`
         );
       } catch {
         onStatusToast('Ungültige JSON-Backup-Datei.');
