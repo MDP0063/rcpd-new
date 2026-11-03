@@ -47,6 +47,26 @@ export function resolveApiUrl(endpointPath: string, customBaseOverride?: string)
   return `${base}${normalizedPath}`;
 }
 
+const AUTH_TOKEN_KEY = 'ca_post_officer_session_token_v1';
+
+/** Sitzungs-Token, das der Server beim Login ausstellt. */
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    else localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // Speicher nicht verfügbar (z. B. privater Modus): Anmeldung gilt dann nur bis zum Neuladen.
+  }
+}
+
 export interface ApiResponse<T = any> {
   ok: boolean;
   status: number;
@@ -68,6 +88,10 @@ export async function apiFetch<T = any>(
 
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json');
+  }
+  const token = getAuthToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
   if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');

@@ -2,6 +2,20 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import {
+  AttemptLimiter,
+  createSessionToken,
+  extractBearerToken,
+  findIdentityMismatch,
+  generatePassword,
+  hashPassword,
+  parseAllowedOrigins,
+  safeEqual,
+  tokenSignature,
+  validateNewPassword,
+  verifyPassword,
+  verifySessionToken
+} from './server/auth.ts';
 import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
@@ -37,7 +51,9 @@ const __dirname = path.dirname(__filename);
 export interface StoredAccountRecord {
   uid: string;
   username: string;
-  password: string;
+  passwordHash?: string;
+  /** Altlast aus älteren Datenbanken: wird beim Laden gehasht und entfernt. */
+  password?: string;
   isOnline: boolean;
   lastSeenIso: string;
   publicProfile: UserPublicProfile;
@@ -60,8 +76,11 @@ export interface PortalDatabaseState {
   deploymentConfig?: PortalDeploymentConfig;
 }
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
+const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
 // Online threshold: 45 seconds since last heartbeat or login
 const ONLINE_THRESHOLD_MS = 45 * 1000;
@@ -335,6 +354,38 @@ function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDo
   return unique;
 }
 
+function initialAdminPassword(): string {
+  const fromEnv = process.env.ADMIN_INITIAL_PASSWORD;
+  if (fromEnv && !validateNewPassword(fromEnv)) return fromEnv;
+  const generated = generatePassword();
+  console.warn(
+    '[Sicherheit] ADMIN_INITIAL_PASSWORD fehlt oder ist zu kurz. ' +
+      `Das Passwort für "Admin1" wurde zufällig erzeugt: ${generated}`
+  );
+  return generated;
+}
+
+/** Hasht Klartext-Passwörter aus älteren Datenbanken. Gibt true zurück, wenn etwas geändert wurde. */
+function migrateLegacyPasswords(state: PortalDatabaseState): boolean {
+  let changed = false;
+  for (const acc of state.accounts) {
+    if (typeof acc.password === 'string') {
+      if (!acc.passwordHash && acc.password.length > 0) {
+        acc.passwordHash = hashPassword(acc.password);
+      }
+      delete acc.password;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+/** Konto ohne Passwort-Felder, für Antworten an den Client. */
+function toAdminView(acc: StoredAccountRecord) {
+  const { password: _legacy, passwordHash: _hash, ...rest } = acc;
+  return rest;
+}
+
 function createInitialDatabase(): PortalDatabaseState {
   const nowIso = new Date().toISOString();
   const tomorrowIso = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
@@ -345,7 +396,7 @@ function createInitialDatabase(): PortalDatabaseState {
     {
       uid: 'usr_admin_1',
       username: 'Admin1',
-      password: '1234',
+      passwordHash: hashPassword(initialAdminPassword()),
       isOnline: false,
       lastSeenIso: nowIso,
       publicProfile: {
@@ -540,6 +591,9 @@ function loadDatabase(): PortalDatabaseState {
       return initial;
     }
     ensureDeploymentConfig(parsed);
+    if (migrateLegacyPasswords(parsed)) {
+      saveDatabase(parsed);
+    }
     return parsed;
   } catch {
     const initial = createInitialDatabase();
@@ -552,23 +606,123 @@ function saveDatabase(state: PortalDatabaseState) {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  fs.writeFileSync(DB_FILE, JSON.stringify(state, null, 2), 'utf8');
+  const tmpFile = `${DB_FILE}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+  fs.renameSync(tmpFile, DB_FILE);
 }
 
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
-  // Increase payload limit to 25MB so Admin/Colonel can upload PDF textbooks directly
-  app.use(express.json({ limit: '25mb' }));
+  // Hinter dem Render-Proxy kommt die echte Client-IP aus X-Forwarded-For.
+  app.set('trust proxy', 1);
 
-  // Standardized CORS headers for cross-origin or Render deployments using VITE_API_BASE_URL
+  const sessionSecret = process.env.SESSION_SECRET || '';
+  if (sessionSecret.length < 32) {
+    console.warn(
+      '[Sicherheit] SESSION_SECRET fehlt oder ist kürzer als 32 Zeichen. ' +
+        'Es wird ein zufälliger Wert verwendet; alle Sitzungen enden bei jedem Neustart.'
+    );
+  }
+  const SESSION_SECRET = sessionSecret.length >= 32 ? sessionSecret : generatePassword() + generatePassword();
+  const allowedOrigins = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
+  const whitelistApiKey = process.env.WHITELIST_API_KEY || '';
+  const loginByUser = new AttemptLimiter(8, 10 * 60 * 1000);
+  const loginByIp = new AttemptLimiter(40, 10 * 60 * 1000);
+  const revokedTokens = new Map<string, number>();
+
+  // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
   app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'same-origin');
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Api-Key');
+    }
     if (req.method === 'OPTIONS') {
       res.status(204).end();
+      return;
+    }
+    next();
+  });
+
+  const PUBLIC_ROUTES = new Set([
+    'GET /api/health',
+    'GET /api/v1/health',
+    'POST /api/auth/login'
+  ]);
+  const WHITELIST_ROUTES = new Set([
+    'GET /api/v1/whitelist/verify',
+    'GET /api/whitelist/verify'
+  ]);
+  const smallJson = express.json({ limit: '16kb' });
+  const largeJson = express.json({ limit: '25mb' });
+
+  // Schritt 1: Sitzung prüfen. Ohne gültiges Token gibt es nur die öffentlichen Routen.
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api/')) {
+      next();
+      return;
+    }
+    const routeKey = `${req.method} ${req.path}`;
+    if (PUBLIC_ROUTES.has(routeKey)) {
+      smallJson(req, res, next);
+      return;
+    }
+
+    // Die Whitelist-Abfrage darf auch ein Server mit API-Key stellen (z. B. die Roblox-Anbindung).
+    if (WHITELIST_ROUTES.has(routeKey) && whitelistApiKey) {
+      const key = req.headers['x-api-key'];
+      if (typeof key === 'string' && safeEqual(key, whitelistApiKey)) {
+        next();
+        return;
+      }
+    }
+
+    const token = extractBearerToken(req.headers.authorization);
+    const uid = token ? verifySessionToken(token, SESSION_SECRET) : null;
+    if (!token || !uid || revokedTokens.has(tokenSignature(token))) {
+      res.status(401).json({ error: 'Nicht angemeldet oder Sitzung abgelaufen.' });
+      return;
+    }
+    const account = loadDatabase().accounts.find(a => a.uid === uid);
+    if (!account) {
+      res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
+      return;
+    }
+    const status = account.publicProfile.whitelistStatus;
+    if (status === 'suspended' || status === 'revoked') {
+      res.status(403).json({ error: 'Dieses Dienstkonto ist gesperrt.' });
+      return;
+    }
+    res.locals.sessionUid = uid;
+    res.locals.sessionToken = token;
+    next();
+  });
+
+  // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
+  app.use('/api', (req, res, next) => {
+    if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
+      next();
+      return;
+    }
+    largeJson(req, res, next);
+  });
+
+  // Schritt 3: Der Client darf nur sich selbst als Absender angeben.
+  app.use('/api', (req, res, next) => {
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    if (!sessionUid) {
+      next();
+      return;
+    }
+    const mismatch = findIdentityMismatch(sessionUid, req.query, req.body);
+    if (mismatch) {
+      res.status(403).json({ error: 'Die Kennung stimmt nicht mit der angemeldeten Sitzung überein.' });
       return;
     }
     next();
@@ -588,23 +742,40 @@ async function startServer() {
   // 2. Login Endpoint (No public self-registration — only Admin creates accounts)
   app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body as { username?: string; password?: string };
-    if (!username || !password) {
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
       res.status(400).json({ error: 'Bitte Benutzername und Passwort eingeben.' });
       return;
     }
 
+    const ipKey = `ip:${req.ip}`;
+    const userKey = `user:${username.trim().toLowerCase()}`;
+    const waitMs = Math.max(loginByIp.retryAfterMs(ipKey), loginByUser.retryAfterMs(userKey));
+    if (waitMs > 0) {
+      res.setHeader('Retry-After', String(Math.ceil(waitMs / 1000)));
+      res.status(429).json({
+        error: 'Zu viele Anmeldeversuche. Bitte warte einige Minuten und versuche es erneut.'
+      });
+      return;
+    }
+
     const dbState = loadDatabase();
-    const matched = dbState.accounts.find(
-      a => a.username.toLowerCase() === username.trim().toLowerCase() && a.password === password
+    const candidate = dbState.accounts.find(
+      a => a.username.toLowerCase() === username.trim().toLowerCase()
     );
+    // Auch bei unbekanntem Benutzer wird gehasht, damit die Antwortzeit nichts verrät.
+    const passwordOk = verifyPassword(password, candidate?.passwordHash ?? DUMMY_HASH);
+    const matched = candidate && passwordOk ? candidate : undefined;
 
     if (!matched) {
+      loginByIp.recordFailure(ipKey);
+      loginByUser.recordFailure(userKey);
       res.status(401).json({
         error:
           'Ungültige Anmeldedaten. Neue Konten werden ausschließlich durch den Administrator vergeben.'
       });
       return;
     }
+    loginByUser.reset(userKey);
 
     if (
       matched.publicProfile.whitelistStatus === 'suspended' ||
@@ -625,12 +796,21 @@ async function startServer() {
 
     res.json({
       user: matched.publicProfile,
-      isAdmin: matched.publicProfile.role === 'admin'
+      isAdmin: matched.publicProfile.role === 'admin',
+      token: createSessionToken(matched.uid, SESSION_SECRET)
     });
   });
 
   // 3. Logout Endpoint (Marks account offline immediately)
   app.post('/api/auth/logout', (req, res) => {
+    const token = res.locals.sessionToken as string | undefined;
+    if (token) {
+      const nowMs = Date.now();
+      for (const [sig, expiresAt] of revokedTokens) {
+        if (expiresAt <= nowMs) revokedTokens.delete(sig);
+      }
+      revokedTokens.set(tokenSignature(token), nowMs + 12 * 60 * 60 * 1000);
+    }
     const { uid } = req.body as { uid?: string };
     if (uid) {
       const dbState = loadDatabase();
@@ -727,7 +907,6 @@ async function startServer() {
         ? dbState.accounts.map(a => ({
             uid: a.uid,
             username: a.username,
-            password: a.password,
             isOnline: computeIsOnline(a),
             lastSeenIso: a.lastSeenIso,
             publicProfile: {
@@ -815,6 +994,11 @@ async function startServer() {
       res.status(400).json({ error: 'Benutzername und Passwort sind Pflichtfelder.' });
       return;
     }
+    const passwordError = validateNewPassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
+      return;
+    }
 
     if (
       dbState.accounts.some(
@@ -825,7 +1009,7 @@ async function startServer() {
       return;
     }
 
-    const uid = `usr_${Date.now()}`;
+    const uid = `usr_${Date.now()}_${generatePassword().slice(0, 6)}`;
     const nowIso = new Date().toISOString();
     // Default role is ALWAYS 'trainee' unless explicitly chosen otherwise by Admin
     const targetRole: OfficerRole = (role as OfficerRole) || 'trainee';
@@ -835,7 +1019,7 @@ async function startServer() {
     const newAccount: StoredAccountRecord = {
       uid,
       username: String(username).trim(),
-      password: String(password),
+      passwordHash: hashPassword(String(password)),
       isOnline: false,
       lastSeenIso: nowIso,
       publicProfile: {
@@ -891,7 +1075,7 @@ async function startServer() {
       `Start-Rang: ${targetRole.toUpperCase()} (${newAccount.publicProfile.rank}) · Abteilung: ${newAccount.publicProfile.division}`
     );
     saveDatabase(dbState);
-    res.json({ account: newAccount });
+    res.json({ account: toAdminView(newAccount) });
   });
 
   // 6. ADMIN ONLY: Update Any Account (Including Admin1's own username & password, role, granularPermissions, status)
@@ -943,10 +1127,18 @@ async function startServer() {
       return;
     }
 
+    if (password !== undefined && String(password).length > 0) {
+      const passwordError = validateNewPassword(password);
+      if (passwordError) {
+        res.status(400).json({ error: passwordError });
+        return;
+      }
+    }
+
     const nowIso = new Date().toISOString();
     target.username = nextUsername;
     if (password !== undefined && String(password).length > 0) {
-      target.password = String(password);
+      target.passwordHash = hashPassword(String(password));
     }
 
     const nextRole: OfficerRole = (role as OfficerRole) || target.publicProfile.role;
@@ -1025,7 +1217,7 @@ async function startServer() {
     }
 
     saveDatabase(dbState);
-    res.json({ account: target });
+    res.json({ account: toAdminView(target) });
   });
 
   // 7. ADMIN ONLY: Delete Account
@@ -1512,8 +1704,7 @@ async function startServer() {
 
   // 10. Self Progress Tracking
   app.post('/api/progress', (req, res) => {
-    const { userId, targetId, targetType, targetTitle, courseCode, status, scorePercent } =
-      req.body;
+    const { userId, targetId, targetType, scorePercent } = req.body;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === userId);
     if (!caller) {
@@ -1521,16 +1712,65 @@ async function startServer() {
       return;
     }
 
+    if (typeof targetId !== 'string' || !targetId) {
+      res.status(400).json({ error: 'targetId fehlt.' });
+      return;
+    }
+
+    // Titel und Status bestimmt der Server aus dem gespeicherten Inhalt, nicht der Client.
+    let resolvedType: UserProgressDoc['targetType'];
+    let resolvedTitle: string;
+    let resolvedStatus: UserProgressDoc['status'];
+    let resolvedScore: number;
+
+    if (targetType === 'module') {
+      const mod = dbState.modules.find(m => m.id === targetId);
+      if (!mod) {
+        res.status(404).json({ error: 'Lehrmaterial nicht gefunden.' });
+        return;
+      }
+      resolvedType = 'module';
+      resolvedTitle = mod.title;
+      resolvedStatus = 'completed';
+      resolvedScore = 100;
+    } else if (targetType === 'test' || targetType === 'final_exam') {
+      const exam = dbState.exams.find(e => e.id === targetId);
+      const score = Number(scorePercent);
+      if (!exam) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (!Number.isFinite(score) || score < 0 || score > 100) {
+        res.status(400).json({ error: 'scorePercent muss zwischen 0 und 100 liegen.' });
+        return;
+      }
+      resolvedType = targetType;
+      resolvedTitle = exam.title;
+      resolvedScore = Math.round(score);
+      resolvedStatus = resolvedScore >= exam.passingScore ? 'passed' : 'failed';
+    } else {
+      res.status(400).json({ error: 'Ungültiger targetType.' });
+      return;
+    }
+
     const existingIdx = dbState.progress.findIndex(
-      p => p.userId === userId && p.targetId === targetId && p.targetType === targetType
+      p => p.userId === userId && p.targetId === targetId && p.targetType === resolvedType
     );
+
+    // Eine Note, die ein Ausbilder vergeben hat, kann der Teilnehmer nicht selbst überschreiben.
+    if (existingIdx !== -1 && dbState.progress[existingIdx].evaluatedByName) {
+      res.status(409).json({
+        error: 'Dieser Eintrag wurde von einem Ausbilder bewertet und kann nicht überschrieben werden.'
+      });
+      return;
+    }
 
     const nowIso = new Date().toISOString();
     if (existingIdx !== -1) {
       dbState.progress[existingIdx] = {
         ...dbState.progress[existingIdx],
-        status,
-        scorePercent: Number(scorePercent),
+        status: resolvedStatus,
+        scorePercent: resolvedScore,
         attempts: dbState.progress[existingIdx].attempts + 1,
         updatedIso: nowIso
       };
@@ -1540,11 +1780,10 @@ async function startServer() {
         userId: caller.uid,
         userName: caller.publicProfile.displayName,
         targetId,
-        targetType,
-        targetTitle,
-        courseCode: courseCode ? String(courseCode).toUpperCase() : undefined,
-        status,
-        scorePercent: Number(scorePercent),
+        targetType: resolvedType,
+        targetTitle: resolvedTitle,
+        status: resolvedStatus,
+        scorePercent: resolvedScore,
         attempts: 1,
         updatedIso: nowIso
       });
@@ -1553,6 +1792,7 @@ async function startServer() {
     saveDatabase(dbState);
     res.json({ ok: true });
   });
+
 
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
   app.get(['/api/v1/whitelist/verify', '/api/whitelist/verify'], (req, res) => {
@@ -1838,6 +2078,8 @@ jobs:
         updatedIso: nowIso
       }
     };
+
+    migrateLegacyPasswords(nextState);
 
     appendAuditLog(
       nextState,

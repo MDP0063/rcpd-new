@@ -72,7 +72,7 @@ import { AuditTrailConsole } from './components/AuditTrailConsole';
 import { ReportsExportCenter } from './components/ReportsExportCenter';
 import { CommandPaletteModal, CommandTargetSection } from './components/CommandPaletteModal';
 import { ProfessionalDevelopmentModule } from './components/ProfessionalDevelopmentModule';
-import { API_ENDPOINTS, apiFetch } from './lib/api';
+import { API_ENDPOINTS, apiFetch, setAuthToken } from './lib/api';
 
 type ActiveSection = CommandTargetSection;
 
@@ -230,6 +230,7 @@ export default function App() {
 
       if (!res.ok || !res.data) {
         if (res.status === 401 || res.status === 403) {
+          setAuthToken(null);
           localStorage.removeItem(SESSION_STORAGE_KEY);
           setSessionUid(null);
           setCurrentUserProfile(null);
@@ -315,7 +316,7 @@ export default function App() {
 
     setAuthLoading(true);
 
-    const res = await apiFetch<{ user: UserPublicProfile; isAdmin: boolean }>(
+    const res = await apiFetch<{ user: UserPublicProfile; isAdmin: boolean; token: string }>(
       API_ENDPOINTS.AUTH_LOGIN,
       {
         method: 'POST',
@@ -339,6 +340,7 @@ export default function App() {
     const loggedInUser = res.data.user;
     initialLoadCompleteRef.current = false;
     seenNotificationIdsRef.current.clear();
+    setAuthToken(res.data.token);
     localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
     setSessionUid(loggedInUser.uid);
     setCurrentUserProfile(loggedInUser);
@@ -359,6 +361,7 @@ export default function App() {
           body: JSON.stringify({ uid: sessionUid })
         });
       }
+      setAuthToken(null);
       localStorage.removeItem(SESSION_STORAGE_KEY);
       setSessionUid(null);
       setCurrentUserProfile(null);
