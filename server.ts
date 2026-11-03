@@ -6,6 +6,8 @@ import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
   OfficerRole,
+  PortalBackupSnapshot,
+  PortalDeploymentConfig,
   ROLE_HIERARCHY,
   TrainingModuleDoc,
   UserPrivateProfile,
@@ -35,6 +37,7 @@ export interface PortalDatabaseState {
   modules: TrainingModuleDoc[];
   exams: AcademyExamDoc[];
   progress: UserProgressDoc[];
+  deploymentConfig?: PortalDeploymentConfig;
 }
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -92,8 +95,32 @@ function createInitialDatabase(): PortalDatabaseState {
     applications: [],
     modules: [], // Empty by default so Admin/Colonel can upload PDFs / Textbooks dynamically
     exams: [],   // Empty by default so Admin/Colonel can add Tests & Final Exams as code dynamically
-    progress: []
+    progress: [],
+    deploymentConfig: {
+      githubRepoUrl: 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git',
+      renderServiceUrl: '',
+      renderDeployHookUrl: '',
+      branchName: 'main',
+      autoDeployEnabled: true,
+      completedSteps: [],
+      updatedIso: nowIso
+    }
   };
+}
+
+function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentConfig {
+  if (!state.deploymentConfig) {
+    state.deploymentConfig = {
+      githubRepoUrl: 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git',
+      renderServiceUrl: '',
+      renderDeployHookUrl: '',
+      branchName: 'main',
+      autoDeployEnabled: true,
+      completedSteps: [],
+      updatedIso: new Date().toISOString()
+    };
+  }
+  return state.deploymentConfig;
 }
 
 function loadDatabase(): PortalDatabaseState {
@@ -113,6 +140,7 @@ function loadDatabase(): PortalDatabaseState {
       fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf8');
       return initial;
     }
+    ensureDeploymentConfig(parsed);
     return parsed;
   } catch {
     const initial = createInitialDatabase();
@@ -283,7 +311,19 @@ async function startServer() {
       exams: visibleExams,
       progress: isAdmin || caller.publicProfile.role === 'colonel'
         ? dbState.progress
-        : dbState.progress.filter(p => p.userId === caller.uid)
+        : dbState.progress.filter(p => p.userId === caller.uid),
+      deploymentConfig: isAdmin ? ensureDeploymentConfig(dbState) : undefined,
+      dbStats: isAdmin
+        ? {
+            accountsCount: dbState.accounts.length,
+            onlineCount: dbState.accounts.filter(a => computeIsOnline(a)).length,
+            modulesCount: dbState.modules.length,
+            examsCount: dbState.exams.length,
+            applicationsCount: dbState.applications.length,
+            progressCount: dbState.progress.length,
+            sizeBytes: fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0
+          }
+        : undefined
     });
   });
 
@@ -819,14 +859,19 @@ async function startServer() {
     });
   });
 
-  // Generate Render.com Blueprint & GitHub Actions CI/CD manifest dynamically
+  // Generate Render.com Blueprint (Free Tier + Auto-Deploy on main) & GitHub Actions CI/CD manifest
   app.get('/api/v1/deployment/manifests', (_req, res) => {
+    const dbState = loadDatabase();
+    const cfg = ensureDeploymentConfig(dbState);
+
     const renderYaml = `services:
   - type: web
     name: ca-post-officer-portal
     runtime: node
-    plan: starter
+    plan: free
     region: frankfurt
+    branch: ${cfg.branchName || 'main'}
+    autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
@@ -836,13 +881,13 @@ async function startServer() {
       - key: PORT
         value: 3000`;
 
-    const githubWorkflow = `name: Deploy to Render & Verify Build
+    const githubWorkflow = `name: Verify Build & Auto-Deploy to Render
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "${cfg.branchName || 'main'}" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "${cfg.branchName || 'main'}" ]
 
 jobs:
   build-and-verify:
@@ -863,16 +908,211 @@ jobs:
       - name: TypeScript Check & Production Build
         run: npm run lint && npm run build
 
-      - name: Trigger Render Deploy Hook
-        if: github.ref == 'refs/heads/main' && env.RENDER_DEPLOY_HOOK_URL != ''
+      - name: Optional Render Deploy Hook Trigger
+        if: github.ref == 'refs/heads/${cfg.branchName || 'main'}' && env.RENDER_DEPLOY_HOOK_URL != ''
         env:
           RENDER_DEPLOY_HOOK_URL: \${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"`;
 
     res.json({
       renderYaml,
-      githubWorkflow
+      githubWorkflow,
+      deploymentConfig: cfg
     });
+  });
+
+  // ADMIN ONLY: Update GitHub Repository URL, Render Service URL & Setup Checklist Progress
+  app.put('/api/admin/deployment-config', (req, res) => {
+    const {
+      adminUid,
+      githubRepoUrl,
+      renderServiceUrl,
+      renderDeployHookUrl,
+      branchName,
+      autoDeployEnabled,
+      completedSteps
+    } = req.body;
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === adminUid);
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Nur der Administrator kann die Deployment-Konfiguration ändern.' });
+      return;
+    }
+
+    const cfg = ensureDeploymentConfig(dbState);
+    if (typeof githubRepoUrl === 'string') cfg.githubRepoUrl = githubRepoUrl.trim();
+    if (typeof renderServiceUrl === 'string') cfg.renderServiceUrl = renderServiceUrl.trim();
+    if (typeof renderDeployHookUrl === 'string') cfg.renderDeployHookUrl = renderDeployHookUrl.trim();
+    if (typeof branchName === 'string' && branchName.trim()) cfg.branchName = branchName.trim();
+    if (typeof autoDeployEnabled === 'boolean') cfg.autoDeployEnabled = autoDeployEnabled;
+    if (Array.isArray(completedSteps)) cfg.completedSteps = completedSteps.map(String);
+    cfg.updatedIso = new Date().toISOString();
+
+    saveDatabase(dbState);
+    res.json({ ok: true, deploymentConfig: cfg });
+  });
+
+  // ADMIN ONLY: 1-Click Full Database Backup Export (Accounts, Passwords, PDFs, Tests, Progress)
+  app.get('/api/admin/backup', (req, res) => {
+    const adminUid = String(req.query.adminUid || '');
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === adminUid);
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Zugriff verweigert. Nur der Administrator kann Datenbank-Backups exportieren.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const cfg = ensureDeploymentConfig(dbState);
+    cfg.lastBackupExportIso = nowIso;
+    cfg.updatedIso = nowIso;
+    saveDatabase(dbState);
+
+    const snapshot: PortalBackupSnapshot = {
+      snapshotFormat: 'CA_POST_PORTAL_BACKUP_V3',
+      exportedAtIso: nowIso,
+      exportedByUsername: caller.username,
+      summary: {
+        accountsCount: dbState.accounts.length,
+        modulesCount: dbState.modules.length,
+        examsCount: dbState.exams.length,
+        applicationsCount: dbState.applications.length,
+        progressCount: dbState.progress.length
+      },
+      database: {
+        version: dbState.version || 3,
+        accounts: dbState.accounts,
+        applications: dbState.applications,
+        modules: dbState.modules,
+        exams: dbState.exams,
+        progress: dbState.progress,
+        deploymentConfig: cfg
+      }
+    };
+
+    res.json(snapshot);
+  });
+
+  // ADMIN ONLY: 1-Click Full Database Restore (Safeguards Admin access & restores all Accounts, PDFs, Tests)
+  app.post('/api/admin/restore', (req, res) => {
+    const { adminUid, snapshot } = req.body as {
+      adminUid?: string;
+      snapshot?: Partial<PortalBackupSnapshot> & Partial<PortalDatabaseState>;
+    };
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === adminUid);
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Zugriff verweigert. Nur der Administrator kann ein Datenbank-Backup einspielen.' });
+      return;
+    }
+
+    if (!snapshot || typeof snapshot !== 'object') {
+      res.status(400).json({ error: 'Ungültige Backup-Datei.' });
+      return;
+    }
+
+    // Accept either wrapped PortalBackupSnapshot ({ database: { ... } }) or raw PortalDatabaseState
+    const rawDb = (snapshot.database ? snapshot.database : snapshot) as Partial<PortalDatabaseState>;
+    if (!Array.isArray(rawDb.accounts) || rawDb.accounts.length === 0) {
+      res.status(400).json({
+        error: 'Die Backup-Datei enthält keine gültigen Benutzerkonten (accounts).'
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const restoredAccounts: StoredAccountRecord[] = rawDb.accounts.map(acc => ({
+      ...acc,
+      isOnline: acc.uid === caller.uid ? true : Boolean(acc.isOnline),
+      lastSeenIso: acc.uid === caller.uid ? nowIso : acc.lastSeenIso || nowIso,
+      publicProfile: {
+        ...acc.publicProfile,
+        isOnline: acc.uid === caller.uid ? true : Boolean(acc.publicProfile?.isOnline),
+        lastSeenIso: acc.uid === caller.uid ? nowIso : acc.publicProfile?.lastSeenIso || nowIso
+      }
+    }));
+
+    // Safety guarantee: Ensure the currently logged-in Admin account still exists so Admin never locks themselves out
+    if (!restoredAccounts.some(a => a.uid === caller.uid)) {
+      restoredAccounts.unshift({
+        ...caller,
+        isOnline: true,
+        lastSeenIso: nowIso
+      });
+    }
+
+    const currentCfg = ensureDeploymentConfig(dbState);
+    const incomingCfg = rawDb.deploymentConfig || currentCfg;
+
+    const nextState: PortalDatabaseState = {
+      version: 3,
+      accounts: restoredAccounts,
+      applications: Array.isArray(rawDb.applications) ? rawDb.applications : [],
+      modules: Array.isArray(rawDb.modules) ? rawDb.modules : [],
+      exams: Array.isArray(rawDb.exams) ? rawDb.exams : [],
+      progress: Array.isArray(rawDb.progress) ? rawDb.progress : [],
+      deploymentConfig: {
+        ...currentCfg,
+        ...incomingCfg,
+        lastBackupRestoreIso: nowIso,
+        updatedIso: nowIso
+      }
+    };
+
+    saveDatabase(nextState);
+
+    res.json({
+      ok: true,
+      restoredAtIso: nowIso,
+      summary: {
+        accountsCount: nextState.accounts.length,
+        modulesCount: nextState.modules.length,
+        examsCount: nextState.exams.length,
+        applicationsCount: nextState.applications.length,
+        progressCount: nextState.progress.length
+      }
+    });
+  });
+
+  // ADMIN ONLY: Optional Render Deploy Hook Trigger
+  app.post('/api/admin/trigger-deploy', async (req, res) => {
+    const { adminUid, deployHookUrl } = req.body as { adminUid?: string; deployHookUrl?: string };
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === adminUid);
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Nur der Administrator kann einen Render-Deploy auslösen.' });
+      return;
+    }
+
+    const cfg = ensureDeploymentConfig(dbState);
+    const targetHook = (deployHookUrl || cfg.renderDeployHookUrl || '').trim();
+    if (!targetHook || !targetHook.startsWith('https://api.render.com/deploy/')) {
+      res.status(400).json({
+        error: 'Bitte eine gültige Render Deploy Hook URL (beginnend mit https://api.render.com/deploy/...) hinterlegen.'
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(targetHook, { method: 'POST' });
+      if (!response.ok) {
+        res.status(502).json({
+          error: `Render hat den Deploy-Hook mit Status ${response.status} abgelehnt.`
+        });
+        return;
+      }
+      res.json({
+        ok: true,
+        triggeredAtIso: new Date().toISOString(),
+        message: 'Render Deployment erfolgreich angestoßen.'
+      });
+    } catch {
+      res.status(500).json({
+        error: 'Verbindung zur Render Deploy Hook URL fehlgeschlagen.'
+      });
+    }
   });
 
   const distPath = path.join(__dirname, 'dist');

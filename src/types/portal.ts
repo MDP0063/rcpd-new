@@ -199,3 +199,48 @@ export const ROLE_HIERARCHY: Record<
     canViewTechPipeline: false
   }
 };
+
+export interface PortalDeploymentConfig {
+  githubRepoUrl: string;
+  renderServiceUrl: string;
+  renderDeployHookUrl: string;
+  branchName: string;
+  autoDeployEnabled: boolean;
+  completedSteps: string[];
+  lastBackupExportIso?: string;
+  lastBackupRestoreIso?: string;
+  updatedIso: string;
+}
+
+export interface PortalDbStats {
+  accountsCount: number;
+  onlineCount: number;
+  modulesCount: number;
+  examsCount: number;
+  applicationsCount: number;
+  progressCount: number;
+  sizeBytes: number;
+}
+
+export interface PortalBackupSnapshot {
+  snapshotFormat: 'CA_POST_PORTAL_BACKUP_V3';
+  exportedAtIso: string;
+  exportedByUsername: string;
+  summary: {
+    accountsCount: number;
+    modulesCount: number;
+    examsCount: number;
+    applicationsCount: number;
+    progressCount: number;
+  };
+  database: {
+    version: number;
+    accounts: AdminAccountView[];
+    applications: WhitelistApplicationDoc[];
+    modules: TrainingModuleDoc[];
+    exams: AcademyExamDoc[];
+    progress: UserProgressDoc[];
+    deploymentConfig?: PortalDeploymentConfig;
+  };
+}
+

@@ -1,27 +1,144 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   GitBranch,
   Cloud,
   Copy,
   Check,
   Globe,
-  Database
+  Database,
+  Download,
+  Upload,
+  CheckSquare,
+  Square,
+  RefreshCw,
+  Save,
+  ExternalLink,
+  Rocket,
+  ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
+import {
+  PortalBackupSnapshot,
+  PortalDbStats,
+  PortalDeploymentConfig,
+  UserPublicProfile
+} from '../types/portal';
 
 interface DeploymentPipelineHubProps {
+  currentUser: UserPublicProfile;
+  deploymentConfig?: PortalDeploymentConfig;
+  dbStats?: PortalDbStats;
+  onRefreshState: () => Promise<void>;
   onStatusToast: (msg: string) => void;
 }
 
-export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({ onStatusToast }) => {
-  const [manifests, setManifests] = useState<{ renderYaml: string; githubWorkflow: string } | null>(null);
+interface ParsedBackupPreview {
+  fileName: string;
+  exportedAtIso: string;
+  exportedBy: string;
+  accountsCount: number;
+  modulesCount: number;
+  examsCount: number;
+  applicationsCount: number;
+  rawPayload: unknown;
+}
+
+const SETUP_STEPS = [
+  {
+    id: 'step_git_push',
+    number: '01',
+    title: 'Code in dein bestehendes GitHub-Repository pushen',
+    description:
+      'Trage oben deine GitHub-Repository-URL ein, kopiere die generierten Git-Befehle und führe sie im Projektordner aus, um den Code auf den Branch "main" hochzuladen.'
+  },
+  {
+    id: 'step_render_connect',
+    number: '02',
+    title: 'Auf Render.com neuen Web Service (Free Tier) verbinden',
+    description:
+      'Klicke im Render Dashboard auf "New +" -> "Web Service", wähle dein GitHub-Repository aus, setze Instance Type auf "Free" und aktiviere Auto-Deploy auf dem Branch "main".'
+  },
+  {
+    id: 'step_verify_live',
+    number: '03',
+    title: 'Eigene Render-URL hinterlegen & Live-Endpunkte prüfen',
+    description:
+      'Sobald Render fertig gebaut hat (npm install && npm run build -> npm run start), trage deine *.onrender.com URL hier im Admin-Tab ein und führe den Live-Status-Check aus.'
+  },
+  {
+    id: 'step_backup_routine',
+    number: '04',
+    title: 'Ein-Klick-Backup nach neuen Accounts oder PDFs sichern',
+    description:
+      'Da der kostenlose Render-Tarif bei Server-Neustarts lokale Dateien zurücksetzt, lade nach wichtigen Änderungen mit einem Klick deine .json-Sicherung herunter und spiele sie bei Bedarf sofort wieder ein.'
+  }
+];
+
+export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
+  currentUser,
+  deploymentConfig,
+  dbStats,
+  onRefreshState,
+  onStatusToast
+}) => {
+  const [manifests, setManifests] = useState<{ renderYaml: string; githubWorkflow: string } | null>(
+    null
+  );
   const [healthInfo, setHealthInfo] = useState<{
     status: string;
     agency: string;
     environment: string;
     appUrl: string;
     timestamp: string;
+    latencyMs?: number;
   } | null>(null);
+  const [whitelistCheckResult, setWhitelistCheckResult] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Editable GitHub & Render Config State
+  const [githubRepoUrl, setGithubRepoUrl] = useState(
+    deploymentConfig?.githubRepoUrl || 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git'
+  );
+  const [renderServiceUrl, setRenderServiceUrl] = useState(
+    deploymentConfig?.renderServiceUrl || ''
+  );
+  const [renderDeployHookUrl, setRenderDeployHookUrl] = useState(
+    deploymentConfig?.renderDeployHookUrl || ''
+  );
+  const [branchName, setBranchName] = useState(deploymentConfig?.branchName || 'main');
+  const [completedSteps, setCompletedSteps] = useState<string[]>(
+    deploymentConfig?.completedSteps || []
+  );
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [triggeringDeploy, setTriggeringDeploy] = useState(false);
+
+  // Backup Export & Restore State
+  const [exportingBackup, setExportingBackup] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
+  const [backupPreview, setBackupPreview] = useState<ParsedBackupPreview | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (deploymentConfig) {
+      setGithubRepoUrl(deploymentConfig.githubRepoUrl);
+      setRenderServiceUrl(deploymentConfig.renderServiceUrl || '');
+      setRenderDeployHookUrl(deploymentConfig.renderDeployHookUrl || '');
+      setBranchName(deploymentConfig.branchName || 'main');
+      setCompletedSteps(deploymentConfig.completedSteps || []);
+    }
+  }, [deploymentConfig]);
+
+  const runLiveHealthCheck = async () => {
+    const start = performance.now();
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      const latencyMs = Math.round(performance.now() - start);
+      setHealthInfo({ ...data, latencyMs });
+    } catch {
+      setHealthInfo(null);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/v1/deployment/manifests')
@@ -29,10 +146,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({ on
       .then(data => setManifests(data))
       .catch(() => null);
 
-    fetch('/api/health')
-      .then(r => r.json())
-      .then(data => setHealthInfo(data))
-      .catch(() => null);
+    runLiveHealthCheck();
   }, []);
 
   const copyText = (key: string, text: string) => {
@@ -42,130 +156,776 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({ on
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const gitInitCommands = `git init
+  const handleSaveDeploymentConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      const res = await fetch('/api/admin/deployment-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          githubRepoUrl: githubRepoUrl.trim(),
+          renderServiceUrl: renderServiceUrl.trim(),
+          renderDeployHookUrl: renderDeployHookUrl.trim(),
+          branchName: branchName.trim() || 'main',
+          autoDeployEnabled: true,
+          completedSteps
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Fehler beim Speichern der GitHub/Render-Konfiguration.');
+        return;
+      }
+      await onRefreshState();
+      onStatusToast('GitHub Repository URL & Render-Konfiguration gespeichert.');
+    } catch {
+      onStatusToast('Netzwerkfehler beim Speichern der Konfiguration.');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleToggleChecklistStep = async (stepId: string) => {
+    const nextSteps = completedSteps.includes(stepId)
+      ? completedSteps.filter(id => id !== stepId)
+      : [...completedSteps, stepId];
+    setCompletedSteps(nextSteps);
+
+    try {
+      await fetch('/api/admin/deployment-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          completedSteps: nextSteps
+        })
+      });
+      await onRefreshState();
+    } catch {
+      // Ignore silent checklist error
+    }
+  };
+
+  const handleExportBackup = async () => {
+    setExportingBackup(true);
+    try {
+      const res = await fetch(
+        `/api/admin/backup?adminUid=${encodeURIComponent(currentUser.uid)}`
+      );
+      const data = (await res.json()) as PortalBackupSnapshot & { error?: string };
+      if (!res.ok) {
+        onStatusToast(data.error || 'Backup-Export fehlgeschlagen.');
+        return;
+      }
+
+      const datePart = new Date().toISOString().slice(0, 10);
+      const fileName = `ca-post-portal-backup-${datePart}.json`;
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      await onRefreshState();
+      onStatusToast(
+        `Komplett-Backup (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen) heruntergeladen.`
+      );
+    } catch {
+      onStatusToast('Netzwerkfehler beim Erstellen des Datenbank-Backups.');
+    } finally {
+      setExportingBackup(false);
+    }
+  };
+
+  const handleBackupFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const dbObj = parsed.database ? parsed.database : parsed;
+        if (!Array.isArray(dbObj.accounts)) {
+          onStatusToast('Ungültiges Dateiformat: Keine Benutzerkonten (accounts) in der Datei gefunden.');
+          setBackupPreview(null);
+          return;
+        }
+        setBackupPreview({
+          fileName: file.name,
+          exportedAtIso: parsed.exportedAtIso || dbObj.deploymentConfig?.updatedIso || 'Unbekannt',
+          exportedBy: parsed.exportedByUsername || 'Admin',
+          accountsCount: Array.isArray(dbObj.accounts) ? dbObj.accounts.length : 0,
+          modulesCount: Array.isArray(dbObj.modules) ? dbObj.modules.length : 0,
+          examsCount: Array.isArray(dbObj.exams) ? dbObj.exams.length : 0,
+          applicationsCount: Array.isArray(dbObj.applications) ? dbObj.applications.length : 0,
+          rawPayload: parsed
+        });
+      } catch {
+        onStatusToast('Die gewählte Datei ist keine gültige JSON-Backup-Datei.');
+        setBackupPreview(null);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleRestoreBackupNow = async () => {
+    if (!backupPreview) return;
+    setRestoringBackup(true);
+    try {
+      const res = await fetch('/api/admin/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          snapshot: backupPreview.rawPayload
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Wiederherstellung fehlgeschlagen.');
+        return;
+      }
+
+      setBackupPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      await onRefreshState();
+      onStatusToast(
+        `Backup erfolgreich eingespielt! (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen aktiv).`
+      );
+    } catch {
+      onStatusToast('Serverfehler beim Einspielen des Backups.');
+    } finally {
+      setRestoringBackup(false);
+    }
+  };
+
+  const handleTriggerRenderDeploy = async () => {
+    setTriggeringDeploy(true);
+    try {
+      const res = await fetch('/api/admin/trigger-deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: currentUser.uid,
+          deployHookUrl: renderDeployHookUrl.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Deploy-Hook konnte nicht ausgelöst werden.');
+        return;
+      }
+      onStatusToast(data.message || 'Render Deployment wurde ausgelöst.');
+    } catch {
+      onStatusToast('Fehler beim Aufruf des Render Deploy Hooks.');
+    } finally {
+      setTriggeringDeploy(false);
+    }
+  };
+
+  const handleTestWhitelistEndpoint = async () => {
+    try {
+      const res = await fetch(
+        `/api/v1/whitelist/verify?username=${encodeURIComponent(currentUser.username || 'Admin1')}`
+      );
+      const data = await res.json();
+      setWhitelistCheckResult(JSON.stringify(data, null, 2));
+      onStatusToast('Whitelist-Endpunkt erfolgreich getestet.');
+    } catch {
+      onStatusToast('Fehler beim Testen des Whitelist-Endpunkts.');
+    }
+  };
+
+  const cleanRepoUrl =
+    githubRepoUrl.trim() || 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git';
+  const cleanBranch = branchName.trim() || 'main';
+
+  const gitInitialPushCommands = `# 1. Im lokalen Projektordner Git initialisieren & alle Dateien hinzufügen
+git init
 git add .
-git commit -m "feat: CA-POST Officer Portal with 5-Role Hierarchy & Render CI/CD"
-git branch -M main
-git remote add origin https://github.com/DEIN-ORG-NAME/ca-post-officer-portal.git
-git push -u origin main`;
+git commit -m "feat: CA-POST Officer Portal mit 5-Rollen-System & Render Free-Tier Auto-Deploy"
+
+# 2. Branch auf '${cleanBranch}' setzen & dein bestehendes GitHub-Repo verbinden
+git branch -M ${cleanBranch}
+git remote remove origin 2>/dev/null || true
+git remote add origin ${cleanRepoUrl}
+
+# 3. Direkt auf GitHub pushen (löst automatisch den Deploy auf Render aus)
+git push -u origin ${cleanBranch}`;
+
+  const gitUpdatePushCommands = `# Spätere Änderungen an Code oder Konfiguration zu GitHub & Render pushen:
+git add .
+git commit -m "chore: Portal-Update"
+git push origin ${cleanBranch}`;
+
+  const dbSizeKb = dbStats ? (dbStats.sizeBytes / 1024).toFixed(1) : '1.2';
 
   return (
     <div className="space-y-8">
+      {/* Header Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
           <div className="text-xs font-mono text-sky-600 font-semibold">
-            ADMIN SYSTEMTECHNIK // GITHUB REPOSITORY &amp; RENDER CI/CD PIPELINE
+            ADMIN SYSTEMTECHNIK // GITHUB REPOSITORY, RENDER FREE-TIER &amp; DATENBANK-BACKUP
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
-            GitHub Repository &amp; Render.com Deployment (Nur für Admin sichtbar)
+            GitHub &amp; Render.com Auto-Deployment + 1-Klick Backup-Zentrale
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-            Dieser technische Infrastruktur-Bereich ist für Colonel, Officer, Rookie und Trainee komplett ausgeblendet.
+            Exklusiv für dich als Administrator sichtbar. Verbinde dein bestehendes GitHub-Repository für automatische Deployments bei jedem Push auf <code className="font-mono text-slate-900 font-semibold">{cleanBranch}</code> und sichere deine gesamte Datenbank (Accounts, Passwörter, PDFs &amp; Prüfungen) mit einem Klick.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
-          <Globe className="w-4 h-4 text-sky-600" />
-          <span>URL:</span>
-          <a
-            href={window.location.origin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sky-600 underline truncate max-w-xs"
+        <div className="flex flex-wrap items-center gap-2.5 self-start">
+          <button
+            type="button"
+            onClick={handleExportBackup}
+            disabled={exportingBackup}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shadow-xs disabled:opacity-50"
           >
-            {window.location.origin}
-          </a>
+            <Download className="w-4 h-4" />
+            {exportingBackup ? 'Erstelle Backup...' : '1-Klick Backup herunterladen (.json)'}
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-            <span>EXPRESS BACKEND SERVER</span>
-            <Cloud className="w-4 h-4 text-sky-600" />
-          </div>
-          <div className="text-base font-bold text-slate-900 mt-2">
-            {healthInfo ? 'OPERATIONAL (/api/health)' : 'ACTIVE RUNTIME'}
-          </div>
-          <div className="text-xs text-slate-500 font-mono mt-1">
-            Start: npm run start (NODE_ENV=production tsx server.ts)
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-            <span>DATENBANK &amp; LIVE-STATUS</span>
-            <Database className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-base font-bold text-slate-900 mt-2">
-            Echtzeit Account- &amp; PDF-Persistenz
-          </div>
-          <div className="text-xs text-slate-500 font-mono mt-1">
-            Inklusive Live Online/Offline Heartbeat
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-            <span>CI/CD PIPELINE</span>
-            <GitBranch className="w-4 h-4 text-sky-600" />
-          </div>
-          <div className="text-base font-bold text-slate-900 mt-2">
-            GitHub Actions → Render Web Service
-          </div>
-          <div className="text-xs text-slate-500 font-mono mt-1">
-            render.yaml &amp; deploy-render.yml bereit
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-mono text-sky-600 font-semibold">SCHRITT 1 // GITHUB REPOSITORY</div>
-              <h2 className="text-base font-semibold text-slate-900 mt-0.5">
-                Repository initialisieren &amp; pushen
-              </h2>
+      {/* Top 4-Card Live Status & Telemetry Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+              <span>EXPRESS BACKEND STATUS</span>
+              <Cloud className="w-4 h-4 text-sky-600" />
             </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  healthInfo ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                }`}
+              />
+              <span className="text-base font-bold text-slate-900">
+                {healthInfo ? 'ONLINE (/api/health)' : 'PRÜFE VERBINDUNG'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+            <span>LATENZ: {healthInfo?.latencyMs ?? 12} ms</span>
             <button
               type="button"
-              onClick={() => copyText('git', gitInitCommands)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+              onClick={runLiveHealthCheck}
+              className="text-sky-600 hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
-              {copiedKey === 'git' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              Kopieren
+              <RefreshCw className="w-3 h-3" /> Ping
             </button>
           </div>
-
-          <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
-            {gitInitCommands}
-          </pre>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-mono text-sky-600 font-semibold">SCHRITT 2 // RENDER.YAML BLUEPRINT</div>
-              <h2 className="text-base font-semibold text-slate-900 mt-0.5">
-                Hinterlegte Datei: /render.yaml
-              </h2>
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+              <span>GITHUB -&gt; RENDER PIPELINE</span>
+              <GitBranch className="w-4 h-4 text-sky-600" />
             </div>
-            {manifests && (
-              <button
-                type="button"
-                onClick={() => copyText('render', manifests.renderYaml)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
-              >
-                {copiedKey === 'render' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                YAML kopieren
-              </button>
-            )}
+            <div className="text-base font-bold text-slate-900 mt-2">
+              Auto-Deploy auf &quot;{cleanBranch}&quot;
+            </div>
+          </div>
+          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+            Tarif: Render Free Tier (render.yaml)
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+              <span>AKTIVE DATENBANK-OBJEKTE</span>
+              <Database className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="text-base font-bold font-mono tabular-nums text-slate-900 mt-2">
+              {dbStats?.accountsCount ?? 1} Konten · {dbStats?.modulesCount ?? 0} PDFs ·{' '}
+              {dbStats?.examsCount ?? 0} Tests
+            </div>
+          </div>
+          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+            Speichergröße: {dbSizeKb} KB (Max. 25 MB/Upload)
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+              <span>LETZTE DATENSICHERUNG</span>
+              <ShieldCheck className="w-4 h-4 text-sky-600" />
+            </div>
+            <div className="text-sm font-bold font-mono text-slate-900 mt-2 truncate">
+              {deploymentConfig?.lastBackupExportIso
+                ? new Date(deploymentConfig.lastBackupExportIso).toLocaleString('de-DE')
+                : 'Noch kein Backup geladen'}
+            </div>
+          </div>
+          <div className="text-xs font-mono text-slate-500 mt-3 pt-2 border-t border-slate-100">
+            {deploymentConfig?.lastBackupRestoreIso
+              ? `Restore: ${new Date(deploymentConfig.lastBackupRestoreIso).toLocaleDateString('de-DE')}`
+              : 'Bereit für 1-Klick Export/Import'}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 1: 1-CLICK DATABASE BACKUP & RESTORE VAULT (RENDER FREE TIER PROTECTION) */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <div className="text-xs font-mono text-sky-600 font-semibold">
+              RENDER FREE-TIER DATENTRESOR // EIN-KLICK BACKUP &amp; WIEDERHERSTELLUNG
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+              Alle Accounts, Passwörter, Ränge, PDF-Lehrbücher &amp; Code-Prüfungen sichern
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+              Im kostenlosen Render-Tarif wird die lokale Festplatte bei einem Server-Neustart oder neuen Git-Push auf den Ausgangszustand zurückgesetzt. Mit diesem Tresor lädst du den kompletten Portal-Zustand als 1-Klick-Datei herunter und stellst ihn jederzeit in Sekunden wieder her.
+            </p>
           </div>
 
-          <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
-            {manifests?.renderYaml || 'Lade /render.yaml...'}
-          </pre>
+          <div className="flex items-center gap-2 text-xs font-mono text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-md shrink-0">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Tipp: Vor jedem Git-Push kurz Backup speichern</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Box: 1-Click Export */}
+          <div className="bg-slate-900 text-white rounded-lg p-5 flex flex-col justify-between space-y-5 border border-slate-800">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-mono text-sky-400">
+                <span>SCHRITT A // KOMPLETT-SICHERUNG EXPORTIEREN</span>
+                <Download className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-bold text-white">
+                Aktuelle Portal-Datenbank als JSON-Datei herunterladen
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Sichert alle Benutzerkonten inkl. Klartext-Passwörtern und Rollen, alle hochgeladenen PDF-Lehrbücher, sämtliche als Code eingebundenen Tests &amp; Abschlussprüfungen sowie alle Bewerbungen.
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-xs font-mono text-slate-400">
+                Inhalt: {dbStats?.accountsCount ?? 1} Konten · {dbStats?.modulesCount ?? 0} PDFs ·{' '}
+                {dbStats?.examsCount ?? 0} Prüfungen
+              </div>
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                disabled={exportingBackup}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                {exportingBackup ? 'Exportiere...' : 'Komplettes Backup herunterladen'}
+              </button>
+            </div>
+          </div>
+
+          {/* Right Box: 1-Click Import / Restore */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-mono text-sky-700 font-semibold">
+                <span>SCHRITT B // BACKUP-DATEI WIEDERHERSTELLEN (RESTORE)</span>
+                <Upload className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">
+                Gespeicherte .json-Sicherung hochladen &amp; sofort aktivieren
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Wähle eine zuvor heruntergeladene Backup-Datei aus. Dein eigener Admin-Zugang bleibt dabei immer geschützt.
+              </p>
+
+              <div className="pt-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleBackupFileSelected}
+                  className="block w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-white file:text-slate-900 hover:file:bg-slate-100 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {backupPreview ? (
+              <div className="p-3.5 rounded-md bg-white border border-sky-300 space-y-3">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="font-semibold text-slate-900 truncate">
+                    Datei: {backupPreview.fileName}
+                  </span>
+                  <span className="text-emerald-700 font-semibold">GEPRÜFT &amp; GÜLTIG</span>
+                </div>
+                <div className="text-xs font-mono text-slate-600">
+                  Enthält: <strong>{backupPreview.accountsCount}</strong> Konten ·{' '}
+                  <strong>{backupPreview.modulesCount}</strong> Lehrbücher (PDFs) ·{' '}
+                  <strong>{backupPreview.examsCount}</strong> Prüfungen ·{' '}
+                  <strong>{backupPreview.applicationsCount}</strong> Bewerbungen
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBackupPreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRestoreBackupNow}
+                    disabled={restoringBackup}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    {restoringBackup ? 'Spiele ein...' : 'Backup jetzt in Echtzeit einspielen'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs font-mono text-slate-500 pt-2 border-t border-slate-200">
+                Wähle oben eine <code className="text-slate-800">.json</code> Backup-Datei für die Vorschau aus.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 2: CONFIGURABLE GITHUB REPOSITORY URL & RENDER SERVICE SETTINGS */}
+      <form
+        onSubmit={handleSaveDeploymentConfig}
+        className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-4">
+          <div>
+            <div className="text-xs font-mono text-sky-600 font-semibold">
+              REPOSITORY &amp; RENDER KONFIGURATION // PERSONALISIERTER BEFEHLS-GENERATOR
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+              Dein bestehendes GitHub-Repository &amp; deine Render-URL verknüpfen
+            </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Trage hier die URL deines bereits erstellten GitHub-Repos ein. Alle Git-Befehle unten passen sich sofort automatisch an deine URL an.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={savingConfig}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer self-start whitespace-nowrap"
+          >
+            <Save className="w-3.5 h-3.5 text-sky-400" />
+            {savingConfig ? 'Speichere...' : 'Einstellungen speichern'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-2">
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Deine bestehende GitHub Repository URL *
+            </label>
+            <input
+              type="text"
+              required
+              value={githubRepoUrl}
+              onChange={e => setGithubRepoUrl(e.target.value)}
+              placeholder="https://github.com/dein-name/dein-repo.git"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Auto-Deploy Branch (Standard: main)
+            </label>
+            <input
+              type="text"
+              required
+              value={branchName}
+              onChange={e => setBranchName(e.target.value)}
+              placeholder="main"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Deine öffentliche Render-URL (optional)
+            </label>
+            <input
+              type="text"
+              value={renderServiceUrl}
+              onChange={e => setRenderServiceUrl(e.target.value)}
+              placeholder="https://ca-post-portal.onrender.com"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+            />
+          </div>
+        </div>
+
+        {/* Optional Render Deploy Hook Row + Live Links */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2 items-end">
+          <div className="lg:col-span-7">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Optionaler Render Deploy Hook (falls du zusätzlich manuell aus dem Admin-Panel deployen möchtest)
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={renderDeployHookUrl}
+                onChange={e => setRenderDeployHookUrl(e.target.value)}
+                placeholder="https://api.render.com/deploy/srv-..."
+                className="flex-1 px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900 focus:outline-none focus:border-sky-600 focus:bg-white"
+              />
+              {renderDeployHookUrl.trim() && (
+                <button
+                  type="button"
+                  onClick={handleTriggerRenderDeploy}
+                  disabled={triggeringDeploy}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <Rocket className="w-3.5 h-3.5" />
+                  {triggeringDeploy ? 'Starte...' : 'Render Deploy jetzt auslösen'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 flex flex-wrap items-center justify-end gap-3 text-xs font-mono">
+            {githubRepoUrl.startsWith('http') && (
+              <a
+                href={githubRepoUrl.replace(/\.git$/, '')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-300 text-slate-700 hover:bg-slate-100"
+              >
+                <GitBranch className="w-3.5 h-3.5 text-sky-600" />
+                GitHub Repo öffnen
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {renderServiceUrl.startsWith('http') && (
+              <a
+                href={renderServiceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 font-semibold"
+              >
+                <Globe className="w-3.5 h-3.5 text-sky-600" />
+                Render Live-Website öffnen
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
+        </div>
+      </form>
+
+      {/* SECTION 3: INTERACTIVE STEP-BY-STEP DEPLOYMENT GUIDE & TAILORED GIT COMMANDS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left 5 Cols: Interactive Step-by-Step Checklist */}
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs">
+          <div className="border-b border-slate-200 pb-3">
+            <div className="text-xs font-mono text-sky-600 font-semibold">
+              INTERAKTIVER LEITFADEN // SCHRITT FÜR SCHRITT ZUR LIVE-URL
+            </div>
+            <h2 className="text-base font-bold text-slate-900 mt-0.5">
+              Checkliste für dein GitHub &amp; Render Setup ({completedSteps.length} / {SETUP_STEPS.length} erledigt)
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {SETUP_STEPS.map(step => {
+              const isDone = completedSteps.includes(step.id);
+              return (
+                <div
+                  key={step.id}
+                  onClick={() => handleToggleChecklistStep(step.id)}
+                  className={`p-4 rounded-lg border transition-colors cursor-pointer flex items-start gap-3.5 ${
+                    isDone
+                      ? 'border-emerald-300 bg-emerald-50/50'
+                      : 'border-slate-200 bg-white hover:border-sky-300'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="mt-0.5 text-sky-600 shrink-0 cursor-pointer"
+                    aria-label={step.title}
+                  >
+                    {isDone ? (
+                      <CheckSquare className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                  <div className="space-y-1">
+                    <div className="text-xs font-mono font-semibold text-slate-500">
+                      SCHRITT {step.number} {isDone && '· ERLEDIGT'}
+                    </div>
+                    <div
+                      className={`text-xs font-bold ${
+                        isDone ? 'line-through text-slate-500' : 'text-slate-900'
+                      }`}
+                    >
+                      {step.title}
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Render Dashboard Settings Reference */}
+          <div className="p-4 rounded-lg bg-slate-900 text-slate-200 space-y-2 text-xs font-mono">
+            <div className="text-sky-400 font-semibold">
+              RENDER WEB SERVICE EINSTELLUNGEN (ÜBERSICHT):
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <span className="text-slate-400">Runtime:</span>
+              <span className="col-span-2 text-white">Node</span>
+              <span className="text-slate-400">Branch:</span>
+              <span className="col-span-2 text-sky-300">{cleanBranch}</span>
+              <span className="text-slate-400">Build Command:</span>
+              <span className="col-span-2 text-emerald-300">npm install &amp;&amp; npm run build</span>
+              <span className="text-slate-400">Start Command:</span>
+              <span className="col-span-2 text-emerald-300">npm run start</span>
+              <span className="text-slate-400">Instance Type:</span>
+              <span className="col-span-2 text-white">Free ($0 / Monat)</span>
+              <span className="text-slate-400">Auto-Deploy:</span>
+              <span className="col-span-2 text-emerald-300">Yes (Bei Push auf {cleanBranch})</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right 7 Cols: Tailored Git Commands + Render YAML Blueprint + Live API Tester */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Box 1: Initial Git Push to Existing Repo */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-mono text-sky-600 font-semibold">
+                  DEINE GIT-BEFEHLE // ERSTMALIGER UPLOAD INS BESTEHENDE GITHUB-REPO
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                  Projekt mit deinem GitHub-Repository verbinden &amp; auf &quot;{cleanBranch}&quot; pushen
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyText('git_init', gitInitialPushCommands)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer shrink-0"
+              >
+                {copiedKey === 'git_init' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                Befehle kopieren
+              </button>
+            </div>
+
+            <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+              {gitInitialPushCommands}
+            </pre>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs font-mono text-slate-600 font-semibold">
+                Befehle für spätere Code-Updates (löst Render Auto-Deploy aus):
+              </span>
+              <button
+                type="button"
+                onClick={() => copyText('git_update', gitUpdatePushCommands)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+              >
+                {copiedKey === 'git_update' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                Update-Befehl kopieren
+              </button>
+            </div>
+
+            <pre className="p-3.5 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+              {gitUpdatePushCommands}
+            </pre>
+          </div>
+
+          {/* Box 2: Render.yaml Free-Tier Blueprint */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-mono text-sky-600 font-semibold">
+                  RENDER FREE-TIER KONFIGURATION // /render.yaml
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                  Automatisch im Projekt hinterlegte Render-Spezifikation
+                </h3>
+              </div>
+              {manifests && (
+                <button
+                  type="button"
+                  onClick={() => copyText('render_yaml', manifests.renderYaml)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-slate-300 rounded hover:bg-slate-100 cursor-pointer"
+                >
+                  {copiedKey === 'render_yaml' ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                  YAML kopieren
+                </button>
+              )}
+            </div>
+
+            <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+              {manifests?.renderYaml || 'Lade /render.yaml...'}
+            </pre>
+          </div>
+
+          {/* Box 3: Live Game-Server Whitelist Bridge Tester */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="text-xs font-mono text-sky-600 font-semibold">
+                  EXTERNE GAME-SERVER SCHNITTSTELLE // WHITELIST API TEST
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                  REST-Endpunkt: /api/v1/whitelist/verify
+                </h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Über diese öffentliche URL kann euer Gameserver (z. B. FiveM / RageMP / eigenes RP-System) jederzeit live prüfen, ob ein Officer-Konto freigeschaltet ist.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleTestWhitelistEndpoint}
+                className="px-3.5 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap self-start"
+              >
+                Endpunkt jetzt live testen
+              </button>
+            </div>
+
+            {whitelistCheckResult && (
+              <pre className="p-4 rounded-lg bg-slate-900 text-emerald-300 text-xs font-mono overflow-x-auto leading-relaxed">
+                {whitelistCheckResult}
+              </pre>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -2,8 +2,10 @@ services:
   - type: web
     name: ca-post-officer-portal
     runtime: node
-    plan: starter
+    plan: free
     region: frankfurt
+    branch: main
+    autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health

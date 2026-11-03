@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Save,
   Search,
@@ -10,7 +10,9 @@ import {
   KeyRound,
   Ban,
   CheckCircle2,
-  Shield
+  Shield,
+  Download,
+  Upload
 } from 'lucide-react';
 import {
   AdminAccountView,
@@ -258,6 +260,67 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   };
 
   const onlineCount = adminAccounts.filter(a => a.isOnline).length;
+  const quickRestoreRef = useRef<HTMLInputElement | null>(null);
+
+  const handleQuickExportBackup = async () => {
+    try {
+      const res = await fetch(
+        `/api/admin/backup?adminUid=${encodeURIComponent(currentUser.uid)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        onStatusToast(data.error || 'Backup-Export fehlgeschlagen.');
+        return;
+      }
+      const datePart = new Date().toISOString().slice(0, 10);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ca-post-portal-backup-${datePart}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      await onRefreshState();
+      onStatusToast('Komplettes Datenbank-Backup (Konten, Passwörter, PDFs & Tests) heruntergeladen.');
+    } catch {
+      onStatusToast('Fehler beim Herunterladen des Backups.');
+    }
+  };
+
+  const handleQuickRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const res = await fetch('/api/admin/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            adminUid: currentUser.uid,
+            snapshot: parsed
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          onStatusToast(data.error || 'Backup-Wiederherstellung fehlgeschlagen.');
+          return;
+        }
+        await onRefreshState();
+        onStatusToast(
+          `Backup wiederhergestellt (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} PDFs, ${data.summary.examsCount} Prüfungen).`
+        );
+      } catch {
+        onStatusToast('Ungültige JSON-Backup-Datei.');
+      } finally {
+        if (quickRestoreRef.current) quickRestoreRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
   return (
     <div className="space-y-8">
@@ -275,7 +338,27 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-start">
+        <div className="flex flex-wrap items-center gap-2.5 self-start">
+          <button
+            type="button"
+            onClick={handleQuickExportBackup}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold bg-white border border-slate-300 text-slate-800 rounded-md hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap"
+            title="Alle Accounts, Passwörter, PDFs & Tests als Backup-Datei sichern"
+          >
+            <Download className="w-3.5 h-3.5 text-sky-600" /> Backup sichern (.json)
+          </button>
+
+          <label className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold bg-white border border-slate-300 text-slate-800 rounded-md hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap">
+            <Upload className="w-3.5 h-3.5 text-emerald-600" /> Backup einspielen
+            <input
+              ref={quickRestoreRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleQuickRestoreFile}
+              className="hidden"
+            />
+          </label>
+
           <button
             type="button"
             onClick={() => setShowCreateForm(!showCreateForm)}

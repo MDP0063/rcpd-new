@@ -19,6 +19,8 @@ import {
 import {
   AcademyExamDoc,
   AdminAccountView,
+  PortalDbStats,
+  PortalDeploymentConfig,
   ROLE_HIERARCHY,
   TrainingModuleDoc,
   UserProgressDoc,
@@ -56,6 +58,10 @@ export default function App() {
   const [modules, setModules] = useState<TrainingModuleDoc[]>([]);
   const [exams, setExams] = useState<AcademyExamDoc[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgressDoc[]>([]);
+  const [deploymentConfig, setDeploymentConfig] = useState<PortalDeploymentConfig | undefined>(
+    undefined
+  );
+  const [dbStats, setDbStats] = useState<PortalDbStats | undefined>(undefined);
 
   const triggerToast = (msg: string) => {
     setStatusToast(msg);
@@ -89,6 +95,8 @@ export default function App() {
         setModules(data.modules || []);
         setExams(data.exams || []);
         setUserProgress(data.progress || []);
+        setDeploymentConfig(data.deploymentConfig);
+        setDbStats(data.dbStats);
       } catch (err) {
         console.error('Failed to load portal state:', err);
       }
@@ -831,7 +839,13 @@ export default function App() {
 
           {/* VIEW 5: STRICTLY ADMIN ONLY — TECHNICAL GITHUB & RENDER PIPELINE */}
           {activeSection === 'deployment' && canViewTech && (
-            <DeploymentPipelineHub onStatusToast={triggerToast} />
+            <DeploymentPipelineHub
+              currentUser={currentUserProfile}
+              deploymentConfig={deploymentConfig}
+              dbStats={dbStats}
+              onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
+              onStatusToast={triggerToast}
+            />
           )}
         </main>
       </div>
