@@ -1,0 +1,280 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Bootstrapped Admin (marlon.xv0063@gmail.com) + /admins/{uid} document lookup
+    function isAdmin() {
+      return isVerified() && (
+        request.auth.token.email == 'marlon.xv0063@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation Blueprints
+    function isValidUserPublic(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'badgeNumber', 'callsign', 'rank', 'role', 'clearanceLevel', 'division', 'whitelistStatus', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'displayName', 'badgeNumber', 'callsign', 'rank', 'role', 'clearanceLevel', 'division', 'whitelistStatus', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 80 &&
+        data.badgeNumber is string && data.badgeNumber.size() >= 2 && data.badgeNumber.size() <= 20 && data.badgeNumber.matches('^[A-Z0-9\\-]+$') &&
+        data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 20 &&
+        data.rank is string && data.rank.size() >= 2 && data.rank.size() <= 50 &&
+        data.role in ['applicant', 'cadet', 'officer', 'fto', 'supervisor', 'admin'] &&
+        data.clearanceLevel is int && data.clearanceLevel >= 0 && data.clearanceLevel <= 10 &&
+        data.division is string && data.division.size() >= 2 && data.division.size() <= 60 &&
+        data.whitelistStatus in ['pending', 'probation', 'whitelisted', 'suspended', 'revoked'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivate(data) {
+      return data.keys().hasAll(['uid', 'email', 'discordTag', 'steamHex', 'supervisorNotes', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'discordTag', 'steamHex', 'supervisorNotes', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.discordTag is string && data.discordTag.size() >= 2 && data.discordTag.size() <= 64 &&
+        data.steamHex is string && data.steamHex.size() >= 2 && data.steamHex.size() <= 64 &&
+        data.supervisorNotes is string && data.supervisorNotes.size() <= 2000 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidApplication(data) {
+      return data.keys().hasAll(['applicantUid', 'applicantName', 'characterName', 'dateOfBirth', 'discordTag', 'priorExperience', 'scenarioResponse', 'penalCodeAck', 'status', 'reviewerUid', 'reviewerFeedback', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['applicantUid', 'applicantName', 'characterName', 'dateOfBirth', 'discordTag', 'priorExperience', 'scenarioResponse', 'penalCodeAck', 'status', 'reviewerUid', 'reviewerFeedback', 'createdAt', 'updatedAt']) &&
+        data.applicantUid is string && data.applicantUid.size() >= 1 && data.applicantUid.size() <= 128 && data.applicantUid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.applicantName is string && data.applicantName.size() >= 2 && data.applicantName.size() <= 80 &&
+        data.characterName is string && data.characterName.size() >= 3 && data.characterName.size() <= 80 &&
+        data.dateOfBirth is string && data.dateOfBirth.size() >= 4 && data.dateOfBirth.size() <= 20 &&
+        data.discordTag is string && data.discordTag.size() >= 2 && data.discordTag.size() <= 64 &&
+        data.priorExperience is string && data.priorExperience.size() >= 10 && data.priorExperience.size() <= 2500 &&
+        data.scenarioResponse is string && data.scenarioResponse.size() >= 10 && data.scenarioResponse.size() <= 3000 &&
+        data.penalCodeAck is bool &&
+        data.status in ['pending', 'under_review', 'interview_scheduled', 'accepted', 'rejected'] &&
+        data.reviewerUid is string && data.reviewerUid.size() <= 128 &&
+        data.reviewerFeedback is string && data.reviewerFeedback.size() <= 2000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTrainingModule(data) {
+      return data.keys().hasAll(['title', 'code', 'category', 'minClearance', 'requiredRole', 'embedType', 'contentMarkdown', 'externalUrl', 'interactiveCode', 'estimatedMinutes', 'authorUid', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'code', 'category', 'minClearance', 'requiredRole', 'embedType', 'contentMarkdown', 'externalUrl', 'interactiveCode', 'estimatedMinutes', 'authorUid', 'createdAt', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+        data.code is string && data.code.size() >= 2 && data.code.size() <= 30 &&
+        data.category in ['SOP & Policy', 'California Penal Code', 'Tactical Operations', 'Radio & Dispatch', 'Field Training (FTO)', 'Supervisor Directive'] &&
+        data.minClearance is int && data.minClearance >= 0 && data.minClearance <= 10 &&
+        data.requiredRole in ['applicant', 'cadet', 'officer', 'fto', 'supervisor', 'admin'] &&
+        data.embedType in ['document', 'external_url', 'interactive_code'] &&
+        data.contentMarkdown is string && data.contentMarkdown.size() >= 1 && data.contentMarkdown.size() <= 15000 &&
+        data.externalUrl is string && data.externalUrl.size() <= 500 &&
+        data.interactiveCode is string && data.interactiveCode.size() <= 15000 &&
+        data.estimatedMinutes is int && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 600 &&
+        data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 && data.authorUid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAcademyExam(data) {
+      return data.keys().hasAll(['title', 'moduleCode', 'minClearance', 'passingScore', 'timeLimitMinutes', 'examFormat', 'questionsPayload', 'interactiveWidgetCode', 'authorUid', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'moduleCode', 'minClearance', 'passingScore', 'timeLimitMinutes', 'examFormat', 'questionsPayload', 'interactiveWidgetCode', 'authorUid', 'createdAt', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+        data.moduleCode is string && data.moduleCode.size() >= 2 && data.moduleCode.size() <= 30 &&
+        data.minClearance is int && data.minClearance >= 0 && data.minClearance <= 10 &&
+        data.passingScore is int && data.passingScore >= 1 && data.passingScore <= 100 &&
+        data.timeLimitMinutes is int && data.timeLimitMinutes >= 1 && data.timeLimitMinutes <= 240 &&
+        data.examFormat in ['structured_quiz', 'interactive_widget', 'external_assessment'] &&
+        data.questionsPayload is string && data.questionsPayload.size() >= 2 && data.questionsPayload.size() <= 15000 &&
+        data.interactiveWidgetCode is string && data.interactiveWidgetCode.size() <= 15000 &&
+        data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 && data.authorUid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['userId', 'userName', 'targetId', 'targetType', 'targetTitle', 'status', 'scorePercent', 'attempts', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['userId', 'userName', 'targetId', 'targetType', 'targetTitle', 'status', 'scorePercent', 'attempts', 'createdAt', 'updatedAt']) &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userName is string && data.userName.size() >= 2 && data.userName.size() <= 80 &&
+        data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 && data.targetId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.targetType in ['module', 'exam'] &&
+        data.targetTitle is string && data.targetTitle.size() >= 2 && data.targetTitle.size() <= 140 &&
+        data.status in ['in_progress', 'completed', 'passed', 'failed'] &&
+        data.scorePercent is int && data.scorePercent >= 0 && data.scorePercent <= 100 &&
+        data.attempts is int && data.attempts >= 1 && data.attempts <= 1000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Admins registry collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list: if isAdmin() && existing().uid is string;
+      allow create, update: if isAdmin() && isValidId(adminId) &&
+        incoming().keys().hasAll(['uid', 'grantedAt']) &&
+        incoming().keys().hasOnly(['uid', 'grantedAt']) &&
+        incoming().uid is string && incoming().uid.size() <= 128 &&
+        incoming().grantedAt == request.time;
+      allow delete: if isAdmin() && isValidId(adminId);
+    }
+
+    // Public Officer Roster (/users/{userId})
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      allow list: if isSignedIn() && existing().clearanceLevel >= 0;
+      allow create: if isVerified() && isValidId(userId) && isValidUserPublic(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isOwner(userId) &&
+            incoming().role == 'applicant' &&
+            incoming().clearanceLevel == 1 &&
+            incoming().whitelistStatus == 'pending'
+          )
+        );
+      allow update: if isVerified() && isValidId(userId) && isValidUserPublic(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isOwner(userId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'callsign', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // Strict PII Split Collection (/users_private/{userId})
+    match /users_private/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (existing().uid == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(userId) && isValidUserPrivate(incoming()) &&
+        incoming().uid == userId &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (isOwner(userId) && incoming().supervisorNotes == '')
+        );
+      allow update: if isVerified() && isValidId(userId) && isValidUserPrivate(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isOwner(userId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['discordTag', 'steamHex', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // Whitelist & Academy Applications (/applications/{applicationId})
+    match /applications/{applicationId} {
+      allow get: if isSignedIn() && isValidId(applicationId) && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(applicationId) && isValidApplication(incoming()) &&
+        incoming().applicantUid == request.auth.uid &&
+        incoming().status == 'pending' &&
+        incoming().reviewerUid == '' &&
+        incoming().reviewerFeedback == '' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if isVerified() && isValidId(applicationId) && isValidApplication(incoming()) &&
+        incoming().applicantUid == existing().applicantUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().applicantUid == request.auth.uid &&
+            !(existing().status in ['accepted', 'rejected']) &&
+            incoming().status == existing().status &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['characterName', 'dateOfBirth', 'discordTag', 'priorExperience', 'scenarioResponse', 'penalCodeAck', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdmin() && isValidId(applicationId);
+    }
+
+    // Academy Training Modules (/training_modules/{moduleId})
+    match /training_modules/{moduleId} {
+      allow get: if isSignedIn() && isValidId(moduleId) && (
+        isAdmin() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clearanceLevel >= existing().minClearance
+      );
+      allow list: if isSignedIn() && existing().minClearance >= 0;
+      allow create: if isAdmin() && isValidId(moduleId) && isValidTrainingModule(incoming()) &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(moduleId) && isValidTrainingModule(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(moduleId);
+    }
+
+    // Academy Exams (/exams/{examId})
+    match /exams/{examId} {
+      allow get: if isSignedIn() && isValidId(examId) && (
+        isAdmin() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clearanceLevel >= existing().minClearance
+      );
+      allow list: if isSignedIn() && existing().minClearance >= 0;
+      allow create: if isAdmin() && isValidId(examId) && isValidAcademyExam(incoming()) &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(examId) && isValidAcademyExam(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(examId);
+    }
+
+    // Officer Learning & Exam Progress (/user_progress/{progressId})
+    match /user_progress/{progressId} {
+      allow get: if isSignedIn() && isValidId(progressId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(progressId) && isValidUserProgress(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(incoming().userId)) && (
+          isAdmin() || incoming().userId == request.auth.uid
+        );
+      allow update: if isVerified() && isValidId(progressId) && isValidUserProgress(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().targetId == existing().targetId &&
+        incoming().targetType == existing().targetType &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().userId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'scorePercent', 'attempts', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdmin() && isValidId(progressId);
+    }
+  }
+}

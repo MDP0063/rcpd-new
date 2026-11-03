@@ -1,0 +1,6 @@
+{
+  "name": "CA-POST Officer & Academy Portal",
+  "description": "Hyper-realistisches California Police Department & POST Officer Portal mit Whitelist-Bewerbungsplattform, Rollen- & Berechtigungsverwaltung, interaktiver Akademie und CI/CD Render-Anbindung.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
