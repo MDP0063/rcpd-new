@@ -1,4 +1,3 @@
-import { Timestamp } from 'firebase/firestore';
 
 export type OfficerRole = 'admin' | 'colonel' | 'officer' | 'rookie' | 'trainee';
 export type WhitelistStatus = 'whitelisted' | 'probation' | 'pending' | 'suspended' | 'revoked';
@@ -29,8 +28,6 @@ export interface UserPublicProfile {
   isOnline?: boolean;
   lastSeenIso?: string;
   updatedIso?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 export interface UserPrivateProfile {
@@ -40,7 +37,6 @@ export interface UserPrivateProfile {
   steamHex: string;
   supervisorNotes: string;
   updatedIso?: string;
-  updatedAt?: Timestamp;
 }
 
 export interface AdminAccountView {
@@ -66,8 +62,6 @@ export interface WhitelistApplicationDoc {
   reviewerUid: string;
   reviewerFeedback: string;
   updatedIso?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 export interface TrainingModuleDoc {
@@ -86,8 +80,6 @@ export interface TrainingModuleDoc {
   estimatedMinutes: number;
   authorUid: string;
   updatedIso?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 export interface ExamQuestionItem {
@@ -111,8 +103,6 @@ export interface AcademyExamDoc {
   interactiveWidgetCode: string;
   authorUid: string;
   updatedIso?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 export interface UserProgressDoc {
@@ -129,8 +119,6 @@ export interface UserProgressDoc {
   evaluatedByName?: string;
   instructorFeedback?: string;
   updatedIso?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
 }
 
 export const ROLE_HIERARCHY: Record<
