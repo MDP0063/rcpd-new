@@ -13,9 +13,18 @@ Bitte zutreffendes ankreuzen:
 - 
 
 ## Testen & Überprüfung
-Wie wurden die Änderungen getestet?
+Nur ankreuzen, was tatsächlich ausgeführt wurde. Was nicht lief, unten begründen.
+- [ ] `npm run lint` ohne Fehler
+- [ ] `npm run build` ohne Fehler
+- [ ] `npm test` ohne Fehler (oder: es gibt noch keine Tests)
 - [ ] Lokal auf Funktionsfähigkeit geprüft
-- [ ] Build/Deployment erfolgreich durchgelaufen
+
+Nicht ausgeführt / Einschränkungen:
+
+## Sicherheit
+- [ ] Keine Secrets, Passwörter oder Tokens im Diff
+- [ ] Neue oder geänderte Routen prüfen die Sitzung serverseitig
+- [ ] Neue Umgebungsvariablen stehen in `.env.example`
 
 ## Hinweise für den Admin / Reviewer
 Besondere Anmerkungen, Umgebungsvariablen oder Folgeschritte:
