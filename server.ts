@@ -98,7 +98,7 @@ function createInitialDatabase(): PortalDatabaseState {
     progress: [],
     deploymentConfig: {
       githubRepoUrl: 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git',
-      renderServiceUrl: '',
+      renderServiceUrl: 'https://rcpd-new.onrender.com',
       renderDeployHookUrl: '',
       branchName: 'main',
       autoDeployEnabled: true,
@@ -112,13 +112,15 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
   if (!state.deploymentConfig) {
     state.deploymentConfig = {
       githubRepoUrl: 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git',
-      renderServiceUrl: '',
+      renderServiceUrl: 'https://rcpd-new.onrender.com',
       renderDeployHookUrl: '',
       branchName: 'main',
       autoDeployEnabled: true,
       completedSteps: [],
       updatedIso: new Date().toISOString()
     };
+  } else if (!state.deploymentConfig.renderServiceUrl) {
+    state.deploymentConfig.renderServiceUrl = 'https://rcpd-new.onrender.com';
   }
   return state.deploymentConfig;
 }
@@ -1139,11 +1141,16 @@ jobs:
   });
 
   const distPath = path.join(__dirname, 'dist');
-  const isProd = process.env.NODE_ENV === 'production' && fs.existsSync(distPath);
+  const isProd =
+    (process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER)) &&
+    fs.existsSync(distPath);
 
   if (!isProd) {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        allowedHosts: true
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);

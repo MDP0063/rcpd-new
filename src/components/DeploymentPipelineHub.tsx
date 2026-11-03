@@ -108,7 +108,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
     deploymentConfig?.githubRepoUrl || 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git'
   );
   const [renderServiceUrl, setRenderServiceUrl] = useState(
-    deploymentConfig?.renderServiceUrl || ''
+    deploymentConfig?.renderServiceUrl || 'https://rcpd-new.onrender.com'
   );
   const [renderDeployHookUrl, setRenderDeployHookUrl] = useState(
     deploymentConfig?.renderDeployHookUrl || ''
