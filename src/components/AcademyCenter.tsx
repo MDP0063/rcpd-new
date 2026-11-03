@@ -30,6 +30,7 @@ import { API_ENDPOINTS, apiFetch } from '../lib/api';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
+  roster?: UserPublicProfile[];
   modules: TrainingModuleDoc[];
   exams: AcademyExamDoc[];
   userProgress: UserProgressDoc[];
@@ -39,6 +40,7 @@ interface AcademyCenterProps {
 
 export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   currentUser,
+  roster = [],
   modules,
   exams,
   userProgress,
@@ -46,12 +48,29 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   onStatusToast
 }) => {
   const rolePermissions = ROLE_HIERARCHY[currentUser.role] || ROLE_HIERARCHY.trainee;
-  const canEditAcademy = rolePermissions.canEditAcademy; // True for Admin & Colonel
+  const assignedCourses = currentUser.granularPermissions?.assignedCourseCodes || [];
+  const hasScopedCourseRights =
+    Boolean(currentUser.granularPermissions?.canGradeAssignedCourses) &&
+    assignedCourses.length > 0;
+  const canEditAcademy = rolePermissions.canEditAcademy || hasScopedCourseRights; // True for Admin, Colonel, or Granular Course Instructor
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'modules' | 'tests' | 'final_exams' | 'upload_textbook' | 'add_code_test'
+    'modules' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('modules');
+
+  // Granular Instructor Grading Form State
+  const [gradeTargetUserUid, setGradeTargetUserUid] = useState<string>('');
+  const [gradeCourseCode, setGradeCourseCode] = useState<string>(
+    assignedCourses[0] && assignedCourses[0] !== '*' ? assignedCourses[0] : 'SOP-01'
+  );
+  const [gradeCourseTitle, setGradeCourseTitle] = useState<string>(
+    'Praxis- & Lehrgangsbewertung'
+  );
+  const [gradeScorePercent, setGradeScorePercent] = useState<number>(92);
+  const [gradeStatus, setGradeStatus] = useState<'passed' | 'completed' | 'failed'>('passed');
+  const [gradeFeedback, setGradeFeedback] = useState<string>('');
+  const [submittingGrade, setSubmittingGrade] = useState(false);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [activeModuleId, setActiveModuleId] = useState<string | null>(modules[0]?.id || null);
@@ -317,22 +336,135 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     }
   };
 
+  const handleAssignInstructorGrade = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gradeTargetUserUid || !gradeCourseCode.trim()) {
+      onStatusToast('Bitte Teilnehmer und Lehrgangs-Code auswählen.');
+      return;
+    }
+    setSubmittingGrade(true);
+    const res = await apiFetch(API_ENDPOINTS.INSTRUCTOR_GRADE, {
+      method: 'POST',
+      body: JSON.stringify({
+        instructorUid: currentUser.uid,
+        targetUserUid: gradeTargetUserUid,
+        courseCode: gradeCourseCode.trim().toUpperCase(),
+        targetTitle: gradeCourseTitle.trim(),
+        targetType: 'test',
+        status: gradeStatus,
+        scorePercent: Number(gradeScorePercent),
+        instructorFeedback: gradeFeedback.trim()
+      })
+    });
+    setSubmittingGrade(false);
+
+    if (!res.ok) {
+      onStatusToast(res.error || 'Notenvergabe fehlgeschlagen.');
+      return;
+    }
+
+    setGradeFeedback('');
+    await onRefreshState();
+    onStatusToast(
+      `Lehrgangs-Note (${gradeScorePercent}% · ${gradeStatus.toUpperCase()}) für ${gradeCourseCode.toUpperCase()} gespeichert und Teilnehmer benachrichtigt.`
+    );
+  };
+
+  const renderStructuredHandbookContent = (markdown: string) => {
+    const blocks = markdown
+      .split(/\n{2,}/)
+      .map(b => b.trim())
+      .filter(Boolean);
+
+    return (
+      <div className="space-y-4 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
+        {blocks.map((block, index) => {
+          if (block.startsWith('# ')) {
+            return (
+              <h3
+                key={index}
+                className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white pt-3 pb-2 border-b border-slate-200 dark:border-slate-800"
+              >
+                {block.replace(/^#\s+/, '')}
+              </h3>
+            );
+          }
+          if (block.startsWith('## ') || block.startsWith('### ')) {
+            return (
+              <h4
+                key={index}
+                className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white pt-3 pb-1 border-b border-slate-100 dark:border-slate-800"
+              >
+                {block.replace(/^#{2,3}\s+/, '')}
+              </h4>
+            );
+          }
+          // Check if block is a bullet list
+          const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+          if (lines.every(l => l.startsWith('- ') || l.startsWith('• ') || l.startsWith('* '))) {
+            return (
+              <ul
+                key={index}
+                className="list-disc pl-6 space-y-2 text-slate-800 dark:text-slate-100"
+              >
+                {lines.map((item, i) => (
+                  <li key={i} className="leading-relaxed">
+                    {item.replace(/^[-•*]\s+/, '')}
+                  </li>
+                ))}
+              </ul>
+            );
+          }
+          return (
+            <div key={index} className="space-y-2.5">
+              {lines.map((line, lineIdx) => {
+                if (/^(\d+\.|§\s*\d+|Kapitel\s+\d+|Abschnitt\s+\d+)/i.test(line) && line.length < 95) {
+                  return (
+                    <h4
+                      key={lineIdx}
+                      className="text-base sm:text-lg font-bold text-slate-900 dark:text-white pt-2"
+                    >
+                      {line}
+                    </h4>
+                  );
+                }
+                return (
+                  <p key={lineIdx} className="leading-relaxed text-slate-800 dark:text-slate-100">
+                    {line}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* Top Header & Direct Action Buttons for Admin / Colonel */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <div className="text-xs font-mono text-sky-600 font-semibold">
-            POST ACADEMY &amp; TRAINING // LEHRBÜCHER, ÜBUNGSTESTS &amp; ABSCHLUSSPRÜFUNGEN
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="space-y-2 max-w-3xl">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Ausbildungsbereich · Lehrbücher, Übungstests &amp; Abschlussprüfungen
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
-            Lehrmaterialien, Tests &amp; Prüfungen
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Lehrmaterialien, Handbücher &amp; Prüfungen
           </h1>
-          <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-            Dein aktueller Rang: <strong className="uppercase font-mono text-slate-900">{currentUser.role}</strong>.
+          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
+            Dein aktueller System-Rang:{' '}
+            <strong className="uppercase font-mono text-slate-900 dark:text-white">
+              {currentUser.role}
+            </strong>
+            . Alle Handbücher und POST Learning Domains sind mit klaren Überschriften und
+            strukturierten Absätzen gegliedert, um das Selbststudium und die Prüfungsvorbereitung
+            optimal zu unterstützen.
+          </p>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             {currentUser.role === 'trainee'
-              ? ' Als Trainee hast du vollen Zugriff auf alle Lehrmaterialien und Übungstests. Die Abschlussprüfungen werden ab dem Rang Rookie freigeschaltet.'
-              : ' Du hast Zugriff auf Lehrmaterialien, Übungstests sowie die Abschlussarbeit / Abschlussprüfung.'}
+              ? 'Hinweis zur Freigabe: Als Trainee hast du vollen Zugriff auf alle Lehrmaterialien und Übungstests. Die Abschlussprüfungen werden ab dem Rang Rookie freigeschaltet.'
+              : 'Freigabestatus: Du hast vollen Zugriff auf sämtliche Lehrmaterialien, Übungstests sowie die offizielle Abschlussarbeit / Abschlussprüfung.'}
           </p>
         </div>
 
@@ -342,7 +474,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('upload_textbook')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
             >
               <FileUp className="w-4 h-4 text-sky-400" />
               + Lehrbuch / PDF hochladen
@@ -350,7 +482,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('add_code_test')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
             >
               <Code2 className="w-4 h-4" />
               + Test / Prüfung als Code hinzufügen
@@ -360,14 +492,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-200/80 border border-slate-300 rounded-lg w-fit">
+      <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg w-fit">
         <button
           type="button"
           onClick={() => setActiveTab('modules')}
-          className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'modules'
-              ? 'bg-white text-slate-900 font-semibold shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
+              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           Lehrbücher &amp; Lehrmaterialien ({modules.length})
@@ -380,10 +512,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveExamId(practiceTests[0]?.id || null);
             setExamSubmittedResult(null);
           }}
-          className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'tests'
-              ? 'bg-white text-slate-900 font-semibold shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
+              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           Übungstests ({practiceTests.length})
@@ -396,13 +528,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveExamId(finalExams[0]?.id || null);
             setExamSubmittedResult(null);
           }}
-          className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'final_exams'
-              ? 'bg-white text-slate-900 font-semibold shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
+              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          {!canAccessFinalExams && <Lock className="w-3 h-3 text-rose-500" />}
+          {!canAccessFinalExams && <Lock className="w-3.5 h-3.5 text-rose-500" />}
           Abschlussarbeit / Prüfungen ({finalExams.length})
         </button>
 
@@ -410,11 +542,22 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           <>
             <button
               type="button"
+              onClick={() => setActiveTab('instructor_grading')}
+              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                activeTab === 'instructor_grading'
+                  ? 'bg-emerald-700 text-white font-semibold'
+                  : 'text-emerald-800 dark:text-emerald-400 hover:text-emerald-950'
+              }`}
+            >
+              Ausbilder-Notenvergabe
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('upload_textbook')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'upload_textbook'
                   ? 'bg-slate-900 text-white font-semibold'
-                  : 'text-sky-700 hover:text-sky-900'
+                  : 'text-sky-700 dark:text-sky-400 hover:text-sky-900'
               }`}
             >
               Lehrbuch-Upload
@@ -422,10 +565,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('add_code_test')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'add_code_test'
                   ? 'bg-sky-600 text-white font-semibold'
-                  : 'text-sky-700 hover:text-sky-900'
+                  : 'text-sky-700 dark:text-sky-400 hover:text-sky-900'
               }`}
             >
               Code-Prüfung einbinden
@@ -438,21 +581,21 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {activeTab === 'modules' && (
         <div>
           {modules.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-12 text-center space-y-4 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center space-y-4 shadow-xs">
               <BookOpen className="w-10 h-10 text-sky-600 mx-auto" />
-              <div className="space-y-1">
-                <h2 className="text-lg font-bold text-slate-900">
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                   Noch keine Lehrbücher oder Dokumente hinterlegt
                 </h2>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Es sind standardmäßig keine Lehrbücher vorprogrammiert. Als Admin oder Colonel kannst du PDF-Lehrbücher, externe Dokumente oder Code-Module jederzeit über die Schaltfläche hinzufügen.
+                <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
+                  Als Admin oder Colonel kannst du PDF-Lehrbücher, externe Dokumente oder Code-Module jederzeit über die Schaltfläche hinzufügen.
                 </p>
               </div>
               {canEditAcademy && (
                 <button
                   type="button"
                   onClick={() => setActiveTab('upload_textbook')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
                 >
                   <FileUp className="w-4 h-4" /> Jetzt erstes Lehrbuch / PDF hochladen
                 </button>
@@ -461,25 +604,36 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left 4 Cols */}
-              <div className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-                <label className="block text-xs font-mono text-slate-500 mb-2">
-                  KATEGORIE FILTERN
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={e => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
-                >
-                  <option value="ALL">Alle Kategorien ({modules.length})</option>
-                  <option value="SOP & Policy">SOP &amp; Policy</option>
-                  <option value="California Penal Code">California Penal Code</option>
-                  <option value="Tactical Operations">Tactical Operations</option>
-                  <option value="Radio & Dispatch">Radio &amp; Dispatch</option>
-                  <option value="Field Training (FTO)">Field Training (FTO)</option>
-                  <option value="Supervisor Directive">Supervisor Directive</option>
-                </select>
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    Handbuch-Verzeichnis
+                  </h2>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                    Wähle ein Lehrmodul zum Lesen aus
+                  </p>
+                </div>
 
-                <div className="mt-4 divide-y divide-slate-200">
+                <div>
+                  <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    KATEGORIE FILTERN
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={e => setSelectedCategory(e.target.value)}
+                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="ALL">Alle Kategorien ({modules.length})</option>
+                    <option value="SOP & Policy">SOP &amp; Policy</option>
+                    <option value="California Penal Code">California Penal Code</option>
+                    <option value="Tactical Operations">Tactical Operations</option>
+                    <option value="Radio & Dispatch">Radio &amp; Dispatch</option>
+                    <option value="Field Training (FTO)">Field Training (FTO)</option>
+                    <option value="Supervisor Directive">Supervisor Directive</option>
+                  </select>
+                </div>
+
+                <div className="divide-y divide-slate-200 dark:divide-slate-800">
                   {filteredModules.map(mod => {
                     const prog = getModuleProgress(mod.id);
                     const isSelected = currentModule?.id === mod.id;
@@ -488,21 +642,25 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         key={mod.id}
                         onClick={() => setActiveModuleId(mod.id)}
                         className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
-                          isSelected ? 'bg-sky-50 border border-sky-200' : 'hover:bg-slate-50'
+                          isSelected
+                            ? 'bg-sky-50 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-700'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                         }`}
                       >
-                        <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+                        <div className="flex items-center justify-between text-xs font-mono font-semibold text-sky-700 dark:text-sky-400">
                           <span>{mod.code}</span>
                           <span>·</span>
                           <span className="uppercase">{mod.requiredRole}+</span>
                           <span className="ml-auto">
                             {prog?.status === 'completed' && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" />
                             )}
                           </span>
                         </div>
-                        <div className="text-sm font-semibold text-slate-900 mt-1">{mod.title}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">
+                        <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
+                          {mod.title}
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                           {mod.category} · {mod.pdfFileName ? `PDF: ${mod.pdfFileName}` : mod.embedType}
                         </div>
                       </div>
@@ -514,17 +672,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               {/* Right 8 Cols: Viewer */}
               <div className="lg:col-span-8">
                 {currentModule && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-5 border-b border-slate-200">
-                      <div>
-                        <div className="flex items-center gap-2 text-xs font-mono text-sky-700 font-semibold">
+                  <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
                           <span>{currentModule.code}</span>
                           <span>·</span>
                           <span>{currentModule.category}</span>
                           <span>·</span>
                           <span className="uppercase">FREIGEGEBEN AB {currentModule.requiredRole}</span>
                         </div>
-                        <h2 className="text-xl font-bold text-slate-900 mt-1">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                           {currentModule.title}
                         </h2>
                       </div>
@@ -533,9 +691,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         <button
                           type="button"
                           onClick={() => handleMarkModuleComplete(currentModule)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md transition-colors cursor-pointer whitespace-nowrap"
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-4 h-4" />
                           {getModuleProgress(currentModule.id)?.status === 'completed'
                             ? 'Erneut als gelesen protokollieren'
                             : 'Als durchgearbeitet markieren'}
@@ -545,7 +703,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDeleteModule(currentModule.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 rounded-md border border-slate-200 cursor-pointer"
+                            className="p-2 text-slate-500 hover:text-rose-600 rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer"
                             title="Lehrmaterial löschen"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -554,11 +712,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
                     </div>
 
-                    {currentModule.contentMarkdown && (
-                      <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                        {currentModule.contentMarkdown}
-                      </div>
-                    )}
+                    {currentModule.contentMarkdown &&
+                      renderStructuredHandbookContent(currentModule.contentMarkdown)}
 
                     {/* Embedded PDF Viewer */}
                     {currentModule.pdfDataUrl && (
@@ -619,7 +774,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         </div>
                       </div>
                     )}
-                  </div>
+                  </article>
                 )}
               </div>
             </div>
@@ -715,9 +870,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <div>
                         <div className="text-xs font-mono text-sky-700 font-semibold">
                           {currentExam.assessmentStage === 'final_exam'
-                            ? 'OFFIZIELLE ABSCHLUSSPRÜFUNG (ROOKIE+)'
-                            : 'ÜBUNGSTEST (TRAINEE+)'}{' '}
-                          // {currentExam.moduleCode} · BESTEHENSGRENZE {currentExam.passingScore}%
+                            ? 'Offizielle Abschlussprüfung (Rookie+)'
+                            : 'Übungstest (Trainee+)'}{' '}
+                          · {currentExam.moduleCode} · Bestehensgrenze {currentExam.passingScore}%
                         </div>
                         <h2 className="text-xl font-bold text-slate-900 mt-1">
                           {currentExam.title}
@@ -866,8 +1021,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
         >
           <div className="pb-4 border-b border-slate-200">
-            <div className="text-xs font-mono text-sky-600 font-semibold">
-              LEHRBUCH &amp; DOKUMENTEN-UPLOAD // ADMIN &amp; COLONELFREIGABE
+            <div className="text-xs font-medium text-slate-500">
+              Lehrbuch- &amp; Dokumenten-Upload · Freigabe für Admin &amp; Colonel
             </div>
             <h2 className="text-lg font-bold text-slate-900 mt-0.5">
               Neues Lehrbuch (PDF), SOP-Dokument oder Code-Lehrmaterial hinzufügen
@@ -1031,11 +1186,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           className="bg-white border border-slate-200 rounded-lg p-6 space-y-5 max-w-4xl shadow-xs"
         >
           <div className="pb-4 border-b border-slate-200">
-            <div className="text-xs font-mono text-sky-600 font-semibold">
-              CODE-TEST &amp; PRÜFUNGS-STUDIO // ADMIN &amp; COLONELFREIGABE
+            <div className="text-xs font-medium text-slate-500">
+              Prüfungsverwaltung · Freigabe für Admin &amp; Colonel
             </div>
             <h2 className="text-lg font-bold text-slate-900 mt-0.5">
-              Neuen Übungstest (für Trainee+) oder Abschlussprüfung (ab Rookie+) als Code einbinden
+              Neuen Übungstest (für Trainee+) oder Abschlussprüfung (ab Rookie+) einbinden
             </h2>
           </div>
 
@@ -1153,6 +1308,203 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </button>
           </div>
         </form>
+      )}
+
+      {/* TAB 6: GRANULAR COURSE INSTRUCTOR GRADING (AUSBILDER-NOTENVERGABE) */}
+      {activeTab === 'instructor_grading' && canEditAcademy && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <form
+            onSubmit={handleAssignInstructorGrade}
+            className="lg:col-span-7 bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs"
+          >
+            <div className="pb-4 border-b border-slate-200">
+              <div className="text-xs font-mono text-sky-600 font-semibold">
+                LEHRGANGS-SPEZIFISCHE NOTEN- &amp; STATUSVERGABE
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+                Ausbilder-Bewertung für zugewiesene Lehrgänge eintragen
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Deine freigeschalteten Lehrgangs-Codes:{' '}
+                <strong className="font-mono text-slate-900">
+                  {rolePermissions.canEditAcademy || assignedCourses.includes('*')
+                    ? 'ALLE LEHRGÄNGE (*)'
+                    : assignedCourses.join(', ')}
+                </strong>
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Teilnehmer / Beamter auswählen *
+                </label>
+                <select
+                  required
+                  value={gradeTargetUserUid}
+                  onChange={e => setGradeTargetUserUid(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                >
+                  <option value="">-- Bitte Beamten wählen --</option>
+                  {roster.map(u => (
+                    <option key={u.uid} value={u.uid}>
+                      {u.displayName} ({u.badgeNumber} · {u.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Lehrgangs-Code (Nur eigene Freigaben) *
+                </label>
+                {!rolePermissions.canEditAcademy &&
+                !assignedCourses.includes('*') &&
+                assignedCourses.length > 0 ? (
+                  <select
+                    value={gradeCourseCode}
+                    onChange={e => setGradeCourseCode(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                  >
+                    {assignedCourses.map(c => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    value={gradeCourseCode}
+                    onChange={e => setGradeCourseCode(e.target.value)}
+                    placeholder="z. B. SOP-01 oder LD-15"
+                    className="w-full px-3.5 py-2 text-xs font-mono uppercase rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Erreichte Punktzahl (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  required
+                  value={gradeScorePercent}
+                  onChange={e => setGradeScorePercent(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 text-xs font-mono rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Lehrgangs-Status
+                </label>
+                <select
+                  value={gradeStatus}
+                  onChange={e =>
+                    setGradeStatus(e.target.value as 'passed' | 'completed' | 'failed')
+                  }
+                  className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+                >
+                  <option value="passed">Bestanden (PASSED)</option>
+                  <option value="completed">Teilnahme abgeschlossen (COMPLETED)</option>
+                  <option value="failed">Nicht bestanden / Nachschulung (FAILED)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Bezeichnung der Prüfung / Praxiseinheit *
+              </label>
+              <input
+                type="text"
+                required
+                value={gradeCourseTitle}
+                onChange={e => setGradeCourseTitle(e.target.value)}
+                placeholder="z. B. Funk- & Taktik-Praxisprüfung SOP-01"
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Ausbilder-Beurteilung / Feedbackvermerk
+              </label>
+              <textarea
+                rows={3}
+                value={gradeFeedback}
+                onChange={e => setGradeFeedback(e.target.value)}
+                placeholder="Kurze Beurteilung der gezeigten Leistung..."
+                className="w-full px-3.5 py-2 text-xs rounded-md bg-slate-50 border border-slate-300 text-slate-900"
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={submittingGrade}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-md cursor-pointer disabled:opacity-50"
+              >
+                <Award className="w-4 h-4" />
+                {submittingGrade ? 'Wird gespeichert...' : 'Note & Status verbindlich eintragen'}
+              </button>
+            </div>
+          </form>
+
+          {/* Recent Instructor Evaluations List */}
+          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <div className="pb-3 border-b border-slate-200">
+              <h3 className="text-base font-bold text-slate-900">
+                Letzte Lehrgangs-Bewertungen
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Protokollierte Noten und Statusvergaben im Ausbildungsbereich
+              </p>
+            </div>
+
+            <div className="divide-y divide-slate-200 max-h-96 overflow-y-auto">
+              {userProgress.length === 0 ? (
+                <p className="text-xs text-slate-500 py-4">
+                  Noch keine Bewertungen eingetragen.
+                </p>
+              ) : (
+                userProgress.slice(0, 10).map(item => (
+                  <div key={item.id} className="py-3 first:pt-0 last:pb-0 space-y-1 text-xs">
+                    <div className="flex items-center justify-between font-semibold text-slate-900">
+                      <span>
+                        {item.userName} · {item.targetTitle}
+                      </span>
+                      <span
+                        className={`font-mono ${
+                          item.status === 'passed' || item.status === 'completed'
+                            ? 'text-emerald-700'
+                            : 'text-rose-600'
+                        }`}
+                      >
+                        {item.scorePercent}% ({item.status.toUpperCase()})
+                      </span>
+                    </div>
+                    {item.instructorFeedback && (
+                      <div className="text-slate-600 italic">„{item.instructorFeedback}“</div>
+                    )}
+                    <div className="text-[11px] font-mono text-slate-400">
+                      {item.evaluatedByName
+                        ? `Prüfer: ${item.evaluatedByName}`
+                        : 'Selbststudium / Online-Test'}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

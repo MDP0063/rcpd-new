@@ -23,7 +23,9 @@ export interface UserPublicProfile {
   role: OfficerRole;
   clearanceLevel: number;
   division: string;
+  bio?: string;
   whitelistStatus: WhitelistStatus;
+  granularPermissions?: GranularPermissions;
   isOnline?: boolean;
   lastSeenIso?: string;
   updatedIso?: string;
@@ -121,9 +123,12 @@ export interface UserProgressDoc {
   targetId: string;
   targetType: 'module' | 'test' | 'final_exam';
   targetTitle: string;
+  courseCode?: string;
   status: 'in_progress' | 'completed' | 'passed' | 'failed';
   scorePercent: number;
   attempts: number;
+  evaluatedByName?: string;
+  instructorFeedback?: string;
   updatedIso?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -200,6 +205,176 @@ export const ROLE_HIERARCHY: Record<
   }
 };
 
+export type AnnouncementCategory =
+  | 'Dienstanweisung'
+  | 'Ausbildung & Academy'
+  | 'Personal & Beförderungen'
+  | 'Allgemeine Bekanntmachung';
+
+export type AnnouncementPriority = 'normal' | 'important' | 'urgent';
+
+export interface AnnouncementDoc {
+  id: string;
+  title: string;
+  category: AnnouncementCategory;
+  priority: AnnouncementPriority;
+  content: string;
+  authorUid: string;
+  authorName: string;
+  authorRank: string;
+  pinned: boolean;
+  acknowledgedByUids: string[];
+  createdIso: string;
+}
+
+export type MessagePriority = 'routine' | 'urgent' | 'confidential';
+
+export interface DirectMessageDoc {
+  id: string;
+  senderUid: string;
+  senderName: string;
+  senderBadge: string;
+  senderRole: OfficerRole;
+  recipientUid: string; // specific uid or 'ALL' for broadcast
+  recipientName: string;
+  recipientBadge: string;
+  subject: string;
+  body: string;
+  priority: MessagePriority;
+  readByUids: string[];
+  createdIso: string;
+}
+
+export type RequestCategory =
+  | 'rank_change'
+  | 'clearance'
+  | 'award'
+  | 'transfer'
+  | 'loa';
+
+export type RequestStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PortalRequestDoc {
+  id: string;
+  requesterUid: string;
+  requesterName: string;
+  requesterBadge: string;
+  requesterCurrentRole: OfficerRole;
+  category: RequestCategory;
+  title: string;
+  requestedRole?: OfficerRole;
+  targetDetail: string;
+  justification: string;
+  priority: 'normal' | 'high';
+  status: RequestStatus;
+  reviewerUid?: string;
+  reviewerName?: string;
+  reviewerComment?: string;
+  createdIso: string;
+  updatedIso: string;
+}
+
+export interface GranularPermissions {
+  assignedCourseCodes: string[]; // e.g. ['SOP-01', 'PC-102'] — allows instructor grading/editing only for these course codes
+  canGradeAssignedCourses: boolean;
+  canManageEvents: boolean;
+  canPublishAnnouncements: boolean;
+  canReviewStandardRequests: boolean; // Non-rank requests (rank changes remain strictly Admin-only)
+  canExportReports: boolean;
+}
+
+export interface AuditLogDoc {
+  id: string;
+  actorUid: string;
+  actorName: string;
+  actorBadge: string;
+  actorRole: OfficerRole;
+  category:
+    | 'ACCOUNT_ROLE'
+    | 'REQUEST_REVIEW'
+    | 'ACADEMY_DOC'
+    | 'COURSE_GRADE'
+    | 'ANNOUNCEMENT'
+    | 'CALENDAR_EVENT'
+    | 'SYSTEM_BACKUP';
+  actionTitle: string;
+  targetLabel: string;
+  details: string;
+  createdIso: string;
+}
+
+export interface PublicActivityDoc {
+  id: string;
+  actionType:
+    | 'New Announcement'
+    | 'New Training Module Published'
+    | 'New Exam Published'
+    | 'New Calendar Event Scheduled'
+    | 'Training Module Updated';
+  actionLabelDe: string;
+  title: string;
+  actorName: string;
+  targetSection:
+    | 'announcements'
+    | 'academy'
+    | 'calendar';
+  createdIso: string;
+}
+
+export type CalendarEventCategory =
+  | 'Training & Lehrgang'
+  | 'Prüfungstermin'
+  | 'Dienstbesprechung'
+  | 'Sondereinsatz';
+
+export interface CalendarEventAttendee {
+  uid: string;
+  displayName: string;
+  badgeNumber: string;
+  role: OfficerRole;
+  status: 'attending' | 'declined';
+  updatedIso: string;
+}
+
+export interface CalendarEventDoc {
+  id: string;
+  title: string;
+  category: CalendarEventCategory;
+  courseCode?: string;
+  location: string;
+  startIso: string;
+  durationMinutes: number;
+  maxParticipants: number;
+  instructorName: string;
+  instructorUid: string;
+  description: string;
+  mandatoryForRoles: OfficerRole[];
+  attendees: CalendarEventAttendee[];
+  createdIso: string;
+}
+
+export interface PortalNotificationDoc {
+  id: string;
+  recipientUid: string; // specific uid or 'ALL'
+  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message';
+  title: string;
+  message: string;
+  linkSection:
+    | 'dashboard'
+    | 'announcements'
+    | 'messages'
+    | 'requests'
+    | 'academy'
+    | 'calendar'
+    | 'reports'
+    | 'audit'
+    | 'whitelist'
+    | 'settings'
+    | 'personnel';
+  readByUids: string[];
+  createdIso: string;
+}
+
 export interface PortalDeploymentConfig {
   githubRepoUrl: string;
   renderServiceUrl: string;
@@ -219,6 +394,11 @@ export interface PortalDbStats {
   examsCount: number;
   applicationsCount: number;
   progressCount: number;
+  announcementsCount?: number;
+  messagesCount?: number;
+  requestsCount?: number;
+  eventsCount?: number;
+  auditLogsCount?: number;
   sizeBytes: number;
 }
 
@@ -232,6 +412,11 @@ export interface PortalBackupSnapshot {
     examsCount: number;
     applicationsCount: number;
     progressCount: number;
+    announcementsCount?: number;
+    messagesCount?: number;
+    requestsCount?: number;
+    eventsCount?: number;
+    auditLogsCount?: number;
   };
   database: {
     version: number;
@@ -240,7 +425,15 @@ export interface PortalBackupSnapshot {
     modules: TrainingModuleDoc[];
     exams: AcademyExamDoc[];
     progress: UserProgressDoc[];
+    announcements?: AnnouncementDoc[];
+    messages?: DirectMessageDoc[];
+    requests?: PortalRequestDoc[];
+    events?: CalendarEventDoc[];
+    auditLogs?: AuditLogDoc[];
+    notifications?: PortalNotificationDoc[];
     deploymentConfig?: PortalDeploymentConfig;
   };
 }
+
+
 

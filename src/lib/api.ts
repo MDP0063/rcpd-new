@@ -138,6 +138,14 @@ export const API_ENDPOINTS = {
   ACADEMY_MODULES: '/api/academy/modules',
   ACADEMY_EXAMS: '/api/academy/exams',
   PROGRESS: '/api/progress',
+  ANNOUNCEMENTS: '/api/announcements',
+  MESSAGES: '/api/messages',
+  REQUESTS: '/api/requests',
+  EVENTS: '/api/events',
+  NOTIFICATIONS: '/api/notifications',
+  AUDIT_LOGS: '/api/admin/audit-logs',
+  INSTRUCTOR_GRADE: '/api/academy/instructor-grade',
+  PROFILE_SELF: '/api/profile/self',
   WHITELIST_VERIFY: '/api/v1/whitelist/verify',
   DEPLOYMENT_MANIFESTS: '/api/v1/deployment/manifests',
   ADMIN_DEPLOYMENT_CONFIG: '/api/admin/deployment-config',
@@ -145,3 +153,4 @@ export const API_ENDPOINTS = {
   ADMIN_RESTORE: '/api/admin/restore',
   ADMIN_TRIGGER_DEPLOY: '/api/admin/trigger-deploy'
 } as const;
+

@@ -404,11 +404,11 @@ git push origin ${cleanBranch}`;
       {/* Header Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <div className="text-xs font-mono text-sky-600 font-semibold">
-            ADMIN SYSTEMTECHNIK // GITHUB REPOSITORY, RENDER FREE-TIER &amp; DATENBANK-BACKUP
+          <div className="text-xs font-medium text-slate-500">
+            Systemtechnik · GitHub Repository, Render &amp; Datenbank-Sicherung
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
-            GitHub &amp; Render.com Auto-Deployment + 1-Klick Backup-Zentrale
+            GitHub &amp; Render.com Deployment + Datensicherung
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-3xl">
             Exklusiv für dich als Administrator sichtbar. Verbinde dein bestehendes GitHub-Repository für automatische Deployments bei jedem Push auf{' '}
@@ -440,7 +440,7 @@ git push origin ${cleanBranch}`;
             <div className="flex items-center gap-2 mt-2">
               <span
                 className={`w-2.5 h-2.5 rounded-full ${
-                  healthInfo ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                  healthInfo ? 'bg-emerald-500' : 'bg-amber-500'
                 }`}
               />
               <span className="text-base font-bold text-slate-900">
@@ -515,8 +515,8 @@ git push origin ${cleanBranch}`;
       <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <div className="text-xs font-mono text-sky-600 font-semibold">
-              RENDER FREE-TIER DATENTRESOR // EIN-KLICK BACKUP &amp; WIEDERHERSTELLUNG
+            <div className="text-xs font-medium text-slate-500">
+              Datensicherung · Backup &amp; Wiederherstellung
             </div>
             <h2 className="text-lg font-bold text-slate-900 mt-0.5">
               Alle Accounts, Passwörter, Ränge, PDF-Lehrbücher &amp; Code-Prüfungen sichern
@@ -537,7 +537,7 @@ git push origin ${cleanBranch}`;
           <div className="bg-slate-900 text-white rounded-lg p-5 flex flex-col justify-between space-y-5 border border-slate-800">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-sky-400">
-                <span>SCHRITT A // KOMPLETT-SICHERUNG EXPORTIEREN</span>
+                <span>Schritt A · Komplett-Sicherung exportieren</span>
                 <Download className="w-4 h-4" />
               </div>
               <h3 className="text-base font-bold text-white">
@@ -569,7 +569,7 @@ git push origin ${cleanBranch}`;
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-sky-700 font-semibold">
-                <span>SCHRITT B // BACKUP-DATEI WIEDERHERSTELLEN (RESTORE)</span>
+                <span>Schritt B · Backup-Datei wiederherstellen</span>
                 <Upload className="w-4 h-4" />
               </div>
               <h3 className="text-base font-bold text-slate-900">
@@ -642,8 +642,8 @@ git push origin ${cleanBranch}`;
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
-            <div className="text-xs font-mono text-sky-600 font-semibold">
-              REPOSITORY &amp; RENDER KONFIGURATION // PERSONALISIERTER BEFEHLS-GENERATOR
+            <div className="text-xs font-medium text-slate-500">
+              Repository &amp; Render-Konfiguration
             </div>
             <h2 className="text-lg font-bold text-slate-900 mt-0.5">
               Dein bestehendes GitHub-Repository &amp; deine Render-URL verknüpfen
@@ -768,8 +768,8 @@ git push origin ${cleanBranch}`;
         {/* Left 5 Cols: Interactive Step-by-Step Checklist */}
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-6 space-y-5 shadow-xs">
           <div className="border-b border-slate-200 pb-3">
-            <div className="text-xs font-mono text-sky-600 font-semibold">
-              INTERAKTIVER LEITFADEN // SCHRITT FÜR SCHRITT ZUR LIVE-URL
+            <div className="text-xs font-medium text-slate-500">
+              Einrichtungs-Leitfaden · Schritt für Schritt
             </div>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
               Checkliste für dein GitHub &amp; Render Setup ({completedSteps.length} / {SETUP_STEPS.length} erledigt)
@@ -848,8 +848,8 @@ git push origin ${cleanBranch}`;
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-xs font-mono text-sky-600 font-semibold">
-                  DEINE GIT-BEFEHLE // ERSTMALIGER UPLOAD INS BESTEHENDE GITHUB-REPO
+                <div className="text-xs font-medium text-slate-500">
+                  Git-Befehle · Erstmaliger Upload ins Repository
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   Projekt mit deinem GitHub-Repository verbinden &amp; auf &quot;{cleanBranch}&quot; pushen
@@ -900,8 +900,8 @@ git push origin ${cleanBranch}`;
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-mono text-sky-600 font-semibold">
-                  RENDER FREE-TIER KONFIGURATION // /render.yaml
+                <div className="text-xs font-medium text-slate-500">
+                  Render-Konfiguration · /render.yaml
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   Synchronisierte Render-Spezifikation (Endpunkt: {API_ENDPOINTS.DEPLOYMENT_MANIFESTS})
@@ -957,8 +957,8 @@ git push origin ${cleanBranch}`;
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <div className="text-xs font-mono text-sky-600 font-semibold">
-                  EXTERNE GAME-SERVER SCHNITTSTELLE // WHITELIST API TEST
+                <div className="text-xs font-medium text-slate-500">
+                  Externe Schnittstelle · Whitelist-API-Prüfung
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   REST-Endpunkt: {resolveApiUrl(API_ENDPOINTS.WHITELIST_VERIFY)}

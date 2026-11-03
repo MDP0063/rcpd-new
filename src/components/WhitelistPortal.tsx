@@ -112,8 +112,8 @@ export const WhitelistPortal: React.FC<WhitelistPortalProps> = ({
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <div className="text-xs font-mono text-sky-600 font-semibold">
-            CALIFORNIA POST // PERSONALBOGEN &amp; WHITELIST-AKTE
+          <div className="text-xs font-medium text-slate-500">
+            California POST · Personalbogen &amp; Whitelist-Akte
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
             Personalbogen &amp; Beförderungsantrag

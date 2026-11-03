@@ -5,9 +5,23 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
+  AnnouncementCategory,
+  AnnouncementDoc,
+  AnnouncementPriority,
+  AuditLogDoc,
+  CalendarEventCategory,
+  CalendarEventDoc,
+  DirectMessageDoc,
+  GranularPermissions,
+  MessagePriority,
   OfficerRole,
   PortalBackupSnapshot,
   PortalDeploymentConfig,
+  PortalNotificationDoc,
+  PortalRequestDoc,
+  PublicActivityDoc,
+  RequestCategory,
+  RequestStatus,
   ROLE_HIERARCHY,
   TrainingModuleDoc,
   UserPrivateProfile,
@@ -37,6 +51,12 @@ export interface PortalDatabaseState {
   modules: TrainingModuleDoc[];
   exams: AcademyExamDoc[];
   progress: UserProgressDoc[];
+  announcements?: AnnouncementDoc[];
+  messages?: DirectMessageDoc[];
+  requests?: PortalRequestDoc[];
+  events?: CalendarEventDoc[];
+  auditLogs?: AuditLogDoc[];
+  notifications?: PortalNotificationDoc[];
   deploymentConfig?: PortalDeploymentConfig;
 }
 
@@ -52,8 +72,273 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
   return diff <= ONLINE_THRESHOLD_MS;
 }
 
+export function getDefaultGranularPermissions(role: OfficerRole): GranularPermissions {
+  if (role === 'admin') {
+    return {
+      assignedCourseCodes: ['*'],
+      canGradeAssignedCourses: true,
+      canManageEvents: true,
+      canPublishAnnouncements: true,
+      canReviewStandardRequests: true,
+      canExportReports: true
+    };
+  }
+  if (role === 'colonel') {
+    return {
+      assignedCourseCodes: ['*'],
+      canGradeAssignedCourses: true,
+      canManageEvents: true,
+      canPublishAnnouncements: true,
+      canReviewStandardRequests: true,
+      canExportReports: true
+    };
+  }
+  return {
+    assignedCourseCodes: [],
+    canGradeAssignedCourses: false,
+    canManageEvents: false,
+    canPublishAnnouncements: false,
+    canReviewStandardRequests: false,
+    canExportReports: false
+  };
+}
+
+function normalizeGranularPermissions(
+  role: OfficerRole,
+  incoming?: Partial<GranularPermissions>
+): GranularPermissions {
+  const defaults = getDefaultGranularPermissions(role);
+  if (role === 'admin') {
+    return defaults;
+  }
+  if (!incoming) return defaults;
+  return {
+    assignedCourseCodes: Array.isArray(incoming.assignedCourseCodes)
+      ? incoming.assignedCourseCodes.map(c => String(c).trim().toUpperCase()).filter(Boolean)
+      : defaults.assignedCourseCodes,
+    canGradeAssignedCourses:
+      typeof incoming.canGradeAssignedCourses === 'boolean'
+        ? incoming.canGradeAssignedCourses
+        : defaults.canGradeAssignedCourses,
+    canManageEvents:
+      typeof incoming.canManageEvents === 'boolean'
+        ? incoming.canManageEvents
+        : defaults.canManageEvents,
+    canPublishAnnouncements:
+      typeof incoming.canPublishAnnouncements === 'boolean'
+        ? incoming.canPublishAnnouncements
+        : defaults.canPublishAnnouncements,
+    canReviewStandardRequests:
+      typeof incoming.canReviewStandardRequests === 'boolean'
+        ? incoming.canReviewStandardRequests
+        : defaults.canReviewStandardRequests,
+    canExportReports:
+      typeof incoming.canExportReports === 'boolean'
+        ? incoming.canExportReports
+        : defaults.canExportReports
+  };
+}
+
+function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
+  const role = caller.publicProfile.role;
+  if (role === 'admin' || role === 'colonel') return true;
+  const perms =
+    caller.publicProfile.granularPermissions || getDefaultGranularPermissions(role);
+  if (!perms.canGradeAssignedCourses) return false;
+  if (!courseCode) return perms.assignedCourseCodes.includes('*');
+  const normalizedTarget = courseCode.trim().toUpperCase();
+  return (
+    perms.assignedCourseCodes.includes('*') ||
+    perms.assignedCourseCodes.some(c => c.toUpperCase() === normalizedTarget)
+  );
+}
+
+function appendAuditLog(
+  state: PortalDatabaseState,
+  actor: StoredAccountRecord,
+  category: AuditLogDoc['category'],
+  actionTitle: string,
+  targetLabel: string,
+  details: string
+) {
+  if (!Array.isArray(state.auditLogs)) {
+    state.auditLogs = [];
+  }
+  const entry: AuditLogDoc = {
+    id: `aud_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    actorUid: actor.uid,
+    actorName: actor.publicProfile.displayName,
+    actorBadge: actor.publicProfile.badgeNumber,
+    actorRole: actor.publicProfile.role,
+    category,
+    actionTitle,
+    targetLabel,
+    details,
+    createdIso: new Date().toISOString()
+  };
+  state.auditLogs.unshift(entry);
+  if (state.auditLogs.length > 500) {
+    state.auditLogs = state.auditLogs.slice(0, 500);
+  }
+}
+
+function pushNotification(
+  state: PortalDatabaseState,
+  recipientUid: string,
+  type: PortalNotificationDoc['type'],
+  title: string,
+  message: string,
+  linkSection: PortalNotificationDoc['linkSection']
+) {
+  if (!Array.isArray(state.notifications)) {
+    state.notifications = [];
+  }
+  const item: PortalNotificationDoc = {
+    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    recipientUid,
+    type,
+    title,
+    message,
+    linkSection,
+    readByUids: [],
+    createdIso: new Date().toISOString()
+  };
+  state.notifications.unshift(item);
+  if (state.notifications.length > 300) {
+    state.notifications = state.notifications.slice(0, 300);
+  }
+}
+
+function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDoc[] {
+  const candidates: PublicActivityDoc[] = [];
+
+  // 1. Extract public actions from auditLogs (ANNOUNCEMENT, ACADEMY_DOC, CALENDAR_EVENT)
+  for (const log of state.auditLogs || []) {
+    if (log.category === 'ANNOUNCEMENT' && !log.actionTitle.toLowerCase().includes('gelöscht')) {
+      candidates.push({
+        id: `pub_${log.id}`,
+        actionType: 'New Announcement',
+        actionLabelDe: 'Neue Bekanntmachung veröffentlicht',
+        title: log.targetLabel,
+        actorName: log.actorName,
+        targetSection: 'announcements',
+        createdIso: log.createdIso
+      });
+    } else if (
+      log.category === 'ACADEMY_DOC' &&
+      !log.actionTitle.toLowerCase().includes('gelöscht')
+    ) {
+      const isExam =
+        log.actionTitle.toLowerCase().includes('prüfung') ||
+        log.actionTitle.toLowerCase().includes('test');
+      const isUpdate = log.actionTitle.toLowerCase().includes('bearbeitet');
+      candidates.push({
+        id: `pub_${log.id}`,
+        actionType: isExam
+          ? 'New Exam Published'
+          : isUpdate
+          ? 'Training Module Updated'
+          : 'New Training Module Published',
+        actionLabelDe: isExam
+          ? 'Neue Prüfung / Test veröffentlicht'
+          : isUpdate
+          ? 'Lehrbuch / Modul aktualisiert'
+          : 'Neues Lehrbuch veröffentlicht',
+        title: log.targetLabel,
+        actorName: log.actorName,
+        targetSection: 'academy',
+        createdIso: log.createdIso
+      });
+    } else if (
+      log.category === 'CALENDAR_EVENT' &&
+      !log.actionTitle.toLowerCase().includes('gelöscht')
+    ) {
+      candidates.push({
+        id: `pub_${log.id}`,
+        actionType: 'New Calendar Event Scheduled',
+        actionLabelDe: 'Neuer Kalender-Termin angesetzt',
+        title: log.targetLabel,
+        actorName: log.actorName,
+        targetSection: 'calendar',
+        createdIso: log.createdIso
+      });
+    }
+  }
+
+  // 2. Also include existing announcements, training modules, exams, and calendar events
+  for (const ann of state.announcements || []) {
+    candidates.push({
+      id: `pub_ann_${ann.id}`,
+      actionType: 'New Announcement',
+      actionLabelDe: 'Neue Bekanntmachung veröffentlicht',
+      title: ann.title,
+      actorName: ann.authorName,
+      targetSection: 'announcements',
+      createdIso: ann.createdIso
+    });
+  }
+
+  for (const mod of state.modules || []) {
+    const authorAcc = state.accounts.find(a => a.uid === mod.authorUid);
+    candidates.push({
+      id: `pub_mod_${mod.id}`,
+      actionType: 'New Training Module Published',
+      actionLabelDe: 'Neues Lehrbuch veröffentlicht',
+      title: `${mod.code} — ${mod.title}`,
+      actorName: authorAcc?.publicProfile.displayName || 'Academy Command',
+      targetSection: 'academy',
+      createdIso: mod.updatedIso || new Date().toISOString()
+    });
+  }
+
+  for (const ex of state.exams || []) {
+    const authorAcc = state.accounts.find(a => a.uid === ex.authorUid);
+    candidates.push({
+      id: `pub_ex_${ex.id}`,
+      actionType: 'New Exam Published',
+      actionLabelDe: 'Neue Prüfung / Test veröffentlicht',
+      title: `${ex.moduleCode} — ${ex.title}`,
+      actorName: authorAcc?.publicProfile.displayName || 'Academy Command',
+      targetSection: 'academy',
+      createdIso: ex.updatedIso || new Date().toISOString()
+    });
+  }
+
+  for (const evt of state.events || []) {
+    candidates.push({
+      id: `pub_evt_${evt.id}`,
+      actionType: 'New Calendar Event Scheduled',
+      actionLabelDe: 'Neuer Kalender-Termin angesetzt',
+      title: evt.title,
+      actorName: evt.instructorName,
+      targetSection: 'calendar',
+      createdIso: evt.createdIso
+    });
+  }
+
+  // Sort newest first and deduplicate by actionType + title
+  candidates.sort(
+    (a, b) => new Date(b.createdIso).getTime() - new Date(a.createdIso).getTime()
+  );
+
+  const unique: PublicActivityDoc[] = [];
+  const seenKeys = new Set<string>();
+  for (const item of candidates) {
+    const key = `${item.actionType}::${item.title.toLowerCase()}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      unique.push(item);
+      if (unique.length >= 5) break;
+    }
+  }
+
+  return unique;
+}
+
 function createInitialDatabase(): PortalDatabaseState {
   const nowIso = new Date().toISOString();
+  const tomorrowIso = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+  const inThreeDaysIso = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
 
   // Only Admin1 is pre-created by default; no pre-programmed tests or textbooks!
   const initialAccounts: StoredAccountRecord[] = [
@@ -74,6 +359,7 @@ function createInitialDatabase(): PortalDatabaseState {
         clearanceLevel: 10,
         division: 'Office of the Chief of Police (Command Administration)',
         whitelistStatus: 'whitelisted',
+        granularPermissions: getDefaultGranularPermissions('admin'),
         isOnline: false,
         lastSeenIso: nowIso,
         updatedIso: nowIso
@@ -83,9 +369,89 @@ function createInitialDatabase(): PortalDatabaseState {
         email: 'admin1@post.ca.gov',
         discordTag: 'admin1#0001',
         steamHex: 'steam:11000010a000001',
-        supervisorNotes: 'Master Administrator Account (Volle System-, Konten- & Rollenberechtigung).',
+        supervisorNotes:
+          'Master Administrator Account (Volle System-, Konten- & Rollenberechtigung).',
         updatedIso: nowIso
       }
+    }
+  ];
+
+  const defaultAnnouncements: AnnouncementDoc[] = [
+    {
+      id: 'ann_welcome_1',
+      title: 'Inbetriebnahme des CA-POST Officer & Academy Intranets',
+      category: 'Dienstanweisung',
+      priority: 'important',
+      content:
+        'Willkommen im offiziellen Dienst- und Ausbildungsportal. Bitte prüft regelmäßig das Ankündigungs-Modul auf aktuelle Dienstanweisungen, nutzt das interne Nachrichtensystem für die dienstliche Kommunikation und reicht Anträge auf Rangänderungen, Sonderfreigaben oder Belobigungen direkt über das Antragsformular ein.',
+      authorUid: 'usr_admin_1',
+      authorName: 'Chief Administrator',
+      authorRank: ROLE_HIERARCHY.admin.defaultRank,
+      pinned: true,
+      acknowledgedByUids: ['usr_admin_1'],
+      createdIso: nowIso
+    }
+  ];
+
+  const defaultEvents: CalendarEventDoc[] = [
+    {
+      id: 'evt_default_1',
+      title: 'Taktisches Grundlagentraining & Funkdisziplin (SOP-01)',
+      category: 'Training & Lehrgang',
+      courseCode: 'SOP-01',
+      location: 'CA-POST Regional Training Center · Übungsplatz Nord',
+      startIso: tomorrowIso,
+      durationMinutes: 90,
+      maxParticipants: 20,
+      instructorName: 'Chief Administrator',
+      instructorUid: 'usr_admin_1',
+      description:
+        'Praktische Übungseinheit zu Funkverkehr, Fahrzeugkontrollen (High-Risk Traffic Stops) und Eigensicherung im Streifendienst.',
+      mandatoryForRoles: ['trainee', 'rookie'],
+      attendees: [
+        {
+          uid: 'usr_admin_1',
+          displayName: 'Chief Administrator',
+          badgeNumber: 'CA-0001',
+          role: 'admin',
+          status: 'attending',
+          updatedIso: nowIso
+        }
+      ],
+      createdIso: nowIso
+    },
+    {
+      id: 'evt_default_2',
+      title: 'Wöchentliche Dienstbesprechung & Einsatznachbereitung',
+      category: 'Dienstbesprechung',
+      courseCode: 'BRIEF-01',
+      location: 'Hauptquartier · Besprechungsraum 204',
+      startIso: inThreeDaysIso,
+      durationMinutes: 45,
+      maxParticipants: 40,
+      instructorName: 'Chief Administrator',
+      instructorUid: 'usr_admin_1',
+      description:
+        'Besprechung aktueller Dienstanweisungen, Beförderungen, offener Lehrgänge und Koordination kommender Sondereinsätze.',
+      mandatoryForRoles: ['admin', 'colonel', 'officer', 'rookie', 'trainee'],
+      attendees: [],
+      createdIso: nowIso
+    }
+  ];
+
+  const initialAuditLogs: AuditLogDoc[] = [
+    {
+      id: 'aud_init_1',
+      actorUid: 'usr_admin_1',
+      actorName: 'Chief Administrator',
+      actorBadge: 'CA-0001',
+      actorRole: 'admin',
+      category: 'ACCOUNT_ROLE',
+      actionTitle: 'System-Initialisierung & Master-Admin bereitgestellt',
+      targetLabel: 'Admin1 (CA-0001)',
+      details:
+        'CA-POST Officer & Academy Intranet initialisiert. Audit-Trail, Live-Benachrichtigungen und granulare Lehrgangs-Berechtigungen aktiv.',
+      createdIso: nowIso
     }
   ];
 
@@ -94,8 +460,14 @@ function createInitialDatabase(): PortalDatabaseState {
     accounts: initialAccounts,
     applications: [],
     modules: [], // Empty by default so Admin/Colonel can upload PDFs / Textbooks dynamically
-    exams: [],   // Empty by default so Admin/Colonel can add Tests & Final Exams as code dynamically
+    exams: [], // Empty by default so Admin/Colonel can add Tests & Final Exams as code dynamically
     progress: [],
+    announcements: defaultAnnouncements,
+    messages: [],
+    requests: [],
+    events: defaultEvents,
+    auditLogs: initialAuditLogs,
+    notifications: [],
     deploymentConfig: {
       githubRepoUrl: 'https://github.com/DEIN-BENUTZERNAME/ca-post-officer-portal.git',
       renderServiceUrl: 'https://rcpd-new.onrender.com',
@@ -121,6 +493,31 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
     };
   } else if (!state.deploymentConfig.renderServiceUrl) {
     state.deploymentConfig.renderServiceUrl = 'https://rcpd-new.onrender.com';
+  }
+  if (!Array.isArray(state.announcements)) {
+    state.announcements = [];
+  }
+  if (!Array.isArray(state.messages)) {
+    state.messages = [];
+  }
+  if (!Array.isArray(state.requests)) {
+    state.requests = [];
+  }
+  if (!Array.isArray(state.events)) {
+    state.events = createInitialDatabase().events || [];
+  }
+  if (!Array.isArray(state.auditLogs)) {
+    state.auditLogs = createInitialDatabase().auditLogs || [];
+  }
+  if (!Array.isArray(state.notifications)) {
+    state.notifications = [];
+  }
+  for (const acc of state.accounts) {
+    if (!acc.publicProfile.granularPermissions) {
+      acc.publicProfile.granularPermissions = getDefaultGranularPermissions(
+        acc.publicProfile.role
+      );
+    }
   }
   return state.deploymentConfig;
 }
@@ -203,7 +600,8 @@ async function startServer() {
 
     if (!matched) {
       res.status(401).json({
-        error: 'Ungültige Anmeldedaten. Neue Konten werden ausschließlich durch den Administrator vergeben.'
+        error:
+          'Ungültige Anmeldedaten. Neue Konten werden ausschließlich durch den Administrator vergeben.'
       });
       return;
     }
@@ -281,10 +679,16 @@ async function startServer() {
 
     const isAdmin = caller.publicProfile.role === 'admin';
     const isTrainee = caller.publicProfile.role === 'trainee';
+    const callerPerms =
+      caller.publicProfile.granularPermissions ||
+      getDefaultGranularPermissions(caller.publicProfile.role);
 
     // Recompute live online flags for all accounts
     const publicRoster = dbState.accounts.map(a => ({
       ...a.publicProfile,
+      granularPermissions:
+        a.publicProfile.granularPermissions ||
+        getDefaultGranularPermissions(a.publicProfile.role),
       isOnline: computeIsOnline(a),
       lastSeenIso: a.lastSeenIso
     }));
@@ -294,9 +698,25 @@ async function startServer() {
       ? dbState.exams.filter(ex => ex.assessmentStage !== 'final_exam')
       : dbState.exams;
 
+    const canSeeAllProgress =
+      isAdmin ||
+      caller.publicProfile.role === 'colonel' ||
+      callerPerms.canGradeAssignedCourses ||
+      callerPerms.canExportReports;
+
+    const canSeeAllRequests =
+      isAdmin ||
+      caller.publicProfile.role === 'colonel' ||
+      callerPerms.canReviewStandardRequests;
+
+    const myNotifications = (dbState.notifications || []).filter(
+      n => n.recipientUid === caller.uid || n.recipientUid === 'ALL'
+    );
+
     res.json({
       currentUser: {
         ...caller.publicProfile,
+        granularPermissions: callerPerms,
         isOnline: true,
         lastSeenIso: nowIso
       },
@@ -312,6 +732,9 @@ async function startServer() {
             lastSeenIso: a.lastSeenIso,
             publicProfile: {
               ...a.publicProfile,
+              granularPermissions:
+                a.publicProfile.granularPermissions ||
+                getDefaultGranularPermissions(a.publicProfile.role),
               isOnline: computeIsOnline(a),
               lastSeenIso: a.lastSeenIso
             },
@@ -323,9 +746,23 @@ async function startServer() {
         : dbState.applications.filter(appItem => appItem.applicantUid === caller.uid),
       modules: dbState.modules,
       exams: visibleExams,
-      progress: isAdmin || caller.publicProfile.role === 'colonel'
+      progress: canSeeAllProgress
         ? dbState.progress
         : dbState.progress.filter(p => p.userId === caller.uid),
+      announcements: dbState.announcements || [],
+      messages: (dbState.messages || []).filter(
+        m =>
+          m.recipientUid === caller.uid ||
+          m.senderUid === caller.uid ||
+          m.recipientUid === 'ALL'
+      ),
+      requests: canSeeAllRequests
+        ? dbState.requests || []
+        : (dbState.requests || []).filter(r => r.requesterUid === caller.uid),
+      events: dbState.events || [],
+      notifications: myNotifications,
+      recentPublicActivity: buildRecentPublicActivity(dbState),
+      auditLogs: isAdmin ? dbState.auditLogs || [] : [],
       deploymentConfig: isAdmin ? ensureDeploymentConfig(dbState) : undefined,
       dbStats: isAdmin
         ? {
@@ -335,6 +772,11 @@ async function startServer() {
             examsCount: dbState.exams.length,
             applicationsCount: dbState.applications.length,
             progressCount: dbState.progress.length,
+            announcementsCount: (dbState.announcements || []).length,
+            messagesCount: (dbState.messages || []).length,
+            requestsCount: (dbState.requests || []).length,
+            eventsCount: (dbState.events || []).length,
+            auditLogsCount: (dbState.auditLogs || []).length,
             sizeBytes: fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0
           }
         : undefined
@@ -355,14 +797,16 @@ async function startServer() {
       division,
       whitelistStatus,
       discordTag,
-      supervisorNotes
+      supervisorNotes,
+      granularPermissions
     } = req.body;
 
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
       res.status(403).json({
-        error: 'Zugriff verweigert. Neue Benutzerkonten können ausschließlich vom Administrator angelegt werden.'
+        error:
+          'Zugriff verweigert. Neue Benutzerkonten können ausschließlich vom Administrator angelegt werden.'
       });
       return;
     }
@@ -372,7 +816,11 @@ async function startServer() {
       return;
     }
 
-    if (dbState.accounts.some(a => a.username.toLowerCase() === String(username).trim().toLowerCase())) {
+    if (
+      dbState.accounts.some(
+        a => a.username.toLowerCase() === String(username).trim().toLowerCase()
+      )
+    ) {
       res.status(409).json({ error: 'Dieser Benutzername existiert bereits.' });
       return;
     }
@@ -382,6 +830,7 @@ async function startServer() {
     // Default role is ALWAYS 'trainee' unless explicitly chosen otherwise by Admin
     const targetRole: OfficerRole = (role as OfficerRole) || 'trainee';
     const roleMeta = ROLE_HIERARCHY[targetRole] || ROLE_HIERARCHY.trainee;
+    const normalizedPerms = normalizeGranularPermissions(targetRole, granularPermissions);
 
     const newAccount: StoredAccountRecord = {
       uid,
@@ -392,14 +841,27 @@ async function startServer() {
       publicProfile: {
         uid,
         username: String(username).trim(),
-        displayName: String(displayName || username).trim().slice(0, 80),
-        badgeNumber: String(badgeNumber || `CA-${Math.floor(1000 + Math.random() * 8999)}`).toUpperCase().slice(0, 20),
-        callsign: String(callsign || '10-TRN').trim().slice(0, 20),
-        rank: String(rank || roleMeta.defaultRank).trim().slice(0, 50),
+        displayName: String(displayName || username)
+          .trim()
+          .slice(0, 80),
+        badgeNumber: String(
+          badgeNumber || `CA-${Math.floor(1000 + Math.random() * 8999)}`
+        )
+          .toUpperCase()
+          .slice(0, 20),
+        callsign: String(callsign || '10-TRN')
+          .trim()
+          .slice(0, 20),
+        rank: String(rank || roleMeta.defaultRank)
+          .trim()
+          .slice(0, 50),
         role: targetRole,
         clearanceLevel: roleMeta.defaultClearance,
-        division: String(division || 'Training & Evaluation Bureau').trim().slice(0, 60),
+        division: String(division || 'Training & Evaluation Bureau')
+          .trim()
+          .slice(0, 60),
         whitelistStatus: (whitelistStatus as WhitelistStatus) || 'whitelisted',
+        granularPermissions: normalizedPerms,
         isOnline: false,
         lastSeenIso: nowIso,
         updatedIso: nowIso
@@ -407,19 +869,32 @@ async function startServer() {
       privateProfile: {
         uid,
         email: `${String(username).trim().toLowerCase()}@post.ca.gov`,
-        discordTag: String(discordTag || `${String(username).trim().toLowerCase()}#0001`).slice(0, 64),
+        discordTag: String(discordTag || `${String(username).trim().toLowerCase()}#0001`).slice(
+          0,
+          64
+        ),
         steamHex: 'steam:verified',
-        supervisorNotes: String(supervisorNotes || 'Vom Administrator persönlich angelegt.').slice(0, 2000),
+        supervisorNotes: String(
+          supervisorNotes || 'Vom Administrator persönlich angelegt.'
+        ).slice(0, 2000),
         updatedIso: nowIso
       }
     };
 
     dbState.accounts.push(newAccount);
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACCOUNT_ROLE',
+      'Neues Dienstkonto angelegt',
+      `${newAccount.publicProfile.displayName} (${newAccount.username} · ${newAccount.publicProfile.badgeNumber})`,
+      `Start-Rang: ${targetRole.toUpperCase()} (${newAccount.publicProfile.rank}) · Abteilung: ${newAccount.publicProfile.division}`
+    );
     saveDatabase(dbState);
     res.json({ account: newAccount });
   });
 
-  // 6. ADMIN ONLY: Update Any Account (Including Admin1's own username & password, role, status)
+  // 6. ADMIN ONLY: Update Any Account (Including Admin1's own username & password, role, granularPermissions, status)
   app.put('/api/admin/accounts/:targetUid', (req, res) => {
     const { targetUid } = req.params;
     const {
@@ -434,14 +909,16 @@ async function startServer() {
       division,
       whitelistStatus,
       discordTag,
-      supervisorNotes
+      supervisorNotes,
+      granularPermissions
     } = req.body;
 
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
       res.status(403).json({
-        error: 'Zugriff verweigert. Rang- und Kontenbearbeitung ist ausschließlich dem Administrator erlaubt.'
+        error:
+          'Zugriff verweigert. Rang- und Kontenbearbeitung ist ausschließlich dem Administrator erlaubt.'
       });
       return;
     }
@@ -453,6 +930,8 @@ async function startServer() {
     }
 
     const target = dbState.accounts[accountIdx];
+    const prevRole = target.publicProfile.role;
+    const prevStatus = target.publicProfile.whitelistStatus;
     const nextUsername = username ? String(username).trim() : target.username;
 
     if (
@@ -472,27 +951,78 @@ async function startServer() {
 
     const nextRole: OfficerRole = (role as OfficerRole) || target.publicProfile.role;
     const roleMeta = ROLE_HIERARCHY[nextRole] || ROLE_HIERARCHY.trainee;
+    const nextPerms =
+      granularPermissions !== undefined
+        ? normalizeGranularPermissions(nextRole, granularPermissions)
+        : prevRole !== nextRole
+        ? getDefaultGranularPermissions(nextRole)
+        : target.publicProfile.granularPermissions ||
+          getDefaultGranularPermissions(nextRole);
 
     target.publicProfile = {
       ...target.publicProfile,
       username: nextUsername,
-      displayName: displayName !== undefined ? String(displayName).trim() : target.publicProfile.displayName,
-      badgeNumber: badgeNumber !== undefined ? String(badgeNumber).toUpperCase().trim() : target.publicProfile.badgeNumber,
-      callsign: callsign !== undefined ? String(callsign).trim() : target.publicProfile.callsign,
+      displayName:
+        displayName !== undefined
+          ? String(displayName).trim()
+          : target.publicProfile.displayName,
+      badgeNumber:
+        badgeNumber !== undefined
+          ? String(badgeNumber).toUpperCase().trim()
+          : target.publicProfile.badgeNumber,
+      callsign:
+        callsign !== undefined ? String(callsign).trim() : target.publicProfile.callsign,
       role: nextRole,
       rank: rank !== undefined ? String(rank).trim() : roleMeta.defaultRank,
       clearanceLevel: roleMeta.defaultClearance,
-      division: division !== undefined ? String(division).trim() : target.publicProfile.division,
-      whitelistStatus: (whitelistStatus as WhitelistStatus) || target.publicProfile.whitelistStatus,
+      division:
+        division !== undefined ? String(division).trim() : target.publicProfile.division,
+      whitelistStatus:
+        (whitelistStatus as WhitelistStatus) || target.publicProfile.whitelistStatus,
+      granularPermissions: nextPerms,
       updatedIso: nowIso
     };
 
     target.privateProfile = {
       ...target.privateProfile,
-      discordTag: discordTag !== undefined ? String(discordTag).trim() : target.privateProfile.discordTag,
-      supervisorNotes: supervisorNotes !== undefined ? String(supervisorNotes) : target.privateProfile.supervisorNotes,
+      discordTag:
+        discordTag !== undefined
+          ? String(discordTag).trim()
+          : target.privateProfile.discordTag,
+      supervisorNotes:
+        supervisorNotes !== undefined
+          ? String(supervisorNotes)
+          : target.privateProfile.supervisorNotes,
       updatedIso: nowIso
     };
+
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACCOUNT_ROLE',
+      prevRole !== nextRole
+        ? `Rangänderung durchgeführt (${prevRole.toUpperCase()} → ${nextRole.toUpperCase()})`
+        : prevStatus !== target.publicProfile.whitelistStatus
+        ? `Kontostatus geändert (${prevStatus} → ${target.publicProfile.whitelistStatus})`
+        : 'Konto- & Berechtigungsdaten aktualisiert',
+      `${target.publicProfile.displayName} (${target.username} · ${target.publicProfile.badgeNumber})`,
+      `Rolle: ${nextRole.toUpperCase()} · Status: ${target.publicProfile.whitelistStatus} · Lehrgangs-Freigaben: ${
+        nextPerms.assignedCourseCodes.join(', ') || 'Keine'
+      }`
+    );
+
+    if (prevRole !== nextRole || granularPermissions !== undefined) {
+      pushNotification(
+        dbState,
+        target.uid,
+        'role_updated',
+        `Dienstkonto & Berechtigungen aktualisiert`,
+        `Dein System-Rang lautet nun ${nextRole.toUpperCase()} (${target.publicProfile.rank}). Zugewiesene Ausbilder-Lehrgänge: ${
+          nextPerms.assignedCourseCodes.join(', ') || 'Standard'
+        }.`,
+        'dashboard'
+      );
+    }
 
     saveDatabase(dbState);
     res.json({ account: target });
@@ -511,11 +1041,24 @@ async function startServer() {
     }
 
     if (targetUid === caller.uid) {
-      res.status(400).json({ error: 'Du kannst dein eigenes aktives Administratorkonto nicht löschen.' });
+      res
+        .status(400)
+        .json({ error: 'Du kannst dein eigenes aktives Administratorkonto nicht löschen.' });
       return;
     }
 
+    const target = dbState.accounts.find(a => a.uid === targetUid);
     dbState.accounts = dbState.accounts.filter(a => a.uid !== targetUid);
+    if (target) {
+      appendAuditLog(
+        dbState,
+        caller,
+        'ACCOUNT_ROLE',
+        'Dienstkonto gelöscht',
+        `${target.publicProfile.displayName} (${target.username})`,
+        `Konto mit Dienstnummer ${target.publicProfile.badgeNumber} wurde dauerhaft entfernt.`
+      );
+    }
     saveDatabase(dbState);
     res.json({ deleted: true });
   });
@@ -586,7 +1129,9 @@ async function startServer() {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
-      res.status(403).json({ error: 'Nur der Administrator darf über Bewerbungen und Rollen entscheiden.' });
+      res
+        .status(403)
+        .json({ error: 'Nur der Administrator darf über Bewerbungen und Rollen entscheiden.' });
       return;
     }
 
@@ -616,11 +1161,31 @@ async function startServer() {
       }
     }
 
+    appendAuditLog(
+      dbState,
+      caller,
+      'REQUEST_REVIEW',
+      `Personalbogen Form 2-251 geprüft (${status.toUpperCase()})`,
+      appItem.applicantName,
+      `Status: ${status} · Feedback: ${appItem.reviewerFeedback || 'Keine Anmerkung'}`
+    );
+
+    pushNotification(
+      dbState,
+      appItem.applicantUid,
+      'request_reviewed',
+      `Personalbogen (Form 2-251): ${status.toUpperCase()}`,
+      `Dein Personalbogen wurde von ${caller.publicProfile.displayName} geprüft: ${
+        appItem.reviewerFeedback || status
+      }`,
+      'whitelist'
+    );
+
     saveDatabase(dbState);
     res.json({ ok: true });
   });
 
-  // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin AND Colonel)
+  // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
   app.post('/api/academy/modules', (req, res) => {
     const {
       actorUid,
@@ -639,9 +1204,11 @@ async function startServer() {
 
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
-    if (!caller || !ROLE_HIERARCHY[caller.publicProfile.role]?.canEditAcademy) {
+    const courseCode = String(code || 'SOP-01').trim();
+    if (!caller || !canActorEditCourseCode(caller, courseCode)) {
       res.status(403).json({
-        error: 'Zugriff verweigert. Nur Admin und Colonel dürfen Lehrmaterialien und Lehrbücher hinzufügen.'
+        error:
+          'Zugriff verweigert. Nur Admin, Colonel oder für diesen Lehrgangs-Code freigeschaltete Ausbilder dürfen dieses Lehrmaterial anlegen.'
       });
       return;
     }
@@ -650,7 +1217,7 @@ async function startServer() {
     const newMod: TrainingModuleDoc = {
       id: `mod_${Date.now()}`,
       title: String(title).trim(),
-      code: String(code || 'SOP-01').trim(),
+      code: courseCode,
       category: category || 'SOP & Policy',
       minClearance: ROLE_HIERARCHY[reqRole]?.defaultClearance || 1,
       requiredRole: reqRole,
@@ -666,6 +1233,14 @@ async function startServer() {
     };
 
     dbState.modules.push(newMod);
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACADEMY_DOC',
+      'Lehrbuch / Handbuch hinzugefügt',
+      `${newMod.code} — ${newMod.title}`,
+      `Format: ${newMod.embedType} · Mindest-Rang: ${newMod.requiredRole.toUpperCase()}`
+    );
     saveDatabase(dbState);
     res.json({ module: newMod });
   });
@@ -689,14 +1264,17 @@ async function startServer() {
 
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
-    if (!caller || !ROLE_HIERARCHY[caller.publicProfile.role]?.canEditAcademy) {
-      res.status(403).json({ error: 'Zugriff verweigert.' });
-      return;
-    }
-
     const idx = dbState.modules.findIndex(m => m.id === modId);
     if (idx === -1) {
       res.status(404).json({ error: 'Lehrmaterial nicht gefunden.' });
+      return;
+    }
+
+    const targetCode = code !== undefined ? String(code).trim() : dbState.modules[idx].code;
+    if (!caller || !canActorEditCourseCode(caller, targetCode)) {
+      res.status(403).json({
+        error: 'Keine Lehrgangs-Berechtigung zum Bearbeiten dieses Moduls.'
+      });
       return;
     }
 
@@ -704,20 +1282,37 @@ async function startServer() {
     dbState.modules[idx] = {
       ...dbState.modules[idx],
       title: title !== undefined ? String(title).trim() : dbState.modules[idx].title,
-      code: code !== undefined ? String(code).trim() : dbState.modules[idx].code,
+      code: targetCode,
       category: category || dbState.modules[idx].category,
       requiredRole: reqRole,
       minClearance: ROLE_HIERARCHY[reqRole]?.defaultClearance || 1,
       embedType: embedType || dbState.modules[idx].embedType,
-      contentMarkdown: contentMarkdown !== undefined ? String(contentMarkdown) : dbState.modules[idx].contentMarkdown,
-      externalUrl: externalUrl !== undefined ? String(externalUrl) : dbState.modules[idx].externalUrl,
-      pdfDataUrl: pdfDataUrl !== undefined ? String(pdfDataUrl) : dbState.modules[idx].pdfDataUrl,
-      pdfFileName: pdfFileName !== undefined ? String(pdfFileName) : dbState.modules[idx].pdfFileName,
-      interactiveCode: interactiveCode !== undefined ? String(interactiveCode) : dbState.modules[idx].interactiveCode,
+      contentMarkdown:
+        contentMarkdown !== undefined
+          ? String(contentMarkdown)
+          : dbState.modules[idx].contentMarkdown,
+      externalUrl:
+        externalUrl !== undefined ? String(externalUrl) : dbState.modules[idx].externalUrl,
+      pdfDataUrl:
+        pdfDataUrl !== undefined ? String(pdfDataUrl) : dbState.modules[idx].pdfDataUrl,
+      pdfFileName:
+        pdfFileName !== undefined ? String(pdfFileName) : dbState.modules[idx].pdfFileName,
+      interactiveCode:
+        interactiveCode !== undefined
+          ? String(interactiveCode)
+          : dbState.modules[idx].interactiveCode,
       estimatedMinutes: Number(estimatedMinutes) || dbState.modules[idx].estimatedMinutes,
       updatedIso: new Date().toISOString()
     };
 
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACADEMY_DOC',
+      'Lehrbuch / Handbuch bearbeitet',
+      `${dbState.modules[idx].code} — ${dbState.modules[idx].title}`,
+      `Aktualisiert durch ${caller.publicProfile.displayName}`
+    );
     saveDatabase(dbState);
     res.json({ module: dbState.modules[idx] });
   });
@@ -726,11 +1321,24 @@ async function startServer() {
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
-    if (!caller || !ROLE_HIERARCHY[caller.publicProfile.role]?.canEditAcademy) {
+    const targetMod = dbState.modules.find(m => m.id === req.params.modId);
+    if (!targetMod) {
+      res.status(404).json({ error: 'Modul nicht gefunden.' });
+      return;
+    }
+    if (!caller || !canActorEditCourseCode(caller, targetMod.code)) {
       res.status(403).json({ error: 'Zugriff verweigert.' });
       return;
     }
     dbState.modules = dbState.modules.filter(m => m.id !== req.params.modId);
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACADEMY_DOC',
+      'Lehrbuch / Handbuch gelöscht',
+      `${targetMod.code} — ${targetMod.title}`,
+      `Modul wurde aus dem Ausbildungsbereich entfernt.`
+    );
     saveDatabase(dbState);
     res.json({ deleted: true });
   });
@@ -750,9 +1358,11 @@ async function startServer() {
 
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
-    if (!caller || !ROLE_HIERARCHY[caller.publicProfile.role]?.canEditAcademy) {
+    const targetCode = String(moduleCode || 'TEST-01').trim();
+    if (!caller || !canActorEditCourseCode(caller, targetCode)) {
       res.status(403).json({
-        error: 'Zugriff verweigert. Nur Admin und Colonel dürfen Tests und Prüfungen anlegen.'
+        error:
+          'Zugriff verweigert. Nur Admin, Colonel oder für diesen Lehrgangs-Code freigeschaltete Ausbilder dürfen Prüfungen anlegen.'
       });
       return;
     }
@@ -761,9 +1371,12 @@ async function startServer() {
     const newExam: AcademyExamDoc = {
       id: `exam_${Date.now()}`,
       title: String(title).trim(),
-      moduleCode: String(moduleCode || 'TEST-01').trim(),
+      moduleCode: targetCode,
       assessmentStage: stage,
-      minClearance: stage === 'final_exam' ? ROLE_HIERARCHY.rookie.defaultClearance : ROLE_HIERARCHY.trainee.defaultClearance,
+      minClearance:
+        stage === 'final_exam'
+          ? ROLE_HIERARCHY.rookie.defaultClearance
+          : ROLE_HIERARCHY.trainee.defaultClearance,
       passingScore: Number(passingScore) || 75,
       timeLimitMinutes: Number(timeLimitMinutes) || 20,
       examFormat: examFormat || 'interactive_code',
@@ -774,6 +1387,14 @@ async function startServer() {
     };
 
     dbState.exams.push(newExam);
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACADEMY_DOC',
+      stage === 'final_exam' ? 'Abschlussprüfung angelegt' : 'Übungstest angelegt',
+      `${newExam.moduleCode} — ${newExam.title}`,
+      `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
+    );
     saveDatabase(dbState);
     res.json({ exam: newExam });
   });
@@ -782,18 +1403,117 @@ async function startServer() {
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
-    if (!caller || !ROLE_HIERARCHY[caller.publicProfile.role]?.canEditAcademy) {
+    const targetExam = dbState.exams.find(e => e.id === req.params.examId);
+    if (!targetExam) {
+      res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+      return;
+    }
+    if (!caller || !canActorEditCourseCode(caller, targetExam.moduleCode)) {
       res.status(403).json({ error: 'Zugriff verweigert.' });
       return;
     }
     dbState.exams = dbState.exams.filter(e => e.id !== req.params.examId);
+    appendAuditLog(
+      dbState,
+      caller,
+      'ACADEMY_DOC',
+      'Prüfung / Test gelöscht',
+      `${targetExam.moduleCode} — ${targetExam.title}`,
+      `Prüfung wurde durch ${caller.publicProfile.displayName} entfernt.`
+    );
     saveDatabase(dbState);
     res.json({ deleted: true });
   });
 
-  // 10. Progress Tracking
+  // 9b. GRANULAR INSTRUCTOR COURSE GRADING (/api/academy/instructor-grade)
+  // Allows Admin, Colonel, or an Officer assigned to a specific courseCode to assign a score/status to a trainee/officer
+  app.post('/api/academy/instructor-grade', (req, res) => {
+    const {
+      instructorUid,
+      targetUserUid,
+      courseCode,
+      targetTitle,
+      targetType,
+      status,
+      scorePercent,
+      instructorFeedback
+    } = req.body;
+
+    const dbState = loadDatabase();
+    const instructor = dbState.accounts.find(a => a.uid === instructorUid);
+    const student = dbState.accounts.find(a => a.uid === targetUserUid);
+
+    if (!instructor || !student) {
+      res.status(404).json({ error: 'Ausbilder- oder Teilnehmer-Konto nicht gefunden.' });
+      return;
+    }
+
+    const normalizedCode = String(courseCode || 'SOP-01')
+      .trim()
+      .toUpperCase();
+    if (!canActorEditCourseCode(instructor, normalizedCode)) {
+      res.status(403).json({
+        error: `Keine Berechtigung für Lehrgang "${normalizedCode}". Du kannst nur in deinen zugewiesenen Lehrgangs-Codes Noten vergeben.`
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const targetId = `crs_${normalizedCode}_${targetUserUid}`;
+    const existingIdx = dbState.progress.findIndex(
+      p => p.userId === student.uid && (p.targetId === targetId || p.courseCode === normalizedCode)
+    );
+
+    const record: UserProgressDoc = {
+      id: existingIdx !== -1 ? dbState.progress[existingIdx].id : `prog_${Date.now()}`,
+      userId: student.uid,
+      userName: student.publicProfile.displayName,
+      targetId,
+      targetType: targetType || 'test',
+      targetTitle: String(targetTitle || `Lehrgang ${normalizedCode}`).trim(),
+      courseCode: normalizedCode,
+      status: status || 'passed',
+      scorePercent: Number(scorePercent ?? 100),
+      attempts: existingIdx !== -1 ? dbState.progress[existingIdx].attempts + 1 : 1,
+      evaluatedByName: `${instructor.publicProfile.displayName} (${instructor.publicProfile.badgeNumber})`,
+      instructorFeedback: String(instructorFeedback || '').trim(),
+      updatedIso: nowIso
+    };
+
+    if (existingIdx !== -1) {
+      dbState.progress[existingIdx] = record;
+    } else {
+      dbState.progress.unshift(record);
+    }
+
+    appendAuditLog(
+      dbState,
+      instructor,
+      'COURSE_GRADE',
+      `Lehrgangs-Note vergeben (${normalizedCode})`,
+      `${student.publicProfile.displayName} (${student.publicProfile.badgeNumber})`,
+      `Ergebnis: ${record.scorePercent}% (${record.status.toUpperCase()}) · Bewertung: ${
+        record.instructorFeedback || 'Bestätigt'
+      }`
+    );
+
+    pushNotification(
+      dbState,
+      student.uid,
+      'course_graded',
+      `Neue Lehrgangs-Bewertung (${normalizedCode})`,
+      `Ausbilder ${instructor.publicProfile.displayName} hat deinen Lehrgang "${record.targetTitle}" mit ${record.scorePercent}% (${record.status.toUpperCase()}) bewertet.`,
+      'academy'
+    );
+
+    saveDatabase(dbState);
+    res.json({ ok: true, progressRecord: record });
+  });
+
+  // 10. Self Progress Tracking
   app.post('/api/progress', (req, res) => {
-    const { userId, targetId, targetType, targetTitle, status, scorePercent } = req.body;
+    const { userId, targetId, targetType, targetTitle, courseCode, status, scorePercent } =
+      req.body;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === userId);
     if (!caller) {
@@ -822,6 +1542,7 @@ async function startServer() {
         targetId,
         targetType,
         targetTitle,
+        courseCode: courseCode ? String(courseCode).toUpperCase() : undefined,
         status,
         scorePercent: Number(scorePercent),
         attempts: 1,
@@ -954,14 +1675,17 @@ jobs:
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
-      res.status(403).json({ error: 'Nur der Administrator kann die Deployment-Konfiguration ändern.' });
+      res
+        .status(403)
+        .json({ error: 'Nur der Administrator kann die Deployment-Konfiguration ändern.' });
       return;
     }
 
     const cfg = ensureDeploymentConfig(dbState);
     if (typeof githubRepoUrl === 'string') cfg.githubRepoUrl = githubRepoUrl.trim();
     if (typeof renderServiceUrl === 'string') cfg.renderServiceUrl = renderServiceUrl.trim();
-    if (typeof renderDeployHookUrl === 'string') cfg.renderDeployHookUrl = renderDeployHookUrl.trim();
+    if (typeof renderDeployHookUrl === 'string')
+      cfg.renderDeployHookUrl = renderDeployHookUrl.trim();
     if (typeof branchName === 'string' && branchName.trim()) cfg.branchName = branchName.trim();
     if (typeof autoDeployEnabled === 'boolean') cfg.autoDeployEnabled = autoDeployEnabled;
     if (Array.isArray(completedSteps)) cfg.completedSteps = completedSteps.map(String);
@@ -971,13 +1695,15 @@ jobs:
     res.json({ ok: true, deploymentConfig: cfg });
   });
 
-  // ADMIN ONLY: 1-Click Full Database Backup Export (Accounts, Passwords, PDFs, Tests, Progress)
+  // ADMIN ONLY: 1-Click Full Database Backup Export
   app.get('/api/admin/backup', (req, res) => {
     const adminUid = String(req.query.adminUid || '');
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
-      res.status(403).json({ error: 'Zugriff verweigert. Nur der Administrator kann Datenbank-Backups exportieren.' });
+      res.status(403).json({
+        error: 'Zugriff verweigert. Nur der Administrator kann Datenbank-Backups exportieren.'
+      });
       return;
     }
 
@@ -985,6 +1711,14 @@ jobs:
     const cfg = ensureDeploymentConfig(dbState);
     cfg.lastBackupExportIso = nowIso;
     cfg.updatedIso = nowIso;
+    appendAuditLog(
+      dbState,
+      caller,
+      'SYSTEM_BACKUP',
+      'Vollständiges Datenbank-Backup exportiert',
+      'CA_POST_PORTAL_BACKUP_V3',
+      `${dbState.accounts.length} Konten, ${dbState.modules.length} Handbücher, ${dbState.exams.length} Prüfungen gesichert.`
+    );
     saveDatabase(dbState);
 
     const snapshot: PortalBackupSnapshot = {
@@ -996,7 +1730,12 @@ jobs:
         modulesCount: dbState.modules.length,
         examsCount: dbState.exams.length,
         applicationsCount: dbState.applications.length,
-        progressCount: dbState.progress.length
+        progressCount: dbState.progress.length,
+        announcementsCount: (dbState.announcements || []).length,
+        messagesCount: (dbState.messages || []).length,
+        requestsCount: (dbState.requests || []).length,
+        eventsCount: (dbState.events || []).length,
+        auditLogsCount: (dbState.auditLogs || []).length
       },
       database: {
         version: dbState.version || 3,
@@ -1005,6 +1744,12 @@ jobs:
         modules: dbState.modules,
         exams: dbState.exams,
         progress: dbState.progress,
+        announcements: dbState.announcements || [],
+        messages: dbState.messages || [],
+        requests: dbState.requests || [],
+        events: dbState.events || [],
+        auditLogs: dbState.auditLogs || [],
+        notifications: dbState.notifications || [],
         deploymentConfig: cfg
       }
     };
@@ -1012,7 +1757,7 @@ jobs:
     res.json(snapshot);
   });
 
-  // ADMIN ONLY: 1-Click Full Database Restore (Safeguards Admin access & restores all Accounts, PDFs, Tests)
+  // ADMIN ONLY: 1-Click Full Database Restore
   app.post('/api/admin/restore', (req, res) => {
     const { adminUid, snapshot } = req.body as {
       adminUid?: string;
@@ -1022,7 +1767,9 @@ jobs:
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
-      res.status(403).json({ error: 'Zugriff verweigert. Nur der Administrator kann ein Datenbank-Backup einspielen.' });
+      res.status(403).json({
+        error: 'Zugriff verweigert. Nur der Administrator kann ein Datenbank-Backup einspielen.'
+      });
       return;
     }
 
@@ -1031,8 +1778,9 @@ jobs:
       return;
     }
 
-    // Accept either wrapped PortalBackupSnapshot ({ database: { ... } }) or raw PortalDatabaseState
-    const rawDb = (snapshot.database ? snapshot.database : snapshot) as Partial<PortalDatabaseState>;
+    const rawDb = (
+      snapshot.database ? snapshot.database : snapshot
+    ) as Partial<PortalDatabaseState>;
     if (!Array.isArray(rawDb.accounts) || rawDb.accounts.length === 0) {
       res.status(400).json({
         error: 'Die Backup-Datei enthält keine gültigen Benutzerkonten (accounts).'
@@ -1047,12 +1795,14 @@ jobs:
       lastSeenIso: acc.uid === caller.uid ? nowIso : acc.lastSeenIso || nowIso,
       publicProfile: {
         ...acc.publicProfile,
+        granularPermissions:
+          acc.publicProfile?.granularPermissions ||
+          getDefaultGranularPermissions(acc.publicProfile?.role || 'trainee'),
         isOnline: acc.uid === caller.uid ? true : Boolean(acc.publicProfile?.isOnline),
         lastSeenIso: acc.uid === caller.uid ? nowIso : acc.publicProfile?.lastSeenIso || nowIso
       }
     }));
 
-    // Safety guarantee: Ensure the currently logged-in Admin account still exists so Admin never locks themselves out
     if (!restoredAccounts.some(a => a.uid === caller.uid)) {
       restoredAccounts.unshift({
         ...caller,
@@ -1071,6 +1821,16 @@ jobs:
       modules: Array.isArray(rawDb.modules) ? rawDb.modules : [],
       exams: Array.isArray(rawDb.exams) ? rawDb.exams : [],
       progress: Array.isArray(rawDb.progress) ? rawDb.progress : [],
+      announcements: Array.isArray(rawDb.announcements)
+        ? rawDb.announcements
+        : dbState.announcements || [],
+      messages: Array.isArray(rawDb.messages) ? rawDb.messages : dbState.messages || [],
+      requests: Array.isArray(rawDb.requests) ? rawDb.requests : dbState.requests || [],
+      events: Array.isArray(rawDb.events) ? rawDb.events : dbState.events || [],
+      auditLogs: Array.isArray(rawDb.auditLogs) ? rawDb.auditLogs : dbState.auditLogs || [],
+      notifications: Array.isArray(rawDb.notifications)
+        ? rawDb.notifications
+        : dbState.notifications || [],
       deploymentConfig: {
         ...currentCfg,
         ...incomingCfg,
@@ -1079,6 +1839,14 @@ jobs:
       }
     };
 
+    appendAuditLog(
+      nextState,
+      caller,
+      'SYSTEM_BACKUP',
+      'Datenbank-Backup wiederhergestellt',
+      'CA_POST_PORTAL_BACKUP_V3',
+      `${nextState.accounts.length} Konten und ${nextState.modules.length} Handbücher erfolgreich eingespielt.`
+    );
     saveDatabase(nextState);
 
     res.json({
@@ -1089,14 +1857,22 @@ jobs:
         modulesCount: nextState.modules.length,
         examsCount: nextState.exams.length,
         applicationsCount: nextState.applications.length,
-        progressCount: nextState.progress.length
+        progressCount: nextState.progress.length,
+        announcementsCount: (nextState.announcements || []).length,
+        messagesCount: (nextState.messages || []).length,
+        requestsCount: (nextState.requests || []).length,
+        eventsCount: (nextState.events || []).length,
+        auditLogsCount: (nextState.auditLogs || []).length
       }
     });
   });
 
   // ADMIN ONLY: Optional Render Deploy Hook Trigger
   app.post('/api/admin/trigger-deploy', async (req, res) => {
-    const { adminUid, deployHookUrl } = req.body as { adminUid?: string; deployHookUrl?: string };
+    const { adminUid, deployHookUrl } = req.body as {
+      adminUid?: string;
+      deployHookUrl?: string;
+    };
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
@@ -1108,7 +1884,8 @@ jobs:
     const targetHook = (deployHookUrl || cfg.renderDeployHookUrl || '').trim();
     if (!targetHook || !targetHook.startsWith('https://api.render.com/deploy/')) {
       res.status(400).json({
-        error: 'Bitte eine gültige Render Deploy Hook URL (beginnend mit https://api.render.com/deploy/...) hinterlegen.'
+        error:
+          'Bitte eine gültige Render Deploy Hook URL (beginnend mit https://api.render.com/deploy/...) hinterlegen.'
       });
       return;
     }
@@ -1133,6 +1910,718 @@ jobs:
     }
   });
 
+  // ==========================================================================
+  // MODULE 1: ANNOUNCEMENTS & FEED (/api/announcements)
+  // ==========================================================================
+  app.post('/api/announcements', (req, res) => {
+    const { actorUid, title, category, priority, content, pinned } = req.body;
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const callerPerms =
+      caller?.publicProfile.granularPermissions ||
+      (caller ? getDefaultGranularPermissions(caller.publicProfile.role) : undefined);
+
+    if (
+      !caller ||
+      (caller.publicProfile.role !== 'admin' &&
+        caller.publicProfile.role !== 'colonel' &&
+        !callerPerms?.canPublishAnnouncements)
+    ) {
+      res.status(403).json({
+        error:
+          'Nur Administratoren, Colonels oder freigeschaltete Multiplikatoren können offizielle Bekanntmachungen veröffentlichen.'
+      });
+      return;
+    }
+
+    if (!title || !content) {
+      res.status(400).json({ error: 'Bitte Titel und Inhalt der Bekanntmachung ausfüllen.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const newAnnouncement: AnnouncementDoc = {
+      id: `ann_${Date.now()}`,
+      title: String(title).trim().slice(0, 160),
+      category: (category as AnnouncementCategory) || 'Allgemeine Bekanntmachung',
+      priority: (priority as AnnouncementPriority) || 'normal',
+      content: String(content).trim().slice(0, 8000),
+      authorUid: caller.uid,
+      authorName: caller.publicProfile.displayName,
+      authorRank: caller.publicProfile.rank,
+      pinned: Boolean(pinned),
+      acknowledgedByUids: [caller.uid],
+      createdIso: nowIso
+    };
+
+    if (!Array.isArray(dbState.announcements)) {
+      dbState.announcements = [];
+    }
+    dbState.announcements.unshift(newAnnouncement);
+
+    appendAuditLog(
+      dbState,
+      caller,
+      'ANNOUNCEMENT',
+      `Offizielle Bekanntmachung veröffentlicht (${newAnnouncement.priority.toUpperCase()})`,
+      newAnnouncement.title,
+      `Kategorie: ${newAnnouncement.category}`
+    );
+
+    pushNotification(
+      dbState,
+      'ALL',
+      'announcement_published',
+      `Neue Bekanntmachung: ${newAnnouncement.title}`,
+      `${caller.publicProfile.displayName} (${caller.publicProfile.rank}) hat eine ${newAnnouncement.category} veröffentlicht.`,
+      'announcements'
+    );
+
+    saveDatabase(dbState);
+    res.json({ ok: true, announcement: newAnnouncement });
+  });
+
+  app.post('/api/announcements/:id/ack', (req, res) => {
+    const { id } = req.params;
+    const { userUid } = req.body as { userUid?: string };
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === userUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const ann = (dbState.announcements || []).find(a => a.id === id);
+    if (!ann) {
+      res.status(404).json({ error: 'Bekanntmachung nicht gefunden.' });
+      return;
+    }
+
+    if (!ann.acknowledgedByUids.includes(caller.uid)) {
+      ann.acknowledgedByUids.push(caller.uid);
+      saveDatabase(dbState);
+    }
+
+    res.json({ ok: true, announcement: ann });
+  });
+
+  app.delete('/api/announcements/:id', (req, res) => {
+    const { id } = req.params;
+    const actorUid = String(req.query.actorUid || '');
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const callerPerms =
+      caller?.publicProfile.granularPermissions ||
+      (caller ? getDefaultGranularPermissions(caller.publicProfile.role) : undefined);
+
+    if (
+      !caller ||
+      (caller.publicProfile.role !== 'admin' &&
+        caller.publicProfile.role !== 'colonel' &&
+        !callerPerms?.canPublishAnnouncements)
+    ) {
+      res.status(403).json({ error: 'Keine Berechtigung zum Löschen von Bekanntmachungen.' });
+      return;
+    }
+
+    const target = (dbState.announcements || []).find(a => a.id === id);
+    dbState.announcements = (dbState.announcements || []).filter(a => a.id !== id);
+    if (target) {
+      appendAuditLog(
+        dbState,
+        caller,
+        'ANNOUNCEMENT',
+        'Bekanntmachung gelöscht',
+        target.title,
+        `Kategorie: ${target.category}`
+      );
+    }
+    saveDatabase(dbState);
+    res.json({ ok: true });
+  });
+
+  // ==========================================================================
+  // MODULE 2: DIRECT MESSAGING & COMMUNICATION (/api/messages)
+  // ==========================================================================
+  app.post('/api/messages', (req, res) => {
+    const { senderUid, recipientUid, subject, body, priority } = req.body;
+    const dbState = loadDatabase();
+    const sender = dbState.accounts.find(a => a.uid === senderUid);
+
+    if (!sender) {
+      res.status(401).json({ error: 'Absender-Konto nicht gefunden.' });
+      return;
+    }
+
+    if (!subject || !body || !recipientUid) {
+      res.status(400).json({ error: 'Bitte Empfänger, Betreff und Nachrichtentext angeben.' });
+      return;
+    }
+
+    let recipientName = 'Alle Beamten (Rundschreiben)';
+    let recipientBadge = 'ALL-UNITS';
+
+    if (recipientUid !== 'ALL') {
+      const targetAcc = dbState.accounts.find(a => a.uid === recipientUid);
+      if (!targetAcc) {
+        res.status(404).json({ error: 'Empfänger-Konto existiert nicht.' });
+        return;
+      }
+      recipientName = targetAcc.publicProfile.displayName;
+      recipientBadge = targetAcc.publicProfile.badgeNumber;
+    } else if (
+      sender.publicProfile.role !== 'admin' &&
+      sender.publicProfile.role !== 'colonel'
+    ) {
+      res.status(403).json({
+        error: 'Rundschreiben an alle Einheiten können nur von Admin oder Colonel gesendet werden.'
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const newMsg: DirectMessageDoc = {
+      id: `msg_${Date.now()}`,
+      senderUid: sender.uid,
+      senderName: sender.publicProfile.displayName,
+      senderBadge: sender.publicProfile.badgeNumber,
+      senderRole: sender.publicProfile.role,
+      recipientUid: String(recipientUid),
+      recipientName,
+      recipientBadge,
+      subject: String(subject).trim().slice(0, 140),
+      body: String(body).trim().slice(0, 5000),
+      priority: (priority as MessagePriority) || 'routine',
+      readByUids: [sender.uid],
+      createdIso: nowIso
+    };
+
+    if (!Array.isArray(dbState.messages)) {
+      dbState.messages = [];
+    }
+    dbState.messages.unshift(newMsg);
+
+    pushNotification(
+      dbState,
+      String(recipientUid),
+      'direct_message',
+      `Neue Dienstnachricht: ${newMsg.subject}`,
+      `Von ${sender.publicProfile.displayName} (${sender.publicProfile.badgeNumber})`,
+      'messages'
+    );
+
+    saveDatabase(dbState);
+    res.json({ ok: true, message: newMsg });
+  });
+
+  app.put('/api/messages/:id/read', (req, res) => {
+    const { id } = req.params;
+    const { userUid } = req.body as { userUid?: string };
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === userUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const msg = (dbState.messages || []).find(m => m.id === id);
+    if (!msg) {
+      res.status(404).json({ error: 'Nachricht nicht gefunden.' });
+      return;
+    }
+
+    if (!msg.readByUids.includes(caller.uid)) {
+      msg.readByUids.push(caller.uid);
+      saveDatabase(dbState);
+    }
+
+    res.json({ ok: true, message: msg });
+  });
+
+  app.delete('/api/messages/:id', (req, res) => {
+    const { id } = req.params;
+    const actorUid = String(req.query.actorUid || '');
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const msg = (dbState.messages || []).find(m => m.id === id);
+    if (!msg) {
+      res.status(404).json({ error: 'Nachricht nicht gefunden.' });
+      return;
+    }
+
+    if (
+      caller.publicProfile.role !== 'admin' &&
+      msg.senderUid !== caller.uid &&
+      msg.recipientUid !== caller.uid
+    ) {
+      res.status(403).json({ error: 'Keine Berechtigung zum Löschen dieser Nachricht.' });
+      return;
+    }
+
+    dbState.messages = (dbState.messages || []).filter(m => m.id !== id);
+    saveDatabase(dbState);
+    res.json({ ok: true });
+  });
+
+  // ==========================================================================
+  // MODULE 3: OFFICIAL REQUESTS & REQUISITIONS (/api/requests)
+  // ==========================================================================
+  app.post('/api/requests', (req, res) => {
+    const {
+      requesterUid,
+      category,
+      title,
+      requestedRole,
+      targetDetail,
+      justification,
+      priority
+    } = req.body;
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === requesterUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    if (!title || !justification) {
+      res.status(400).json({ error: 'Bitte Betreff und ausführliche Begründung angeben.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const newReq: PortalRequestDoc = {
+      id: `req_${Date.now()}`,
+      requesterUid: caller.uid,
+      requesterName: caller.publicProfile.displayName,
+      requesterBadge: caller.publicProfile.badgeNumber,
+      requesterCurrentRole: caller.publicProfile.role,
+      category: (category as RequestCategory) || 'rank_change',
+      title: String(title).trim().slice(0, 150),
+      requestedRole: requestedRole ? (requestedRole as OfficerRole) : undefined,
+      targetDetail: String(targetDetail || '').trim().slice(0, 200),
+      justification: String(justification).trim().slice(0, 4000),
+      priority: priority === 'high' ? 'high' : 'normal',
+      status: 'pending',
+      createdIso: nowIso,
+      updatedIso: nowIso
+    };
+
+    if (!Array.isArray(dbState.requests)) {
+      dbState.requests = [];
+    }
+    dbState.requests.unshift(newReq);
+
+    appendAuditLog(
+      dbState,
+      caller,
+      'REQUEST_REVIEW',
+      `Neuer Antrag eingereicht (${newReq.category})`,
+      newReq.title,
+      `Antragsteller: ${caller.publicProfile.displayName} (${caller.publicProfile.badgeNumber})`
+    );
+
+    // Notify Admin immediately in real-time when a new request is submitted
+    const adminAcc = dbState.accounts.find(a => a.publicProfile.role === 'admin');
+    if (adminAcc && adminAcc.uid !== caller.uid) {
+      pushNotification(
+        dbState,
+        adminAcc.uid,
+        'request_reviewed',
+        `Neuer Antrag: ${newReq.title}`,
+        `${caller.publicProfile.displayName} (${caller.publicProfile.badgeNumber}) hat einen neuen Antrag zur Admin-Prüfung eingereicht.`,
+        'requests'
+      );
+    }
+
+    saveDatabase(dbState);
+    res.json({ ok: true, request: newReq });
+  });
+
+  app.put('/api/requests/:id/review', (req, res) => {
+    const { id } = req.params;
+    const { reviewerUid, status, reviewerComment, applyRankChange } = req.body as {
+      reviewerUid?: string;
+      status?: RequestStatus;
+      reviewerComment?: string;
+      applyRankChange?: boolean;
+    };
+
+    const dbState = loadDatabase();
+    const reviewer = dbState.accounts.find(a => a.uid === reviewerUid);
+    const reviewerPerms =
+      reviewer?.publicProfile.granularPermissions ||
+      (reviewer ? getDefaultGranularPermissions(reviewer.publicProfile.role) : undefined);
+
+    if (
+      !reviewer ||
+      (reviewer.publicProfile.role !== 'admin' &&
+        reviewer.publicProfile.role !== 'colonel' &&
+        !reviewerPerms?.canReviewStandardRequests)
+    ) {
+      res.status(403).json({
+        error:
+          'Nur der Administrator (bzw. Colonel / freigeschaltete Prüfer für Fachanträge) kann Anträge bearbeiten.'
+      });
+      return;
+    }
+
+    const targetReq = (dbState.requests || []).find(r => r.id === id);
+    if (!targetReq) {
+      res.status(404).json({ error: 'Antrag nicht gefunden.' });
+      return;
+    }
+
+    // Strict Enforcement: Rank changes can ONLY be approved/applied by Admin!
+    if (targetReq.category === 'rank_change' && reviewer.publicProfile.role !== 'admin') {
+      res.status(403).json({
+        error:
+          'Rangänderungen und Beförderungen dürfen ausschließlich vom Administrator (Admin) genehmigt werden.'
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    targetReq.status = status || 'approved';
+    targetReq.reviewerUid = reviewer.uid;
+    targetReq.reviewerName = reviewer.publicProfile.displayName;
+    targetReq.reviewerComment = String(reviewerComment || '').trim().slice(0, 1500);
+    targetReq.updatedIso = nowIso;
+
+    let rankPromotedNote = '';
+    // If Admin approves a rank_change request and applyRankChange is true, automatically promote the account!
+    if (
+      reviewer.publicProfile.role === 'admin' &&
+      targetReq.status === 'approved' &&
+      targetReq.category === 'rank_change' &&
+      targetReq.requestedRole &&
+      applyRankChange !== false
+    ) {
+      const applicantAcc = dbState.accounts.find(a => a.uid === targetReq.requesterUid);
+      if (applicantAcc && ROLE_HIERARCHY[targetReq.requestedRole]) {
+        const nextMeta = ROLE_HIERARCHY[targetReq.requestedRole];
+        applicantAcc.publicProfile.role = targetReq.requestedRole;
+        applicantAcc.publicProfile.rank = nextMeta.defaultRank;
+        applicantAcc.publicProfile.clearanceLevel = nextMeta.defaultClearance;
+        applicantAcc.publicProfile.updatedIso = nowIso;
+        rankPromotedNote = ` · Automatisch auf ${targetReq.requestedRole.toUpperCase()} befördert`;
+      }
+    }
+
+    appendAuditLog(
+      dbState,
+      reviewer,
+      'REQUEST_REVIEW',
+      `Antrag ${targetReq.status === 'approved' ? 'GENEHMIGT' : 'ABGELEHNT'} (${targetReq.category})`,
+      `${targetReq.title} — ${targetReq.requesterName}`,
+      `Entscheidung durch ${reviewer.publicProfile.displayName}: ${
+        targetReq.reviewerComment || 'Keine Anmerkung'
+      }${rankPromotedNote}`
+    );
+
+    pushNotification(
+      dbState,
+      targetReq.requesterUid,
+      'request_reviewed',
+      `Dein Antrag wurde ${targetReq.status === 'approved' ? 'GENEHMIGT' : 'ABGELEHNT'}`,
+      `Antrag "${targetReq.title}" wurde von ${reviewer.publicProfile.displayName} bearbeitet.${
+        targetReq.reviewerComment ? ` Vermerk: "${targetReq.reviewerComment}"` : ''
+      }${rankPromotedNote}`,
+      'requests'
+    );
+
+    saveDatabase(dbState);
+    res.json({ ok: true, request: targetReq });
+  });
+
+  app.delete('/api/requests/:id', (req, res) => {
+    const { id } = req.params;
+    const actorUid = String(req.query.actorUid || '');
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const targetReq = (dbState.requests || []).find(r => r.id === id);
+    if (!targetReq) {
+      res.status(404).json({ error: 'Antrag nicht gefunden.' });
+      return;
+    }
+
+    if (caller.publicProfile.role !== 'admin' && targetReq.requesterUid !== caller.uid) {
+      res.status(403).json({ error: 'Keine Berechtigung zum Löschen dieses Antrags.' });
+      return;
+    }
+
+    dbState.requests = (dbState.requests || []).filter(r => r.id !== id);
+    saveDatabase(dbState);
+    res.json({ ok: true });
+  });
+
+  // ==========================================================================
+  // MODULE 4: INTERACTIVE CALENDAR & EVENTS (/api/events)
+  // ==========================================================================
+  app.post('/api/events', (req, res) => {
+    const {
+      actorUid,
+      title,
+      category,
+      courseCode,
+      location,
+      startIso,
+      durationMinutes,
+      maxParticipants,
+      description,
+      mandatoryForRoles
+    } = req.body;
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const callerPerms =
+      caller?.publicProfile.granularPermissions ||
+      (caller ? getDefaultGranularPermissions(caller.publicProfile.role) : undefined);
+
+    if (
+      !caller ||
+      (caller.publicProfile.role !== 'admin' &&
+        caller.publicProfile.role !== 'colonel' &&
+        !callerPerms?.canManageEvents)
+    ) {
+      res.status(403).json({
+        error:
+          'Zugriff verweigert. Nur Admin, Colonel oder mit Event-Berechtigung ausgestattete Ausbilder können Termine anlegen.'
+      });
+      return;
+    }
+
+    if (!title || !startIso) {
+      res.status(400).json({ error: 'Bitte Titel und Startzeitpunkt des Termins angeben.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const newEvent: CalendarEventDoc = {
+      id: `evt_${Date.now()}`,
+      title: String(title).trim().slice(0, 150),
+      category: (category as CalendarEventCategory) || 'Training & Lehrgang',
+      courseCode: courseCode ? String(courseCode).trim().toUpperCase() : undefined,
+      location: String(location || 'Hauptquartier / Trainingszentrum').trim().slice(0, 140),
+      startIso: String(startIso),
+      durationMinutes: Number(durationMinutes) || 60,
+      maxParticipants: Number(maxParticipants) || 20,
+      instructorName: caller.publicProfile.displayName,
+      instructorUid: caller.uid,
+      description: String(description || '').trim().slice(0, 3000),
+      mandatoryForRoles: Array.isArray(mandatoryForRoles) ? mandatoryForRoles : ['trainee', 'rookie'],
+      attendees: [
+        {
+          uid: caller.uid,
+          displayName: caller.publicProfile.displayName,
+          badgeNumber: caller.publicProfile.badgeNumber,
+          role: caller.publicProfile.role,
+          status: 'attending',
+          updatedIso: nowIso
+        }
+      ],
+      createdIso: nowIso
+    };
+
+    if (!Array.isArray(dbState.events)) {
+      dbState.events = [];
+    }
+    dbState.events.push(newEvent);
+    dbState.events.sort(
+      (a, b) => new Date(a.startIso).getTime() - new Date(b.startIso).getTime()
+    );
+
+    appendAuditLog(
+      dbState,
+      caller,
+      'CALENDAR_EVENT',
+      `Kalender-Termin angelegt (${newEvent.category})`,
+      newEvent.title,
+      `Ort: ${newEvent.location} · Start: ${new Date(newEvent.startIso).toLocaleString('de-DE')}`
+    );
+
+    pushNotification(
+      dbState,
+      'ALL',
+      'event_created',
+      `Neuer Termin: ${newEvent.title}`,
+      `${newEvent.category} am ${new Date(newEvent.startIso).toLocaleDateString('de-DE')} (${newEvent.location}). Jetzt im Kalender an-/abmelden.`,
+      'calendar'
+    );
+
+    saveDatabase(dbState);
+    res.json({ ok: true, event: newEvent });
+  });
+
+  app.post('/api/events/:id/rsvp', (req, res) => {
+    const { id } = req.params;
+    const { userUid, status } = req.body as {
+      userUid?: string;
+      status?: 'attending' | 'declined' | 'remove';
+    };
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === userUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const evt = (dbState.events || []).find(e => e.id === id);
+    if (!evt) {
+      res.status(404).json({ error: 'Termin nicht gefunden.' });
+      return;
+    }
+
+    const attendingCount = evt.attendees.filter(
+      a => a.status === 'attending' && a.uid !== caller.uid
+    ).length;
+
+    if (status === 'attending' && attendingCount >= evt.maxParticipants) {
+      res.status(400).json({
+        error: `Maximale Teilnehmerzahl (${evt.maxParticipants}) für diesen Termin ist bereits erreicht.`
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    evt.attendees = evt.attendees.filter(a => a.uid !== caller.uid);
+    if (status === 'attending' || status === 'declined') {
+      evt.attendees.push({
+        uid: caller.uid,
+        displayName: caller.publicProfile.displayName,
+        badgeNumber: caller.publicProfile.badgeNumber,
+        role: caller.publicProfile.role,
+        status,
+        updatedIso: nowIso
+      });
+    }
+
+    saveDatabase(dbState);
+    res.json({ ok: true, event: evt });
+  });
+
+  app.delete('/api/events/:id', (req, res) => {
+    const { id } = req.params;
+    const actorUid = String(req.query.actorUid || '');
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const callerPerms =
+      caller?.publicProfile.granularPermissions ||
+      (caller ? getDefaultGranularPermissions(caller.publicProfile.role) : undefined);
+
+    if (
+      !caller ||
+      (caller.publicProfile.role !== 'admin' &&
+        caller.publicProfile.role !== 'colonel' &&
+        !callerPerms?.canManageEvents)
+    ) {
+      res.status(403).json({ error: 'Keine Berechtigung zum Löschen von Terminen.' });
+      return;
+    }
+
+    const target = (dbState.events || []).find(e => e.id === id);
+    dbState.events = (dbState.events || []).filter(e => e.id !== id);
+    if (target) {
+      appendAuditLog(
+        dbState,
+        caller,
+        'CALENDAR_EVENT',
+        'Kalender-Termin gelöscht',
+        target.title,
+        `Kategorie: ${target.category}`
+      );
+    }
+    saveDatabase(dbState);
+    res.json({ ok: true });
+  });
+
+  // ==========================================================================
+  // MODULE 5: LIVE NOTIFICATIONS (/api/notifications)
+  // ==========================================================================
+  app.put('/api/notifications/read-all', (req, res) => {
+    const { userUid } = req.body as { userUid?: string };
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === userUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    for (const n of dbState.notifications || []) {
+      if (
+        (n.recipientUid === caller.uid || n.recipientUid === 'ALL') &&
+        !n.readByUids.includes(caller.uid)
+      ) {
+        n.readByUids.push(caller.uid);
+      }
+    }
+    saveDatabase(dbState);
+    res.json({ ok: true });
+  });
+
+  app.put('/api/notifications/:id/read', (req, res) => {
+    const { id } = req.params;
+    const { userUid } = req.body as { userUid?: string };
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === userUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Nicht autorisiert.' });
+      return;
+    }
+
+    const notif = (dbState.notifications || []).find(n => n.id === id);
+    if (notif && !notif.readByUids.includes(caller.uid)) {
+      notif.readByUids.push(caller.uid);
+      saveDatabase(dbState);
+    }
+    res.json({ ok: true });
+  });
+
+  // ==========================================================================
+  // MODULE 6: SELF PROFILE SETTINGS (/api/profile/self)
+  // ==========================================================================
+  app.put('/api/profile/self', (req, res) => {
+    const { uid, callsign, division, bio } = req.body as {
+      uid?: string;
+      callsign?: string;
+      division?: string;
+      bio?: string;
+    };
+
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === uid);
+    if (!caller) {
+      res.status(401).json({ error: 'Sitzung ungültig.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    if (typeof callsign === 'string' && callsign.trim()) {
+      caller.publicProfile.callsign = callsign.trim().slice(0, 20);
+    }
+    if (typeof division === 'string' && division.trim()) {
+      caller.publicProfile.division = division.trim().slice(0, 60);
+    }
+    if (typeof bio === 'string') {
+      caller.publicProfile.bio = bio.trim().slice(0, 500);
+    }
+    caller.publicProfile.updatedIso = nowIso;
+    saveDatabase(dbState);
+
+    res.json({ ok: true, user: caller.publicProfile });
+  });
+
   // Ensure unknown /api/* requests always return JSON 404 instead of SPA index.html
   app.all('/api/*', (req, res) => {
     res.status(404).json({
@@ -1151,7 +2640,7 @@ jobs:
         middlewareMode: true,
         allowedHosts: true
       },
-      appType: 'spa',
+      appType: 'spa'
     });
     app.use(vite.middlewares);
   } else {
