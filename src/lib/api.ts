@@ -154,6 +154,8 @@ function normalizedEndpointLabel(endpointPath: string): string {
 export const API_ENDPOINTS = {
   HEALTH: '/api/health',
   AUTH_LOGIN: '/api/auth/login',
+  AUTH_RECOVERY_REQUEST: '/api/auth/recovery/request',
+  AUTH_RECOVERY_RESET: '/api/auth/recovery/reset',
   AUTH_LOGOUT: '/api/auth/logout',
   FIREBASE_TOKEN: '/api/auth/firebase-token',
   PORTAL_STATE: '/api/portal/state',
