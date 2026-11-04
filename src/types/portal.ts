@@ -75,6 +75,8 @@ export interface TrainingModuleDoc {
   contentMarkdown: string;
   externalUrl: string;
   pdfDataUrl?: string;
+  /** Vom Server gesetzt: es gibt ein PDF, das separat geladen wird. */
+  hasPdf?: boolean;
   pdfFileName?: string;
   interactiveCode: string;
   estimatedMinutes: number;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Code2,
@@ -143,6 +143,25 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
   const currentModule =
     modules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
+
+  // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
+  const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
+  const currentModuleId = currentModule ? `${currentModule.id}:${currentModule.updatedIso || ''}` : undefined;
+  const currentHasPdf = Boolean(currentModule?.hasPdf || currentModule?.pdfDataUrl);
+  const currentPdfLoaded = currentModuleId ? currentModuleId in pdfCache : false;
+  useEffect(() => {
+    if (!currentModuleId || !currentHasPdf || currentPdfLoaded) return;
+    let cancelled = false;
+    void apiFetch<{ pdfDataUrl: string }>(API_ENDPOINTS.ACADEMY_MODULE_PDF(currentModule!.id)).then(res => {
+      if (cancelled || !res.ok || !res.data) return;
+      const url = res.data.pdfDataUrl || '';
+      setPdfCache(prev => ({ ...prev, [currentModuleId]: url }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentModuleId, currentHasPdf, currentPdfLoaded]);
+  const currentPdfUrl = (currentModuleId && pdfCache[currentModuleId]) || currentModule?.pdfDataUrl || '';
 
   const activeExamList = activeTab === 'final_exams' ? finalExams : practiceTests;
   const currentExam =
@@ -740,7 +759,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       renderStructuredHandbookContent(currentModule.contentMarkdown)}
 
                     {/* Embedded PDF Viewer */}
-                    {currentModule.pdfDataUrl && (
+                    {currentHasPdf && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-300">
                           <span className="flex items-center gap-1.5">
@@ -748,7 +767,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             HOCHGELADENES LEHRBUCH / DOKUMENT: {currentModule.pdfFileName || 'Dokument.pdf'}
                           </span>
                           <a
-                            href={currentModule.pdfDataUrl}
+                            href={currentPdfUrl}
                             download={currentModule.pdfFileName || 'lehrbuch.pdf'}
                             className="text-sky-600 dark:text-sky-400 hover:underline font-semibold"
                           >
@@ -756,11 +775,15 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           </a>
                         </div>
                         <div className="rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
-                          <iframe
-                            title={currentModule.title}
-                            src={currentModule.pdfDataUrl}
-                            className="w-full h-[540px] border-0"
-                          />
+                          {currentPdfUrl ? (
+                            <iframe
+                              title={currentModule.title}
+                              src={currentPdfUrl}
+                              className="w-full h-[540px] border-0"
+                            />
+                          ) : (
+                            <div className="p-6 text-xs font-mono text-slate-500">PDF wird geladen …</div>
+                          )}
                         </div>
                       </div>
                     )}
