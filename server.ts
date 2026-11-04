@@ -16,6 +16,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
+import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
@@ -80,6 +81,10 @@ const DATA_DIR = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
+// Speicher: JSON-Datei (Standard) oder Firestore (STORAGE_BACKEND=firestore).
+// Mit Firestore liegt der Zustand im Speicher des Servers und wird gebündelt nach Firestore geschrieben.
+let store: FirestoreStore | null = null;
+let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
 // Online threshold: 45 seconds since last heartbeat or login
@@ -747,6 +752,8 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
 }
 
 function loadDatabase(): PortalDatabaseState {
+  // Kopie, damit unvollständige Änderungen in einem Request nie im Speicher hängen bleiben.
+  if (store && memoryState) return structuredClone(memoryState);
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -776,6 +783,11 @@ function loadDatabase(): PortalDatabaseState {
 }
 
 function saveDatabase(state: PortalDatabaseState) {
+  if (store) {
+    memoryState = state;
+    store.scheduleSave(state as unknown as Record<string, unknown>);
+    return;
+  }
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -784,7 +796,49 @@ function saveDatabase(state: PortalDatabaseState) {
   fs.renameSync(tmpFile, DB_FILE);
 }
 
+async function initFirestoreStorage() {
+  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccount) {
+    console.error('STORAGE_BACKEND=firestore gesetzt, aber FIREBASE_SERVICE_ACCOUNT fehlt.');
+    process.exit(1);
+  }
+  // Bei Fehlern bewusst abbrechen statt auf die JSON-Datei auszuweichen, damit keine Daten auseinanderlaufen.
+  store = await openFirestoreStore({
+    serviceAccount,
+    databaseId: process.env.FIREBASE_DATABASE_ID || undefined
+  });
+  let initial = (await store.loadAll()) as unknown as PortalDatabaseState | null;
+  if (!initial) {
+    // Erster Start mit Firestore: vorhandene JSON-Datei übernehmen, sonst neu anlegen.
+    let fromFile: PortalDatabaseState | null = null;
+    try {
+      fromFile = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) as PortalDatabaseState;
+    } catch {
+      fromFile = null;
+    }
+    initial = fromFile && fromFile.accounts?.length ? fromFile : createInitialDatabase();
+    console.log(
+      `[Firestore] Noch keine Daten vorhanden, ${fromFile ? 'übernehme die JSON-Datei' : 'lege eine neue Datenbank an'}.`
+    );
+  }
+  ensureDeploymentConfig(initial);
+  migrateLegacyPasswords(initial);
+  memoryState = initial;
+  store.scheduleSave(initial as unknown as Record<string, unknown>);
+  await store.flush();
+
+  const shutdown = () => {
+    void store?.flush().finally(() => process.exit(0));
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+  console.log('[Firestore] Speicher bereit.');
+}
+
 async function startServer() {
+  if (process.env.STORAGE_BACKEND === 'firestore') {
+    await initFirestoreStorage();
+  }
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -907,6 +961,7 @@ async function startServer() {
       status: 'operational',
       agency: 'California Department of Justice — POST Officer Portal',
       environment: process.env.NODE_ENV || 'development',
+      storage: store ? 'firestore' : 'json',
       appUrl: process.env.APP_URL || `http://localhost:${PORT}`,
       timestamp: new Date().toISOString()
     });
@@ -998,6 +1053,21 @@ async function startServer() {
       }
     }
     res.json({ ok: true });
+  });
+
+  // Token für die Anmeldung des Browsers bei Firebase (nur für die Echtzeit-Benachrichtigung).
+  app.get('/api/auth/firebase-token', async (_req, res) => {
+    if (!store) {
+      res.status(503).json({ error: 'Echtzeit-Anbindung ist nicht aktiviert.' });
+      return;
+    }
+    try {
+      const token = await store.createCustomToken(res.locals.sessionUid as string);
+      res.json({ token });
+    } catch (err) {
+      console.error('[Firestore] Custom Token fehlgeschlagen:', err);
+      res.status(500).json({ error: 'Firebase-Token konnte nicht erstellt werden.' });
+    }
   });
 
   // 4. Heartbeat & Real-Time State Sync
@@ -1129,7 +1199,7 @@ async function startServer() {
             requestsCount: (dbState.requests || []).length,
             eventsCount: (dbState.events || []).length,
             auditLogsCount: (dbState.auditLogs || []).length,
-            sizeBytes: fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0
+            sizeBytes: !store && fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0
           }
         : undefined
     });
