@@ -17,6 +17,7 @@ import {
   verifySessionToken
 } from './server/auth.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
+import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
@@ -794,6 +795,32 @@ function saveDatabase(state: PortalDatabaseState) {
   const tmpFile = `${DB_FILE}.tmp`;
   fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
   fs.renameSync(tmpFile, DB_FILE);
+}
+
+/** Prüft die Felder eines Lehrmaterials. Gibt eine Fehlermeldung zurück oder null. */
+function validateModuleFields(
+  fields: { title?: unknown; externalUrl?: unknown; pdfDataUrl?: unknown; requiredRole?: unknown },
+  requireTitle: boolean
+): string | null {
+  if (requireTitle && (typeof fields.title !== 'string' || fields.title.trim().length === 0)) {
+    return 'Bitte einen Titel angeben.';
+  }
+  if (typeof fields.title === 'string' && fields.title.length > 200) {
+    return 'Der Titel ist zu lang (höchstens 200 Zeichen).';
+  }
+  if (fields.externalUrl !== undefined && !isSafeHttpUrl(String(fields.externalUrl).trim())) {
+    return 'Die externe Adresse muss mit http:// oder https:// beginnen.';
+  }
+  if (fields.pdfDataUrl !== undefined && !isSafePdfDataUrl(String(fields.pdfDataUrl))) {
+    return 'Das hochgeladene Dokument ist kein gültiges PDF.';
+  }
+  if (
+    fields.requiredRole &&
+    !Object.prototype.hasOwnProperty.call(ROLE_HIERARCHY, String(fields.requiredRole))
+  ) {
+    return 'Unbekannte Rolle.';
+  }
+  return null;
 }
 
 async function initFirestoreStorage() {
@@ -1681,6 +1708,15 @@ async function startServer() {
       return;
     }
 
+    const moduleError = validateModuleFields(
+      { title, externalUrl, pdfDataUrl, requiredRole },
+      true
+    );
+    if (moduleError) {
+      res.status(400).json({ error: moduleError });
+      return;
+    }
+
     const reqRole: OfficerRole = requiredRole || 'trainee';
     const newMod: TrainingModuleDoc = {
       id: `mod_${Date.now()}`,
@@ -1690,11 +1726,11 @@ async function startServer() {
       minClearance: ROLE_HIERARCHY[reqRole]?.defaultClearance || 1,
       requiredRole: reqRole,
       embedType: embedType || 'pdf_upload',
-      contentMarkdown: String(contentMarkdown || ''),
-      externalUrl: String(externalUrl || ''),
+      contentMarkdown: limitText(contentMarkdown, 200_000),
+      externalUrl: String(externalUrl || '').trim(),
       pdfDataUrl: String(pdfDataUrl || ''),
-      pdfFileName: String(pdfFileName || ''),
-      interactiveCode: String(interactiveCode || ''),
+      pdfFileName: limitText(pdfFileName, 200),
+      interactiveCode: limitText(interactiveCode, 200_000),
       estimatedMinutes: Number(estimatedMinutes) || 25,
       authorUid: caller.uid,
       updatedIso: new Date().toISOString()
@@ -1746,6 +1782,15 @@ async function startServer() {
       return;
     }
 
+    const moduleError = validateModuleFields(
+      { title, externalUrl, pdfDataUrl, requiredRole },
+      false
+    );
+    if (moduleError) {
+      res.status(400).json({ error: moduleError });
+      return;
+    }
+
     const reqRole: OfficerRole = requiredRole || dbState.modules[idx].requiredRole;
     dbState.modules[idx] = {
       ...dbState.modules[idx],
@@ -1757,17 +1802,21 @@ async function startServer() {
       embedType: embedType || dbState.modules[idx].embedType,
       contentMarkdown:
         contentMarkdown !== undefined
-          ? String(contentMarkdown)
+          ? limitText(contentMarkdown, 200_000)
           : dbState.modules[idx].contentMarkdown,
       externalUrl:
-        externalUrl !== undefined ? String(externalUrl) : dbState.modules[idx].externalUrl,
+        externalUrl !== undefined
+          ? String(externalUrl).trim()
+          : dbState.modules[idx].externalUrl,
       pdfDataUrl:
         pdfDataUrl !== undefined ? String(pdfDataUrl) : dbState.modules[idx].pdfDataUrl,
       pdfFileName:
-        pdfFileName !== undefined ? String(pdfFileName) : dbState.modules[idx].pdfFileName,
+        pdfFileName !== undefined
+          ? limitText(pdfFileName, 200)
+          : dbState.modules[idx].pdfFileName,
       interactiveCode:
         interactiveCode !== undefined
-          ? String(interactiveCode)
+          ? limitText(interactiveCode, 200_000)
           : dbState.modules[idx].interactiveCode,
       estimatedMinutes: Number(estimatedMinutes) || dbState.modules[idx].estimatedMinutes,
       updatedIso: new Date().toISOString()
@@ -2197,14 +2246,32 @@ jobs:
       return;
     }
 
+    if (
+      (typeof githubRepoUrl === 'string' && !isSafeHttpUrl(githubRepoUrl.trim())) ||
+      (typeof renderServiceUrl === 'string' && !isSafeHttpUrl(renderServiceUrl.trim()))
+    ) {
+      res.status(400).json({ error: 'Adressen müssen mit http:// oder https:// beginnen.' });
+      return;
+    }
+    if (typeof renderDeployHookUrl === 'string' && !isRenderDeployHook(renderDeployHookUrl.trim())) {
+      res.status(400).json({
+        error: 'Der Deploy-Hook muss mit https://api.render.com/deploy/ beginnen.'
+      });
+      return;
+    }
+
     const cfg = ensureDeploymentConfig(dbState);
     if (typeof githubRepoUrl === 'string') cfg.githubRepoUrl = githubRepoUrl.trim();
     if (typeof renderServiceUrl === 'string') cfg.renderServiceUrl = renderServiceUrl.trim();
     if (typeof renderDeployHookUrl === 'string')
       cfg.renderDeployHookUrl = renderDeployHookUrl.trim();
-    if (typeof branchName === 'string' && branchName.trim()) cfg.branchName = branchName.trim();
+    if (typeof branchName === 'string' && branchName.trim()) {
+      cfg.branchName = limitText(branchName.trim(), 100);
+    }
     if (typeof autoDeployEnabled === 'boolean') cfg.autoDeployEnabled = autoDeployEnabled;
-    if (Array.isArray(completedSteps)) cfg.completedSteps = completedSteps.map(String);
+    if (Array.isArray(completedSteps)) {
+      cfg.completedSteps = completedSteps.slice(0, 50).map(step => limitText(step, 100));
+    }
     cfg.updatedIso = new Date().toISOString();
 
     saveDatabase(dbState);
