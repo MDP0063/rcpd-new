@@ -6,7 +6,7 @@ Eine kurze Zusammenfassung der Änderungen und des Hintergrunds dieses Pull Requ
 ## 🏷️ Release-Kategorie (Wichtig für automatische Release Notes)
 *Bitte stelle sicher, dass du rechts in der GitHub-Seitenleiste das passende Label gesetzt hast (`feature`, `bug`, etc.).*
 - [ ] `feature` (🚀 Neue Funktion / Erweiterung)
-- [ ] `bug` (🐛 Fehlerbehebung)
+- [ ] `fix` (🐛 Fehlerbehebung)
 - [ ] `refactor` / `documentation` (🧰 Code-Bereinigung / Doku)
 - [ ] `skip-changelog` (Änderung soll nicht in den Release Notes auftauchen)
 
