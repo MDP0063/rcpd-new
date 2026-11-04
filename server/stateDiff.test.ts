@@ -160,6 +160,22 @@ test('große PDF-Felder werden zerlegt, wieder zusammengesetzt und beim Löschen
   assert.equal(gone.ops.filter(o => o.kind === 'delete' && o.path.startsWith('blobs/')).length, 2);
 });
 
+test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalten', () => {
+  const index: PersistIndex = new Map();
+  const state = baseState();
+  state.adminRecovery = {
+    tokenHash: 'a'.repeat(64),
+    expiresAt: '2030-01-01T00:15:00.000Z',
+    requestedAt: '2030-01-01T00:00:00.000Z'
+  };
+  const store = new Map<string, Doc>();
+  const plan = planWrites(index, state, 0);
+  const raw = applyToFake(plan.ops, store);
+  plan.commit();
+  const loaded = assembleState(raw, 1)!;
+  assert.deepEqual(loaded.state.adminRecovery, state.adminRecovery);
+});
+
 test('leerer Speicher ergibt null', () => {
   assert.equal(
     assembleState({ collections: {}, blobs: new Map(), order: null, meta: null }, 0),
