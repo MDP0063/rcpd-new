@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Der Browser darf nur das Änderungssignal lesen, und nur mit einem vom Portal-Server
+    // ausgestellten Token (Claim "portal"). Alle Daten und alle Schreibzugriffe laufen über den Server.
+    match /sync/state {
+      allow get: if request.auth != null && request.auth.token.portal == true;
+      allow list, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

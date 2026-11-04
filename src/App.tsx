@@ -73,6 +73,7 @@ import { ReportsExportCenter } from './components/ReportsExportCenter';
 import { CommandPaletteModal, CommandTargetSection } from './components/CommandPaletteModal';
 import { ProfessionalDevelopmentModule } from './components/ProfessionalDevelopmentModule';
 import { API_ENDPOINTS, apiFetch, setAuthToken } from './lib/api';
+import { isLiveSyncConfigured, startLiveSync } from './lib/liveSync';
 
 type ActiveSection = CommandTargetSection;
 
@@ -290,15 +291,63 @@ export default function App() {
     }
   }, [currentUserProfile?.uid]);
 
-  // Initial load + 5-second real-time heartbeat polling for live notifications & online status
+  // Echtzeit-Signal aus Firestore: bei jeder Änderung sofort neu laden (nur wenn konfiguriert).
+  const fetchPortalStateRef = useRef(fetchPortalState);
+  fetchPortalStateRef.current = fetchPortalState;
+  const [liveConnected, setLiveConnected] = useState(false);
+
+  useEffect(() => {
+    if (!sessionUid || !isLiveSyncConfigured()) return;
+    let cancelled = false;
+    let stop: (() => void) | null = null;
+    let refreshTimer: number | undefined;
+
+    const refresh = () => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        void fetchPortalStateRef.current(sessionUid);
+      }, 150);
+    };
+
+    startLiveSync(
+      async () => {
+        const res = await apiFetch<{ token: string }>(API_ENDPOINTS.FIREBASE_TOKEN);
+        return res.ok && res.data ? res.data.token : null;
+      },
+      refresh,
+      connected => {
+        if (!cancelled) setLiveConnected(connected);
+      }
+    )
+      .then(unsubscribe => {
+        if (cancelled) unsubscribe();
+        else stop = unsubscribe;
+      })
+      .catch(() => {
+        if (!cancelled) setLiveConnected(false);
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(refreshTimer);
+      stop?.();
+      setLiveConnected(false);
+    };
+  }, [sessionUid]);
+
+  // Initial load + Polling. Mit Echtzeit-Signal reicht ein langsamer Takt, der nur noch den
+  // Online-Status auffrischt (der Server wertet 45 Sekunden ohne Lebenszeichen als offline).
   useEffect(() => {
     if (!sessionUid) return;
     fetchPortalState(sessionUid);
-    const interval = setInterval(() => {
-      fetchPortalState(sessionUid);
-    }, 5000);
+    const interval = setInterval(
+      () => {
+        fetchPortalState(sessionUid);
+      },
+      liveConnected ? 20000 : 5000
+    );
     return () => clearInterval(interval);
-  }, [sessionUid, fetchPortalState]);
+  }, [sessionUid, fetchPortalState, liveConnected]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

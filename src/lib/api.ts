@@ -155,6 +155,7 @@ export const API_ENDPOINTS = {
   HEALTH: '/api/health',
   AUTH_LOGIN: '/api/auth/login',
   AUTH_LOGOUT: '/api/auth/logout',
+  FIREBASE_TOKEN: '/api/auth/firebase-token',
   PORTAL_STATE: '/api/portal/state',
   ADMIN_ACCOUNTS: '/api/admin/accounts',
   APPLICATIONS: '/api/applications',
