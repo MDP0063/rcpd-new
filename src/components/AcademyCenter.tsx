@@ -207,7 +207,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     exam: AcademyExamDoc,
     parsedQuestions: ExamQuestionPublicItem[]
   ) => {
-    if (parsedQuestions.length > 0) {
+    const isStructuredQuiz = exam.examFormat === 'structured_quiz';
+    if (isStructuredQuiz && parsedQuestions.length === 0) {
+      onStatusToast('Diese Prüfung enthält keine gültigen Fragen und kann nicht abgegeben werden.');
+      return;
+    }
+    if (isStructuredQuiz) {
       const unansweredCount = parsedQuestions.filter(q => examAnswers[q.id] === undefined).length;
       if (unansweredCount > 0) {
         onStatusToast(
@@ -216,8 +221,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         return;
       }
     }
-
-    const isStructuredQuiz = parsedQuestions.length > 0;
     const res = await apiFetch<{
       scorePercent: number;
       passed: boolean;
@@ -986,7 +989,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
                       return (
                         <>
-                          {parsedQuestions.length > 0 ? (
+                          {currentExam.examFormat === 'structured_quiz' ? (
                             <div className="space-y-4">
                               {parsedQuestions.map((q, idx) => (
                                 <div
