@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { randomBytes } from 'node:crypto';
 import {
   AttemptLimiter,
   createSessionToken,
@@ -9,6 +10,8 @@ import {
   findIdentityMismatch,
   generatePassword,
   hashPassword,
+  hashRecoveryToken,
+  readSessionUid,
   parseAllowedOrigins,
   safeEqual,
   tokenSignature,
@@ -59,6 +62,8 @@ export interface StoredAccountRecord {
   passwordHash?: string;
   /** Altlast aus älteren Datenbanken: wird beim Laden gehasht und entfernt. */
   password?: string;
+  /** Erhöhen, um alle zuvor ausgestellten Sitzungen dieses Kontos zu widerrufen. */
+  sessionVersion?: number;
   isOnline: boolean;
   lastSeenIso: string;
   publicProfile: UserPublicProfile;
@@ -79,6 +84,8 @@ export interface PortalDatabaseState {
   auditLogs?: AuditLogDoc[];
   notifications?: PortalNotificationDoc[];
   deploymentConfig?: PortalDeploymentConfig;
+  /** Private, gehashte Einmal-Credentials; wird nicht an Client-APIs ausgegeben. */
+  adminRecovery?: { tokenHash: string; expiresAt: string; requestedAt: string } | null;
 }
 
 const DATA_DIR = process.env.DATA_DIR
@@ -932,6 +939,7 @@ async function startServer() {
   const whitelistApiKey = process.env.WHITELIST_API_KEY || '';
   const loginByUser = new AttemptLimiter(8, 10 * 60 * 1000);
   const loginByIp = new AttemptLimiter(40, 10 * 60 * 1000);
+  const recoveryByIp = new AttemptLimiter(3, 15 * 60 * 1000);
   const revokedTokens = new Map<string, number>();
 
   // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
@@ -955,7 +963,9 @@ async function startServer() {
   const PUBLIC_ROUTES = new Set([
     'GET /api/health',
     'GET /api/v1/health',
-    'POST /api/auth/login'
+    'POST /api/auth/login',
+    'POST /api/auth/recovery/request',
+    'POST /api/auth/recovery/reset'
   ]);
   const WHITELIST_ROUTES = new Set([
     'GET /api/v1/whitelist/verify',
@@ -986,12 +996,17 @@ async function startServer() {
     }
 
     const token = extractBearerToken(req.headers.authorization);
-    const uid = token ? verifySessionToken(token, SESSION_SECRET) : null;
-    if (!token || !uid || revokedTokens.has(tokenSignature(token))) {
+    // Die UID aus dem Token dient zunächst nur zum Kontonachschlagen. Erst danach
+    // wird die Signatur inklusive Session-Version gegen den gespeicherten Account geprüft.
+    const tokenUid = token ? readSessionUid(token) : null;
+    const account = tokenUid ? peekDatabase().accounts.find(a => a.uid === tokenUid) : undefined;
+    const uid = account && token
+      ? verifySessionToken(token, SESSION_SECRET, Date.now(), account.sessionVersion ?? 0)
+      : null;
+    if (!token || !uid || !account || revokedTokens.has(tokenSignature(token))) {
       res.status(401).json({ error: 'Nicht angemeldet oder Sitzung abgelaufen.' });
       return;
     }
-    const account = peekDatabase().accounts.find(a => a.uid === uid);
     if (!account) {
       res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
       return;
@@ -1040,6 +1055,129 @@ async function startServer() {
       appUrl: process.env.APP_URL || `http://localhost:${PORT}`,
       timestamp: new Date().toISOString()
     });
+  });
+
+  // Admin-Wiederherstellung: Empfänger und Zielkonto sind ausschließlich serverseitig festgelegt.
+  app.post('/api/auth/recovery/request', async (req, res) => {
+    const genericMessage = 'Wenn die Wiederherstellung verfügbar ist, erhält der Administrator in Kürze eine E-Mail.';
+    const ipKey = `recovery:${req.ip}`;
+    const waitMs = recoveryByIp.retryAfterMs(ipKey);
+    if (waitMs > 0) {
+      res.setHeader('Retry-After', String(Math.ceil(waitMs / 1000)));
+      res.status(429).json({ error: 'Zu viele Wiederherstellungsanfragen. Bitte warte einige Minuten.' });
+      return;
+    }
+    recoveryByIp.recordFailure(ipKey);
+
+    const apiKey = process.env.RESEND_API_KEY;
+    const recipient = process.env.ADMIN_RECOVERY_EMAIL?.trim();
+    const appUrl = process.env.APP_URL?.trim();
+    const from = process.env.RESEND_FROM_EMAIL?.trim() || 'RCPD Portal <onboarding@resend.dev>';
+    if (!apiKey || !recipient || !appUrl || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient)) {
+      console.error('[Admin-Recovery] Konfiguration unvollständig (Secrets werden nicht protokolliert).');
+      res.status(503).json({ error: 'Die Wiederherstellung ist derzeit nicht konfiguriert.' });
+      return;
+    }
+
+    let baseUrl: URL;
+    try {
+      baseUrl = new URL(appUrl);
+      if (baseUrl.protocol !== 'https:' && !(baseUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(baseUrl.hostname))) {
+        throw new Error('APP_URL muss HTTPS verwenden.');
+      }
+    } catch {
+      res.status(503).json({ error: 'Die Wiederherstellung ist derzeit nicht korrekt konfiguriert.' });
+      return;
+    }
+
+    const dbState = loadDatabase();
+    const admin = dbState.accounts.find(a => a.uid === 'usr_admin_1' && a.publicProfile.role === 'admin');
+    if (!admin) {
+      res.json({ ok: true, message: genericMessage });
+      return;
+    }
+    const lastRequested = Date.parse(dbState.adminRecovery?.requestedAt || '');
+    if (Number.isFinite(lastRequested) && Date.now() - lastRequested < 60_000) {
+      res.json({ ok: true, message: genericMessage });
+      return;
+    }
+
+    const rawToken = randomBytes(32).toString('base64url');
+    dbState.adminRecovery = {
+      tokenHash: hashRecoveryToken(rawToken),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      requestedAt: new Date().toISOString()
+    };
+    saveDatabase(dbState);
+    try {
+      if (store) await store.flush();
+      const recoveryUrl = new URL('/', baseUrl);
+      recoveryUrl.searchParams.set('adminRecovery', rawToken);
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from,
+          to: [recipient],
+          subject: 'RCPD – Wiederherstellung des Administrator-Zugangs',
+          html: `<p>Es wurde eine Wiederherstellung des Administrator-Zugangs angefordert.</p><p><a href="${recoveryUrl.toString()}">Administrator-Passwort sicher zurücksetzen</a></p><p>Der Link ist 15 Minuten gültig und kann nur einmal verwendet werden. Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.</p>`,
+          text: `Es wurde eine Wiederherstellung des Administrator-Zugangs angefordert. Öffne diesen einmaligen Link innerhalb von 15 Minuten: ${recoveryUrl.toString()} Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.`
+        })
+      });
+      if (!emailResponse.ok) {
+        const errorText = await emailResponse.text().catch(() => '');
+        console.error('[Admin-Recovery] Resend-Versand fehlgeschlagen:', emailResponse.status, errorText.slice(0, 500));
+        dbState.adminRecovery = null;
+        saveDatabase(dbState);
+        if (store) await store.flush();
+        res.status(503).json({ error: 'Die Wiederherstellungs-E-Mail konnte nicht versendet werden.' });
+        return;
+      }
+      res.json({ ok: true, message: genericMessage });
+    } catch (error) {
+      console.error('[Admin-Recovery] Anfrage fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
+      dbState.adminRecovery = null;
+      saveDatabase(dbState);
+      if (store) await store.flush().catch(() => undefined);
+      res.status(503).json({ error: 'Die Wiederherstellungs-E-Mail konnte nicht versendet werden.' });
+    }
+  });
+
+  app.post('/api/auth/recovery/reset', async (req, res) => {
+    const { token, password } = req.body as { token?: string; password?: string };
+    if (typeof token !== 'string' || token.length < 20 || token.length > 200 || typeof password !== 'string') {
+      res.status(400).json({ error: 'Der Wiederherstellungslink oder das neue Passwort ist ungültig.' });
+      return;
+    }
+    const passwordError = validateNewPassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
+      return;
+    }
+
+    const dbState = loadDatabase();
+    const recovery = dbState.adminRecovery;
+    const admin = dbState.accounts.find(a => a.uid === 'usr_admin_1' && a.publicProfile.role === 'admin');
+    if (!recovery || !admin || Date.parse(recovery.expiresAt) <= Date.now() || !safeEqual(hashRecoveryToken(token), recovery.tokenHash)) {
+      res.status(400).json({ error: 'Der Wiederherstellungslink ist ungültig oder abgelaufen. Fordere bitte einen neuen Link an.' });
+      return;
+    }
+
+    // Einmal-Token sofort verbrauchen und alle zuvor ausgestellten Admin-Sitzungen widerrufen.
+    dbState.adminRecovery = null;
+    admin.passwordHash = hashPassword(password);
+    delete admin.password;
+    admin.sessionVersion = (admin.sessionVersion ?? 0) + 1;
+    appendAuditLog(dbState, admin, 'ACCOUNT_ROLE', 'Administrator-Passwort wiederhergestellt', 'Admin1', 'Passwort über den verifizierten E-Mail-Wiederherstellungslink zurückgesetzt.');
+    saveDatabase(dbState);
+    try {
+      if (store) await store.flush();
+    } catch (error) {
+      console.error('[Admin-Recovery] Persistierung fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
+      res.status(503).json({ error: 'Die Änderung konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
+      return;
+    }
+    res.json({ ok: true, message: 'Das Administrator-Passwort wurde zurückgesetzt. Du kannst dich jetzt mit deinem neuen Passwort anmelden.' });
   });
 
   // 2. Login Endpoint (No public self-registration — only Admin creates accounts)
@@ -1100,7 +1238,7 @@ async function startServer() {
     res.json({
       user: matched.publicProfile,
       isAdmin: matched.publicProfile.role === 'admin',
-      token: createSessionToken(matched.uid, SESSION_SECRET)
+      token: createSessionToken(matched.uid, SESSION_SECRET, Date.now(), undefined, matched.sessionVersion ?? 0)
     });
   });
 
