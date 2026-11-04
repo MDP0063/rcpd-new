@@ -540,7 +540,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveTab('tests');
             setActiveExamId(practiceTests[0]?.id || null);
             setExamSubmittedResult(null);
-                        setExamExplanations({});
+            setExamAnswers({});
+            setExamExplanations({});
           }}
           className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'tests'
@@ -557,6 +558,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveTab('final_exams');
             setActiveExamId(finalExams[0]?.id || null);
             setExamSubmittedResult(null);
+            setExamAnswers({});
+            setExamExplanations({});
           }}
           className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'final_exams'
@@ -887,6 +890,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         setActiveExamId(ex.id);
                         setExamAnswers({});
                         setExamSubmittedResult(null);
+                        setExamExplanations({});
                       }}
                       className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
                         isSelected
