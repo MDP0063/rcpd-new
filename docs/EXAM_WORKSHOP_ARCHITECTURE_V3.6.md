@@ -256,9 +256,7 @@ Die Antwort wird gegen den serverseitigen Lösungsschlüssel geprüft. Ungültig
 
 ### Multiple Choice mit Teilpunkten
 
-[
-P = maxleft(0, rac{R-F}{N}cdot P_{max}ight)
-]
+`P = max(0, ((R - F) / N) * P_max)`
 
 - `R`: korrekt ausgewählte Optionen
 - `F`: falsch ausgewählte Optionen
@@ -269,9 +267,7 @@ Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das
 
 ### Matching mit Teilpunkten
 
-[
 P = rac{K}{N}cdot P_{max}
-]
 
 - `K`: korrekt zugeordnete Paare
 - `N`: Gesamtzahl der Paare
