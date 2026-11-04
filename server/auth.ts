@@ -142,7 +142,9 @@ export const IDENTITY_KEYS = [
   'senderUid',
   'reviewerUid',
   'instructorUid',
-  'userId'
+  'userId',
+  'applicantUid',
+  'requesterUid'
 ] as const;
 
 /** Gibt den Namen des ersten Feldes zurück, das nicht zur Sitzung passt, sonst null. */

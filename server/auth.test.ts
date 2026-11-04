@@ -74,6 +74,10 @@ test('Identität: fremde UID in Query oder Body fällt auf', () => {
   assert.equal(findIdentityMismatch('usr_2', {}, { adminUid: 'usr_admin_1' }), 'adminUid');
   assert.equal(findIdentityMismatch('usr_2', { actorUid: ['usr_2'] }), 'actorUid');
   assert.equal(findIdentityMismatch('usr_2', undefined, null), null);
+  // Bewerbungen und Anträge nennen den Absender ebenfalls im Body
+  assert.equal(findIdentityMismatch('usr_2', undefined, { applicantUid: 'usr_9' }), 'applicantUid');
+  assert.equal(findIdentityMismatch('usr_2', undefined, { requesterUid: 'usr_9' }), 'requesterUid');
+  assert.equal(findIdentityMismatch('usr_2', undefined, { applicantUid: 'usr_2' }), null);
   // Zielfelder anderer Nutzer sind keine Identitätsfelder
   assert.equal(findIdentityMismatch('usr_2', { targetUserUid: 'usr_9' }), null);
 });
