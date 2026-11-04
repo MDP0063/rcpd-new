@@ -1,8 +1,8 @@
 # KI-Mitwirkende und Zuständigkeiten
 
-Dieses Dokument legt die empfohlenen Hauptaufgaben der am RCPD-Projekt beteiligten KI-Werkzeuge fest. Es ergänzt `AGENTS.md`; es ersetzt oder überschreibt keine dortigen Projekt-, Sicherheits- oder Git-Regeln.
+Dieses Dokument legt die empfohlenen Hauptaufgaben der am RCPD-Projekt beteiligten KI-Werkzeuge fest. Es ergänzt `AGENTS.md`; es ersetzt oder überschreibt keine dortigen Projekt-, Sicherheits- oder Git-Regeln. Die übergreifende Entwicklungsphilosophie ist verbindlich in `DEVELOPMENT_PHILOSOPHY.md` festgehalten.
 
-**Verbindlich vor jeder Projektarbeit:** Lies zuerst `AGENTS.md` und anschließend dieses Dokument vollständig. Prüfe außerdem die für deine konkrete Aufgabe relevanten Projektdateien und Dokumentationen. Wenn du keinen Zugriff auf das Repository oder eine dieser Dateien hast, sage das ausdrücklich und bitte darum, die fehlenden Inhalte bereitzustellen. Behaupte niemals, du hättest Regeln gelesen, die dir nicht zugänglich waren.
+**Verbindlich vor jeder Projektarbeit:** Lies zuerst `AGENTS.md`, anschließend dieses Dokument und danach `DEVELOPMENT_PHILOSOPHY.md` vollständig. Prüfe außerdem die für deine konkrete Aufgabe relevanten Projektdateien und Dokumentationen. Wenn du keinen Zugriff auf das Repository oder eine dieser Dateien hast, sage das ausdrücklich und bitte darum, die fehlenden Inhalte bereitzustellen. Behaupte niemals, du hättest Regeln gelesen, die dir nicht zugänglich waren.
 
 ## Rollenübersicht
 
@@ -19,7 +19,7 @@ Diese Rollen sind Schwerpunktsetzungen, keine exklusiven Berechtigungen. Jede be
 
 ## Verbindlicher Review- und Änderungsablauf
 
-1. **Aufgabe verstehen:** Lies `AGENTS.md`, dieses Dokument und die für die Aufgabe relevanten Dateien. Prüfe den aktuellen Stand des Ziel-Branches, bevor du Änderungen planst.
+1. **Aufgabe verstehen:** Lies `AGENTS.md`, dieses Dokument und `DEVELOPMENT_PHILOSOPHY.md` sowie die für die Aufgabe relevanten Dateien. Prüfe den aktuellen Stand des Ziel-Branches, bevor du Änderungen planst.
 2. **Isoliert arbeiten:** Verwende einen eigenen, thematisch passenden Branch. Arbeite niemals direkt auf `main` und überschreibe keine fremden, noch nicht integrierten Änderungen.
 3. **Änderungen nachvollziehbar halten:** Ein Branch soll ein zusammenhängendes Thema behandeln. Dokumentiere wichtige Annahmen, geänderte Bereiche, Risiken und bekannte Einschränkungen.
 4. **Prüfungen ehrlich ausführen:** Befolge die Test-, Lint- und Build-Vorgaben aus `AGENTS.md`. Kennzeichne nicht ausgeführte Prüfungen ausdrücklich. Erfinde keine erfolgreichen Testergebnisse.
@@ -41,13 +41,14 @@ Findings sollen nach Möglichkeit mit Schweregrad (**kritisch**, **hoch**, **mit
 
 ## Besonderheit: Werkzeuge ohne automatisches Einlesen
 
-Nicht jede Entwicklungsumgebung liest Repository-Anweisungen automatisch ein. Insbesondere bei Google AI Studio oder anderen browserbasierten beziehungsweise promptgesteuerten Arbeitsabläufen darf nicht angenommen werden, dass `AGENTS.md` oder `CONTRIBUTOR_ROLES.md` automatisch geladen wurden.
+Nicht jede Entwicklungsumgebung liest Repository-Anweisungen automatisch ein. Insbesondere bei Google AI Studio oder anderen browserbasierten beziehungsweise promptgesteuerten Arbeitsabläufen darf nicht angenommen werden, dass `AGENTS.md`, `CONTRIBUTOR_ROLES.md` oder `DEVELOPMENT_PHILOSOPHY.md` automatisch geladen wurden.
 
 Wenn die Umgebung die Dateien nicht selbstständig einliest, müssen sie vor Beginn der Arbeit ausdrücklich als Projektkontext oder Anweisung bereitgestellt werden. Kann das nicht gewährleistet werden, muss die KI den Projektinhaber darauf hinweisen und darf nicht behaupten, die Regeln vollständig berücksichtigt zu haben.
 
 ## Umgang mit Konflikten
 
 - `AGENTS.md` enthält die zentralen technischen und sicherheitsbezogenen Projektregeln.
-- Dieses Dokument ergänzt diese Regeln nur um Zuständigkeiten und Zusammenarbeit.
-- Bei Widersprüchen gelten die Sicherheits- und Git-Regeln aus `AGENTS.md`; melde den Widerspruch, statt eigenmächtig eine Regel zu wählen.
+- Dieses Dokument ergänzt diese Regeln um Zuständigkeiten und Zusammenarbeit.
+- `DEVELOPMENT_PHILOSOPHY.md` enthält die übergreifenden Qualitäts- und Entwicklungsgrundsätze.
+- Bei Widersprüchen gelten die verbindlichen Sicherheits- und Git-Regeln aus `AGENTS.md`; melde den Widerspruch, statt eigenmächtig eine Regel zu wählen.
 - Anforderungen des Projektinhabers haben Vorrang vor den hier vorgeschlagenen Aufgabenschwerpunkten, sofern sie nicht den verbindlichen Sicherheits- und Repository-Regeln widersprechen.
