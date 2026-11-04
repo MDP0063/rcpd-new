@@ -1,0 +1,19 @@
+changelog:
+  categories:
+    - title: "🚀 Neue Funktionen"
+      labels:
+        - "feature"
+        - "enhancement"
+    - title: "🐛 Fehlerbehebungen"
+      labels:
+        - "fix"
+    - title: "🧰 Wartung & Performance"
+      labels:
+        - "documentation"
+        - "refactor"
+        - "dependencies"
+  exclude:
+    labels:
+      - "skip-changelog"
+    authors:
+      - "dependabot[bot]"
