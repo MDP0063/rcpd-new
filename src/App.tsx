@@ -55,6 +55,7 @@ import {
   PortalRequestDoc,
   PublicActivityDoc,
   ROLE_HIERARCHY,
+  sortRequestsPendingFirst,
   TrainingModuleDoc,
   UserProgressDoc,
   UserPublicProfile,
@@ -629,7 +630,8 @@ export default function App() {
       ? requests.filter(r => r.status === 'pending').length
       : myRequests.filter(r => r.status === 'pending').length;
 
-  const pendingAdminRequests = requests.filter(r => r.status === 'pending');
+  const sortedRequests = sortRequestsPendingFirst(requests);
+  const pendingAdminRequests = sortedRequests.filter(r => r.status === 'pending');
   const unreadConfidentialAdminMessages = messages.filter(
     m =>
       m.recipientUid === currentUserProfile.uid &&
@@ -2012,7 +2014,7 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
-                          {requests.slice(0, 5).map(req => (
+                          {sortedRequests.slice(0, 5).map(req => (
                             <tr
                               key={req.id}
                               className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"

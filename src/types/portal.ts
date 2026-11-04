@@ -422,5 +422,13 @@ export interface PortalBackupSnapshot {
   };
 }
 
-
-
+export function sortRequestsPendingFirst(requests: PortalRequestDoc[]): PortalRequestDoc[] {
+  return [...requests].sort((a, b) => {
+    const aPending = a.status === 'pending' ? 0 : 1;
+    const bPending = b.status === 'pending' ? 0 : 1;
+    if (aPending !== bPending) {
+      return aPending - bPending;
+    }
+    return new Date(b.createdIso).getTime() - new Date(a.createdIso).getTime();
+  });
+}

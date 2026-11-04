@@ -19,6 +19,7 @@ import {
   RequestCategory,
   RequestStatus,
   ROLE_HIERARCHY,
+  sortRequestsPendingFirst,
   UserPublicProfile
 } from '../types/portal';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
@@ -72,8 +73,8 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
   const [reviewComment, setReviewComment] = useState('');
   const [applyRankChange, setApplyRankChange] = useState(true);
 
-  const filteredRequests = requests.filter(r =>
-    statusFilter === 'ALL' ? true : r.status === statusFilter
+  const filteredRequests = sortRequestsPendingFirst(
+    requests.filter(r => (statusFilter === 'ALL' ? true : r.status === statusFilter))
   );
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
