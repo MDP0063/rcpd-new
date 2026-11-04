@@ -37,7 +37,7 @@ jobs:
 
             function clean(value) {
               return value
-                .replace(/<!--[\\s\\S]*?-->/g, '')
+                .replace(/<!--[\s\S]*?-->/g, '')
                 .replace(/\[[^\]]*\]/g, '')
                 .replace(/\s/g, '');
             }
