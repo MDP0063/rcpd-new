@@ -490,17 +490,19 @@ Der aktuelle Firestore-Store ist kein transaktionales Repository für einzelne F
 
 Die neuen Exam-Datensätze werden nicht gleichzeitig als beschreibbare Kopien im allgemeinen `dbState` geführt. Der allgemeine Portal-State darf daraus ausschließlich eine sichere, explizit projizierte Metadatenansicht erhalten.
 
+Im Firestore-Backend verwendet der neue Store die getrennten Sammlungen `exam_masters`, `exam_versions`, `exam_attempts` und `exam_progress`. Die bisherigen Sammlungen `exams` und `progress` sind während der Migration ausschließlich Legacy-Quellen und werden nach dem Cutover nicht mehr durch neue Prüfungsabläufe beschrieben. Damit konkurrieren `stateDiff.ts` und der neue Store nicht um dieselben Dokumente. Die Migration liest Legacy-Daten gezielt aus den bisherigen Sammlungen und überführt sie idempotent in die neuen Sammlungen. Nach erfolgreicher Verifikation bleiben Legacy-Datensätze als historische Quelle erhalten oder werden in einem ausdrücklich dokumentierten späteren Schritt archiviert; sie werden nicht parallel weiterbearbeitet.
+
 Der `ExamRepository` besitzt zwei Backend-Adapter:
 
 **Firestore-Adapter**
-- Verwendet die vorhandene Firestore-Instanz beziehungsweise deren Konfiguration, aber eigene, gezielte Repository-Methoden.
+- Verwendet dieselbe konfigurierte Firebase-App und Firestore-Datenbank wie das Portal, aber eigene, gezielte Repository-Methoden und die getrennten Exam-Sammlungen. Es wird keine zweite, unabhängig initialisierte Firestore-Instanz als konkurrierende Quelle angelegt.
 - Veröffentlichung, Prüfungsstart, Kontingentprüfung und Versuchsanlage verwenden echte Firestore-Transaktionen, soweit mehrere Dokumente gemeinsam konsistent geändert werden müssen.
 - Versionsdokumente werden create-only angelegt; vorhandene Versionen können nicht überschrieben oder gelöscht werden.
 - Autosaves schreiben gezielt das betreffende Versuchsdokument. Sie lösen weder eine Änderung an `sync/state` noch einen allgemeinen Portal-State-Reload aus.
 - Reads für aktive Versuche, Historie und Korrektur laden nur die jeweils benötigten Dokumente; sie laden und klonen nicht den gesamten Portal-State.
 
 **JSON-Adapter**
-- Verwendet eine eigene Exam-Datendatei im bestehenden `DATA_DIR`; es wird kein neuer Dienst und kein zusätzlicher kostenpflichtiger Speicher eingeführt.
+- Verwendet eine eigene Exam-Datendatei im bestehenden `DATA_DIR`; es wird kein neuer Dienst und kein zusätzlicher kostenpflichtiger Speicher eingeführt. Dieser Adapter ist für lokale Entwicklung beziehungsweise Umgebungen mit tatsächlich dauerhaftem `DATA_DIR` gedacht. Auf Render ohne persistenten Datenträger ist der JSON-Adapter nicht als dauerhafte Produktionsspeicherung zulässig; dort bleibt der vorhandene Firestore-Backend-Modus maßgeblich.
 - Alle fachlichen Read-Modify-Write-Operationen laufen durch eine gemeinsame prozessweite FIFO-Queue. Die Queue umfasst Lesen, Validieren, Mutieren und atomare Dateipersistenz – nicht nur den abschließenden Schreibvorgang.
 - Die Queue bleibt nach einem fehlgeschlagenen Task verwendbar; der Fehler wird an den konkreten Aufrufer weitergegeben.
 - Persistenz erfolgt über eine eindeutig benannte temporäre Datei und `rename`; kein Copy-plus-Unlink-Fallback.
