@@ -18,28 +18,37 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const body = pr.body || '';
+            const lines = body.split(/\r?\n/);
             const errors = [];
 
             function section(title) {
-              const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const match = body.match(new RegExp('^##\\s+' + escaped + '\\s*$([\\s\\S]*?)(?=^##\\s+|\\s*$)', 'm'));
-              return match ? match[1].trim() : '';
+              const heading = '## ' + title;
+              const start = lines.findIndex(line => line.trim() === heading);
+              if (start === -1) return '';
+              let end = lines.length;
+              for (let i = start + 1; i < lines.length; i++) {
+                if (lines[i].startsWith('## ')) {
+                  end = i;
+                  break;
+                }
+              }
+              return lines.slice(start + 1, end).join('\n').trim();
             }
 
             function clean(value) {
               return value
                 .replace(/<!--[\\s\\S]*?-->/g, '')
-                .replace(/\\[[^\\]]*\\]/g, '')
-                .replace(/\\s/g, '');
+                .replace(/\[[^\]]*\]/g, '')
+                .replace(/\s/g, '');
             }
 
             const description = section('📝 Beschreibung');
-            if (!description || !clean(description)) {
+            if (!clean(description)) {
               errors.push('Die **Beschreibung** fehlt oder enthält nur den Platzhalter.');
             }
 
             const category = section('🏷️ Release-Kategorie');
-            if (!/^- \\[xX\\] /m.test(category)) {
+            if (!/^- \[x\] /im.test(category)) {
               errors.push('Wähle mindestens eine **Release-Kategorie** in der PR-Vorlage aus.');
             }
 
@@ -53,38 +62,38 @@ jobs:
             }
 
             const changeType = section('🛠️ Art der Änderung');
-            if (!/^- \\[xX\\] /m.test(changeType)) {
+            if (!/^- \[x\] /im.test(changeType)) {
               errors.push('Wähle mindestens eine **Art der Änderung** aus.');
             }
 
             const components = section('📂 Geänderte / Hinzugefügte Komponenten');
-            if (!components || !clean(components)) {
+            if (!clean(components)) {
               errors.push('Nenne die **geänderten Komponenten/Dateien**.');
             }
 
             const tests = section('🧪 Testen & Überprüfung');
-            const testChecks = (tests.match(/^- \\[xX\\] /gm) || []).length;
-            const limitationMatch = tests.match(/\\*\\*Nicht ausgeführt \\/ Einschränkungen und ggf\\. andere Prüfungen:\\*\\*([\\s\\S]*)/);
+            const testChecks = (tests.match(/^- \[x\] /gim) || []).length;
+            const limitationMatch = tests.match(/\*\*Nicht ausgeführt \/ Einschränkungen und ggf\. andere Prüfungen:\*\*([\s\S]*)/);
             const limitationText = limitationMatch ? clean(limitationMatch[1]) : '';
             if (testChecks === 0 && !limitationText) {
               errors.push('Kreuze mindestens eine tatsächlich ausgeführte Prüfung an oder erläutere, warum keine Prüfung möglich war.');
             }
 
             const security = section('🔒 Sicherheit & Konfiguration');
-            if (!/^- \\[xX\\] Ich habe den Git-Diff auf Secrets/m.test(security)) {
+            if (!/^- \[x\] Ich habe den Git-Diff auf Secrets/im.test(security)) {
               errors.push('Bestätige die Prüfung des Git-Diffs auf Secrets, Passwörter, Tokens und API-Keys.');
             }
 
             const screenshots = section('📷 Screenshots oder Demo');
-            if (!screenshots || !clean(screenshots)) {
+            if (!clean(screenshots)) {
               errors.push('Bei UI-Änderungen Screenshots/Demo ergänzen; sonst ausdrücklich "Nicht relevant" eintragen.');
             }
 
             if (errors.length) {
               core.setFailed(
-                'Der Pull Request ist noch nicht vollständig beschrieben:\\n\\n' +
-                errors.map(error => '- ' + error).join('\\n') +
-                '\\n\\nBitte ergänze die PR-Beschreibung anhand der Vorlage und speichere sie erneut.'
+                'Der Pull Request ist noch nicht vollständig beschrieben:\n\n' +
+                errors.map(error => '- ' + error).join('\n') +
+                '\n\nBitte ergänze die PR-Beschreibung anhand der Vorlage und speichere sie erneut.'
               );
             } else {
               core.info('PR description contains all required information.');
