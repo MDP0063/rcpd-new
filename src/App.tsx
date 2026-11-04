@@ -119,9 +119,9 @@ export default function App() {
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initialLoadCompleteRef = useRef<boolean>(false);
 
-  // Login Form State (Strictly Admin-created accounts; default Admin1 / 1234)
-  const [loginUsername, setLoginUsername] = useState('Admin1');
-  const [loginPassword, setLoginPassword] = useState('1234');
+  // Login Form State (nur vom Administrator angelegte Konten, keine Vorbelegung)
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [securityCaptchaTarget, setSecurityCaptchaTarget] = useState<string>(() =>
     generateTacticalCaptcha()
@@ -693,16 +693,6 @@ export default function App() {
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
                     Mit Dienstkennung und Passwort anmelden
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Standard-Administrator-Zugang:{' '}
-                    <code className="font-mono text-slate-800 dark:text-slate-200 font-semibold">
-                      Admin1
-                    </code>{' '}
-                    / Passwort:{' '}
-                    <code className="font-mono text-slate-800 dark:text-slate-200 font-semibold">
-                      1234
-                    </code>
-                  </p>
                 </div>
 
                 {/* Error & Lockout Status Banner */}
@@ -851,18 +841,6 @@ export default function App() {
 
                 <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
                   <span>Zugangsvergabe durch die Dienststellenleitung</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginUsername('Admin1');
-                      setLoginPassword('1234');
-                      setSecurityCaptchaInput(securityCaptchaTarget);
-                      setAuthError(null);
-                    }}
-                    className="text-sky-700 dark:text-sky-400 hover:underline cursor-pointer font-medium"
-                  >
-                    Standard-Admin ausfüllen
-                  </button>
                 </div>
               </div>
             </div>
