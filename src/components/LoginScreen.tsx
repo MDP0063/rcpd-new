@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import {
   Shield,
   LogIn,
@@ -35,6 +36,56 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [recoveryToken, setRecoveryToken] = useState(
+    () => new URLSearchParams(window.location.hash.slice(1)).get('adminRecovery') || ''
+  );
+  const [showRecoveryRequest, setShowRecoveryRequest] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  const requestAdminRecovery = async () => {
+    setRecoveryLoading(true);
+    setRecoveryMessage(null);
+    setRecoveryError(null);
+    const result = await apiFetch<{ message?: string }>(API_ENDPOINTS.AUTH_RECOVERY_REQUEST, {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+    if (result.ok) setRecoveryMessage(result.data?.message || 'Falls die Wiederherstellung verfügbar ist, erhält der Administrator eine E-Mail.');
+    else setRecoveryError(result.error || 'Die Anfrage konnte nicht verarbeitet werden.');
+    setRecoveryLoading(false);
+  };
+
+  const submitAdminRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRecoveryMessage(null);
+    setRecoveryError(null);
+    if (newPassword !== confirmNewPassword) {
+      setRecoveryError('Die beiden Passwörter stimmen nicht überein.');
+      return;
+    }
+    setRecoveryLoading(true);
+    const result = await apiFetch<{ message?: string }>(API_ENDPOINTS.AUTH_RECOVERY_RESET, {
+      method: 'POST',
+      body: JSON.stringify({ token: recoveryToken, password: newPassword })
+    });
+    if (result.ok) {
+      const url = new URL(window.location.href);
+      url.hash = '';
+      window.history.replaceState({}, '', url.toString());
+      setRecoveryToken('');
+      setShowRecoveryRequest(false);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setRecoveryMessage(result.data?.message || 'Passwort zurückgesetzt. Du kannst dich jetzt anmelden.');
+    } else {
+      setRecoveryError(result.error || 'Das Passwort konnte nicht zurückgesetzt werden.');
+    }
+    setRecoveryLoading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,6 +237,43 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </button>
               </div>
             </form>
+
+            {recoveryMessage && (
+              <div role="status" className="rounded-md border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-xs text-emerald-800 dark:text-emerald-200">
+                {recoveryMessage}
+              </div>
+            )}
+            {recoveryError && (
+              <div role="alert" className="rounded-md border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs text-rose-800 dark:text-rose-200">
+                {recoveryError}
+              </div>
+            )}
+
+            {recoveryToken ? (
+              <form onSubmit={submitAdminRecovery} className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <div>
+                  <h2 className="text-sm font-semibold">Administrator-Passwort zurücksetzen</h2>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Der einmalige Link ist nur 15 Minuten gültig. Wähle ein neues Passwort mit mindestens 8 Zeichen.</p>
+                </div>
+                <input type="password" required minLength={8} maxLength={200} autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Neues Passwort" className="w-full px-3.5 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                <input type="password" required minLength={8} maxLength={200} autoComplete="new-password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} placeholder="Neues Passwort wiederholen" className="w-full px-3.5 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                <button type="submit" disabled={recoveryLoading} className="w-full px-4 py-2.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-md disabled:opacity-50">{recoveryLoading ? 'Wird gespeichert...' : 'Passwort sicher zurücksetzen'}</button>
+                <button type="button" onClick={() => { const url = new URL(window.location.href); url.hash = ''; window.history.replaceState({}, '', url.toString()); setRecoveryToken(''); setShowRecoveryRequest(true); setRecoveryError(null); }} className="w-full px-4 py-2 text-xs text-slate-600 dark:text-slate-300 hover:underline">Link ungültig oder abgelaufen? Neuen Link anfordern</button>
+              </form>
+            ) : showRecoveryRequest ? (
+              <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <div>
+                  <h2 className="text-sm font-semibold">Administrator-Zugang wiederherstellen</h2>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Wenn die Funktion eingerichtet ist, wird ein einmaliger Link an die fest hinterlegte Administrator-E-Mail gesendet.</p>
+                </div>
+                <button type="button" onClick={requestAdminRecovery} disabled={recoveryLoading} className="w-full px-4 py-2.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-md disabled:opacity-50">{recoveryLoading ? 'Anfrage wird gesendet...' : 'Wiederherstellungs-E-Mail anfordern'}</button>
+                <button type="button" onClick={() => { setShowRecoveryRequest(false); setRecoveryError(null); }} className="w-full px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300">Zurück zur Anmeldung</button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => { setShowRecoveryRequest(true); setRecoveryMessage(null); setRecoveryError(null); }} className="w-full border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-sky-700 dark:text-sky-400 hover:underline">
+                Administrator-Zugang wiederherstellen
+              </button>
+            )}
           </div>
         </div>
       </main>

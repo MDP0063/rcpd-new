@@ -3,10 +3,14 @@ import { test } from 'node:test';
 import {
   AttemptLimiter,
   createSessionToken,
+  consumeRecoveryEmailQuota,
   extractBearerToken,
   findIdentityMismatch,
   hashPassword,
+  hasActiveRecoveryToken,
+  hashRecoveryToken,
   parseAllowedOrigins,
+  readSessionUid,
   safeEqual,
   validateNewPassword,
   verifyPassword,
@@ -43,6 +47,9 @@ test('Passwort: Mindestlänge wird erzwungen', () => {
 test('Token: gültiges Token liefert die UID', () => {
   const token = createSessionToken('usr_1', SECRET, 1000, 5000);
   assert.equal(verifySessionToken(token, SECRET, 2000), 'usr_1');
+  assert.equal(verifySessionToken(token, SECRET, 2000, 0), 'usr_1');
+  assert.equal(verifySessionToken(token, SECRET, 2000, 1), null);
+  assert.equal(readSessionUid(token), 'usr_1');
 });
 
 test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', () => {
@@ -59,6 +66,55 @@ test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', ()
   assert.equal(verifySessionToken('', SECRET, 2000), null);
   assert.equal(verifySessionToken(undefined, SECRET, 2000), null);
   assert.equal(verifySessionToken('nur-ein-teil', SECRET, 2000), null);
+});
+
+test('Ein noch gültiger Recovery-Link darf nicht durch neue Anfragen ersetzt werden', () => {
+  const now = Date.parse('2026-11-04T10:00:00.000Z');
+  assert.equal(hasActiveRecoveryToken(new Date(now + 1).toISOString(), now), true);
+  assert.equal(hasActiveRecoveryToken(new Date(now).toISOString(), now), false);
+  assert.equal(hasActiveRecoveryToken(new Date(now - 1).toISOString(), now), false);
+  assert.equal(hasActiveRecoveryToken('ungültig', now), false);
+  assert.equal(hasActiveRecoveryToken(null, now), false);
+});
+
+test('Recovery-Mail-Kontingent begrenzt global auf drei Sendungen pro Stunde', () => {
+  const start = Date.parse('2026-11-04T10:00:00.000Z');
+  let quota = consumeRecoveryEmailQuota(undefined, start);
+  assert.equal(quota.allowed, true);
+  assert.equal(quota.state.count, 1);
+
+  quota = consumeRecoveryEmailQuota(quota.state, start + 1);
+  assert.equal(quota.allowed, true);
+  quota = consumeRecoveryEmailQuota(quota.state, start + 2);
+  assert.equal(quota.allowed, true);
+  quota = consumeRecoveryEmailQuota(quota.state, start + 3);
+  assert.equal(quota.allowed, false);
+  assert.equal(quota.state.count, 3);
+
+  const nextWindow = consumeRecoveryEmailQuota(quota.state, start + 60 * 60 * 1000);
+  assert.equal(nextWindow.allowed, true);
+  assert.equal(nextWindow.state.count, 1);
+});
+
+test('Recovery-Mail-Kontingent verwirft ungültige oder zukünftige Zeitfenster', () => {
+  const now = Date.parse('2026-11-04T10:00:00.000Z');
+  const invalid = consumeRecoveryEmailQuota({ windowStartedAt: 'kaputt', count: 3 }, now);
+  assert.equal(invalid.allowed, true);
+  assert.equal(invalid.state.count, 1);
+  const future = consumeRecoveryEmailQuota({
+    windowStartedAt: new Date(now + 1000).toISOString(),
+    count: 3
+  }, now);
+  assert.equal(future.allowed, true);
+  assert.equal(future.state.count, 1);
+});
+
+test('Wiederherstellungstoken wird nur als SHA-256-Hash abgelegt', () => {
+  const token = 'ein-einmaliger-geheimer-token';
+  const hash = hashRecoveryToken(token);
+  assert.equal(hash.length, 64);
+  assert.notEqual(hash, token);
+  assert.equal(hashRecoveryToken(token), hash);
 });
 
 test('Bearer-Header wird gelesen', () => {

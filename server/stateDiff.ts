@@ -5,7 +5,7 @@
  * Aufbau in Firestore:
  *   <sammlung>/<id>      ein Dokument pro Eintrag (accounts, modules, messages, ...)
  *   blobs/<...>          Teilstücke sehr großer Textfelder (PDF-Handbücher), da ein Dokument max. 1 MiB hat
- *   meta/state           version und deploymentConfig
+ *   meta/state           version, deploymentConfig und private Admin-Recovery-Metadaten
  *   meta/order           Reihenfolge der Einträge je Sammlung (Firestore kennt keine Listenreihenfolge)
  */
 import { createHash } from 'node:crypto';
@@ -134,7 +134,12 @@ function orderOf(state: StateLike): Record<string, string[]> {
 }
 
 function metaOf(state: StateLike): Doc {
-  return { version: state.version ?? 3, deploymentConfig: state.deploymentConfig ?? null };
+  return {
+    version: state.version ?? 3,
+    deploymentConfig: state.deploymentConfig ?? null,
+    adminRecovery: state.adminRecovery ?? null,
+    adminRecoveryRateLimit: state.adminRecoveryRateLimit ?? null
+  };
 }
 
 /** Vergleicht den Zustand mit dem zuletzt gespeicherten Stand und liefert nur die nötigen Schreibvorgänge. */
@@ -235,6 +240,8 @@ export function assembleState(
   const index: PersistIndex = new Map();
   const state: StateLike = { version: raw.meta.version ?? 3 };
   if (raw.meta.deploymentConfig) state.deploymentConfig = raw.meta.deploymentConfig;
+  if (raw.meta.adminRecovery) state.adminRecovery = raw.meta.adminRecovery;
+  if (raw.meta.adminRecoveryRateLimit) state.adminRecoveryRateLimit = raw.meta.adminRecoveryRateLimit;
 
   for (const spec of COLLECTIONS) {
     const entries: Array<{ doc: Doc; chunks: Record<string, number> }> = [];
