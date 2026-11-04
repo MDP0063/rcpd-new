@@ -398,7 +398,7 @@ function migrateLegacyPasswords(state: PortalDatabaseState): boolean {
 
 /** Konto ohne Passwort-Felder, für Antworten an den Client. */
 function toAdminView(acc: StoredAccountRecord) {
-  const { password: _legacy, passwordHash: _hash, ...rest } = acc;
+  const { password: _legacy, passwordHash: _hash, sessionVersion: _sessionVersion, ...rest } = acc;
   return rest;
 }
 
@@ -1005,10 +1005,6 @@ async function startServer() {
       : null;
     if (!token || !uid || !account || revokedTokens.has(tokenSignature(token))) {
       res.status(401).json({ error: 'Nicht angemeldet oder Sitzung abgelaufen.' });
-      return;
-    }
-    if (!account) {
-      res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
       return;
     }
     const status = account.publicProfile.whitelistStatus;
@@ -2658,6 +2654,10 @@ jobs:
     const nowIso = new Date().toISOString();
     const restoredAccounts: StoredAccountRecord[] = rawDb.accounts.map(acc => ({
       ...acc,
+      sessionVersion: Math.max(
+        acc.sessionVersion ?? 0,
+        dbState.accounts.find(current => current.uid === acc.uid)?.sessionVersion ?? 0
+      ),
       isOnline: acc.uid === caller.uid ? true : Boolean(acc.isOnline),
       lastSeenIso: acc.uid === caller.uid ? nowIso : acc.lastSeenIso || nowIso,
       publicProfile: {
