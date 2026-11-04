@@ -18,6 +18,7 @@ import {
 } from './server/auth.ts';
 import { canReadModule, shouldRefreshPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
+import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { createServer as createViteServer } from 'vite';
@@ -3276,9 +3277,27 @@ jobs:
     });
   }
 
+  // Einheitliche Fehlerantwort: JSON statt HTML-Fehlerseite, keine internen Details nach außen.
+  app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
+    const { status, message } = describeError(err);
+    if (status >= 500) console.error(`[Fehler] ${req.method} ${req.path}:`, err);
+    res.status(status).json({ error: message });
+  });
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[CA-POST Officer Portal] Server listening on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
+process.on('unhandledRejection', reason => {
+  console.error('[Fehler] Unbehandelte Promise-Ablehnung:', reason);
+});
+
+startServer().catch(err => {
+  console.error('[Fehler] Server konnte nicht starten:', err);
+  process.exit(1);
+});
