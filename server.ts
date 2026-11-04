@@ -5,6 +5,7 @@ import fs from 'fs';
 import { randomBytes } from 'node:crypto';
 import {
   AttemptLimiter,
+  consumeRecoveryEmailQuota,
   createSessionToken,
   extractBearerToken,
   findIdentityMismatch,
@@ -86,6 +87,8 @@ export interface PortalDatabaseState {
   deploymentConfig?: PortalDeploymentConfig;
   /** Private, gehashte Einmal-Credentials; wird nicht an Client-APIs ausgegeben. */
   adminRecovery?: { tokenHash: string; expiresAt: string; requestedAt: string } | null;
+  /** Persistentes globales Versandkontingent für Admin-Recovery-E-Mails. */
+  adminRecoveryRateLimit?: { windowStartedAt: string; count: number } | null;
 }
 
 const DATA_DIR = process.env.DATA_DIR
@@ -940,6 +943,7 @@ async function startServer() {
   const loginByUser = new AttemptLimiter(8, 10 * 60 * 1000);
   const loginByIp = new AttemptLimiter(40, 10 * 60 * 1000);
   const recoveryByIp = new AttemptLimiter(3, 15 * 60 * 1000);
+  const resetByIp = new AttemptLimiter(5, 15 * 60 * 1000);
   const revokedTokens = new Map<string, number>();
 
   // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
@@ -1092,17 +1096,26 @@ async function startServer() {
       res.json({ ok: true, message: genericMessage });
       return;
     }
-    const lastRequested = Date.parse(dbState.adminRecovery?.requestedAt || '');
-    if (Number.isFinite(lastRequested) && Date.now() - lastRequested < 60_000) {
+    const now = Date.now();
+    const activeExpiry = Date.parse(dbState.adminRecovery?.expiresAt || '');
+    // Ein bereits versendeter, noch gültiger Link darf niemals durch eine neue Anfrage ungültig werden.
+    if (Number.isFinite(activeExpiry) && activeExpiry > now) {
       res.json({ ok: true, message: genericMessage });
       return;
     }
 
+    const quota = consumeRecoveryEmailQuota(dbState.adminRecoveryRateLimit, now, 3, 60 * 60 * 1000);
+    if (!quota.allowed) {
+      res.json({ ok: true, message: genericMessage });
+      return;
+    }
+    dbState.adminRecoveryRateLimit = quota.state;
+
     const rawToken = randomBytes(32).toString('base64url');
     dbState.adminRecovery = {
       tokenHash: hashRecoveryToken(rawToken),
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      requestedAt: new Date().toISOString()
+      expiresAt: new Date(now + 15 * 60 * 1000).toISOString(),
+      requestedAt: new Date(now).toISOString()
     };
     saveDatabase(dbState);
     try {
@@ -1138,41 +1151,55 @@ async function startServer() {
     }
   });
 
-  app.post('/api/auth/recovery/reset', async (req, res) => {
-    const { token, password } = req.body as { token?: string; password?: string };
-    if (typeof token !== 'string' || token.length < 20 || token.length > 200 || typeof password !== 'string') {
-      res.status(400).json({ error: 'Der Wiederherstellungslink oder das neue Passwort ist ungültig.' });
-      return;
-    }
-    const passwordError = validateNewPassword(password);
-    if (passwordError) {
-      res.status(400).json({ error: passwordError });
-      return;
-    }
-
-    const dbState = loadDatabase();
-    const recovery = dbState.adminRecovery;
-    const admin = dbState.accounts.find(a => a.uid === 'usr_admin_1' && a.publicProfile.role === 'admin');
-    if (!recovery || !admin || Date.parse(recovery.expiresAt) <= Date.now() || !safeEqual(hashRecoveryToken(token), recovery.tokenHash)) {
-      res.status(400).json({ error: 'Der Wiederherstellungslink ist ungültig oder abgelaufen. Fordere bitte einen neuen Link an.' });
-      return;
-    }
-
-    // Einmal-Token sofort verbrauchen und alle zuvor ausgestellten Admin-Sitzungen widerrufen.
-    dbState.adminRecovery = null;
-    admin.passwordHash = hashPassword(password);
-    delete admin.password;
-    admin.sessionVersion = (admin.sessionVersion ?? 0) + 1;
-    appendAuditLog(dbState, admin, 'ACCOUNT_ROLE', 'Administrator-Passwort wiederhergestellt', 'Admin1', 'Passwort über den verifizierten E-Mail-Wiederherstellungslink zurückgesetzt.');
-    saveDatabase(dbState);
+  app.post('/api/auth/recovery/reset', async (req, res, next) => {
     try {
-      if (store) await store.flush();
+      const ipKey = `recovery-reset:${req.ip}`;
+      const waitMs = resetByIp.retryAfterMs(ipKey);
+      if (waitMs > 0) {
+        res.setHeader('Retry-After', String(Math.ceil(waitMs / 1000)));
+        res.status(429).json({ error: 'Zu viele Zurücksetzversuche. Bitte warte einige Minuten.' });
+        return;
+      }
+      // Jeder Versuch zählt, auch ungültige Tokens und fehlerhafte Passwörter.
+      resetByIp.recordFailure(ipKey);
+
+      const { token, password } = req.body as { token?: string; password?: string };
+      if (typeof token !== 'string' || token.length < 20 || token.length > 200 || typeof password !== 'string') {
+        res.status(400).json({ error: 'Der Wiederherstellungslink oder das neue Passwort ist ungültig.' });
+        return;
+      }
+      const passwordError = validateNewPassword(password);
+      if (passwordError) {
+        res.status(400).json({ error: passwordError });
+        return;
+      }
+
+      const dbState = loadDatabase();
+      const recovery = dbState.adminRecovery;
+      const admin = dbState.accounts.find(a => a.uid === 'usr_admin_1' && a.publicProfile.role === 'admin');
+      if (!recovery || !admin || Date.parse(recovery.expiresAt) <= Date.now() || !safeEqual(hashRecoveryToken(token), recovery.tokenHash)) {
+        res.status(400).json({ error: 'Der Wiederherstellungslink ist ungültig oder abgelaufen. Fordere bitte einen neuen Link an.' });
+        return;
+      }
+
+      // Einmal-Token sofort verbrauchen und alle zuvor ausgestellten Admin-Sitzungen widerrufen.
+      dbState.adminRecovery = null;
+      admin.passwordHash = hashPassword(password);
+      delete admin.password;
+      admin.sessionVersion = (admin.sessionVersion ?? 0) + 1;
+      appendAuditLog(dbState, admin, 'ACCOUNT_ROLE', 'Administrator-Passwort wiederhergestellt', 'Admin1', 'Passwort über den verifizierten E-Mail-Wiederherstellungslink zurückgesetzt.');
+      saveDatabase(dbState);
+      try {
+        if (store) await store.flush();
+      } catch (error) {
+        console.error('[Admin-Recovery] Persistierung fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
+        res.status(503).json({ error: 'Die Änderung konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
+        return;
+      }
+      res.json({ ok: true, message: 'Das Administrator-Passwort wurde zurückgesetzt. Du kannst dich jetzt mit deinem neuen Passwort anmelden.' });
     } catch (error) {
-      console.error('[Admin-Recovery] Persistierung fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
-      res.status(503).json({ error: 'Die Änderung konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
-      return;
+      next(error);
     }
-    res.json({ ok: true, message: 'Das Administrator-Passwort wurde zurückgesetzt. Du kannst dich jetzt mit deinem neuen Passwort anmelden.' });
   });
 
   // 2. Login Endpoint (No public self-registration — only Admin creates accounts)
