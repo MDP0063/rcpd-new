@@ -94,6 +94,36 @@ export function hashRecoveryToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+export interface RecoveryEmailRateLimitState {
+  windowStartedAt: string;
+  count: number;
+}
+
+/**
+ * Verbraucht ein globales, persistierbares Versandkontingent.
+ * Ungültige oder veraltete Metadaten starten ein neues Zeitfenster.
+ */
+export function consumeRecoveryEmailQuota(
+  current: RecoveryEmailRateLimitState | null | undefined,
+  now: number,
+  maxAttempts: number = 3,
+  windowMs: number = 60 * 60 * 1000
+): { allowed: boolean; state: RecoveryEmailRateLimitState } {
+  const startedAt = Date.parse(current?.windowStartedAt ?? '');
+  const validCount = Number.isSafeInteger(current?.count) && (current?.count ?? -1) >= 0;
+  const validWindow =
+    Number.isFinite(startedAt) && startedAt <= now && now - startedAt < windowMs;
+  const windowStartedAt = validWindow && validCount
+    ? current!.windowStartedAt
+    : new Date(now).toISOString();
+  const count = validWindow && validCount ? current!.count : 0;
+
+  if (count >= maxAttempts) {
+    return { allowed: false, state: { windowStartedAt, count } };
+  }
+  return { allowed: true, state: { windowStartedAt, count: count + 1 } };
+}
+
 function sign(data: string, secret: string): string {
   return createHmac('sha256', secret).update(data).digest('base64url');
 }
