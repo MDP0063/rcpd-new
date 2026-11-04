@@ -1,7 +1,14 @@
 # Regeln für KI-Agenten (Claude, Antigravity, Google AI Studio u. a.)
 
-Diese Datei ist die einzige Quelle für alle Regeln. `CLAUDE.md` und `GEMINI.md` verweisen nur hierher.
-Wenn du eine Regel ändern willst, ändere sie hier und nirgends sonst.
+Diese Datei ist die zentrale Quelle für technische, sicherheitsbezogene und Git-Regeln. Die Zuständigkeiten und Zusammenarbeit der Projektmitwirkenden stehen ergänzend in `CONTRIBUTOR_ROLES.md`.
+
+**Vor jeder Projektarbeit zwingend vollständig lesen:**
+1. Diese Datei (`AGENTS.md`).
+2. `CONTRIBUTOR_ROLES.md`.
+
+Wenn eine dieser Dateien nicht zugänglich ist, weise ausdrücklich darauf hin und bitte um Bereitstellung. Behaupte nicht, unbekannte Anweisungen gelesen oder befolgt zu haben.
+
+Diese Datei ist die einzige Quelle für die hier definierten technischen Regeln. `CLAUDE.md` und `GEMINI.md` verweisen auf diese zentralen Regeln und sollen keine widersprüchlichen Kopien enthalten.
 
 ## Projekt in drei Sätzen
 Intranet-Portal für eine Polizei-Roleplay-Community (Officer-Training, Akademie, Bewerbungen, Nachrichten). Das Projekt ist in früher Alpha, Änderungen kommen häufig.
