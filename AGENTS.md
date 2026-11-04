@@ -1,10 +1,11 @@
 # Regeln für KI-Agenten (Claude, Antigravity, Google AI Studio u. a.)
 
-Diese Datei ist die zentrale Quelle für technische, sicherheitsbezogene und Git-Regeln. Die Zuständigkeiten und Zusammenarbeit der Projektmitwirkenden stehen ergänzend in `CONTRIBUTOR_ROLES.md`.
+Diese Datei ist die zentrale Quelle für technische, sicherheitsbezogene und Git-Regeln. Die Zuständigkeiten und Zusammenarbeit der Projektmitwirkenden stehen ergänzend in `CONTRIBUTOR_ROLES.md`. Die übergreifende Entwicklungsphilosophie steht in `DEVELOPMENT_PHILOSOPHY.md`.
 
 **Vor jeder Projektarbeit zwingend vollständig lesen:**
 1. Diese Datei (`AGENTS.md`).
 2. `CONTRIBUTOR_ROLES.md`.
+3. `DEVELOPMENT_PHILOSOPHY.md`.
 
 Wenn eine dieser Dateien nicht zugänglich ist, weise ausdrücklich darauf hin und bitte um Bereitstellung. Behaupte nicht, unbekannte Anweisungen gelesen oder befolgt zu haben.
 
