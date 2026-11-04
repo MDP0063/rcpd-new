@@ -12,6 +12,7 @@ import {
   generatePassword,
   hashPassword,
   hashRecoveryToken,
+  hasActiveRecoveryToken,
   readSessionUid,
   parseAllowedOrigins,
   safeEqual,
@@ -1097,9 +1098,8 @@ async function startServer() {
       return;
     }
     const now = Date.now();
-    const activeExpiry = Date.parse(dbState.adminRecovery?.expiresAt || '');
     // Ein bereits versendeter, noch gültiger Link darf niemals durch eine neue Anfrage ungültig werden.
-    if (Number.isFinite(activeExpiry) && activeExpiry > now) {
+    if (hasActiveRecoveryToken(dbState.adminRecovery?.expiresAt, now)) {
       res.json({ ok: true, message: genericMessage });
       return;
     }
