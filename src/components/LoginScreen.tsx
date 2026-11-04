@@ -37,7 +37,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [recoveryToken, setRecoveryToken] = useState(
-    () => new URLSearchParams(window.location.search).get('adminRecovery') || ''
+    () => new URLSearchParams(window.location.hash.slice(1)).get('adminRecovery') || ''
   );
   const [showRecoveryRequest, setShowRecoveryRequest] = useState(false);
   const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     });
     if (result.ok) {
       const url = new URL(window.location.href);
-      url.searchParams.delete('adminRecovery');
+      url.hash = '';
       window.history.replaceState({}, '', url.toString());
       setRecoveryToken('');
       setShowRecoveryRequest(false);
