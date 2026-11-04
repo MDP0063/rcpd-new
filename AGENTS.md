@@ -5,7 +5,7 @@ Wenn du eine Regel ändern willst, ändere sie hier und nirgends sonst.
 
 ## Projekt in drei Sätzen
 Intranet-Portal für eine Polizei-Roleplay-Community (Officer-Training, Akademie, Bewerbungen, Nachrichten). Das Projekt ist in früher Alpha, Änderungen kommen häufig.
-Frontend: React 19 + Vite + Tailwind (`src/`). Backend: ein Express-Server in `server.ts`, der Daten in einer JSON-Datei speichert (`DATA_DIR`, Standard `./data`). Firebase/Firestore wird nicht verwendet; lege dafür keine Regeln oder Konfigurationen an und behandle vorhandene Reste nicht als Sicherheitsmechanismus.
+Frontend: React 19 + Vite + Tailwind (`src/`). Backend: ein Express-Server in `server.ts`. Er ist der einzige Schreiber und prüft alle Rechte. Gespeichert wird in einer JSON-Datei (`DATA_DIR`, Standard `./data`) oder mit `STORAGE_BACKEND=firestore` in Firestore (`server/firestoreStore.ts`). Der Browser schreibt nie direkt nach Firestore und liest dort nur das Änderungssignal `sync/state`; alle Daten kommen weiter über `/api/`.
 Deployment: Render, automatisch bei jedem Push auf `main`. Ein Merge nach `main` geht also live.
 
 ## Git (zwingend)
