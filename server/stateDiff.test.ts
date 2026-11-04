@@ -168,12 +168,17 @@ test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalt
     expiresAt: '2030-01-01T00:15:00.000Z',
     requestedAt: '2030-01-01T00:00:00.000Z'
   };
+  state.adminRecoveryRateLimit = {
+    windowStartedAt: '2030-01-01T00:00:00.000Z',
+    count: 2
+  };
   const store = new Map<string, Doc>();
   const plan = planWrites(index, state, 0);
   const raw = applyToFake(plan.ops, store);
   plan.commit();
   const loaded = assembleState(raw, 1)!;
   assert.deepEqual(loaded.state.adminRecovery, state.adminRecovery);
+  assert.deepEqual(loaded.state.adminRecoveryRateLimit, state.adminRecoveryRateLimit);
 });
 
 test('leerer Speicher ergibt null', () => {
