@@ -7,6 +7,7 @@ import {
   extractBearerToken,
   findIdentityMismatch,
   hashPassword,
+  hasActiveRecoveryToken,
   hashRecoveryToken,
   parseAllowedOrigins,
   readSessionUid,
@@ -65,6 +66,15 @@ test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', ()
   assert.equal(verifySessionToken('', SECRET, 2000), null);
   assert.equal(verifySessionToken(undefined, SECRET, 2000), null);
   assert.equal(verifySessionToken('nur-ein-teil', SECRET, 2000), null);
+});
+
+test('Ein noch gültiger Recovery-Link darf nicht durch neue Anfragen ersetzt werden', () => {
+  const now = Date.parse('2026-11-04T10:00:00.000Z');
+  assert.equal(hasActiveRecoveryToken(new Date(now + 1).toISOString(), now), true);
+  assert.equal(hasActiveRecoveryToken(new Date(now).toISOString(), now), false);
+  assert.equal(hasActiveRecoveryToken(new Date(now - 1).toISOString(), now), false);
+  assert.equal(hasActiveRecoveryToken('ungültig', now), false);
+  assert.equal(hasActiveRecoveryToken(null, now), false);
 });
 
 test('Recovery-Mail-Kontingent begrenzt global auf drei Sendungen pro Stunde', () => {
