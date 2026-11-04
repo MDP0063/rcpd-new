@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   AttemptLimiter,
   createSessionToken,
+  consumeRecoveryEmailQuota,
   extractBearerToken,
   findIdentityMismatch,
   hashPassword,
@@ -64,6 +65,38 @@ test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', ()
   assert.equal(verifySessionToken('', SECRET, 2000), null);
   assert.equal(verifySessionToken(undefined, SECRET, 2000), null);
   assert.equal(verifySessionToken('nur-ein-teil', SECRET, 2000), null);
+});
+
+test('Recovery-Mail-Kontingent begrenzt global auf drei Sendungen pro Stunde', () => {
+  const start = Date.parse('2026-11-04T10:00:00.000Z');
+  let quota = consumeRecoveryEmailQuota(undefined, start);
+  assert.equal(quota.allowed, true);
+  assert.equal(quota.state.count, 1);
+
+  quota = consumeRecoveryEmailQuota(quota.state, start + 1);
+  assert.equal(quota.allowed, true);
+  quota = consumeRecoveryEmailQuota(quota.state, start + 2);
+  assert.equal(quota.allowed, true);
+  quota = consumeRecoveryEmailQuota(quota.state, start + 3);
+  assert.equal(quota.allowed, false);
+  assert.equal(quota.state.count, 3);
+
+  const nextWindow = consumeRecoveryEmailQuota(quota.state, start + 60 * 60 * 1000);
+  assert.equal(nextWindow.allowed, true);
+  assert.equal(nextWindow.state.count, 1);
+});
+
+test('Recovery-Mail-Kontingent verwirft ungültige oder zukünftige Zeitfenster', () => {
+  const now = Date.parse('2026-11-04T10:00:00.000Z');
+  const invalid = consumeRecoveryEmailQuota({ windowStartedAt: 'kaputt', count: 3 }, now);
+  assert.equal(invalid.allowed, true);
+  assert.equal(invalid.state.count, 1);
+  const future = consumeRecoveryEmailQuota({
+    windowStartedAt: new Date(now + 1000).toISOString(),
+    count: 3
+  }, now);
+  assert.equal(future.allowed, true);
+  assert.equal(future.state.count, 1);
 });
 
 test('Wiederherstellungstoken wird nur als SHA-256-Hash abgelegt', () => {
