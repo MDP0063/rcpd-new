@@ -161,6 +161,7 @@ export const API_ENDPOINTS = {
   APPLICATIONS: '/api/applications',
   ADMIN_APPLICATIONS: '/api/admin/applications',
   ACADEMY_MODULES: '/api/academy/modules',
+  ACADEMY_MODULE_PDF: (id: string) => `/api/academy/modules/${encodeURIComponent(id)}/pdf`,
   ACADEMY_EXAMS: '/api/academy/exams',
   PROGRESS: '/api/progress',
   ANNOUNCEMENTS: '/api/announcements',

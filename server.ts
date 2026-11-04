@@ -16,6 +16,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
+import { canReadModule, shouldRefreshPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
@@ -753,6 +754,18 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
   return state.deploymentConfig;
 }
 
+/** Modul ohne das (sehr große) PDF; der Client lädt es erst beim Öffnen über /api/academy/modules/:id/pdf. */
+function toClientModule(mod: TrainingModuleDoc): TrainingModuleDoc {
+  const { pdfDataUrl, ...rest } = mod;
+  return { ...rest, hasPdf: Boolean(pdfDataUrl) };
+}
+
+/** Nur lesen, ohne Kopie (für die Sitzungsprüfung bei jedem Request). Ergebnis nie verändern. */
+function peekDatabase(): PortalDatabaseState {
+  if (store && memoryState) return memoryState;
+  return loadDatabase();
+}
+
 function loadDatabase(): PortalDatabaseState {
   // Kopie, damit unvollständige Änderungen in einem Request nie im Speicher hängen bleiben.
   if (store && memoryState) return structuredClone(memoryState);
@@ -944,7 +957,7 @@ async function startServer() {
       res.status(401).json({ error: 'Nicht angemeldet oder Sitzung abgelaufen.' });
       return;
     }
-    const account = loadDatabase().accounts.find(a => a.uid === uid);
+    const account = peekDatabase().accounts.find(a => a.uid === uid);
     if (!account) {
       res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
       return;
@@ -1122,11 +1135,14 @@ async function startServer() {
 
     // Update caller heartbeat
     const nowIso = new Date().toISOString();
-    caller.isOnline = true;
-    caller.lastSeenIso = nowIso;
-    caller.publicProfile.isOnline = true;
-    caller.publicProfile.lastSeenIso = nowIso;
-    saveDatabase(dbState);
+    // Nur schreiben, wenn der letzte Eintrag älter als 15 s ist (Online-Schwelle: 45 s).
+    if (shouldRefreshPresence(caller.isOnline, caller.lastSeenIso, Date.now())) {
+      caller.isOnline = true;
+      caller.lastSeenIso = nowIso;
+      caller.publicProfile.isOnline = true;
+      caller.publicProfile.lastSeenIso = nowIso;
+      saveDatabase(dbState);
+    }
 
     const isAdmin = caller.publicProfile.role === 'admin';
     const isTrainee = caller.publicProfile.role === 'trainee';
@@ -1194,7 +1210,7 @@ async function startServer() {
       applications: isAdmin
         ? dbState.applications
         : dbState.applications.filter(appItem => appItem.applicantUid === caller.uid),
-      modules: dbState.modules,
+      modules: dbState.modules.map(toClientModule),
       exams: visibleExams,
       progress: canSeeAllProgress
         ? dbState.progress
@@ -1832,7 +1848,27 @@ async function startServer() {
       `Aktualisiert durch ${caller.publicProfile.displayName}`
     );
     saveDatabase(dbState);
-    res.json({ module: dbState.modules[idx] });
+    res.json({ module: toClientModule(dbState.modules[idx]) });
+  });
+
+  app.get('/api/academy/modules/:modId/pdf', (req, res) => {
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
+    const mod = dbState.modules.find(m => m.id === req.params.modId);
+    if (!caller || !mod) {
+      res.status(404).json({ error: 'Handbuch nicht gefunden.' });
+      return;
+    }
+    if (
+      !canReadModule(
+        ROLE_HIERARCHY[caller.publicProfile.role]?.rankOrder,
+        ROLE_HIERARCHY[mod.requiredRole]?.rankOrder
+      )
+    ) {
+      res.status(403).json({ error: 'Für dieses Handbuch fehlt dir der nötige Rang.' });
+      return;
+    }
+    res.json({ pdfDataUrl: mod.pdfDataUrl || '' });
   });
 
   app.delete('/api/academy/modules/:modId', (req, res) => {
