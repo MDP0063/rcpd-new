@@ -267,7 +267,7 @@ Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das
 
 ### Matching mit Teilpunkten
 
-P = rac{K}{N}cdot P_{max}
+`P = (K / N) * P_max`
 
 - `K`: korrekt zugeordnete Paare
 - `N`: Gesamtzahl der Paare
