@@ -37,7 +37,7 @@ Ein Versuch muss immer auf eine konkrete `examVersionId` zeigen. Nachträgliche 
 
 ### 3.1 Master-Definition: `AcademyExamDoc`
 
-Die Master-Definition liegt in `dbState.exams`.
+Die Master-Definition wird für das neue System ausschließlich über den `ExamRepository` verwaltet. `dbState.exams` bleibt während des Cutovers nur Quelle historischer Legacy-Datensätze und ist nach abgeschlossener Migration keine zweite beschreibbare Quelle der Wahrheit.
 
 Wesentliche Felder:
 
@@ -94,8 +94,8 @@ Ein Bild ist eine optionale Medieneigenschaft einer Frage, kein eigener Fragetyp
 Ein Frageobjekt kann abhängig vom Typ enthalten:
 
 - `id`, `type`, `question`, `points`, `explanation?`, `imageUrl?`
-- `options?`, `correctIndices?`
-- `matchingPairs?`
+- `options?`, `correctOptionId?`, `correctOptionIds?`
+- `correctBoolean?`, `matchingPairs?`
 - `gradingRubric?`, `maxAnswerLength?`
 
 Matching-Paare besitzen stabile IDs und Ziel-IDs. Die richtige Zuordnung bleibt im Snapshot serverseitig.
@@ -134,7 +134,7 @@ Die Veröffentlichung läuft über eine Firestore-Transaktion:
 5. Snapshot mit `transaction.create()` anlegen.
 6. Master-Zeiger und Versionsnummer in derselben Transaktion aktualisieren.
 
-`transaction.create()` muss verhindern, dass eine vorhandene Version überschrieben wird. Die Diff-/Storage-Schicht darf für `exam_versions` keine Updates oder Deletes akzeptieren.
+`transaction.create()` muss verhindern, dass eine vorhandene Version überschrieben wird. Die Append-only-Regel wird innerhalb des dedizierten `ExamRepository` durch create-only-Operationen und Tests erzwungen; `exam_versions` darf nicht parallel über `stateDiff.ts` geschrieben werden.
 
 ### 4.2 JSON-Backend: prozessweite Operations-Queue
 
@@ -291,7 +291,7 @@ Bei gemischten Prüfungen mit noch offenen Freitexten:
 
 Die öffentliche Fragenprojektion darf niemals Lösungsschlüssel oder private Bewertungsdaten enthalten.
 
-- `correctIndices`, korrekte Matching-Zuordnungen und interne Bewertungsdaten bleiben serverseitig.
+- `correctOptionId`, `correctOptionIds`, `correctBoolean`, korrekte Matching-Zuordnungen und interne Bewertungsdaten bleiben serverseitig.
 - Die Prüflingsprojektion enthält nur die benötigten Fragen und Antwortmöglichkeiten.
 - Matching-Ziele werden für den Teilnehmer zufällig angeordnet; die korrekte Zuordnung wird nicht an den Client gesendet.
 - `toClientExam()` und alle neuen Endpunkte müssen diese Trennung erhalten.
@@ -589,7 +589,7 @@ Die Antworten werden als typisierte, serverseitig validierte Werte gespeichert:
 | `matching` | Zuordnungsliste aus `{ pairId, targetId }` | Pair- und Target-IDs müssen existieren; jede Pair-ID und Target-ID höchstens einmal |
 | `free_text` | `string` | Länge und zulässiger Zeichensatz werden serverseitig begrenzt; bestehendes Maximum 4.000 Zeichen |
 
-Optionen und Zuordnungsziele erhalten stabile, innerhalb der jeweiligen Frage eindeutige IDs. Numerische Array-Indizes sind kein dauerhaftes Antwortformat, weil sich die Reihenfolge in einer späteren Version ändern kann.
+Optionen und Zuordnungsziele erhalten stabile, innerhalb der jeweiligen Frage eindeutige IDs. Single Choice verwendet `correctOptionId`, Multiple Choice `correctOptionIds` und True/False `correctBoolean` als serverseitige Lösungsschlüssel. Numerische Array-Indizes sind kein dauerhaftes Antwortformat, weil sich die Reihenfolge in einer späteren Version ändern kann. Bei der Migration wird ein vorhandenes Legacy-`correctIndex` anhand der bisherigen Optionsreihenfolge einmalig auf die zugehörige stabile Options-ID abgebildet; die ursprünglichen Legacy-Daten bleiben nachvollziehbar erhalten.
 
 Bewertungsregeln:
 - Fragenpunkte müssen endliche Zahlen größer als 0 sein.
