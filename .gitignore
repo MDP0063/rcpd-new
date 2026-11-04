@@ -9,3 +9,4 @@ coverage/
 .aistudio/
 bun.lock
 data/
+firebase-applet-config.json

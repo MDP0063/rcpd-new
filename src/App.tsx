@@ -72,6 +72,7 @@ import { AuditTrailConsole } from './components/AuditTrailConsole';
 import { ReportsExportCenter } from './components/ReportsExportCenter';
 import { CommandPaletteModal, CommandTargetSection } from './components/CommandPaletteModal';
 import { ProfessionalDevelopmentModule } from './components/ProfessionalDevelopmentModule';
+import { LoginScreen } from './components/LoginScreen';
 import { API_ENDPOINTS, apiFetch, setAuthToken } from './lib/api';
 import { isLiveSyncConfigured, startLiveSync } from './lib/liveSync';
 
@@ -80,11 +81,6 @@ type ActiveSection = CommandTargetSection;
 const SESSION_STORAGE_KEY = 'ca_post_officer_session_uid_v3';
 const THEME_STORAGE_KEY = 'ca_post_theme_mode_v1';
 const INACTIVITY_TIMEOUT_SECONDS = 15 * 60; // 15 Minuten Inaktivitäts-Timeout
-
-function generateTacticalCaptcha(): string {
-  const digits = Math.floor(1000 + Math.random() * 9000);
-  return `CA-${digits}`;
-}
 
 export default function App() {
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
@@ -119,22 +115,9 @@ export default function App() {
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initialLoadCompleteRef = useRef<boolean>(false);
 
-  // Login Form State (nur vom Administrator angelegte Konten, keine Vorbelegung)
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [securityCaptchaTarget, setSecurityCaptchaTarget] = useState<string>(() =>
-    generateTacticalCaptcha()
-  );
-  const [securityCaptchaInput, setSecurityCaptchaInput] = useState<string>('');
-  const [showAdminContactInfo, setShowAdminContactInfo] = useState(false);
+  // Login State
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
-
-  // Auto-fill security captcha on initial default Admin1 load for smooth UX while keeping interactive challenge active
-  useEffect(() => {
-    setSecurityCaptchaInput(securityCaptchaTarget);
-  }, [securityCaptchaTarget]);
 
   // Session-Timeout & Auto-Logout State
   const [inactivitySecondsLeft, setInactivitySecondsLeft] = useState<number>(
@@ -349,20 +332,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [sessionUid, fetchPortalState, liveConnected]);
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (username: string, password: string) => {
     setAuthError(null);
-
-    if (
-      securityCaptchaInput.trim().toUpperCase() !==
-      securityCaptchaTarget.trim().toUpperCase()
-    ) {
-      setAuthError(
-        'Sicherheitsverifizierung fehlgeschlagen: Der eingegebene Dienst-Sicherheitscode stimmt nicht überein.'
-      );
-      return;
-    }
-
     setAuthLoading(true);
 
     const res = await apiFetch<{ user: UserPublicProfile; isAdmin: boolean; token: string }>(
@@ -370,8 +341,8 @@ export default function App() {
       {
         method: 'POST',
         body: JSON.stringify({
-          username: loginUsername.trim(),
-          password: loginPassword
+          username: username.trim(),
+          password
         })
       }
     );
@@ -583,275 +554,19 @@ export default function App() {
   };
 
   // ============================================================================
-  // 1. CLEAN WHITE, ANTHRACITE & SKY-BLUE LOGIN WINDOW (NO SELF-REGISTRATION)
+  // 1. CLEAN COMPACT LOGIN WINDOW (NO SELF-REGISTRATION)
   // ============================================================================
   if (!sessionUid || !currentUserProfile) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between transition-colors duration-200">
-        {/* Floating Top-Right Toast Notification on Login Screen */}
-        {statusToast && (
-          <div className="fixed top-16 right-6 z-50 max-w-md w-full bg-slate-900 text-white border border-sky-500/50 rounded-lg p-4 shadow-2xl flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5 text-xs font-mono">
-              <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-              <span>{statusToast}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setStatusToast(null)}
-              className="text-slate-400 hover:text-white cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Top Institutional Bar */}
-        <header className="flex items-center justify-between gap-4 px-6 py-3.5 bg-slate-900 dark:bg-slate-950 text-white border-b border-slate-800">
-          <div className="flex items-center gap-3 whitespace-nowrap shrink-0">
-            <Shield className="w-5 h-5 text-sky-400" />
-            <span className="text-sm font-semibold tracking-tight">
-              State of California · Department of Justice &amp; POST
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4 text-xs text-slate-400">
-            <span>Internes Dienst- und Ausbildungsportal</span>
-            <span>·</span>
-            <span>Zugang nur für autorisiertes Personal</span>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={toggleThemeMode}
-              aria-label={
-                themeMode === 'dark'
-                  ? 'Zum hellen Design wechseln'
-                  : 'Zum dunklen Design wechseln'
-              }
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-slate-800 dark:bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-700 transition-colors cursor-pointer"
-            >
-              {themeMode === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Hell</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Dunkel</span>
-                </>
-              )}
-            </button>
-          </div>
-        </header>
-
-        {/* Centered Split-Screen Login Card */}
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm transition-colors">
-            {/* Left 5 Columns: Institutional Information Panel */}
-            <div className="lg:col-span-5 bg-slate-900 dark:bg-slate-950 text-white p-8 flex flex-col justify-between space-y-8 border-b lg:border-b-0 lg:border-r border-slate-800">
-              <div className="space-y-5">
-                <div className="w-10 h-10 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-sky-400" />
-                </div>
-
-                <div>
-                  <div className="text-xs text-slate-400 font-medium">
-                    California Commission on POST
-                  </div>
-                  <h1 className="text-xl font-bold tracking-tight text-white mt-1">
-                    Dienst- &amp; Ausbildungsportal
-                  </h1>
-                  <p className="text-xs text-slate-300 leading-relaxed mt-3">
-                    Zentrale Plattform für Dienstanweisungen, interne Mitteilungen, Anträge,
-                    Einsatztermine, Handbücher und Prüfungen. Neue Dienstkonten werden durch die
-                    Systemadministration eingerichtet und starten im Rang <strong>Trainee</strong>.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-5 border-t border-slate-800 text-xs">
-                <div className="font-semibold text-slate-300">Dienstgrad- und Rollenstruktur</div>
-                <div className="text-slate-400 space-y-1 text-[11px] leading-relaxed">
-                  <div>1. Admin — Systemleitung, Kontenverwaltung &amp; Revisionsprotokoll</div>
-                  <div>2. Colonel — Ausbildungsleitung, Prüfungen &amp; Bekanntmachungen</div>
-                  <div>3. Officer — Vollzugsdienst &amp; optionale Fachausbilder-Freigabe</div>
-                  <div>4. Rookie — Lehrmaterialien, Übungstests &amp; Abschlussprüfung</div>
-                  <div>5. Trainee — Lehrmaterialien &amp; Übungstests</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right 7 Columns: Clean Login Form */}
-            <div className="lg:col-span-7 p-8 bg-white dark:bg-slate-900 flex flex-col justify-between transition-colors">
-              <div className="space-y-5">
-                <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Behörden-Anmeldung
-                  </div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                    Mit Dienstkennung und Passwort anmelden
-                  </h2>
-                </div>
-
-                {/* Error & Lockout Status Banner */}
-                {authError && (
-                  <div
-                    role="alert"
-                    className="p-3.5 rounded-md bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2.5"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
-                      <div className="font-semibold">Anmeldehinweis</div>
-                      <div>{authError}</div>
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
-                  {/* Field 1: Dienstnummer / Benutzername */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Dienstnummer / Benutzername
-                    </label>
-                    <div className="relative">
-                      <UserCheck className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input
-                        type="text"
-                        required
-                        autoComplete="username"
-                        value={loginUsername}
-                        onChange={e => setLoginUsername(e.target.value)}
-                        placeholder="z. B. Admin1"
-                        className="w-full pl-10 pr-3.5 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-600 dark:focus:border-sky-400 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Field 2: Password */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Passwort
-                    </label>
-                    <div className="relative">
-                      <KeyRound className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input
-                        type={showLoginPassword ? 'text' : 'password'}
-                        required
-                        autoComplete="current-password"
-                        value={loginPassword}
-                        onChange={e => setLoginPassword(e.target.value)}
-                        placeholder="••••"
-                        className="w-full pl-10 pr-10 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-600 dark:focus:border-sky-400 transition-colors"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowLoginPassword(prev => !prev)}
-                        aria-label={
-                          showLoginPassword ? 'Passwort verbergen' : 'Passwort einblenden'
-                        }
-                        title={showLoginPassword ? 'Passwort verbergen' : 'Passwort einblenden'}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                      >
-                        {showLoginPassword ? (
-                          <EyeOff className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Field 3: Sober Security Code Verification */}
-                  <div className="p-3.5 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5 text-slate-500" />
-                        Sicherheitsprüfung (Prüfcode)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextCode = generateTacticalCaptcha();
-                          setSecurityCaptchaTarget(nextCode);
-                          setSecurityCaptchaInput(nextCode);
-                        }}
-                        className="inline-flex items-center gap-1 text-xs text-sky-700 dark:text-sky-400 hover:underline cursor-pointer"
-                        title="Neuen Sicherheitscode generieren"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Neuer Code
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="px-3.5 py-1.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono text-sm font-semibold tracking-wider select-none border border-slate-300 dark:border-slate-700 shrink-0">
-                        {securityCaptchaTarget}
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={securityCaptchaInput}
-                        onChange={e => setSecurityCaptchaInput(e.target.value)}
-                        placeholder="Prüfcode eingeben"
-                        className="flex-1 px-3 py-1.5 text-xs font-mono rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-600 uppercase"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <button
-                      type="submit"
-                      disabled={authLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-slate-900 dark:bg-sky-600 hover:bg-slate-800 dark:hover:bg-sky-500 rounded-md transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      {authLoading ? 'Anmeldung wird geprüft...' : 'Am Dienstportal anmelden'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Direct Admin Contact Notice */}
-              <div className="pt-5 mt-5 border-t border-slate-200 dark:border-slate-800 space-y-3">
-                <div className="p-3 rounded-md bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  <div className="flex items-center justify-between gap-2 font-semibold text-slate-800 dark:text-slate-200">
-                    <span>Hinweis zur Kontoverwaltung</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowAdminContactInfo(prev => !prev)}
-                      className="text-sky-700 dark:text-sky-400 hover:underline cursor-pointer font-medium"
-                    >
-                      {showAdminContactInfo ? 'Details ausblenden' : 'Kontakt zur Administration'}
-                    </button>
-                  </div>
-                  <p className="mt-1">
-                    Es erfolgt keine automatische Passwort-Zurücksetzung. Passwort-Resets und
-                    Kontofreischaltungen werden direkt über die Systemadministration (
-                    <strong>Admin1</strong>) abgewickelt.
-                  </p>
-                  {showAdminContactInfo && (
-                    <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 space-y-1">
-                      <div>• Zuständige Stelle: Chief Administrator (Dienstnr. CA-0001)</div>
-                      <div>• Erreichbarkeit: Rufzeichen 1-ADMIN · admin1@post.ca.gov</div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                  <span>Zugangsvergabe durch die Dienststellenleitung</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-
-        <footer className="px-6 py-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors">
-          State of California Department of Justice · Commission on Peace Officer Standards and
-          Training
-        </footer>
-      </div>
+      <LoginScreen
+        themeMode={themeMode}
+        onToggleThemeMode={toggleThemeMode}
+        statusToast={statusToast}
+        onDismissToast={() => setStatusToast(null)}
+        authError={authError}
+        authLoading={authLoading}
+        onLogin={handleLogin}
+      />
     );
   }
 
