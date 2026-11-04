@@ -137,7 +137,8 @@ function metaOf(state: StateLike): Doc {
   return {
     version: state.version ?? 3,
     deploymentConfig: state.deploymentConfig ?? null,
-    adminRecovery: state.adminRecovery ?? null
+    adminRecovery: state.adminRecovery ?? null,
+    adminRecoveryRateLimit: state.adminRecoveryRateLimit ?? null
   };
 }
 
@@ -240,6 +241,7 @@ export function assembleState(
   const state: StateLike = { version: raw.meta.version ?? 3 };
   if (raw.meta.deploymentConfig) state.deploymentConfig = raw.meta.deploymentConfig;
   if (raw.meta.adminRecovery) state.adminRecovery = raw.meta.adminRecovery;
+  if (raw.meta.adminRecoveryRateLimit) state.adminRecoveryRateLimit = raw.meta.adminRecoveryRateLimit;
 
   for (const spec of COLLECTIONS) {
     const entries: Array<{ doc: Doc; chunks: Record<string, number> }> = [];
