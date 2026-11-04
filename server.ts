@@ -1069,7 +1069,7 @@ async function startServer() {
     const recipient = process.env.ADMIN_RECOVERY_EMAIL?.trim();
     const appUrl = process.env.APP_URL?.trim();
     const from = process.env.RESEND_FROM_EMAIL?.trim() || 'RCPD Portal <onboarding@resend.dev>';
-    if (!apiKey || !recipient || !appUrl || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient)) {
+    if (!apiKey || !recipient || !appUrl || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
       console.error('[Admin-Recovery] Konfiguration unvollständig (Secrets werden nicht protokolliert).');
       res.status(503).json({ error: 'Die Wiederherstellung ist derzeit nicht konfiguriert.' });
       return;
