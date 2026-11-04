@@ -84,12 +84,20 @@ export interface TrainingModuleDoc {
   updatedIso?: string;
 }
 
+/** Vollständige serverseitige Frage inklusive Lösungsschlüssel. */
 export interface ExamQuestionItem {
   id: string;
   question: string;
   options: string[];
   correctIndex: number;
   explanation: string;
+}
+
+/** Öffentliche Frage, die an den Browser ausgeliefert werden darf. */
+export interface ExamQuestionPublicItem {
+  id: string;
+  question: string;
+  options: string[];
 }
 
 export interface AcademyExamDoc {
