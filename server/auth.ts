@@ -130,7 +130,7 @@ export function verifySessionToken(
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as SessionPayload;
     if (typeof payload.uid !== 'string' || typeof payload.exp !== 'number') return null;
     if (payload.exp <= now) return null;
-    if (expectedSessionVersion !== undefined && payload.sessionVersion !== expectedSessionVersion) return null;
+    if (expectedSessionVersion !== undefined && (payload.sessionVersion ?? 0) !== expectedSessionVersion) return null;
     return payload.uid;
   } catch {
     return null;
