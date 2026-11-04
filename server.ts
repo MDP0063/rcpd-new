@@ -17,6 +17,7 @@ import {
   verifySessionToken
 } from './server/auth.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
+import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { createServer as createViteServer } from 'vite';
 import {
@@ -190,7 +191,7 @@ function appendAuditLog(
     state.auditLogs = [];
   }
   const entry: AuditLogDoc = {
-    id: `aud_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    id: newId('aud'),
     actorUid: actor.uid,
     actorName: actor.publicProfile.displayName,
     actorBadge: actor.publicProfile.badgeNumber,
@@ -219,7 +220,7 @@ function pushNotification(
     state.notifications = [];
   }
   const item: PortalNotificationDoc = {
-    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    id: newId('notif'),
     recipientUid,
     type,
     title,
@@ -1279,7 +1280,7 @@ async function startServer() {
       return;
     }
 
-    const uid = `usr_${Date.now()}_${generatePassword().slice(0, 6)}`;
+    const uid = newId('usr');
     const nowIso = new Date().toISOString();
     // Default role is ALWAYS 'trainee' unless explicitly chosen otherwise by Admin
     const targetRole: OfficerRole = (role as OfficerRole) || 'trainee';
@@ -1597,7 +1598,7 @@ async function startServer() {
       };
     } else {
       dbState.applications.unshift({
-        id: `app_${Date.now()}`,
+        id: newId('app'),
         applicantUid: caller.uid,
         applicantName: caller.publicProfile.displayName,
         characterName: String(characterName).trim(),
@@ -1719,7 +1720,7 @@ async function startServer() {
 
     const reqRole: OfficerRole = requiredRole || 'trainee';
     const newMod: TrainingModuleDoc = {
-      id: `mod_${Date.now()}`,
+      id: newId('mod'),
       title: String(title).trim(),
       code: courseCode,
       category: category || 'SOP & Policy',
@@ -1886,7 +1887,7 @@ async function startServer() {
 
     const stage = assessmentStage === 'final_exam' ? 'final_exam' : 'test';
     const newExam: AcademyExamDoc = {
-      id: `exam_${Date.now()}`,
+      id: newId('exam'),
       title: String(title).trim(),
       moduleCode: targetCode,
       assessmentStage: stage,
@@ -1982,7 +1983,7 @@ async function startServer() {
     );
 
     const record: UserProgressDoc = {
-      id: existingIdx !== -1 ? dbState.progress[existingIdx].id : `prog_${Date.now()}`,
+      id: existingIdx !== -1 ? dbState.progress[existingIdx].id : newId('prog'),
       userId: student.uid,
       userName: student.publicProfile.displayName,
       targetId,
@@ -2526,7 +2527,7 @@ jobs:
 
     const nowIso = new Date().toISOString();
     const newAnnouncement: AnnouncementDoc = {
-      id: `ann_${Date.now()}`,
+      id: newId('ann'),
       title: String(title).trim().slice(0, 160),
       category: (category as AnnouncementCategory) || 'Allgemeine Bekanntmachung',
       priority: (priority as AnnouncementPriority) || 'normal',
@@ -2666,7 +2667,7 @@ jobs:
 
     const nowIso = new Date().toISOString();
     const newMsg: DirectMessageDoc = {
-      id: `msg_${Date.now()}`,
+      id: newId('msg'),
       senderUid: sender.uid,
       senderName: sender.publicProfile.displayName,
       senderBadge: sender.publicProfile.badgeNumber,
@@ -2781,7 +2782,7 @@ jobs:
 
     const nowIso = new Date().toISOString();
     const newReq: PortalRequestDoc = {
-      id: `req_${Date.now()}`,
+      id: newId('req'),
       requesterUid: caller.uid,
       requesterName: caller.publicProfile.displayName,
       requesterBadge: caller.publicProfile.badgeNumber,
@@ -2997,7 +2998,7 @@ jobs:
 
     const nowIso = new Date().toISOString();
     const newEvent: CalendarEventDoc = {
-      id: `evt_${Date.now()}`,
+      id: newId('evt'),
       title: String(title).trim().slice(0, 150),
       category: (category as CalendarEventCategory) || 'Training & Lehrgang',
       courseCode: courseCode ? String(courseCode).trim().toUpperCase() : undefined,
