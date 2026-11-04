@@ -415,6 +415,28 @@ Die konkreten Pfade können bei der Implementierung an bestehende Routing-Konven
 
 Jeder Endpunkt prüft die Berechtigung serverseitig. Teilnehmer dürfen nur ihre eigenen Versuche lesen und verändern. Admin-Werkstattdaten und Lösungsschlüssel werden nicht über allgemeine Portal-State-Endpunkte offengelegt.
 
+### Vorgesehene konkrete Routen
+
+| Endpunkt | Methode | Zugriff | Zweck |
+|---|:---:|---|---|
+| `/api/admin/exams` | GET | Admin | Alle Master-Definitionen einschließlich Entwürfen |
+| `/api/admin/exams/:id` | GET | Admin | Unredigierte Master-Definition für die Werkstatt |
+| `/api/academy/exams/:id` | PUT | Admin | Master-Definition und aktuelle Lehrgangszuweisung speichern |
+| `/api/admin/exams/:id/publish` | POST | Admin | Snapshot atomar anlegen und veröffentlichen |
+| `/api/admin/exams/:id/unlock-user` | POST | Admin | Teilnehmer manuell für eine Abschlussprüfung freischalten |
+| `/api/admin/exams/attempts/:id/override` | POST | Admin | Versuch invalidieren oder Zusatzversuch gewähren |
+| `/api/admin/exams/progress/:id/verify-legacy` | POST | Admin | Historischen Legacy-Nachweis auditierbar verifizieren |
+| `/api/academy/exams/:id/start` | POST | Teilnehmer | Voraussetzungen, Lehrgang, Kontingent und aktiven Versuch prüfen |
+| `/api/academy/exams/:id/attempts/active` | GET | Eigentümer des Versuchs | Laufenden Versuch wiederherstellen |
+| `/api/academy/exams/:id/attempts/:attemptId/autosave` | PUT | Eigentümer des Versuchs | Antwortstand revisionsgesichert speichern |
+| `/api/academy/exams/:id/attempts/:attemptId/submit` | POST | Eigentümer des Versuchs | Versuch abgeben und automatisch auswerten |
+| `/api/academy/exams/:id/history` | GET | Teilnehmer | Eigene Versuchshistorie |
+| `/api/academy/grading/pending` | GET | Berechtigter Ausbilder | Offene Freitextkorrekturen der zugewiesenen Lehrgänge |
+| `/api/academy/grading/submissions/:attemptId` | GET | Berechtigter Ausbilder | Zulässige Freitextabgabe und Rubrik abrufen |
+| `/api/academy/grading/submissions/:attemptId` | POST | Berechtigter Ausbilder | Freitext bewerten und Gesamtnote finalisieren |
+
+Die Pfade sind die geplante Ausgangsstruktur. Vorhandene Routing-Konventionen dürfen bei der Implementierung berücksichtigt werden, solange Zweck, serverseitige Autorisierung und Datengrenzen unverändert bleiben.
+
 ## 16. Implementierungsphasen
 
 1. **Phase 1:** Datenmodelle, serverseitige Bewertungs- und Validierungslogik einschließlich Matching.
