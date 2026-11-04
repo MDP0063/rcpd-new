@@ -4,7 +4,7 @@
 > **Projekt:** California POST Officer Portal (`ca-post-officer-portal`)  
 > **Status:** Überarbeitete Architektur-Spezifikation nach unabhängigem Review; weiterhin vor Implementierungsfreigabe.  
 > **Änderungsumfang:** Konzeption und Dokumentation; keine Implementierung der Prüfungswerkstatt.  
-> **Grundlage:** v3.5 sowie die verbindlichen Ergänzungen in v3.7.
+> **Grundlage:** v3.5 und v3.7 sowie die gezielten Abschlusskorrekturen in v3.8.
 
 ## 1. Zweck, Geltungsbereich und Freigabe
 
@@ -470,12 +470,12 @@ Diese Prüfpunkte sind Implementierungsnachweise; die Spezifikation allein bewei
 
 ## 18. Freigabestatus
 
-v3.7 ist die konsolidierte konzeptionelle Grundlage. Sie genehmigt keine Codeänderungen an der Prüfungswerkstatt.
+v3.8 ist die konsolidierte konzeptionelle Grundlage. Sie genehmigt keine Codeänderungen an der Prüfungswerkstatt.
 
 Vor Phase 1 erfolgt ein unabhängiges Review durch eine andere Instanz als den Hauptimplementierer. Danach entscheidet ausschließlich der Projektinhaber, ob und wann die Implementierung beginnen darf.
 
 
-## 19. Verbindliche Klarstellungen aus dem unabhängigen Review (v3.7)
+## 19. Verbindliche Klarstellungen aus den unabhängigen Reviews (v3.7 und v3.8)
 
 Dieser Abschnitt ergänzt und präzisiert v3.6. Bei Widersprüchen haben die folgenden Festlegungen Vorrang vor früheren, allgemeineren Formulierungen. Die Ergänzungen sind Teil der verbindlichen Spezifikation; sie genehmigen noch keine Implementierung.
 
@@ -650,7 +650,7 @@ Phase 2 implementiert den in §19.1 beschriebenen ExamRepository, die Legacy-Ver
 
 ### 19.8 Review-Fazit und Freigabestatus
 
-Die v3.7-Spezifikation berücksichtigt die sechs kritischen Review-Punkte K1–K6. Das ist eine konzeptionelle Entscheidung, kein Nachweis, dass der bestehende Code diese Architektur bereits erfüllt.
+Die v3.8-Spezifikation berücksichtigt die sechs ursprünglichen kritischen Review-Punkte K1–K6 sowie die gezielten Abschlusskorrekturen C1–C4. Das ist eine konzeptionelle Entscheidung, kein Nachweis, dass der bestehende Code diese Architektur bereits erfüllt.
 
 Phase 1 kann nach ausdrücklicher Freigabe des Projektinhabers beginnen und bleibt eine reine Logikphase ohne Änderungen an laufenden Prüfungsrouten oder Daten. Phase 2 darf nach separater Freigabe beginnen; während ihrer Vorbereitung bleiben die bisherigen Prüfungswege aktiv. Die alten Schreibwege dürfen erst im kontrollierten Cutover nach erfolgreicher Fertigstellung und Prüfung des neuen Runners, der Werkstatt, der neuen Oberfläche, des vollständigen Backups/Restores und der sicheren State-Projektionen deaktiviert werden. Der Cutover-Schalter muss den Wechsel so steuern, dass niemals beide Systeme parallel schreiben und niemals beide Systeme gleichzeitig für Prüfungen nicht verfügbar sind.
 
