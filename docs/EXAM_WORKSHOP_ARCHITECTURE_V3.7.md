@@ -1,4 +1,4 @@
-# Technische Architektur-Spezifikation: Admin-Prüfungswerkstatt (v3.7)
+# Technische Architektur-Spezifikation: Admin-Prüfungswerkstatt (v3.8)
 
 > **Repository:** `MDP0063/rcpd-new`  
 > **Projekt:** California POST Officer Portal (`ca-post-officer-portal`)  
@@ -170,7 +170,7 @@ Mindestens folgende Operationen müssen diese Sperre nutzen:
 - Autosave und Abgabe
 - manuelle Bewertung
 - Admin-Overrides und Zusatzversuche
-- Migrationen und sonstige Mutationen desselben States
+- Migrationen und sonstige Mutationen derselben Exam-JSON-Datei
 
 Der State ist auf einem Arbeitsstand zu verändern. Ein fehlgeschlagener Persistenzvorgang darf keinen dauerhaft abweichenden In-Memory-State hinterlassen; nach fehlgeschlagener Persistenz muss der Arbeitsstand verworfen oder zuverlässig zurückgerollt werden.
 
@@ -252,7 +252,7 @@ Alle automatischen Bewertungen erfolgen serverseitig anhand des unveränderliche
 
 ### Single Choice und True/False
 
-Die Antwort wird gegen den serverseitigen Lösungsschlüssel geprüft. Ungültige Indizes oder manipulierte Payloads werden abgelehnt beziehungsweise ohne Zusatzpunkte behandelt.
+Die Antwort wird gegen den serverseitigen Lösungsschlüssel geprüft. Ungültige Options-IDs oder manipulierte Payloads werden abgelehnt beziehungsweise ohne Zusatzpunkte behandelt.
 
 ### Multiple Choice mit Teilpunkten
 
@@ -263,7 +263,7 @@ Die Antwort wird gegen den serverseitigen Lösungsschlüssel geprüft. Ungültig
 - `N`: Gesamtzahl richtiger Optionen
 - `P_max`: maximale Punktzahl der Frage
 
-Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das Ergebnis liegt zwischen 0 und `P_max`.
+Doppelte und ungültige Options-IDs dürfen keine zusätzlichen Punkte erzeugen. Das Ergebnis liegt zwischen 0 und `P_max`.
 
 ### Matching mit Teilpunkten
 
@@ -439,12 +439,13 @@ Die Pfade sind die geplante Ausgangsstruktur. Vorhandene Routing-Konventionen d�
 
 ## 16. Implementierungsphasen
 
-1. **Phase 1:** Datenmodelle, serverseitige Bewertungs- und Validierungslogik einschließlich Matching.
-2. **Phase 2:** Snapshot-Architektur, Firestore-Transaktionen, JSON-Operations-Queue und idempotente Migration.
+1. **Phase 1:** Reine Datenmodelle, Antwortschemas, Legacy-Verifikationstyp, Validatoren, Projektionen und Bewertungs-/Aggregatlogik einschließlich Tests.
+2. **Phase 2:** ExamRepository, Firestore-/JSON-Adapter, Backup-/Restore-Erweiterung und idempotente Legacy-Migration; bisherige Prüfungswege bleiben während dieser Vorbereitungsphase aktiv.
 3. **Phase 3:** Admin-Prüfungswerkstatt mit visueller Bearbeitung und Vorschau.
-4. **Phase 4:** Prüfungs-Runner, serverseitiger Timer, Autosave und Wiederaufnahme.
+4. **Phase 4:** Prüfungs-Runner, serverseitiger Timer, Autosave, Wiederaufnahme und neue Academy-Oberfläche.
 5. **Phase 5:** Ausbilder-Korrekturkonsole und manuelle Freitextbewertung.
-6. **Phase 6:** Admin-Overrides, Legacy-Verifikation, Berechtigungs- und End-to-End-Tests.
+6. **Phase 6:** Admin-Overrides sowie abschließende Berechtigungs- und End-to-End-Tests.
+7. **Kontrollierter Cutover:** Nach erfolgreicher Fertigstellung und Prüfung der Phasen 2 bis 6, vollständigem Backup und abschließender Migration werden die Legacy-Schreibwege pausiert und anschließend gemeinsam mit der Aktivierung des neuen Systems serverseitig dauerhaft gesperrt. Der Cutover ist kein vorgezogener Schritt in Phase 2.
 
 Jede Phase wird über einen eigenen nachvollziehbaren PR beziehungsweise klar abgegrenzte Änderungen umgesetzt. Sicherheitsrelevante serverseitige Logik erhält automatisierte Tests.
 
@@ -490,7 +491,7 @@ Der aktuelle Firestore-Store ist kein transaktionales Repository für einzelne F
 
 Die neuen Exam-Datensätze werden nicht gleichzeitig als beschreibbare Kopien im allgemeinen `dbState` geführt. Der allgemeine Portal-State darf daraus ausschließlich eine sichere, explizit projizierte Metadatenansicht erhalten.
 
-Im Firestore-Backend verwendet der neue Store die getrennten Sammlungen `exam_masters`, `exam_versions`, `exam_attempts` und `exam_progress`. Die bisherigen Sammlungen `exams` und `progress` sind während der Migration ausschließlich Legacy-Quellen und werden nach dem Cutover nicht mehr durch neue Prüfungsabläufe beschrieben. Damit konkurrieren `stateDiff.ts` und der neue Store nicht um dieselben Dokumente. Die Migration liest Legacy-Daten gezielt aus den bisherigen Sammlungen und überführt sie idempotent in die neuen Sammlungen. Nach erfolgreicher Verifikation bleiben Legacy-Datensätze als historische Quelle erhalten oder werden in einem ausdrücklich dokumentierten späteren Schritt archiviert; sie werden nicht parallel weiterbearbeitet.
+Im Firestore-Backend verwendet der neue Store die getrennten Sammlungen `exam_masters`, `exam_versions`, `exam_attempts`, `exam_progress` und `exam_legacy_verifications`. Die letzte Sammlung enthält ausschließlich append-only Verifikationsnachweise für historische Legacy-Progress-Datensätze; sie wird weder in `dbState` gespiegelt noch über `stateDiff.ts` geschrieben. Die bisherigen Sammlungen `exams` und `progress` sind während der Migration ausschließlich Legacy-Quellen und werden nach dem Cutover nicht mehr durch neue Prüfungsabläufe beschrieben. Damit konkurrieren `stateDiff.ts` und der neue Store nicht um dieselben Dokumente. Die Migration liest Legacy-Daten gezielt aus den bisherigen Sammlungen und überführt sie idempotent in die neuen Sammlungen. Nach erfolgreicher Verifikation bleiben Legacy-Datensätze als historische Quelle erhalten oder werden in einem ausdrücklich dokumentierten späteren Schritt archiviert; sie werden nicht parallel weiterbearbeitet.
 
 Der `ExamRepository` besitzt zwei Backend-Adapter:
 
@@ -524,16 +525,31 @@ Die bestehende Academy besitzt ältere Routen, die nicht automatisch die Regeln 
 | `DELETE /api/academy/exams/:examId` | Hard Delete wird deaktiviert. Prüfungen werden archiviert; Versionen und Versuche bleiben erhalten. |
 | `POST /api/academy/instructor-grade` | Darf keine neuen Prüfungsversuche oder beliebigen Prüfungs-Progress-Datensätze schreiben. Die neue Freitextkorrektur läuft ausschließlich über die dedizierten Grading-Endpunkte mit serverseitiger Lehrgangsprüfung. Bestehende Nicht-Prüfungsfunktionen dürfen nur erhalten bleiben, wenn ihr `targetType` explizit begrenzt und geprüft ist. |
 
-Die Umschaltung muss serverseitig erfolgen; ein ausgeblendeter Button genügt nicht. Die Reihenfolge des Cutovers ist:
-1. Bestehende Prüfungs- und Progress-Daten sichern und migrieren.
-2. Neue ExamRepository-Lese- und Schreibwege aktivieren.
-3. Alte Prüfungs-Schreibwege serverseitig sperren oder für zulässige Nicht-Prüfungsfälle eng begrenzen.
-4. Client-Oberfläche auf die neuen Endpunkte umstellen.
-5. Historische Datensätze weiterhin lesbar halten.
+Die Umschaltung muss serverseitig über einen zentralen, serverseitig ausgewerteten Cutover-Schalter erfolgen; ein ausgeblendeter Button oder eine reine Client-Prüfung genügt nicht. Der Schalter hält das neue System bis zur vollständigen Einsatzbereitschaft deaktiviert und steuert den Übergang ohne parallele Schreibwege.
 
-Während der Übergangsphase darf kein Datensatz gleichzeitig über den alten und den neuen Bewertungsweg verändert werden.
+Verbindliche Reihenfolge:
+1. Vorbereitungsphase: ExamRepository, Migration, neue APIs und neue Oberfläche werden implementiert und getestet. Das neue System bleibt deaktiviert; die bisherigen Prüfungswege funktionieren weiter.
+2. Vollständiges Backup: Vor dem Cutover wird ein vollständiges, überprüfbares Backup sowohl der Legacy-Prüfungsdaten als auch aller ExamRepository-Daten erstellt.
+3. Kurzes Cutover-Wartungsfenster: Legacy-Prüfungs-Schreibzugriffe werden serverseitig vorübergehend pausiert. Bereits laufende Schreibvorgänge werden abgeschlossen; neue Prüfungsstarts, Autosaves, Abgaben und Legacy-Bewertungen werden während dieser kurzen Pause abgewiesen oder mit einem klaren Wartungsstatus beantwortet.
+4. Abschließende Migration: Während die Legacy-Schreibwege pausiert sind, werden seit dem letzten Migrationslauf hinzugekommene Änderungen nachgezogen. Die Migration wird vollständig verifiziert; bei Fehlern bleibt das neue System deaktiviert und die Legacy-Wege werden nach sicherem Abbruch wieder freigegeben.
+5. Aktivierung: Erst nach erfolgreicher Verifikation wird der Cutover-Schalter so umgelegt, dass die neuen APIs und die neue Oberfläche aktiv sind und die alten Prüfungs-Schreibwege serverseitig dauerhaft gesperrt bleiben.
+6. Historische Daten bleiben über die vorgesehenen Legacy-Lese- und Verifikationswege verfügbar.
 
-Bestehende `interactive_code`-Prüfungen bleiben als historische Datensätze erhalten. Sie werden nicht in das neue strukturierte Prüfungsformat umgewandelt und können nicht neu gestartet werden, solange ihre Bewertung ausschließlich auf einem vom Client gelieferten Ergebnis beruht. Ein Admin kann einen konkreten historischen Nachweis ausdrücklich verifizieren; diese Verifikation wird separat protokolliert.
+Es darf keinen produktiven Zustand geben, in dem die alten Prüfungs-Schreibwege bereits gesperrt sind, während der neue Runner noch nicht einsatzbereit ist. Ebenso dürfen Legacy- und neue Prüfungswege niemals gleichzeitig denselben Prüfungsbestand beschreiben.
+
+### 19.2.1 Backup und Restore über beide Speichergrenzen
+
+Die bestehenden Endpunkte `GET /api/admin/backup` und `POST /api/admin/restore` sichern beziehungsweise restaurieren derzeit nur den allgemeinen Portal-State. Nach Einführung des ExamRepository dürfen sie deshalb nicht als vollständiges Prüfungsbackup ausgegeben werden, solange Exam-Daten fehlen.
+
+Verbindliche Anforderungen:
+- Das Admin-Backup umfasst sowohl die bisherigen Legacy-Daten (`exams` und `progress`) als auch sämtliche Dokumente aus `exam_masters`, `exam_versions`, `exam_attempts`, `exam_progress` und `exam_legacy_verifications`.
+- Das Backup enthält ein Format-/Versionsfeld, Erstellungszeitpunkt und eine nachvollziehbare Auflistung der enthaltenen Exam-Datensätze beziehungsweise Sammlungen.
+- Während der Exam-Export erstellt wird, werden konkurrierende Exam-Schreibvorgänge kurz pausiert oder über einen gleichwertigen konsistenten Repository-Snapshot ausgeschlossen. Ein Backup darf keine unbemerkte Mischung aus unterschiedlichen Schreibständen enthalten.
+- Restore prüft vor jeder Änderung Format, Vollständigkeit, Referenzen und Datenintegrität. Ein unvollständiges oder nicht unterstütztes Exam-Backup wird vor Beginn der Exam-Wiederherstellung abgelehnt.
+- Restore stellt Legacy- und neue Exam-Daten gemeinsam wieder her. Es darf keine alten Prüfungsdaten zurücksetzen, während dazugehörige Versionen, Versuche oder Aggregate unverändert zurückbleiben.
+- Bei einem Fehler während der Wiederherstellung wird kein erfolgreicher Restore gemeldet. Das Prüfungssystem bleibt bis zur erfolgreichen Wiederholung beziehungsweise administrativen Wiederherstellung im Wartungsmodus; ein teilweise restaurierter Datenbestand darf nicht für Prüfungen freigegeben werden.
+- Backup und Restore bleiben Admin-only und werden in den bestehenden Sicherheits-/Auditregeln berücksichtigt.
+Bestehende `interactive_code`-Prüfungen bleiben als historische Datensätze erhalten. Sie werden nicht in das neue strukturierte Prüfungsformat umgewandelt und können nicht neu gestartet werden, solange ihre Bewertung ausschließlich auf einem vom Client gelieferten Ergebnis beruht. Ein Admin kann einen konkreten historischen Nachweis ausdrücklich verifizieren; diese Verifikation wird als eigener, unveränderlicher Datensatz in `exam_legacy_verifications` protokolliert.
 
 ### 19.3 Allgemeiner Portal-State und Client-Projektionen
 
@@ -575,7 +591,8 @@ Voraussetzungen werden primär aus den neuen, nicht invalidierten Versuchen ermi
 - Ein Legacy-Progress-Datensatz wird nicht künstlich als vollständiger neuer Versuch mit erfundenen Antworten oder Zeitstempeln migriert.
 - Historische Progress-Datensätze bleiben als Legacy-Nachweise erhalten und werden ausdrücklich als solche gekennzeichnet.
 - Ein historisches `completed` kann eine reine Abschlussvoraussetzung erfüllen, sofern der Datensatz einen nachvollziehbaren Abschluss ausweist.
-- Ein historisches `passed` erfüllt eine Bestehensvoraussetzung nur nach expliziter Admin-Verifikation.
+- Ein historisches `passed` erfüllt eine Bestehensvoraussetzung nur nach expliziter Admin-Verifikation. Die Verifikation wird nicht in den Legacy-Progress-Datensatz zurückgeschrieben, sondern als eigener Datensatz in `exam_legacy_verifications` gespeichert. Er enthält mindestens `id`, `legacyProgressId`, `userId`, `examId`, optional `attemptCourseCode`, `verifiedStatus: 'passed'`, `verifiedByUid`, `verifiedAtIso` und eine verpflichtende Begründung. Die Dokumente sind create-only; eine doppelte Verifikation desselben Legacy-Nachweises wird verhindert. Die Voraussetzungsauswertung berücksichtigt nur eine gültige, eindeutig zuordenbare Verifikation für genau den betreffenden Nutzer, die Prüfung und – sofern vorhanden – den Lehrgang.
+- Phase 1 definiert den Typ dieses Verifikationsdatensatzes sowie die reine Auswertungsfunktion, die verifizierte Legacy-Nachweise von unverifizierten unterscheidet. Phase 2 ergänzt Repository-Lese-/Schreibmethoden und die Admin-Verifikationsroute.
 - Ein vorhandener Legacy-`attempts`-Zähler wird bei der Migration als verbrauchtes historisches Kontingent berücksichtigt, soweit er eine positive sichere Ganzzahl ist. Die Migration darf den Zähler nicht stillschweigend auf null setzen. Nicht rekonstruierbare Versuchseinzelheiten werden als Legacy-Lücke dokumentiert, nicht erfunden.
 - Bestehende aktive Prüfungen ohne Statusfeld werden bei erfolgreicher Migration als `published` übernommen; Entwürfe werden nur dann als `draft` behandelt, wenn ihr Entwurfsstatus tatsächlich belegt ist.
 
@@ -595,8 +612,10 @@ Optionen und Zuordnungsziele erhalten stabile, innerhalb der jeweiligen Frage ei
 
 Bewertungsregeln:
 - Fragenpunkte müssen endliche Zahlen größer als 0 sein.
-- Punkte werden intern mit ausreichender Dezimalpräzision beziehungsweise als ganzzahlige kleinste Einheit gespeichert; Rundung erfolgt nicht vor der Bestehensentscheidung.
-- Der Vergleich mit `passingScore` erfolgt anhand des ungerundeten Gesamtprozentsatzes. Erst die Anzeige wird auf eine ganze Prozentzahl gerundet.
+- Die kanonische interne Einheit ist ein ganzzahliger Wert in Tausendstel-Punkten (`pointsMilli`): 1 Punkt entspricht 1.000 Einheiten. Neue ExamRepository-Dokumente speichern Punkte ausschließlich in dieser Einheit; die Oberfläche darf sie als Dezimalpunkte darstellen. Eingaben mit mehr als drei Nachkommastellen werden abgelehnt.
+- Die Bestehensgrenze wird intern als ganzzahliger Wert in Basispunkten (`passingScoreBasisPoints`) gespeichert: 100 % entsprechen 10.000, 75 % entsprechen 7.500. Werte außerhalb 0 bis 10.000 oder nicht ganzzahlige Werte werden abgelehnt.
+- Teilpunktformeln werden ausschließlich mit Ganzzahlarithmetik berechnet. Das Ergebnis je Frage wird deterministisch auf die nächste Tausendstel-Punkteinheit gerundet (kaufmännisch, halbe Einheiten aufwärts) und anschließend auf 0 bis `maxPointsMilli` begrenzt. Gesamtpunkte und mögliche Gesamtpunkte sind Summen ganzzahliger Einheiten.
+- Die Bestehensentscheidung erfolgt ohne Fließkomma-Prozentberechnung durch den ganzzahligen Vergleich `earnedPointsMilli * 10000 >= totalPossiblePointsMilli * passingScoreBasisPoints`. Erst für die Anzeige wird ein Prozentwert formatiert und auf eine ganze Prozentzahl gerundet.
 - Unbeantwortete Fragen erhalten null Punkte und gelten nicht als richtig.
 - Ungültige, doppelte oder fremde Antwort-IDs erzeugen keine Zusatzpunkte; strukturell manipulierte Payloads können serverseitig abgelehnt werden.
 - Die Multiple-Choice- und Matching-Teilpunktformeln aus §9 bleiben unverändert. Das Ergebnis jeder Frage wird auf den Bereich von 0 bis zu ihren maximalen Punkten begrenzt.
@@ -627,11 +646,11 @@ Reihenfolge:
 5. Status-/Aggregatfunktionen, Versuchszählung und Voraussetzungen.
 6. Legacy-Mapping und Tests für historische Daten.
 
-Phase 2 implementiert den in §19.1 beschriebenen ExamRepository und die Migration. Die alten Schreibwege aus §19.2 müssen vor Aktivierung der neuen Prüfungsdurchführung abgesichert werden. Phase 3 bis 5 bauen erst auf dem Repository und den abgesicherten API-Grenzen auf.
+Phase 2 implementiert den in §19.1 beschriebenen ExamRepository, die Legacy-Verifikations-Repository-Methoden, die vollständige Backup-/Restore-Unterstützung und die idempotente Migration. Die alten Schreibwege bleiben während dieser Vorbereitungsphase aktiv; sie werden erst im kontrollierten Cutover nach Fertigstellung und Test von Werkstatt, Runner und neuer Oberfläche gemeinsam mit der Aktivierung des neuen Systems gesperrt. Phase 3 bis 5 bauen auf dem Repository auf. Der Cutover darf erst nach den in §19.2 festgelegten Backup-, Wartungs-, Nachzieh- und Verifikationsschritten erfolgen.
 
 ### 19.8 Review-Fazit und Freigabestatus
 
 Die v3.7-Spezifikation berücksichtigt die sechs kritischen Review-Punkte K1–K6. Das ist eine konzeptionelle Entscheidung, kein Nachweis, dass der bestehende Code diese Architektur bereits erfüllt.
 
-Vor der Implementierung ist noch eine gezielte Prüfung der v3.7-Klarstellungen möglich. Phase 1 kann nach ausdrücklicher Freigabe des Projektinhabers beginnen. Phase 2 und die folgenden Integrationsphasen dürfen erst beginnen, wenn die neue ExamRepository-Grenze, die Abschaltung/Begrenzung der alten Schreibwege und die sichere State-Projektion umgesetzt und getestet werden.
+Phase 1 kann nach ausdrücklicher Freigabe des Projektinhabers beginnen und bleibt eine reine Logikphase ohne Änderungen an laufenden Prüfungsrouten oder Daten. Phase 2 darf nach separater Freigabe beginnen; während ihrer Vorbereitung bleiben die bisherigen Prüfungswege aktiv. Die alten Schreibwege dürfen erst im kontrollierten Cutover nach erfolgreicher Fertigstellung und Prüfung des neuen Runners, der Werkstatt, der neuen Oberfläche, des vollständigen Backups/Restores und der sicheren State-Projektionen deaktiviert werden. Der Cutover-Schalter muss den Wechsel so steuern, dass niemals beide Systeme parallel schreiben und niemals beide Systeme gleichzeitig für Prüfungen nicht verfügbar sind.
 
