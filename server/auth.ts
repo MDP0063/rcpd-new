@@ -2,7 +2,7 @@
  * Anmeldung und Sitzungen für den Portal-Server.
  * Nur Node-Standardbibliotheken, damit sich das Modul ohne Zusatzpakete testen lässt.
  */
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Passwörter
@@ -73,6 +73,25 @@ export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 interface SessionPayload {
   uid: string;
   exp: number;
+  sessionVersion?: number;
+}
+
+/** Liefert nur eine unbestätigte UID zum Nachschlagen des Kontos; niemals als Authentifizierung verwenden. */
+export function readSessionUid(token: string | undefined | null): string | null {
+  if (!token || typeof token !== 'string') return null;
+  const dot = token.indexOf('.');
+  if (dot <= 0) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(token.slice(0, dot), 'base64url').toString('utf8')) as SessionPayload;
+    return typeof payload.uid === 'string' ? payload.uid : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Einweg-Hash für Wiederherstellungstokens; der Klartext-Token wird nie gespeichert. */
+export function hashRecoveryToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 function sign(data: string, secret: string): string {
@@ -83,9 +102,10 @@ export function createSessionToken(
   uid: string,
   secret: string,
   now: number = Date.now(),
-  ttlMs: number = SESSION_TTL_MS
+  ttlMs: number = SESSION_TTL_MS,
+  sessionVersion: number = 0
 ): string {
-  const payload: SessionPayload = { uid, exp: now + ttlMs };
+  const payload: SessionPayload = { uid, exp: now + ttlMs, sessionVersion };
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   return `${body}.${sign(body, secret)}`;
 }
@@ -94,7 +114,8 @@ export function createSessionToken(
 export function verifySessionToken(
   token: string | undefined | null,
   secret: string,
-  now: number = Date.now()
+  now: number = Date.now(),
+  expectedSessionVersion?: number
 ): string | null {
   if (!token || typeof token !== 'string') return null;
   const dot = token.indexOf('.');
@@ -109,6 +130,7 @@ export function verifySessionToken(
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as SessionPayload;
     if (typeof payload.uid !== 'string' || typeof payload.exp !== 'number') return null;
     if (payload.exp <= now) return null;
+    if (expectedSessionVersion !== undefined && payload.sessionVersion !== expectedSessionVersion) return null;
     return payload.uid;
   } catch {
     return null;
