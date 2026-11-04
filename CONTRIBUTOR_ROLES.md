@@ -2,7 +2,7 @@
 
 Dieses Dokument legt die empfohlenen Hauptaufgaben der am RCPD-Projekt beteiligten KI-Werkzeuge fest. Es ergänzt `AGENTS.md`; es ersetzt oder überschreibt keine dortigen Projekt-, Sicherheits- oder Git-Regeln. Die übergreifende Entwicklungsphilosophie ist verbindlich in `DEVELOPMENT_PHILOSOPHY.md` festgehalten.
 
-**Verbindlich vor jeder Projektarbeit:** Lies zuerst `AGENTS.md`, anschließend dieses Dokument und danach `DEVELOPMENT_PHILOSOPHY.md) vollständig. Prüfe außerdem die für deine konkrete Aufgabe relevanten Projektdateien und Dokumentationen. Wenn du keinen Zugriff auf das Repository oder eine dieser Dateien hast, sage das ausdrücklich und bitte darum, die fehlenden Inhalte bereitzustellen. Behaupte niemals, du hättest Regeln gelesen, die dir nicht zugänglich waren.
+**Verbindlich vor jeder Projektarbeit:** Lies zuerst `AGENTS.md`, anschließend dieses Dokument und danach `DEVELOPMENT_PHILOSOPHY.md` vollständig. Prüfe außerdem die für deine konkrete Aufgabe relevanten Projektdateien und Dokumentationen. Wenn du keinen Zugriff auf das Repository oder eine dieser Dateien hast, sage das ausdrücklich und bitte darum, die fehlenden Inhalte bereitzustellen. Behaupte niemals, du hättest Regeln gelesen, die dir nicht zugänglich waren.
 
 ## Rollenübersicht
 
