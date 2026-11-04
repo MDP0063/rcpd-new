@@ -17,7 +17,7 @@ import {
 import {
   AcademyExamDoc,
   AssessmentStage,
-  ExamQuestionItem,
+  ExamQuestionPublicItem,
   ModuleCategory,
   ModuleEmbedType,
   OfficerRole,
@@ -83,6 +83,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     score: number;
     passed: boolean;
   } | null>(null);
+  const [examExplanations, setExamExplanations] = useState<Record<string, string>>({});
 
   // Admin / Colonel: Upload PDF / Textbook State
   const [modTitle, setModTitle] = useState('');
@@ -202,10 +203,16 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     }
   };
 
-  const handleSubmitExam = async (exam: AcademyExamDoc, parsedQuestions: ExamQuestionItem[]) => {
-    let scorePercent = customCodeScore;
-
-    if (parsedQuestions.length > 0) {
+  const handleSubmitExam = async (
+    exam: AcademyExamDoc,
+    parsedQuestions: ExamQuestionPublicItem[]
+  ) => {
+    const isStructuredQuiz = exam.examFormat === 'structured_quiz';
+    if (isStructuredQuiz && parsedQuestions.length === 0) {
+      onStatusToast('Diese Prüfung enthält keine gültigen Fragen und kann nicht abgegeben werden.');
+      return;
+    }
+    if (isStructuredQuiz) {
       const unansweredCount = parsedQuestions.filter(q => examAnswers[q.id] === undefined).length;
       if (unansweredCount > 0) {
         onStatusToast(
@@ -213,40 +220,36 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         );
         return;
       }
-      let correctCount = 0;
-      parsedQuestions.forEach(q => {
-        if (examAnswers[q.id] === q.correctIndex) {
-          correctCount++;
-        }
-      });
-      scorePercent = Math.round((correctCount / parsedQuestions.length) * 100);
     }
-
-    const passed = scorePercent >= exam.passingScore;
-    setExamSubmittedResult({ score: scorePercent, passed });
-
-    const res = await apiFetch(API_ENDPOINTS.PROGRESS, {
+    const res = await apiFetch<{
+      scorePercent: number;
+      passed: boolean;
+      explanations?: Record<string, string>;
+    }>(API_ENDPOINTS.PROGRESS, {
       method: 'POST',
       body: JSON.stringify({
         userId: currentUser.uid,
         targetId: exam.id,
         targetType: exam.assessmentStage === 'final_exam' ? 'final_exam' : 'test',
-        targetTitle: exam.title,
-        status: passed ? 'passed' : 'failed',
-        scorePercent
+        ...(isStructuredQuiz ? { answers: examAnswers } : { scorePercent: customCodeScore })
       })
     });
 
-    if (res.ok) {
-      await onRefreshState();
-      onStatusToast(
-        passed
-          ? `Erfolgreich bestanden (${scorePercent}%)! Im Fortschrittstracking gespeichert.`
-          : `Nicht bestanden (${scorePercent}% / erforderlich: ${exam.passingScore}%).`
-      );
-    } else {
+    if (!res.ok || !res.data) {
       onStatusToast(res.error || 'Fehler beim Speichern des Ergebnisses.');
+      return;
     }
+
+    const scorePercent = res.data.scorePercent;
+    const passed = res.data.passed;
+    setExamSubmittedResult({ score: scorePercent, passed });
+    setExamExplanations(res.data.explanations || {});
+    await onRefreshState();
+    onStatusToast(
+      passed
+        ? `Erfolgreich bestanden (${scorePercent}%)! Im Fortschrittstracking gespeichert.`
+        : `Nicht bestanden (${scorePercent}% / erforderlich: ${exam.passingScore}%).`
+    );
   };
 
   const handleCreateModule = async (e: React.FormEvent) => {
@@ -537,6 +540,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveTab('tests');
             setActiveExamId(practiceTests[0]?.id || null);
             setExamSubmittedResult(null);
+            setExamAnswers({});
+            setExamExplanations({});
           }}
           className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'tests'
@@ -553,6 +558,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             setActiveTab('final_exams');
             setActiveExamId(finalExams[0]?.id || null);
             setExamSubmittedResult(null);
+            setExamAnswers({});
+            setExamExplanations({});
           }}
           className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'final_exams'
@@ -883,6 +890,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         setActiveExamId(ex.id);
                         setExamAnswers({});
                         setExamSubmittedResult(null);
+                        setExamExplanations({});
                       }}
                       className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
                         isSelected
@@ -976,7 +984,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
                     {/* Structured Questions or Code Score Input */}
                     {(() => {
-                      let parsedQuestions: ExamQuestionItem[] = [];
+                      let parsedQuestions: ExamQuestionPublicItem[] = [];
                       try {
                         parsedQuestions = JSON.parse(currentExam.questionsPayload || '[]');
                       } catch {
@@ -985,7 +993,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
                       return (
                         <>
-                          {parsedQuestions.length > 0 ? (
+                          {currentExam.examFormat === 'structured_quiz' ? (
                             <div className="space-y-4">
                               {parsedQuestions.map((q, idx) => (
                                 <div
@@ -1021,10 +1029,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                                       );
                                     })}
                                   </div>
-                                  {examSubmittedResult && q.explanation && (
+                                  {examSubmittedResult && examExplanations[q.id] && (
                                     <div className="text-xs text-slate-600 dark:text-slate-300 pt-2 border-t border-slate-200 dark:border-slate-800">
                                       <strong className="text-slate-900 dark:text-white">Erläuterung:</strong>{' '}
-                                      {q.explanation}
+                                      {examExplanations[q.id]}
                                     </div>
                                   )}
                                 </div>

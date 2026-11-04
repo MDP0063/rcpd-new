@@ -761,6 +761,39 @@ function toClientModule(mod: TrainingModuleDoc): TrainingModuleDoc {
   return { ...rest, hasPdf: Boolean(pdfDataUrl) };
 }
 
+/**
+ * Prüfungsfragen für den Browser: Lösungsschlüssel und Erläuterungen bleiben
+ * ausschließlich auf dem Server. Die Antworten werden nach Abgabe serverseitig ausgewertet.
+ */
+function toClientExam(exam: AcademyExamDoc): AcademyExamDoc {
+  let publicQuestions: Array<{ id: string; question: string; options: string[] }> = [];
+  try {
+    const parsed: unknown = JSON.parse(exam.questionsPayload || '[]');
+    if (Array.isArray(parsed)) {
+      publicQuestions = parsed.flatMap(item => {
+        if (!item || typeof item !== 'object') return [];
+        const question = item as Record<string, unknown>;
+        if (
+          typeof question.id !== 'string' ||
+          typeof question.question !== 'string' ||
+          !Array.isArray(question.options) ||
+          !question.options.every(option => typeof option === 'string')
+        ) {
+          return [];
+        }
+        return [{
+          id: question.id,
+          question: question.question,
+          options: question.options as string[]
+        }];
+      });
+    }
+  } catch {
+    // Fehlerhafte gespeicherte Frage-Payloads werden geschlossen behandelt.
+  }
+  return { ...exam, questionsPayload: JSON.stringify(publicQuestions) };
+}
+
 /** Nur lesen, ohne Kopie (für die Sitzungsprüfung bei jedem Request). Ergebnis nie verändern. */
 function peekDatabase(): PortalDatabaseState {
   if (store && memoryState) return memoryState;
@@ -1212,7 +1245,7 @@ async function startServer() {
         ? dbState.applications
         : dbState.applications.filter(appItem => appItem.applicantUid === caller.uid),
       modules: dbState.modules.map(toClientModule),
-      exams: visibleExams,
+      exams: visibleExams.map(toClientExam),
       progress: canSeeAllProgress
         ? dbState.progress
         : dbState.progress.filter(p => p.userId === caller.uid),
@@ -2067,9 +2100,10 @@ async function startServer() {
 
   // 10. Self Progress Tracking
   app.post('/api/progress', (req, res) => {
-    const { userId, targetId, targetType, scorePercent } = req.body;
+    const { targetId, targetType, scorePercent, answers } = req.body;
+    const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === userId);
+    const caller = dbState.accounts.find(a => a.uid === callerUid);
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
@@ -2080,11 +2114,12 @@ async function startServer() {
       return;
     }
 
-    // Titel und Status bestimmt der Server aus dem gespeicherten Inhalt, nicht der Client.
+    // Titel, Status und bei strukturierten Prüfungen auch die Note werden serverseitig bestimmt.
     let resolvedType: UserProgressDoc['targetType'];
     let resolvedTitle: string;
     let resolvedStatus: UserProgressDoc['status'];
     let resolvedScore: number;
+    let explanations: Record<string, string> = {};
 
     if (targetType === 'module') {
       const mod = dbState.modules.find(m => m.id === targetId);
@@ -2098,18 +2133,88 @@ async function startServer() {
       resolvedScore = 100;
     } else if (targetType === 'test' || targetType === 'final_exam') {
       const exam = dbState.exams.find(e => e.id === targetId);
-      const score = Number(scorePercent);
       if (!exam) {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
         return;
       }
-      if (!Number.isFinite(score) || score < 0 || score > 100) {
-        res.status(400).json({ error: 'scorePercent muss zwischen 0 und 100 liegen.' });
+      if (exam.assessmentStage !== targetType) {
+        res.status(400).json({ error: 'Der Prüfungstyp stimmt nicht mit der gespeicherten Prüfung überein.' });
         return;
       }
+
+      if (exam.examFormat === 'structured_quiz') {
+        let questions: unknown;
+        try {
+          questions = JSON.parse(exam.questionsPayload || '[]');
+        } catch {
+          res.status(500).json({ error: 'Die gespeicherten Prüfungsfragen sind ungültig.' });
+          return;
+        }
+        if (
+          !Array.isArray(questions) ||
+          questions.length === 0 ||
+          questions.some((q: any) =>
+            !q ||
+            typeof q.id !== 'string' ||
+            !q.id ||
+            !Array.isArray(q.options) ||
+            q.options.length < 2 ||
+            !Number.isInteger(q.correctIndex) ||
+            q.correctIndex < 0 ||
+            q.correctIndex >= q.options.length
+          )
+        ) {
+          res.status(500).json({ error: 'Die gespeicherten Prüfungsfragen sind unvollständig oder ungültig.' });
+          return;
+        }
+
+        const questionIds = questions.map((q: any) => q.id);
+        if (new Set(questionIds).size !== questionIds.length) {
+          res.status(500).json({ error: 'Die Prüfung enthält doppelte Fragenkennungen.' });
+          return;
+        }
+        if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+          res.status(400).json({ error: 'Die Antworten fehlen oder sind ungültig.' });
+          return;
+        }
+        const answerKeys = Object.keys(answers);
+        if (
+          answerKeys.length !== questionIds.length ||
+          questionIds.some((id: string) =>
+            !Object.prototype.hasOwnProperty.call(answers, id) ||
+            !Number.isInteger(answers[id]) ||
+            answers[id] < 0 ||
+            answers[id] >= questions.find((q: any) => q.id === id).options.length
+          )
+        ) {
+          res.status(400).json({ error: 'Bitte beantworte alle Fragen mit einer gültigen Auswahl.' });
+          return;
+        }
+
+        const correctCount = questions.reduce(
+          (count: number, question: any) => count + (answers[question.id] === question.correctIndex ? 1 : 0),
+          0
+        );
+        resolvedScore = Math.round((correctCount / questions.length) * 100);
+        explanations = questions.reduce((result: Record<string, string>, question: any) => {
+          if (typeof question.explanation === 'string' && question.explanation.trim()) {
+            result[question.id] = question.explanation;
+          }
+          return result;
+        }, {});
+      } else {
+        // Interaktive Code-Prüfungen verwenden weiterhin die bisherige manuelle Selbsteinschätzung.
+        // Die Absicherung dieser clientseitigen Eingabe ist ein separater Punkt.
+        const score = Number(scorePercent);
+        if (!Number.isFinite(score) || score < 0 || score > 100) {
+          res.status(400).json({ error: 'scorePercent muss zwischen 0 und 100 liegen.' });
+          return;
+        }
+        resolvedScore = Math.round(score);
+      }
+
       resolvedType = targetType;
       resolvedTitle = exam.title;
-      resolvedScore = Math.round(score);
       resolvedStatus = resolvedScore >= exam.passingScore ? 'passed' : 'failed';
     } else {
       res.status(400).json({ error: 'Ungültiger targetType.' });
@@ -2117,7 +2222,7 @@ async function startServer() {
     }
 
     const existingIdx = dbState.progress.findIndex(
-      p => p.userId === userId && p.targetId === targetId && p.targetType === resolvedType
+      p => p.userId === caller.uid && p.targetId === targetId && p.targetType === resolvedType
     );
 
     // Eine Note, die ein Ausbilder vergeben hat, kann der Teilnehmer nicht selbst überschreiben.
@@ -2139,7 +2244,7 @@ async function startServer() {
       };
     } else {
       dbState.progress.unshift({
-        id: `prog_${userId}_${targetId}`,
+        id: `prog_${caller.uid}_${targetId}`,
         userId: caller.uid,
         userName: caller.publicProfile.displayName,
         targetId,
@@ -2153,9 +2258,13 @@ async function startServer() {
     }
 
     saveDatabase(dbState);
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      scorePercent: resolvedScore,
+      passed: resolvedStatus === 'passed',
+      explanations
+    });
   });
-
 
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
   app.get(['/api/v1/whitelist/verify', '/api/whitelist/verify'], (req, res) => {
