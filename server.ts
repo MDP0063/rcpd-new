@@ -1112,7 +1112,7 @@ async function startServer() {
     try {
       if (store) await store.flush();
       const recoveryUrl = new URL('/', baseUrl);
-      recoveryUrl.searchParams.set('adminRecovery', rawToken);
+      recoveryUrl.hash = new URLSearchParams({ adminRecovery: rawToken }).toString();
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -1125,8 +1125,7 @@ async function startServer() {
         })
       });
       if (!emailResponse.ok) {
-        const errorText = await emailResponse.text().catch(() => '');
-        console.error('[Admin-Recovery] Resend-Versand fehlgeschlagen:', emailResponse.status, errorText.slice(0, 500));
+        console.error('[Admin-Recovery] Resend-Versand fehlgeschlagen. HTTP-Status:', emailResponse.status);
         dbState.adminRecovery = null;
         saveDatabase(dbState);
         if (store) await store.flush();
