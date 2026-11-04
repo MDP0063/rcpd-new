@@ -6,7 +6,9 @@ import {
   extractBearerToken,
   findIdentityMismatch,
   hashPassword,
+  hashRecoveryToken,
   parseAllowedOrigins,
+  readSessionUid,
   safeEqual,
   validateNewPassword,
   verifyPassword,
@@ -43,6 +45,9 @@ test('Passwort: Mindestlänge wird erzwungen', () => {
 test('Token: gültiges Token liefert die UID', () => {
   const token = createSessionToken('usr_1', SECRET, 1000, 5000);
   assert.equal(verifySessionToken(token, SECRET, 2000), 'usr_1');
+  assert.equal(verifySessionToken(token, SECRET, 2000, 0), 'usr_1');
+  assert.equal(verifySessionToken(token, SECRET, 2000, 1), null);
+  assert.equal(readSessionUid(token), 'usr_1');
 });
 
 test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', () => {
@@ -59,6 +64,14 @@ test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', ()
   assert.equal(verifySessionToken('', SECRET, 2000), null);
   assert.equal(verifySessionToken(undefined, SECRET, 2000), null);
   assert.equal(verifySessionToken('nur-ein-teil', SECRET, 2000), null);
+});
+
+test('Wiederherstellungstoken wird nur als SHA-256-Hash abgelegt', () => {
+  const token = 'ein-einmaliger-geheimer-token';
+  const hash = hashRecoveryToken(token);
+  assert.equal(hash.length, 64);
+  assert.notEqual(hash, token);
+  assert.equal(hashRecoveryToken(token), hash);
 });
 
 test('Bearer-Header wird gelesen', () => {
