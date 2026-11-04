@@ -94,6 +94,12 @@ export function hashRecoveryToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+/** Prüft, ob ein Recovery-Link noch aktiv ist und deshalb nicht ersetzt werden darf. */
+export function hasActiveRecoveryToken(expiresAt: string | null | undefined, now: number): boolean {
+  const expiry = Date.parse(expiresAt ?? '');
+  return Number.isFinite(expiry) && expiry > now;
+}
+
 export interface RecoveryEmailRateLimitState {
   windowStartedAt: string;
   count: number;
