@@ -3,7 +3,7 @@
 > **Repository:** `MDP0063/rcpd-new`  
 > **Projekt:** California POST Officer Portal (`ca-post-officer-portal`)  
 > **Status:** Konsolidierte Architektur-Spezifikation vor Implementierungsfreigabe.  
-> **Änderungsumfang:** Konzeption und Dokumentation בלבד; keine Implementierung der Prüfungswerkstatt.  
+> **Änderungsumfang:** Konzeption und Dokumentation; keine Implementierung der Prüfungswerkstatt.  
 > **Grundlage:** v3.5 sowie die verbindlichen Ergänzungen in v3.6.
 
 ## 1. Zweck, Geltungsbereich und Freigabe
@@ -260,12 +260,12 @@ Die Antwort wird gegen den serverseitigen Lösungsschlüssel geprüft. Ungültig
 P = maxleft(0, rac{R-F}{N}cdot P_{max}ight)
 ]
 
-- (R): korrekt ausgewählte Optionen
-- (F): falsch ausgewählte Optionen
-- (N): Gesamtzahl richtiger Optionen
-- (P_{max}): maximale Punktzahl der Frage
+- `R`: korrekt ausgewählte Optionen
+- `F`: falsch ausgewählte Optionen
+- `N`: Gesamtzahl richtiger Optionen
+- `P_max`: maximale Punktzahl der Frage
 
-Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das Ergebnis liegt zwischen 0 und (P_{max}).
+Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das Ergebnis liegt zwischen 0 und `P_max`.
 
 ### Matching mit Teilpunkten
 
@@ -273,9 +273,9 @@ Doppelte und ungültige Indizes dürfen keine zusätzlichen Punkte erzeugen. Das
 P = rac{K}{N}cdot P_{max}
 ]
 
-- (K): korrekt zugeordnete Paare
-- (N): Gesamtzahl der Paare
-- (P_{max}): maximale Punktzahl der Frage
+- `K`: korrekt zugeordnete Paare
+- `N`: Gesamtzahl der Paare
+- `P_max`: maximale Punktzahl der Frage
 
 Version 1 verwendet eine eindeutige Eins-zu-eins-Zuordnung. Jede Ziel-ID darf in einer Antwort nur einmal verwendet werden. Paar- und Ziel-IDs werden serverseitig gegen den Snapshot validiert.
 
