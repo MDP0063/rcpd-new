@@ -1360,20 +1360,22 @@ export default function App() {
                   </span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveSection('reports')}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                    activeSection === 'reports'
-                      ? 'bg-sky-600 text-white font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <FileSpreadsheet className="w-4 h-4" />
-                    Berichte &amp; Exporte
-                  </span>
-                </button>
+                {canManageUsers && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('reports')}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      activeSection === 'reports'
+                        ? 'bg-sky-600 text-white font-semibold'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <FileSpreadsheet className="w-4 h-4" />
+                      Berichte &amp; Exporte
+                    </span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1498,7 +1500,7 @@ export default function App() {
                 { id: 'requests', label: `Anträge (${pendingRequestsForReviewCount})` },
                 { id: 'calendar', label: `Kalender (${events.length})` },
                 { id: 'academy', label: 'Ausbildung' },
-                { id: 'reports', label: 'Berichte & Export' },
+                ...(canManageUsers ? [{ id: 'reports', label: 'Berichte & Export' }] : []),
                 { id: 'whitelist', label: 'Personalbogen' },
                 { id: 'settings', label: 'Einstellungen' },
                 ...(canManageUsers
@@ -2274,7 +2276,7 @@ export default function App() {
           {/* ========================================================================
               VIEW 7: EXPORT- UND BERICHTSFUNKTIONEN (CSV / PDF LEITUNGSBERICHT)
               ======================================================================== */}
-          {activeSection === 'reports' && (
+          {activeSection === 'reports' && canManageUsers && (
             <ReportsExportCenter
               currentUser={currentUserProfile}
               roster={roster}
