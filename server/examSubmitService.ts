@@ -6,6 +6,7 @@ import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { evaluateExamAnswers, parseAttemptAnswers } from './examRunner.ts';
 import type { ExamAttemptRecord, ExamVersionRecord } from './examAttemptService.ts';
+import type { ExamQuestion } from './examTypes.ts';
 import { isValidId } from './examValidate.ts';
 
 export interface PublicExamSubmission {
@@ -73,7 +74,7 @@ function toPublicSubmission(
     requiresManualReview: boolean;
     correct?: boolean;
   }> : [];
-  const questionsById = new Map<string, import('./examTypes.ts').ExamQuestion>(version.questionsSnapshot.map(question => [question.id, question] as const));
+  const questionsById = new Map<string, ExamQuestion>(version.questionsSnapshot.map(question => [question.id, question] as const));
   return {
     id: attempt.id,
     examId: attempt.examId,
