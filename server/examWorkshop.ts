@@ -2,7 +2,7 @@ import type { ExamRepository } from './examRepository.ts';
 import { checkSnapshotSize, validateExamForPublication } from './examValidate.ts';
 import { defaultMaxAttempts, EXAM_LIMITS } from './examTypes.ts';
 import type { AssessmentStage, ExamPrerequisite, ExamQuestion } from './examTypes.ts';
-import { normalizeCourseCode, isHttpsUrl, isPlainObject } from './examValidate.ts';
+import { normalizeCourseCode, isHttpsUrl, isPlainObject, isValidId } from './examValidate.ts';
 
 export interface ExamWorkshopDraftInput {
   title: string;
@@ -74,9 +74,7 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
   const prerequisites = rawPrerequisites.map((item, index) => {
     if (!isPlainObject(item)) return invalid(`prerequisites[${index}]`);
     if (
-      typeof item.examId !== 'string' ||
-      !item.examId.trim() ||
-      item.examId.length > EXAM_LIMITS.maxIdLength ||
+      !isValidId(item.examId) ||
       (item.mode !== 'completed' && item.mode !== 'passed') ||
       (item.minScoreBasisPoints !== undefined &&
         (typeof item.minScoreBasisPoints !== 'number' ||
