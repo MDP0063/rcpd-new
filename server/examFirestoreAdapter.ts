@@ -204,7 +204,10 @@ export class FirestoreExamStorageAdapter implements ExamStorageAdapter {
     const writes: Promise<unknown>[] = [];
     for (const collection of EXAM_COLLECTIONS) {
       const existing = await this.database.collection(collection).get();
-      for (const document of existing.docs) writes.push(writer.delete(document.ref));
+      const incomingIds = new Set(snapshot.collections[collection].map(document => storageId(document.id)));
+      for (const document of existing.docs) {
+        if (!incomingIds.has(document.id)) writes.push(writer.delete(document.ref));
+      }
       for (const document of snapshot.collections[collection]) {
         writes.push(
           writer.set(
