@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import {
   AdminAccountView,
+  ExamWorkshopPermissions,
   OfficerRole,
   PortalBackupSnapshot,
   ROLE_HIERARCHY,
@@ -22,6 +23,7 @@ import {
   WhitelistStatus
 } from '../types/portal';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { ExamWorkshopPermissionEditor } from './ExamWorkshopPermissionEditor';
 
 interface AdminPersonnelConsoleProps {
   currentUser: UserPublicProfile;
@@ -136,6 +138,14 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   const [editCanManageEvents, setEditCanManageEvents] = useState(false);
   const [editCanPublishAnnouncements, setEditCanPublishAnnouncements] = useState(false);
   const [editCanReviewStandardRequests, setEditCanReviewStandardRequests] = useState(false);
+  const [editExamWorkshopPermissions, setEditExamWorkshopPermissions] = useState<ExamWorkshopPermissions>({
+    hasAccess: false,
+    canRequestAccess: false,
+    tests: { canView: false, canCreate: false, canEdit: false, canUpdateExisting: false },
+    finalExams: { canView: false, canCreate: false, canEdit: false, canUpdateExisting: false },
+    publication: { newTestsRequireApproval: false, newFinalExamsRequireApproval: false, testUpdatesRequireApproval: false, finalExamUpdatesRequireApproval: false },
+    lockedUpdateExamIds: []
+  });
 
   // Create New Account State (Default Role: Trainee)
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -184,6 +194,14 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     setEditCanManageEvents(Boolean(perms?.canManageEvents));
     setEditCanPublishAnnouncements(Boolean(perms?.canPublishAnnouncements));
     setEditCanReviewStandardRequests(Boolean(perms?.canReviewStandardRequests));
+    setEditExamWorkshopPermissions(perms?.examWorkshop || {
+      hasAccess: false,
+      canRequestAccess: acc.publicProfile.role === 'colonel',
+      tests: { canView: false, canCreate: false, canEdit: false, canUpdateExisting: false },
+      finalExams: { canView: false, canCreate: false, canEdit: false, canUpdateExisting: false },
+      publication: { newTestsRequireApproval: false, newFinalExamsRequireApproval: false, testUpdatesRequireApproval: false, finalExamUpdatesRequireApproval: false },
+      lockedUpdateExamIds: []
+    });
   };
 
   const handleUpdateMyOwnCredentials = async (e: React.FormEvent) => {
@@ -228,7 +246,8 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           canGradeAssignedCourses: editCanGradeCourses,
           canManageEvents: editCanManageEvents,
           canPublishAnnouncements: editCanPublishAnnouncements,
-          canReviewStandardRequests: editCanReviewStandardRequests
+          canReviewStandardRequests: editCanReviewStandardRequests,
+          examWorkshop: editExamWorkshopPermissions
         }
       })
     });
@@ -1299,6 +1318,11 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                                 </div>
                               </div>
                             </div>
+
+                            <ExamWorkshopPermissionEditor
+                              value={editExamWorkshopPermissions}
+                              onChange={setEditExamWorkshopPermissions}
+                            />
 
                             <div className="flex items-center justify-end gap-3 pt-2">
                               <button
