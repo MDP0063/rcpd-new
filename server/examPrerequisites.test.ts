@@ -12,7 +12,7 @@ const legacyPassed: LegacyProgressRecord = {
 };
 const verification: LegacyVerificationDoc = {
   id: 'legacy_verification__lp1', legacyProgressId: 'lp1', userId: 'u1', examId: 'e1',
-  verifiedStatus: 'passed', verifiedScoreBasisPoints: 8800, verifiedByUid: 'admin1', verifiedAtIso: '2026-01-01T00:00:00.000Z', reason: 'Prüfprotokoll gesehen'
+  verifiedStatus: 'passed', verifiedScoreBasisPoints: 9000, verifiedByUid: 'admin1', verifiedAtIso: '2026-01-01T00:00:00.000Z', reason: 'Prüfprotokoll gesehen'
 };
 
 test('keine Voraussetzungen: immer erfüllt', () => {
