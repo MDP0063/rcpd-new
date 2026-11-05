@@ -2464,7 +2464,7 @@ export default function App() {
           {/* ========================================================================
               VIEW 10: STRICTLY ADMIN ONLY — ACCOUNT, PASSWORD, ROLE & GRANULAR PERMISSIONS
               ======================================================================== */}
-          {activeSection === 'exam_workshop' && currentUserProfile.role === 'admin' && (
+          {activeSection === 'exam_workshop' && (currentUserProfile.role === 'admin' || currentUserProfile.granularPermissions?.examWorkshop?.hasAccess === true) && (
             <ExamWorkshop />
           )}
 
