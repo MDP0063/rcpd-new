@@ -182,9 +182,11 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const previousScore = appended?.previousScoreBasisPoints;
     const nextScore = appended?.nextScoreBasisPoints;
     if (
-      (next.status !== 'passed' && next.status !== 'failed') ||
       nextHistory.length !== previousHistory.length + 1 ||
-      !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory) ||
+      !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory)
+    ) throw new Error('EXAM_ATTEMPT_IMMUTABLE');
+    if (
+      (next.status !== 'passed' && next.status !== 'failed') ||
       !isDeepStrictEqual(stripMutable(existing), stripMutable(next)) ||
       !appended || typeof appended !== 'object' ||
       typeof appended.reviewerUid !== 'string' || !appended.reviewerUid.trim() ||
