@@ -97,6 +97,35 @@ test('unvollständige oder zusätzliche Sammlungen werden abgelehnt', () => {
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_COLLECTIONS_INCOMPLETE/);
 });
 
+test('Workshop-Kommentare und Freigabeanfragen müssen auf vorhandene Prüfungen verweisen', () => {
+  const snapshot = emptySnapshot();
+  snapshot.collections.exam_comments.push({
+    id: 'comment_1',
+    examId: 'missing_exam',
+    authorUid: 'user_1',
+    authorName: 'Officer One',
+    body: 'Kommentar',
+    createdIso: '2026-11-05T12:00:00.000Z'
+  });
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_COMMENT_MASTER_MISSING/);
+
+  const requestSnapshot = emptySnapshot();
+  requestSnapshot.collections.exam_publication_requests.push({
+    id: 'request_1',
+    examId: 'missing_exam',
+    requestedByUid: 'user_1',
+    requestedByName: 'Officer One',
+    assessmentStage: 'test',
+    requestKind: 'new',
+    status: 'pending',
+    submittedRevision: 1,
+    submittedHash: 'a'.repeat(64),
+    createdIso: '2026-11-05T12:00:00.000Z',
+    updatedIso: '2026-11-05T12:00:00.000Z'
+  });
+  assert.throws(() => validateExamRepositorySnapshot(requestSnapshot), /EXAM_BACKUP_PUBLICATION_REQUEST_MASTER_MISSING/);
+});
+
 test('Versionen ohne passenden Master werden abgelehnt', () => {
   const snapshot = emptySnapshot();
   snapshot.collections.exam_versions.push({
