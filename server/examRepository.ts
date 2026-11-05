@@ -21,6 +21,7 @@ import {
   type ExamDocument,
   type ExamQuery,
   type ExamRepositorySnapshot,
+  type ExamStorageAdapter,
   type ExamTransaction
 } from './examRepositoryTypes.ts';
 
