@@ -1,9 +1,5 @@
 import type { ExamWorkshopCategoryPermissions, ExamWorkshopPermissions, GranularPermissions, OfficerRole } from '../src/types/portal.ts';
 
-function defaultExamWorkshopCategory(): ExamWorkshopCategoryPermissions {
-  return { canView: false, canCreate: false, canEdit: false, canUpdateExisting: false };
-}
-
 export function getDefaultExamWorkshopPermissions(role: OfficerRole): ExamWorkshopPermissions {
   const admin = role === 'admin';
   const category = (): ExamWorkshopCategoryPermissions => ({
