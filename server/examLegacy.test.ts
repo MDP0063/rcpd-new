@@ -32,6 +32,7 @@ test('strukturierte Altprüfung wird auf Single Choice mit stabilen Option-IDs a
   assert.equal(r.master.passingScoreBasisPoints, 7500);
   assert.deepEqual(r.master.assignedCourseCodes, ['SOP-01']);
   assert.equal(r.master.maxAttempts, 3);
+  assert.equal(r.master.minClearance, 1);
   assert.equal(r.master.startable, true);
   const q1 = r.master.questions[0];
   assert.equal(q1.type, 'single_choice');
@@ -80,6 +81,7 @@ test('fehlerhafte Altdaten werden nicht migriert und nichts wird geraten', () =>
     { assessmentStage: undefined as never },
     { assessmentStage: 'FINAL_EXAM' },
     { passingScore: 120 },
+    { minClearance: -1 },
     { timeLimitMinutes: -1 },
     { title: ' ' }
   ];
