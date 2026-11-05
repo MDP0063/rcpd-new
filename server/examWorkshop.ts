@@ -1,4 +1,5 @@
 import type { ExamRepository } from './examRepository.ts';
+import type { ExamDocument } from './examRepositoryTypes.ts';
 import { checkSnapshotSize, validateExamForPublication } from './examValidate.ts';
 import { defaultMaxAttempts, EXAM_LIMITS } from './examTypes.ts';
 import type { AssessmentStage, ExamPrerequisite, ExamQuestion } from './examTypes.ts';
@@ -180,7 +181,7 @@ export async function updateExamDraft(
   if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
 
   const input = parseExamWorkshopDraft(definition);
-  const next = {
+  const next: ExamDocument = {
     ...current,
     ...input,
     title: input.title.trim(),
@@ -226,8 +227,13 @@ export async function publishExamDraft(
     throw error;
   }
 
-  const latestVersionNumber = current.latestVersionNumber ?? 0;
-  if (!Number.isSafeInteger(latestVersionNumber) || latestVersionNumber < 0) {
+  const rawLatestVersionNumber = current.latestVersionNumber;
+  const latestVersionNumber = rawLatestVersionNumber === undefined ? 0 : rawLatestVersionNumber;
+  if (
+    typeof latestVersionNumber !== 'number' ||
+    !Number.isSafeInteger(latestVersionNumber) ||
+    latestVersionNumber < 0
+  ) {
     throw new Error('EXAM_VERSION_SEQUENCE_INVALID');
   }
   const versionNumber = latestVersionNumber + 1;
