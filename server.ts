@@ -30,11 +30,19 @@ import {
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
-import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
-import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
+import { createExamDraft, getExamWorkshopDefinitionHash, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, examWorkshopPublicationRequiresApproval, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
+import {
+  addExamComment,
+  listExamComments,
+  listPendingExamPublicationRequests,
+  refreshPendingExamPublicationRequest,
+  submitExamPublicationRequest,
+  updateExamPublicationRequestDecision
+} from './server/examWorkshopRequests.ts';
 import { listParticipantExamCatalog } from './server/examParticipantCatalog.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
