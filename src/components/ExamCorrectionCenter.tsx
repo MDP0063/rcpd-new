@@ -79,16 +79,16 @@ export const ExamCorrectionCenter: React.FC = () => {
       setError('Bitte gib eine Korrekturbegründung mit 10 bis 1000 Zeichen ein.');
       return;
     }
-    const gradeList = review.questions.map(question => ({
+    const gradeValues = review.questions.map(question => grades[review.id]?.[question.questionId] ?? '');
+    const gradeList = review.questions.map((question, index) => ({
       questionId: question.questionId,
-      pointsEarnedMilli: Math.round(Number(grades[review.id]?.[question.questionId]) * 1000)
+      pointsEarnedMilli: Math.round(Number(gradeValues[index]) * 1000)
     }));
     if (gradeList.some((grade, index) =>
+      !gradeValues[index].trim() ||
+      !Number.isFinite(Number(gradeValues[index])) ||
       !Number.isSafeInteger(grade.pointsEarnedMilli) ||
-      typeof grades[review.id]?.[review.questions[index].questionId] !== 'string' ||
-      !grades[review.id][review.questions[index].questionId].trim() ||
-      !Number.isFinite(Number(grades[review.id][review.questions[index].questionId])) ||
-      Math.abs(Number(grades[review.id]?.[review.questions[index].questionId]) * 1000 - grade.pointsEarnedMilli) > 1e-7 ||
+      Math.abs(Number(gradeValues[index]) * 1000 - grade.pointsEarnedMilli) > 1e-7 ||
       grade.pointsEarnedMilli < 0 ||
       grade.pointsEarnedMilli > review.questions[index].pointsMilli
     )) {
