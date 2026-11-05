@@ -10,6 +10,7 @@ import {
   publishExamDraft,
   updateExamDraft
 } from './examWorkshop.ts';
+import { submitExamPublicationRequest } from './examWorkshopRequests.ts';
 
 async function withRepository(
   run: (repository: ReturnType<typeof createJsonExamRepository>) => Promise<void>
@@ -114,6 +115,7 @@ test('Prüfungswerkstatt: Admin kann einen Entwurf anlegen und bearbeiten, ohne 
     assert.equal(updated.authorUid, 'admin-1');
     assert.equal(updated.lastModifiedByUid, 'admin-2');
     assert.equal(updated.latestVersionNumber, 0);
+    assert.equal(updated.workingRevision, 2);
   });
 });
 
@@ -134,6 +136,46 @@ test('Prüfungswerkstatt: Veröffentlichung erzeugt einen unveränderlichen Snap
       repository.update('exam_versions', 'exam-2__v1', { ...published.version }),
       /EXAM_DOCUMENT_APPEND_ONLY/
     );
+  });
+});
+
+test('Prüfungswerkstatt: Admin-Veröffentlichung einer Einreichung bindet Snapshot und Anfrage atomar', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-review', 'author-1', validDefinition, '2026-11-05T10:00:00.000Z');
+    const request = await submitExamPublicationRequest(repository, 'exam-review', {
+      uid: 'author-1', displayName: 'Officer One'
+    }, '2026-11-05T10:01:00.000Z');
+    const published = await publishExamDraft(
+      repository,
+      'exam-review',
+      'admin-1',
+      '2026-11-05T10:05:00.000Z',
+      { requestId: request.id, reviewerName: 'Admin One', reviewComment: 'Geprüft und freigegeben.' }
+    );
+    const storedRequest = await repository.get('exam_publication_requests', request.id);
+    assert.equal(published.version.id, 'exam-review__v1');
+    assert.equal(storedRequest?.status, 'published');
+    assert.equal(storedRequest?.publishedVersionId, 'exam-review__v1');
+    assert.equal(storedRequest?.reviewedByUid, 'admin-1');
+  });
+});
+
+test('Prüfungswerkstatt: Veröffentlichung wird abgelehnt, wenn sich der eingereichte Inhalt geändert hat', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-review-stale', 'author-1', validDefinition, '2026-11-05T10:00:00.000Z');
+    const request = await submitExamPublicationRequest(repository, 'exam-review-stale', {
+      uid: 'author-1', displayName: 'Officer One'
+    });
+    await updateExamDraft(repository, 'exam-review-stale', 'admin-1', {
+      ...validDefinition, title: 'Admin-Änderung'
+    });
+    await assert.rejects(
+      publishExamDraft(repository, 'exam-review-stale', 'admin-1', new Date().toISOString(), {
+        requestId: request.id, reviewerName: 'Admin One'
+      }),
+      /EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT/
+    );
+    assert.equal(await repository.get('exam_versions', 'exam-review-stale__v1'), null);
   });
 });
 
