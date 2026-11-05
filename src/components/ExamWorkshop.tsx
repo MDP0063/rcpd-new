@@ -160,20 +160,23 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       return;
     }
     setSaving(true); setError(null); setNotice(null);
-    const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
-    const response = selectedId
-      ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
-      : await apiFetch<{ exam: ExamMaster }>('/api/workshop/exams', { method: 'POST', body: JSON.stringify(payload) });
-    setSaving(false);
-    if (!response.ok || !response.data?.exam) {
-      setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
-      return;
+    try {
+      const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
+      const response = selectedId
+        ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
+        : await apiFetch<{ exam: ExamMaster }>('/api/workshop/exams', { method: 'POST', body: JSON.stringify(payload) });
+      if (!response.ok || !response.data?.exam) {
+        setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
+        return;
+      }
+      setSelectedId(response.data.exam.id);
+      setExpectedRevision(response.data.exam.workingRevision ?? 1);
+      setNotice('Entwurf erfolgreich gespeichert.');
+      await loadExams();
+      await openExam(response.data.exam.id);
+    } finally {
+      setSaving(false);
     }
-    setSelectedId(response.data.exam.id);
-    setExpectedRevision(response.data.exam.workingRevision ?? 1);
-    setNotice('Entwurf erfolgreich gespeichert.');
-    await loadExams();
-    await openExam(response.data.exam.id);
   };
 
   const publish = async () => {
@@ -181,6 +184,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     if (expectedRevision === null) { setError('Die aktuelle Prüfungsrevision fehlt. Bitte lade die Prüfung erneut.'); return; }
     if (!window.confirm('Prüfung jetzt zur Veröffentlichung einreichen?')) return;
     setPublishing(true); setError(null); setNotice(null);
+    try {
     const response = await apiFetch<{
       requiresApproval?: boolean;
       request?: { id?: string };
@@ -189,7 +193,6 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       `/api/workshop/exams/${encodeURIComponent(selectedId)}/publication-request`,
       { method: 'POST', body: JSON.stringify({ expectedRevision }) }
     );
-    setPublishing(false);
     if (!response.ok) {
       const issues = response.data?.validation?.errors || [];
       setError(issues.length
@@ -205,6 +208,9 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     setNotice('Prüfung wurde als unveränderliche Version veröffentlicht.');
     await openExam(selectedId);
     await loadExams();
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const patchQuestion = (index: number, patch: Partial<Question>) => {
@@ -240,7 +246,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
   };
 
   if (mode === 'list') return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {isAdmin && <AdminExamWorkshopGovernance onOpenExam={id => void openExam(id)} />}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
@@ -280,6 +286,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
           <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>
           <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
       </div>
+      <fieldset disabled={saving || publishing} className="min-w-0 space-y-6 border-0 p-0">
       <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedId ? 'Prüfung bearbeiten' : 'Neue Prüfung erstellen'}</h1><p className="text-sm text-slate-500 mt-1">Arbeitsstand und veröffentlichte Version bleiben getrennt.</p></div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm">{error}</div>}
       {notice && <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 p-3 text-sm">{notice}</div>}
@@ -330,6 +337,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
         {commentsLoading ? <p className="text-sm text-slate-500">Kommentare werden geladen…</p> : comments.length === 0 ? <p className="text-sm text-slate-500">Noch keine Kommentare.</p> : <ol className="space-y-2">{comments.map(comment => <li key={comment.id} className="rounded border border-slate-200 dark:border-slate-700 p-3"><div className="flex justify-between gap-2 text-xs text-slate-500"><span>{comment.authorName}</span><time>{new Date(comment.createdIso).toLocaleString('de-DE')}</time></div><p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p></li>)}</ol>}
         <div className="flex flex-col gap-2 sm:flex-row"><textarea value={commentBody} onChange={event => setCommentBody(event.target.value)} maxLength={4000} rows={2} placeholder="Kommentar zum Prüfungsverlauf…" className={inputClass}/><button type="button" disabled={!commentBody.trim()} onClick={() => void createComment()} className="rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Kommentar hinzufügen</button></div>
       </section>}
+      </fieldset>
     </div>
   );
 };

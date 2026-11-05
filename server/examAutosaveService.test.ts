@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
-import { startExamAttempt } from './examAttemptService.ts';
+import { getActiveExamAttempt, startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 
 async function withAttempt(
@@ -48,6 +48,13 @@ async function withAttempt(
           pointsMilli: 1000,
           maxAnswerLength: 4000,
           rubric: 'Intern'
+        },
+        {
+          id: 'q3', type: 'matching', question: 'Zuordnen', pointsMilli: 1000,
+          matchingPairs: [
+            { id: 'meaning-alpha', prompt: 'Alpha', targetId: 'definition-one', targetText: 'Definition eins' },
+            { id: 'meaning-beta', prompt: 'Beta', targetId: 'definition-two', targetText: 'Definition zwei' }
+          ]
         }
       ]
     });
@@ -77,10 +84,38 @@ test('Autosave speichert validierte Antworten und erhöht die Revision', async (
     assert.equal(result.saved, true);
     assert.equal(result.stale, false);
     assert.equal(result.attempt.currentRevision, 1);
-    assert.deepEqual(result.attempt.answers, { q1: 'b', q2: 'Meine Begründung' });
+    assert.deepEqual(result.attempt.answers, { q1: 'b', q2: 'Meine Begründung', q3: null });
     const stored = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(stored?.currentRevision, 1);
     assert.equal(stored?.lastHeartbeatAtIso, new Date(at(1)).toISOString());
+  });
+});
+
+test('Matching-Aliasse verbergen Quell-IDs, bleiben bei Wiederaufnahme stabil und werden serverseitig zurückübersetzt', async () => {
+  await withAttempt(async repository => {
+    const active = await getActiveExamAttempt(repository, 'exam-1', 'user-1', 'PC-101', at(1));
+    assert.ok(active);
+    const question = active.questions.find(item => item.type === 'matching');
+    assert.equal(question?.type, 'matching');
+    if (question?.type !== 'matching') return;
+    const pair = question.pairs.find(item => item.prompt === 'Alpha')!;
+    const target = question.targets.find(item => item.text === 'Definition eins')!;
+    assert.notEqual(pair.id, 'meaning-alpha');
+    assert.notEqual(target.id, 'definition-one');
+    assert.equal(JSON.stringify(active).includes('meaning-alpha'), false);
+    assert.equal(JSON.stringify(active).includes('definition-one'), false);
+
+    await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, {
+      q3: [{ pairId: pair.id, targetId: target.id }]
+    }, at(2));
+    const stored = await repository.get('exam_attempts', 'attempt-1');
+    assert.deepEqual((stored?.answers as Record<string, unknown>).q3, [{ pairId: 'meaning-alpha', targetId: 'definition-one' }]);
+
+    const resumed = await getActiveExamAttempt(repository, 'exam-1', 'user-1', 'PC-101', at(3));
+    assert.deepEqual(resumed?.answers.q3, [{ pairId: pair.id, targetId: target.id }]);
+    await assert.rejects(saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, {
+      q3: [{ pairId: 'meaning-alpha', targetId: 'definition-one' }]
+    }, at(4)), /EXAM_ANSWER_INVALID/);
   });
 });
 

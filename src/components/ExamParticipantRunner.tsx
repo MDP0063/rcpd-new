@@ -47,7 +47,6 @@ interface PublicAttempt {
   currentRevision: number;
   status: 'in_progress';
   answers: AnswerMap;
-  matchingShuffleOrders: Record<string, string[]>;
   questions: PublicQuestion[];
   totalPossiblePointsMilli: number;
   passingScoreBasisPoints: number;

@@ -125,7 +125,12 @@ test('Teilnehmerprojektion gibt keine Lösungen oder Erklärungen aus', async ()
     assert.equal(publicAttempt.questions[0].type, 'single_choice');
     const matching = publicAttempt.questions.find(question => question.type === 'matching');
     assert.equal(matching?.type, 'matching');
-    if (matching?.type === 'matching') assert.equal(matching.targets.length, 2);
+    if (matching?.type === 'matching') {
+      assert.equal(matching.targets.length, 2);
+      assert.equal(matching.pairs.some(pair => ['pair-a', 'pair-b'].includes(pair.id)), false);
+      assert.equal(matching.targets.some(target => ['target-a', 'target-b'].includes(target.id)), false);
+      assert.equal('matchingShuffleOrders' in publicAttempt, false);
+    }
     assert.equal(publicAttempt.deadlineIso, result.attempt.deadlineIso);
   });
 });
@@ -262,6 +267,25 @@ test('Wiederaufnahme liefert nur den eigenen aktiven Versuch und eine sichere Fr
     assert.equal(publicAttempt?.questions[0].type, 'single_choice');
     assert.equal(JSON.stringify(publicAttempt).includes('correctOptionId'), false);
     assert.equal(await getActiveExamAttempt(repository, 'exam-1', 'another-user', 'PC-101'), null);
+  });
+});
+
+test('Vorhandene aktive Versuche ohne Alias-Metadaten werden bei Wiederaufnahme sicher migriert', async () => {
+  await withRepository(async repository => {
+    const started = await start(repository);
+    const legacyAttempt = { ...started.attempt };
+    delete legacyAttempt.matchingPresentationIds;
+    delete legacyAttempt.matchingPairOrders;
+    await repository.update('exam_attempts', started.attempt.id, legacyAttempt);
+    const resumed = await getActiveExamAttempt(repository, 'exam-1', 'user-1', 'PC-101', fixedNow + 1_000);
+    assert.ok(resumed);
+    const matching = resumed.questions.find(question => question.type === 'matching');
+    assert.equal(matching?.type, 'matching');
+    if (matching?.type === 'matching') {
+      assert.equal(matching.pairs.some(pair => ['pair-a', 'pair-b'].includes(pair.id)), false);
+      assert.equal(matching.targets.some(target => ['target-a', 'target-b'].includes(target.id)), false);
+    }
+    assert.ok((await repository.get('exam_attempts', started.attempt.id) as any).matchingPresentationIds);
   });
 });
 

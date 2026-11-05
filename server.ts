@@ -33,7 +33,7 @@ import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, getExamWorkshopDefinitionHash, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, examWorkshopPublicationRequiresApproval, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
-import { projectExamWorkshopMaster } from './server/examWorkshopProjection.ts';
+import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server/examWorkshopProjection.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
@@ -1314,7 +1314,7 @@ async function startServer() {
         canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)
       );
       visible.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
-      res.json({ exams: visible.map(exam => projectExamWorkshopMaster(exam, context.actor.role === 'admin')) });
+      res.json({ exams: visible.map(exam => projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET)) });
     } catch (error) {
       next(error);
     }
@@ -1334,7 +1334,7 @@ async function startServer() {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
         return;
       }
-      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       next(error);
     }
@@ -1368,7 +1368,7 @@ async function startServer() {
         req.body.definition
       );
       recordExamWorkshopAudit(context.account.uid, 'Prüfungsentwurf erstellt', String(exam.id), 'Neuer Entwurf angelegt.');
-      res.status(201).json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.status(201).json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
         res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
@@ -1413,18 +1413,21 @@ async function startServer() {
         res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
         return;
       }
+      const definition = context.actor.role === 'admin'
+        ? req.body?.definition
+        : restoreDelegatedMatchingIds(req.body?.definition, existing, SESSION_SECRET);
       const exam = await updateExamDraft(
         getExamRepository(),
         req.params.id,
         context.account.uid,
-        req.body?.definition,
+        definition,
         undefined,
         expectedRevision,
         context.actor.role !== 'admin'
       );
       await refreshPendingExamPublicationRequest(getExamRepository(), req.params.id);
       recordExamWorkshopAudit(context.account.uid, 'Prüfung geändert', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, `Arbeitsrevision ${exam.workingRevision} gespeichert.`);
-      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
         res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
@@ -1592,7 +1595,7 @@ async function startServer() {
         ? { requiresApproval: false, ...result }
         : {
             requiresApproval: false,
-            master: projectExamWorkshopMaster(result.master, false),
+            master: projectExamWorkshopMaster(result.master, false, SESSION_SECRET),
             version: {
               id: result.version.id,
               examId: result.version.examId,
