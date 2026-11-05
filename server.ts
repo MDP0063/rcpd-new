@@ -26,7 +26,8 @@ import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore
 import {
   createFirestoreExamRepository,
   createJsonExamRepository,
-  type ExamRepository
+  type ExamRepository,
+  type ExamDocument
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
@@ -41,7 +42,8 @@ import {
   listPendingExamPublicationRequests,
   refreshPendingExamPublicationRequest,
   submitExamPublicationRequest,
-  updateExamPublicationRequestDecision
+  updateExamPublicationRequestDecision,
+  type ExamPublicationRequestDocument
 } from './server/examWorkshopRequests.ts';
 import { listParticipantExamCatalog } from './server/examParticipantCatalog.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
