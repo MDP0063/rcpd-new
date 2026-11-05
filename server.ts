@@ -42,6 +42,7 @@ import {
   addExamComment,
   archiveExamMaster,
   listExamComments,
+  listExamPublicationRequests,
   refreshPendingExamPublicationRequest,
   submitExamPublicationRequest,
   updateExamPublicationRequestDecision,
@@ -1615,8 +1616,7 @@ async function startServer() {
         res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge einsehen.' });
         return;
       }
-      const requests = await getExamRepository().list<ExamPublicationRequestDocument>('exam_publication_requests', { limit: 500 });
-      requests.sort((a, b) => b.createdIso.localeCompare(a.createdIso));
+      const requests = await listExamPublicationRequests(getExamRepository());
       res.json({ requests });
     } catch (error) {
       sendExamWorkshopGovernanceError(error, res, next);

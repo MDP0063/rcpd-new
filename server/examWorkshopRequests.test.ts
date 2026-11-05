@@ -5,6 +5,7 @@ import { createExamDraft, publishExamDraft } from './examWorkshop.ts';
 import {
   addExamComment,
   archiveExamMaster,
+  listExamPublicationRequests,
   listPendingExamPublicationRequests,
   refreshPendingExamPublicationRequest,
   submitExamPublicationRequest,
@@ -159,5 +160,48 @@ test('admin archive closes all pending publication requests and makes the exam u
     assert.equal(archived.status, 'archived');
     assert.equal(archived.startable, false);
     assert.equal((await repository.get('exam_publication_requests', request.id))?.status, 'archived');
+  });
+});
+
+
+test('all publication request statuses are listed newest-first with a global limit of 500', async () => {
+  await withRepository(async repository => {
+    const statuses = ['pending', 'published', 'returned', 'rejected', 'archived'] as const;
+    const createRequest = async (id: string, status: typeof statuses[number], createdIso: string) => {
+      await repository.create('exam_publication_requests', id, {
+        id,
+        examId: `exam_${id}`,
+        requestedByUid: 'author_1',
+        requestedByName: 'Officer One',
+        assessmentStage: 'test',
+        requestKind: 'new',
+        status,
+        submittedRevision: 1,
+        submittedHash: 'a'.repeat(64),
+        createdIso,
+        updatedIso: createdIso
+      });
+    };
+
+    for (let index = 0; index < 495; index += 1) {
+      await createRequest(`old_${index}`, 'pending', new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString());
+    }
+    for (let index = 0; index < statuses.length; index += 1) {
+      await createRequest(`latest_${statuses[index]}`, statuses[index], new Date(Date.UTC(2026, 1, 1, 0, index)).toISOString());
+    }
+
+    const requests = await listExamPublicationRequests(repository);
+    assert.equal(requests.length, 500);
+    assert.deepEqual(
+      requests.slice(0, statuses.length).map(request => request.status),
+      [...statuses].reverse()
+    );
+    assert.deepEqual(
+      requests.slice(0, statuses.length).map(request => request.id),
+      [...statuses].reverse().map(status => `latest_${status}`)
+    );
+    assert.ok(requests.every((request, index) =>
+      index === 0 || requests[index - 1].createdIso >= request.createdIso
+    ));
   });
 });
