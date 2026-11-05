@@ -1291,6 +1291,7 @@ async function startServer() {
       EXAM_COURSE_NOT_ASSIGNED: { status: 403, message: 'Diese Prüfung ist dem ausgewählten Lehrgang nicht zugewiesen.' },
       EXAM_CLEARANCE_INSUFFICIENT: { status: 403, message: 'Deine aktuelle Freigabestufe reicht für diese Prüfung nicht aus.' },
       EXAM_PUBLISHED_VERSION_INVALID: { status: 409, message: 'Die veröffentlichte Prüfungsversion ist derzeit nicht verfügbar.' },
+      EXAM_ATTEMPT_SNAPSHOT_INVALID: { status: 409, message: 'Der gespeicherte Prüfungsversuch ist nicht konsistent. Bitte wende dich an den Administrator.' },
       EXAM_ATTEMPT_LIMIT_REACHED: { status: 409, message: 'Das zulässige Versuchskontingent für diesen Lehrgang ist ausgeschöpft.' },
       EXAM_PREREQUISITE_NOT_MET: { status: 403, message: 'Die Voraussetzungen für diese Prüfung sind noch nicht erfüllt.' },
       ACTIVE_ATTEMPT_DIFFERENT_COURSE: { status: 409, message: 'Für diese Prüfung läuft bereits ein Versuch in einem anderen Lehrgang. Dieser Versuch kann nicht übertragen werden.' },
