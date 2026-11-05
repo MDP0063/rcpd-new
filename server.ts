@@ -2786,7 +2786,7 @@ jobs:
         'SYSTEM_BACKUP',
         'Legacy-Prüfungsdaten migriert',
         'ExamRepository',
-        `Prüfungen: ${summary.exams.imported} neu, ${summary.exams.alreadyMigrated} bereits vorhanden, ${summary.exams.skipped} übersprungen. Fortschritt: ${summary.progress.imported} neu, ${summary.progress.updated} aktualisiert, ${summary.progress.alreadyMigrated} bereits vorhanden, ${summary.progress.skipped} übersprungen.`
+        `Prüfungen: ${summary.exams.imported} neu, ${summary.exams.updated} aktualisiert, ${summary.exams.alreadyMigrated} bereits vorhanden, ${summary.exams.skipped} übersprungen. Fortschritt: ${summary.progress.imported} neu, ${summary.progress.updated} aktualisiert, ${summary.progress.alreadyMigrated} bereits vorhanden, ${summary.progress.skipped} übersprungen.`
       );
       await saveDatabaseAndWait(dbState);
       await repository.setMaintenanceMode(false);
