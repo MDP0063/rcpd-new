@@ -45,7 +45,10 @@ export function canAccessExamWorkshopExam(
   const category = assessmentStage === 'final_exam' ? permissions.finalExams : permissions.tests;
   if (action === 'view') return category.canView;
   if (action === 'create') return category.canCreate;
-  if (action === 'edit') return category.canEdit;
+  if (action === 'edit') {
+    if (examId && permissions.lockedUpdateExamIds.includes(examId)) return false;
+    return category.canEdit;
+  }
   if (action === 'update_existing') {
     if (!category.canUpdateExisting) return false;
     if (examId && permissions.lockedUpdateExamIds.includes(examId)) return false;
