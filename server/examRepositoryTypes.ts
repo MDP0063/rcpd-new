@@ -3,7 +3,9 @@ export const EXAM_COLLECTIONS = [
   'exam_versions',
   'exam_attempts',
   'exam_progress',
-  'exam_legacy_verifications'
+  'exam_legacy_verifications',
+  'exam_comments',
+  'exam_publication_requests'
 ] as const;
 
 export type ExamCollection = (typeof EXAM_COLLECTIONS)[number];
