@@ -247,7 +247,8 @@ export type RequestCategory =
   | 'clearance'
   | 'award'
   | 'transfer'
-  | 'loa';
+  | 'loa'
+  | 'exam_workshop_access';
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
@@ -318,7 +319,8 @@ export interface AuditLogDoc {
     | 'COURSE_GRADE'
     | 'ANNOUNCEMENT'
     | 'CALENDAR_EVENT'
-    | 'SYSTEM_BACKUP';
+    | 'SYSTEM_BACKUP'
+    | 'EXAM_WORKSHOP';
   actionTitle: string;
   targetLabel: string;
   details: string;
@@ -378,7 +380,7 @@ export interface CalendarEventDoc {
 export interface PortalNotificationDoc {
   id: string;
   recipientUid: string; // specific uid or 'ALL'
-  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message';
+  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review';
   title: string;
   message: string;
   linkSection:
@@ -392,7 +394,8 @@ export interface PortalNotificationDoc {
     | 'audit'
     | 'whitelist'
     | 'settings'
-    | 'personnel';
+    | 'personnel'
+    | 'exam_workshop';
   readByUids: string[];
   createdIso: string;
 }
