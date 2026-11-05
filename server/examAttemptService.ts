@@ -4,7 +4,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { ExamRepository } from './examRepository.ts';
-import type { ExamDocument, ExamQuery } from './examRepositoryTypes.ts';
+import type { ExamDocument, ExamQuery, ExamTransaction } from './examRepositoryTypes.ts';
 import { normalizeCourseCode, isValidId } from './examValidate.ts';
 import { defaultMaxAttempts, type ExamQuestion, type ExamPrerequisite } from './examTypes.ts';
 import {
@@ -145,7 +145,7 @@ function validateExtraAttempts(master: ExamDocument, uid: string): number {
 }
 
 async function prerequisiteSatisfied(
-  transaction: Parameters<Parameters<ExamRepository['runTransaction']>[0]>[0],
+  transaction: ExamTransaction,
   participantUid: string,
   prerequisite: ExamPrerequisite
 ): Promise<boolean> {
@@ -281,21 +281,6 @@ export async function startExamAttempt(
   return repository.runTransaction(async transaction => {
     const master = await transaction.get('exam_masters', examId);
     if (!master) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
-    if (master.status !== 'published' || master.startable !== true) {
-      throw new Error('EXAM_NOT_STARTABLE');
-    }
-    const assigned = master.assignedCourseCodes;
-    if (!Array.isArray(assigned) || !assigned.includes(attemptCourseCode)) {
-      throw new Error('EXAM_COURSE_NOT_ASSIGNED');
-    }
-    if (participant.clearanceLevel < Number(master.minClearance ?? 0)) {
-      throw new Error('EXAM_CLEARANCE_INSUFFICIENT');
-    }
-    const versionId = master.currentPublishedVersionId;
-    if (typeof versionId !== 'string' || !isValidId(versionId)) {
-      throw new Error('EXAM_PUBLISHED_VERSION_INVALID');
-    }
-    const version = validVersion(master, await transaction.get('exam_versions', versionId));
 
     const query = {
       where: [
@@ -314,22 +299,41 @@ export async function startExamAttempt(
       if (active.attemptCourseCode !== attemptCourseCode) {
         throw new Error('ACTIVE_ATTEMPT_DIFFERENT_COURSE');
       }
-      return { attempt: active, version, created: false };
+      // Ein laufender Versuch bleibt an seinen ursprünglichen unveränderlichen Snapshot gebunden,
+      // auch wenn zwischenzeitlich eine neue Version veröffentlicht oder die Zuweisung geändert wurde.
+      const activeVersion = validVersion(master, await transaction.get('exam_versions', active.examVersionId));
+      return { attempt: active, version: activeVersion, created: false };
+    }
+
+    if (master.status !== 'published' || master.startable !== true) {
+      throw new Error('EXAM_NOT_STARTABLE');
+    }
+    const assigned = master.assignedCourseCodes;
+    if (!Array.isArray(assigned) || !assigned.includes(attemptCourseCode)) {
+      throw new Error('EXAM_COURSE_NOT_ASSIGNED');
+    }
+    const versionId = master.currentPublishedVersionId;
+    if (typeof versionId !== 'string' || !isValidId(versionId)) {
+      throw new Error('EXAM_PUBLISHED_VERSION_INVALID');
+    }
+    const version = validVersion(master, await transaction.get('exam_versions', versionId));
+    if (participant.clearanceLevel < version.minClearance) {
+      throw new Error('EXAM_CLEARANCE_INSUFFICIENT');
     }
 
     await assertPrerequisites(transaction, master, version, participant.uid);
     const attemptLimit = getAttemptLimit(version);
-    const courseAttempts = userAttempts.filter(attempt =>
-      attempt.attemptCourseCode === attemptCourseCode &&
-      attempt.status !== 'invalidated_by_admin'
-    );
+    const allCourseAttempts = userAttempts.filter(attempt => attempt.attemptCourseCode === attemptCourseCode);
+    const countableCourseAttempts = allCourseAttempts.filter(attempt => attempt.status !== 'invalidated_by_admin');
     if (attemptLimit !== null) {
       const extraAttempts = validateExtraAttempts(master, participant.uid);
-      if (courseAttempts.length >= attemptLimit + extraAttempts) {
+      const effectiveLimit = attemptLimit + extraAttempts;
+      if (!Number.isSafeInteger(effectiveLimit)) throw new Error('EXAM_ATTEMPT_LIMIT_INVALID');
+      if (countableCourseAttempts.length >= effectiveLimit) {
         throw new Error('EXAM_ATTEMPT_LIMIT_REACHED');
       }
     }
-    const attemptNumber = courseAttempts.length + 1;
+    const attemptNumber = allCourseAttempts.length + 1;
     if (!Number.isSafeInteger(attemptNumber)) throw new Error('EXAM_ATTEMPT_LIMIT_INVALID');
 
     const timeLimitMinutes = version.timeLimitMinutes;
