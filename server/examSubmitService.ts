@@ -50,6 +50,7 @@ function validAttemptVersion(
     version.id !== attempt.examVersionId ||
     version.examId !== examId ||
     version.versionNumber !== attempt.versionNumber ||
+    (version.assessmentStage !== 'test' && version.assessmentStage !== 'final_exam') ||
     version.assessmentStage !== attempt.assessmentStage ||
     !Array.isArray(version.questionsSnapshot) ||
     version.questionsSnapshot.length === 0 ||
