@@ -6,6 +6,7 @@
  * sync/state aktualisiert; Browser lauschen darauf und laden ihre Daten dann neu.
  * firebase-admin wird erst beim Öffnen geladen, damit der JSON-Modus ohne das Paket läuft.
  */
+import type { Firestore } from 'firebase-admin/firestore';
 import {
   assembleState,
   COLLECTIONS,
@@ -17,6 +18,8 @@ import {
 } from './stateDiff.ts';
 
 export interface FirestoreStore {
+  /** Dieselbe konfigurierte Datenbank für gezielte ExamRepository-Operationen. */
+  getDatabase(): Firestore;
   /** Liest alles aus Firestore. Gibt null zurück, wenn noch nichts gespeichert wurde. */
   loadAll(): Promise<StateLike | null>;
   /** Merkt den Zustand zum Speichern vor. Aufeinanderfolgende Aufrufe werden gebündelt. */
@@ -128,6 +131,10 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
   }
 
   return {
+    getDatabase() {
+      return db;
+    },
+
     async loadAll() {
       const metaSnap = await db.doc('meta/state').get();
       if (!metaSnap.exists) return null;
