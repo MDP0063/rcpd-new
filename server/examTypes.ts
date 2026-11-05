@@ -164,6 +164,7 @@ export interface LegacyProgressRecord {
 
 /** Create-only Nachweis in `exam_legacy_verifications` (§19.5). */
 export interface LegacyVerificationDoc {
+  [key: string]: unknown;
   id: string;
   legacyProgressId: string;
   userId: string;
