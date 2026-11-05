@@ -24,7 +24,7 @@ const QUESTION_KEYS = new Set([
 ]);
 
 function invalid(path: string): never {
-  throw new Error(\`EXAM_WORKSHOP_INPUT_INVALID:\${path}\`);
+  throw new Error(`EXAM_WORKSHOP_INPUT_INVALID:${path}`);
 }
 
 function boundedInteger(value: unknown, min: number, max: number, path: string): number {
@@ -72,7 +72,7 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
   const rawPrerequisites = value.prerequisites === undefined ? [] : value.prerequisites;
   if (!Array.isArray(rawPrerequisites) || rawPrerequisites.length > EXAM_LIMITS.maxPrerequisites) return invalid('prerequisites');
   const prerequisites = rawPrerequisites.map((item, index) => {
-    if (!isPlainObject(item)) return invalid(\`prerequisites[\${index}]\`);
+    if (!isPlainObject(item)) return invalid(`prerequisites[${index}]`);
     if (
       typeof item.examId !== 'string' ||
       !item.examId.trim() ||
@@ -83,7 +83,7 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
           !Number.isSafeInteger(item.minScoreBasisPoints) ||
           item.minScoreBasisPoints < 0 ||
           item.minScoreBasisPoints > 10_000))
-    ) return invalid(\`prerequisites[\${index}]\`);
+    ) return invalid(`prerequisites[${index}]`);
     return {
       examId: item.examId,
       mode: item.mode,
@@ -94,9 +94,9 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
   const rawQuestions = value.questions === undefined ? [] : value.questions;
   if (!Array.isArray(rawQuestions) || rawQuestions.length > EXAM_LIMITS.maxQuestions) return invalid('questions');
   const questions = rawQuestions.map((question, index) => {
-    if (!isPlainObject(question)) return invalid(\`questions[\${index}]\`);
-    if (Object.keys(question).some(key => !QUESTION_KEYS.has(key))) return invalid(\`questions[\${index}]\`);
-    if (question.imageUrl !== undefined && !isHttpsUrl(question.imageUrl)) return invalid(\`questions[\${index}].imageUrl\`);
+    if (!isPlainObject(question)) return invalid(`questions[${index}]`);
+    if (Object.keys(question).some(key => !QUESTION_KEYS.has(key))) return invalid(`questions[${index}]`);
+    if (question.imageUrl !== undefined && !isHttpsUrl(question.imageUrl)) return invalid(`questions[${index}].imageUrl`);
     return structuredClone(question) as unknown as ExamQuestion;
   });
 
@@ -233,7 +233,7 @@ export async function publishExamDraft(
   if (!Number.isSafeInteger(versionNumber)) throw new Error('EXAM_VERSION_SEQUENCE_INVALID');
 
   const version = {
-    id: \`\${id}__v\${versionNumber}\`,
+    id: `${id}__v${versionNumber}`,
     examId: id,
     versionNumber,
     publishedAtIso: nowIso,
