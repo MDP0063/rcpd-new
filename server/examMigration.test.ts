@@ -61,6 +61,8 @@ test('Legacy-Migration importiert Master, unveränderliche Startversion und Fort
     const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
     assert.equal(version?.source, 'legacy_migration');
     assert.equal(version?.versionNumber, 1);
+    assert.equal(version?.publishedAtIso, '2026-11-05T12:00:00.000Z');
+    assert.equal(version?.sourceUpdatedIso, '2026-10-01T12:00:00.000Z');
 
     const progress = await repository.get('exam_progress', 'legacy_progress__progress-legacy-1');
     assert.equal(progress?.source, 'legacy');
