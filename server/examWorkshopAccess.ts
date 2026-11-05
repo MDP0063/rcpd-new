@@ -45,6 +45,7 @@ export function canAccessExamWorkshopExam(
     : actor.permissions.tests;
   if (action === 'view') return category.canView;
   if (action === 'create') return category.canCreate;
+  if (!category.canView) return false;
   if (action === 'edit') {
     // This action is reserved for the creator's own unpublished draft.
     return category.canEdit;
