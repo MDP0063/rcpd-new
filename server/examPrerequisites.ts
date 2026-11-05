@@ -3,7 +3,7 @@
  *
  * Quellen: zuerst die neuen, nicht invalidierten Versuche, danach Legacy-Nachweise.
  * Ein altes "passed" zählt nur mit gültiger Admin-Verifikation. Die Auswertung bezieht sich auf die
- * Prüfung insgesamt (über alle Lehrgänge des Nutzers) und nutzt die übergebene Auswahlregel (Standard "best").
+ * Prüfung im konkreten Lehrgangskontext und nutzt die übergebene Auswahlregel (Standard "best").
  */
 import { aggregateAttempts } from './examAggregate.ts';
 import { mapLegacyProgress } from './examLegacy.ts';
@@ -18,6 +18,8 @@ import type {
 
 export interface PrerequisiteContext {
   userId: string;
+  /** Lehrgang, für den die aktuelle Abschlussprüfung gestartet werden soll. */
+  attemptCourseCode: string;
   attempts: AttemptSummary[];
   legacyProgress: LegacyProgressRecord[];
   legacyVerifications: LegacyVerificationDoc[];
@@ -56,8 +58,11 @@ function checkOne(pre: ExamPrerequisite, ctx: PrerequisiteContext): Prerequisite
   });
 
   // 1. Neue Versuche
-  const own = ctx.attempts.filter(a => a.userId === ctx.userId && a.examId === pre.examId);
-  const agg = aggregateAttempts(own, rule, { userId: ctx.userId, examId: pre.examId, attemptCourseCode: '' });
+  const courseCode = ctx.attemptCourseCode.trim().toUpperCase();
+  const own = ctx.attempts.filter(a =>
+    a.userId === ctx.userId && a.examId === pre.examId && a.attemptCourseCode.trim().toUpperCase() === courseCode
+  );
+  const agg = aggregateAttempts(own, rule, { userId: ctx.userId, examId: pre.examId, attemptCourseCode: courseCode });
   if (pre.mode === 'completed') {
     // Abgegeben zählt als absolviert, auch wenn die Korrektur noch offen ist.
     if (agg.status === 'passed' || agg.status === 'failed' || agg.status === 'pending_review') {
@@ -72,6 +77,8 @@ function checkOne(pre: ExamPrerequisite, ctx: PrerequisiteContext): Prerequisite
   let unverified = false;
   for (const record of ctx.legacyProgress) {
     if (record.userId !== ctx.userId || record.targetId !== pre.examId) continue;
+    // Historische Nachweise ohne Lehrgangscode bleiben als globale Legacy-Nachweise nutzbar.
+    if (record.courseCode && record.courseCode.trim().toUpperCase() !== courseCode) continue;
     const evidence = mapLegacyProgress(record, ctx.legacyVerifications);
     if (!evidence) continue;
     if (pre.mode === 'completed') {
