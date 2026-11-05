@@ -29,6 +29,7 @@ type ExamMaster = {
   prerequisites?: { examId: string; mode: 'completed' | 'passed'; minScoreBasisPoints?: number }[];
   questions: Question[]; updatedIso?: string; latestVersionNumber?: number;
   currentPublishedVersionId?: string; isLegacyFormat?: boolean; examFormat?: string;
+  workingRevision?: number;
 };
 type Definition = Omit<ExamMaster, 'id' | 'status' | 'updatedIso' | 'latestVersionNumber' | 'currentPublishedVersionId' | 'isLegacyFormat' | 'examFormat'>;
 
@@ -62,6 +63,7 @@ const labelClass = 'block text-xs font-semibold text-slate-600 dark:text-slate-3
 export const ExamWorkshop: React.FC = () => {
   const [exams, setExams] = useState<ExamMaster[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expectedRevision, setExpectedRevision] = useState<number | null>(null);
   const [definition, setDefinition] = useState<Definition>(emptyDefinition());
   const [mode, setMode] = useState<'list' | 'edit' | 'preview'>('list');
   const [loading, setLoading] = useState(true);
@@ -96,6 +98,7 @@ export const ExamWorkshop: React.FC = () => {
 
   const openNew = () => {
     setSelectedId(null);
+    setExpectedRevision(null);
     setDefinition(emptyDefinition());
     setError(null);
     setNotice(null);
@@ -117,6 +120,7 @@ export const ExamWorkshop: React.FC = () => {
       return;
     }
     setSelectedId(id);
+    setExpectedRevision(exam.workingRevision ?? 1);
     setDefinition({
       title: exam.title || '', moduleCode: exam.moduleCode || '',
       assignedCourseCodes: exam.assignedCourseCodes || (exam.moduleCode ? [exam.moduleCode] : []),
@@ -131,16 +135,21 @@ export const ExamWorkshop: React.FC = () => {
 
   const save = async () => {
     setSaving(true); setError(null); setNotice(null);
-    const payload = { definition };
+    if (selectedId && expectedRevision === null) {
+      setError('Die aktuelle Prüfungsrevision fehlt. Bitte lade die Prüfung erneut.');
+      return;
+    }
+    const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
     const response = selectedId
       ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
-      : await apiFetch<{ exam: ExamMaster }>('/api/admin/exams', { method: 'POST', body: JSON.stringify(payload) });
+      : await apiFetch<{ exam: ExamMaster }>('/api/workshop/exams', { method: 'POST', body: JSON.stringify(payload) });
     setSaving(false);
     if (!response.ok || !response.data?.exam) {
       setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
       return;
     }
     setSelectedId(response.data.exam.id);
+    setExpectedRevision(response.data.exam.workingRevision ?? 1);
     setNotice('Entwurf erfolgreich gespeichert.');
     await loadExams();
   };
