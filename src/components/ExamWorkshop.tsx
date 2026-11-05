@@ -67,7 +67,6 @@ interface ExamWorkshopProps { currentUser: UserPublicProfile; }
 export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   const workshopPermissions = currentUser.granularPermissions?.examWorkshop;
   const isAdmin = currentUser.role === 'admin';
-  const canCreateActive = isAdmin || Boolean(workshopPermissions?.hasAccess && (activeStage === 'final_exam' ? workshopPermissions.finalExams.canCreate : workshopPermissions.tests.canCreate));
   const canViewTests = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.tests.canView);
   const canViewFinalExams = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.finalExams.canView);
   const [exams, setExams] = useState<ExamMaster[]>([]);
@@ -76,6 +75,7 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   const [activeStage, setActiveStage] = useState<'test' | 'final_exam'>(() =>
     currentUser.role === 'admin' || currentUser.granularPermissions?.examWorkshop?.tests.canView ? 'test' : 'final_exam'
   );
+  const canCreateActive = isAdmin || Boolean(workshopPermissions?.hasAccess && (activeStage === 'final_exam' ? workshopPermissions.finalExams.canCreate : workshopPermissions.tests.canCreate));
   const [definition, setDefinition] = useState<Definition>(emptyDefinition());
   const [mode, setMode] = useState<'list' | 'edit' | 'preview'>('list');
   const [loading, setLoading] = useState(true);
