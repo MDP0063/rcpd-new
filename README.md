@@ -1,4 +1,4 @@
-This repository contains a web-based intranet portal designed for police roleplay communities to manage training, internal communications, and administrative requests. Please note that the project is currently in a very early stage of development (Alpha). Frequent updates, bug fixes, and continuous additions of new features are expected. All functional capabilities are being actively developed and refined over time.
+This repository contains a web-based intranet portal designed for police roleplay communities to manage training, internal communications, and administrative requests. Please note that the project is currently in a very early stage of development (Alpha). Frequent updates, bug fixes, and continuous additions of new features are expected. All functional capabilities are being actively developed and refined over time. And i know its basicly vibecoding but idc fight me 😅
 
 ## AI-assisted development
 
