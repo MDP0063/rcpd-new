@@ -4,7 +4,7 @@
  */
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
-import { parseAttemptAnswers, projectQuestionsForAttempt } from './examRunner.ts';
+import { evaluateExamAnswers, parseAttemptAnswers, projectQuestionsForAttempt } from './examRunner.ts';
 import type { ExamAttemptRecord, ExamVersionRecord, PublicExamAttempt } from './examAttemptService.ts';
 import { isValidId } from './examValidate.ts';
 
@@ -15,6 +15,8 @@ export interface SaveExamAttemptAnswersResult {
   attempt: PublicExamAttempt;
   saved: boolean;
   stale: boolean;
+  expired: boolean;
+  finalStatus?: 'passed' | 'failed' | 'pending_review';
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -129,7 +131,37 @@ export async function saveExamAttemptAnswers(
     if (attempt.deadlineIso !== null) {
       const deadlineMs = Date.parse(attempt.deadlineIso);
       if (!Number.isFinite(deadlineMs)) throw new Error('EXAM_ATTEMPT_DEADLINE_INVALID');
-      if (requestReceivedAtMs > deadlineMs) throw new Error('EXAM_ATTEMPT_EXPIRED');
+      if (requestReceivedAtMs > deadlineMs) {
+        const savedAnswers = parseAttemptAnswers(attempt.answers, version.questionsSnapshot);
+        const grade = evaluateExamAnswers(
+          version.questionsSnapshot,
+          savedAnswers,
+          version.passingScoreBasisPoints
+        );
+        if (grade.totalPossiblePointsMilli !== attempt.totalPossiblePointsMilli) {
+          throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+        }
+        const expiredAttempt: ExamAttemptRecord = {
+          ...attempt,
+          status: grade.status,
+          submittedAtIso: new Date(deadlineMs).toISOString(),
+          autoFinalizedAtIso: serverTimeIso,
+          submissionReason: 'time_expired',
+          automaticallyEarnedPointsMilli: grade.automaticallyEarnedPointsMilli,
+          manuallyEarnedPointsMilli: 0,
+          preliminaryScoreBasisPoints: grade.preliminaryScoreBasisPoints,
+          finalScoreBasisPoints: grade.finalScoreBasisPoints,
+          questionGrades: grade.questionGrades
+        };
+        await transaction.update('exam_attempts', attemptId, expiredAttempt);
+        return {
+          attempt: null,
+          saved: false,
+          stale: false,
+          expired: true,
+          finalStatus: grade.status
+        };
+      }
     }
 
     // Ein verspätet eintreffender älterer Autosave darf den neueren Serverstand nicht überschreiben.
@@ -137,7 +169,8 @@ export async function saveExamAttemptAnswers(
       return {
         attempt: publicProjection(attempt, version, requestReceivedAtMs),
         saved: false,
-        stale: true
+        stale: true,
+        expired: false
       };
     }
     if (revision > attempt.currentRevision + MAX_REVISION_JUMP) {
@@ -150,7 +183,8 @@ export async function saveExamAttemptAnswers(
       return {
         attempt: publicProjection(attempt, version, requestReceivedAtMs),
         saved: false,
-        stale: false
+        stale: false,
+        expired: false
       };
     }
 
@@ -165,7 +199,8 @@ export async function saveExamAttemptAnswers(
     return {
       attempt: publicProjection(updated, version, requestReceivedAtMs),
       saved: true,
-      stale: false
+      stale: false,
+      expired: false
     };
   });
 }
