@@ -149,7 +149,13 @@ async function prerequisiteSatisfied(
   participantUid: string,
   prerequisite: ExamPrerequisite
 ): Promise<boolean> {
-  if (!isValidId(prerequisite.examId) || !['completed', 'passed'].includes(prerequisite.mode)) {
+  if (
+    !isValidId(prerequisite.examId) ||
+    !['completed', 'passed'].includes(prerequisite.mode) ||
+    (prerequisite.minScoreBasisPoints !== undefined &&
+      (!Number.isSafeInteger(prerequisite.minScoreBasisPoints) ||
+        prerequisite.minScoreBasisPoints < 0 || prerequisite.minScoreBasisPoints > 10_000))
+  ) {
     throw new Error('EXAM_PREREQUISITE_INVALID');
   }
   const where: ExamQuery['where'] = [
@@ -302,6 +308,7 @@ export async function startExamAttempt(
       // Ein laufender Versuch bleibt an seinen ursprünglichen unveränderlichen Snapshot gebunden,
       // auch wenn zwischenzeitlich eine neue Version veröffentlicht oder die Zuweisung geändert wurde.
       const activeVersion = validVersion(master, await transaction.get('exam_versions', active.examVersionId));
+      if (activeVersion.versionNumber !== active.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
       return { attempt: active, version: activeVersion, created: false };
     }
 
@@ -322,11 +329,11 @@ export async function startExamAttempt(
     }
 
     await assertPrerequisites(transaction, master, version, participant.uid);
+    const extraAttempts = validateExtraAttempts(master, participant.uid);
     const attemptLimit = getAttemptLimit(version);
     const allCourseAttempts = userAttempts.filter(attempt => attempt.attemptCourseCode === attemptCourseCode);
     const countableCourseAttempts = allCourseAttempts.filter(attempt => attempt.status !== 'invalidated_by_admin');
     if (attemptLimit !== null) {
-      const extraAttempts = validateExtraAttempts(master, participant.uid);
       const effectiveLimit = attemptLimit + extraAttempts;
       if (!Number.isSafeInteger(effectiveLimit)) throw new Error('EXAM_ATTEMPT_LIMIT_INVALID');
       if (countableCourseAttempts.length >= effectiveLimit) {
@@ -406,6 +413,7 @@ export async function getActiveExamAttempt(
     { id: examId },
     await repository.get('exam_versions', active[0].examVersionId)
   );
+  if (version.versionNumber !== active[0].versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
   return toPublicAttempt(active[0], version, new Date(serverTimeMs).toISOString());
 }
 
