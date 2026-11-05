@@ -64,6 +64,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
   const [title, setTitle] = useState('');
   const [requestedRole, setRequestedRole] = useState<OfficerRole>('rookie');
   const [targetDetail, setTargetDetail] = useState('');
+  const [examWorkshopAreas, setExamWorkshopAreas] = useState<Array<'tests' | 'final_exams'>>(['tests']);
   const [justification, setJustification] = useState('');
   const [priority, setPriority] = useState<'normal' | 'high'>('normal');
   const [confirmAccuracy, setConfirmAccuracy] = useState(false);
@@ -73,6 +74,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [applyRankChange, setApplyRankChange] = useState(true);
+  const [examWorkshopGrantAreas, setExamWorkshopGrantAreas] = useState<Array<'tests' | 'final_exams'>>([]);
 
   const filteredRequests = sortRequestsPendingFirst(
     requests.filter(r => (statusFilter === 'ALL' ? true : r.status === statusFilter))
@@ -95,7 +97,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
 
   const canProceedStep1 =
     title.trim().length >= 4 &&
-    (category === 'rank_change' ? Boolean(requestedRole) : targetDetail.trim().length >= 2);
+    (category === 'rank_change' ? Boolean(requestedRole) : category === 'exam_workshop_access' ? examWorkshopAreas.length > 0 : targetDetail.trim().length >= 2);
 
   const canProceedStep2 = justification.trim().length >= 10;
 
@@ -126,7 +128,10 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
           targetDetail:
             category === 'rank_change'
               ? `Zielrang: ${requestedRole.toUpperCase()} (${ROLE_HIERARCHY[requestedRole].defaultRank})`
-              : targetDetail.trim(),
+              : category === 'exam_workshop_access'
+                ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen').join(', ')
+                : targetDetail.trim(),
+          ...(category === 'exam_workshop_access' ? { examWorkshopAreas } : {}),
           justification: justification.trim(),
           priority
         })
@@ -151,13 +156,18 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
   };
 
   const handleDecision = async (reqDoc: PortalRequestDoc, nextStatus: RequestStatus) => {
+    if (reqDoc.category === 'exam_workshop_access' && nextStatus === 'approved' && !examWorkshopGrantAreas.length) {
+      onStatusToast('Wähle mindestens einen beantragten Bereich für die Freigabe aus.');
+      return;
+    }
     const res = await apiFetch(`${API_ENDPOINTS.REQUESTS}/${reqDoc.id}/review`, {
       method: 'PUT',
       body: JSON.stringify({
         reviewerUid: currentUser.uid,
         status: nextStatus,
         reviewerComment: reviewComment,
-        applyRankChange
+        applyRankChange,
+        ...(reqDoc.category === 'exam_workshop_access' && nextStatus === 'approved' ? { examWorkshopAreas: examWorkshopGrantAreas } : {})
       })
     });
 
@@ -168,6 +178,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
 
     setReviewingId(null);
     setReviewComment('');
+    setExamWorkshopGrantAreas([]);
     await onRefreshState();
     onStatusToast(
       nextStatus === 'approved'
@@ -396,6 +407,19 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                         <option value="colonel">2. Colonel (Ausbildungs- &amp; Stabsleitung)</option>
                       </select>
                     </div>
+                  ) : category === 'exam_workshop_access' ? (
+                    <fieldset className="space-y-2 rounded-md border border-sky-200 dark:border-sky-900 p-3">
+                      <legend className="px-1 text-xs font-semibold">Benötigter Bereich *</legend>
+                      {([
+                        ['tests', 'Prüfungen / Tests'], ['final_exams', 'Abschlussprüfungen']
+                      ] as const).map(([area, label]) => (
+                        <label key={area} className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={examWorkshopAreas.includes(area)} onChange={event => setExamWorkshopAreas(current => event.target.checked ? [...new Set([...current, area])] : current.filter(item => item !== area))} />
+                          {label}
+                        </label>
+                      ))}
+                      <p className="text-xs text-slate-500">Beide Bereiche kannst du gemeinsam beantragen. Der Admin legt den Umfang der Rechte fest.</p>
+                    </fieldset>
                   ) : (
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -491,7 +515,9 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                       <span className="font-mono font-bold text-sky-700 dark:text-sky-400">
                         {category === 'rank_change'
                           ? `Zielrang: ${requestedRole.toUpperCase()} (${ROLE_HIERARCHY[requestedRole].defaultRank})`
-                          : targetDetail}
+                          : category === 'exam_workshop_access'
+                            ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen').join(', ')
+                            : targetDetail}
                       </span>
                     </div>
                     <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -761,6 +787,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                               onClick={() => {
                                 setReviewingId(isReviewing ? null : reqDoc.id);
                                 setReviewComment(reqDoc.reviewerComment || '');
+                                setExamWorkshopGrantAreas([]);
                               }}
                               className="px-2.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/70 rounded border border-sky-200 dark:border-sky-800 cursor-pointer"
                             >
@@ -820,6 +847,18 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                                     DIREKTE ENTSCHEIDUNG DURCH{' '}
                                     {isAdmin ? 'ADMINISTRATOR' : 'COLONEL'}:
                                   </div>
+
+                                  {isAdmin && reqDoc.category === 'exam_workshop_access' && (
+                                    <fieldset className="space-y-2 rounded-md border border-sky-200 dark:border-sky-900 p-3">
+                                      <legend className="px-1 text-xs font-semibold">Freizugebende beantragte Bereiche</legend>
+                                      {(reqDoc.examWorkshopAreas || []).map(area => (
+                                        <label key={area} className="flex items-center gap-2 text-xs">
+                                          <input type="checkbox" checked={examWorkshopGrantAreas.includes(area)} onChange={event => setExamWorkshopGrantAreas(current => event.target.checked ? [...new Set([...current, area])] : current.filter(item => item !== area))} />
+                                          {area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen'}
+                                        </label>
+                                      ))}
+                                    </fieldset>
+                                  )}
 
                                   <input
                                     type="text"

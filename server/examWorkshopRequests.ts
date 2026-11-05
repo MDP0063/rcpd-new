@@ -56,8 +56,6 @@ export async function addExamComment(
     throw new Error('EXAM_COMMENT_INVALID');
   }
   if (!author.uid.trim() || !author.displayName.trim()) throw new Error('EXAM_COMMENT_INVALID');
-  const exam = await repository.get('exam_masters', examId);
-  if (!exam) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
   const comment: ExamCommentDocument = {
     id: newId('examcomment'),
     examId,
@@ -66,7 +64,12 @@ export async function addExamComment(
     body: rawBody.trim(),
     createdIso: nowIso
   };
-  await repository.create('exam_comments', comment.id, comment);
+  await repository.runTransaction(async transaction => {
+    const exam = await transaction.get('exam_masters', examId);
+    if (!exam) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
+    if (exam.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+    await transaction.create('exam_comments', comment.id, comment);
+  });
   return comment;
 }
 
@@ -190,5 +193,39 @@ export async function updateExamPublicationRequestDecision(
     }
     await transaction.update('exam_publication_requests', requestId, next);
     return next;
+  });
+}
+
+export async function archiveExamMaster(
+  repository: ExamRepository,
+  examId: string,
+  reviewer: { uid: string; displayName: string },
+  reason: string,
+  nowIso = new Date().toISOString()
+): Promise<ExamDocument> {
+  const comment = reason.trim();
+  if (comment.length < 3 || comment.length > 1000 || !reviewer.uid.trim() || !reviewer.displayName.trim()) {
+    throw new Error('EXAM_ARCHIVE_REASON_INVALID');
+  }
+  return repository.runTransaction(async transaction => {
+    const master = await transaction.get('exam_masters', examId);
+    if (!master) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
+    if (master.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+    const requests = await transaction.list<ExamPublicationRequestDocument>('exam_publication_requests', {
+      where: [{ field: 'examId', value: examId }, { field: 'status', value: 'pending' }], limit: 500
+    });
+    const nextMaster: ExamDocument = {
+      ...master, status: 'archived', startable: false, archivedAtIso: nowIso,
+      archivedByUid: reviewer.uid, archivedReason: comment, updatedIso: nowIso
+    };
+    await transaction.update('exam_masters', examId, nextMaster);
+    for (const request of requests) {
+      await transaction.update('exam_publication_requests', request.id, {
+        ...request, status: 'archived', reviewedByUid: reviewer.uid,
+        reviewedByName: reviewer.displayName.trim().slice(0, 120), reviewedAtIso: nowIso,
+        reviewComment: comment, updatedIso: nowIso
+      });
+    }
+    return nextMaster;
   });
 }

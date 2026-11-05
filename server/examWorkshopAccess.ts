@@ -48,7 +48,7 @@ export function canAccessExamWorkshopExam(
   if (!category.canView) return false;
   if (action === 'edit') {
     // This action is reserved for the creator's own unpublished draft.
-    return category.canEdit;
+    return category.canEdit && !(examId && actor.permissions.lockedUpdateExamIds.includes(examId));
   }
   if (action === 'update_existing') {
     if (!category.canUpdateExisting) return false;

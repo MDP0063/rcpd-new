@@ -262,6 +262,7 @@ export interface PortalRequestDoc {
   title: string;
   requestedRole?: OfficerRole;
   targetDetail: string;
+  examWorkshopAreas?: Array<'tests' | 'final_exams'>;
   justification: string;
   priority: 'normal' | 'high';
   status: RequestStatus;

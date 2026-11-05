@@ -46,6 +46,12 @@ test('own draft editing and existing exam updates are separate permissions', () 
     tests: { canView: true, canCreate: true, canEdit: true, canUpdateExisting: false }
   }));
   assert.equal(canAccessExamWorkshopExam(actor, 'test', 'edit', 'own_draft'), true);
+  const lockedOwnDraft = resolveExamWorkshopActor(account('colonel', {
+    hasAccess: true,
+    tests: { canView: true, canCreate: true, canEdit: true, canUpdateExisting: true },
+    lockedUpdateExamIds: ['own_draft']
+  }));
+  assert.equal(canAccessExamWorkshopExam(lockedOwnDraft, 'test', 'edit', 'own_draft'), false);
   assert.equal(canAccessExamWorkshopExam(actor, 'test', 'update_existing', 'other_draft'), false);
 });
 

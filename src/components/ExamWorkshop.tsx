@@ -4,6 +4,7 @@ import {
   Loader2, Plus, Save, Send, Trash2, X
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import { AdminExamWorkshopGovernance } from './AdminExamWorkshopGovernance';
 
 type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'matching' | 'free_text';
 type Option = { id: string; text: string };
@@ -60,7 +61,7 @@ const defaultQuestion = (type: QuestionType): Question => {
 const inputClass = 'w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500';
 const labelClass = 'block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5';
 
-export const ExamWorkshop: React.FC = () => {
+export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const [exams, setExams] = useState<ExamMaster[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expectedRevision, setExpectedRevision] = useState<number | null>(null);
@@ -73,6 +74,9 @@ export const ExamWorkshop: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, string | string[] | boolean>>({});
+  const [comments, setComments] = useState<Array<{ id: string; authorName: string; body: string; createdIso: string }>>([]);
+  const [commentBody, setCommentBody] = useState('');
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   const loadExams = useCallback(async () => {
     setLoading(true);
@@ -120,6 +124,11 @@ export const ExamWorkshop: React.FC = () => {
       return;
     }
     setSelectedId(id);
+    setCommentsLoading(true);
+    const commentsResponse = await apiFetch<{ comments: typeof comments }>(`/api/workshop/exams/${encodeURIComponent(id)}/comments`, { cache: 'no-store' });
+    setCommentsLoading(false);
+    if (commentsResponse.ok && commentsResponse.data) setComments(commentsResponse.data.comments || []);
+    else setComments([]);
     setExpectedRevision(exam.workingRevision ?? 1);
     setDefinition({
       title: exam.title || '', moduleCode: exam.moduleCode || '',
@@ -189,11 +198,30 @@ export const ExamWorkshop: React.FC = () => {
     setDefinition(current => ({ ...current, questions: current.questions.map((question, i) => i === index ? { ...question, ...patch } : question) }));
   };
 
+  const createComment = async () => {
+    if (!selectedId || !commentBody.trim()) return;
+    const response = await apiFetch<{ comment: typeof comments[number] }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}/comments`, { method: 'POST', body: JSON.stringify({ body: commentBody }) });
+    if (!response.ok || !response.data) { setError(response.error || 'Der Kommentar konnte nicht gespeichert werden.'); return; }
+    setComments(current => [...current, response.data!.comment]);
+    setCommentBody('');
+  };
+
+  const archiveExam = async (exam: ExamMaster) => {
+    const reason = window.prompt('Begründung für die Archivierung dieser Prüfung:');
+    if (reason === null) return;
+    if (reason.trim().length < 3) { setError('Bitte gib einen nachvollziehbaren Archivierungsgrund ein.'); return; }
+    const response = await apiFetch(`/api/admin/exams/${encodeURIComponent(exam.id)}/archive`, { method: 'POST', body: JSON.stringify({ reason }) });
+    if (!response.ok) { setError(response.error || 'Die Prüfung konnte nicht archiviert werden.'); return; }
+    setNotice(`„${exam.title || 'Prüfung'}“ wurde archiviert.`);
+    await loadExams();
+  };
+
   const addQuestion = (type: QuestionType) => update('questions', [...definition.questions, defaultQuestion(type)]);
   const removeQuestion = (index: number) => update('questions', definition.questions.filter((_, i) => i !== index));
 
   if (mode === 'list') return (
     <div className="space-y-6">
+      {isAdmin && <AdminExamWorkshopGovernance onOpenExam={id => void openExam(id)} />}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
@@ -204,7 +232,7 @@ export const ExamWorkshop: React.FC = () => {
       <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Prüfung oder Lehrgang suchen…"/></div>
       {loading ? <div className="py-16 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2"/>Prüfungen werden geladen…</div> :
         filteredExams.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center"><BookOpen className="mx-auto text-slate-400 mb-3"/><p className="font-semibold text-slate-800 dark:text-slate-100">Noch keine Prüfungen gefunden</p><p className="text-sm text-slate-500 mt-1">Lege eine neue Prüfung an oder passe den Suchbegriff an.</p></div> :
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3"><button onClick={()=>void openExam(exam.id)} disabled={exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button></td></tr>)}</tbody></table></div>}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3 space-x-3"><button onClick={()=>void openExam(exam.id)} disabled={exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button>{isAdmin && exam.status !== 'archived' && <button onClick={()=>void archiveExam(exam)} className="text-rose-700 dark:text-rose-400 font-semibold">Archivieren</button>}</td></tr>)}</tbody></table></div>}
     </div>
   );
 
@@ -274,6 +302,11 @@ export const ExamWorkshop: React.FC = () => {
         </article>)}
         {definition.questions.length===0 && <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500">Noch keine Fragen hinzugefügt.</div>}
       </section>
+      {selectedId && <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
+        <div><h2 className="font-bold text-slate-900 dark:text-white">Prüfungsverlauf &amp; Kommentare</h2><p className="text-xs text-slate-500">Anmerkungen werden mit Prüfung und Zeitstempel gespeichert.</p></div>
+        {commentsLoading ? <p className="text-sm text-slate-500">Kommentare werden geladen…</p> : comments.length === 0 ? <p className="text-sm text-slate-500">Noch keine Kommentare.</p> : <ol className="space-y-2">{comments.map(comment => <li key={comment.id} className="rounded border border-slate-200 dark:border-slate-700 p-3"><div className="flex justify-between gap-2 text-xs text-slate-500"><span>{comment.authorName}</span><time>{new Date(comment.createdIso).toLocaleString('de-DE')}</time></div><p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p></li>)}</ol>}
+        <div className="flex flex-col gap-2 sm:flex-row"><textarea value={commentBody} onChange={event => setCommentBody(event.target.value)} maxLength={4000} rows={2} placeholder="Kommentar zum Prüfungsverlauf…" className={inputClass}/><button type="button" disabled={!commentBody.trim()} onClick={() => void createComment()} className="rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Kommentar hinzufügen</button></div>
+      </section>}
     </div>
   );
 };

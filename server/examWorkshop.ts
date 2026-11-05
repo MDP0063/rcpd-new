@@ -177,7 +177,8 @@ export async function updateExamDraft(
   editorUid: string,
   definition: unknown,
   nowIso = new Date().toISOString(),
-  expectedRevision?: number
+  expectedRevision?: number,
+  preserveSensitiveFields = false
 ) {
   const input = parseExamWorkshopDraft(definition);
   return repository.runTransaction(async transaction => {
@@ -196,6 +197,25 @@ export async function updateExamDraft(
     ) throw new Error('EXAM_WORKING_REVISION_INVALID');
     if (expectedRevision !== undefined && expectedRevision !== currentRevision) {
       throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+    }
+    if (preserveSensitiveFields) {
+      const existingQuestions = new Map((Array.isArray(current.questions) ? current.questions : [])
+        .filter((question): question is Record<string, unknown> => Boolean(question) && typeof question === 'object')
+        .map(question => [String(question.id || ''), question]));
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) {
+        const previous = existingQuestions.get(String(question.id || ''));
+        if (!previous) continue;
+        for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'explanation', 'gradingRubric']) {
+          if (Object.prototype.hasOwnProperty.call(previous, key)) question[key] = structuredClone(previous[key]);
+        }
+        if (Array.isArray(question.matchingPairs) && Array.isArray(previous.matchingPairs)) {
+          const oldPairs = new Map((previous.matchingPairs as Array<Record<string, unknown>>).map(pair => [String(pair.id || ''), pair]));
+          question.matchingPairs = (question.matchingPairs as Array<Record<string, unknown>>).map(pair => {
+            const old = oldPairs.get(String(pair.id || ''));
+            return old && Object.prototype.hasOwnProperty.call(old, 'targetId') ? { ...pair, targetId: old.targetId } : pair;
+          });
+        }
+      }
     }
     const next: ExamDocument = {
       ...current,
@@ -269,6 +289,20 @@ export async function publishExamDraft(
       reviewComment: (publicationReview.reviewComment || '').trim().slice(0, 1000),
       updatedIso: nowIso
     };
+  } else {
+    // A direct publication closes any pending review in the same repository transaction.
+    const pending = await repository.list<ExamDocument & { status?: string; examId?: string; submittedRevision?: number }>(
+      'exam_publication_requests',
+      { where: [{ field: 'examId', value: id }, { field: 'status', value: 'pending' }], limit: 2 }
+    );
+    if (pending.length > 1) throw new Error('EXAM_PUBLICATION_REQUEST_DUPLICATE_PENDING');
+    if (pending[0]) {
+      if (pending[0].submittedRevision !== currentRevision) throw new Error('EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT');
+      nextPublicationRequest = {
+        ...pending[0], status: 'published', reviewedByUid: publisherUid,
+        reviewedAtIso: nowIso, reviewComment: 'Der Prüfungsstand wurde direkt veröffentlicht.', updatedIso: nowIso
+      };
+    }
   }
 
   const definition = {

@@ -138,6 +138,22 @@ test('Prüfungswerkstatt: veraltete Arbeitsrevisionen werden abgewiesen', async 
   });
 });
 
+test('Prüfungswerkstatt: delegierte Bearbeitung bewahrt serverseitige Schlüssel und Rubriken', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-preserve-secrets', 'author-1', validDefinition);
+    const delegatedDefinition = {
+      ...validDefinition,
+      questions: [{
+        id: 'question-1', type: 'single_choice', question: 'Überarbeiteter Fragetext', pointsMilli: 1000,
+        options: [{ id: 'a', text: 'Neue Beschriftung' }, { id: 'b', text: 'Kanal B' }]
+      }]
+    };
+    const updated = await updateExamDraft(repository, 'exam-preserve-secrets', 'editor-1', delegatedDefinition, undefined, 1, true);
+    assert.equal((updated.questions as any[])[0].correctOptionId, 'a');
+    assert.equal((updated.questions as any[])[0].question, 'Überarbeiteter Fragetext');
+  });
+});
+
 test('Prüfungswerkstatt: die Prüfungsart eines bestehenden Entwurfs ist unveränderlich', async () => {
   await withRepository(async repository => {
     await createExamDraft(repository, 'exam-stage-immutable', 'author-1', validDefinition);
