@@ -247,7 +247,8 @@ export type RequestCategory =
   | 'clearance'
   | 'award'
   | 'transfer'
-  | 'loa';
+  | 'loa'
+  | 'exam_workshop_access';
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
