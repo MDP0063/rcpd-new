@@ -31,7 +31,6 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
   }
 
   const collections = {} as Record<ExamCollection, ExamDocument[]>;
-  const ids = {} as Record<ExamCollection, Set<string>>;
 
   for (const collection of EXAM_COLLECTIONS) {
     const raw = value.collections[collection];
@@ -51,7 +50,6 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
       }
       documents.push(structuredClone(item) as ExamDocument);
     }
-    ids[collection] = seen;
     collections[collection] = documents;
   }
 
@@ -106,14 +104,14 @@ export function validateLegacyVerificationSources(
     fail('EXAM_BACKUP_LEGACY_DATA_MISSING');
   }
 
-  const examIds = new Set(
-    legacyExams.filter(isRecord).map(exam => exam.id).filter((id): id is string => typeof id === 'string')
-  );
-  const progressById = new Map(
-    legacyProgress.filter(isRecord).map(record => [record.id, record]).filter(
-      (entry): entry is [string, Record<string, unknown>] => typeof entry[0] === 'string'
-    )
-  );
+  const examIds = new Set<string>();
+  for (const exam of legacyExams) {
+    if (isRecord(exam) && typeof exam.id === 'string') examIds.add(exam.id);
+  }
+  const progressById = new Map<string, Record<string, unknown>>();
+  for (const record of legacyProgress) {
+    if (isRecord(record) && typeof record.id === 'string') progressById.set(record.id, record);
+  }
 
   for (const verification of snapshot.collections.exam_legacy_verifications) {
     if (!validateLegacyVerification(verification).ok) fail('EXAM_BACKUP_LEGACY_VERIFICATION_INVALID');
