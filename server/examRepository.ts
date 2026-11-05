@@ -35,7 +35,7 @@ export class ExamRepository implements ExamStorageAdapter {
   }
 
   async exportSnapshot(): Promise<ExamRepositorySnapshot> {
-    return this.adapter.exportSnapshot();
+    return validateExamRepositorySnapshot(await this.adapter.exportSnapshot());
   }
 
   async restoreSnapshot(snapshot: unknown): Promise<void> {
