@@ -41,6 +41,12 @@ async function withRepository(
         options: [{ id: 'a', text: 'Antwort A' }, { id: 'b', text: 'Antwort B' }],
         correctOptionId: 'b',
         explanation: 'Geheim'
+      }, {
+        id: 'q2', type: 'matching', question: 'Ordne zu.', pointsMilli: 2000,
+        matchingPairs: [
+          { id: 'pair-a', prompt: 'Begriff A', targetId: 'target-a', targetText: 'Definition A' },
+          { id: 'pair-b', prompt: 'Begriff B', targetId: 'target-b', targetText: 'Definition B' }
+        ]
       }]
     });
     await run(repository);
@@ -103,6 +109,7 @@ test('Start legt einen serverseitig getimten Versuch mit Snapshot und Matching-R
     assert.equal(result.attempt.examVersionId, 'exam-1__v1');
     assert.deepEqual(result.attempt.assignedCourseCodesAtStart, ['PC-101', 'PC-102']);
     assert.deepEqual(result.attempt.answers, {});
+    assert.deepEqual(new Set(result.attempt.matchingShuffleOrders.q2), new Set(['target-a', 'target-b']));
     assert.equal((await repository.list('exam_attempts', { where: [{ field: 'userId', value: 'user-1' }] })).length, 1);
   });
 });
@@ -116,6 +123,9 @@ test('Teilnehmerprojektion gibt keine Lösungen oder Erklärungen aus', async ()
     assert.equal(serialized.includes('Geheim'), false);
     assert.equal(serialized.includes('correctOptionIds'), false);
     assert.equal(publicAttempt.questions[0].type, 'single_choice');
+    const matching = publicAttempt.questions.find(question => question.type === 'matching');
+    assert.equal(matching?.type, 'matching');
+    if (matching?.type === 'matching') assert.equal(matching.targets.length, 2);
     assert.equal(publicAttempt.deadlineIso, result.attempt.deadlineIso);
   });
 });
