@@ -367,7 +367,9 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     await onRefreshState();
-    onStatusToast('Komplettes Datenbank-Backup (Konten, Passwörter, PDFs & Tests) heruntergeladen.');
+    onStatusToast(
+      `Vollständiges V4-Backup heruntergeladen: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche.`
+    );
   };
 
   const handleQuickRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,9 +379,33 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     reader.onload = async () => {
       try {
         const parsed = JSON.parse(String(reader.result));
+        const requiredExamCollections = [
+          'exam_masters',
+          'exam_versions',
+          'exam_attempts',
+          'exam_progress',
+          'exam_legacy_verifications'
+        ];
+        if (
+          parsed.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+          !parsed.examRepository?.collections ||
+          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name]))
+        ) {
+          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein neues vollständiges V4-Backup.');
+          return;
+        }
         const res = await apiFetch<{
           ok: boolean;
-          summary: { accountsCount: number; modulesCount: number; examsCount: number };
+          summary: {
+            accountsCount: number;
+            modulesCount: number;
+            examsCount: number;
+            examMastersCount: number;
+            examVersionsCount: number;
+            examAttemptsCount: number;
+            examProgressCount: number;
+            examLegacyVerificationsCount: number;
+          };
         }>(API_ENDPOINTS.ADMIN_RESTORE, {
           method: 'POST',
           body: JSON.stringify({
@@ -393,7 +419,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
         }
         await onRefreshState();
         onStatusToast(
-          `Backup wiederhergestellt (${res.data.summary.accountsCount} Konten, ${res.data.summary.modulesCount} PDFs, ${res.data.summary.examsCount} Prüfungen).`
+          `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche.`
         );
       } catch {
         onStatusToast('Ungültige JSON-Backup-Datei.');
