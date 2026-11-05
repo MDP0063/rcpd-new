@@ -1059,7 +1059,7 @@ async function startServer() {
 
   // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
   app.use('/api', (req, res, next) => {
-    const isExamAutosave = req.method === 'PUT' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/autosave$/.test(req.path);
+    const isExamAutosave = req.method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(req.path);
     if (isExamAutosave) res.locals.examRequestReceivedAtMs = Date.now();
     if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
       next();
