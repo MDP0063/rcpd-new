@@ -201,10 +201,19 @@ export function validateLegacyVerification(doc: unknown): { ok: boolean; errors:
     if (typeof doc[key] !== 'string' || !(doc[key] as string).trim()) errors.push(`${key} fehlt.`);
   }
   if (doc.verifiedStatus !== 'passed') errors.push('verifiedStatus muss "passed" sein.');
-  if (typeof doc.verifiedAtIso !== 'string' || Number.isNaN(Date.parse(doc.verifiedAtIso))) {
+  if (
+    typeof doc.legacyProgressId === 'string' &&
+    typeof doc.id === 'string' &&
+    doc.id !== legacyVerificationId(doc.legacyProgressId)
+  ) {
+    errors.push('id entspricht nicht der deterministischen Legacy-Verifikations-ID.');
+  }
+  if (typeof doc.verifiedAtIso !== 'string' || doc.verifiedAtIso.length > 64 || Number.isNaN(Date.parse(doc.verifiedAtIso))) {
     errors.push('verifiedAtIso ist kein gültiger Zeitstempel.');
   }
-  if (typeof doc.reason !== 'string' || !doc.reason.trim()) errors.push('Die Begründung ist Pflicht.');
+  if (typeof doc.reason !== 'string' || !doc.reason.trim() || doc.reason.length > 1000) {
+    errors.push('Die Begründung fehlt oder überschreitet 1.000 Zeichen.');
+  }
   if (doc.attemptCourseCode !== undefined && normalizeCourseCode(doc.attemptCourseCode) === null) {
     errors.push('attemptCourseCode ist ungültig.');
   }
@@ -212,8 +221,48 @@ export function validateLegacyVerification(doc: unknown): { ok: boolean; errors:
 }
 
 /**
+ * Erstellt den unveränderlichen Verifikationsnachweis aus dem serverseitig geladenen Legacy-Datensatz.
+ * Identität, Prüfung und Lehrgang werden niemals aus Client-Eingaben übernommen.
+ */
+export function createLegacyVerificationDoc(
+  progress: LegacyProgressRecord,
+  verifiedByUid: string,
+  verifiedAtIso: string,
+  reason: string
+): LegacyVerificationDoc {
+  if (
+    (progress.targetType !== 'test' && progress.targetType !== 'final_exam') ||
+    progress.status !== 'passed'
+  ) {
+    throw new Error('EXAM_LEGACY_SOURCE_NOT_VERIFIABLE');
+  }
+  const courseCode = progress.courseCode === undefined
+    ? undefined
+    : normalizeCourseCode(progress.courseCode);
+  if (progress.courseCode !== undefined && courseCode === null) {
+    throw new Error('EXAM_LEGACY_COURSE_INVALID');
+  }
+  const verification: LegacyVerificationDoc = {
+    id: legacyVerificationId(progress.id),
+    legacyProgressId: progress.id,
+    userId: progress.userId,
+    examId: progress.targetId,
+    ...(courseCode ? { attemptCourseCode: courseCode } : {}),
+    verifiedStatus: 'passed',
+    verifiedByUid,
+    verifiedAtIso,
+    reason: typeof reason === 'string' ? reason.trim() : ''
+  };
+  if (!validateLegacyVerification(verification).ok) {
+    throw new Error('EXAM_LEGACY_VERIFICATION_INVALID');
+  }
+  return verification;
+}
+
+/**
  * Gibt die gültige Verifikation für genau diesen Legacy-Nachweis zurück, sonst null.
- * Gilt nur für Nutzer, Prüfung und - sofern auf beiden Seiten vorhanden - Lehrgang des Nachweises.
+ * Nutzer, Prüfung und Lehrgang müssen eindeutig übereinstimmen; ein fehlender Lehrgangscode
+ * bleibt nur dann global, wenn er auf beiden Seiten fehlt.
  */
 export function findValidVerification(
   progress: LegacyProgressRecord,
@@ -223,8 +272,10 @@ export function findValidVerification(
   for (const v of verifications) {
     if (!validateLegacyVerification(v).ok) continue;
     if (v.legacyProgressId !== progress.id || v.userId !== progress.userId || v.examId !== progress.targetId) continue;
-    if (v.attemptCourseCode !== undefined && progress.courseCode !== undefined) {
-      if (normalizeCourseCode(v.attemptCourseCode) !== normalizeCourseCode(progress.courseCode)) continue;
+    if (v.attemptCourseCode !== undefined || progress.courseCode !== undefined) {
+      const verificationCourse = normalizeCourseCode(v.attemptCourseCode);
+      const progressCourse = normalizeCourseCode(progress.courseCode);
+      if (!verificationCourse || !progressCourse || verificationCourse !== progressCourse) continue;
     }
     return v;
   }
