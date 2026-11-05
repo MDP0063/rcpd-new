@@ -209,6 +209,10 @@ test('Voraussetzungen unterscheiden Absolvierung, bestanden und verifizierte Leg
     });
     await assert.rejects(startExamAttempt(repository, 'exam-final', participant, 'PC-101'), /EXAM_PREREQUISITE_NOT_MET/);
     await repository.create('exam_attempts', 'old-attempt', {
+      id: 'old-attempt', userId: 'user-1', examId: 'exam-1', status: 'in_progress',
+      finalScoreBasisPoints: null
+    });
+    await repository.update('exam_attempts', 'old-attempt', {
       id: 'old-attempt', userId: 'user-1', examId: 'exam-1', status: 'passed',
       finalScoreBasisPoints: 9000, submittedAtIso: new Date().toISOString()
     });
