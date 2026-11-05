@@ -165,16 +165,22 @@ test('Nur der Eigentümer und die passende Prüfung dürfen den Versuch speicher
   });
 });
 
-test('Ein nach der Deadline eingegangener Autosave verändert Antworten, Revision und Heartbeat nicht', async () => {
+test('Verspäteter Autosave speichert keine Payload und finalisiert den letzten gespeicherten Stand', async () => {
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(29));
     const before = await repository.get('exam_attempts', 'attempt-1');
-    await assert.rejects(
-      saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'a' }, at(31)),
-      /EXAM_ATTEMPT_EXPIRED/
-    );
+    const result = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'a' }, at(31));
     const after = await repository.get('exam_attempts', 'attempt-1');
-    assert.deepEqual(after, before);
+    assert.equal(result.expired, true);
+    assert.equal(result.finalStatus, 'pending_review');
+    assert.equal(result.attempt, null);
+    assert.equal(after?.status, 'pending_review');
+    assert.equal(after?.submittedAtIso, new Date(at(30)).toISOString());
+    assert.equal(after?.submissionReason, 'time_expired');
+    assert.deepEqual(after?.answers, before?.answers);
+    assert.equal(after?.currentRevision, before?.currentRevision);
+    assert.equal(after?.lastHeartbeatAtIso, before?.lastHeartbeatAtIso);
+    assert.equal(after?.autoFinalizedAtIso, new Date(at(31)).toISOString());
   });
 });
 
