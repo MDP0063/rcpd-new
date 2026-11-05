@@ -2226,9 +2226,8 @@ async function startServer() {
     }));
 
     // Filter out final_exam for trainees on the backend as well
-    const visibleExams = isTrainee
-      ? dbState.exams.filter(ex => ex.assessmentStage !== 'final_exam')
-      : dbState.exams;
+    const visibleExams = dbState.exams.filter(exam => exam.status !== 'archived' &&
+      (!isTrainee || exam.assessmentStage !== 'final_exam'));
 
     const canSeeAllProgress =
       isAdmin ||
@@ -3021,17 +3020,19 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetCode = String(moduleCode || 'TEST-01').trim();
-    if (!caller || !canActorEditCourseCode(caller, targetCode)) {
+    const stage = assessmentStage === 'final_exam' ? 'final_exam' : assessmentStage === 'test' ? 'test' : null;
+    const actor = caller ? resolveExamWorkshopActor(caller) : null;
+    if (!caller || !actor || !stage ||
+        !canAccessExamWorkshopExam(actor, stage, 'create') ||
+        (actor.role !== 'admin' && examWorkshopPublicationRequiresApproval(actor, stage, false)) ||
+        !canActorEditCourseCode(caller, targetCode)) {
       res.status(403).json({
-        error:
-          'Zugriff verweigert. Nur Admin, Colonel oder für diesen Lehrgangs-Code freigeschaltete Ausbilder dürfen Prüfungen anlegen.'
+        error: 'Zugriff verweigert. Die Prüfungswerkstatt-Berechtigung und die Veröffentlichungsregel erlauben diese Legacy-Anlage nicht.'
       });
       return;
     }
-
-    const stage = assessmentStage === 'final_exam' ? 'final_exam' : 'test';
     const newExam: AcademyExamDoc = {
       id: newId('exam'),
       title: String(title).trim(),
@@ -3059,34 +3060,41 @@ async function startServer() {
       `${newExam.moduleCode} — ${newExam.title}`,
       `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
     );
+    appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung angelegt', `${newExam.moduleCode} — ${newExam.title}`, `Prüfungsbereich: ${stage}.`);
     saveDatabase(dbState);
     res.json({ exam: newExam });
   });
 
   app.delete('/api/academy/exams/:examId', (req, res) => {
-    const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetExam = dbState.exams.find(e => e.id === req.params.examId);
     if (!targetExam) {
       res.status(404).json({ error: 'Prüfung nicht gefunden.' });
       return;
     }
-    if (!caller || !canActorEditCourseCode(caller, targetExam.moduleCode)) {
-      res.status(403).json({ error: 'Zugriff verweigert.' });
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Nur der Administrator darf ältere Prüfungen archivieren.' });
       return;
     }
-    dbState.exams = dbState.exams.filter(e => e.id !== req.params.examId);
+    const reason = req.body?.reason;
+    if (typeof reason !== 'string' || reason.trim().length < 3 || reason.length > 1000) {
+      res.status(400).json({ error: 'Bitte gib einen Archivierungsgrund mit höchstens 1.000 Zeichen ein.' });
+      return;
+    }
+    const archiveTime = new Date().toISOString();
+    Object.assign(targetExam, { status: 'archived', archivedAtIso: archiveTime, archivedByUid: caller.uid, archivedReason: reason.trim(), updatedIso: archiveTime });
     appendAuditLog(
       dbState,
       caller,
       'ACADEMY_DOC',
-      'Prüfung / Test gelöscht',
+      'Ältere Prüfung archiviert',
       `${targetExam.moduleCode} — ${targetExam.title}`,
-      `Prüfung wurde durch ${caller.publicProfile.displayName} entfernt.`
+      reason.trim()
     );
+    appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung archiviert', `${targetExam.moduleCode} — ${targetExam.title}`, reason.trim());
     saveDatabase(dbState);
-    res.json({ deleted: true });
+    res.json({ archived: true });
   });
 
   // 9b. GRANULAR INSTRUCTOR COURSE GRADING (/api/academy/instructor-grade)
@@ -3104,7 +3112,7 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const instructor = dbState.accounts.find(a => a.uid === instructorUid);
+    const instructor = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const student = dbState.accounts.find(a => a.uid === targetUserUid);
 
     if (!instructor || !student) {
@@ -3121,6 +3129,16 @@ async function startServer() {
       });
       return;
     }
+    if (targetType !== 'module') {
+      res.status(400).json({ error: 'Über diesen älteren Ausbilderpfad dürfen nur Lehrgangsfortschritte, keine Prüfungsresultate bewertet werden.' });
+      return;
+    }
+    const numericScore = Number(scorePercent);
+    if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 100 ||
+        (status !== 'passed' && status !== 'failed' && status !== 'completed')) {
+      res.status(400).json({ error: 'Bewertungsstatus oder Punktzahl ist ungültig.' });
+      return;
+    }
 
     const nowIso = new Date().toISOString();
     const targetId = `crs_${normalizedCode}_${targetUserUid}`;
@@ -3133,11 +3151,11 @@ async function startServer() {
       userId: student.uid,
       userName: student.publicProfile.displayName,
       targetId,
-      targetType: targetType || 'test',
+      targetType: 'module',
       targetTitle: String(targetTitle || `Lehrgang ${normalizedCode}`).trim(),
       courseCode: normalizedCode,
       status: status || 'passed',
-      scorePercent: Number(scorePercent ?? 100),
+      scorePercent: Math.round(numericScore),
       attempts: existingIdx !== -1 ? dbState.progress[existingIdx].attempts + 1 : 1,
       evaluatedByName: `${instructor.publicProfile.displayName} (${instructor.publicProfile.badgeNumber})`,
       instructorFeedback: String(instructorFeedback || '').trim(),

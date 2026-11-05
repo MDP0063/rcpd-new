@@ -112,6 +112,10 @@ export interface AcademyExamDoc {
   questionsPayload: string;
   interactiveWidgetCode: string;
   authorUid: string;
+  status?: 'draft' | 'published' | 'archived';
+  archivedAtIso?: string;
+  archivedByUid?: string;
+  archivedReason?: string;
   updatedIso?: string;
 }
 

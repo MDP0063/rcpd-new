@@ -353,14 +353,20 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   };
 
   const handleDeleteExam = async (id: string) => {
-    if (!canEditAcademy) return;
+    if (currentUser.role !== 'admin') return;
+    const reason = window.prompt('Begründung für die Archivierung dieser älteren Prüfung:');
+    if (reason === null) return;
+    if (reason.trim().length < 3) {
+      onStatusToast('Bitte gib einen nachvollziehbaren Archivierungsgrund ein.');
+      return;
+    }
     const res = await apiFetch(
       `${API_ENDPOINTS.ACADEMY_EXAMS}/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`,
-      { method: 'DELETE' }
+      { method: 'DELETE', body: JSON.stringify({ reason }) }
     );
     if (res.ok) {
       await onRefreshState();
-      onStatusToast('Test / Prüfung entfernt.');
+      onStatusToast('Ältere Prüfung wurde archiviert.');
     } else {
       onStatusToast(res.error || 'Test / Prüfung konnte nicht gelöscht werden.');
     }
@@ -380,7 +386,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         targetUserUid: gradeTargetUserUid,
         courseCode: gradeCourseCode.trim().toUpperCase(),
         targetTitle: gradeCourseTitle.trim(),
-        targetType: 'test',
+        targetType: 'module',
         status: gradeStatus,
         scorePercent: Number(gradeScorePercent),
         instructorFeedback: gradeFeedback.trim()
@@ -952,7 +958,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         </h2>
                       </div>
 
-                      {canEditAcademy && (
+                      {currentUser.role === 'admin' && (
                         <button
                           type="button"
                           onClick={() => handleDeleteExam(currentExam.id)}
