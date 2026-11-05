@@ -162,7 +162,6 @@ nodeTest('Abgabe nach Admin-Invalidierung wird abgelehnt', async () => {
 nodeTest('Abschlussprüfungen geben keine Richtig/Falsch-Hinweise oder Erklärungen an Teilnehmer zurück', async () => {
   await withAttempt(async repository => {
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
-    assert.equal('correct' in result.submission.questionResults[0], false);
-    assert.equal('explanation' in result.submission.questionResults[0], false);
+    assert.deepEqual(result.submission.questionResults, []);
   }, { assessmentStage: 'final_exam' });
 });
