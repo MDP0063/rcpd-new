@@ -1524,7 +1524,9 @@ async function startServer() {
         res.status(202).json({ requiresApproval: true, request });
         return;
       }
-      const result = await publishExamDraft(getExamRepository(), exam.id, context.account.uid);
+      const result = await publishExamDraft(
+        getExamRepository(), exam.id, context.account.uid, new Date().toISOString(), undefined, expectedRevision
+      );
       res.json({ requiresApproval: false, ...result });
     } catch (error) {
       sendExamWorkshopGovernanceError(error, res, next);
