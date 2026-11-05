@@ -14,7 +14,8 @@ const CATEGORY_LABELS: Record<AuditLogDoc['category'], string> = {
   COURSE_GRADE: 'Lehrgangs-Notenvergabe',
   ANNOUNCEMENT: 'Offizielle Bekanntmachung',
   CALENDAR_EVENT: 'Kalender & Einsätze',
-  SYSTEM_BACKUP: 'Datenbank & System'
+  SYSTEM_BACKUP: 'Datenbank & System',
+  EXAM_WORKSHOP: 'Prüfungswerkstatt'
 };
 
 export const AuditTrailConsole: React.FC<AuditTrailConsoleProps> = ({
