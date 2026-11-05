@@ -399,8 +399,26 @@ export interface PortalDbStats {
   sizeBytes: number;
 }
 
+export interface ExamRepositoryBackupSnapshot {
+  formatVersion: 1;
+  collections: {
+    exam_masters: Array<Record<string, unknown> & { id: string }>;
+    exam_versions: Array<Record<string, unknown> & { id: string }>;
+    exam_attempts: Array<Record<string, unknown> & { id: string }>;
+    exam_progress: Array<Record<string, unknown> & { id: string }>;
+    exam_legacy_verifications: Array<Record<string, unknown> & { id: string }>;
+  };
+  summary: {
+    exam_masters: number;
+    exam_versions: number;
+    exam_attempts: number;
+    exam_progress: number;
+    exam_legacy_verifications: number;
+  };
+}
+
 export interface PortalBackupSnapshot {
-  snapshotFormat: 'CA_POST_PORTAL_BACKUP_V3';
+  snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4';
   exportedAtIso: string;
   exportedByUsername: string;
   summary: {
@@ -414,7 +432,13 @@ export interface PortalBackupSnapshot {
     requestsCount?: number;
     eventsCount?: number;
     auditLogsCount?: number;
+    examMastersCount: number;
+    examVersionsCount: number;
+    examAttemptsCount: number;
+    examProgressCount: number;
+    examLegacyVerificationsCount: number;
   };
+  examRepository: ExamRepositoryBackupSnapshot;
   database: {
     version: number;
     accounts: AdminAccountView[];
