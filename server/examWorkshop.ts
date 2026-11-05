@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { checkSnapshotSize, validateExamForPublication } from './examValidate.ts';
@@ -152,7 +153,8 @@ function toMaster(
     questions: input.questions,
     authorUid,
     updatedIso,
-    latestVersionNumber: 0
+    latestVersionNumber: 0,
+    workingRevision: 1
   };
 }
 
@@ -181,9 +183,15 @@ export async function updateExamDraft(
   if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
 
   const input = parseExamWorkshopDraft(definition);
+  const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
+  if (typeof currentRevision !== 'number' || !Number.isSafeInteger(currentRevision) || currentRevision < 1 ||
+    !Number.isSafeInteger(currentRevision + 1)) {
+    throw new Error('EXAM_WORKING_REVISION_INVALID');
+  }
   const next: ExamDocument = {
     ...current,
     ...input,
+    workingRevision: currentRevision + 1,
     title: input.title.trim(),
     // A published snapshot remains active while the admin edits the next working version.
     status: current.currentPublishedVersionId ? 'published' : 'draft',
@@ -195,6 +203,22 @@ export async function updateExamDraft(
   };
   await repository.update('exam_masters', id, next);
   return next;
+}
+
+export function getExamWorkshopDefinitionHash(master: ExamDocument): string {
+  const definition = {
+    title: master.title,
+    moduleCode: master.moduleCode,
+    assignedCourseCodes: master.assignedCourseCodes ?? [],
+    assessmentStage: master.assessmentStage,
+    minClearance: master.minClearance,
+    passingScoreBasisPoints: master.passingScoreBasisPoints,
+    timeLimitMinutes: master.timeLimitMinutes,
+    maxAttempts: master.maxAttempts ?? null,
+    prerequisites: master.prerequisites ?? [],
+    questions: master.questions ?? []
+  };
+  return createHash('sha256').update(JSON.stringify(definition), 'utf8').digest('hex');
 }
 
 export async function publishExamDraft(
