@@ -23,6 +23,11 @@ import {
 } from './server/auth.ts';
 import { canReadModule, shouldRefreshPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
+import {
+  createFirestoreExamRepository,
+  createJsonExamRepository,
+  type ExamRepository
+} from './server/examRepository.ts';
 import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
@@ -99,6 +104,7 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 // Speicher: JSON-Datei (Standard) oder Firestore (STORAGE_BACKEND=firestore).
 // Mit Firestore liegt der Zustand im Speicher des Servers und wird gebündelt nach Firestore geschrieben.
 let store: FirestoreStore | null = null;
+let examRepository: ExamRepository | null = null;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
@@ -921,10 +927,18 @@ async function initFirestoreStorage() {
   console.log('[Firestore] Speicher bereit.');
 }
 
+export function getExamRepository(): ExamRepository {
+  if (!examRepository) throw new Error('EXAM_REPOSITORY_NOT_INITIALIZED');
+  return examRepository;
+}
+
 async function startServer() {
   if (process.env.STORAGE_BACKEND === 'firestore') {
     await initFirestoreStorage();
   }
+  examRepository = store
+    ? createFirestoreExamRepository(store.getDatabase())
+    : createJsonExamRepository(DATA_DIR);
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
