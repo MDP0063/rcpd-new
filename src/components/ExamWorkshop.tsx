@@ -156,17 +156,28 @@ export const ExamWorkshop: React.FC = () => {
 
   const publish = async () => {
     if (!selectedId) { setError('Speichere den Entwurf zuerst.'); return; }
-    if (!window.confirm('Prüfung jetzt veröffentlichen? Dadurch wird eine unveränderliche Version erstellt.')) return;
+    if (expectedRevision === null) { setError('Die aktuelle Prüfungsrevision fehlt. Bitte lade die Prüfung erneut.'); return; }
+    if (!window.confirm('Prüfung jetzt zur Veröffentlichung einreichen?')) return;
     setPublishing(true); setError(null); setNotice(null);
-    const response = await apiFetch<{ version?: { versionNumber?: number }; validation?: { errors?: { path?: string; message?: string }[] } }>(
-      `/api/admin/exams/${encodeURIComponent(selectedId)}/publish`, { method: 'POST', body: JSON.stringify({}) }
+    const response = await apiFetch<{
+      requiresApproval?: boolean;
+      request?: { id?: string };
+      validation?: { errors?: { path?: string; message?: string }[] };
+    }>(
+      `/api/workshop/exams/${encodeURIComponent(selectedId)}/publication-request`,
+      { method: 'POST', body: JSON.stringify({ expectedRevision }) }
     );
     setPublishing(false);
     if (!response.ok) {
       const issues = response.data?.validation?.errors || [];
       setError(issues.length
         ? `Noch nicht veröffentlichungsfähig: ${issues.map(issue => [issue.path, issue.message].filter(Boolean).join(': ')).join(' · ')}`
-        : response.error || 'Die Veröffentlichung ist fehlgeschlagen.');
+        : response.error || 'Die Veröffentlichung konnte nicht eingereicht werden.');
+      return;
+    }
+    if (response.status === 202 || response.data?.requiresApproval) {
+      setNotice('Der Freigabeantrag wurde eingereicht und wartet auf die Admin-Entscheidung.');
+      await loadExams();
       return;
     }
     setNotice('Prüfung wurde als unveränderliche Version veröffentlicht.');
