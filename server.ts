@@ -112,6 +112,7 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
 let examMaintenanceActive = false;
+let examMaintenanceOperation: 'backup' | 'restore' | null = null;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
@@ -2759,8 +2760,9 @@ jobs:
     try {
       // Das persistente Flag pausiert auch Legacy-Prüfungsschreibwege und bleibt bei Server-Neustarts sichtbar.
       examMaintenanceActive = true;
-      maintenanceStarted = true;
+      examMaintenanceOperation = 'backup';
       await repository.setMaintenanceMode(true);
+      maintenanceStarted = true;
 
       const dbState = loadDatabase();
       const caller = dbState.accounts.find(account => account.uid === sessionUid);
@@ -2836,14 +2838,23 @@ jobs:
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
+      examMaintenanceOperation = null;
       res.json(snapshot);
     } catch (error) {
       if (maintenanceStarted) {
         try {
           await repository.setMaintenanceMode(false);
           examMaintenanceActive = false;
+          examMaintenanceOperation = null;
         } catch (releaseError) {
           console.error('[Backup] Wartungsmodus konnte nach fehlgeschlagenem Export nicht aufgehoben werden:', releaseError);
+        }
+      } else {
+        try {
+          examMaintenanceActive = await repository.isMaintenanceMode();
+          examMaintenanceOperation = examMaintenanceActive ? 'restore' : null;
+        } catch {
+          examMaintenanceActive = true;
         }
       }
       next(error);
@@ -2950,9 +2961,16 @@ jobs:
     }
 
     const repository = getExamRepository();
+    if (examMaintenanceActive && examMaintenanceOperation === 'backup') {
+      res.status(503).json({
+        error: 'Eine Datensicherung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
+      });
+      return;
+    }
     try {
       // Auch ein zuvor fehlgeschlagener Restore darf nur über einen erneuten vollständigen Restore fortgesetzt werden.
       examMaintenanceActive = true;
+      examMaintenanceOperation = 'restore';
       await repository.setMaintenanceMode(true, true);
 
       const nowIso = new Date().toISOString();
@@ -3020,6 +3038,7 @@ jobs:
       await repository.restoreSnapshot(examSnapshot);
       await repository.setMaintenanceMode(false);
       examMaintenanceActive = false;
+      examMaintenanceOperation = null;
 
       res.json({
         ok: true,
