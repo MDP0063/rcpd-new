@@ -85,3 +85,23 @@ test('publication request can be returned or archived with a reviewer decision',
     assert.equal((await listPendingExamPublicationRequests(repository)).length, 0);
   });
 });
+
+test('archiving a rejected publication request also archives the exam master', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_archive', 'author_1', definition);
+    const request = await submitExamPublicationRequest(repository, 'exam_archive', {
+      uid: 'author_1', displayName: 'Officer One'
+    });
+    const archived = await updateExamPublicationRequestDecision(
+      repository,
+      request.id,
+      { uid: 'admin_1', displayName: 'Admin' },
+      'archived',
+      'Inhalt wird nicht verwendet.'
+    );
+    const master = await repository.get('exam_masters', 'exam_archive');
+    assert.equal(archived.status, 'archived');
+    assert.equal(master?.status, 'archived');
+    assert.equal(master?.startable, false);
+  });
+});
