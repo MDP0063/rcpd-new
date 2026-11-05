@@ -1396,7 +1396,19 @@ async function startServer() {
         body.answers,
         Number.isSafeInteger(requestReceivedAtMs) ? requestReceivedAtMs : Date.now()
       );
-      res.json(result);
+      if (result.expired) {
+        res.status(409).json({
+          error: 'Das Zeitlimit ist abgelaufen. Es wurden ausschließlich die zuletzt gespeicherten Antworten ausgewertet.',
+          expired: true,
+          status: result.finalStatus
+        });
+        return;
+      }
+      res.json({
+        attempt: result.attempt,
+        saved: result.saved,
+        stale: result.stale
+      });
     } catch (error) {
       sendExamAttemptError(error, res, next);
     }
