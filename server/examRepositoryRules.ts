@@ -195,9 +195,15 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       !isDeepStrictEqual(appended.nextScoreBasisPoints, next.finalScoreBasisPoints ?? null) ||
       !isDeepStrictEqual(next.reviewedByUid, appended.reviewerUid) ||
       !isDeepStrictEqual(next.reviewedAtIso, appended.atIso) ||
+      !isDeepStrictEqual(appended.previousReviewerUid, existing.reviewedByUid) ||
+      !isDeepStrictEqual(appended.previousReviewedAtIso, existing.reviewedAtIso) ||
+      !isDeepStrictEqual(appended.previousManualPointsMilli, existing.manuallyEarnedPointsMilli) ||
+      !isDeepStrictEqual(appended.nextManualPointsMilli, next.manuallyEarnedPointsMilli) ||
+      !Number.isSafeInteger(appended.previousManualPointsMilli) || Number(appended.previousManualPointsMilli) < 0 ||
+      !Number.isSafeInteger(appended.nextManualPointsMilli) || Number(appended.nextManualPointsMilli) < 0 ||
       !isDeepStrictEqual(
         Object.keys(appended).sort(),
-        ['atIso', 'nextGrades', 'nextScoreBasisPoints', 'nextStatus', 'previousGrades', 'previousScoreBasisPoints', 'previousStatus', 'reason', 'reviewerUid'].sort()
+        ['atIso', 'nextGrades', 'nextManualPointsMilli', 'nextScoreBasisPoints', 'nextStatus', 'previousGrades', 'previousManualPointsMilli', 'previousReviewedAtIso', 'previousReviewerUid', 'previousScoreBasisPoints', 'previousStatus', 'reason', 'reviewerUid'].sort()
       ) ||
       !appended.previousGrades.every((grade: any, index: number, all: any[]) =>
         grade && typeof grade.questionId === 'string' && grade.questionId.trim() &&
@@ -214,6 +220,8 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         next.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
       ) ||
       appended.previousGrades.length === 0 ||
+      appended.previousGrades.reduce((sum: number, grade: any) => sum + grade.pointsEarnedMilli, 0) !== appended.previousManualPointsMilli ||
+      appended.nextGrades.reduce((sum: number, grade: any) => sum + grade.pointsEarnedMilli, 0) !== appended.nextManualPointsMilli ||
       appended.previousGrades.length !== appended.nextGrades.length ||
       appended.previousGrades.some((grade: any) => !appended.nextGrades.some((nextGrade: any) => nextGrade.questionId === grade.questionId)) ||
       (appended.nextScoreBasisPoints !== null && (!Number.isSafeInteger(appended.nextScoreBasisPoints) || appended.nextScoreBasisPoints < 0 || appended.nextScoreBasisPoints > 10000)) ||
