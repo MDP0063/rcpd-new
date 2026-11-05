@@ -161,9 +161,9 @@ export interface QuotaInput {
   maxAttempts?: number | null;
   /** Zusatzversuche dieses Nutzers (§7); ungültige Werte zählen als 0. */
   extraAttempts?: number;
-  /** Aus Altdaten übernommener, bereits verbrauchter Versuchszähler (§19.5). */
-  legacyAttemptsConsumed?: number;
   userId: string;
+  /** Lehrgangskontext; Kontingente werden getrennt je Nutzer, Prüfung und Lehrgang geführt. */
+  attemptCourseCode: string;
   examId: string;
   attempts: AttemptSummary[];
 }
@@ -178,10 +178,13 @@ export interface QuotaResult {
 }
 
 export function evaluateQuota(input: QuotaInput): QuotaResult {
-  const legacy = isPositiveSafeInteger(input.legacyAttemptsConsumed) ? input.legacyAttemptsConsumed : 0;
-  const used =
-    input.attempts.filter(a => a.userId === input.userId && a.examId === input.examId && isCounted(a)).length +
-    legacy;
+  const courseCode = input.attemptCourseCode.trim().toUpperCase();
+  // Nur neue Versuche im konkreten Lehrgang verbrauchen das neue Kontingent.
+  // Legacy-Zähler bleiben historische Statistik und werden nicht rückwirkend angerechnet.
+  const used = input.attempts.filter(a =>
+    a.userId === input.userId && a.examId === input.examId &&
+    a.attemptCourseCode.trim().toUpperCase() === courseCode && isCounted(a)
+  ).length;
 
   // Übungstests sind immer unbegrenzt (§3.1).
   const limited = input.assessmentStage === 'final_exam' && isPositiveSafeInteger(input.maxAttempts);
