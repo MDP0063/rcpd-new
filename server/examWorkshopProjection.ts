@@ -1,6 +1,5 @@
 import type { ExamDocument } from './examRepositoryTypes.ts';
-import { randomInt } from 'node:crypto';
-import { createHmac } from 'node:crypto';
+import { createHmac, randomInt } from 'node:crypto';
 
 const SAFE_QUESTION_FIELDS = [
   'id', 'type', 'question', 'pointsMilli', 'imageUrl', 'maxAnswerLength'
@@ -12,6 +11,22 @@ function matchingAlias(secret: string, examId: string, questionId: string, kind:
     .update(JSON.stringify(['exam-workshop', examId, questionId, kind, id]))
     .digest('base64url')
     .slice(0, 32);
+}
+
+/** Uniform Fisher–Yates permutation driven by crypto.randomInt in production. */
+export function shuffleMatchingProjection<T>(
+  values: readonly T[],
+  chooseIndex: (exclusiveUpperBound: number) => number = upperBound => randomInt(upperBound)
+): T[] {
+  const shuffled = [...values];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = chooseIndex(index + 1);
+    if (!Number.isSafeInteger(swapIndex) || swapIndex < 0 || swapIndex > index) {
+      throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
+    }
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
 /** Converts projected aliases back to private IDs before a delegated definition is validated. */
@@ -52,15 +67,17 @@ export function restoreDelegatedMatchingIds(definition: unknown, master: ExamDoc
   return restored;
 }
 
-export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean, aliasSecret = 'test-only-secret'): ExamDocument {
+export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean, aliasSecret?: string): ExamDocument {
   if (isAdmin) return structuredClone(master);
+  if (typeof aliasSecret !== 'string' || aliasSecret.length < 32) {
+    throw new Error('EXAM_WORKSHOP_PROJECTION_SECRET_INVALID');
+  }
 
   const safe: Record<string, unknown> = {};
   for (const key of [
     'id', 'title', 'moduleCode', 'assignedCourseCodes', 'assessmentStage', 'status',
     'minClearance', 'passingScoreBasisPoints', 'timeLimitMinutes', 'maxAttempts', 'prerequisites', 'examFormat',
-    'isLegacyFormat', 'startable', 'authorUid', 'updatedIso', 'latestVersionNumber',
-    'currentPublishedVersionId', 'workingRevision'
+    'isLegacyFormat', 'startable', 'updatedIso', 'latestVersionNumber', 'workingRevision'
   ]) {
     if (Object.prototype.hasOwnProperty.call(master, key)) safe[key] = master[key];
   }
@@ -90,11 +107,7 @@ export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean
           : [];
       });
       // Shuffle prompts independently so the source pair order cannot act as a side channel.
-      for (let index = prompts.length - 1; index > 0; index -= 1) {
-        const swapIndex = randomInt(index + 1);
-        [prompts[index], prompts[swapIndex]] = [prompts[swapIndex], prompts[index]];
-      }
-      projected.matchingPairs = prompts;
+      projected.matchingPairs = shuffleMatchingProjection(prompts);
       const targets = question.matchingPairs.flatMap(pair => {
         if (!pair || typeof pair !== 'object' || Array.isArray(pair)) return [];
         const item = pair as Record<string, unknown>;
@@ -102,13 +115,8 @@ export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean
           ? [{ id: matchingAlias(aliasSecret, master.id, String(question.id), 'target', item.targetId), text: item.targetText }]
           : [];
       });
-      // A random non-zero cyclic offset is a derangement: every option leaves its source index.
-      if (targets.length > 1) {
-        const offset = randomInt(1, targets.length);
-        projected.matchingTargets = [...targets.slice(offset), ...targets.slice(0, offset)];
-      } else {
-        projected.matchingTargets = targets;
-      }
+      // Use a separate full permutation; a cyclic offset preserves relative ordering.
+      projected.matchingTargets = shuffleMatchingProjection(targets);
     }
     return projected;
   }) : [];

@@ -108,6 +108,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     setDefinition(current => ({ ...current, [key]: value }));
 
   const openNew = () => {
+    if (saving || publishing) return;
     setSelectedId(null);
     setExpectedRevision(null);
     setDefinition(emptyDefinition());
@@ -116,7 +117,8 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     setMode('edit');
   };
 
-  const openExam = async (id: string) => {
+  const openExam = async (id: string, allowWhileBusy = false) => {
+    if (!allowWhileBusy && (saving || publishing)) return;
     setLoading(true);
     setError(null);
     const response = await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(id)}`, { cache: 'no-store' });
@@ -173,7 +175,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       setExpectedRevision(response.data.exam.workingRevision ?? 1);
       setNotice('Entwurf erfolgreich gespeichert.');
       await loadExams();
-      await openExam(response.data.exam.id);
+      await openExam(response.data.exam.id, true);
     } finally {
       setSaving(false);
     }
@@ -206,7 +208,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       return;
     }
     setNotice('Prüfung wurde als unveränderliche Version veröffentlicht.');
-    await openExam(selectedId);
+    await openExam(selectedId, true);
     await loadExams();
     } finally {
       setPublishing(false);
@@ -252,13 +254,13 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Prüfungen erstellen, bearbeiten, prüfen und veröffentlichen.</p></div>
-        <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>
+        <button onClick={openNew} disabled={saving || publishing} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><FilePlus2 size={16}/> Neue Prüfung</button>
       </div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm flex gap-2"><AlertCircle size={17}/>{error}</div>}
       <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Prüfung oder Lehrgang suchen…"/></div>
       {loading ? <div className="py-16 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2"/>Prüfungen werden geladen…</div> :
         filteredExams.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center"><BookOpen className="mx-auto text-slate-400 mb-3"/><p className="font-semibold text-slate-800 dark:text-slate-100">Noch keine Prüfungen gefunden</p><p className="text-sm text-slate-500 mt-1">Lege eine neue Prüfung an oder passe den Suchbegriff an.</p></div> :
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3 space-x-3"><button onClick={()=>void openExam(exam.id)} disabled={exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button>{isAdmin && exam.status !== 'archived' && <button onClick={()=>void archiveExam(exam)} className="text-rose-700 dark:text-rose-400 font-semibold">Archivieren</button>}</td></tr>)}</tbody></table></div>}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3 space-x-3"><button onClick={()=>void openExam(exam.id)} disabled={saving || publishing || exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button>{isAdmin && exam.status !== 'archived' && <button onClick={()=>void archiveExam(exam)} disabled={saving || publishing} className="text-rose-700 dark:text-rose-400 font-semibold disabled:opacity-40">Archivieren</button>}</td></tr>)}</tbody></table></div>}
     </div>
   );
 
@@ -281,8 +283,8 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button onClick={()=>setMode('list')} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
-        <div className="flex gap-2"><button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
+        <button onClick={()=>setMode('list')} disabled={saving || publishing} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-50"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
+        <div className="flex gap-2"><button onClick={()=>setMode('preview')} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm disabled:opacity-50"><Eye size={16}/> Vorschau</button>
           <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>
           <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
       </div>

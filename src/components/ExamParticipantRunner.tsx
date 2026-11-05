@@ -216,7 +216,7 @@ export const ExamParticipantRunner: React.FC = () => {
     setStarting(false);
   };
 
-  const saveAnswers = useCallback(async (allowDuringSubmit = false): Promise<boolean> => {
+  const saveAnswers = useCallback(async (allowDuringSubmit = false, keepalive = false): Promise<boolean> => {
     const current = attemptRef.current;
     if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
@@ -226,7 +226,8 @@ export const ExamParticipantRunner: React.FC = () => {
       API_ENDPOINTS.ACADEMY_EXAM_AUTOSAVE(current.examId, current.id),
       {
         method: 'PUT',
-        body: JSON.stringify({ revision: nextRevision, answers: snapshot })
+        body: JSON.stringify({ revision: nextRevision, answers: snapshot }),
+        keepalive
       }
     );
     if (response.ok && response.data?.attempt) {
@@ -338,7 +339,14 @@ export const ExamParticipantRunner: React.FC = () => {
 
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-  }, []);
+    debounceRef.current = null;
+    if (!attemptRef.current || submittingRef.current) return;
+    // Tabs/routes can unmount the runner before the input debounce fires. Drain earlier saves,
+    // then send the latest in-memory answer snapshot as a keepalive request.
+    void saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => saveAnswers(true, true));
+  }, [saveAnswers]);
 
   const canStart = Boolean(selectedExam && selectedCourseCode && !starting);
 

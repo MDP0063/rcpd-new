@@ -1,11 +1,31 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { projectExamWorkshopMaster } from './examWorkshopProjection.ts';
+import { projectExamWorkshopMaster, shuffleMatchingProjection } from './examWorkshopProjection.ts';
+
+test('Matching-Projektion nutzt Fisher–Yates und kann jede Permutation erzeugen', () => {
+  const permutations = new Set<string>();
+  for (let firstPick = 0; firstPick < 3; firstPick += 1) {
+    for (let secondPick = 0; secondPick < 2; secondPick += 1) {
+      const choices = [firstPick, secondPick];
+      const shuffled = shuffleMatchingProjection(['a', 'b', 'c'], () => choices.shift()!);
+      permutations.add(shuffled.join(''));
+    }
+  }
+  assert.equal(permutations.size, 6);
+  assert.deepEqual([...permutations].sort(), ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']);
+  assert.throws(() => shuffleMatchingProjection(['a', 'b'], () => 2), /EXAM_MATCHING_SHUFFLE_INVALID/);
+});
 
 test('delegated workshop projection removes answer keys and private scoring fields', () => {
+  assert.throws(
+    () => projectExamWorkshopMaster({ id: 'exam_safe', questions: [] } as any, false),
+    /EXAM_WORKSHOP_PROJECTION_SECRET_INVALID/
+  );
   const projected = projectExamWorkshopMaster({
     id: 'exam_safe',
     title: 'Training',
+    authorUid: 'private-author-uid',
+    currentPublishedVersionId: 'private-version-document-id',
     assessmentStage: 'test',
     questions: [{
       id: 'q1', type: 'matching', question: 'Match', pointsMilli: 1000,
@@ -18,11 +38,13 @@ test('delegated workshop projection removes answer keys and private scoring fiel
       ],
       options: [{ id: 'secret', text: 'Visible option' }]
     }]
-  }, false, 'projection-test-secret');
+  }, false, 'projection-test-secret-is-at-least-32-bytes');
   const json = JSON.stringify(projected);
   for (const forbidden of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'explanation', 'gradingRubric', 'internalScore', 'targetId']) {
     assert.equal(json.includes(forbidden), false, `projection exposed ${forbidden}`);
   }
+  assert.equal(json.includes('private-author-uid'), false);
+  assert.equal(json.includes('private-version-document-id'), false);
   const question = (projected.questions as any[])[0];
   assert.equal(question.options[0].text, 'Visible option');
   assert.deepEqual(new Set(question.matchingPairs.map((pair: { prompt: string }) => pair.prompt)), new Set(['Cat', 'Car', 'Plane']));
@@ -49,5 +71,5 @@ test('administrator projection retains the complete master document', () => {
       ]
     }]
   };
-  assert.deepEqual(projectExamWorkshopMaster(master, true, 'projection-test-secret'), master);
+  assert.deepEqual(projectExamWorkshopMaster(master, true, 'projection-test-secret-is-at-least-32-bytes'), master);
 });
