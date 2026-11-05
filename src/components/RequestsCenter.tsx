@@ -36,7 +36,8 @@ const REQUEST_CATEGORY_LABELS: Record<RequestCategory, string> = {
   clearance: 'Antrag auf Sonderfreigabe / Modul-Freigabe',
   award: 'Vorschlag für Auszeichnung / Belobigung',
   transfer: 'Antrag auf Abteilungs- / Divisionswechsel',
-  loa: 'Dienstabmeldung / Urlaubsantrag (LOA)'
+  loa: 'Dienstabmeldung / Urlaubsantrag (LOA)',
+  exam_workshop_access: 'Zugang zur Prüfungswerkstatt'
 };
 
 export const RequestsCenter: React.FC<RequestsCenterProps> = ({
@@ -359,6 +360,9 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                         <option value="award">Auszeichnung / Belobigung (Commendation)</option>
                         <option value="transfer">Abteilungs- / Divisionswechsel</option>
                         <option value="loa">Dienstabmeldung / Urlaubsantrag (LOA)</option>
+                        {currentUser.granularPermissions?.examWorkshop?.canRequestAccess && (
+                          <option value="exam_workshop_access">Zugang zur Prüfungswerkstatt beantragen</option>
+                        )}
                       </select>
                     </div>
 
@@ -690,7 +694,8 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                     isAdmin ||
                     ((isColonel ||
                       Boolean(currentUser.granularPermissions?.canReviewStandardRequests)) &&
-                      reqDoc.category !== 'rank_change');
+                      reqDoc.category !== 'rank_change' &&
+                      reqDoc.category !== 'exam_workshop_access');
 
                   return (
                     <React.Fragment key={reqDoc.id}>
