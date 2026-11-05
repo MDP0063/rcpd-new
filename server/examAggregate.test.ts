@@ -96,7 +96,7 @@ test('Aggregate trennen Nutzer, Prüfung und Lehrgang', () => {
 
 test('Kontingent: Übungstests unbegrenzt, Abschlussprüfung nach maxAttempts', () => {
   const attempts = [attempt('failed', 1000), attempt('failed', 1000), attempt('failed', 1000)];
-  const base = { userId: 'u1', examId: 'e1', attempts };
+  const base = { userId: 'u1', examId: 'e1', attemptCourseCode: 'SOP-01', attempts };
   assert.deepEqual(evaluateQuota({ ...base, assessmentStage: 'test', maxAttempts: 3 }).allowed, true);
   const q = evaluateQuota({ ...base, assessmentStage: 'final_exam', maxAttempts: 3 });
   assert.equal(q.used, 3);
@@ -109,13 +109,20 @@ test('Kontingent: Übungstests unbegrenzt, Abschlussprüfung nach maxAttempts', 
 
 test('Kontingent: Zusatzversuche, invalidierte Versuche und Altzähler', () => {
   const attempts = [attempt('failed', 1000), attempt('invalidated_by_admin', null)];
-  const base = { assessmentStage: 'final_exam' as const, maxAttempts: 1, userId: 'u1', examId: 'e1', attempts };
+  const base = { assessmentStage: 'final_exam' as const, maxAttempts: 1, userId: 'u1', examId: 'e1', attemptCourseCode: 'SOP-01', attempts };
   assert.equal(evaluateQuota(base).used, 1); // invalidierter zählt nicht
   assert.equal(evaluateQuota(base).allowed, false);
   assert.equal(evaluateQuota({ ...base, extraAttempts: 1 }).allowed, true);
   assert.equal(evaluateQuota({ ...base, extraAttempts: -5 }).allowed, false); // ungültig = 0
-  assert.equal(evaluateQuota({ ...base, attempts: [], legacyAttemptsConsumed: 1 }).allowed, false);
-  assert.equal(evaluateQuota({ ...base, attempts: [], legacyAttemptsConsumed: Number.NaN }).allowed, true);
+  assert.equal(evaluateQuota({ ...base, attempts: [] }).allowed, true); // historische Zähler werden nicht angerechnet
   // Versuche anderer Nutzer zählen nicht
   assert.equal(evaluateQuota({ ...base, attempts: [attempt('failed', 0, { userId: 'u2' })] }).used, 0);
+  assert.equal(evaluateQuota({ ...base, attempts: [attempt('failed', 0, { attemptCourseCode: 'SOP-02' })] }).used, 0);
+});
+
+test('Kontingente sind je Lehrgang getrennt', () => {
+  const attempts = [attempt('failed', 1000, { attemptCourseCode: 'SOP-01' }), attempt('failed', 1000, { attemptCourseCode: 'SOP-02' })];
+  const result = evaluateQuota({ assessmentStage: 'final_exam', maxAttempts: 1, userId: 'u1', examId: 'e1', attemptCourseCode: 'SOP-01', attempts });
+  assert.equal(result.used, 1);
+  assert.equal(result.allowed, false);
 });
