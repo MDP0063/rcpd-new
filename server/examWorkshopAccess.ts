@@ -46,9 +46,8 @@ export function canAccessExamWorkshopExam(
   if (action === 'view') return category.canView;
   if (action === 'create') return category.canCreate;
   if (action === 'edit') {
-    // Editing a saved draft is an update to an existing exam and must obey both controls.
-    if (examId && actor.permissions.lockedUpdateExamIds.includes(examId)) return false;
-    return category.canEdit && category.canUpdateExisting;
+    // This action is reserved for the creator's own unpublished draft.
+    return category.canEdit;
   }
   if (action === 'update_existing') {
     if (!category.canUpdateExisting) return false;
