@@ -51,6 +51,15 @@ test('Entwurf: unvollständige Fragen dürfen gespeichert werden, Metadaten blei
   assert.equal(parsed.moduleCode, 'SOP-01');
 });
 
+test('Entwurf: der alte Einzel-Lehrgangscode wird in die autoritative Zuweisung übernommen', () => {
+  const { moduleCode, assignedCourseCodes } = parseExamWorkshopDraft({
+    ...validDefinition,
+    assignedCourseCodes: undefined
+  });
+  assert.equal(moduleCode, 'SOP-01');
+  assert.deepEqual(assignedCourseCodes, ['SOP-01']);
+});
+
 test('Entwurf: Bild-URLs müssen bereits beim Speichern HTTPS verwenden', () => {
   assert.throws(
     () => parseExamWorkshopDraft({
