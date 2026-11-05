@@ -225,13 +225,38 @@ export async function publishExamDraft(
   repository: ExamRepository,
   id: string,
   publisherUid: string,
-  nowIso = new Date().toISOString()
+  nowIso = new Date().toISOString(),
+  publicationReview?: { requestId: string; reviewerName: string; reviewComment?: string }
 ) {
   const current = await repository.get('exam_masters', id);
   if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
   if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
   if (current.examFormat === 'interactive_code' || current.isLegacyFormat === true) {
     throw new Error('EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE');
+  }
+
+  let nextPublicationRequest: ExamDocument | undefined;
+  if (publicationReview) {
+    const request = await repository.get('exam_publication_requests', publicationReview.requestId);
+    const revision = current.workingRevision === undefined ? 1 : current.workingRevision;
+    if (
+      !request ||
+      request.status !== 'pending' ||
+      request.examId !== id ||
+      request.submittedRevision !== revision ||
+      request.submittedHash !== getExamWorkshopDefinitionHash(current)
+    ) {
+      throw new Error('EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT');
+    }
+    nextPublicationRequest = {
+      ...request,
+      status: 'published',
+      reviewedByUid: publisherUid,
+      reviewedByName: publicationReview.reviewerName.trim().slice(0, 120),
+      reviewedAtIso: nowIso,
+      reviewComment: (publicationReview.reviewComment || '').trim().slice(0, 1000),
+      updatedIso: nowIso
+    };
   }
 
   const definition = {
@@ -298,6 +323,14 @@ export async function publishExamDraft(
     lastPublishedByUid: publisherUid,
     lastPublishedAtIso: nowIso
   };
-  await repository.publishVersion(id, version, nextMaster);
+  if (nextPublicationRequest) {
+    nextPublicationRequest.publishedVersionId = version.id;
+  }
+  await repository.publishVersion(
+    id,
+    version,
+    nextMaster,
+    nextPublicationRequest ? { id: String(nextPublicationRequest.id), document: nextPublicationRequest } : undefined
+  );
   return { master: nextMaster, version };
 }
