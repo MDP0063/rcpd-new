@@ -219,13 +219,25 @@ export const ExamWorkshop: React.FC = () => {
         <h2 className="font-bold text-slate-900 dark:text-white">Prüfungsparameter</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <label><span className={labelClass}>Titel</span><input className={inputClass} maxLength={200} value={definition.title} onChange={e=>update('title',e.target.value)}/></label>
-          <label><span className={labelClass}>Prüfungsart</span><select className={inputClass} value={definition.assessmentStage} onChange={e=>update('assessmentStage',e.target.value as Definition['assessmentStage'])}><option value="test">Übungstest</option><option value="final_exam">Abschlussprüfung</option></select></label>
+          <label><span className={labelClass}>Prüfungsart</span><select className={inputClass} value={definition.assessmentStage} onChange={e=>{const stage=e.target.value as Definition['assessmentStage'];setDefinition(current=>({...current,assessmentStage:stage,maxAttempts:stage==='final_exam'?3:null}));}}><option value="test">Übungstest</option><option value="final_exam">Abschlussprüfung</option></select></label>
           <label><span className={labelClass}>Lehrgangscodes (kommagetrennt)</span><input className={inputClass} value={(definition.assignedCourseCodes || []).join(', ')} onChange={e=>update('assignedCourseCodes',e.target.value.split(',').map(v=>v.trim().toUpperCase()).filter(Boolean))} placeholder="z. B. SOP-01, LAW-02"/></label>
           <label><span className={labelClass}>Mindest-Dienstgradstufe (0–10)</span><input className={inputClass} type="number" min={0} max={10} value={definition.minClearance} onChange={e=>update('minClearance',Number(e.target.value))}/></label>
           <label><span className={labelClass}>Bestehensgrenze (%)</span><input className={inputClass} type="number" min={0} max={100} value={definition.passingScoreBasisPoints/100} onChange={e=>update('passingScoreBasisPoints',Math.round(Number(e.target.value)*100))}/></label>
           <label><span className={labelClass}>Zeitlimit in Minuten (0 = unbegrenzt)</span><input className={inputClass} type="number" min={0} max={1440} value={definition.timeLimitMinutes} onChange={e=>update('timeLimitMinutes',Number(e.target.value))}/></label>
-          <label><span className={labelClass}>Maximale Versuche (leer = unbegrenzt)</span><input className={inputClass} type="number" min={0} value={definition.maxAttempts ?? ''} onChange={e=>update('maxAttempts',e.target.value===''?null:Number(e.target.value))}/></label>
+          <label><span className={labelClass}>Maximale Versuche (leer = unbegrenzt)</span><input className={inputClass} type="number" min={0} value={definition.maxAttempts ?? ''} onChange={e=>update('maxAttempts',e.target.value==='' || Number(e.target.value)===0 ? null : Number(e.target.value))}/></label>
         </div>
+      </section>
+      <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
+        <div><h2 className="font-bold text-slate-900 dark:text-white">Prüfungsvoraussetzungen</h2><p className="text-xs text-slate-500 mt-1">Optional: Lege fest, welche Prüfungen vorher abgeschlossen oder bestanden sein müssen.</p></div>
+        {definition.prerequisites?.map((prerequisite,index)=><div key={prerequisite.examId} className="grid md:grid-cols-[1.5fr_1fr_auto] gap-2 items-center">
+          <div className="text-sm text-slate-700 dark:text-slate-200">{exams.find(exam=>exam.id===prerequisite.examId)?.title || prerequisite.examId}</div>
+          <select className={inputClass} value={prerequisite.mode} onChange={e=>update('prerequisites',(definition.prerequisites||[]).map((item,i)=>i===index?{...item,mode:e.target.value as 'completed'|'passed'}:item))}><option value="completed">Muss abgeschlossen sein</option><option value="passed">Muss bestanden sein</option></select>
+          <button type="button" onClick={()=>update('prerequisites',(definition.prerequisites||[]).filter((_,i)=>i!==index))} className="text-rose-600 text-xs font-semibold">Entfernen</button>
+        </div>)}
+        <select className={inputClass} value="" onChange={e=>{const examId=e.target.value;if(examId)update('prerequisites',[...(definition.prerequisites||[]),{examId,mode:'passed'}]);}}>
+          <option value="">Voraussetzung hinzufügen…</option>
+          {exams.filter(exam=>exam.id!==selectedId && !(definition.prerequisites||[]).some(item=>item.examId===exam.id)).map(exam=><option key={exam.id} value={exam.id}>{exam.title || 'Unbenannter Entwurf'} ({exam.assessmentStage==='final_exam'?'Abschlussprüfung':'Übungstest'})</option>)}
+        </select>
       </section>
       <section className="space-y-4">
         <div className="flex flex-wrap justify-between items-center gap-2"><div><h2 className="font-bold text-slate-900 dark:text-white">Fragen ({definition.questions.length})</h2><p className="text-xs text-slate-500">Gesamtpunktzahl: {totalPoints.toLocaleString('de-DE')} Punkte</p></div>
