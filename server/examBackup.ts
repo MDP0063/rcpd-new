@@ -92,6 +92,18 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     }
   }
 
+  for (const comment of collections.exam_comments) {
+    if (typeof comment.examId !== 'string' || !masters.has(comment.examId)) {
+      return fail('EXAM_BACKUP_COMMENT_MASTER_MISSING');
+    }
+  }
+
+  for (const request of collections.exam_publication_requests) {
+    if (typeof request.examId !== 'string' || !masters.has(request.examId)) {
+      return fail('EXAM_BACKUP_PUBLICATION_REQUEST_MASTER_MISSING');
+    }
+  }
+
   return { formatVersion: 1, collections };
 }
 
