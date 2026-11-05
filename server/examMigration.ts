@@ -71,7 +71,6 @@ export async function migrateLegacyExamData(
     progress: { imported: 0, alreadyMigrated: 0, skipped: 0 },
     issues: []
   };
-  const migratedExamIds = new Set<string>();
 
   for (const legacy of legacyExams) {
     const mapped = mapLegacyExam(legacy);
@@ -130,7 +129,6 @@ export async function migrateLegacyExamData(
         if (!existingVersion) await transaction.create('exam_versions', versionId, version);
         return Boolean(existingMaster && existingVersion);
       });
-      migratedExamIds.add(examId);
       if (result) summary.exams.alreadyMigrated++;
       else summary.exams.imported++;
     } catch (error) {
