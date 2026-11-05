@@ -14,6 +14,7 @@ const legacyExam = (over: Partial<LegacyExamInput> = {}): LegacyExamInput => ({
   moduleCode: 'SOP-01',
   assessmentStage: 'test',
   passingScore: 70,
+  minClearance: 1,
   timeLimitMinutes: 20,
   examFormat: 'structured_quiz',
   questionsPayload: JSON.stringify([
