@@ -21,13 +21,12 @@ import {
   type ExamDocument,
   type ExamQuery,
   type ExamRepositorySnapshot,
-  type ExamStorageAdapter,
   type ExamTransaction
 } from './examRepositoryTypes.ts';
 
 export * from './examRepositoryTypes.ts';
 
-export class ExamRepository implements ExamStorageAdapter {
+export class ExamRepository {
   private readonly adapter: ExamStorageAdapter;
 
   constructor(adapter: ExamStorageAdapter) {
