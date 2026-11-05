@@ -213,6 +213,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         Array.isArray(next.questionGrades) &&
         next.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
       ) ||
+      appended.previousGrades.length === 0 ||
       appended.previousGrades.length !== appended.nextGrades.length ||
       appended.previousGrades.some((grade: any) => !appended.nextGrades.some((nextGrade: any) => nextGrade.questionId === grade.questionId)) ||
       (appended.nextScoreBasisPoints !== null && (!Number.isSafeInteger(appended.nextScoreBasisPoints) || appended.nextScoreBasisPoints < 0 || appended.nextScoreBasisPoints > 10000)) ||
