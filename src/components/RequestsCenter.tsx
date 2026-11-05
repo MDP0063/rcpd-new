@@ -36,7 +36,8 @@ const REQUEST_CATEGORY_LABELS: Record<RequestCategory, string> = {
   clearance: 'Antrag auf Sonderfreigabe / Modul-Freigabe',
   award: 'Vorschlag für Auszeichnung / Belobigung',
   transfer: 'Antrag auf Abteilungs- / Divisionswechsel',
-  loa: 'Dienstabmeldung / Urlaubsantrag (LOA)'
+  loa: 'Dienstabmeldung / Urlaubsantrag (LOA)',
+  exam_workshop_access: 'Zugang zur Prüfungswerkstatt'
 };
 
 export const RequestsCenter: React.FC<RequestsCenterProps> = ({
@@ -47,6 +48,9 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
 }) => {
   const isAdmin = currentUser.role === 'admin';
   const isColonel = currentUser.role === 'colonel';
+  const canRequestWorkshopAccess = currentUser.role !== 'admin' &&
+    currentUser.granularPermissions?.examWorkshop?.hasAccess !== true &&
+    (currentUser.role === 'colonel' || currentUser.granularPermissions?.examWorkshop?.canRequestAccess === true);
   const canReviewRequests =
     isAdmin ||
     isColonel ||
@@ -118,7 +122,6 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
       {
         method: 'POST',
         body: JSON.stringify({
-          requesterUid: currentUser.uid,
           category,
           title: title.trim(),
           requestedRole: category === 'rank_change' ? requestedRole : undefined,
@@ -153,7 +156,6 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
     const res = await apiFetch(`${API_ENDPOINTS.REQUESTS}/${reqDoc.id}/review`, {
       method: 'PUT',
       body: JSON.stringify({
-        reviewerUid: currentUser.uid,
         status: nextStatus,
         reviewerComment: reviewComment,
         applyRankChange
@@ -177,7 +179,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
 
   const handleDeleteRequest = async (reqId: string) => {
     const res = await apiFetch(
-      `${API_ENDPOINTS.REQUESTS}/${reqId}?actorUid=${encodeURIComponent(currentUser.uid)}`,
+      `${API_ENDPOINTS.REQUESTS}/${reqId}`,
       { method: 'DELETE' }
     );
     if (res.ok) {
@@ -359,6 +361,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                         <option value="award">Auszeichnung / Belobigung (Commendation)</option>
                         <option value="transfer">Abteilungs- / Divisionswechsel</option>
                         <option value="loa">Dienstabmeldung / Urlaubsantrag (LOA)</option>
+                        {canRequestWorkshopAccess && <option value="exam_workshop_access">Zugang zur Prüfungswerkstatt</option>}
                       </select>
                     </div>
 
