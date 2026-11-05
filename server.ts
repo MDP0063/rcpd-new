@@ -1371,6 +1371,16 @@ async function startServer() {
           String(master.title || master.id),
           `Version: ${result.version.id}`
         );
+        if (openRequest && context.actor.role === 'admin') {
+          pushNotification(
+            state,
+            String(openRequest.requestedByUid),
+            'exam_workshop_review',
+            'Deine Prüfung wurde veröffentlicht',
+            `Deine Prüfung „${String(master.title || master.id)}“ wurde vom Admin freigegeben und veröffentlicht.`,
+            'exam_workshop'
+          );
+        }
         await saveDatabaseAndWait(state);
       } catch (auditError) {
         console.warn('[Exam Workshop] Veröffentlichung erfolgreich, Audit-Eintrag konnte nicht persistiert werden:', auditError);
