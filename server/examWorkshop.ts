@@ -184,6 +184,9 @@ export async function updateExamDraft(
     const current = await transaction.get('exam_masters', id);
     if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
     if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+    if (input.assessmentStage !== current.assessmentStage) {
+      throw new Error('EXAM_ASSESSMENT_STAGE_IMMUTABLE');
+    }
     const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
     if (
       typeof currentRevision !== 'number' ||
