@@ -1528,7 +1528,7 @@ async function startServer() {
             caller,
             'EXAM_WORKSHOP',
             'Eingereichte Prüfung geprüft und veröffentlicht',
-            String(result.master.title || result.master.id),
+            String(request.examId),
             `Freigabeanfrage: ${request.id} · Version: ${result.version.id} · ${reviewComment || 'Keine Anmerkung'}`
           );
           pushNotification(
@@ -1536,7 +1536,7 @@ async function startServer() {
             String(request.requestedByUid),
             'exam_workshop_review',
             'Deine Prüfung wurde veröffentlicht',
-            `„${String(result.master.title || 'Deine Prüfung')}“ wurde vom Admin freigegeben und veröffentlicht.`,
+            `Deine Prüfung (ID: ${String(request.examId)}) wurde vom Admin freigegeben und veröffentlicht.`,
             'exam_workshop'
           );
           await saveDatabaseAndWait(state);
