@@ -1201,6 +1201,10 @@ async function startServer() {
         res.status(409).json({ error: 'Archivierte Prüfungen können nicht bearbeitet werden.' });
         return;
       }
+      if (error instanceof Error && error.message === 'EXAM_WORKING_REVISION_CONFLICT') {
+        res.status(409).json({ error: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version und übertrage deine Änderungen erneut.' });
+        return;
+      }
       next(error);
     }
   });
@@ -1356,6 +1360,11 @@ async function startServer() {
         res.status(403).json({ error: 'Du darfst diese bestehende Prüfung nicht bearbeiten.' });
         return;
       }
+      const expectedRevision = req.body?.expectedRevision;
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+        res.status(400).json({ error: 'Die Prüfungsrevision fehlt oder ist ungültig. Bitte lade die Prüfung erneut.' });
+        return;
+      }
       if (await examWorkshopMaintenanceActive()) {
         res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
         return;
@@ -1364,7 +1373,9 @@ async function startServer() {
         getExamRepository(),
         req.params.id,
         context.account.uid,
-        req.body?.definition
+        req.body?.definition,
+        undefined,
+        expectedRevision
       );
       res.json({ exam });
     } catch (error) {
