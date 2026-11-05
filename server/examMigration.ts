@@ -12,7 +12,7 @@ export interface LegacyMigrationIssue {
 
 export interface LegacyMigrationSummary {
   exams: { imported: number; alreadyMigrated: number; skipped: number };
-  progress: { imported: number; alreadyMigrated: number; skipped: number };
+  progress: { imported: number; updated: number; alreadyMigrated: number; skipped: number };
   issues: LegacyMigrationIssue[];
 }
 
@@ -70,7 +70,7 @@ export async function migrateLegacyExamData(
 
   const summary: LegacyMigrationSummary = {
     exams: { imported: 0, alreadyMigrated: 0, skipped: 0 },
-    progress: { imported: 0, alreadyMigrated: 0, skipped: 0 },
+    progress: { imported: 0, updated: 0, alreadyMigrated: 0, skipped: 0 },
     issues: []
   };
 
@@ -183,15 +183,19 @@ export async function migrateLegacyExamData(
       }
       const existing = await repository.get('exam_progress', document.id);
       if (existing) {
-        if (!sameDocument(existing, document)) {
+        if (sameDocument(existing, document)) {
+          summary.progress.alreadyMigrated++;
+        } else if (existing.source === 'legacy' && existing.legacyProgressId === record.id) {
+          // Legacy progress is a projection, not an attempt. Re-runs may refresh it from the source.
+          await repository.update('exam_progress', document.id, document);
+          summary.progress.updated++;
+        } else {
           summary.progress.skipped++;
           summary.issues.push({
             kind: 'progress',
             sourceId: record.id,
             code: 'EXAM_MIGRATION_PROGRESS_CONFLICT'
           });
-        } else {
-          summary.progress.alreadyMigrated++;
         }
         continue;
       }
