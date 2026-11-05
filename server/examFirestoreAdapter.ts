@@ -118,6 +118,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     assertExamAttemptCreate(collection, document);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.create(reference, clone(document));
+    this.readDocuments.set(this.cacheKey(collection, id), clone(document));
     this.hasWrites = true;
   }
 
@@ -140,6 +141,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     if (collection === 'exam_attempts') assertExamAttemptUpdate(existing, document);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.set(reference, clone(document));
+    this.readDocuments.set(key, clone(document));
     this.hasWrites = true;
   }
 
@@ -161,6 +163,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     };
     const reference = this.database.collection('exam_attempts').doc(storageId(id));
     this.transaction.set(reference, clone(next));
+    this.readDocuments.set(this.cacheKey('exam_attempts', id), clone(next));
     this.hasWrites = true;
   }
 
@@ -169,6 +172,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     assertExamDocumentId(id);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.delete(reference);
+    this.readDocuments.set(this.cacheKey(collection, id), null);
     this.hasWrites = true;
   }
 }
