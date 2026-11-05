@@ -96,9 +96,8 @@ export async function migrateLegacyExamData(
 
     const examId = mapped.master.id;
     const versionId = `${examId}__v1`;
-    const migrationTimestamp = legacy.updatedIso && !Number.isNaN(Date.parse(legacy.updatedIso))
-      ? legacy.updatedIso
-      : migratedAtIso;
+    // This is the actual migration time; the legacy source timestamp is retained separately.
+    const migrationTimestamp = migratedAtIso;
     const master = {
       ...mapped.master,
       latestVersionNumber: 1,
