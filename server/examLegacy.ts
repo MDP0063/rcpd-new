@@ -128,7 +128,7 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   if (legacy.examFormat !== 'structured_quiz' && legacy.examFormat !== 'interactive_code') {
     errors.push('Unbekanntes Prüfungsformat.');
   }
-  if (typeof legacy.minClearance !== 'number' || !Number.isSafeInteger(legacy.minClearance) || legacy.minClearance < 0) {
+  if (typeof legacy.minClearance !== 'number' || !Number.isSafeInteger(legacy.minClearance) || legacy.minClearance < 0 || legacy.minClearance > 10) {
     errors.push('Ungültige Mindest-Clearance.');
   }
   if (typeof legacy.timeLimitMinutes !== 'number' || !Number.isSafeInteger(legacy.timeLimitMinutes) || legacy.timeLimitMinutes < 0) {
@@ -185,7 +185,8 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
         questions: master.questions
       });
   if (publication && !publication.ok) {
-    warnings.push('Die abgebildete Prüfung erfüllt die Veröffentlichungsvalidierung noch nicht.');
+    warnings.push('Die abgebildete Prüfung erfüllt die Veröffentlichungsvalidierung noch nicht und ist vorerst nicht startbar.');
+    master.startable = false;
   }
   return { ok: true, master, warnings, publication };
 }
