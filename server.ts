@@ -34,6 +34,7 @@ import { createExamDraft, publishExamDraft, updateExamDraft } from './server/exa
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
+import { listParticipantExamCatalog } from './server/examParticipantCatalog.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
@@ -1266,7 +1267,10 @@ async function startServer() {
       EXAM_ANSWER_INVALID: { status: 400, message: 'Eine oder mehrere Antworten sind ungültig.' },
       EXAM_ATTEMPT_REVISION_INVALID: { status: 409, message: 'Der gespeicherte Revisionsstand ist ungültig.' },
       EXAM_ATTEMPT_EXPIRED: { status: 409, message: 'Das Zeitlimit ist abgelaufen. Die verspäteten Antworten wurden nicht gespeichert.' },
-      EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' }
+      EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' },
+      EXAM_CATALOG_LIMIT: { status: 503, message: 'Der Prüfungskatalog ist derzeit zu umfangreich. Bitte wende dich an den Administrator.' },
+      EXAM_CATALOG_SNAPSHOT_INVALID: { status: 503, message: 'Eine veröffentlichte Prüfung ist derzeit nicht verfügbar. Bitte wende dich an den Administrator.' },
+      EXAM_CATALOG_ASSIGNMENT_INVALID: { status: 503, message: 'Eine Prüfungszuweisung ist derzeit ungültig. Bitte wende dich an den Administrator.' }
     };
     const response = responses[code];
     if (response) {
@@ -1275,6 +1279,27 @@ async function startServer() {
     }
     next(error);
   }
+
+
+  // Teilnehmer erhalten ausschließlich freigegebene Metadaten, niemals Fragen oder Lösungsschlüssel.
+  app.get('/api/academy/exams/catalog', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) {
+        res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exams = await listParticipantExamCatalog(getExamRepository(), participant.clearanceLevel);
+      res.json({ exams });
+    } catch (error) {
+      sendExamAttemptError(error, res, next);
+    }
+  });
 
   // Start und Wiederaufnahme liefern ausschließlich die sichere Prüflingsprojektion.
   app.post('/api/academy/exams/:id/start', async (req, res, next) => {
