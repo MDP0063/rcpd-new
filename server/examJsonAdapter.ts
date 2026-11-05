@@ -25,12 +25,14 @@ const operationQueues = new Map<string, Promise<void>>();
 
 interface JsonExamState {
   version: 1;
+  maintenanceMode?: boolean;
   collections: Record<ExamCollection, Record<string, ExamDocument>>;
 }
 
 function emptyState(): JsonExamState {
   return {
     version: 1,
+    maintenanceMode: false,
     collections: Object.fromEntries(
       EXAM_COLLECTIONS.map(collection => [collection, {}])
     ) as Record<ExamCollection, Record<string, ExamDocument>>
@@ -197,6 +199,7 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
       }
       state.collections[collection] = normalized;
     }
+    state.maintenanceMode = parsed.maintenanceMode === true;
     return state;
   }
 
@@ -251,6 +254,45 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
         .filter(document => matches(document, query));
       const limited = documents.slice(0, query.limit ?? 1000);
       return clone(limited) as T[];
+    });
+  }
+
+  async exportSnapshot(): Promise<import('./examRepositoryTypes.ts').ExamRepositorySnapshot> {
+    return this.runExclusive(async () => {
+      const state = await this.readState();
+      if (!state.maintenanceMode) throw new Error('EXAM_MAINTENANCE_REQUIRED');
+      return {
+        formatVersion: 1,
+        collections: clone(state.collections)
+      };
+    });
+  }
+
+  async replaceSnapshot(snapshot: import('./examRepositoryTypes.ts').ExamRepositorySnapshot): Promise<void> {
+    return this.runExclusive(async () => {
+      const current = await this.readState();
+      if (!current.maintenanceMode) throw new Error('EXAM_MAINTENANCE_REQUIRED');
+      const next: JsonExamState = {
+        version: 1,
+        maintenanceMode: true,
+        collections: clone(snapshot.collections)
+      };
+      await this.writeState(next);
+    });
+  }
+
+  async isMaintenanceMode(): Promise<boolean> {
+    return this.runExclusive(async () => (await this.readState()).maintenanceMode === true);
+  }
+
+  async setMaintenanceMode(enabled: boolean, allowExisting = false): Promise<void> {
+    return this.runExclusive(async () => {
+      const state = await this.readState();
+      if (enabled && state.maintenanceMode && !allowExisting) {
+        throw new Error('EXAM_MAINTENANCE_ALREADY_ACTIVE');
+      }
+      state.maintenanceMode = enabled;
+      await this.writeState(state);
     });
   }
 
