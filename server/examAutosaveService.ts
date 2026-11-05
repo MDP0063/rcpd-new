@@ -4,17 +4,8 @@
  */
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
-import {
-  parseAttemptAnswers
-} from './examRunner.ts';
-import type { PublicExamAttempt } from './examAttemptService.ts';
-import {
-  type ExamAttemptRecord,
-  type ExamVersionRecord
-} from './examAttemptService.ts';
-import {
-  projectQuestionsForAttempt
-} from './examRunner.ts';
+import { parseAttemptAnswers, projectQuestionsForAttempt } from './examRunner.ts';
+import type { ExamAttemptRecord, ExamVersionRecord, PublicExamAttempt } from './examAttemptService.ts';
 import { isValidId } from './examValidate.ts';
 
 const MAX_AUTOSAVE_BODY_BYTES = 64 * 1024;
@@ -102,7 +93,7 @@ export async function saveExamAttemptAnswers(
   if (!Number.isSafeInteger(requestReceivedAtMs) || requestReceivedAtMs < 0) {
     throw new Error('EXAM_REQUEST_TIME_INVALID');
   }
-  if (!Number.isSafeInteger(rawRevision) || Number(rawRevision) < 1) {
+  if (typeof rawRevision !== 'number' || !Number.isSafeInteger(rawRevision) || rawRevision < 1) {
     throw new Error('EXAM_REVISION_INVALID');
   }
   if (!isPlainRecord(rawAnswers)) throw new Error('EXAM_ANSWERS_INVALID');
