@@ -29,6 +29,7 @@ import {
   type ExamRepository
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
@@ -1932,8 +1933,14 @@ async function startServer() {
     }
 
     const target = dbState.accounts[accountIdx];
-    const prevRole = target.publicProfile.role;
-    const prevStatus = target.publicProfile.whitelistStatus;
+    const previousRole = target.publicProfile.role;
+    const previousStatus = target.publicProfile.whitelistStatus;
+    const previousAccount = {
+      username: target.username,
+      passwordHash: target.passwordHash,
+      publicProfile: { ...target.publicProfile },
+      privateProfile: { ...target.privateProfile }
+    };
     const nextUsername = username ? String(username).trim() : target.username;
 
     if (
@@ -1953,21 +1960,29 @@ async function startServer() {
       }
     }
 
-    const nowIso = new Date().toISOString();
+    const nextRole: OfficerRole = (role as OfficerRole) || previousRole;
+    const roleMeta = ROLE_HIERARCHY[nextRole] || ROLE_HIERARCHY.trainee;
+    const previousPerms = normalizeGranularPermissions(
+      previousRole,
+      target.publicProfile.granularPermissions
+    );
+    const nextPerms = normalizeGranularPermissions(
+      nextRole,
+      granularPermissions !== undefined
+        ? granularPermissions
+        : previousRole !== nextRole
+          ? undefined
+          : target.publicProfile.granularPermissions
+    );
+
     target.username = nextUsername;
-    if (password !== undefined && String(password).length > 0) {
+    if (
+      password !== undefined &&
+      String(password).length > 0 &&
+      !verifyPassword(String(password), target.passwordHash)
+    ) {
       target.passwordHash = hashPassword(String(password));
     }
-
-    const nextRole: OfficerRole = (role as OfficerRole) || target.publicProfile.role;
-    const roleMeta = ROLE_HIERARCHY[nextRole] || ROLE_HIERARCHY.trainee;
-    const nextPerms =
-      granularPermissions !== undefined
-        ? normalizeGranularPermissions(nextRole, granularPermissions)
-        : prevRole !== nextRole
-        ? getDefaultGranularPermissions(nextRole)
-        : target.publicProfile.granularPermissions ||
-          getDefaultGranularPermissions(nextRole);
 
     target.publicProfile = {
       ...target.publicProfile,
@@ -1983,14 +1998,21 @@ async function startServer() {
       callsign:
         callsign !== undefined ? String(callsign).trim() : target.publicProfile.callsign,
       role: nextRole,
-      rank: rank !== undefined ? String(rank).trim() : roleMeta.defaultRank,
-      clearanceLevel: roleMeta.defaultClearance,
+      rank:
+        rank !== undefined
+          ? String(rank).trim()
+          : previousRole !== nextRole
+            ? roleMeta.defaultRank
+            : target.publicProfile.rank,
+      clearanceLevel:
+        previousRole !== nextRole
+          ? roleMeta.defaultClearance
+          : target.publicProfile.clearanceLevel,
       division:
         division !== undefined ? String(division).trim() : target.publicProfile.division,
       whitelistStatus:
         (whitelistStatus as WhitelistStatus) || target.publicProfile.whitelistStatus,
-      granularPermissions: nextPerms,
-      updatedIso: nowIso
+      granularPermissions: nextPerms
     };
 
     target.privateProfile = {
@@ -2002,31 +2024,44 @@ async function startServer() {
       supervisorNotes:
         supervisorNotes !== undefined
           ? String(supervisorNotes)
-          : target.privateProfile.supervisorNotes,
-      updatedIso: nowIso
+          : target.privateProfile.supervisorNotes
     };
 
-    appendAuditLog(
-      dbState,
-      caller,
-      'ACCOUNT_ROLE',
-      prevRole !== nextRole
-        ? `Rangänderung durchgeführt (${prevRole.toUpperCase()} → ${nextRole.toUpperCase()})`
-        : prevStatus !== target.publicProfile.whitelistStatus
-        ? `Kontostatus geändert (${prevStatus} → ${target.publicProfile.whitelistStatus})`
-        : 'Konto- & Berechtigungsdaten aktualisiert',
-      `${target.publicProfile.displayName} (${target.username} · ${target.publicProfile.badgeNumber})`,
-      `Rolle: ${nextRole.toUpperCase()} · Status: ${target.publicProfile.whitelistStatus} · Lehrgangs-Freigaben: ${
-        nextPerms.assignedCourseCodes.join(', ') || 'Keine'
-      }`
+    const accountChanged = hasAccountRecordChanged(previousAccount, target);
+    const permissionsOrRoleChanged = shouldNotifyAccountPermissionsUpdated(
+      previousRole,
+      nextRole,
+      previousPerms,
+      nextPerms
     );
 
-    if (prevRole !== nextRole || granularPermissions !== undefined) {
+    if (accountChanged) {
+      const nowIso = new Date().toISOString();
+      target.publicProfile.updatedIso = nowIso;
+      target.privateProfile.updatedIso = nowIso;
+
+      appendAuditLog(
+        dbState,
+        caller,
+        'ACCOUNT_ROLE',
+        previousRole !== nextRole
+          ? `Rangänderung durchgeführt (${previousRole.toUpperCase()} → ${nextRole.toUpperCase()})`
+          : previousStatus !== target.publicProfile.whitelistStatus
+            ? `Kontostatus geändert (${previousStatus} → ${target.publicProfile.whitelistStatus})`
+            : 'Konto- & Berechtigungsdaten aktualisiert',
+        `${target.publicProfile.displayName} (${target.username} · ${target.publicProfile.badgeNumber})`,
+        `Rolle: ${nextRole.toUpperCase()} · Status: ${target.publicProfile.whitelistStatus} · Lehrgangs-Freigaben: ${
+          nextPerms.assignedCourseCodes.join(', ') || 'Keine'
+        }`
+      );
+    }
+
+    if (permissionsOrRoleChanged) {
       pushNotification(
         dbState,
         target.uid,
         'role_updated',
-        `Dienstkonto & Berechtigungen aktualisiert`,
+        'Dienstkonto & Berechtigungen aktualisiert',
         `Dein System-Rang lautet nun ${nextRole.toUpperCase()} (${target.publicProfile.rank}). Zugewiesene Ausbilder-Lehrgänge: ${
           nextPerms.assignedCourseCodes.join(', ') || 'Standard'
         }.`,
@@ -2062,7 +2097,7 @@ async function startServer() {
       }
     }
 
-    saveDatabase(dbState);
+    if (accountChanged) saveDatabase(dbState);
     res.json({ account: toAdminView(target) });
   });
 
