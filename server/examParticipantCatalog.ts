@@ -1,7 +1,7 @@
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { normalizeCourseCode, isValidId } from './examValidate.ts';
-import type { ExamPrerequisite } from './examTypes.ts';
+import { defaultMaxAttempts, type ExamPrerequisite } from './examTypes.ts';
 
 const MAX_CATALOG_MASTERS = 1000;
 
@@ -20,6 +20,7 @@ export interface ExamParticipantCatalogEntry {
 
 function toCatalogEntry(master: ExamDocument, version: ExamDocument): ExamParticipantCatalogEntry {
   if (
+    version.id !== master.currentPublishedVersionId ||
     version.examId !== master.id ||
     !Number.isSafeInteger(version.versionNumber) ||
     Number(version.versionNumber) < 1 ||
@@ -53,12 +54,42 @@ function toCatalogEntry(master: ExamDocument, version: ExamDocument): ExamPartic
     assignedCourseCodes.push(code);
   }
 
-  const maxAttempts = version.maxAttempts === undefined ? null : version.maxAttempts;
-  if (maxAttempts !== null && (!Number.isSafeInteger(maxAttempts) || Number(maxAttempts) < 0)) {
+  const maxAttempts = version.maxAttempts === undefined
+    ? defaultMaxAttempts(version.assessmentStage)
+    : version.maxAttempts;
+  if (maxAttempts !== null && (typeof maxAttempts !== 'number' || !Number.isSafeInteger(maxAttempts) || maxAttempts < 0)) {
     throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
   }
-  const prerequisites = version.prerequisites === undefined ? [] : version.prerequisites;
-  if (!Array.isArray(prerequisites)) throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
+  const rawPrerequisites = version.prerequisites === undefined ? [] : version.prerequisites;
+  if (!Array.isArray(rawPrerequisites)) throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
+  const prerequisites = rawPrerequisites.map((item): ExamPrerequisite => {
+    if (
+      !item ||
+      typeof item !== 'object' ||
+      Array.isArray(item) ||
+      !isValidId((item as Record<string, unknown>).examId) ||
+      ((item as Record<string, unknown>).mode !== 'completed' && (item as Record<string, unknown>).mode !== 'passed')
+    ) {
+      throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
+    }
+    const record = item as Record<string, unknown>;
+    if (
+      record.minScoreBasisPoints !== undefined &&
+      (typeof record.minScoreBasisPoints !== 'number' ||
+        !Number.isSafeInteger(record.minScoreBasisPoints) ||
+        record.minScoreBasisPoints < 0 ||
+        record.minScoreBasisPoints > 10_000)
+    ) {
+      throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
+    }
+    return {
+      examId: record.examId as string,
+      mode: record.mode as 'completed' | 'passed',
+      ...(record.minScoreBasisPoints !== undefined
+        ? { minScoreBasisPoints: record.minScoreBasisPoints as number }
+        : {})
+    };
+  });
 
   return {
     id: master.id,
@@ -69,7 +100,7 @@ function toCatalogEntry(master: ExamDocument, version: ExamDocument): ExamPartic
     timeLimitMinutes: Number(version.timeLimitMinutes),
     passingScoreBasisPoints: Number(version.passingScoreBasisPoints),
     maxAttempts: maxAttempts as number | null,
-    prerequisites: structuredClone(prerequisites) as ExamPrerequisite[],
+    prerequisites,
     minClearance: Number(version.minClearance)
   };
 }
