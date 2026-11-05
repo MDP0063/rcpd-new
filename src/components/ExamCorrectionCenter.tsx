@@ -63,7 +63,7 @@ export const ExamCorrectionCenter: React.FC = () => {
       setGrades(current => {
         const next = { ...current };
         for (const review of response.data!.reviews) {
-          next[review.id] ||= Object.fromEntries(review.questions.map(question => [question.questionId, String(question.pointsEarnedMilli / 1000)]));
+          next[review.id] = Object.fromEntries(review.questions.map(question => [question.questionId, String(question.pointsEarnedMilli / 1000)]));
         }
         return next;
       });
@@ -85,6 +85,8 @@ export const ExamCorrectionCenter: React.FC = () => {
     }));
     if (gradeList.some((grade, index) =>
       !Number.isSafeInteger(grade.pointsEarnedMilli) ||
+      !Number.isFinite(Number(grades[review.id]?.[review.questions[index].questionId])) ||
+      Math.abs(Number(grades[review.id]?.[review.questions[index].questionId]) * 1000 - grade.pointsEarnedMilli) > 1e-7 ||
       grade.pointsEarnedMilli < 0 ||
       grade.pointsEarnedMilli > review.questions[index].pointsMilli
     )) {
