@@ -117,6 +117,21 @@ test('Prüfungswerkstatt: Admin kann einen Entwurf anlegen und bearbeiten, ohne 
   });
 });
 
+test('Prüfungswerkstatt: die Prüfungsart eines bestehenden Entwurfs ist unveränderlich', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-stage-immutable', 'author-1', validDefinition);
+    await assert.rejects(
+      updateExamDraft(repository, 'exam-stage-immutable', 'editor-1', {
+        ...validDefinition,
+        assessmentStage: 'final_exam'
+      }),
+      /EXAM_ASSESSMENT_STAGE_IMMUTABLE/
+    );
+    const stored = await repository.get('exam_masters', 'exam-stage-immutable');
+    assert.equal(stored?.assessmentStage, 'test');
+  });
+});
+
 test('Prüfungswerkstatt: Veröffentlichung erzeugt einen unveränderlichen Snapshot und setzt den Master-Zeiger', async () => {
   await withRepository(async repository => {
     await createExamDraft(repository, 'exam-2', 'admin-1', validDefinition, '2026-11-05T10:00:00.000Z');
