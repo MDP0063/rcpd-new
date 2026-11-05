@@ -581,6 +581,7 @@ export default function App() {
     (currentUserProfile.granularPermissions?.assignedCourseCodes?.length || 0) > 0;
   const canEditAcademy = currentRoleMeta.canEditAcademy || hasScopedCourseRights;
   const canManageUsers = currentRoleMeta.canManageUsers; // Strictly Admin ONLY
+  const canAccessExamWorkshop = currentUserProfile.role === 'admin' || currentUserProfile.granularPermissions?.examWorkshop?.hasAccess === true;
   const canViewTech = currentRoleMeta.canViewTechPipeline; // Strictly Admin ONLY
 
   // Progress & Metrics Computation
@@ -1409,11 +1410,26 @@ export default function App() {
               </div>
 
               {/* Group 3: Strictly Admin Only */}
-              {(canManageUsers || canViewTech) && (
+              {(canManageUsers || canViewTech || canAccessExamWorkshop) && (
                 <div className="space-y-1 pt-2 border-t border-slate-800">
                   <div className="px-3 pb-1 text-[10px] font-mono uppercase tracking-wider text-sky-400">
-                    Administration (Nur Admin)
+                    Verwaltung &amp; Administration
                   </div>
+
+                  {canAccessExamWorkshop && !canManageUsers && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection('exam_workshop')}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                        activeSection === 'exam_workshop'
+                          ? 'bg-sky-600 text-white font-semibold'
+                          : 'text-sky-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      <FilePlus2 className="w-4 h-4" />
+                      Prüfungswerkstatt
+                    </button>
+                  )}
 
                   {canManageUsers && (
                     <>
@@ -1503,9 +1519,9 @@ export default function App() {
                 ...(canManageUsers ? [{ id: 'reports', label: 'Berichte & Export' }] : []),
                 { id: 'whitelist', label: 'Personalbogen' },
                 { id: 'settings', label: 'Einstellungen' },
+                ...(canAccessExamWorkshop ? [{ id: 'exam_workshop', label: 'Prüfungswerkstatt' }] : []),
                 ...(canManageUsers
                   ? [
-                      { id: 'exam_workshop', label: 'Prüfungswerkstatt' },
                       { id: 'personnel', label: 'Admin: Konten' },
                       { id: 'audit', label: 'Admin: Audit-Log' }
                     ]
