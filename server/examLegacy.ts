@@ -202,6 +202,20 @@ export function validateLegacyVerification(doc: unknown): { ok: boolean; errors:
   }
   if (doc.verifiedStatus !== 'passed') errors.push('verifiedStatus muss "passed" sein.');
   if (
+    typeof doc.verifiedScoreBasisPoints !== 'number' ||
+    !Number.isSafeInteger(doc.verifiedScoreBasisPoints) ||
+    doc.verifiedScoreBasisPoints < 0 ||
+    doc.verifiedScoreBasisPoints > BASIS_POINTS_FULL
+  ) {
+    errors.push('verifiedScoreBasisPoints ist ungültig.');
+  }
+  if (
+    doc.legacyUpdatedIso !== undefined &&
+    (typeof doc.legacyUpdatedIso !== 'string' || doc.legacyUpdatedIso.length > 64 || Number.isNaN(Date.parse(doc.legacyUpdatedIso)))
+  ) {
+    errors.push('legacyUpdatedIso ist ungültig.');
+  }
+  if (
     typeof doc.legacyProgressId === 'string' &&
     typeof doc.id === 'string' &&
     doc.id !== legacyVerificationId(doc.legacyProgressId)
@@ -242,6 +256,10 @@ export function createLegacyVerificationDoc(
   if (progress.courseCode !== undefined && courseCode === null) {
     throw new Error('EXAM_LEGACY_COURSE_INVALID');
   }
+  const score = Number(progress.scorePercent);
+  if (!Number.isFinite(score) || score < 0 || score > 100) {
+    throw new Error('EXAM_LEGACY_SCORE_INVALID');
+  }
   const verification: LegacyVerificationDoc = {
     id: legacyVerificationId(progress.id),
     legacyProgressId: progress.id,
@@ -249,6 +267,8 @@ export function createLegacyVerificationDoc(
     examId: progress.targetId,
     ...(courseCode ? { attemptCourseCode: courseCode } : {}),
     verifiedStatus: 'passed',
+    verifiedScoreBasisPoints: Math.round(score * 100),
+    ...(progress.updatedIso !== undefined ? { legacyUpdatedIso: progress.updatedIso } : {}),
     verifiedByUid,
     verifiedAtIso,
     reason: typeof reason === 'string' ? reason.trim() : ''
@@ -272,6 +292,14 @@ export function findValidVerification(
   for (const v of verifications) {
     if (!validateLegacyVerification(v).ok) continue;
     if (v.legacyProgressId !== progress.id || v.userId !== progress.userId || v.examId !== progress.targetId) continue;
+    const score = Number(progress.scorePercent);
+    const scoreBasisPoints = Number.isFinite(score) && score >= 0 && score <= 100
+      ? Math.round(score * 100)
+      : null;
+    if (scoreBasisPoints === null || v.verifiedScoreBasisPoints !== scoreBasisPoints) continue;
+    if (v.legacyUpdatedIso !== undefined || progress.updatedIso !== undefined) {
+      if (!v.legacyUpdatedIso || v.legacyUpdatedIso !== progress.updatedIso) continue;
+    }
     if (v.attemptCourseCode !== undefined || progress.courseCode !== undefined) {
       const verificationCourse = normalizeCourseCode(v.attemptCourseCode);
       const progressCourse = normalizeCourseCode(progress.courseCode);
