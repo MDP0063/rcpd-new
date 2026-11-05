@@ -110,7 +110,8 @@ class JsonExamTransaction implements ExamTransaction {
     id: string,
     document: T
   ): Promise<void> {
-    this.assertCanRead();
+    // Multiple writes are valid in one transaction. Read-after-write remains blocked
+    // by get/list; update only checks the already loaded transaction snapshot.
     assertExamCanUpdate(collection);
     assertExamDocument(collection, id, document);
     const key = storageId(id);
