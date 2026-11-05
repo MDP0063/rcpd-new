@@ -501,7 +501,18 @@ test('Firestore-Repository: mehrere Updates verwenden vorgelesene Dokumente ohne
   const key = (collection: string, id: string) => `${collection}/${id}`;
   const database = {
     collection: (collectionName: string) => ({
-      doc: (id: string) => ({ collectionName, id })
+      doc: (id: string) => ({
+        collectionName,
+        id,
+        get: async () => {
+          const data = documents.get(`${collectionName}/${id}`);
+          return {
+            exists: Boolean(data),
+            id,
+            data: () => data ? structuredClone(data) : undefined
+          };
+        }
+      })
     }),
     runTransaction: async <T>(operation: (transaction: {
       get: (reference: { collectionName: string; id: string }) => Promise<{
@@ -566,7 +577,18 @@ test('Firestore-Repository: einzelnes Repository-Update liest vor dem Schreiben'
   ]);
   const database = {
     collection: (collectionName: string) => ({
-      doc: (id: string) => ({ collectionName, id })
+      doc: (id: string) => ({
+        collectionName,
+        id,
+        get: async () => {
+          const data = documents.get(`${collectionName}/${id}`);
+          return {
+            exists: Boolean(data),
+            id,
+            data: () => data ? structuredClone(data) : undefined
+          };
+        }
+      })
     }),
     runTransaction: async <T>(operation: (transaction: {
       get: (reference: { collectionName: string; id: string }) => Promise<{
