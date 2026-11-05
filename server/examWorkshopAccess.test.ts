@@ -40,13 +40,13 @@ test('test and final exam visibility and creation are independent', () => {
   assert.equal(canAccessExamWorkshopExam(actor, 'final_exam', 'create'), false);
 });
 
-test('existing draft edits obey the separate existing-exam permission', () => {
+test('own draft editing and existing exam updates are separate permissions', () => {
   const actor = resolveExamWorkshopActor(account('colonel', {
     hasAccess: true,
     tests: { canView: true, canCreate: true, canEdit: true, canUpdateExisting: false }
   }));
-  assert.equal(canAccessExamWorkshopExam(actor, 'test', 'edit', 'draft_1'), false);
-  assert.equal(canAccessExamWorkshopExam(actor, 'test', 'update_existing', 'draft_1'), false);
+  assert.equal(canAccessExamWorkshopExam(actor, 'test', 'edit', 'own_draft'), true);
+  assert.equal(canAccessExamWorkshopExam(actor, 'test', 'update_existing', 'other_draft'), false);
 });
 
 test('per-exam update locks override general update permissions but not admin', () => {
