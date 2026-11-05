@@ -3339,7 +3339,9 @@ jobs:
         exam_versions: examSnapshot.collections.exam_versions.length,
         exam_attempts: examSnapshot.collections.exam_attempts.length,
         exam_progress: examSnapshot.collections.exam_progress.length,
-        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length,
+        exam_comments: examSnapshot.collections.exam_comments.length,
+        exam_publication_requests: examSnapshot.collections.exam_publication_requests.length
       };
 
       const nowIso = new Date().toISOString();
@@ -3375,7 +3377,9 @@ jobs:
           examVersionsCount: examSummary.exam_versions,
           examAttemptsCount: examSummary.exam_attempts,
           examProgressCount: examSummary.exam_progress,
-          examLegacyVerificationsCount: examSummary.exam_legacy_verifications
+          examLegacyVerificationsCount: examSummary.exam_legacy_verifications,
+          examCommentsCount: examSummary.exam_comments,
+          examPublicationRequestsCount: examSummary.exam_publication_requests
         },
         examRepository: {
           ...examSnapshot,
@@ -3490,11 +3494,16 @@ jobs:
         exam_versions: examSnapshot.collections.exam_versions.length,
         exam_attempts: examSnapshot.collections.exam_attempts.length,
         exam_progress: examSnapshot.collections.exam_progress.length,
-        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length,
+        exam_comments: examSnapshot.collections.exam_comments.length,
+        exam_publication_requests: examSnapshot.collections.exam_publication_requests.length
       };
       if (
         !examCounts ||
-        Object.entries(expectedExamCounts).some(([key, count]) => examCounts[key as keyof typeof expectedExamCounts] !== count)
+        Object.entries(expectedExamCounts).some(([key, count]) => {
+          const actual = examCounts[key as keyof typeof expectedExamCounts];
+          return actual === undefined ? count !== 0 : actual !== count;
+        })
       ) {
         throw new Error('EXAM_BACKUP_SUMMARY_MISMATCH');
       }
@@ -3505,13 +3514,16 @@ jobs:
         examVersionsCount: expectedExamCounts.exam_versions,
         examAttemptsCount: expectedExamCounts.exam_attempts,
         examProgressCount: expectedExamCounts.exam_progress,
-        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications
+        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications,
+        examCommentsCount: expectedExamCounts.exam_comments,
+        examPublicationRequestsCount: expectedExamCounts.exam_publication_requests
       };
       if (
         !summary ||
-        Object.entries(expectedTopExamCounts).some(([key, count]) =>
-          summary[key as keyof typeof expectedTopExamCounts] !== count
-        )
+        Object.entries(expectedTopExamCounts).some(([key, count]) => {
+          const actual = summary[key as keyof typeof expectedTopExamCounts];
+          return actual === undefined ? count !== 0 : actual !== count;
+        })
       ) {
         throw new Error('PORTAL_BACKUP_EXAM_SUMMARY_MISMATCH');
       }
@@ -3636,7 +3648,9 @@ jobs:
           examVersionsCount: examSnapshot.collections.exam_versions.length,
           examAttemptsCount: examSnapshot.collections.exam_attempts.length,
           examProgressCount: examSnapshot.collections.exam_progress.length,
-          examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length
+          examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length,
+          examCommentsCount: examSnapshot.collections.exam_comments.length,
+          examPublicationRequestsCount: examSnapshot.collections.exam_publication_requests.length
         }
       });
     } catch (error) {
