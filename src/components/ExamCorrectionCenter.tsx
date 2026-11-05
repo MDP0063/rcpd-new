@@ -85,7 +85,9 @@ export const ExamCorrectionCenter: React.FC = () => {
     }));
     if (gradeList.some((grade, index) =>
       !Number.isSafeInteger(grade.pointsEarnedMilli) ||
-      !Number.isFinite(Number(grades[review.id]?.[review.questions[index].questionId])) ||
+      typeof grades[review.id]?.[review.questions[index].questionId] !== 'string' ||
+      !grades[review.id][review.questions[index].questionId].trim() ||
+      !Number.isFinite(Number(grades[review.id][review.questions[index].questionId])) ||
       Math.abs(Number(grades[review.id]?.[review.questions[index].questionId]) * 1000 - grade.pointsEarnedMilli) > 1e-7 ||
       grade.pointsEarnedMilli < 0 ||
       grade.pointsEarnedMilli > review.questions[index].pointsMilli
