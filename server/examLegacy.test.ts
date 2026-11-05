@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  createLegacyVerificationDoc,
   findValidVerification,
   legacyOptionId,
   legacyVerificationId,
@@ -135,10 +136,36 @@ test('Verifikation: nur mit allen Pflichtfeldern und für genau diesen Nachweis'
   assert.equal(findValidVerification(progress({ status: 'failed' }), [verification()]), null);
 });
 
-test('Verifikation gilt nur für den passenden Lehrgang', () => {
+test('Verifikation gilt nur für den passenden Lehrgang; fehlende Codes sind nur beidseitig global', () => {
   const p = progress({ courseCode: 'SOP-01' });
   assert.ok(findValidVerification(p, [verification({ attemptCourseCode: 'sop-01' })]));
   assert.equal(findValidVerification(p, [verification({ attemptCourseCode: 'SOP-02' })]), null);
+  assert.equal(findValidVerification(p, [verification()]), null);
+  assert.equal(findValidVerification(progress(), [verification({ attemptCourseCode: 'SOP-01' })]), null);
+  assert.ok(findValidVerification(progress(), [verification()]));
+});
+
+test('Legacy-Verifikationsnachweis wird ausschließlich aus einem bestandenen Prüfungsdatensatz erstellt', () => {
+  const record = progress({ courseCode: 'sop-01' });
+  const doc = createLegacyVerificationDoc(record, 'admin-1', '2026-11-05T12:00:00.000Z', '  Prüfprotokoll geprüft  ');
+  assert.equal(doc.id, legacyVerificationId(record.id));
+  assert.equal(doc.userId, record.userId);
+  assert.equal(doc.examId, record.targetId);
+  assert.equal(doc.attemptCourseCode, 'SOP-01');
+  assert.equal(doc.verifiedByUid, 'admin-1');
+  assert.equal(doc.reason, 'Prüfprotokoll geprüft');
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ status: 'failed' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_SOURCE_NOT_VERIFIABLE/
+  );
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ targetType: 'module' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_SOURCE_NOT_VERIFIABLE/
+  );
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ courseCode: 'bad/code' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_COURSE_INVALID/
+  );
 });
 
 test('mit Verifikation erfüllt altes "passed" die Bestehensvoraussetzung', () => {
