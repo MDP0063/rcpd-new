@@ -4,6 +4,7 @@ import {
   Loader2, Plus, Save, Send, Trash2, X
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import type { UserPublicProfile } from '../types/portal';
 
 type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'matching' | 'free_text';
 type Option = { id: string; text: string };
@@ -59,7 +60,12 @@ const defaultQuestion = (type: QuestionType): Question => {
 const inputClass = 'w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500';
 const labelClass = 'block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5';
 
-export const ExamWorkshop: React.FC = () => {
+interface ExamWorkshopProps { currentUser: UserPublicProfile; }
+
+export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
+  const workshopPermissions = currentUser.granularPermissions?.examWorkshop;
+  const isAdmin = currentUser.role === 'admin';
+  const canCreateAny = isAdmin || Boolean(workshopPermissions?.hasAccess && (workshopPermissions.tests.canCreate || workshopPermissions.finalExams.canCreate));
   const [exams, setExams] = useState<ExamMaster[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [definition, setDefinition] = useState<Definition>(emptyDefinition());
@@ -96,7 +102,11 @@ export const ExamWorkshop: React.FC = () => {
 
   const openNew = () => {
     setSelectedId(null);
-    setDefinition(emptyDefinition());
+    const initial = emptyDefinition();
+    if (!isAdmin && workshopPermissions && !workshopPermissions.tests.canCreate && workshopPermissions.finalExams.canCreate) {
+      initial.assessmentStage = 'final_exam';
+    }
+    setDefinition(initial);
     setError(null);
     setNotice(null);
     setMode('edit');
@@ -178,7 +188,7 @@ export const ExamWorkshop: React.FC = () => {
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Prüfungen erstellen, bearbeiten, prüfen und veröffentlichen.</p></div>
-        <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>
+        {canCreateAny && <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>}
       </div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm flex gap-2"><AlertCircle size={17}/>{error}</div>}
       <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Prüfung oder Lehrgang suchen…"/></div>
