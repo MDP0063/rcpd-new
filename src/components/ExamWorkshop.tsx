@@ -6,6 +6,7 @@ import {
 import { apiFetch } from '../lib/api';
 import type { UserPublicProfile } from '../types/portal';
 import { ExamWorkshopComments } from './ExamWorkshopComments';
+import { ExamWorkshopReviewInbox } from './ExamWorkshopReviewInbox';
 
 type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'matching' | 'free_text';
 type Option = { id: string; text: string };
@@ -67,8 +68,14 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   const workshopPermissions = currentUser.granularPermissions?.examWorkshop;
   const isAdmin = currentUser.role === 'admin';
   const canCreateAny = isAdmin || Boolean(workshopPermissions?.hasAccess && (workshopPermissions.tests.canCreate || workshopPermissions.finalExams.canCreate));
+  const canViewTests = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.tests.canView);
+  const canViewFinalExams = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.finalExams.canView);
   const [exams, setExams] = useState<ExamMaster[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedPublicationRequestId, setSelectedPublicationRequestId] = useState<string | null>(null);
+  const [activeStage, setActiveStage] = useState<'test' | 'final_exam'>(() =>
+    currentUser.role === 'admin' || currentUser.granularPermissions?.examWorkshop?.tests.canView ? 'test' : 'final_exam'
+  );
   const [definition, setDefinition] = useState<Definition>(emptyDefinition());
   const [mode, setMode] = useState<'list' | 'edit' | 'preview'>('list');
   const [loading, setLoading] = useState(true);
@@ -94,9 +101,10 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   useEffect(() => { void loadExams(); }, [loadExams]);
 
   const filteredExams = useMemo(() => exams.filter(exam =>
-    exam.title.toLocaleLowerCase('de-DE').includes(search.toLocaleLowerCase('de-DE')) ||
-    (exam.assignedCourseCodes || []).join(' ').toLowerCase().includes(search.toLowerCase())
-  ), [exams, search]);
+    exam.assessmentStage === activeStage &&
+    (exam.title.toLocaleLowerCase('de-DE').includes(search.toLocaleLowerCase('de-DE')) ||
+      (exam.assignedCourseCodes || []).join(' ').toLowerCase().includes(search.toLowerCase()))
+  ), [exams, search, activeStage]);
 
   const update = <K extends keyof Definition>(key: K, value: Definition[K]) =>
     setDefinition(current => ({ ...current, [key]: value }));
@@ -104,9 +112,8 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   const openNew = () => {
     setSelectedId(null);
     const initial = emptyDefinition();
-    if (!isAdmin && workshopPermissions && !workshopPermissions.tests.canCreate && workshopPermissions.finalExams.canCreate) {
-      initial.assessmentStage = 'final_exam';
-    }
+    initial.assessmentStage = activeStage;
+    setSelectedPublicationRequestId(null);
     setDefinition(initial);
     setError(null);
     setNotice(null);
@@ -158,20 +165,52 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
 
   const publish = async () => {
     if (!selectedId) { setError('Speichere den Entwurf zuerst.'); return; }
-    if (!window.confirm('Prüfung jetzt veröffentlichen? Dadurch wird eine unveränderliche Version erstellt.')) return;
+    const isUpdate = Boolean(selectedExam?.currentPublishedVersionId);
+    const requiresApproval = !isAdmin && Boolean(workshopPermissions?.publication && (
+      definition.assessmentStage === 'final_exam'
+        ? isUpdate ? workshopPermissions.publication.finalExamUpdatesRequireApproval : workshopPermissions.publication.newFinalExamsRequireApproval
+        : isUpdate ? workshopPermissions.publication.testUpdatesRequireApproval : workshopPermissions.publication.newTestsRequireApproval
+    ));
+    const label = selectedPublicationRequestId
+      ? 'Prüfung freigeben und veröffentlichen'
+      : requiresApproval ? 'Prüfung zur Admin-Freigabe einreichen' : 'Prüfung jetzt veröffentlichen';
+    if (!window.confirm(`${label}? Dadurch wird der aktuelle Prüfungsstand verbindlich eingereicht bzw. veröffentlicht.`)) return;
     setPublishing(true); setError(null); setNotice(null);
-    const response = await apiFetch<{ version?: { versionNumber?: number }; validation?: { errors?: { path?: string; message?: string }[] } }>(
-      `/api/admin/exams/${encodeURIComponent(selectedId)}/publish`, { method: 'POST', body: JSON.stringify({}) }
-    );
+    let response;
+    if (isAdmin && selectedPublicationRequestId) {
+      response = await apiFetch(
+        `/api/admin/exam-publication-requests/${encodeURIComponent(selectedPublicationRequestId)}/decision`,
+        { method: 'POST', body: JSON.stringify({ decision: 'publish', comment: '' }) }
+      );
+    } else if (requiresApproval) {
+      response = await apiFetch(
+        `/api/admin/exams/${encodeURIComponent(selectedId)}/submit-for-approval`,
+        { method: 'POST', body: JSON.stringify({}) }
+      );
+    } else {
+      response = await apiFetch<{ version?: { versionNumber?: number }; validation?: { errors?: { path?: string; message?: string }[] } }>(
+        `/api/admin/exams/${encodeURIComponent(selectedId)}/publish`, { method: 'POST', body: JSON.stringify({}) }
+      );
+    }
     setPublishing(false);
     if (!response.ok) {
-      const issues = response.data?.validation?.errors || [];
+      const issues = (response.data as { validation?: { errors?: { path?: string; message?: string }[] } } | undefined)?.validation?.errors || [];
       setError(issues.length
         ? `Noch nicht veröffentlichungsfähig: ${issues.map(issue => [issue.path, issue.message].filter(Boolean).join(': ')).join(' · ')}`
-        : response.error || 'Die Veröffentlichung ist fehlgeschlagen.');
+        : response.error || 'Die Aktion konnte nicht abgeschlossen werden.');
       return;
     }
-    setNotice('Prüfung wurde als unveränderliche Version veröffentlicht.');
+    if (requiresApproval) {
+      setNotice('Die Prüfung wurde zur Admin-Freigabe eingereicht.');
+      setSelectedPublicationRequestId(null);
+      await loadExams();
+      setMode('list');
+      return;
+    }
+    setNotice(selectedPublicationRequestId
+      ? 'Die eingereichte Prüfung wurde geprüft und veröffentlicht.'
+      : 'Prüfung wurde als unveränderliche Version veröffentlicht.');
+    setSelectedPublicationRequestId(null);
     await openExam(selectedId);
     await loadExams();
   };
@@ -186,13 +225,24 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   if (mode === 'list') return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
+        <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Prüfungen erstellen, bearbeiten, prüfen und veröffentlichen.</p></div>
         {canCreateAny && <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>}
       </div>
+      {isAdmin && <ExamWorkshopReviewInbox
+        onOpenRequest={(requestId, examId) => {
+          setSelectedPublicationRequestId(requestId);
+          void openExam(examId);
+        }}
+        onChanged={() => { void loadExams(); }}
+      />}
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm flex gap-2"><AlertCircle size={17}/>{error}</div>}
-      <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Prüfung oder Lehrgang suchen…"/></div>
+      <div className="flex flex-wrap items-center gap-2">
+        {canViewTests && <button type="button" onClick={() => setActiveStage('test')} className={`rounded-md px-4 py-2 text-sm font-semibold ${activeStage === 'test' ? 'bg-sky-600 text-white' : 'border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'}`}>Tests</button>}
+        {canViewFinalExams && <button type="button" onClick={() => setActiveStage('final_exam')} className={`rounded-md px-4 py-2 text-sm font-semibold ${activeStage === 'final_exam' ? 'bg-sky-600 text-white' : 'border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'}`}>Abschlussprüfungen</button>}
+      </div>
+      <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder={activeStage === 'final_exam' ? 'Abschlussprüfung oder Lehrgang suchen…' : 'Test oder Lehrgang suchen…'}/></div>
       {loading ? <div className="py-16 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2"/>Prüfungen werden geladen…</div> :
         filteredExams.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center"><BookOpen className="mx-auto text-slate-400 mb-3"/><p className="font-semibold text-slate-800 dark:text-slate-100">Noch keine Prüfungen gefunden</p><p className="text-sm text-slate-500 mt-1">Lege eine neue Prüfung an oder passe den Suchbegriff an.</p></div> :
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3"><button onClick={()=>void openExam(exam.id)} disabled={exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button></td></tr>)}</tbody></table></div>}
@@ -234,7 +284,13 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
         <div className="flex gap-2">
           <button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
           {canEditSelected && <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>}
-          {isAdmin && <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button>}
+          {canEditSelected && selectedId && <button onClick={()=>void publish()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} {isAdmin ? selectedPublicationRequestId ? 'Freigeben & veröffentlichen' : 'Veröffentlichen' : (() => {
+            const isUpdate = Boolean(selectedExam?.currentPublishedVersionId);
+            const required = workshopPermissions?.publication && (definition.assessmentStage === 'final_exam'
+              ? isUpdate ? workshopPermissions.publication.finalExamUpdatesRequireApproval : workshopPermissions.publication.newFinalExamsRequireApproval
+              : isUpdate ? workshopPermissions.publication.testUpdatesRequireApproval : workshopPermissions.publication.newTestsRequireApproval);
+            return required ? 'Zur Freigabe einreichen' : 'Veröffentlichen';
+          })()}</button>}
         </div>
       </div>
       <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedId ? 'Prüfung bearbeiten' : 'Neue Prüfung erstellen'}</h1><p className="text-sm text-slate-500 mt-1">Arbeitsstand und veröffentlichte Version bleiben getrennt.</p></div>
