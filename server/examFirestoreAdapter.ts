@@ -4,6 +4,7 @@ import type {
   ExamCollection,
   ExamDocument,
   ExamQuery,
+  ExamRepositorySnapshot,
   ExamStorageAdapter,
   ExamTransaction
 } from './examRepositoryTypes.ts';
@@ -175,6 +176,77 @@ export class FirestoreExamStorageAdapter implements ExamStorageAdapter {
       const data = documentFromSnapshot<T>(collection, document);
       if (!data) throw new Error('EXAM_FIRESTORE_DOCUMENT_INVALID');
       return data;
+    });
+  }
+
+  async exportSnapshot(): Promise<ExamRepositorySnapshot> {
+    return this.database.runTransaction(async transaction => {
+      const control = await transaction.get(this.database.doc('exam_system_control/state'));
+      if (control.get('enabled') !== true) throw new Error('EXAM_MAINTENANCE_REQUIRED');
+      const collections = {} as ExamRepositorySnapshot['collections'];
+      for (const collection of EXAM_COLLECTIONS) {
+        const snapshot = await transaction.get(this.database.collection(collection));
+        collections[collection] = snapshot.docs.map(document => {
+          const data = documentFromSnapshot(collection, document);
+          if (!data) throw new Error('EXAM_FIRESTORE_DOCUMENT_INVALID');
+          return data;
+        });
+      }
+      return { formatVersion: 1, collections };
+    });
+  }
+
+  async replaceSnapshot(snapshot: ExamRepositorySnapshot): Promise<void> {
+    const control = await this.database.doc('exam_system_control/state').get();
+    if (control.get('enabled') !== true) throw new Error('EXAM_MAINTENANCE_REQUIRED');
+
+    const writer = this.database.bulkWriter();
+    const writes: Promise<unknown>[] = [];
+    for (const collection of EXAM_COLLECTIONS) {
+      const existing = await this.database.collection(collection).get();
+      for (const document of existing.docs) writes.push(writer.delete(document.ref));
+      for (const document of snapshot.collections[collection]) {
+        writes.push(
+          writer.set(
+            this.database.collection(collection).doc(storageId(document.id)),
+            clone(document)
+          )
+        );
+      }
+    }
+
+    let closeError: unknown;
+    try {
+      await writer.close();
+    } catch (error) {
+      closeError = error;
+    }
+    const settled = await Promise.allSettled(writes);
+    const failed = settled.find(result => result.status === 'rejected') as PromiseRejectedResult | undefined;
+    if (closeError) throw closeError;
+    if (failed) throw failed.reason;
+  }
+
+  async isMaintenanceMode(): Promise<boolean> {
+    const snapshot = await this.database.doc('exam_system_control/state').get();
+    return snapshot.get('enabled') === true;
+  }
+
+  async setMaintenanceMode(enabled: boolean, allowExisting = false): Promise<void> {
+    const reference = this.database.doc('exam_system_control/state');
+    await this.database.runTransaction(async transaction => {
+      const current = await transaction.get(reference);
+      if (enabled && current.exists && current.get('enabled') === true && !allowExisting) {
+        throw new Error('EXAM_MAINTENANCE_ALREADY_ACTIVE');
+      }
+      if (enabled) {
+        transaction.set(reference, {
+          enabled: true,
+          updatedAtIso: new Date().toISOString()
+        });
+      } else if (current.exists) {
+        transaction.delete(reference);
+      }
     });
   }
 
