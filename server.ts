@@ -1133,6 +1133,7 @@ async function startServer() {
         res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
         return;
       }
+      res.setHeader('Cache-Control', 'no-store');
       const exams = await getExamRepository().list('exam_masters');
       exams.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
       res.json({ exams });
@@ -1147,6 +1148,7 @@ async function startServer() {
         res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
         return;
       }
+      res.setHeader('Cache-Control', 'no-store');
       const exam = await getExamRepository().get('exam_masters', req.params.id);
       if (!exam) {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
