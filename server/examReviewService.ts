@@ -114,6 +114,8 @@ export interface CompletedManualReviewItem extends ExamReviewItem {
   reviewedByUid: string;
   reviewCorrections: Array<{
     reviewerUid: string; atIso: string; reason: string;
+    previousReviewerUid: string; previousReviewedAtIso: string;
+    previousManualPointsMilli: number; nextManualPointsMilli: number;
     previousStatus: 'passed' | 'failed'; nextStatus: 'passed' | 'failed';
     previousScoreBasisPoints: number | null; nextScoreBasisPoints: number | null;
     previousGrades: Array<{ questionId: string; pointsEarnedMilli: number }>;
@@ -232,6 +234,10 @@ export async function correctCompletedExamReview(
     if (previousCorrectionHistory.length >= 100) throw new Error('EXAM_REVIEW_CORRECTION_LIMIT');
     const correction = {
       reviewerUid, atIso: nowIso, reason,
+      previousReviewerUid: attempt.reviewedByUid,
+      previousReviewedAtIso: attempt.reviewedAtIso,
+      previousManualPointsMilli: attempt.manuallyEarnedPointsMilli,
+      nextManualPointsMilli: result.manualEarnedPointsMilli,
       previousStatus: attempt.status,
       nextStatus: result.status,
       previousScoreBasisPoints: attempt.finalScoreBasisPoints ?? null,
