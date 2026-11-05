@@ -173,6 +173,17 @@ test('Prüfungswerkstatt: Veröffentlichung erzeugt einen unveränderlichen Snap
   });
 });
 
+test('Prüfungswerkstatt: direkte Veröffentlichung weist eine veraltete Arbeitsrevision ab', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-publish-revision', 'author-1', validDefinition);
+    await assert.rejects(
+      publishExamDraft(repository, 'exam-publish-revision', 'author-1', undefined, undefined, 2),
+      /EXAM_WORKING_REVISION_CONFLICT/
+    );
+    assert.equal(await repository.get('exam_versions', 'exam-publish-revision__v1'), null);
+  });
+});
+
 test('Prüfungswerkstatt: ungültige Prüfungen können nicht veröffentlicht werden', async () => {
   await withRepository(async repository => {
     await createExamDraft(
