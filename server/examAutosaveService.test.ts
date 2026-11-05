@@ -73,6 +73,7 @@ test('Autosave speichert validierte Antworten und erhöht die Revision', async (
       repository, 'exam-1', 'attempt-1', 'user-1', 1,
       { q1: 'b', q2: 'Meine Begründung' }, at(1)
     );
+    assert.ok(result.attempt);
     assert.equal(result.saved, true);
     assert.equal(result.stale, false);
     assert.equal(result.attempt.currentRevision, 1);
@@ -87,6 +88,7 @@ test('Veraltete Revisionen werden ignoriert und überschreiben keine neueren Ant
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'b' }, at(1));
     const stale = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'a' }, at(2));
+    assert.ok(stale.attempt);
     assert.equal(stale.saved, false);
     assert.equal(stale.stale, true);
     assert.equal(stale.attempt.currentRevision, 2);
@@ -112,6 +114,7 @@ test('Identische Antworten lösen trotz höherer Revision keinen unnötigen Schr
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const unchanged = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'b' }, at(2));
+    assert.ok(unchanged.attempt);
     assert.equal(unchanged.saved, false);
     assert.equal(unchanged.stale, false);
     assert.equal(unchanged.attempt.currentRevision, 1);
@@ -131,6 +134,7 @@ test('Revision muss positiv und darf höchstens 100 Schritte voraus sein', async
       /EXAM_REVISION_JUMP_INVALID/
     );
     const boundary = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 100, { q1: 'a' }, at(1));
+    assert.ok(boundary.attempt);
     assert.equal(boundary.attempt.currentRevision, 100);
   });
 });
