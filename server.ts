@@ -31,6 +31,7 @@ import {
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
+import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
@@ -1010,6 +1011,7 @@ async function startServer() {
     'GET /api/whitelist/verify'
   ]);
   const smallJson = express.json({ limit: '16kb' });
+  const examAutosaveJson = express.json({ limit: '64kb' });
   const largeJson = express.json({ limit: '25mb' });
 
   // Schritt 1: Sitzung prüfen. Ohne gültiges Token gibt es nur die öffentlichen Routen.
@@ -1057,8 +1059,14 @@ async function startServer() {
 
   // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
   app.use('/api', (req, res, next) => {
+    const isExamAutosave = req.method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(req.path);
+    if (isExamAutosave) res.locals.examRequestReceivedAtMs = Date.now();
     if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
       next();
+      return;
+    }
+    if (isExamAutosave) {
+      examAutosaveJson(req, res, next);
       return;
     }
     largeJson(req, res, next);
@@ -1302,7 +1310,19 @@ async function startServer() {
       EXAM_PREREQUISITE_INVALID: { status: 409, message: 'Die Prüfungsvoraussetzungen sind ungültig. Bitte wende dich an den Administrator.' },
       EXAM_MANUAL_UNLOCKS_INVALID: { status: 409, message: 'Die Freigabeeinstellungen dieser Prüfung sind ungültig. Bitte wende dich an den Administrator.' },
       EXAM_TIME_LIMIT_INVALID: { status: 409, message: 'Das Zeitlimit dieser Prüfung ist ungültig. Bitte wende dich an den Administrator.' },
-      EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' }
+      EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
+      EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
+      EXAM_ATTEMPT_FORBIDDEN: { status: 403, message: 'Du darfst nur deinen eigenen Prüfungsversuch speichern.' },
+      EXAM_ATTEMPT_NOT_ACTIVE: { status: 409, message: 'Dieser Prüfungsversuch ist nicht mehr aktiv.' },
+      EXAM_REVISION_INVALID: { status: 400, message: 'Die Autosave-Revision ist ungültig.' },
+      EXAM_REVISION_JUMP_INVALID: { status: 409, message: 'Die Autosave-Revision liegt zu weit voraus. Bitte lade den gespeicherten Stand neu.' },
+      EXAM_AUTOSAVE_TOO_LARGE: { status: 413, message: 'Die zu speichernden Antworten überschreiten die zulässige Größe.' },
+      EXAM_ANSWERS_INVALID: { status: 400, message: 'Das Antwortformat ist ungültig.' },
+      EXAM_ANSWER_QUESTION_UNKNOWN: { status: 400, message: 'Die Antwort enthält eine unbekannte Frage.' },
+      EXAM_ANSWER_INVALID: { status: 400, message: 'Eine oder mehrere Antworten sind ungültig.' },
+      EXAM_ATTEMPT_REVISION_INVALID: { status: 409, message: 'Der gespeicherte Revisionsstand ist ungültig.' },
+      EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' },
+      EXAM_ATTEMPT_EXPIRED: { status: 409, message: 'Das Zeitlimit ist abgelaufen. Die verspäteten Antworten wurden nicht gespeichert.' }
     };
     const response = responses[code];
     if (response) {
@@ -1335,6 +1355,59 @@ async function startServer() {
       );
       res.status(result.created ? 201 : 200).json({
         attempt: projectStartedExamAttempt(result, requestReceivedAtMs)
+      });
+    } catch (error) {
+      sendExamAttemptError(error, res, next);
+    }
+  });
+
+
+  app.put('/api/academy/exams/:id/attempts/:attemptId/autosave', async (req, res, next) => {
+    const requestReceivedAtMs = Number(res.locals.examRequestReceivedAtMs);
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) {
+        res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const body = req.body;
+      if (
+        !body ||
+        typeof body !== 'object' ||
+        Array.isArray(body) ||
+        Object.keys(body).some(key => key !== 'revision' && key !== 'answers') ||
+        !Object.prototype.hasOwnProperty.call(body, 'revision') ||
+        !Object.prototype.hasOwnProperty.call(body, 'answers')
+      ) {
+        res.status(400).json({ error: 'Die Autosave-Anfrage ist ungültig.' });
+        return;
+      }
+      const result = await saveExamAttemptAnswers(
+        getExamRepository(),
+        req.params.id,
+        req.params.attemptId,
+        participant.uid,
+        body.revision,
+        body.answers,
+        Number.isSafeInteger(requestReceivedAtMs) ? requestReceivedAtMs : Date.now()
+      );
+      if (result.expired) {
+        res.status(409).json({
+          error: 'Das Zeitlimit ist abgelaufen. Es wurden ausschließlich die zuletzt gespeicherten Antworten ausgewertet.',
+          expired: true,
+          status: result.finalStatus
+        });
+        return;
+      }
+      res.json({
+        attempt: result.attempt,
+        saved: result.saved,
+        stale: result.stale
       });
     } catch (error) {
       sendExamAttemptError(error, res, next);
