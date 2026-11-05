@@ -33,7 +33,7 @@ import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from '
 import { createExamDraft, parseExamWorkshopDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { examWorkshopPublicationRequiresApproval } from './server/examWorkshopAccess.ts';
 import { listPendingExamPublicationRequests, refreshPendingExamPublicationRequest, submitExamPublicationRequest, updateExamPublicationRequestDecision } from './server/examWorkshopRequests.ts';
-import { canAccessExamWorkshopExam, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
+import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
 import { createExamWorkshopComment, listExamWorkshopComments } from './server/examWorkshopComments.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
@@ -139,7 +139,7 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 }
 
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
-import { getDefaultGranularPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
+import { getDefaultExamWorkshopPermissions, getDefaultGranularPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
@@ -4181,7 +4181,6 @@ jobs:
   // ==========================================================================
   app.post('/api/requests', (req, res) => {
     const {
-      requesterUid,
       category,
       title,
       requestedRole,
@@ -4191,15 +4190,42 @@ jobs:
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === requesterUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const caller = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
     }
 
+    const validCategories: RequestCategory[] = [
+      'rank_change', 'clearance', 'award', 'transfer', 'loa', 'exam_workshop_access'
+    ];
+    if (typeof category !== 'string' || !validCategories.includes(category as RequestCategory)) {
+      res.status(400).json({ error: 'Ungültige Antragskategorie.' });
+      return;
+    }
     if (!title || !justification) {
       res.status(400).json({ error: 'Bitte Betreff und ausführliche Begründung angeben.' });
       return;
+    }
+    if (category === 'exam_workshop_access') {
+      const actor = resolveExamWorkshopActor(caller);
+      if (!canRequestExamWorkshopAccess(actor)) {
+        res.status(403).json({ error: 'Du darfst keinen Zugang zur Prüfungswerkstatt beantragen.' });
+        return;
+      }
+      if (caller.publicProfile.granularPermissions?.examWorkshop?.hasAccess === true) {
+        res.status(409).json({ error: 'Du hast bereits Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      if ((dbState.requests || []).some(request =>
+        request.requesterUid === caller.uid &&
+        request.category === 'exam_workshop_access' &&
+        request.status === 'pending'
+      )) {
+        res.status(409).json({ error: 'Du hast bereits eine offene Zugriffsanfrage.' });
+        return;
+      }
     }
 
     const nowIso = new Date().toISOString();
@@ -4253,15 +4279,15 @@ jobs:
 
   app.put('/api/requests/:id/review', (req, res) => {
     const { id } = req.params;
-    const { reviewerUid, status, reviewerComment, applyRankChange } = req.body as {
-      reviewerUid?: string;
+    const { status, reviewerComment, applyRankChange } = req.body as {
       status?: RequestStatus;
       reviewerComment?: string;
       applyRankChange?: boolean;
     };
 
     const dbState = loadDatabase();
-    const reviewer = dbState.accounts.find(a => a.uid === reviewerUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const reviewer = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     const reviewerPerms =
       reviewer?.publicProfile.granularPermissions ||
       (reviewer ? getDefaultGranularPermissions(reviewer.publicProfile.role) : undefined);
@@ -4284,6 +4310,14 @@ jobs:
       res.status(404).json({ error: 'Antrag nicht gefunden.' });
       return;
     }
+    if (status !== 'approved' && status !== 'rejected') {
+      res.status(400).json({ error: 'Ungültige Antragsentscheidung.' });
+      return;
+    }
+    if (targetReq.category === 'exam_workshop_access' && reviewer.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Zugriffsanfragen zur Prüfungswerkstatt dürfen ausschließlich Administratoren entscheiden.' });
+      return;
+    }
 
     // Strict Enforcement: Rank changes can ONLY be approved/applied by Admin!
     if (targetReq.category === 'rank_change' && reviewer.publicProfile.role !== 'admin') {
@@ -4302,6 +4336,28 @@ jobs:
     targetReq.updatedIso = nowIso;
 
     let rankPromotedNote = '';
+    if (
+      reviewer.publicProfile.role === 'admin' &&
+      targetReq.status === 'approved' &&
+      targetReq.category === 'exam_workshop_access'
+    ) {
+      const applicantAcc = dbState.accounts.find(a => a.uid === targetReq.requesterUid);
+      if (applicantAcc) {
+        const currentPermissions = normalizeGranularPermissions(
+          applicantAcc.publicProfile.role,
+          applicantAcc.publicProfile.granularPermissions
+        );
+        const workshopPermissions = currentPermissions.examWorkshop ||
+          getDefaultExamWorkshopPermissions(applicantAcc.publicProfile.role);
+        applicantAcc.publicProfile.granularPermissions = {
+          ...currentPermissions,
+          examWorkshop: { ...workshopPermissions, hasAccess: true }
+        };
+        applicantAcc.publicProfile.updatedIso = nowIso;
+        rankPromotedNote = ' · Zugang zur Prüfungswerkstatt erteilt; Detailrechte können separat konfiguriert werden';
+      }
+    }
+
     // If Admin approves a rank_change request and applyRankChange is true, automatically promote the account!
     if (
       reviewer.publicProfile.role === 'admin' &&
@@ -4353,9 +4409,9 @@ jobs:
 
   app.delete('/api/requests/:id', (req, res) => {
     const { id } = req.params;
-    const actorUid = String(req.query.actorUid || '');
+    const sessionUid = res.locals.sessionUid as string | undefined;
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
