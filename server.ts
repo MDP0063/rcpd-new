@@ -33,6 +33,7 @@ import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from '
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
+import { submitExamAttempt } from './server/examSubmitService.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
@@ -996,14 +997,19 @@ async function startServer() {
 
   // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
   app.use('/api', (req, res, next) => {
-    const isExamAutosave = req.method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(req.path);
-    if (isExamAutosave) res.locals.examRequestReceivedAtMs = Date.now();
+    const isExamAutosave = req.method === 'PUT' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/autosave$/.test(req.path);
+    const isExamSubmit = req.method === 'POST' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(req.path);
+    if (isExamAutosave || isExamSubmit) res.locals.examRequestReceivedAtMs = Date.now();
     if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
       next();
       return;
     }
     if (isExamAutosave) {
       examAutosaveJson(req, res, next);
+      return;
+    }
+    if (isExamSubmit) {
+      smallJson(req, res, next);
       return;
     }
     largeJson(req, res, next);
@@ -1036,6 +1042,7 @@ async function startServer() {
           '/admin/exams/legacy-verifications',
           '/admin/exams/migrate-legacy'
         ].includes(req.path) ||
+        /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
       (req.method === 'PUT' && /^\/academy\/exams\/[^/]+$/.test(req.path)) ||
@@ -1259,7 +1266,8 @@ async function startServer() {
       EXAM_ANSWER_INVALID: { status: 400, message: 'Eine oder mehrere Antworten sind ungültig.' },
       EXAM_ATTEMPT_REVISION_INVALID: { status: 409, message: 'Der gespeicherte Revisionsstand ist ungültig.' },
       EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' },
-      EXAM_ATTEMPT_EXPIRED: { status: 409, message: 'Das Zeitlimit ist abgelaufen. Die verspäteten Antworten wurden nicht gespeichert.' }
+      EXAM_ATTEMPT_EXPIRED: { status: 409, message: 'Das Zeitlimit ist abgelaufen. Die verspäteten Antworten wurden nicht gespeichert.' },
+      EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' }
     };
     const response = responses[code];
     if (response) {
@@ -1345,6 +1353,47 @@ async function startServer() {
         attempt: result.attempt,
         saved: result.saved,
         stale: result.stale
+      });
+    } catch (error) {
+      sendExamAttemptError(error, res, next);
+    }
+  });
+
+
+  // Die Abgabe wertet ausschließlich den letzten serverseitig gespeicherten Autosave-Stand aus.
+  app.post('/api/academy/exams/:id/attempts/:attemptId/submit', async (req, res, next) => {
+    const requestReceivedAtMs = Number(res.locals.examRequestReceivedAtMs);
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) {
+        res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      // Antworten gehören ausschließlich in den revisionsgesicherten Autosave-Endpunkt.
+      // So kann eine Abgabe keine nicht gespeicherten oder nachträglich manipulierten Werte einschleusen.
+      if (
+        req.body !== undefined &&
+        (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || Object.keys(req.body).length > 0)
+      ) {
+        res.status(400).json({ error: 'Die Abgabe darf keine Antworten enthalten. Bitte speichere sie zuerst über Autosave.' });
+        return;
+      }
+      const result = await submitExamAttempt(
+        getExamRepository(),
+        req.params.id,
+        req.params.attemptId,
+        participant.uid,
+        Number.isSafeInteger(requestReceivedAtMs) ? requestReceivedAtMs : Date.now()
+      );
+      res.status(result.expired ? 409 : 200).json({
+        submission: result.submission,
+        expired: result.expired,
+        alreadySubmitted: result.alreadySubmitted
       });
     } catch (error) {
       sendExamAttemptError(error, res, next);
