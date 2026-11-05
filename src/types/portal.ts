@@ -271,6 +271,30 @@ export interface PortalRequestDoc {
   updatedIso: string;
 }
 
+export interface ExamWorkshopCategoryPermissions {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canUpdateExisting: boolean;
+}
+
+export interface ExamWorkshopPublicationPermissions {
+  newTestsRequireApproval: boolean;
+  newFinalExamsRequireApproval: boolean;
+  testUpdatesRequireApproval: boolean;
+  finalExamUpdatesRequireApproval: boolean;
+}
+
+/** Separate from course grading and all other granular Academy permissions. */
+export interface ExamWorkshopPermissions {
+  hasAccess: boolean;
+  canRequestAccess: boolean;
+  tests: ExamWorkshopCategoryPermissions;
+  finalExams: ExamWorkshopCategoryPermissions;
+  publication: ExamWorkshopPublicationPermissions;
+  lockedUpdateExamIds: string[];
+}
+
 export interface GranularPermissions {
   assignedCourseCodes: string[]; // e.g. ['SOP-01', 'PC-102'] — allows instructor grading/editing only for these course codes
   canGradeAssignedCourses: boolean;
@@ -278,6 +302,7 @@ export interface GranularPermissions {
   canPublishAnnouncements: boolean;
   canReviewStandardRequests: boolean; // Non-rank requests (rank changes remain strictly Admin-only)
   canExportReports: boolean;
+  examWorkshop?: ExamWorkshopPermissions;
 }
 
 export interface AuditLogDoc {
