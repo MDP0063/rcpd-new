@@ -36,6 +36,33 @@ function boundedInteger(value: unknown, min: number, max: number, path: string):
   return value;
 }
 
+function validateMatchingIntegrity(questions: ExamQuestion[]): void {
+  for (const [index, rawQuestion] of (questions as unknown as Array<Record<string, unknown>>).entries()) {
+    if (rawQuestion.type !== 'matching') continue;
+    const pairs = rawQuestion.matchingPairs;
+    if (!Array.isArray(pairs) || pairs.length < 1 || pairs.length > EXAM_LIMITS.maxMatchingPairs) {
+      invalid(`questions[${index}].matchingPairs`);
+    }
+    const pairIds = new Set<string>();
+    const targetIds = new Set<string>();
+    for (const [pairIndex, rawPair] of pairs.entries()) {
+      if (!isPlainObject(rawPair) || !isValidId(rawPair.id) || !isValidId(rawPair.targetId)) {
+        invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      }
+      if (pairIds.has(rawPair.id) || targetIds.has(rawPair.targetId) || pairIds.has(rawPair.targetId)) {
+        invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      }
+      if (
+        typeof rawPair.prompt !== 'string' || !rawPair.prompt.trim() || rawPair.prompt.length > EXAM_LIMITS.maxOptionLength ||
+        typeof rawPair.targetText !== 'string' || !rawPair.targetText.trim() || rawPair.targetText.length > EXAM_LIMITS.maxOptionLength
+      ) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      pairIds.add(rawPair.id);
+      targetIds.add(rawPair.targetId);
+    }
+    if ([...targetIds].some(id => pairIds.has(id))) invalid(`questions[${index}].matchingPairs`);
+  }
+}
+
 /** Validiert und begrenzt den speicherbaren Arbeitsstand, ohne unvollständige Entwürfe zu verbieten. */
 export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
   if (!isPlainObject(value)) return invalid('definition');
@@ -170,6 +197,7 @@ export async function createExamDraft(
   nowIso = new Date().toISOString()
 ) {
   const input = parseExamWorkshopDraft(definition);
+  validateMatchingIntegrity(input.questions);
   const master = toMaster(id, input, authorUid, nowIso);
   await repository.create('exam_masters', id, master);
   return master;
@@ -207,31 +235,71 @@ export async function updateExamDraft(
       .map(question => [String(question.id || ''), question]));
     const editedMatchingTargetQuestions = new Set<string>();
     for (const [index, rawQuestion] of (input.questions as unknown as Array<Record<string, unknown>>).entries()) {
-      if (!Array.isArray(rawQuestion.matchingTargets)) continue;
+      if (rawQuestion.type !== 'matching') continue;
       const currentQuestion = existingQuestions.get(String(rawQuestion.id || ''));
       const oldPairs = Array.isArray(currentQuestion?.matchingPairs)
         ? currentQuestion.matchingPairs as Array<Record<string, unknown>>
         : [];
-      const targetIds = oldPairs.map(pair => pair.targetId).filter((id): id is string => typeof id === 'string');
-      const targetItems = rawQuestion.matchingTargets as Array<Record<string, unknown>>;
+      if (preserveSensitiveFields && currentQuestion && !Array.isArray(rawQuestion.matchingTargets)) {
+        invalid(`questions[${index}].matchingTargets`);
+      }
+      const targetItems = Array.isArray(rawQuestion.matchingTargets)
+        ? rawQuestion.matchingTargets as Array<Record<string, unknown>>
+        : [];
       const targetTexts = new Map<string, string>();
       for (const target of targetItems) {
-        if (typeof target.id !== 'string' || typeof target.text !== 'string' || target.text.length > 2000 || targetTexts.has(target.id)) {
+        if (!isPlainObject(target) || !isValidId(target.id) || typeof target.text !== 'string' || !target.text.trim() || target.text.length > EXAM_LIMITS.maxOptionLength || targetTexts.has(target.id)) {
           invalid(`questions[${index}].matchingTargets`);
         }
         targetTexts.set(target.id, target.text);
       }
-      if (targetIds.length !== targetTexts.size || targetIds.some(id => !targetTexts.has(id))) {
-        invalid(`questions[${index}].matchingTargets`);
-      }
       if (!Array.isArray(rawQuestion.matchingPairs)) invalid(`questions[${index}].matchingPairs`);
-      const oldPairsById = new Map(oldPairs.map(pair => [String(pair.id || ''), pair]));
-      rawQuestion.matchingPairs = (rawQuestion.matchingPairs as Array<Record<string, unknown>>).map(pair => {
-        const old = oldPairsById.get(String(pair.id || ''));
-        if (!old || typeof old.targetId !== 'string') return pair;
-        return { ...pair, targetId: old.targetId, targetText: targetTexts.get(old.targetId) };
-      });
-      editedMatchingTargetQuestions.add(String(rawQuestion.id || ''));
+      if (preserveSensitiveFields && currentQuestion) {
+        if (oldPairs.some(pair => !isPlainObject(pair) || !isValidId(pair.id) || !isValidId(pair.targetId))) {
+          invalid(`questions[${index}].matchingPairs`);
+        }
+        const oldPairsById = new Map(oldPairs.map(pair => [String(pair.id || ''), pair]));
+        const oldTargetIds = new Set(oldPairs.map(pair => {
+          if (!isValidId(pair.id) || !isValidId(pair.targetId)) invalid(`questions[${index}].matchingPairs`);
+          return pair.targetId;
+        }));
+        const submittedPairs = rawQuestion.matchingPairs as Array<Record<string, unknown>>;
+        const nextPairs: Array<Record<string, unknown>> = submittedPairs.map((pair, pairIndex) => {
+          if (!isPlainObject(pair) || !isValidId(pair.id) || typeof pair.prompt !== 'string') invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const old = oldPairsById.get(pair.id);
+          const targetId = old ? old.targetId : pair.targetId;
+          if (!isValidId(targetId)) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const targetText = targetTexts.get(targetId);
+          if (typeof targetText !== 'string') invalid(`questions[${index}].matchingTargets`);
+          return { ...pair, targetId, targetText };
+        });
+        const newTargetIds = nextPairs
+          .filter(pair => !oldPairsById.has(String(pair.id)))
+          .map(pair => pair.targetId as string);
+        const expectedTargetIds = new Set([...oldTargetIds, ...newTargetIds]);
+        if (expectedTargetIds.size !== oldTargetIds.size + newTargetIds.length || targetTexts.size !== expectedTargetIds.size || [...expectedTargetIds].some(targetId => !targetTexts.has(targetId))) {
+          invalid(`questions[${index}].matchingTargets`);
+        }
+        if (newTargetIds.some(targetId => oldTargetIds.has(targetId))) invalid(`questions[${index}].matchingPairs`);
+        const nextByPairId = new Map(nextPairs.map(pair => [String(pair.id), pair]));
+        const retainedPairsInMasterOrder = oldPairs.flatMap(pair => {
+          const nextPair = nextByPairId.get(String(pair.id));
+          return nextPair ? [nextPair] : [];
+        });
+        const addedPairs = nextPairs.filter(pair => !oldPairsById.has(String(pair.id)));
+        rawQuestion.matchingPairs = [...retainedPairsInMasterOrder, ...addedPairs];
+        editedMatchingTargetQuestions.add(String(rawQuestion.id || ''));
+      } else if (Array.isArray(rawQuestion.matchingTargets)) {
+        const targetsById = targetTexts;
+        const submittedPairs = rawQuestion.matchingPairs as Array<Record<string, unknown>>;
+        rawQuestion.matchingPairs = submittedPairs.map((pair, pairIndex) => {
+          if (!isPlainObject(pair) || !isValidId(pair.targetId)) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const targetText = targetsById.get(pair.targetId);
+          if (typeof pair.prompt !== 'string' || typeof targetText !== 'string') invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          return { ...pair, targetText };
+        });
+        if (targetsById.size !== submittedPairs.length) invalid(`questions[${index}].matchingTargets`);
+      }
     }
     if (preserveSensitiveFields) {
       for (const question of input.questions as unknown as Array<Record<string, unknown>>) {
@@ -254,11 +322,12 @@ export async function updateExamDraft(
             };
           });
         }
-        delete question.matchingTargets;
       }
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) delete question.matchingTargets;
     } else {
       for (const question of input.questions as unknown as Array<Record<string, unknown>>) delete question.matchingTargets;
     }
+    validateMatchingIntegrity(input.questions);
     const next: ExamDocument = {
       ...current,
       ...input,

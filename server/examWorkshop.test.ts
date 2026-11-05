@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
+import { projectExamWorkshopMaster } from './examWorkshopProjection.ts';
 import {
   createExamDraft,
   parseExamWorkshopDraft,
@@ -154,7 +155,111 @@ test('Prüfungswerkstatt: delegierte Bearbeitung bewahrt serverseitige Schlüsse
   });
 });
 
-test('Prüfungswerkstatt: getrennte Matching-Zieloptionen bleiben editierbar ohne die Prompt-Zuordnung zu verändern', async () => {
+test('Prüfungswerkstatt: Delegierte ergänzen Matching-Begriff und Zieloption, Server erhält und projiziert die Zuordnung geschützt', async () => {
+  await withRepository(async repository => {
+    const definition = {
+      ...validDefinition,
+      questions: [{
+        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+        matchingPairs: [
+          { id: 'pair-cat', prompt: 'Katze', targetId: 'target-feline', targetText: 'Katzenartig' },
+          { id: 'pair-car', prompt: 'Auto', targetId: 'target-vehicle', targetText: 'Fahrzeug' },
+          { id: 'pair-plane', prompt: 'Flugzeug', targetId: 'target-aircraft', targetText: 'Luftfahrzeug' }
+        ]
+      }]
+    };
+    const created = await createExamDraft(repository, 'exam-matching-edit', 'author-1', definition);
+    const projected = projectExamWorkshopMaster(created as any, false) as any;
+    const projectedQuestion = projected.questions[0];
+    assert.deepEqual(new Set(projectedQuestion.matchingPairs.map((pair: { id: string; prompt: string }) => `${pair.id}:${pair.prompt}`)), new Set([
+      'pair-cat:Katze', 'pair-car:Auto', 'pair-plane:Flugzeug'
+    ]));
+    const originalTargetIds = ['target-feline', 'target-vehicle', 'target-aircraft'];
+    assert.equal(projectedQuestion.matchingTargets.length, originalTargetIds.length);
+    projectedQuestion.matchingTargets.forEach((target: { id: string }, index: number) => {
+      assert.notEqual(target.id, originalTargetIds[index], `target at index ${index} retained its source position`);
+    });
+
+    const updatedTargets = projectedQuestion.matchingTargets.map((target: { id: string; text: string }) => ({
+      ...target,
+      ...(target.id === 'target-feline' ? { text: 'Katzenfamilie' } : {})
+    }));
+    updatedTargets.push({ id: 'target-new', text: 'Schienenfahrzeug' });
+    const delegatedDefinition = {
+      ...definition,
+      questions: [{
+        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+        matchingPairs: [
+          { id: 'pair-cat', prompt: 'Katze (aktualisiert)', targetId: 'target-vehicle' },
+          { id: 'pair-car', prompt: 'Auto' },
+          { id: 'pair-plane', prompt: 'Flugzeug' },
+          { id: 'pair-train', prompt: 'Zug', targetId: 'target-new' }
+        ],
+        matchingTargets: updatedTargets
+      }]
+    };
+    const updated = await updateExamDraft(repository, 'exam-matching-edit', 'editor-1', delegatedDefinition, undefined, 1, true);
+    const savedQuestion = (updated.questions as any[])[0];
+    const pairs = savedQuestion.matchingPairs;
+    assert.deepEqual(pairs, [
+      { id: 'pair-cat', prompt: 'Katze (aktualisiert)', targetId: 'target-feline', targetText: 'Katzenfamilie' },
+      { id: 'pair-car', prompt: 'Auto', targetId: 'target-vehicle', targetText: 'Fahrzeug' },
+      { id: 'pair-plane', prompt: 'Flugzeug', targetId: 'target-aircraft', targetText: 'Luftfahrzeug' },
+      { id: 'pair-train', prompt: 'Zug', targetId: 'target-new', targetText: 'Schienenfahrzeug' }
+    ]);
+    assert.equal('matchingTargets' in savedQuestion, false);
+
+    const reprojected = projectExamWorkshopMaster(updated as any, false) as any;
+    const reprojectedQuestion = reprojected.questions[0];
+    assert.deepEqual(
+      new Set(reprojectedQuestion.matchingPairs.map(({ id, prompt }: { id: string; prompt: string }) => `${id}:${prompt}`)),
+      new Set(pairs.map(({ id, prompt }: { id: string; prompt: string }) => `${id}:${prompt}`))
+    );
+    const savedTargetIds = pairs.map((pair: { targetId: string }) => pair.targetId);
+    reprojectedQuestion.matchingTargets.forEach((target: { id: string }, index: number) => {
+      assert.notEqual(target.id, savedTargetIds[index], `reprojected target at index ${index} retained its source position`);
+    });
+    assert.equal(JSON.stringify(reprojectedQuestion).includes('targetId'), false);
+    assert.equal(JSON.stringify(reprojectedQuestion).includes('targetText'), false);
+  });
+});
+
+test('Prüfungswerkstatt: Matching-Entfernen löscht serverseitig nur das zugehörige Ziel und verhindert verwaiste Einträge', async () => {
+  await withRepository(async repository => {
+    const definition = {
+      ...validDefinition,
+      questions: [{
+        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+        matchingPairs: [
+          { id: 'pair-cat', prompt: 'Katze', targetId: 'target-feline', targetText: 'Katzenartig' },
+          { id: 'pair-car', prompt: 'Auto', targetId: 'target-vehicle', targetText: 'Fahrzeug' },
+          { id: 'pair-plane', prompt: 'Flugzeug', targetId: 'target-aircraft', targetText: 'Luftfahrzeug' }
+        ]
+      }]
+    };
+    const created = await createExamDraft(repository, 'exam-matching-remove', 'author-1', definition);
+    const projected = projectExamWorkshopMaster(created as any, false) as any;
+    const question = projected.questions[0];
+    const updated = await updateExamDraft(repository, 'exam-matching-remove', 'editor-1', {
+      ...definition,
+      questions: [{
+        ...question,
+        matchingPairs: question.matchingPairs.filter((pair: { id: string }) => pair.id !== 'pair-car'),
+        matchingTargets: question.matchingTargets
+      }]
+    }, undefined, 1, true);
+    const savedPairs = (updated.questions as any[])[0].matchingPairs;
+    assert.deepEqual(savedPairs.map((pair: { id: string }) => pair.id), ['pair-cat', 'pair-plane']);
+    assert.equal(savedPairs.some((pair: { targetId: string }) => pair.targetId === 'target-vehicle'), false);
+    const reprojected = projectExamWorkshopMaster(updated as any, false) as any;
+    assert.deepEqual(
+      new Set(reprojected.questions[0].matchingTargets.map((target: { id: string }) => target.id)),
+      new Set(['target-feline', 'target-aircraft'])
+    );
+  });
+});
+
+test('Prüfungswerkstatt: unvollständige oder ungültige neue Matching-Zuordnungen werden nicht gespeichert', async () => {
   await withRepository(async repository => {
     const definition = {
       ...validDefinition,
@@ -166,27 +271,48 @@ test('Prüfungswerkstatt: getrennte Matching-Zieloptionen bleiben editierbar ohn
         ]
       }]
     };
-    await createExamDraft(repository, 'exam-matching-edit', 'author-1', definition);
-    const delegatedDefinition = {
-      ...definition,
-      questions: [{
-        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
-        matchingPairs: [
-          { id: 'pair-cat', prompt: 'Katze (aktualisiert)' },
-          { id: 'pair-car', prompt: 'Auto (aktualisiert)' }
-        ],
-        matchingTargets: [
-          { id: 'target-vehicle', text: 'Verkehrsmittel' },
-          { id: 'target-feline', text: 'Katzenfamilie' }
-        ]
-      }]
+    await createExamDraft(repository, 'exam-matching-invalid', 'author-1', definition);
+    const project = projectExamWorkshopMaster(await repository.get('exam_masters', 'exam-matching-invalid') as any, false) as any;
+    const question = project.questions[0];
+    const baseQuestion = {
+      ...question,
+      matchingPairs: [...question.matchingPairs, { id: 'pair-new', prompt: 'Neuer Begriff' }],
+      matchingTargets: [...question.matchingTargets, { id: 'target-new', text: 'Neues Ziel' }]
     };
-    const updated = await updateExamDraft(repository, 'exam-matching-edit', 'editor-1', delegatedDefinition, undefined, 1, true);
-    const pairs = (updated.questions as any[])[0].matchingPairs;
-    assert.deepEqual(pairs, [
-      { id: 'pair-cat', prompt: 'Katze (aktualisiert)', targetId: 'target-feline', targetText: 'Katzenfamilie' },
-      { id: 'pair-car', prompt: 'Auto (aktualisiert)', targetId: 'target-vehicle', targetText: 'Verkehrsmittel' }
-    ]);
+    await assert.rejects(
+      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', {
+        ...definition, questions: [baseQuestion]
+      }, undefined, 1, true),
+      /EXAM_WORKSHOP_INPUT_INVALID:questions\[0\]\.matchingPairs\[2\]/
+    );
+    const storedAfterMissingLink = await repository.get('exam_masters', 'exam-matching-invalid');
+    assert.equal(((storedAfterMissingLink?.questions as any[])[0]).matchingPairs.length, 2);
+
+    const pairedQuestion = {
+      ...baseQuestion,
+      matchingPairs: [...question.matchingPairs, { id: 'pair-new', prompt: 'Neuer Begriff', targetId: 'target-new' }]
+    };
+    await assert.rejects(
+      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', {
+        ...definition,
+        questions: [{ ...pairedQuestion, matchingTargets: [...question.matchingTargets, { id: 'orphan-target', text: 'Verwaist' }] }]
+      }, undefined, 1, true),
+      /EXAM_WORKSHOP_INPUT_INVALID:questions\[0\]\.matchingTargets/
+    );
+    const storedAfterOrphan = await repository.get('exam_masters', 'exam-matching-invalid');
+    assert.equal(((storedAfterOrphan?.questions as any[])[0]).matchingPairs.length, 2);
+
+    await assert.rejects(
+      createExamDraft(repository, 'exam-matching-incomplete-create', 'author-1', {
+        ...definition,
+        questions: [{
+          id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+          matchingPairs: [{ id: 'pair-empty', prompt: ' ', targetId: 'target-empty', targetText: 'Ziel' }]
+        }]
+      }),
+      /EXAM_WORKSHOP_INPUT_INVALID:questions\[0\]\.matchingPairs\[0\]/
+    );
+    assert.equal(await repository.get('exam_masters', 'exam-matching-incomplete-create'), null);
   });
 });
 

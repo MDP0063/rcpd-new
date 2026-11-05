@@ -36,13 +36,19 @@ export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean
       });
     }
     if (Array.isArray(question.matchingPairs)) {
-      projected.matchingPairs = question.matchingPairs.flatMap(pair => {
+      const prompts = question.matchingPairs.flatMap(pair => {
         if (!pair || typeof pair !== 'object' || Array.isArray(pair)) return [];
         const item = pair as Record<string, unknown>;
         return typeof item.id === 'string' && typeof item.prompt === 'string'
           ? [{ id: item.id, prompt: item.prompt }]
           : [];
       });
+      // Shuffle prompts independently so the source pair order cannot act as a side channel.
+      for (let index = prompts.length - 1; index > 0; index -= 1) {
+        const swapIndex = randomInt(index + 1);
+        [prompts[index], prompts[swapIndex]] = [prompts[swapIndex], prompts[index]];
+      }
+      projected.matchingPairs = prompts;
       const targets = question.matchingPairs.flatMap(pair => {
         if (!pair || typeof pair !== 'object' || Array.isArray(pair)) return [];
         const item = pair as Record<string, unknown>;
@@ -50,17 +56,13 @@ export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean
           ? [{ id: item.targetId, text: item.targetText }]
           : [];
       });
-      const originalTargetIds = targets.map(target => target.id);
-      // Randomize independently: array position must not act as a hidden prompt-to-target join.
-      for (let index = targets.length - 1; index > 0; index -= 1) {
-        const swapIndex = randomInt(index + 1);
-        [targets[index], targets[swapIndex]] = [targets[swapIndex], targets[index]];
+      // A random non-zero cyclic offset is a derangement: every option leaves its source index.
+      if (targets.length > 1) {
+        const offset = randomInt(1, targets.length);
+        projected.matchingTargets = [...targets.slice(offset), ...targets.slice(0, offset)];
+      } else {
+        projected.matchingTargets = targets;
       }
-      // Ensure even a random identity permutation cannot preserve the source's positional join.
-      if (targets.length > 1 && targets.every((target, index) => target.id === originalTargetIds[index])) {
-        targets.push(targets.shift()!);
-      }
-      projected.matchingTargets = targets;
     }
     return projected;
   }) : [];

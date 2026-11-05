@@ -13,7 +13,8 @@ test('delegated workshop projection removes answer keys and private scoring fiel
       explanation: 'secret explanation', gradingRubric: 'private rubric', internalScore: 9,
       matchingPairs: [
         { id: 'pair-cat', prompt: 'Cat', targetId: 'target-feline', targetText: 'Feline' },
-        { id: 'pair-car', prompt: 'Car', targetId: 'target-vehicle', targetText: 'Vehicle' }
+        { id: 'pair-car', prompt: 'Car', targetId: 'target-vehicle', targetText: 'Vehicle' },
+        { id: 'pair-plane', prompt: 'Plane', targetId: 'target-aircraft', targetText: 'Aircraft' }
       ],
       options: [{ id: 'secret', text: 'Visible option' }]
     }]
@@ -24,19 +25,20 @@ test('delegated workshop projection removes answer keys and private scoring fiel
   }
   const question = (projected.questions as any[])[0];
   assert.equal(question.options[0].text, 'Visible option');
-  assert.deepEqual(question.matchingPairs, [
-    { id: 'pair-cat', prompt: 'Cat' },
-    { id: 'pair-car', prompt: 'Car' }
-  ]);
-  assert.deepEqual(new Set(question.matchingTargets.map((target: { text: string }) => target.text)), new Set(['Feline', 'Vehicle']));
+  assert.deepEqual(new Set(question.matchingPairs.map((pair: { id: string; prompt: string }) => `${pair.id}:${pair.prompt}`)), new Set([
+    'pair-cat:Cat', 'pair-car:Car', 'pair-plane:Plane'
+  ]));
+  assert.deepEqual(new Set(question.matchingTargets.map((target: { text: string }) => target.text)), new Set(['Feline', 'Vehicle', 'Aircraft']));
   assert.equal(question.matchingPairs.some((pair: Record<string, unknown>) => 'targetText' in pair || 'targetId' in pair), false);
   assert.equal(question.matchingTargets.some((target: Record<string, unknown>) => 'prompt' in target), false);
 
   // Explicitly prove the response does not retain the source's pair-by-pair positional mapping.
-  assert.deepEqual(question.matchingPairs.map((pair: { id: string }) => pair.id), ['pair-cat', 'pair-car']);
-  assert.deepEqual(new Set(question.matchingTargets.map((target: { id: string }) => target.id)), new Set(['target-feline', 'target-vehicle']));
-  assert.notEqual(question.matchingTargets[0].id, 'target-feline');
-  assert.notEqual(question.matchingTargets[1].id, 'target-vehicle');
+  assert.deepEqual(new Set(question.matchingPairs.map((pair: { id: string }) => pair.id)), new Set(['pair-cat', 'pair-car', 'pair-plane']));
+  const originalTargetIds = ['target-feline', 'target-vehicle', 'target-aircraft'];
+  assert.deepEqual(new Set(question.matchingTargets.map((target: { id: string }) => target.id)), new Set(originalTargetIds));
+  question.matchingTargets.forEach((target: { id: string }, index: number) => {
+    assert.notEqual(target.id, originalTargetIds[index], `target at index ${index} retained its source position`);
+  });
 });
 
 test('administrator projection retains the complete master document', () => {
