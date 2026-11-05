@@ -111,7 +111,6 @@ export async function migrateLegacyExamData(
       startable: mapped.master.startable,
       interactiveWidgetCode: mapped.master.interactiveWidgetCode,
       questionsSnapshot: mapped.master.questions,
-      minClearance: mapped.master.minClearance,
       source: 'legacy_migration',
       sourceUpdatedIso: legacy.updatedIso ?? null
     };
