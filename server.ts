@@ -1395,6 +1395,10 @@ async function startServer() {
         res.status(409).json({ error: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version und übertrage deine Änderungen erneut.' });
         return;
       }
+      if (error instanceof Error && error.message === 'EXAM_ASSESSMENT_STAGE_IMMUTABLE') {
+        res.status(409).json({ error: 'Die Prüfungsart kann nach dem Erstellen nicht mehr geändert werden.' });
+        return;
+      }
       next(error);
     }
   });
