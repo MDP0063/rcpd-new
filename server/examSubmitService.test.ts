@@ -10,7 +10,7 @@ import { submitExamAttempt } from './examSubmitService.ts';
 
 async function withAttempt(
   run: (repository: ReturnType<typeof createJsonExamRepository>) => Promise<void>,
-  options: { timeLimitMinutes?: number; assessmentStage?: 'test' | 'final_exam' } = {}
+  options: { timeLimitMinutes?: number; assessmentStage?: 'test' | 'final_exam'; includeFreeText?: boolean } = {}
 ): Promise<void> {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-submit-'));
   try {
@@ -43,14 +43,14 @@ async function withAttempt(
           correctOptionId: 'b',
           explanation: 'B ist richtig.'
         },
-        {
+        ...(options.includeFreeText === false ? [] : [{
           id: 'q2',
           type: 'free_text',
           question: 'Begründung?',
           pointsMilli: 1000,
           maxAnswerLength: 4000,
           gradingRubric: 'Intern'
-        }
+        }])
       ]
     });
     await startExamAttempt(
@@ -99,6 +99,25 @@ nodeTest('Wiederholte Abgabe ist idempotent und verändert das gespeicherte Erge
   });
 });
 
+
+nodeTest('Objektive Prüfung wird nach Abgabe anhand der Bestehensgrenze final bewertet', async () => {
+  await withAttempt(async repository => {
+    await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
+    const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
+    assert.equal(result.submission.status, 'passed');
+    assert.equal(result.submission.finalScoreBasisPoints, 10_000);
+  }, { includeFreeText: false });
+});
+
+nodeTest('Nicht bestandene objektive Prüfung erhält den endgültigen Fehlstatus', async () => {
+  await withAttempt(async repository => {
+    await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'a' }, at(1));
+    const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
+    assert.equal(result.submission.status, 'failed');
+    assert.equal(result.submission.finalScoreBasisPoints, 0);
+  }, { includeFreeText: false });
+});
+
 nodeTest('Eingang exakt zur Deadline ist eine reguläre Abgabe', async () => {
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
@@ -106,10 +125,10 @@ nodeTest('Eingang exakt zur Deadline ist eine reguläre Abgabe', async () => {
     assert.equal(result.expired, false);
     assert.equal(result.submission.status, 'pending_review');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
-  });
+  }, { includeFreeText: false });
 });
 
-nodeTest('Verspätete Abgabe ignoriert Request-Payloads und finalisiert den letzten Autosave-Stand', async () => {
+nodeTest('Verspätete Abgabe finalisiert ausschließlich den letzten Autosave-Stand', async () => {
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(31));
@@ -120,7 +139,7 @@ nodeTest('Verspätete Abgabe ignoriert Request-Payloads und finalisiert den letz
     assert.equal(stored?.submissionReason, 'time_expired');
     assert.equal(stored?.autoFinalizedAtIso, new Date(at(31)).toISOString());
     assert.equal((stored?.answers as Record<string, unknown>).q1, 'b');
-  });
+  }, { includeFreeText: false });
 });
 
 nodeTest('Fremde Teilnehmer dürfen einen Versuch nicht abgeben', async () => {
