@@ -1313,7 +1313,7 @@ async function startServer() {
         return;
       }
       const isUpdate = Boolean(master.currentPublishedVersionId);
-      const action = isUpdate ? 'update_existing' : 'create';
+      const action = isUpdate ? 'update_existing' : 'edit';
       if (!canAccessExamWorkshopExam(context.actor, master.assessmentStage, action, master.id)) {
         res.status(403).json({ error: 'Du darfst diese Prüfung nicht veröffentlichen.' });
         return;
@@ -1336,6 +1336,13 @@ async function startServer() {
       }
       if (error instanceof Error && error.message === 'EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE') {
         res.status(409).json({ error: 'Historische interaktive Prüfungen können nicht über die neue Werkstatt veröffentlicht werden.' });
+        return;
+      }
+      if (error instanceof Error && (
+        error.message === 'EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT' ||
+        error.message === 'EXAM_WORKING_REVISION_CONFLICT'
+      )) {
+        res.status(409).json({ error: 'Der Prüfungsstand hat sich während der Veröffentlichung geändert. Bitte lade den aktuellen Stand neu.' });
         return;
       }
       if (error instanceof Error && error.message === 'EXAM_PUBLICATION_VALIDATION_FAILED') {
