@@ -49,6 +49,7 @@ async function legacyProgressDocument(repository: ExamRepository, record: Legacy
     completed: evidence.completed,
     verified: evidence.verified,
     satisfiesPassed: evidence.satisfiesPassed,
+    ...(evidence.verification ? { legacyVerificationId: evidence.verification.id } : {}),
     ...(record.courseCode !== undefined ? { attemptCourseCode: record.courseCode } : {}),
     ...(record.updatedIso !== undefined ? { sourceUpdatedIso: record.updatedIso } : {})
   };
@@ -73,7 +74,19 @@ export async function migrateLegacyExamData(
     issues: []
   };
 
+  const seenExamIds = new Set<string>();
   for (const legacy of legacyExams) {
+    if (!legacy || typeof legacy !== 'object' || typeof legacy.id !== 'string' || !legacy.id.trim()) {
+      summary.exams.skipped++;
+      summary.issues.push({ kind: 'exam', sourceId: '<unknown>', code: 'LEGACY_EXAM_RECORD_INVALID' });
+      continue;
+    }
+    if (seenExamIds.has(legacy.id)) {
+      summary.exams.skipped++;
+      summary.issues.push({ kind: 'exam', sourceId: legacy.id, code: 'LEGACY_EXAM_DUPLICATE_SOURCE_ID' });
+      continue;
+    }
+    seenExamIds.add(legacy.id);
     const mapped = mapLegacyExam(legacy);
     if (!mapped.ok) {
       summary.exams.skipped++;
@@ -142,9 +155,19 @@ export async function migrateLegacyExamData(
 
   // Existing masters may have been created by an earlier partial run or by a later authoring flow.
   // Progress is imported only when its exam reference exists in the new repository.
+  const seenProgressIds = new Set<string>();
   for (const record of legacyProgress) {
-    const document = await legacyProgressDocument(repository, record);
-    if (!document) continue;
+    if (!record || typeof record !== 'object' || typeof record.id !== 'string' || !record.id.trim()) {
+      summary.progress.skipped++;
+      summary.issues.push({ kind: 'progress', sourceId: '<unknown>', code: 'LEGACY_PROGRESS_RECORD_INVALID' });
+      continue;
+    }
+    if (seenProgressIds.has(record.id)) {
+      summary.progress.skipped++;
+      summary.issues.push({ kind: 'progress', sourceId: record.id, code: 'LEGACY_PROGRESS_DUPLICATE_SOURCE_ID' });
+      continue;
+    }
+    seenProgressIds.add(record.id);
     try {
       const master = await repository.get('exam_masters', document.examId);
       if (!master) {
