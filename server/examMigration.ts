@@ -169,6 +169,8 @@ export async function migrateLegacyExamData(
     }
     seenProgressIds.add(record.id);
     try {
+      const document = await legacyProgressDocument(repository, record);
+      if (!document) continue;
       const master = await repository.get('exam_masters', document.examId);
       if (!master) {
         summary.progress.skipped++;
