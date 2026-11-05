@@ -23,6 +23,7 @@ export type CommandTargetSection =
   | 'whitelist'
   | 'settings'
   | 'personnel'
+  | 'exam_workshop'
   | 'audit'
   | 'deployment';
 
@@ -138,6 +139,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
     if (canManageUsers) {
       navItems.push(
+        {
+          id: 'nav-exam-workshop',
+          category: 'Navigation',
+          title: 'Admin: Prüfungswerkstatt',
+          subtitle: 'Prüfungsentwürfe erstellen, bearbeiten und veröffentlichen',
+          targetSection: 'exam_workshop'
+        },
         {
           id: 'nav-personnel',
           category: 'Navigation',

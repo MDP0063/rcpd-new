@@ -63,6 +63,7 @@ import {
 } from './types/portal';
 import { WhitelistPortal } from './components/WhitelistPortal';
 import { AcademyCenter } from './components/AcademyCenter';
+import { ExamWorkshop } from './components/ExamWorkshop';
 import { AdminPersonnelConsole } from './components/AdminPersonnelConsole';
 import { DeploymentPipelineHub } from './components/DeploymentPipelineHub';
 import { AnnouncementsFeed } from './components/AnnouncementsFeed';
@@ -1416,6 +1417,19 @@ export default function App() {
                     <>
                       <button
                         type="button"
+                        onClick={() => setActiveSection('exam_workshop')}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                          activeSection === 'exam_workshop'
+                            ? 'bg-sky-600 text-white font-semibold'
+                            : 'text-sky-400 hover:bg-slate-800'
+                        }`}
+                      >
+                        <FilePlus2 className="w-4 h-4" />
+                        Prüfungswerkstatt
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setActiveSection('personnel')}
                         className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'personnel'
@@ -1489,6 +1503,7 @@ export default function App() {
                 { id: 'settings', label: 'Einstellungen' },
                 ...(canManageUsers
                   ? [
+                      { id: 'exam_workshop', label: 'Prüfungswerkstatt' },
                       { id: 'personnel', label: 'Admin: Konten' },
                       { id: 'audit', label: 'Admin: Audit-Log' }
                     ]
@@ -2447,6 +2462,10 @@ export default function App() {
           {/* ========================================================================
               VIEW 10: STRICTLY ADMIN ONLY — ACCOUNT, PASSWORD, ROLE & GRANULAR PERMISSIONS
               ======================================================================== */}
+          {activeSection === 'exam_workshop' && currentUserProfile.role === 'admin' && (
+            <ExamWorkshop />
+          )}
+
           {activeSection === 'personnel' && canManageUsers && (
             <AdminPersonnelConsole
               currentUser={currentUserProfile}
