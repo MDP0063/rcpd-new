@@ -12,6 +12,8 @@ import {
   assertExamDocumentId,
   assertExamQuery
 } from './examRepositoryRules.ts';
+import { legacyVerificationId } from './examLegacy.ts';
+import type { LegacyVerificationDoc } from './examTypes.ts';
 import {
   type AttemptInvalidationAudit,
   type ExamCollection,
@@ -111,6 +113,20 @@ export class ExamRepository implements ExamStorageAdapter {
       await transaction.update('exam_masters', examId, nextMaster);
       await transaction.create('exam_versions', version.id, version);
     });
+  }
+
+  /** Liest den unveränderlichen Nachweis für eine Legacy-Progress-ID. */
+  async getLegacyVerification(legacyProgressId: string): Promise<LegacyVerificationDoc | null> {
+    assertExamDocumentId(legacyProgressId);
+    return this.get<LegacyVerificationDoc>(
+      'exam_legacy_verifications',
+      legacyVerificationId(legacyProgressId)
+    );
+  }
+
+  /** Erstellt den einmaligen, append-only Verifikationsnachweis. */
+  async createLegacyVerification(document: LegacyVerificationDoc): Promise<void> {
+    return this.create('exam_legacy_verifications', document.id, document);
   }
 
   async invalidateAttempt(id: string, audit: AttemptInvalidationAudit): Promise<void> {

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  createLegacyVerificationDoc,
   findValidVerification,
   legacyOptionId,
   legacyVerificationId,
@@ -102,6 +103,7 @@ const progress = (over: Partial<LegacyProgressRecord> = {}): LegacyProgressRecor
 });
 const verification = (over: Partial<LegacyVerificationDoc> = {}): LegacyVerificationDoc => ({
   id: legacyVerificationId('lp1'), legacyProgressId: 'lp1', userId: 'u1', examId: 'ex1', verifiedStatus: 'passed',
+  verifiedScoreBasisPoints: 8800,
   verifiedByUid: 'admin1', verifiedAtIso: '2026-01-01T00:00:00.000Z', reason: 'Protokoll geprüft', ...over
 });
 
@@ -135,10 +137,44 @@ test('Verifikation: nur mit allen Pflichtfeldern und für genau diesen Nachweis'
   assert.equal(findValidVerification(progress({ status: 'failed' }), [verification()]), null);
 });
 
-test('Verifikation gilt nur für den passenden Lehrgang', () => {
+test('Verifikation gilt nur für den passenden Lehrgang; fehlende Codes sind nur beidseitig global', () => {
   const p = progress({ courseCode: 'SOP-01' });
   assert.ok(findValidVerification(p, [verification({ attemptCourseCode: 'sop-01' })]));
   assert.equal(findValidVerification(p, [verification({ attemptCourseCode: 'SOP-02' })]), null);
+  assert.equal(findValidVerification(progress({ scorePercent: 89 }), [verification()]), null);
+  assert.equal(
+    findValidVerification(progress({ updatedIso: '2026-11-06T12:00:00.000Z' }), [
+      verification({ legacyUpdatedIso: '2026-11-05T12:00:00.000Z' })
+    ]),
+    null
+  );
+  assert.equal(findValidVerification(p, [verification()]), null);
+  assert.equal(findValidVerification(progress(), [verification({ attemptCourseCode: 'SOP-01' })]), null);
+  assert.ok(findValidVerification(progress(), [verification()]));
+});
+
+test('Legacy-Verifikationsnachweis wird ausschließlich aus einem bestandenen Prüfungsdatensatz erstellt', () => {
+  const record = progress({ courseCode: 'sop-01' });
+  const doc = createLegacyVerificationDoc(record, 'admin-1', '2026-11-05T12:00:00.000Z', '  Prüfprotokoll geprüft  ');
+  assert.equal(doc.id, legacyVerificationId(record.id));
+  assert.equal(doc.userId, record.userId);
+  assert.equal(doc.examId, record.targetId);
+  assert.equal(doc.attemptCourseCode, 'SOP-01');
+  assert.equal(doc.verifiedScoreBasisPoints, 8800);
+  assert.equal(doc.verifiedByUid, 'admin-1');
+  assert.equal(doc.reason, 'Prüfprotokoll geprüft');
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ status: 'failed' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_SOURCE_NOT_VERIFIABLE/
+  );
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ targetType: 'module' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_SOURCE_NOT_VERIFIABLE/
+  );
+  assert.throws(
+    () => createLegacyVerificationDoc(progress({ courseCode: 'bad/code' }), 'admin-1', '2026-11-05T12:00:00.000Z', 'Geprüft'),
+    /EXAM_LEGACY_COURSE_INVALID/
+  );
 });
 
 test('mit Verifikation erfüllt altes "passed" die Bestehensvoraussetzung', () => {

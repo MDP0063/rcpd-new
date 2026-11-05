@@ -115,6 +115,7 @@ test('JSON-Repository: Versuche und Legacy-Verifikationen können nicht gelösch
       userId: 'user-1',
       examId: 'exam-1',
       verifiedStatus: 'passed',
+      verifiedScoreBasisPoints: 8800,
       verifiedByUid: 'admin-1',
       verifiedAtIso: '2026-11-05T12:00:00.000Z',
       reason: 'Historischen Nachweis geprüft'
@@ -390,6 +391,29 @@ test('JSON-Repository: neue Versuche müssen im Status in_progress angelegt werd
   });
 });
 
+test('JSON-Repository: dedizierte Legacy-Verifikationsmethoden lesen und erstellen create-only', async () => {
+  await withRepository(async repository => {
+    const document = {
+      id: 'legacy_verification__legacy-methods',
+      legacyProgressId: 'legacy-methods',
+      userId: 'user-1',
+      examId: 'exam-1',
+      verifiedStatus: 'passed' as const,
+      verifiedScoreBasisPoints: 8800,
+      verifiedByUid: 'admin-1',
+      verifiedAtIso: '2026-11-05T12:00:00.000Z',
+      reason: 'Historischen Nachweis geprüft'
+    };
+    assert.equal(await repository.getLegacyVerification('legacy-methods'), null);
+    await repository.createLegacyVerification(document);
+    assert.deepEqual(await repository.getLegacyVerification('legacy-methods'), document);
+    await assert.rejects(
+      repository.createLegacyVerification(document),
+      /EXAM_DOCUMENT_ALREADY_EXISTS/
+    );
+  });
+});
+
 test('JSON-Repository: Legacy-Verifikationen verwenden eine deterministische Nachweis-ID', async () => {
   await withRepository(async repository => {
     await assert.rejects(
@@ -399,6 +423,7 @@ test('JSON-Repository: Legacy-Verifikationen verwenden eine deterministische Nac
         userId: 'u1',
         examId: 'exam-1',
         verifiedStatus: 'passed',
+        verifiedScoreBasisPoints: 8800,
         verifiedByUid: 'admin-1',
         verifiedAtIso: '2026-11-05T12:00:00.000Z',
         reason: 'Historischen Nachweis geprüft'
@@ -411,6 +436,7 @@ test('JSON-Repository: Legacy-Verifikationen verwenden eine deterministische Nac
       userId: 'u1',
       examId: 'exam-1',
       verifiedStatus: 'passed',
+      verifiedScoreBasisPoints: 8800,
       verifiedByUid: 'admin-1',
       verifiedAtIso: '2026-11-05T12:00:00.000Z',
       reason: 'Historischen Nachweis geprüft'
