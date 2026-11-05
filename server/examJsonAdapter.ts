@@ -110,7 +110,8 @@ class JsonExamTransaction implements ExamTransaction {
     id: string,
     document: T
   ): Promise<void> {
-    this.assertCanRead();
+    // Reads are forbidden after the first write, but transactions may perform
+    // multiple writes after completing all reads (as Firestore transactions do).
     assertExamCanUpdate(collection);
     assertExamDocument(collection, id, document);
     const key = storageId(id);
