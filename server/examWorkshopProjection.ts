@@ -1,4 +1,5 @@
 import type { ExamDocument } from './examRepositoryTypes.ts';
+import { randomInt } from 'node:crypto';
 
 const SAFE_QUESTION_FIELDS = [
   'id', 'type', 'question', 'pointsMilli', 'imageUrl', 'maxAnswerLength'
@@ -38,10 +39,28 @@ export function projectExamWorkshopMaster(master: ExamDocument, isAdmin: boolean
       projected.matchingPairs = question.matchingPairs.flatMap(pair => {
         if (!pair || typeof pair !== 'object' || Array.isArray(pair)) return [];
         const item = pair as Record<string, unknown>;
-        return typeof item.id === 'string' && typeof item.prompt === 'string' && typeof item.targetText === 'string'
-          ? [{ id: item.id, prompt: item.prompt, targetText: item.targetText }]
+        return typeof item.id === 'string' && typeof item.prompt === 'string'
+          ? [{ id: item.id, prompt: item.prompt }]
           : [];
       });
+      const targets = question.matchingPairs.flatMap(pair => {
+        if (!pair || typeof pair !== 'object' || Array.isArray(pair)) return [];
+        const item = pair as Record<string, unknown>;
+        return typeof item.targetId === 'string' && typeof item.targetText === 'string'
+          ? [{ id: item.targetId, text: item.targetText }]
+          : [];
+      });
+      const originalTargetIds = targets.map(target => target.id);
+      // Randomize independently: array position must not act as a hidden prompt-to-target join.
+      for (let index = targets.length - 1; index > 0; index -= 1) {
+        const swapIndex = randomInt(index + 1);
+        [targets[index], targets[swapIndex]] = [targets[swapIndex], targets[index]];
+      }
+      // Ensure even a random identity permutation cannot preserve the source's positional join.
+      if (targets.length > 1 && targets.every((target, index) => target.id === originalTargetIds[index])) {
+        targets.push(targets.shift()!);
+      }
+      projected.matchingTargets = targets;
     }
     return projected;
   }) : [];

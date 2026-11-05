@@ -22,7 +22,7 @@ export interface ExamWorkshopDraftInput {
 const QUESTION_KEYS = new Set([
   'id', 'type', 'question', 'pointsMilli', 'explanation', 'imageUrl',
   'options', 'correctOptionId', 'correctOptionIds', 'correctBoolean',
-  'matchingPairs', 'gradingRubric', 'maxAnswerLength', 'legacyCorrectIndex'
+  'matchingPairs', 'matchingTargets', 'gradingRubric', 'maxAnswerLength', 'legacyCorrectIndex'
 ]);
 
 function invalid(path: string): never {
@@ -150,7 +150,11 @@ function toMaster(
     examFormat: 'structured_quiz',
     isLegacyFormat: false,
     startable: false,
-    questions: input.questions,
+    questions: input.questions.map(question => {
+      const copy = { ...question } as ExamQuestion & { matchingTargets?: unknown };
+      delete copy.matchingTargets;
+      return copy;
+    }),
     authorUid,
     updatedIso,
     latestVersionNumber: 0,
@@ -198,10 +202,38 @@ export async function updateExamDraft(
     if (expectedRevision !== undefined && expectedRevision !== currentRevision) {
       throw new Error('EXAM_WORKING_REVISION_CONFLICT');
     }
+    const existingQuestions = new Map((Array.isArray(current.questions) ? current.questions : [])
+      .filter((question): question is Record<string, unknown> => Boolean(question) && typeof question === 'object')
+      .map(question => [String(question.id || ''), question]));
+    const editedMatchingTargetQuestions = new Set<string>();
+    for (const [index, rawQuestion] of (input.questions as unknown as Array<Record<string, unknown>>).entries()) {
+      if (!Array.isArray(rawQuestion.matchingTargets)) continue;
+      const currentQuestion = existingQuestions.get(String(rawQuestion.id || ''));
+      const oldPairs = Array.isArray(currentQuestion?.matchingPairs)
+        ? currentQuestion.matchingPairs as Array<Record<string, unknown>>
+        : [];
+      const targetIds = oldPairs.map(pair => pair.targetId).filter((id): id is string => typeof id === 'string');
+      const targetItems = rawQuestion.matchingTargets as Array<Record<string, unknown>>;
+      const targetTexts = new Map<string, string>();
+      for (const target of targetItems) {
+        if (typeof target.id !== 'string' || typeof target.text !== 'string' || target.text.length > 2000 || targetTexts.has(target.id)) {
+          invalid(`questions[${index}].matchingTargets`);
+        }
+        targetTexts.set(target.id, target.text);
+      }
+      if (targetIds.length !== targetTexts.size || targetIds.some(id => !targetTexts.has(id))) {
+        invalid(`questions[${index}].matchingTargets`);
+      }
+      if (!Array.isArray(rawQuestion.matchingPairs)) invalid(`questions[${index}].matchingPairs`);
+      const oldPairsById = new Map(oldPairs.map(pair => [String(pair.id || ''), pair]));
+      rawQuestion.matchingPairs = (rawQuestion.matchingPairs as Array<Record<string, unknown>>).map(pair => {
+        const old = oldPairsById.get(String(pair.id || ''));
+        if (!old || typeof old.targetId !== 'string') return pair;
+        return { ...pair, targetId: old.targetId, targetText: targetTexts.get(old.targetId) };
+      });
+      editedMatchingTargetQuestions.add(String(rawQuestion.id || ''));
+    }
     if (preserveSensitiveFields) {
-      const existingQuestions = new Map((Array.isArray(current.questions) ? current.questions : [])
-        .filter((question): question is Record<string, unknown> => Boolean(question) && typeof question === 'object')
-        .map(question => [String(question.id || ''), question]));
       for (const question of input.questions as unknown as Array<Record<string, unknown>>) {
         const previous = existingQuestions.get(String(question.id || ''));
         if (!previous) continue;
@@ -212,10 +244,20 @@ export async function updateExamDraft(
           const oldPairs = new Map((previous.matchingPairs as Array<Record<string, unknown>>).map(pair => [String(pair.id || ''), pair]));
           question.matchingPairs = (question.matchingPairs as Array<Record<string, unknown>>).map(pair => {
             const old = oldPairs.get(String(pair.id || ''));
-            return old && Object.prototype.hasOwnProperty.call(old, 'targetId') ? { ...pair, targetId: old.targetId } : pair;
+            if (!old || !Object.prototype.hasOwnProperty.call(old, 'targetId')) return pair;
+            return {
+              ...pair,
+              targetId: old.targetId,
+              targetText: editedMatchingTargetQuestions.has(String(question.id || '')) && typeof pair.targetText === 'string'
+                ? pair.targetText
+                : old.targetText
+            };
           });
         }
+        delete question.matchingTargets;
       }
+    } else {
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) delete question.matchingTargets;
     }
     const next: ExamDocument = {
       ...current,

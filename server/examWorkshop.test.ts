@@ -154,6 +154,42 @@ test('Prüfungswerkstatt: delegierte Bearbeitung bewahrt serverseitige Schlüsse
   });
 });
 
+test('Prüfungswerkstatt: getrennte Matching-Zieloptionen bleiben editierbar ohne die Prompt-Zuordnung zu verändern', async () => {
+  await withRepository(async repository => {
+    const definition = {
+      ...validDefinition,
+      questions: [{
+        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+        matchingPairs: [
+          { id: 'pair-cat', prompt: 'Katze', targetId: 'target-feline', targetText: 'Katzenartig' },
+          { id: 'pair-car', prompt: 'Auto', targetId: 'target-vehicle', targetText: 'Fahrzeug' }
+        ]
+      }]
+    };
+    await createExamDraft(repository, 'exam-matching-edit', 'author-1', definition);
+    const delegatedDefinition = {
+      ...definition,
+      questions: [{
+        id: 'matching-question', type: 'matching', question: 'Ordne zu', pointsMilli: 1000,
+        matchingPairs: [
+          { id: 'pair-cat', prompt: 'Katze (aktualisiert)' },
+          { id: 'pair-car', prompt: 'Auto (aktualisiert)' }
+        ],
+        matchingTargets: [
+          { id: 'target-vehicle', text: 'Verkehrsmittel' },
+          { id: 'target-feline', text: 'Katzenfamilie' }
+        ]
+      }]
+    };
+    const updated = await updateExamDraft(repository, 'exam-matching-edit', 'editor-1', delegatedDefinition, undefined, 1, true);
+    const pairs = (updated.questions as any[])[0].matchingPairs;
+    assert.deepEqual(pairs, [
+      { id: 'pair-cat', prompt: 'Katze (aktualisiert)', targetId: 'target-feline', targetText: 'Katzenfamilie' },
+      { id: 'pair-car', prompt: 'Auto (aktualisiert)', targetId: 'target-vehicle', targetText: 'Verkehrsmittel' }
+    ]);
+  });
+});
+
 test('Prüfungswerkstatt: die Prüfungsart eines bestehenden Entwurfs ist unveränderlich', async () => {
   await withRepository(async repository => {
     await createExamDraft(repository, 'exam-stage-immutable', 'author-1', validDefinition);

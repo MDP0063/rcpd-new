@@ -19,7 +19,8 @@ type Question = {
   correctOptionId?: string;
   correctOptionIds?: string[];
   correctBoolean?: boolean;
-  matchingPairs?: { id: string; prompt: string; targetId: string; targetText: string }[];
+  matchingPairs?: { id: string; prompt: string; targetId?: string; targetText?: string }[];
+  matchingTargets?: { id: string; text: string }[];
   gradingRubric?: string;
   maxAnswerLength?: number;
 };
@@ -51,10 +52,16 @@ const defaultQuestion = (type: QuestionType): Question => {
     return { id, type, question: '', pointsMilli: 1000, options, correctOptionIds: [options[0].id] };
   }
   if (type === 'true_false') return { id, type, question: '', pointsMilli: 1000, correctBoolean: true };
-  if (type === 'matching') return { id, type, question: '', pointsMilli: 1000, matchingPairs: [
-    { id: makeId(), prompt: '', targetId: makeId(), targetText: '' },
-    { id: makeId(), prompt: '', targetId: makeId(), targetText: '' }
-  ] };
+  if (type === 'matching') {
+    const matchingPairs = [
+      { id: makeId(), prompt: '', targetId: makeId(), targetText: '' },
+      { id: makeId(), prompt: '', targetId: makeId(), targetText: '' }
+    ];
+    return {
+      id, type, question: '', pointsMilli: 1000, matchingPairs,
+      matchingTargets: matchingPairs.map(pair => ({ id: pair.targetId!, text: pair.targetText! }))
+    };
+  }
   return { id, type, question: '', pointsMilli: 1000, gradingRubric: '', maxAnswerLength: 4000 };
 };
 
@@ -136,7 +143,12 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       assessmentStage: exam.assessmentStage, minClearance: exam.minClearance ?? 1,
       passingScoreBasisPoints: exam.passingScoreBasisPoints ?? 7500,
       timeLimitMinutes: exam.timeLimitMinutes ?? 0, maxAttempts: exam.maxAttempts ?? null,
-      prerequisites: exam.prerequisites || [], questions: exam.questions || []
+        prerequisites: exam.prerequisites || [], questions: (exam.questions || []).map(question =>
+        !isAdmin && question.type === 'matching' && !question.matchingTargets
+          ? { ...question, matchingTargets: (question.matchingPairs || []).flatMap(pair =>
+              pair.targetId && pair.targetText ? [{ id: pair.targetId, text: pair.targetText }] : []) }
+          : question
+      )
     });
     setNotice(null);
     setMode('edit');
@@ -296,7 +308,10 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
           <div className="grid md:grid-cols-2 gap-3"><label><span className={labelClass}>Punkte</span><input className={inputClass} type="number" min="0.001" step="0.001" value={question.pointsMilli/1000} onChange={e=>patchQuestion(index,{pointsMilli:Math.round(Number(e.target.value)*1000)})}/></label><label><span className={labelClass}>Bild-URL (HTTPS, optional)</span><input className={inputClass} type="url" maxLength={500} value={question.imageUrl || ''} onChange={e=>patchQuestion(index,{imageUrl:e.target.value || undefined})} placeholder="https://…"/></label></div>
           {(question.type==='single_choice' || question.type==='multiple_choice') && <div className="space-y-2"><div className={labelClass}>Antwortmöglichkeiten · {question.type==='single_choice'?'eine richtige Antwort':'alle richtigen Antworten markieren'}</div>{(question.options || []).map((option,oi)=><div key={option.id} className="flex gap-2 items-center"><input className={inputClass} value={option.text} onChange={e=>patchQuestion(index,{options:question.options?.map((o,j)=>j===oi?{...o,text:e.target.value}:o)})}/><label className="flex items-center gap-1 text-xs whitespace-nowrap"><input type={question.type==='single_choice'?'radio':'checkbox'} name={`correct-${question.id}`} checked={question.type==='single_choice'?question.correctOptionId===option.id:(question.correctOptionIds||[]).includes(option.id)} onChange={e=>patchQuestion(index,question.type==='single_choice'?{correctOptionId:option.id}:{correctOptionIds:e.target.checked?[...(question.correctOptionIds||[]),option.id]:(question.correctOptionIds||[]).filter(id=>id!==option.id)})}/>{question.type==='single_choice'?'Richtig':'Korrekt'}</label><button type="button" onClick={()=>{const opts=(question.options||[]).filter((_,j)=>j!==oi);patchQuestion(index,{options:opts,correctOptionId:question.correctOptionId===option.id?opts[0]?.id:question.correctOptionId,correctOptionIds:(question.correctOptionIds||[]).filter(id=>id!==option.id)});}} className="text-rose-500"><X size={15}/></button></div>)}<button type="button" onClick={()=>patchQuestion(index,{options:[...(question.options||[]),{id:makeId(),text:''}]})} className="text-xs font-semibold text-sky-700 dark:text-sky-400 inline-flex gap-1 items-center"><Plus size={14}/> Antwort hinzufügen</button></div>}
           {question.type==='true_false' && <label className="flex gap-3 items-center text-sm"><span className={labelClass+' mb-0'}>Richtige Antwort</span><select className={inputClass+' max-w-xs'} value={String(question.correctBoolean)} onChange={e=>patchQuestion(index,{correctBoolean:e.target.value==='true'})}><option value="true">Richtig</option><option value="false">Falsch</option></select></label>}
-          {question.type==='matching' && <div className="space-y-2"><div className={labelClass}>Zuordnungspaare</div>{(question.matchingPairs||[]).map((pair,pi)=><div key={pair.id} className="grid md:grid-cols-[1fr_1fr_auto] gap-2"><input className={inputClass} aria-label="Ausgangstext" placeholder="Begriff / Frage" value={pair.prompt} onChange={e=>patchQuestion(index,{matchingPairs:question.matchingPairs?.map((p,j)=>j===pi?{...p,prompt:e.target.value}:p)})}/><input className={inputClass} aria-label="Zieltext" placeholder="Zugehörige Antwort" value={pair.targetText} onChange={e=>patchQuestion(index,{matchingPairs:question.matchingPairs?.map((p,j)=>j===pi?{...p,targetText:e.target.value}:p)})}/><button onClick={()=>patchQuestion(index,{matchingPairs:question.matchingPairs?.filter((_,j)=>j!==pi)})} className="text-rose-500"><Trash2 size={16}/></button></div>)}<button onClick={()=>patchQuestion(index,{matchingPairs:[...(question.matchingPairs||[]),{id:makeId(),prompt:'',targetId:makeId(),targetText:''}]})} className="text-xs font-semibold text-sky-700">+ Paar hinzufügen</button></div>}
+          {question.type==='matching' && (isAdmin ? <div className="space-y-2"><div className={labelClass}>Zuordnungspaare</div>{(question.matchingPairs||[]).map((pair,pi)=><div key={pair.id} className="grid md:grid-cols-[1fr_1fr_auto] gap-2"><input className={inputClass} aria-label="Ausgangstext" placeholder="Begriff / Frage" value={pair.prompt} onChange={e=>patchQuestion(index,{matchingPairs:question.matchingPairs?.map((p,j)=>j===pi?{...p,prompt:e.target.value}:p)})}/><input className={inputClass} aria-label="Zieltext" placeholder="Zugehörige Antwort" value={pair.targetText || ''} onChange={e=>patchQuestion(index,{matchingPairs:question.matchingPairs?.map((p,j)=>j===pi?{...p,targetText:e.target.value}:p)})}/><button type="button" onClick={()=>patchQuestion(index,{matchingPairs:question.matchingPairs?.filter((_,j)=>j!==pi)})} className="text-rose-500"><Trash2 size={16}/></button></div>)}<button type="button" onClick={()=>patchQuestion(index,{matchingPairs:[...(question.matchingPairs||[]),{id:makeId(),prompt:'',targetId:makeId(),targetText:''}]})} className="text-xs font-semibold text-sky-700">+ Paar hinzufügen</button></div> : <div className="space-y-4">
+            <div className="space-y-2"><div className={labelClass}>Zuordnungsbegriffe</div>{(question.matchingPairs||[]).map((pair,pi)=><div key={pair.id} className="flex gap-2"><input className={inputClass} aria-label="Zuordnungsbegriff" placeholder="Begriff / Frage" value={pair.prompt} onChange={e=>patchQuestion(index,{matchingPairs:question.matchingPairs?.map((p,j)=>j===pi?{...p,prompt:e.target.value}:p)})}/><button type="button" aria-label="Begriff entfernen" onClick={()=>patchQuestion(index,{matchingPairs:question.matchingPairs?.filter((_,j)=>j!==pi),matchingTargets:!selectedId && pair.targetId ? question.matchingTargets?.filter(target=>target.id!==pair.targetId) : question.matchingTargets})} className="text-rose-500"><Trash2 size={16}/></button></div>)}<button type="button" onClick={()=>{const pair={id:makeId(),prompt:''};if(selectedId)patchQuestion(index,{matchingPairs:[...(question.matchingPairs||[]),pair]});else{const targetId=makeId();patchQuestion(index,{matchingPairs:[...(question.matchingPairs||[]),{...pair,targetId,targetText:''}],matchingTargets:[...(question.matchingTargets||[]),{id:targetId,text:''}]});}}} className="text-xs font-semibold text-sky-700">+ Begriff hinzufügen</button></div>
+            <div className="space-y-2"><div className={labelClass}>Zieloptionen <span className="font-normal">(getrennt von den Begriffen)</span></div>{(question.matchingTargets || []).map((target,ti)=><div key={target.id} className="flex gap-2"><input className={inputClass} aria-label="Matching-Zieloption" placeholder="Zieloption" value={target.text} onChange={e=>{const text=e.target.value;patchQuestion(index,{matchingTargets:question.matchingTargets?.map((item,j)=>j===ti?{...item,text}:item),matchingPairs:question.matchingPairs?.map(pair=>pair.targetId===target.id?{...pair,targetText:text}:pair)});}}/></div>)}</div>
+          </div>)}
           {question.type==='free_text' && <label><span className={labelClass}>Bewertungsrubrik für Ausbilder</span><textarea className={inputClass} rows={3} maxLength={4000} value={question.gradingRubric||''} onChange={e=>patchQuestion(index,{gradingRubric:e.target.value})}/></label>}
           <label><span className={labelClass}>Erklärung (optional)</span><textarea className={inputClass} rows={2} maxLength={4000} value={question.explanation||''} onChange={e=>patchQuestion(index,{explanation:e.target.value})}/></label>
         </article>)}
