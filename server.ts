@@ -2806,12 +2806,10 @@ jobs:
           console.error('[Exam Migration] Wartungsmodus konnte nach Fehler nicht aufgehoben werden:', releaseError);
         }
       } else {
-        try {
-          examMaintenanceActive = await repository.isMaintenanceMode();
-          examMaintenanceOperation = examMaintenanceActive ? 'migration' : null;
-        } catch {
-          examMaintenanceActive = true;
-        }
+        // The persistent lock was not acquired by this process. Do not leave a stale local
+        // maintenance flag behind; the middleware checks the shared repository flag per request.
+        examMaintenanceActive = false;
+        examMaintenanceOperation = null;
       }
       next(error);
     }
