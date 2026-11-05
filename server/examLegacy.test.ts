@@ -15,7 +15,7 @@ import { scoreExam } from './examScore.ts';
 import type { LegacyProgressRecord, LegacyVerificationDoc } from './examTypes.ts';
 
 const legacyExam = (over: Partial<LegacyExamInput> = {}): LegacyExamInput => ({
-  id: 'ex1', title: 'Altprüfung', moduleCode: 'sop-01', assessmentStage: 'final_exam', passingScore: 75,
+  id: 'ex1', title: 'Altprüfung', moduleCode: 'sop-01', assessmentStage: 'final_exam', passingScore: 75, minClearance: 1,
   timeLimitMinutes: 30, examFormat: 'structured_quiz',
   questionsPayload: JSON.stringify([
     { id: 'q1', question: 'Frage 1', options: ['A', 'B', 'C'], correctIndex: 2, explanation: 'Weil' },
@@ -32,6 +32,7 @@ test('strukturierte Altprüfung wird auf Single Choice mit stabilen Option-IDs a
   assert.equal(r.master.passingScoreBasisPoints, 7500);
   assert.deepEqual(r.master.assignedCourseCodes, ['SOP-01']);
   assert.equal(r.master.maxAttempts, 3);
+  assert.equal(r.master.minClearance, 1);
   assert.equal(r.master.startable, true);
   const q1 = r.master.questions[0];
   assert.equal(q1.type, 'single_choice');
@@ -80,6 +81,7 @@ test('fehlerhafte Altdaten werden nicht migriert und nichts wird geraten', () =>
     { assessmentStage: undefined as never },
     { assessmentStage: 'FINAL_EXAM' },
     { passingScore: 120 },
+    { minClearance: -1 },
     { timeLimitMinutes: -1 },
     { title: ' ' }
   ];
@@ -191,4 +193,13 @@ test('unbekannte Prüfungsstufe führt zu einem nachvollziehbaren Migrationsfehl
   const r = mapLegacyExam(legacyExam({ assessmentStage: 'practice' }));
   assert.ok(!r.ok);
   if (!r.ok) assert.ok(r.errors.some(e => e.includes('Prüfungsstufe')));
+});
+
+test('Legacy-Prüfungen außerhalb der neuen Veröffentlichungsgrenzen bleiben vorerst nicht startbar', () => {
+  const r = mapLegacyExam(legacyExam({ timeLimitMinutes: 1500 }));
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.master.status, 'published');
+  assert.equal(r.master.startable, false);
+  assert.ok(r.publication && !r.publication.ok);
 });

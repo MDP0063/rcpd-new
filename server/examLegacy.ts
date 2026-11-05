@@ -25,6 +25,7 @@ export interface LegacyExamInput {
   moduleCode: string;
   assessmentStage: string;
   passingScore: number;
+  minClearance: number;
   timeLimitMinutes: number;
   examFormat: string;
   questionsPayload: string;
@@ -42,6 +43,7 @@ export interface MigratedExamMaster {
   /** Bestehende aktive Prüfungen ohne Statusfeld werden als veröffentlicht übernommen (§19.5). */
   status: 'published';
   passingScoreBasisPoints: number;
+  minClearance: number;
   timeLimitMinutes: number;
   maxAttempts: number | null;
   examFormat: 'structured_quiz' | 'interactive_code';
@@ -126,6 +128,9 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   if (legacy.examFormat !== 'structured_quiz' && legacy.examFormat !== 'interactive_code') {
     errors.push('Unbekanntes Prüfungsformat.');
   }
+  if (typeof legacy.minClearance !== 'number' || !Number.isSafeInteger(legacy.minClearance) || legacy.minClearance < 0 || legacy.minClearance > 10) {
+    errors.push('Ungültige Mindest-Clearance.');
+  }
   if (typeof legacy.timeLimitMinutes !== 'number' || !Number.isSafeInteger(legacy.timeLimitMinutes) || legacy.timeLimitMinutes < 0) {
     errors.push('Ungültiges Zeitlimit.');
   }
@@ -156,6 +161,7 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
     assessmentStage: stage,
     status: 'published',
     passingScoreBasisPoints: Math.min(BASIS_POINTS_FULL, Math.round(rawScore * 100)),
+    minClearance: legacy.minClearance,
     timeLimitMinutes: legacy.timeLimitMinutes,
     maxAttempts: defaultMaxAttempts(stage),
     examFormat: isInteractive ? 'interactive_code' : 'structured_quiz',
@@ -179,7 +185,8 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
         questions: master.questions
       });
   if (publication && !publication.ok) {
-    warnings.push('Die abgebildete Prüfung erfüllt die Veröffentlichungsvalidierung noch nicht.');
+    warnings.push('Die abgebildete Prüfung erfüllt die Veröffentlichungsvalidierung noch nicht und ist vorerst nicht startbar.');
+    master.startable = false;
   }
   return { ok: true, master, warnings, publication };
 }

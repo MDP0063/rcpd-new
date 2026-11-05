@@ -29,6 +29,8 @@ import {
   type ExamRepository
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import type { LegacyExamInput } from './server/examLegacy.ts';
+import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
   validateExamRepositorySnapshot,
   validateLegacyVerificationSources
@@ -112,7 +114,7 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
 let examMaintenanceActive = false;
-let examMaintenanceOperation: 'backup' | 'restore' | null = null;
+let examMaintenanceOperation: 'backup' | 'restore' | 'migration' | null = null;
 let examRestoreInProgress = false;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
@@ -1082,7 +1084,8 @@ async function startServer() {
         '/academy/exams',
         '/academy/instructor-grade',
         '/progress',
-        '/admin/exams/legacy-verifications'
+        '/admin/exams/legacy-verifications',
+        '/admin/exams/migrate-legacy'
       ].includes(req.path)) ||
       (req.method === 'DELETE' && req.path.startsWith('/academy/exams/'));
     if (!isExamWrite) {
@@ -2744,6 +2747,74 @@ jobs:
     }
   });
 
+  // ADMIN ONLY: Idempotently migrate legacy exams and progress into ExamRepository.
+  app.post('/api/admin/exams/migrate-legacy', async (_req, res, next) => {
+    const sessionUid = res.locals.sessionUid as string;
+    const initialState = loadDatabase();
+    const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
+    if (!initialCaller || initialCaller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Nur der Administrator kann die historische Prüfungs-Migration starten.' });
+      return;
+    }
+    if (examMaintenanceActive) {
+      res.status(503).json({ error: 'Eine Datensicherung, Wiederherstellung oder Migration läuft bereits.' });
+      return;
+    }
+
+    const repository = getExamRepository();
+    let maintenanceStarted = false;
+    try {
+      examMaintenanceActive = true;
+      examMaintenanceOperation = 'migration';
+      await repository.setMaintenanceMode(true);
+      maintenanceStarted = true;
+
+      const dbState = loadDatabase();
+      const caller = dbState.accounts.find(account => account.uid === sessionUid);
+      if (!caller || caller.publicProfile.role !== 'admin') {
+        throw new Error('EXAM_MIGRATION_ADMIN_SESSION_INVALID');
+      }
+      const summary = await migrateLegacyExamData(
+        repository,
+        dbState.exams as LegacyExamInput[],
+        dbState.progress as LegacyProgressRecord[]
+      );
+
+      appendAuditLog(
+        dbState,
+        caller,
+        'SYSTEM_BACKUP',
+        'Legacy-Prüfungsdaten migriert',
+        'ExamRepository',
+        `Prüfungen: ${summary.exams.imported} neu, ${summary.exams.updated} aktualisiert, ${summary.exams.alreadyMigrated} bereits vorhanden, ${summary.exams.skipped} übersprungen. Fortschritt: ${summary.progress.imported} neu, ${summary.progress.updated} aktualisiert, ${summary.progress.alreadyMigrated} bereits vorhanden, ${summary.progress.skipped} übersprungen.`
+      );
+      await saveDatabaseAndWait(dbState);
+      await repository.setMaintenanceMode(false);
+      maintenanceStarted = false;
+      examMaintenanceActive = false;
+      examMaintenanceOperation = null;
+
+      res.json({ ok: true, complete: summary.issues.length === 0, summary });
+    } catch (error) {
+      if (maintenanceStarted) {
+        try {
+          // Die Migration ist idempotent; ein Teilstand kann sicher erneut verarbeitet werden.
+          await repository.setMaintenanceMode(false);
+          examMaintenanceActive = false;
+          examMaintenanceOperation = null;
+        } catch (releaseError) {
+          console.error('[Exam Migration] Wartungsmodus konnte nach Fehler nicht aufgehoben werden:', releaseError);
+        }
+      } else {
+        // The persistent lock was not acquired by this process. Do not leave a stale local
+        // maintenance flag behind; the middleware checks the shared repository flag per request.
+        examMaintenanceActive = false;
+        examMaintenanceOperation = null;
+      }
+      next(error);
+    }
+  });
+
   // ADMIN ONLY: Complete portal + ExamRepository backup.
   app.get('/api/admin/backup', async (_req, res, next) => {
     const sessionUid = res.locals.sessionUid as string;
@@ -2990,7 +3061,7 @@ jobs:
     }
 
     const repository = getExamRepository();
-    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation === 'backup')) {
+    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation !== 'restore')) {
       res.status(503).json({
         error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
       });
