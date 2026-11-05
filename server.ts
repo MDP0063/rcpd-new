@@ -1391,6 +1391,10 @@ async function startServer() {
         res.status(409).json({ error: 'Archivierte Prüfungen können nicht bearbeitet werden.' });
         return;
       }
+      if (error instanceof Error && error.message === 'EXAM_WORKING_REVISION_CONFLICT') {
+        res.status(409).json({ error: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version und übertrage deine Änderungen erneut.' });
+        return;
+      }
       next(error);
     }
   });
