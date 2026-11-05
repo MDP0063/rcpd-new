@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle, ArrowLeft, BookOpen, Eye, FilePlus2,
+  AlertCircle, ArrowDown, ArrowLeft, ArrowUp, BookOpen, Eye, FilePlus2,
   Loader2, Plus, Save, Send, Trash2, X
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
@@ -231,6 +231,13 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
 
   const addQuestion = (type: QuestionType) => update('questions', [...definition.questions, defaultQuestion(type)]);
   const removeQuestion = (index: number) => update('questions', definition.questions.filter((_, i) => i !== index));
+  const moveQuestion = (index: number, offset: -1 | 1) => {
+    const target = index + offset;
+    if (target < 0 || target >= definition.questions.length) return;
+    const questions = [...definition.questions];
+    [questions[index], questions[target]] = [questions[target], questions[index]];
+    update('questions', questions);
+  };
 
   if (mode === 'list') return (
     <div className="space-y-6">
@@ -304,7 +311,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
         <div className="flex flex-wrap justify-between items-center gap-2"><div><h2 className="font-bold text-slate-900 dark:text-white">Fragen ({definition.questions.length})</h2><p className="text-xs text-slate-500">Gesamtpunktzahl: {totalPoints.toLocaleString('de-DE')} Punkte</p></div>
           <select className={inputClass+' max-w-xs'} value="" onChange={e=>{if(e.target.value)addQuestion(e.target.value as QuestionType);}}><option value="">Fragetyp hinzufügen…</option><option value="single_choice">Single Choice</option><option value="multiple_choice">Multiple Choice</option><option value="true_false">Richtig / Falsch</option><option value="matching">Zuordnung</option><option value="free_text">Freitext</option></select></div>
         {definition.questions.map((question,index)=><article key={question.id} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-          <div className="flex items-center justify-between"><div className="font-semibold text-sm text-slate-800 dark:text-white">Frage {index+1} · {({single_choice:'Single Choice',multiple_choice:'Multiple Choice',true_false:'Richtig / Falsch',matching:'Zuordnung',free_text:'Freitext'} as Record<QuestionType,string>)[question.type]}</div><button onClick={()=>removeQuestion(index)} aria-label={`Frage ${index+1} entfernen`} className="text-rose-600 p-1"><Trash2 size={16}/></button></div>
+          <div className="flex items-center justify-between"><div className="font-semibold text-sm text-slate-800 dark:text-white">Frage {index+1} · {({single_choice:'Single Choice',multiple_choice:'Multiple Choice',true_false:'Richtig / Falsch',matching:'Zuordnung',free_text:'Freitext'} as Record<QuestionType,string>)[question.type]}</div><div className="flex items-center gap-2"><button type="button" onClick={()=>moveQuestion(index,-1)} disabled={index===0} aria-label={`Frage ${index+1} nach oben`} className="p-1 text-slate-500 disabled:opacity-30"><ArrowUp size={16}/></button><button type="button" onClick={()=>moveQuestion(index,1)} disabled={index===definition.questions.length-1} aria-label={`Frage ${index+1} nach unten`} className="p-1 text-slate-500 disabled:opacity-30"><ArrowDown size={16}/></button><button onClick={()=>removeQuestion(index)} aria-label={`Frage ${index+1} entfernen`} className="text-rose-600 p-1"><Trash2 size={16}/></button></div></div>
           <label><span className={labelClass}>Fragetext</span><textarea className={inputClass} rows={3} maxLength={2000} value={question.question} onChange={e=>patchQuestion(index,{question:e.target.value})}/></label>
           <div className="grid md:grid-cols-2 gap-3"><label><span className={labelClass}>Punkte</span><input className={inputClass} type="number" min="0.001" step="0.001" value={question.pointsMilli/1000} onChange={e=>patchQuestion(index,{pointsMilli:Math.round(Number(e.target.value)*1000)})}/></label><label><span className={labelClass}>Bild-URL (HTTPS, optional)</span><input className={inputClass} type="url" maxLength={500} value={question.imageUrl || ''} onChange={e=>patchQuestion(index,{imageUrl:e.target.value || undefined})} placeholder="https://…"/></label></div>
           {(question.type==='single_choice' || question.type==='multiple_choice') && <div className="space-y-2"><div className={labelClass}>Antwortmöglichkeiten · {question.type==='single_choice'?'eine richtige Antwort':'alle richtigen Antworten markieren'}</div>{(question.options || []).map((option,oi)=><div key={option.id} className="flex gap-2 items-center"><input className={inputClass} value={option.text} onChange={e=>patchQuestion(index,{options:question.options?.map((o,j)=>j===oi?{...o,text:e.target.value}:o)})}/><label className="flex items-center gap-1 text-xs whitespace-nowrap"><input type={question.type==='single_choice'?'radio':'checkbox'} name={`correct-${question.id}`} checked={question.type==='single_choice'?question.correctOptionId===option.id:(question.correctOptionIds||[]).includes(option.id)} onChange={e=>patchQuestion(index,question.type==='single_choice'?{correctOptionId:option.id}:{correctOptionIds:e.target.checked?[...(question.correctOptionIds||[]),option.id]:(question.correctOptionIds||[]).filter(id=>id!==option.id)})}/>{question.type==='single_choice'?'Richtig':'Korrekt'}</label><button type="button" onClick={()=>{const opts=(question.options||[]).filter((_,j)=>j!==oi);patchQuestion(index,{options:opts,correctOptionId:question.correctOptionId===option.id?opts[0]?.id:question.correctOptionId,correctOptionIds:(question.correctOptionIds||[]).filter(id=>id!==option.id)});}} className="text-rose-500"><X size={15}/></button></div>)}<button type="button" onClick={()=>patchQuestion(index,{options:[...(question.options||[]),{id:makeId(),text:''}]})} className="text-xs font-semibold text-sky-700 dark:text-sky-400 inline-flex gap-1 items-center"><Plus size={14}/> Antwort hinzufügen</button></div>}

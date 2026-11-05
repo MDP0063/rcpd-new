@@ -125,6 +125,16 @@ test('Eine reine automatisch bewertete Prüfung erhält einen endgültigen Beste
   assert.equal(result.requiresManualReview, false);
 });
 
+test('Leerer Freitext benötigt keine manuelle Prüfung, beantworteter Freitext schon', () => {
+  const text = questions.filter(question => question.type === 'free_text');
+  const blank = evaluateExamAnswers(text, parseAttemptAnswers({}, text), 5000);
+  assert.equal(blank.status, 'failed');
+  assert.equal(blank.requiresManualReview, false);
+  assert.notEqual(blank.finalScoreBasisPoints, null);
+  assert.equal(evaluateExamAnswers(text, parseAttemptAnswers({ text: '  ' }, text), 5000).requiresManualReview, false);
+  assert.equal(evaluateExamAnswers(text, parseAttemptAnswers({ text: 'Antwort' }, text), 5000).status, 'pending_review');
+});
+
 test('Fehlerhafte Bestehensgrenzen und unsichere Gesamtpunktzahlen werden abgelehnt', () => {
   const objective = questions.filter(question => question.type !== 'free_text');
   const answers = parseAttemptAnswers({}, objective);

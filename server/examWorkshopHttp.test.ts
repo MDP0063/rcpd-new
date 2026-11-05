@@ -74,7 +74,7 @@ function makeMaster() {
       {
         id: 'http-single', type: 'single_choice', question: 'Single-Frage', pointsMilli: 1000,
         options: [{ id: 'single-right', text: 'Single richtig' }, { id: 'single-wrong', text: 'Single falsch' }],
-        correctOptionId: 'single-right', explanation: 'Single intern'
+        correctOptionId: 'single-right', legacyCorrectIndex: 0, explanation: 'Single intern'
       },
       {
         id: 'http-multiple', type: 'multiple_choice', question: 'Multiple-Frage', pointsMilli: 2000,
@@ -147,6 +147,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     },
     lockedUpdateExamIds: []
   };
+  delegatePermissions.canGradeAssignedCourses = true;
+  delegatePermissions.assignedCourseCodes = ['SOP-01'];
   const portalState = {
     version: 3,
     accounts: [
@@ -159,6 +161,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   };
   const collections = Object.fromEntries(EXAM_COLLECTIONS.map(name => [name, {}])) as Record<string, Record<string, unknown>>;
   collections.exam_masters[`doc:${encodeURIComponent(TEST_EXAM_ID)}`] = master;
+  const versionId = `${TEST_EXAM_ID}__v1`;
+  collections.exam_versions[`doc:${encodeURIComponent(versionId)}`] = {
+    id: versionId, examId: TEST_EXAM_ID, versionNumber: 1, title: master.title,
+    assessmentStage: 'test', timeLimitMinutes: 20, passingScoreBasisPoints: 7500, minClearance: 1,
+    questionsSnapshot: master.questions
+  };
+  collections.exam_attempts['doc:http-review-attempt'] = {
+    id: 'http-review-attempt', userId: 'http-delegate', userName: 'HttpDelegate', examId: TEST_EXAM_ID,
+    examVersionId: versionId, versionNumber: 1, attemptCourseCode: 'SOP-01', assessmentStage: 'test',
+    attemptNumber: 1, startedAtIso: '2026-11-05T11:00:00.000Z', submittedAtIso: '2026-11-05T11:20:00.000Z',
+    status: 'pending_review', answers: { 'http-free-text': 'Meine HTTP Antwort' }, questionGrades: [],
+    matchingShuffleOrders: {}, totalPossiblePointsMilli: 11000, automaticallyEarnedPointsMilli: 0,
+    manuallyEarnedPointsMilli: 0, preliminaryScoreBasisPoints: 0, finalScoreBasisPoints: null
+  };
   await writeFile(path.join(dataDirectory, 'portal-db-v3.json'), JSON.stringify(portalState));
   await writeFile(path.join(dataDirectory, 'exam-db-v1.json'), JSON.stringify({ version: 1, maintenanceMode: false, collections }));
   // Keep the child TSX runtime independent of host account lookup in locked-down test environments.
@@ -219,12 +235,34 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(detailResponse.status, 200);
     const detailExam = detailResponse.body.exam;
 
+    const reviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
+    assert.equal(reviewQueue.status, 200, JSON.stringify(reviewQueue.body));
+    assert.equal(reviewQueue.body.reviews.length, 1);
+    assert.equal(reviewQueue.body.reviews[0].questions[0].answer, 'Meine HTTP Antwort');
+    assert.equal(reviewQueue.body.reviews[0].questions[0].gradingRubric, 'Nur für Prüfer sichtbare Rubrik');
+    for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'targetId', 'internalScore']) {
+      assert.equal(JSON.stringify(reviewQueue.body).includes(key), false, `review queue leaked ${key}`);
+    }
+    const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, delegate.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
+    });
+    assert.equal(gradeResponse.status, 200, JSON.stringify(gradeResponse.body));
+    assert.equal(gradeResponse.body.submission.status, 'failed');
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
+    const ownResults = await jsonRequest('/api/academy/exam-results', delegate.token);
+    assert.equal(ownResults.status, 200);
+    assert.equal(ownResults.body.results.length, 1);
+    assert.equal(JSON.stringify(ownResults.body.results).includes('gradingRubric'), false);
+    assert.equal(JSON.stringify(ownResults.body.results).includes('Meine HTTP Antwort'), false);
+    assert.deepEqual((await jsonRequest('/api/academy/exam-results', admin.token)).body.results, []);
+
     const assertDelegatedProjection = (exam: Record<string, any>) => {
       assert.deepEqual(exam.questions.map((question: { id: string }) => question.id), master.questions.map(question => question.id));
       const serialized = JSON.stringify(exam);
       for (const privateField of [
         'correctOptionId', 'correctOptionIds', 'correctBoolean', 'targetId', 'targetText',
-        'gradingRubric', 'explanation', 'internalScore'
+        'gradingRubric', 'explanation', 'internalScore', 'legacyCorrectIndex'
       ]) assert.equal(serialized.includes(privateField), false, `delegated HTTP response leaked ${privateField}`);
       assert.deepEqual(exam.questions[0].options.map((option: { text: string }) => option.text), ['Single richtig', 'Single falsch']);
       assert.deepEqual(exam.questions[1].options.map((option: { text: string }) => option.text), ['Multiple A', 'Multiple B', 'Multiple C']);
@@ -280,6 +318,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(adminDetailResponse.status, 200);
     assert.deepEqual(adminDetailResponse.body.exam.questions, adminListResponse.body.exams[0].questions);
     assert.equal(adminDetailResponse.body.exam.questions[0].correctOptionId, 'single-right');
+    assert.equal(adminDetailResponse.body.exam.questions[0].legacyCorrectIndex, 0);
     assert.deepEqual(adminDetailResponse.body.exam.questions[1].correctOptionIds, ['multiple-right-a', 'multiple-right-b']);
     assert.equal(adminDetailResponse.body.exam.questions[2].correctBoolean, true);
     assert.equal(adminDetailResponse.body.exam.questions[3].matchingPairs[0].targetId, 'target-a');
@@ -289,6 +328,10 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(forbiddenList.status, 403);
     const forbiddenDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`, unauthorized.token);
     assert.equal(forbiddenDetail.status, 403);
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', unauthorized.token)).status, 403);
+    assert.equal((await jsonRequest('/api/academy/exams/http-workshop-exam/attempts/http-review-attempt/grade', unauthorized.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades: [] })
+    })).status, 403);
     const forbiddenUpdate = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`, unauthorized.token, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

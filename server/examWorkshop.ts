@@ -305,7 +305,7 @@ export async function updateExamDraft(
       for (const question of input.questions as unknown as Array<Record<string, unknown>>) {
         const previous = existingQuestions.get(String(question.id || ''));
         if (!previous) continue;
-        for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'explanation', 'gradingRubric']) {
+        for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'explanation', 'gradingRubric', 'legacyCorrectIndex']) {
           if (Object.prototype.hasOwnProperty.call(previous, key)) question[key] = structuredClone(previous[key]);
         }
         if (Array.isArray(question.matchingPairs) && Array.isArray(previous.matchingPairs)) {

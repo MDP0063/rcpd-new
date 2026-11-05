@@ -37,6 +37,7 @@ import { projectExamWorkshopMaster } from './server/examWorkshopProjection.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
+import { gradeExamAttempt, listExamReviews, listOwnExamResults } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1058,7 +1059,7 @@ async function startServer() {
           '/admin/exams/legacy-verifications',
           '/admin/exams/migrate-legacy'
         ].includes(req.path) ||
-        /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path) ||
+        /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/(submit|grade)$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
       (req.method === 'PUT' && (
@@ -1717,6 +1718,9 @@ async function startServer() {
       EXAM_TIME_LIMIT_INVALID: { status: 409, message: 'Das Zeitlimit dieser Prüfung ist ungültig. Bitte wende dich an den Administrator.' },
       EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
       EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
+      EXAM_REVIEW_NOT_PENDING: { status: 409, message: 'Dieser Versuch wartet nicht mehr auf eine manuelle Bewertung.' },
+      EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
+      EXAM_MANUAL_GRADES_INCOMPLETE: { status: 400, message: 'Bitte bewerte alle offenen Freitextfragen.' },
       EXAM_ATTEMPT_FORBIDDEN: { status: 403, message: 'Du darfst nur deinen eigenen Prüfungsversuch speichern.' },
       EXAM_ATTEMPT_NOT_ACTIVE: { status: 409, message: 'Dieser Prüfungsversuch ist nicht mehr aktiv.' },
       EXAM_REVISION_INVALID: { status: 400, message: 'Die Autosave-Revision ist ungültig.' },
@@ -1739,6 +1743,57 @@ async function startServer() {
     }
     next(error);
   }
+
+  app.get('/api/academy/exam-reviews', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
+      const canReviewAnyCourse = Boolean(caller && (
+        caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
+        (permissions?.canGradeAssignedCourses && permissions.assignedCourseCodes.length > 0)
+      ));
+      if (!caller || !canReviewAnyCourse) {
+        res.status(403).json({ error: 'Für manuelle Prüfungsbewertungen fehlt die Berechtigung.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const role = caller.publicProfile.role;
+      const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
+      res.json({ reviews: await listExamReviews(getExamRepository(), allowed) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/grade', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id || !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || Object.keys(req.body).some(key => key !== 'grades')) {
+        res.status(400).json({ error: 'Die Bewertungsanfrage ist ungültig.' }); return;
+      }
+      const submission = await gradeExamAttempt(getExamRepository(), req.params.id, req.params.attemptId, caller.uid, req.body.grades);
+      recordExamWorkshopAudit(caller.uid, 'Freitextprüfung bewertet', req.params.id, `Versuch ${req.params.attemptId} manuell bewertet.`);
+      res.json({ submission });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.get('/api/academy/exam-results', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) { res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' }); return; }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      res.json({ results: await listOwnExamResults(getExamRepository(), participant.uid) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
 
 
   // Teilnehmer erhalten ausschließlich freigegebene Metadaten, niemals Fragen oder Lösungsschlüssel.

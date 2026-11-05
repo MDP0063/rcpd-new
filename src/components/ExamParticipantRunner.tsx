@@ -119,6 +119,7 @@ export const ExamParticipantRunner: React.FC = () => {
   const [selectedCourseCode, setSelectedCourseCode] = useState('');
   const [attempt, setAttempt] = useState<PublicAttempt | null>(null);
   const [submission, setSubmission] = useState<PublicSubmission | null>(null);
+  const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [starting, setStarting] = useState(false);
@@ -158,9 +159,15 @@ export const ExamParticipantRunner: React.FC = () => {
     setLoadingCatalog(false);
   }, []);
 
+  const loadResultHistory = useCallback(async () => {
+    const response = await apiFetch<{ results: PublicSubmission[] }>(API_ENDPOINTS.ACADEMY_EXAM_RESULTS, { cache: 'no-store' });
+    if (response.ok && response.data && Array.isArray(response.data.results)) setResultHistory(response.data.results);
+  }, []);
+
   useEffect(() => {
     void loadCatalog();
-  }, [loadCatalog]);
+    void loadResultHistory();
+  }, [loadCatalog, loadResultHistory]);
 
   const clearRunner = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -277,6 +284,7 @@ export const ExamParticipantRunner: React.FC = () => {
       );
       if ((response.ok || response.status === 409) && response.data?.submission) {
         setSubmission(response.data.submission);
+        void loadResultHistory();
         attemptRef.current = null;
         setAttempt(null);
         setSaveState('saved');
@@ -290,7 +298,7 @@ export const ExamParticipantRunner: React.FC = () => {
       submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [saveAnswers, serverOffsetMs, submission]);
+  }, [loadResultHistory, saveAnswers, serverOffsetMs, submission]);
 
   const updateAnswer = (questionId: string, value: AnswerValue) => {
     const next = { ...answersRef.current, [questionId]: value };
@@ -541,6 +549,7 @@ export const ExamParticipantRunner: React.FC = () => {
         <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
+      {resultHistory.length > 0 && <section className={cardClass + ' space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Nur deine eigenen abgeschlossenen Versuche.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
       {loadingCatalog ? (
         <div className={cardClass + ' flex items-center justify-center gap-3 p-12 text-sm text-slate-500'}><Loader2 className="h-5 w-5 animate-spin" />Prüfungen werden geladen …</div>
       ) : catalog.length === 0 ? (

@@ -303,8 +303,10 @@ function gradeObjectiveQuestion(question: ExamQuestion, answer: AnswerValue | un
       const earned = mulDivHalfUpClamped(correctCount, max, question.matchingPairs.length, max);
       return { questionId: question.id, pointsEarnedMilli: earned, maxPointsMilli: max, requiresManualReview: false, correct: earned === max };
     }
-    case 'free_text':
-      return { questionId: question.id, pointsEarnedMilli: 0, maxPointsMilli: max, requiresManualReview: true };
+    case 'free_text': {
+      const answered = typeof answer === 'string' && answer.trim().length > 0;
+      return { questionId: question.id, pointsEarnedMilli: 0, maxPointsMilli: max, requiresManualReview: answered };
+    }
   }
 }
 

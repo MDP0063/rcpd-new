@@ -176,9 +176,9 @@ test('Verspäteter Autosave speichert keine Payload und finalisiert den letzten 
     const result = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'a' }, at(31));
     const after = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(result.expired, true);
-    assert.equal(result.finalStatus, 'pending_review');
+    assert.equal(result.finalStatus, 'failed');
     assert.equal(result.attempt, null);
-    assert.equal(after?.status, 'pending_review');
+    assert.equal(after?.status, 'failed');
     assert.equal(after?.submittedAtIso, new Date(at(30)).toISOString());
     assert.equal(after?.submissionReason, 'time_expired');
     assert.deepEqual(after?.answers, before?.answers);
