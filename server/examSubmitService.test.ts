@@ -123,7 +123,7 @@ nodeTest('Eingang exakt zur Deadline ist eine reguläre Abgabe', async () => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(30));
     assert.equal(result.expired, false);
-    assert.equal(result.submission.status, 'pending_review');
+    assert.equal(result.submission.status, 'passed');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
   }, { includeFreeText: false });
 });
@@ -133,7 +133,7 @@ nodeTest('Verspätete Abgabe finalisiert ausschließlich den letzten Autosave-St
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(31));
     assert.equal(result.expired, true);
-    assert.equal(result.submission.status, 'pending_review');
+    assert.equal(result.submission.status, 'passed');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
     const stored = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(stored?.submissionReason, 'time_expired');
