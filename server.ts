@@ -1337,14 +1337,37 @@ async function startServer() {
         res.status(409).json({ error: 'Für diese Veröffentlichung ist eine Admin-Freigabe erforderlich. Bitte reiche die Prüfung zur Freigabe ein.' });
         return;
       }
-      const result = await publishExamDraft(getExamRepository(), req.params.id, context.account.uid);
+      const pendingRequests = await getExamRepository().list('exam_publication_requests', {
+        where: [{ field: 'examId', value: master.id }],
+        limit: 1000
+      });
+      const openRequest = pendingRequests.find(request => request.status === 'pending');
+      if (pendingRequests.filter(request => request.status === 'pending').length > 1) {
+        res.status(409).json({ error: 'Für diese Prüfung existieren mehrere offene Freigabeanfragen. Bitte lasse den Datenbestand administrativ prüfen.' });
+        return;
+      }
+      const result = await publishExamDraft(
+        getExamRepository(),
+        req.params.id,
+        context.account.uid,
+        new Date().toISOString(),
+        context.actor.role === 'admin' && openRequest
+          ? {
+              requestId: openRequest.id,
+              reviewerName: context.account.publicProfile.displayName || context.account.username,
+              reviewComment: typeof req.body?.reviewComment === 'string' ? req.body.reviewComment : ''
+            }
+          : undefined
+      );
       try {
         const state = loadDatabase();
         appendAuditLog(
           state,
           context.account,
           'EXAM_WORKSHOP',
-          'Prüfung automatisch veröffentlicht',
+          openRequest && context.actor.role === 'admin'
+            ? 'Eingereichte Prüfung geprüft und veröffentlicht'
+            : 'Prüfung automatisch veröffentlicht',
           String(master.title || master.id),
           `Version: ${result.version.id}`
         );
