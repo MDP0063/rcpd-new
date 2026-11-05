@@ -119,6 +119,25 @@ export async function submitExamPublicationRequest(
   });
 }
 
+export async function listExamPublicationRequests(repository: ExamRepository): Promise<ExamPublicationRequestDocument[]> {
+  const statuses: ExamPublicationRequestDocument['status'][] = [
+    'pending',
+    'published',
+    'returned',
+    'rejected',
+    'archived'
+  ];
+  const groups = await Promise.all(statuses.map(status =>
+    repository.list<ExamPublicationRequestDocument>('exam_publication_requests', {
+      where: [{ field: 'status', value: status }],
+      limit: 500
+    })
+  ));
+  return groups.flat()
+    .sort((a, b) => b.createdIso.localeCompare(a.createdIso))
+    .slice(0, 500);
+}
+
 export async function listPendingExamPublicationRequests(repository: ExamRepository): Promise<ExamPublicationRequestDocument[]> {
   const requests = await repository.list<ExamPublicationRequestDocument>('exam_publication_requests', {
     where: [{ field: 'status', value: 'pending' }],
