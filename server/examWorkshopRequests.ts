@@ -17,7 +17,7 @@ export interface ExamPublicationRequestDocument extends ExamDocument {
   requestedByName: string;
   assessmentStage: 'test' | 'final_exam';
   requestKind: 'new' | 'update';
-  status: 'pending' | 'published' | 'returned' | 'archived';
+  status: 'pending' | 'published' | 'returned' | 'rejected' | 'archived';
   submittedRevision: number;
   submittedHash: string;
   createdIso: string;
@@ -158,7 +158,7 @@ export async function updateExamPublicationRequestDecision(
   repository: ExamRepository,
   requestId: string,
   reviewer: { uid: string; displayName: string },
-  decision: 'returned' | 'archived',
+  decision: 'returned' | 'rejected' | 'archived',
   reviewComment: string,
   nowIso = new Date().toISOString()
 ): Promise<ExamPublicationRequestDocument> {
