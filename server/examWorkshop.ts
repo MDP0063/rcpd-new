@@ -235,11 +235,16 @@ export async function publishExamDraft(
   id: string,
   publisherUid: string,
   nowIso = new Date().toISOString(),
-  publicationReview?: { requestId: string; reviewerName: string; reviewComment?: string }
+  publicationReview?: { requestId: string; reviewerName: string; reviewComment?: string },
+  expectedRevision?: number
 ) {
   const current = await repository.get('exam_masters', id);
   if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
   if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+  const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
+  if (expectedRevision !== undefined && expectedRevision !== currentRevision) {
+    throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+  }
   if (current.examFormat === 'interactive_code' || current.isLegacyFormat === true) {
     throw new Error('EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE');
   }
