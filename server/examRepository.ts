@@ -13,6 +13,7 @@ import {
   assertExamQuery
 } from './examRepositoryRules.ts';
 import { legacyVerificationId } from './examLegacy.ts';
+import { validateExamRepositorySnapshot } from './examBackup.ts';
 import type { LegacyVerificationDoc } from './examTypes.ts';
 import {
   type AttemptInvalidationAudit,
@@ -25,7 +26,6 @@ import {
 } from './examRepositoryTypes.ts';
 
 export * from './examRepositoryTypes.ts';
-import { validateExamRepositorySnapshot } from './examBackup.ts';
 
 export class ExamRepository implements ExamStorageAdapter {
   private readonly adapter: ExamStorageAdapter;
