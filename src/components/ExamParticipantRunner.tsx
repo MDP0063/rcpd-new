@@ -467,9 +467,9 @@ export const ExamParticipantRunner: React.FC = () => {
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                    <button type="button" disabled={currentQuestionIndex === 0} onClick={() => setCurrentQuestionIndex(index => Math.max(0, index - 1))} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
+                    <button type="button" disabled={currentQuestionIndex === 0} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.max(0, index - 1)); }} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
                     {currentQuestionIndex < attempt.questions.length - 1 ? (
-                      <button type="button" onClick={() => setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1))} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
                     ) : (
                       <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Prüfung abgeben</button>
                     )}
