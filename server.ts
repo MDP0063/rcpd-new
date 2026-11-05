@@ -29,6 +29,7 @@ import {
   type ExamRepository
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
@@ -1077,16 +1078,21 @@ async function startServer() {
     next();
   });
 
-  // Während Backup/Restore werden alle bisherigen prüfungsbezogenen Schreibwege serverseitig pausiert.
+  // Während Backup/Restore werden alle prüfungsbezogenen Schreibwege serverseitig pausiert.
   app.use('/api', async (req, res, next) => {
     const isExamWrite =
-      (req.method === 'POST' && [
-        '/academy/exams',
-        '/academy/instructor-grade',
-        '/progress',
-        '/admin/exams/legacy-verifications',
-        '/admin/exams/migrate-legacy'
-      ].includes(req.path)) ||
+      (req.method === 'POST' && (
+        [
+          '/academy/exams',
+          '/academy/instructor-grade',
+          '/progress',
+          '/admin/exams',
+          '/admin/exams/legacy-verifications',
+          '/admin/exams/migrate-legacy'
+        ].includes(req.path) ||
+        /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
+      )) ||
+      (req.method === 'PUT' && /^\/academy\/exams\/[^/]+$/.test(req.path)) ||
       (req.method === 'DELETE' && req.path.startsWith('/academy/exams/'));
     if (!isExamWrite) {
       next();
@@ -1101,6 +1107,157 @@ async function startServer() {
       }
       next();
     } catch (error) {
+      next(error);
+    }
+  });
+
+  // ==========================================================================
+  // ADMIN EXAM WORKSHOP API — ausschließlich für den Admin-Account
+  // ==========================================================================
+
+  function getExamWorkshopAdmin(res: express.Response) {
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    if (!sessionUid) return null;
+    const dbState = loadDatabase();
+    const caller = dbState.accounts.find(account => account.uid === sessionUid);
+    return caller?.publicProfile.role === 'admin' ? caller : null;
+  }
+
+  async function examWorkshopMaintenanceActive(): Promise<boolean> {
+    return examMaintenanceActive || await getExamRepository().isMaintenanceMode();
+  }
+
+  app.get('/api/admin/exams', async (_req, res, next) => {
+    try {
+      if (!getExamWorkshopAdmin(res)) {
+        res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
+        return;
+      }
+      const exams = await getExamRepository().list('exam_masters');
+      exams.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
+      res.json({ exams });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/admin/exams/:id', async (req, res, next) => {
+    try {
+      if (!getExamWorkshopAdmin(res)) {
+        res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
+        return;
+      }
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!exam) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.json({ exam });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/admin/exams', async (req, res, next) => {
+    try {
+      const caller = getExamWorkshopAdmin(res);
+      if (!caller) {
+        res.status(403).json({ error: 'Nur der Administrator darf Prüfungen in der Werkstatt anlegen.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const master = await createExamDraft(
+        getExamRepository(),
+        newId('exam'),
+        caller.uid,
+        req.body?.definition
+      );
+      res.status(201).json({ exam: master });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  app.put('/api/academy/exams/:id', async (req, res, next) => {
+    try {
+      const caller = getExamWorkshopAdmin(res);
+      if (!caller) {
+        res.status(403).json({ error: 'Nur der Administrator darf Prüfungsentwürfe bearbeiten.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await updateExamDraft(
+        getExamRepository(),
+        req.params.id,
+        caller.uid,
+        req.body?.definition
+      );
+      res.json({ exam });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_MASTER_ARCHIVED') {
+        res.status(409).json({ error: 'Archivierte Prüfungen können nicht bearbeitet werden.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  app.post('/api/admin/exams/:id/publish', async (req, res, next) => {
+    try {
+      const caller = getExamWorkshopAdmin(res);
+      if (!caller) {
+        res.status(403).json({ error: 'Nur der Administrator darf Prüfungen veröffentlichen.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const result = await publishExamDraft(getExamRepository(), req.params.id, caller.uid);
+      res.json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_MASTER_ARCHIVED') {
+        res.status(409).json({ error: 'Archivierte Prüfungen können nicht veröffentlicht werden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE') {
+        res.status(409).json({ error: 'Historische interaktive Prüfungen können nicht über die neue Werkstatt veröffentlicht werden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_PUBLICATION_VALIDATION_FAILED') {
+        const validation = (error as Error & { validation?: unknown }).validation;
+        res.status(422).json({ error: 'Die Prüfung ist noch nicht veröffentlichungsfähig.', validation });
+        return;
+      }
+      if (error instanceof Error && (
+        error.message === 'EXAM_VERSION_SEQUENCE_INVALID' ||
+        error.message === 'EXAM_DOCUMENT_ALREADY_EXISTS'
+      )) {
+        res.status(409).json({ error: 'Die Prüfungsversion konnte wegen eines Versionskonflikts nicht veröffentlicht werden. Bitte lade den aktuellen Stand neu.' });
+        return;
+      }
       next(error);
     }
   });
