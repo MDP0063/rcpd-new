@@ -187,6 +187,12 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
     const state = emptyState();
     for (const collection of EXAM_COLLECTIONS) {
       const documents = parsed.collections[collection];
+      const isNewWorkshopCollection =
+        collection === 'exam_comments' || collection === 'exam_publication_requests';
+      if (documents === undefined && isNewWorkshopCollection) {
+        state.collections[collection] = {};
+        continue;
+      }
       if (!isRecord(documents)) throw new Error('EXAM_JSON_STORE_INVALID');
       const normalized: Record<string, ExamDocument> = {};
       for (const [key, value] of Object.entries(documents)) {
