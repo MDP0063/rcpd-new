@@ -32,6 +32,7 @@ import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, parseExamWorkshopDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { canAccessExamWorkshopExam, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
+import { createExamWorkshopComment, listExamWorkshopComments } from './server/examWorkshopComments.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
@@ -1131,6 +1132,62 @@ async function startServer() {
       }
       res.json({ exam });
     } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/admin/exams/:id/comments', async (req, res, next) => {
+    try {
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
+        return;
+      }
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!exam || (context.actor.role !== 'admin' &&
+        ((exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view')))) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      const comments = await listExamWorkshopComments(getExamRepository(), req.params.id);
+      res.json({ comments });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/admin/exams/:id/comments', async (req, res, next) => {
+    try {
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!exam || (context.actor.role !== 'admin' &&
+        ((exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view')))) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      const comment = await createExamWorkshopComment(getExamRepository(), {
+        examId: exam.id,
+        authorUid: context.account.uid,
+        authorName: context.account.publicProfile.displayName || context.account.username,
+        body: req.body?.body
+      });
+      res.status(201).json({ comment });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'EXAM_COMMENT_INPUT_INVALID') {
+        res.status(400).json({ error: 'Der Kommentar ist leer oder überschreitet die erlaubte Länge von 4.000 Zeichen.' });
+        return;
+      }
       next(error);
     }
   });
