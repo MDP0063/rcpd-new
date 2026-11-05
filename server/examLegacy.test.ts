@@ -194,3 +194,12 @@ test('unbekannte Prüfungsstufe führt zu einem nachvollziehbaren Migrationsfehl
   assert.ok(!r.ok);
   if (!r.ok) assert.ok(r.errors.some(e => e.includes('Prüfungsstufe')));
 });
+
+test('Legacy-Prüfungen außerhalb der neuen Veröffentlichungsgrenzen bleiben vorerst nicht startbar', () => {
+  const r = mapLegacyExam(legacyExam({ timeLimitMinutes: 1500 }));
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.master.status, 'published');
+  assert.equal(r.master.startable, false);
+  assert.ok(r.publication && !r.publication.ok);
+});
