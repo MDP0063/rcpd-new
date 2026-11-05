@@ -49,9 +49,48 @@ async function withRepository(
   }
 }
 
+async function createFinalExam(
+  repository: ReturnType<typeof createJsonExamRepository>,
+  options: {
+    id?: string;
+    prerequisites?: Array<{ examId: string; mode: 'completed' | 'passed'; minScoreBasisPoints?: number }>;
+    maxAttempts?: number | null;
+    manualUnlockUserUids?: string[];
+  } = {}
+): Promise<void> {
+  const id = options.id ?? 'exam-final';
+  const versionId = `${id}__v1`;
+  await repository.create('exam_masters', id, {
+    id,
+    status: 'published',
+    startable: true,
+    minClearance: 0,
+    assignedCourseCodes: ['PC-101', 'PC-102'],
+    currentPublishedVersionId: versionId,
+    ...(options.manualUnlockUserUids ? { manualUnlockUserUids: options.manualUnlockUserUids } : {})
+  });
+  await repository.create('exam_versions', versionId, {
+    id: versionId,
+    examId: id,
+    versionNumber: 1,
+    title: 'Abschlussprüfung',
+    assessmentStage: 'final_exam',
+    minClearance: 0,
+    timeLimitMinutes: 0,
+    passingScoreBasisPoints: 7500,
+    ...(options.maxAttempts !== undefined ? { maxAttempts: options.maxAttempts } : {}),
+    prerequisites: options.prerequisites ?? [],
+    questionsSnapshot: [{
+      id: 'final-q1', type: 'true_false', question: 'Aussage?', pointsMilli: 1000,
+      correctBoolean: true
+    }]
+  });
+}
+
 const participant = { uid: 'user-1', displayName: 'Officer One', clearanceLevel: 5 };
-const start = (repository: ReturnType<typeof createJsonExamRepository>, course = 'PC-101', now = Date.parse('2026-11-05T12:00:00.000Z')) =>
-  startExamAttempt(repository, 'exam-1', participant, course, now, () => 'attempt-1');
+const fixedNow = Date.parse('2026-11-05T12:00:00.000Z');
+const start = (repository: ReturnType<typeof createJsonExamRepository>, course = 'PC-101', now = fixedNow, id = 'attempt-1') =>
+  startExamAttempt(repository, 'exam-1', participant, course, now, () => id);
 
 test('Start legt einen serverseitig getimten Versuch mit Snapshot und Matching-Reihenfolge an', async () => {
   await withRepository(async repository => {
@@ -71,7 +110,7 @@ test('Start legt einen serverseitig getimten Versuch mit Snapshot und Matching-R
 test('Teilnehmerprojektion gibt keine Lösungen oder Erklärungen aus', async () => {
   await withRepository(async repository => {
     const result = await start(repository);
-    const publicAttempt = projectStartedExamAttempt(result, Date.parse('2026-11-05T12:01:00.000Z'));
+    const publicAttempt = projectStartedExamAttempt(result, fixedNow + 60_000);
     const serialized = JSON.stringify(publicAttempt);
     assert.equal(serialized.includes('correctOptionId'), false);
     assert.equal(serialized.includes('Geheim'), false);
@@ -84,7 +123,7 @@ test('Teilnehmerprojektion gibt keine Lösungen oder Erklärungen aus', async ()
 test('Doppelter Start ist idempotent und erzeugt keinen zweiten Versuch', async () => {
   await withRepository(async repository => {
     const first = await start(repository);
-    const second = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.parse('2026-11-05T12:01:00.000Z'), () => 'attempt-2');
+    const second = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', fixedNow + 60_000, () => 'attempt-2');
     assert.equal(first.attempt.id, second.attempt.id);
     assert.equal(second.created, false);
     assert.equal((await repository.list('exam_attempts', { where: [{ field: 'userId', value: 'user-1' }] })).length, 1);
@@ -94,25 +133,19 @@ test('Doppelter Start ist idempotent und erzeugt keinen zweiten Versuch', async 
 test('Aktiver Versuch kann nicht in einen anderen Lehrgang umgehängt werden', async () => {
   await withRepository(async repository => {
     await start(repository);
-    await assert.rejects(
-      startExamAttempt(repository, 'exam-1', participant, 'PC-102', Date.now(), () => 'attempt-2'),
-      /ACTIVE_ATTEMPT_DIFFERENT_COURSE/
-    );
+    await assert.rejects(startExamAttempt(repository, 'exam-1', participant, 'PC-102'), /ACTIVE_ATTEMPT_DIFFERENT_COURSE/);
   });
 });
 
 test('Parallele Starts bleiben transaktionssicher und erzeugen nur einen aktiven Versuch', async () => {
   await withRepository(async repository => {
-    const secondRepository = createJsonExamRepository((repository as unknown as { adapter?: { filePath?: string } }).adapter?.filePath ?? '');
-    // Concurrent calls through one repository share its serial transaction queue.
     const results = await Promise.all([
-      startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.now(), () => 'attempt-a'),
-      startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.now(), () => 'attempt-b')
+      startExamAttempt(repository, 'exam-1', participant, 'PC-101', fixedNow, () => 'attempt-a'),
+      startExamAttempt(repository, 'exam-1', participant, 'PC-101', fixedNow, () => 'attempt-b')
     ]);
     assert.equal(results.filter(result => result.created).length, 1);
     assert.equal(results[0].attempt.id, results[1].attempt.id);
     assert.equal((await repository.list('exam_attempts', { where: [{ field: 'userId', value: 'user-1' }] })).length, 1);
-    void secondRepository;
   });
 });
 
@@ -121,68 +154,58 @@ test('Lehrgang, Freigabe, Clearance und veröffentlichter Snapshot werden server
     await assert.rejects(startExamAttempt(repository, 'exam-1', participant, 'OTHER-1'), /EXAM_COURSE_NOT_ASSIGNED/);
     await assert.rejects(startExamAttempt(repository, 'missing', participant, 'PC-101'), /EXAM_DOCUMENT_NOT_FOUND/);
     await assert.rejects(startExamAttempt(repository, 'exam-1', { ...participant, clearanceLevel: 0 }, 'PC-101'), /EXAM_CLEARANCE_INSUFFICIENT/);
-    await repository.update('exam_masters', 'exam-1', {
-      ...(await repository.get('exam_masters', 'exam-1'))!,
-      status: 'draft'
-    });
+    const master = await repository.get('exam_masters', 'exam-1');
+    await repository.update('exam_masters', 'exam-1', { ...master!, status: 'draft' });
     await assert.rejects(startExamAttempt(repository, 'exam-1', participant, 'PC-101'), /EXAM_NOT_STARTABLE/);
   });
 });
 
 test('Abschlussprüfung verwendet standardmäßig drei Versuche und zählt pro Lehrgang', async () => {
   await withRepository(async repository => {
-    await repository.update('exam_versions', 'exam-1__v1', {
-      ...(await repository.get('exam_versions', 'exam-1__v1'))!,
-      assessmentStage: 'final_exam',
-      maxAttempts: undefined
-    });
+    await createFinalExam(repository);
     for (let index = 1; index <= 3; index += 1) {
-      const id = `attempt-${index}`;
-      const created = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.now() + index, () => id);
+      const id = `final-attempt-${index}`;
+      const created = await startExamAttempt(repository, 'exam-final', participant, 'PC-101', fixedNow + index, () => id);
       assert.equal(created.attempt.attemptNumber, index);
       await repository.update('exam_attempts', id, {
         ...created.attempt,
         status: 'failed',
-        submittedAtIso: new Date(Date.now() + index).toISOString()
+        submittedAtIso: new Date(fixedNow + index).toISOString()
       });
     }
-    await assert.rejects(startExamAttempt(repository, 'exam-1', participant, 'PC-101'), /EXAM_ATTEMPT_LIMIT_REACHED/);
-    const otherCourse = await startExamAttempt(repository, 'exam-1', participant, 'PC-102');
+    await assert.rejects(startExamAttempt(repository, 'exam-final', participant, 'PC-101'), /EXAM_ATTEMPT_LIMIT_REACHED/);
+    const otherCourse = await startExamAttempt(repository, 'exam-final', participant, 'PC-102', fixedNow + 10, () => 'other-course-attempt');
     assert.equal(otherCourse.attempt.attemptNumber, 1);
   });
 });
 
-test('Zusatzversuche gelten nur für begrenzte Kontingente; ungültige Werte werden abgelehnt', async () => {
+test('Zusatzversuche erweitern nur ein begrenztes Kontingent', async () => {
   await withRepository(async repository => {
-    await repository.update('exam_versions', 'exam-1__v1', {
-      ...(await repository.get('exam-1' as never, 'exam-1') as never),
-    } as never).catch(() => undefined);
-    const master = await repository.get('exam_masters', 'exam-1');
-    await repository.update('exam_masters', 'exam-1', { ...master!, userExtraAttempts: { 'user-1': 1 } });
-    await repository.update('exam_versions', 'exam-1__v1', {
-      ...(await repository.get('exam_versions', 'exam-1__v1'))!,
-      assessmentStage: 'final_exam',
-      maxAttempts: 1
+    await createFinalExam(repository, { maxAttempts: 1 });
+    const master = await repository.get('exam_masters', 'exam-final');
+    await repository.update('exam_masters', 'exam-final', { ...master!, userExtraAttempts: { 'user-1': 1 } });
+    const first = await startExamAttempt(repository, 'exam-final', participant, 'PC-101', fixedNow, () => 'extra-first');
+    await repository.update('exam_attempts', first.attempt.id, {
+      ...first.attempt, status: 'failed', submittedAtIso: new Date(fixedNow).toISOString()
     });
-    const first = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.now(), () => 'attempt-first');
-    await repository.update('exam_attempts', first.attempt.id, { ...first.attempt, status: 'failed', submittedAtIso: new Date().toISOString() });
-    const second = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', Date.now() + 1, () => 'attempt-second');
+    const second = await startExamAttempt(repository, 'exam-final', participant, 'PC-101', fixedNow + 1, () => 'extra-second');
     assert.equal(second.attempt.attemptNumber, 2);
+  });
+});
+
+test('Ungültige Zusatzversuche werden abgelehnt', async () => {
+  await withRepository(async repository => {
+    await createFinalExam(repository, { maxAttempts: 1 });
+    const master = await repository.get('exam_masters', 'exam-final');
+    await repository.update('exam_masters', 'exam-final', { ...master!, userExtraAttempts: { 'user-1': -1 } });
+    await assert.rejects(startExamAttempt(repository, 'exam-final', participant, 'PC-101'), /EXAM_EXTRA_ATTEMPTS_INVALID/);
   });
 });
 
 test('Voraussetzungen unterscheiden Absolvierung, bestanden und verifizierte Legacy-Ergebnisse', async () => {
   await withRepository(async repository => {
-    await repository.create('exam_masters', 'exam-final', {
-      id: 'exam-final', status: 'published', startable: true, minClearance: 0,
-      assignedCourseCodes: ['PC-101'], currentPublishedVersionId: 'exam-final__v1'
-    });
-    await repository.create('exam_versions', 'exam-final__v1', {
-      id: 'exam-final__v1', examId: 'exam-final', versionNumber: 1,
-      title: 'Abschluss', assessmentStage: 'final_exam', minClearance: 0,
-      timeLimitMinutes: 0, passingScoreBasisPoints: 7500, maxAttempts: 3,
-      prerequisites: [{ examId: 'exam-1', mode: 'passed', minScoreBasisPoints: 8000 }],
-      questionsSnapshot: [{ id: 'q', type: 'true_false', question: 'Wahr?', pointsMilli: 1000, correctBoolean: true }]
+    await createFinalExam(repository, {
+      prerequisites: [{ examId: 'exam-1', mode: 'passed', minScoreBasisPoints: 8000 }]
     });
     await assert.rejects(startExamAttempt(repository, 'exam-final', participant, 'PC-101'), /EXAM_PREREQUISITE_NOT_MET/);
     await repository.create('exam_attempts', 'old-attempt', {
@@ -194,19 +217,9 @@ test('Voraussetzungen unterscheiden Absolvierung, bestanden und verifizierte Leg
   });
 });
 
-test('Legacy-Absolvierung erfüllt completed, ein unverifiziertes passed nicht', async () => {
+test('Legacy-Absolvierung erfüllt completed; unverifiziertes Legacy-passed erfüllt passed nicht', async () => {
   await withRepository(async repository => {
-    await repository.create('exam_masters', 'exam-final', {
-      id: 'exam-final', status: 'published', startable: true, minClearance: 0,
-      assignedCourseCodes: ['PC-101'], currentPublishedVersionId: 'exam-final__v1'
-    });
-    await repository.create('exam_versions', 'exam-final__v1', {
-      id: 'exam-final__v1', examId: 'exam-final', versionNumber: 1,
-      title: 'Abschluss', assessmentStage: 'final_exam', minClearance: 0,
-      timeLimitMinutes: 0, passingScoreBasisPoints: 7500, maxAttempts: 3,
-      prerequisites: [{ examId: 'exam-1', mode: 'completed' }],
-      questionsSnapshot: [{ id: 'q', type: 'true_false', question: 'Wahr?', pointsMilli: 1000, correctBoolean: true }]
-    });
+    await createFinalExam(repository, { prerequisites: [{ examId: 'exam-1', mode: 'completed' }] });
     await repository.create('exam_progress', 'legacy-progress', {
       id: 'legacy-progress', userId: 'user-1', targetId: 'exam-1', status: 'completed'
     });
@@ -215,21 +228,18 @@ test('Legacy-Absolvierung erfüllt completed, ein unverifiziertes passed nicht',
   });
 });
 
-test('Manuelle Freischaltung übersteuert nur Voraussetzungen und wird nicht vom Client gesetzt', async () => {
+test('Manuelle Freischaltung übersteuert Voraussetzungen, nicht andere Startbedingungen', async () => {
   await withRepository(async repository => {
-    const master = await repository.get('exam_masters', 'exam-1');
-    await repository.update('exam_masters', 'exam-1', { ...master!, manualUnlockUserUids: ['user-1'] });
-    const version = await repository.get('exam_versions', 'exam-1__v1');
-    await repository.update('exam_versions', 'exam-1__v1', {
-      ...version!,
-      prerequisites: [{ examId: 'missing-prereq', mode: 'passed' }]
+    await createFinalExam(repository, {
+      prerequisites: [{ examId: 'missing-prereq', mode: 'passed' }],
+      manualUnlockUserUids: ['user-1']
     });
-    const result = await start(repository);
+    const result = await startExamAttempt(repository, 'exam-final', participant, 'PC-101');
     assert.equal(result.created, true);
   });
 });
 
-test('Wiederaufnahme liefert nur die eigene sichere Fragenprojektion und gespeicherte Antworten', async () => {
+test('Wiederaufnahme liefert nur den eigenen aktiven Versuch und eine sichere Fragenprojektion', async () => {
   await withRepository(async repository => {
     const created = await start(repository);
     const publicAttempt = await getActiveExamAttempt(repository, 'exam-1', 'user-1', 'PC-101');
@@ -238,5 +248,38 @@ test('Wiederaufnahme liefert nur die eigene sichere Fragenprojektion und gespeic
     assert.equal(publicAttempt?.questions[0].type, 'single_choice');
     assert.equal(JSON.stringify(publicAttempt).includes('correctOptionId'), false);
     assert.equal(await getActiveExamAttempt(repository, 'exam-1', 'another-user', 'PC-101'), null);
+  });
+});
+
+test('Wiederaufnahme bleibt an der ursprünglich gestarteten unveränderlichen Version', async () => {
+  await withRepository(async repository => {
+    const first = await start(repository);
+    await repository.create('exam_versions', 'exam-1__v2', {
+      id: 'exam-1__v2', examId: 'exam-1', versionNumber: 2, title: 'Neue Version',
+      assessmentStage: 'test', minClearance: 0, timeLimitMinutes: 0,
+      passingScoreBasisPoints: 8000, maxAttempts: null, questionsSnapshot: [{
+        id: 'new-q', type: 'true_false', question: 'Neu?', pointsMilli: 1000, correctBoolean: true
+      }]
+    });
+    const master = await repository.get('exam_masters', 'exam-1');
+    await repository.update('exam_masters', 'exam-1', {
+      ...master!, currentPublishedVersionId: 'exam-1__v2'
+    });
+    const resumed = await startExamAttempt(repository, 'exam-1', participant, 'PC-101', fixedNow + 60_000, () => 'must-not-be-used');
+    assert.equal(resumed.created, false);
+    assert.equal(resumed.attempt.id, first.attempt.id);
+    assert.equal(resumed.version.id, 'exam-1__v1');
+  });
+});
+
+test('Invalidierte Versuche verbrauchen kein Kontingent, bleiben aber in der Versuchsnummerierung erhalten', async () => {
+  await withRepository(async repository => {
+    await createFinalExam(repository, { maxAttempts: 1 });
+    const first = await startExamAttempt(repository, 'exam-final', participant, 'PC-101', fixedNow, () => 'invalidated');
+    await repository.invalidateAttempt(first.attempt.id, {
+      adminUid: 'admin-1', atIso: new Date(fixedNow + 1).toISOString(), reason: 'Technischer Fehler'
+    });
+    const second = await startExamAttempt(repository, 'exam-final', participant, 'PC-101', fixedNow + 2, () => 'after-invalidation');
+    assert.equal(second.attempt.attemptNumber, 2);
   });
 });
