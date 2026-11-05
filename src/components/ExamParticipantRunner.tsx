@@ -333,7 +333,6 @@ export const ExamParticipantRunner: React.FC = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
   }, []);
 
-  const resultPercent = Math.round(resultScore / 100);
   const canStart = Boolean(selectedExam && selectedCourseCode && !starting);
 
   if (attempt) {
