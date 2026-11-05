@@ -3063,7 +3063,7 @@ jobs:
     }
 
     const repository = getExamRepository();
-    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation === 'backup')) {
+    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation !== 'restore')) {
       res.status(503).json({
         error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
       });
