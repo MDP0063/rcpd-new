@@ -58,7 +58,7 @@ export function assertExamDocument(
       typeof document.requestedByName !== 'string' || document.requestedByName.length > 120 ||
       (document.assessmentStage !== 'test' && document.assessmentStage !== 'final_exam') ||
       (document.requestKind !== 'new' && document.requestKind !== 'update') ||
-      !['pending', 'published', 'returned', 'archived'].includes(String(document.status)) ||
+      !['pending', 'published', 'returned', 'rejected', 'archived'].includes(String(document.status)) ||
       typeof document.submittedRevision !== 'number' || !Number.isSafeInteger(document.submittedRevision) || document.submittedRevision < 1 ||
       typeof document.submittedHash !== 'string' || !/^[a-f0-9]{64}$/.test(document.submittedHash) ||
       typeof document.createdIso !== 'string' || Number.isNaN(Date.parse(document.createdIso)) ||
