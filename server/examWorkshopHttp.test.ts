@@ -152,12 +152,16 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   const otherCoursePermissions = getDefaultGranularPermissions('officer');
   otherCoursePermissions.canGradeAssignedCourses = true;
   otherCoursePermissions.assignedCourseCodes = ['LAW-02'];
+  const courseReviewerPermissions = getDefaultGranularPermissions('officer');
+  courseReviewerPermissions.canGradeAssignedCourses = true;
+  courseReviewerPermissions.assignedCourseCodes = ['SOP-01'];
   const portalState = {
     version: 3,
     accounts: [
       makeAccount('http-admin', 'HttpAdmin', 'admin'),
       makeAccount('http-delegate', 'HttpDelegate', 'officer', delegatePermissions),
       makeAccount('http-other-course', 'HttpOtherCourse', 'officer', otherCoursePermissions),
+      makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer')
     ],
     applications: [], modules: [], exams: [], progress: [], announcements: [], messages: [],
@@ -224,6 +228,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const delegate = await login(baseUrl, 'HttpDelegate');
     const admin = await login(baseUrl, 'HttpAdmin');
     const otherCourse = await login(baseUrl, 'HttpOtherCourse');
+    const courseReviewer = await login(baseUrl, 'HttpCourseReviewer');
     const unauthorized = await login(baseUrl, 'HttpUnauthorized');
     const jsonRequest = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
@@ -250,7 +255,15 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'targetId', 'internalScore']) {
       assert.equal(JSON.stringify(reviewQueue.body).includes(key), false, `review queue leaked ${key}`);
     }
-    const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, delegate.token, {
+    const selfGradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, delegate.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
+    });
+    assert.equal(selfGradeResponse.status, 403, JSON.stringify(selfGradeResponse.body));
+    assert.match(selfGradeResponse.body.error, /eigenen Prüfungsversuch/);
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 1);
+
+    const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
     });
@@ -308,7 +321,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const nextReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
     assert.equal(nextReviewQueue.body.reviews.length, 1);
     const attemptToGrade = nextReviewQueue.body.reviews[0];
-    const finalGradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/grade`, delegate.token, {
+    const finalGradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/grade`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 4000 }] })
     });
@@ -333,16 +346,17 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       assert.equal(exam.questions[4].maxAnswerLength, 1000);
 
       const matching = exam.questions[3];
+      assert.equal(matching.matchingPairs.length, 3);
+      assert.equal(matching.matchingTargets.length, 3);
       assert.deepEqual(new Set(matching.matchingPairs.map((pair: { prompt: string }) => pair.prompt)), new Set(['Begriff A', 'Begriff B', 'Begriff C']));
       assert.deepEqual(new Set(matching.matchingTargets.map((target: { text: string }) => target.text)), new Set(['Ziel A', 'Ziel B', 'Ziel C']));
+      assert.equal(matching.matchingPairs.every((pair: Record<string, unknown>) => Object.keys(pair).sort().join(',') === 'id,prompt'), true);
+      assert.equal(matching.matchingTargets.every((target: Record<string, unknown>) => Object.keys(target).sort().join(',') === 'id,text'), true);
       assert.equal(matching.matchingPairs.some((pair: Record<string, unknown>) => 'targetId' in pair || 'targetText' in pair), false);
       assert.equal(matching.matchingTargets.some((target: Record<string, unknown>) => 'prompt' in target || 'pairId' in target), false);
       assert.equal(matching.matchingPairs.some((pair: { id: string }) => ['pair-a', 'pair-b', 'pair-c'].includes(pair.id)), false);
       assert.equal(matching.matchingTargets.some((target: { id: string }) => ['target-a', 'target-b', 'target-c'].includes(target.id)), false);
       assert.equal(new Set([...matching.matchingPairs.map((pair: { id: string }) => pair.id), ...matching.matchingTargets.map((target: { id: string }) => target.id)]).size, 6);
-      matching.matchingTargets.forEach((target: { id: string }, index: number) => {
-        assert.notEqual(target.id, ['target-a', 'target-b', 'target-c'][index]);
-      });
     };
     assertDelegatedProjection(listExam);
     assertDelegatedProjection(detailExam);

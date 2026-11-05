@@ -37,6 +37,14 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [], '2026-11-05T12:03:00.000Z'), /EXAM_MANUAL_GRADES_INCOMPLETE/);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 1001 }]), /EXAM_MANUAL_GRADES_INVALID/);
 
+    const attemptBeforeSelfReview = await repository.get('exam_attempts', 'review-attempt');
+    await assert.rejects(
+      gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', [{ questionId: 'text', pointsEarnedMilli: 1000 }]),
+      /EXAM_SELF_REVIEW_FORBIDDEN/
+    );
+    assert.deepEqual(await repository.get('exam_attempts', 'review-attempt'), attemptBeforeSelfReview);
+    assert.equal((await repository.get('exam_attempts', 'review-attempt'))?.status, 'pending_review');
+
     const submission = await gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T12:03:00.000Z');
     assert.equal(submission.status, 'passed');
     assert.equal(submission.finalScoreBasisPoints, 7500);

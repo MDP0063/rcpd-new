@@ -1722,6 +1722,7 @@ async function startServer() {
       EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
       EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
       EXAM_REVIEW_NOT_PENDING: { status: 409, message: 'Dieser Versuch wartet nicht mehr auf eine manuelle Bewertung.' },
+      EXAM_SELF_REVIEW_FORBIDDEN: { status: 403, message: 'Du darfst deinen eigenen Prüfungsversuch nicht bewerten.' },
       EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
       EXAM_MANUAL_GRADES_INCOMPLETE: { status: 400, message: 'Bitte bewerte alle offenen Freitextfragen.' },
       EXAM_ATTEMPT_FORBIDDEN: { status: 403, message: 'Du darfst nur deinen eigenen Prüfungsversuch speichern.' },
@@ -1774,7 +1775,12 @@ async function startServer() {
       const sessionUid = res.locals.sessionUid as string | undefined;
       const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
-      if (!caller || !attempt || attempt.examId !== req.params.id || !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+      if (!caller || !attempt || attempt.examId !== req.params.id) {
+        res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
+        return;
+      }
+      if (attempt.userId === caller.uid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+      if (!canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
         return;
       }
