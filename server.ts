@@ -2908,11 +2908,16 @@ jobs:
     ] as const;
     if (
       !requiredArrays.every(key => Array.isArray(rawDb[key])) ||
+      !Number.isSafeInteger(rawDb.version) ||
+      !rawDb.deploymentConfig ||
+      typeof rawDb.deploymentConfig !== 'object' ||
+      Array.isArray(rawDb.deploymentConfig) ||
       !rawDb.accounts?.length ||
       !rawDb.accounts.every(account =>
-        account && typeof account.uid === 'string' &&
+        account && typeof account.uid === 'string' && account.uid.trim().length > 0 &&
         account.publicProfile && typeof account.publicProfile === 'object'
-      )
+      ) ||
+      new Set(rawDb.accounts.map(account => account.uid)).size !== rawDb.accounts.length
     ) {
       res.status(400).json({
         error: 'Das Backup enthält nicht alle erforderlichen Portal-Daten oder keine gültigen Benutzerkonten.'
