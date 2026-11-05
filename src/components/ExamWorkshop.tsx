@@ -70,6 +70,7 @@ export const ExamWorkshop: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, string | string[] | boolean>>({});
 
   const loadExams = useCallback(async () => {
     setLoading(true);
@@ -188,7 +189,20 @@ export const ExamWorkshop: React.FC = () => {
   );
 
   const totalPoints = definition.questions.reduce((sum, question) => sum + question.pointsMilli, 0) / 1000;
-  const isPublished = exams.find(exam => exam.id === selectedId)?.status === 'published';
+
+  if (mode === 'preview') return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3"><button onClick={()=>setMode('edit')} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><ArrowLeft size={16}/> Zurück zum Editor</button><span className="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs font-bold">Nur Vorschau · kein echter Versuch</span></div>
+      <div className="rounded-lg bg-slate-900 text-white p-6"><div className="text-xs uppercase tracking-wider text-sky-300">{definition.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</div><h1 className="text-2xl font-bold mt-2">{definition.title || 'Unbenannte Prüfung'}</h1><p className="text-sm text-slate-300 mt-2">{definition.timeLimitMinutes ? `${definition.timeLimitMinutes} Minuten` : 'Ohne Zeitlimit'} · Bestehensgrenze {definition.passingScoreBasisPoints / 100}% · {definition.questions.length} Fragen</p></div>
+      {definition.questions.map((question,index)=><section key={question.id} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3"><div className="text-xs font-semibold text-slate-500">FRAGE {index+1} · {question.pointsMilli/1000} PUNKTE</div><h2 className="font-semibold text-slate-900 dark:text-white">{question.question || 'Frage ohne Text'}</h2>{question.imageUrl && <img src={question.imageUrl} alt="Abbildung zur Frage" className="max-h-64 rounded-md object-contain"/>}
+        {(question.type==='single_choice' || question.type==='multiple_choice') && <div className="space-y-2">{(question.options||[]).map(option=><label key={option.id} className="flex gap-2 items-center rounded-md border border-slate-200 dark:border-slate-700 p-3 text-sm"><input type={question.type==='single_choice'?'radio':'checkbox'} name={`preview-${question.id}`} checked={question.type==='single_choice'?previewAnswers[question.id]===option.id:Array.isArray(previewAnswers[question.id])&&(previewAnswers[question.id] as string[]).includes(option.id)} onChange={e=>setPreviewAnswers(current=>({...current,[question.id]:question.type==='single_choice'?option.id:e.target.checked?[...((current[question.id] as string[])||[]),option.id]:((current[question.id] as string[])||[]).filter(id=>id!==option.id)}))}/>{option.text || 'Leere Antwortmöglichkeit'}</label>)}</div>}
+        {question.type==='true_false' && <div className="flex gap-4">{[true,false].map(value=><label key={String(value)} className="flex gap-2 items-center"><input type="radio" name={`preview-${question.id}`} checked={previewAnswers[question.id]===value} onChange={()=>setPreviewAnswers(current=>({...current,[question.id]:value}))}/>{value?'Richtig':'Falsch'}</label>)}</div>}
+        {question.type==='matching' && <div className="space-y-2">{(question.matchingPairs||[]).map(pair=><label key={pair.id} className="grid md:grid-cols-2 gap-2 items-center text-sm"><span>{pair.prompt}</span><select className={inputClass} value={String(previewAnswers[pair.id]||'')} onChange={e=>setPreviewAnswers(current=>({...current,[pair.id]:e.target.value}))}><option value="">Bitte zuordnen…</option>{(question.matchingPairs||[]).map(target=><option key={target.targetId} value={target.targetId}>{target.targetText}</option>)}</select></label>)}</div>}
+        {question.type==='free_text' && <textarea className={inputClass} rows={4} maxLength={question.maxAnswerLength||4000} placeholder="Deine Antwort…" value={String(previewAnswers[question.id]||'')} onChange={e=>setPreviewAnswers(current=>({...current,[question.id]:e.target.value}))}/>}
+      </section>)}
+      <div className="flex justify-end"><button onClick={()=>setPreviewAnswers({})} className="rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm">Vorschau zurücksetzen</button></div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -196,7 +210,7 @@ export const ExamWorkshop: React.FC = () => {
         <button onClick={()=>setMode('list')} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
         <div className="flex gap-2"><button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
           <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>
-          <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing || isPublished && !notice} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
+          <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
       </div>
       <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedId ? 'Prüfung bearbeiten' : 'Neue Prüfung erstellen'}</h1><p className="text-sm text-slate-500 mt-1">Arbeitsstand und veröffentlichte Version bleiben getrennt.</p></div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm">{error}</div>}
@@ -228,7 +242,6 @@ export const ExamWorkshop: React.FC = () => {
         </article>)}
         {definition.questions.length===0 && <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500">Noch keine Fragen hinzugefügt.</div>}
       </section>
-      {mode==='preview' && null}
     </div>
   );
 };
