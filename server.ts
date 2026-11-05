@@ -1184,6 +1184,20 @@ async function startServer() {
         authorName: context.account.publicProfile.displayName || context.account.username,
         body: req.body?.body
       });
+      try {
+        const state = loadDatabase();
+        appendAuditLog(
+          state,
+          context.account,
+          'EXAM_WORKSHOP',
+          'Kommentar zur Prüfung hinzugefügt',
+          String(exam.title || exam.id),
+          `Kommentar-ID: ${comment.id}`
+        );
+        await saveDatabaseAndWait(state);
+      } catch (auditError) {
+        console.warn('[Exam Workshop] Kommentar gespeichert, Audit-Eintrag konnte nicht persistiert werden:', auditError);
+      }
       res.status(201).json({ comment });
     } catch (error) {
       if (error instanceof Error && error.message === 'EXAM_COMMENT_INPUT_INVALID') {
@@ -1324,6 +1338,20 @@ async function startServer() {
         return;
       }
       const result = await publishExamDraft(getExamRepository(), req.params.id, context.account.uid);
+      try {
+        const state = loadDatabase();
+        appendAuditLog(
+          state,
+          context.account,
+          'EXAM_WORKSHOP',
+          'Prüfung automatisch veröffentlicht',
+          String(master.title || master.id),
+          `Version: ${result.version.id}`
+        );
+        await saveDatabaseAndWait(state);
+      } catch (auditError) {
+        console.warn('[Exam Workshop] Veröffentlichung erfolgreich, Audit-Eintrag konnte nicht persistiert werden:', auditError);
+      }
       res.json(result);
     } catch (error) {
       if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
@@ -1401,6 +1429,14 @@ async function startServer() {
       });
       try {
         const state = loadDatabase();
+        appendAuditLog(
+          state,
+          context.account,
+          'EXAM_WORKSHOP',
+          'Prüfung zur Admin-Freigabe eingereicht',
+          String(master.title || master.id),
+          `Freigabeanfrage: ${request.id}`
+        );
         for (const admin of state.accounts.filter(account => account.publicProfile.role === 'admin')) {
           pushNotification(
             state,
@@ -1485,6 +1521,28 @@ async function startServer() {
             reviewComment
           }
         );
+        try {
+          const state = loadDatabase();
+          appendAuditLog(
+            state,
+            caller,
+            'EXAM_WORKSHOP',
+            'Eingereichte Prüfung geprüft und veröffentlicht',
+            String(result.master.title || result.master.id),
+            `Freigabeanfrage: ${request.id} · Version: ${result.version.id} · ${reviewComment || 'Keine Anmerkung'}`
+          );
+          pushNotification(
+            state,
+            String(request.requestedByUid),
+            'exam_workshop_review',
+            'Deine Prüfung wurde veröffentlicht',
+            `„${String(result.master.title || 'Deine Prüfung')}“ wurde vom Admin freigegeben und veröffentlicht.`,
+            'exam_workshop'
+          );
+          await saveDatabaseAndWait(state);
+        } catch (auditError) {
+          console.warn('[Exam Workshop] Veröffentlichung erfolgreich, Audit/Benachrichtigung konnte nicht persistiert werden:', auditError);
+        }
         res.json({ decision: 'published', result });
         return;
       }
@@ -1497,6 +1555,14 @@ async function startServer() {
       );
       try {
         const state = loadDatabase();
+        appendAuditLog(
+          state,
+          caller,
+          'EXAM_WORKSHOP',
+          decision === 'return' ? 'Prüfungseinreichung zur Überarbeitung zurückgegeben' : 'Prüfungseinreichung archiviert',
+          String((await getExamRepository().get('exam_masters', String(updated.examId)))?.title || updated.examId),
+          `Freigabeanfrage: ${updated.id} · ${reviewComment || 'Keine Anmerkung'}`
+        );
         pushNotification(
           state,
           String(updated.requestedByUid),
