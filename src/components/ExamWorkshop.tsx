@@ -75,7 +75,7 @@ export const ExamWorkshop: React.FC = () => {
   const loadExams = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const response = await apiFetch<{ exams: ExamMaster[] }>('/api/admin/exams', { cache: 'no-store' });
+    const response = await apiFetch<{ exams: ExamMaster[] }>('/api/workshop/exams', { cache: 'no-store' });
     if (!response.ok || !response.data) {
       setError(response.error || 'Die Prüfungsübersicht konnte nicht geladen werden.');
     } else {
@@ -105,7 +105,7 @@ export const ExamWorkshop: React.FC = () => {
   const openExam = async (id: string) => {
     setLoading(true);
     setError(null);
-    const response = await apiFetch<{ exam: ExamMaster }>(`/api/admin/exams/${encodeURIComponent(id)}`, { cache: 'no-store' });
+    const response = await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(id)}`, { cache: 'no-store' });
     setLoading(false);
     if (!response.ok || !response.data?.exam) {
       setError(response.error || 'Die Prüfung konnte nicht geladen werden.');
@@ -133,7 +133,7 @@ export const ExamWorkshop: React.FC = () => {
     setSaving(true); setError(null); setNotice(null);
     const payload = { definition };
     const response = selectedId
-      ? await apiFetch<{ exam: ExamMaster }>(`/api/academy/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
+      ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
       : await apiFetch<{ exam: ExamMaster }>('/api/admin/exams', { method: 'POST', body: JSON.stringify(payload) });
     setSaving(false);
     if (!response.ok || !response.data?.exam) {
