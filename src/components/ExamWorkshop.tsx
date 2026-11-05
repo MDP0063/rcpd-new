@@ -149,7 +149,7 @@ export const ExamWorkshop: React.FC = () => {
     if (!selectedId) { setError('Speichere den Entwurf zuerst.'); return; }
     if (!window.confirm('Prüfung jetzt veröffentlichen? Dadurch wird eine unveränderliche Version erstellt.')) return;
     setPublishing(true); setError(null); setNotice(null);
-    const response = await apiFetch<{ version?: { versionNumber?: number }; validation?: { issues?: { path?: string; message?: string }[] } }>(
+    const response = await apiFetch<{ version?: { versionNumber?: number }; validation?: { errors?: { path?: string; message?: string }[] } }>(
       `/api/admin/exams/${encodeURIComponent(selectedId)}/publish`, { method: 'POST', body: JSON.stringify({}) }
     );
     setPublishing(false);
