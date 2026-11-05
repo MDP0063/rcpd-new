@@ -2805,6 +2805,13 @@ jobs:
         } catch (releaseError) {
           console.error('[Exam Migration] Wartungsmodus konnte nach Fehler nicht aufgehoben werden:', releaseError);
         }
+      } else {
+        try {
+          examMaintenanceActive = await repository.isMaintenanceMode();
+          examMaintenanceOperation = examMaintenanceActive ? 'migration' : null;
+        } catch {
+          examMaintenanceActive = true;
+        }
       }
       next(error);
     }
