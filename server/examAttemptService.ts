@@ -9,9 +9,13 @@ import { normalizeCourseCode, isValidId } from './examValidate.ts';
 import { defaultMaxAttempts, type ExamQuestion, type ExamPrerequisite } from './examTypes.ts';
 import {
   createMatchingShuffleOrders,
-  parseAttemptAnswers,
+  createMatchingPairOrders,
+  createMatchingPresentationIds,
+  projectAttemptAnswers,
   projectQuestionsForAttempt,
   type MatchingShuffleOrders,
+  type MatchingPairOrders,
+  type MatchingPresentationIds,
   type PublicExamQuestion
 } from './examRunner.ts';
 
@@ -41,6 +45,8 @@ export interface ExamAttemptRecord extends ExamDocument {
   status: 'in_progress' | 'passed' | 'failed' | 'pending_review' | 'invalidated_by_admin';
   answers: Record<string, unknown>;
   matchingShuffleOrders: MatchingShuffleOrders;
+  matchingPairOrders?: MatchingPairOrders;
+  matchingPresentationIds?: MatchingPresentationIds;
   totalPossiblePointsMilli: number;
   automaticallyEarnedPointsMilli: number;
   manuallyEarnedPointsMilli: number;
@@ -74,7 +80,6 @@ export interface PublicExamAttempt {
   currentRevision: number;
   status: 'in_progress';
   answers: Record<string, unknown>;
-  matchingShuffleOrders: MatchingShuffleOrders;
   questions: PublicExamQuestion[];
   totalPossiblePointsMilli: number;
   passingScoreBasisPoints: number;
@@ -240,7 +245,9 @@ function toPublicAttempt(
   version: ExamVersionRecord,
   serverTimeIso: string
 ): PublicExamAttempt {
-  const answers = parseAttemptAnswers(attempt.answers, version.questionsSnapshot);
+  const presentationIds = attempt.matchingPresentationIds;
+  if (!presentationIds) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+  const answers = projectAttemptAnswers(attempt.answers, version.questionsSnapshot, presentationIds);
   return {
     id: attempt.id,
     examId: attempt.examId,
@@ -254,8 +261,7 @@ function toPublicAttempt(
     currentRevision: attempt.currentRevision,
     status: 'in_progress',
     answers,
-    matchingShuffleOrders: attempt.matchingShuffleOrders,
-    questions: projectQuestionsForAttempt(version.questionsSnapshot, attempt.matchingShuffleOrders),
+    questions: projectQuestionsForAttempt(version.questionsSnapshot, attempt.matchingShuffleOrders, presentationIds, attempt.matchingPairOrders || {}),
     totalPossiblePointsMilli: attempt.totalPossiblePointsMilli,
     passingScoreBasisPoints: version.passingScoreBasisPoints,
     serverTimeIso
@@ -309,7 +315,13 @@ export async function startExamAttempt(
       // auch wenn zwischenzeitlich eine neue Version veröffentlicht oder die Zuweisung geändert wurde.
       const activeVersion = validVersion(master, await transaction.get('exam_versions', active.examVersionId));
       if (activeVersion.versionNumber !== active.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-      return { attempt: active, version: activeVersion, created: false };
+      const resumed = active.matchingPresentationIds && active.matchingPairOrders ? active : {
+        ...active,
+        matchingPresentationIds: active.matchingPresentationIds || createMatchingPresentationIds(activeVersion.questionsSnapshot),
+        matchingPairOrders: active.matchingPairOrders || createMatchingPairOrders(activeVersion.questionsSnapshot)
+      };
+      if (resumed !== active) await transaction.update('exam_attempts', active.id, resumed);
+      return { attempt: resumed, version: activeVersion, created: false };
     }
 
     if (master.status !== 'published' || master.startable !== true) {
@@ -352,6 +364,8 @@ export async function startExamAttempt(
     }
     const questions = version.questionsSnapshot;
     const matchingShuffleOrders = createMatchingShuffleOrders(questions);
+    const matchingPairOrders = createMatchingPairOrders(questions);
+    const matchingPresentationIds = createMatchingPresentationIds(questions);
     const attemptId = createId();
     if (!isValidId(attemptId)) throw new Error('EXAM_ATTEMPT_ID_INVALID');
     const totalPossiblePointsMilli = sumQuestionPoints(questions);
@@ -374,6 +388,8 @@ export async function startExamAttempt(
       status: 'in_progress',
       answers: {},
       matchingShuffleOrders,
+      matchingPairOrders,
+      matchingPresentationIds,
       totalPossiblePointsMilli,
       automaticallyEarnedPointsMilli: 0,
       manuallyEarnedPointsMilli: 0,
@@ -414,7 +430,24 @@ export async function getActiveExamAttempt(
     await repository.get('exam_versions', active[0].examVersionId)
   );
   if (version.versionNumber !== active[0].versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-  return toPublicAttempt(active[0], version, new Date(serverTimeMs).toISOString());
+  let attempt = active[0];
+  if (!attempt.matchingPresentationIds || !attempt.matchingPairOrders) {
+    attempt = await repository.runTransaction(async transaction => {
+      const current = await transaction.get<ExamAttemptRecord>('exam_attempts', attempt.id);
+      if (!current || current.userId !== participantUid || current.examId !== examId || current.status !== 'in_progress') {
+        throw new Error('EXAM_ATTEMPT_NOT_ACTIVE');
+      }
+      if (current.matchingPresentationIds && current.matchingPairOrders) return current;
+      const updated = {
+        ...current,
+        matchingPresentationIds: current.matchingPresentationIds || createMatchingPresentationIds(version.questionsSnapshot),
+        matchingPairOrders: current.matchingPairOrders || createMatchingPairOrders(version.questionsSnapshot)
+      };
+      await transaction.update('exam_attempts', current.id, updated);
+      return updated;
+    });
+  }
+  return toPublicAttempt(attempt, version, new Date(serverTimeMs).toISOString());
 }
 
 /** Sichere Teilnehmerprojektion eines neu gestarteten oder idempotent gefundenen Versuchs. */

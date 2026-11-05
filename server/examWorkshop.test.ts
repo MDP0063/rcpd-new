@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
-import { projectExamWorkshopMaster } from './examWorkshopProjection.ts';
+import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './examWorkshopProjection.ts';
 import {
   createExamDraft,
   parseExamWorkshopDraft,
@@ -169,11 +169,12 @@ test('Prüfungswerkstatt: Delegierte ergänzen Matching-Begriff und Zieloption, 
       }]
     };
     const created = await createExamDraft(repository, 'exam-matching-edit', 'author-1', definition);
-    const projected = projectExamWorkshopMaster(created as any, false) as any;
+    const projected = projectExamWorkshopMaster(created as any, false, 'test-only-projection-secret-32-bytes') as any;
     const projectedQuestion = projected.questions[0];
-    assert.deepEqual(new Set(projectedQuestion.matchingPairs.map((pair: { id: string; prompt: string }) => `${pair.id}:${pair.prompt}`)), new Set([
-      'pair-cat:Katze', 'pair-car:Auto', 'pair-plane:Flugzeug'
+    assert.deepEqual(new Set(projectedQuestion.matchingPairs.map((pair: { prompt: string }) => pair.prompt)), new Set([
+      'Katze', 'Auto', 'Flugzeug'
     ]));
+    assert.equal(projectedQuestion.matchingPairs.some((pair: { id: string }) => ['pair-cat', 'pair-car', 'pair-plane'].includes(pair.id)), false);
     const originalTargetIds = ['target-feline', 'target-vehicle', 'target-aircraft'];
     assert.equal(projectedQuestion.matchingTargets.length, originalTargetIds.length);
     projectedQuestion.matchingTargets.forEach((target: { id: string }, index: number) => {
@@ -182,7 +183,7 @@ test('Prüfungswerkstatt: Delegierte ergänzen Matching-Begriff und Zieloption, 
 
     const updatedTargets = projectedQuestion.matchingTargets.map((target: { id: string; text: string }) => ({
       ...target,
-      ...(target.id === 'target-feline' ? { text: 'Katzenfamilie' } : {})
+      ...(target.text === 'Katzenartig' ? { text: 'Katzenfamilie' } : {})
     }));
     updatedTargets.push({ id: 'target-new', text: 'Schienenfahrzeug' });
     const delegatedDefinition = {
@@ -198,7 +199,7 @@ test('Prüfungswerkstatt: Delegierte ergänzen Matching-Begriff und Zieloption, 
         matchingTargets: updatedTargets
       }]
     };
-    const updated = await updateExamDraft(repository, 'exam-matching-edit', 'editor-1', delegatedDefinition, undefined, 1, true);
+    const updated = await updateExamDraft(repository, 'exam-matching-edit', 'editor-1', restoreDelegatedMatchingIds(delegatedDefinition, created as any, 'test-only-projection-secret-32-bytes'), undefined, 1, true);
     const savedQuestion = (updated.questions as any[])[0];
     const pairs = savedQuestion.matchingPairs;
     assert.deepEqual(pairs, [
@@ -209,11 +210,11 @@ test('Prüfungswerkstatt: Delegierte ergänzen Matching-Begriff und Zieloption, 
     ]);
     assert.equal('matchingTargets' in savedQuestion, false);
 
-    const reprojected = projectExamWorkshopMaster(updated as any, false) as any;
+    const reprojected = projectExamWorkshopMaster(updated as any, false, 'test-only-projection-secret-32-bytes') as any;
     const reprojectedQuestion = reprojected.questions[0];
     assert.deepEqual(
-      new Set(reprojectedQuestion.matchingPairs.map(({ id, prompt }: { id: string; prompt: string }) => `${id}:${prompt}`)),
-      new Set(pairs.map(({ id, prompt }: { id: string; prompt: string }) => `${id}:${prompt}`))
+      new Set(reprojectedQuestion.matchingPairs.map(({ prompt }: { prompt: string }) => prompt)),
+      new Set(pairs.map(({ prompt }: { prompt: string }) => prompt))
     );
     const savedTargetIds = pairs.map((pair: { targetId: string }) => pair.targetId);
     reprojectedQuestion.matchingTargets.forEach((target: { id: string }, index: number) => {
@@ -238,24 +239,23 @@ test('Prüfungswerkstatt: Matching-Entfernen löscht serverseitig nur das zugeh�
       }]
     };
     const created = await createExamDraft(repository, 'exam-matching-remove', 'author-1', definition);
-    const projected = projectExamWorkshopMaster(created as any, false) as any;
+    const projected = projectExamWorkshopMaster(created as any, false, 'test-only-projection-secret-32-bytes') as any;
     const question = projected.questions[0];
-    const updated = await updateExamDraft(repository, 'exam-matching-remove', 'editor-1', {
+    const delegatedDefinition = {
       ...definition,
       questions: [{
         ...question,
-        matchingPairs: question.matchingPairs.filter((pair: { id: string }) => pair.id !== 'pair-car'),
+        matchingPairs: question.matchingPairs.filter((pair: { prompt: string }) => pair.prompt !== 'Auto'),
         matchingTargets: question.matchingTargets
       }]
-    }, undefined, 1, true);
+    };
+    const updated = await updateExamDraft(repository, 'exam-matching-remove', 'editor-1', restoreDelegatedMatchingIds(delegatedDefinition, created as any, 'test-only-projection-secret-32-bytes'), undefined, 1, true);
     const savedPairs = (updated.questions as any[])[0].matchingPairs;
     assert.deepEqual(savedPairs.map((pair: { id: string }) => pair.id), ['pair-cat', 'pair-plane']);
     assert.equal(savedPairs.some((pair: { targetId: string }) => pair.targetId === 'target-vehicle'), false);
-    const reprojected = projectExamWorkshopMaster(updated as any, false) as any;
-    assert.deepEqual(
-      new Set(reprojected.questions[0].matchingTargets.map((target: { id: string }) => target.id)),
-      new Set(['target-feline', 'target-aircraft'])
-    );
+    const reprojected = projectExamWorkshopMaster(updated as any, false, 'test-only-projection-secret-32-bytes') as any;
+    assert.equal(reprojected.questions[0].matchingTargets.length, 2);
+    assert.equal(reprojected.questions[0].matchingTargets.some((target: { id: string }) => ['target-feline', 'target-aircraft'].includes(target.id)), false);
   });
 });
 
@@ -272,17 +272,17 @@ test('Prüfungswerkstatt: unvollständige oder ungültige neue Matching-Zuordnun
       }]
     };
     await createExamDraft(repository, 'exam-matching-invalid', 'author-1', definition);
-    const project = projectExamWorkshopMaster(await repository.get('exam_masters', 'exam-matching-invalid') as any, false) as any;
+    const project = projectExamWorkshopMaster(await repository.get('exam_masters', 'exam-matching-invalid') as any, false, 'test-only-projection-secret-32-bytes') as any;
     const question = project.questions[0];
     const baseQuestion = {
       ...question,
       matchingPairs: [...question.matchingPairs, { id: 'pair-new', prompt: 'Neuer Begriff' }],
       matchingTargets: [...question.matchingTargets, { id: 'target-new', text: 'Neues Ziel' }]
     };
+    const incompleteDefinition = { ...definition, questions: [baseQuestion] };
+    const master = await repository.get('exam_masters', 'exam-matching-invalid') as any;
     await assert.rejects(
-      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', {
-        ...definition, questions: [baseQuestion]
-      }, undefined, 1, true),
+      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', restoreDelegatedMatchingIds(incompleteDefinition, master, 'test-only-projection-secret-32-bytes'), undefined, 1, true),
       /EXAM_WORKSHOP_INPUT_INVALID:questions\[0\]\.matchingPairs\[2\]/
     );
     const storedAfterMissingLink = await repository.get('exam_masters', 'exam-matching-invalid');
@@ -293,10 +293,10 @@ test('Prüfungswerkstatt: unvollständige oder ungültige neue Matching-Zuordnun
       matchingPairs: [...question.matchingPairs, { id: 'pair-new', prompt: 'Neuer Begriff', targetId: 'target-new' }]
     };
     await assert.rejects(
-      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', {
+      updateExamDraft(repository, 'exam-matching-invalid', 'editor-1', restoreDelegatedMatchingIds({
         ...definition,
         questions: [{ ...pairedQuestion, matchingTargets: [...question.matchingTargets, { id: 'orphan-target', text: 'Verwaist' }] }]
-      }, undefined, 1, true),
+      }, master, 'test-only-projection-secret-32-bytes'), undefined, 1, true),
       /EXAM_WORKSHOP_INPUT_INVALID:questions\[0\]\.matchingTargets/
     );
     const storedAfterOrphan = await repository.get('exam_masters', 'exam-matching-invalid');

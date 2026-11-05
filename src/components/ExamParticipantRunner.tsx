@@ -47,7 +47,6 @@ interface PublicAttempt {
   currentRevision: number;
   status: 'in_progress';
   answers: AnswerMap;
-  matchingShuffleOrders: Record<string, string[]>;
   questions: PublicQuestion[];
   totalPossiblePointsMilli: number;
   passingScoreBasisPoints: number;
@@ -119,6 +118,7 @@ export const ExamParticipantRunner: React.FC = () => {
   const [selectedCourseCode, setSelectedCourseCode] = useState('');
   const [attempt, setAttempt] = useState<PublicAttempt | null>(null);
   const [submission, setSubmission] = useState<PublicSubmission | null>(null);
+  const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [starting, setStarting] = useState(false);
@@ -158,9 +158,15 @@ export const ExamParticipantRunner: React.FC = () => {
     setLoadingCatalog(false);
   }, []);
 
+  const loadResultHistory = useCallback(async () => {
+    const response = await apiFetch<{ results: PublicSubmission[] }>(API_ENDPOINTS.ACADEMY_EXAM_RESULTS, { cache: 'no-store' });
+    if (response.ok && response.data && Array.isArray(response.data.results)) setResultHistory(response.data.results);
+  }, []);
+
   useEffect(() => {
     void loadCatalog();
-  }, [loadCatalog]);
+    void loadResultHistory();
+  }, [loadCatalog, loadResultHistory]);
 
   const clearRunner = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -210,7 +216,7 @@ export const ExamParticipantRunner: React.FC = () => {
     setStarting(false);
   };
 
-  const saveAnswers = useCallback(async (allowDuringSubmit = false): Promise<boolean> => {
+  const saveAnswers = useCallback(async (allowDuringSubmit = false, keepalive = false): Promise<boolean> => {
     const current = attemptRef.current;
     if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
@@ -220,7 +226,8 @@ export const ExamParticipantRunner: React.FC = () => {
       API_ENDPOINTS.ACADEMY_EXAM_AUTOSAVE(current.examId, current.id),
       {
         method: 'PUT',
-        body: JSON.stringify({ revision: nextRevision, answers: snapshot })
+        body: JSON.stringify({ revision: nextRevision, answers: snapshot }),
+        keepalive
       }
     );
     if (response.ok && response.data?.attempt) {
@@ -277,6 +284,7 @@ export const ExamParticipantRunner: React.FC = () => {
       );
       if ((response.ok || response.status === 409) && response.data?.submission) {
         setSubmission(response.data.submission);
+        void loadResultHistory();
         attemptRef.current = null;
         setAttempt(null);
         setSaveState('saved');
@@ -290,7 +298,7 @@ export const ExamParticipantRunner: React.FC = () => {
       submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [saveAnswers, serverOffsetMs, submission]);
+  }, [loadResultHistory, saveAnswers, serverOffsetMs, submission]);
 
   const updateAnswer = (questionId: string, value: AnswerValue) => {
     const next = { ...answersRef.current, [questionId]: value };
@@ -331,7 +339,14 @@ export const ExamParticipantRunner: React.FC = () => {
 
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-  }, []);
+    debounceRef.current = null;
+    if (!attemptRef.current || submittingRef.current) return;
+    // Tabs/routes can unmount the runner before the input debounce fires. Drain earlier saves,
+    // then send the latest in-memory answer snapshot as a keepalive request.
+    void saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => saveAnswers(true, true));
+  }, [saveAnswers]);
 
   const canStart = Boolean(selectedExam && selectedCourseCode && !starting);
 
@@ -375,7 +390,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     (typeof value !== 'string' || value.trim().length > 0) &&
                     (!Array.isArray(value) || value.length > 0);
                   return (
-                    <button key={question.id} type="button" onClick={() => {
+                    <button key={question.id} type="button" disabled={submitting} onClick={() => {
                       if (debounceRef.current) clearTimeout(debounceRef.current);
                       debounceRef.current = null;
                       void enqueueSave();
@@ -408,7 +423,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     <div className="space-y-2">
                       {activeQuestion.options.map(option => (
                         <label key={option.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${answers[activeQuestion.id] === option.id ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
-                          <input type="radio" name={activeQuestion.id} checked={answers[activeQuestion.id] === option.id} onChange={() => updateAnswer(activeQuestion.id, option.id)} className="mt-0.5 text-sky-600 focus:ring-sky-500" />
+                          <input type="radio" name={activeQuestion.id} disabled={submitting} checked={answers[activeQuestion.id] === option.id} onChange={() => updateAnswer(activeQuestion.id, option.id)} className="mt-0.5 text-sky-600 focus:ring-sky-500" />
                           <span className="text-slate-800 dark:text-slate-200">{option.text}</span>
                         </label>
                       ))}
@@ -420,7 +435,7 @@ export const ExamParticipantRunner: React.FC = () => {
                       {activeQuestion.options.map(option => {
                         const selected = Array.isArray(answers[activeQuestion.id]) && (answers[activeQuestion.id] as string[]).includes(option.id);
                         return <label key={option.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${selected ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
-                          <input type="checkbox" checked={selected} onChange={event => {
+                          <input type="checkbox" disabled={submitting} checked={selected} onChange={event => {
                             const current = Array.isArray(answersRef.current[activeQuestion.id]) ? answersRef.current[activeQuestion.id] as string[] : [];
                             updateAnswer(activeQuestion.id, event.target.checked ? [...current, option.id] : current.filter(id => id !== option.id));
                           }} className="mt-0.5 rounded text-sky-600 focus:ring-sky-500" />
@@ -433,7 +448,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     <div className="grid gap-2 sm:grid-cols-2">
                       {[{ value: true, label: 'Wahr' }, { value: false, label: 'Falsch' }].map(option => (
                         <label key={String(option.value)} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm font-medium ${answers[activeQuestion.id] === option.value ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 dark:border-slate-700'}`}>
-                          <input type="radio" name={activeQuestion.id} checked={answers[activeQuestion.id] === option.value} onChange={() => updateAnswer(activeQuestion.id, option.value)} />
+                          <input type="radio" name={activeQuestion.id} disabled={submitting} checked={answers[activeQuestion.id] === option.value} onChange={() => updateAnswer(activeQuestion.id, option.value)} />
                           {option.label}
                         </label>
                       ))}
@@ -447,7 +462,7 @@ export const ExamParticipantRunner: React.FC = () => {
                         const usedTargets = new Set(current.filter(entry => entry.pairId !== pair.id).map(entry => entry.targetId));
                         return <div key={pair.id} className="grid gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700 sm:grid-cols-2 sm:items-center">
                           <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{pair.prompt}</span>
-                          <select value={selectedTarget} onChange={event => {
+                          <select disabled={submitting} value={selectedTarget} onChange={event => {
                             const next = current.filter(entry => entry.pairId !== pair.id);
                             if (event.target.value) next.push({ pairId: pair.id, targetId: event.target.value });
                             updateAnswer(activeQuestion.id, next);
@@ -461,14 +476,14 @@ export const ExamParticipantRunner: React.FC = () => {
                   )}
                   {activeQuestion.type === 'free_text' && (
                     <div className="space-y-2">
-                      <textarea value={typeof answers[activeQuestion.id] === 'string' ? answers[activeQuestion.id] as string : ''} maxLength={activeQuestion.maxAnswerLength} rows={7} onChange={event => updateAnswer(activeQuestion.id, event.target.value)} placeholder="Deine Antwort …" className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      <textarea disabled={submitting} value={typeof answers[activeQuestion.id] === 'string' ? answers[activeQuestion.id] as string : ''} maxLength={activeQuestion.maxAnswerLength} rows={7} onChange={event => updateAnswer(activeQuestion.id, event.target.value)} placeholder="Deine Antwort …" className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                       <div className="text-right text-xs text-slate-500">{typeof answers[activeQuestion.id] === 'string' ? (answers[activeQuestion.id] as string).length : 0}/{activeQuestion.maxAnswerLength} Zeichen · Manuelle Bewertung</div>
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                    <button type="button" disabled={currentQuestionIndex === 0} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.max(0, index - 1)); }} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
+                    <button type="button" disabled={submitting || currentQuestionIndex === 0} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.max(0, index - 1)); }} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
                     {currentQuestionIndex < attempt.questions.length - 1 ? (
-                      <button type="button" onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
+                      <button type="button" disabled={submitting} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
                     ) : (
                       <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Prüfung abgeben</button>
                     )}
@@ -541,6 +556,7 @@ export const ExamParticipantRunner: React.FC = () => {
         <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
+      {resultHistory.length > 0 && <section className={cardClass + ' space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Nur deine eigenen abgeschlossenen Versuche.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
       {loadingCatalog ? (
         <div className={cardClass + ' flex items-center justify-center gap-3 p-12 text-sm text-slate-500'}><Loader2 className="h-5 w-5 animate-spin" />Prüfungen werden geladen …</div>
       ) : catalog.length === 0 ? (

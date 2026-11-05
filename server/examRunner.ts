@@ -9,7 +9,7 @@
  *
  * HTTP-Routen und Persistenz bleiben bewusst außerhalb dieses Moduls.
  */
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { mulDivHalfUpClamped, meetsPassingScore, scoreBasisPoints } from './examMath.ts';
 import type {
   AnswerMap,
@@ -77,6 +77,13 @@ export type PublicExamQuestion =
   | PublicFreeTextQuestion;
 
 export type MatchingShuffleOrders = Record<string, string[]>;
+export type MatchingPairOrders = Record<string, string[]>;
+
+/** Zufällige, nur für den Client sichtbare IDs für Matching-Begriffe und Zieloptionen. */
+export interface MatchingPresentationIds {
+  pairAliases: Record<string, Record<string, string>>;
+  targetAliases: Record<string, Record<string, string>>;
+}
 
 export interface QuestionGrade {
   questionId: string;
@@ -132,6 +139,52 @@ export function createMatchingShuffleOrders(
   return orders;
 }
 
+export function createMatchingPairOrders(
+  questions: readonly ExamQuestion[],
+  chooseIndex: (exclusiveUpperBound: number) => number = upperBound => randomInt(upperBound)
+): MatchingPairOrders {
+  const orders: MatchingPairOrders = {};
+  for (const question of questions) {
+    if (question.type !== 'matching') continue;
+    const ids = question.matchingPairs.map(pair => pair.id);
+    for (let index = ids.length - 1; index > 0; index -= 1) {
+      const targetIndex = chooseIndex(index + 1);
+      if (!Number.isSafeInteger(targetIndex) || targetIndex < 0 || targetIndex > index) {
+        throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
+      }
+      [ids[index], ids[targetIndex]] = [ids[targetIndex], ids[index]];
+    }
+    orders[question.id] = ids;
+  }
+  return orders;
+}
+
+export function createMatchingPresentationIds(
+  questions: readonly ExamQuestion[],
+  createId: () => string = () => randomUUID()
+): MatchingPresentationIds {
+  const pairAliases: MatchingPresentationIds['pairAliases'] = {};
+  const targetAliases: MatchingPresentationIds['targetAliases'] = {};
+  const privateIds = new Set(questions.flatMap(question => question.type === 'matching'
+    ? [...question.matchingPairs.map(pair => pair.id), ...question.matchingPairs.map(pair => pair.targetId)]
+    : []));
+  const publicIds = new Set<string>();
+  const alias = () => {
+    const id = createId();
+    if (typeof id !== 'string' || !id || privateIds.has(id) || publicIds.has(id)) {
+      throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+    }
+    publicIds.add(id);
+    return id;
+  };
+  for (const question of questions) {
+    if (question.type !== 'matching') continue;
+    pairAliases[question.id] = Object.fromEntries(question.matchingPairs.map(pair => [pair.id, alias()]));
+    targetAliases[question.id] = Object.fromEntries(question.matchingPairs.map(pair => [pair.targetId, alias()]));
+  }
+  return { pairAliases, targetAliases };
+}
+
 function getValidatedTargetOrder(question: MatchingQuestion, order: unknown): string[] {
   const expected = new Set(question.matchingPairs.map(pair => pair.targetId));
   if (
@@ -151,9 +204,14 @@ function getValidatedTargetOrder(question: MatchingQuestion, order: unknown): st
  */
 export function projectQuestionsForAttempt(
   questions: readonly ExamQuestion[],
-  matchingShuffleOrders: MatchingShuffleOrders
+  matchingShuffleOrders: MatchingShuffleOrders,
+  presentationIds: MatchingPresentationIds,
+  matchingPairOrders: MatchingPairOrders
 ): PublicExamQuestion[] {
-  if (!isPlainRecord(matchingShuffleOrders)) throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
+  if (!isPlainRecord(matchingShuffleOrders) || !isPlainRecord(matchingPairOrders)) throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
+  if (!isPlainRecord(presentationIds) || !isPlainRecord(presentationIds.pairAliases) || !isPlainRecord(presentationIds.targetAliases)) {
+    throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+  }
   return questions.map(question => {
     switch (question.type) {
       case 'single_choice':
@@ -172,12 +230,20 @@ export function projectQuestionsForAttempt(
         return { ...baseProjection(question), type: question.type };
       case 'matching': {
         const targetOrder = getValidatedTargetOrder(question, matchingShuffleOrders[question.id]);
+        const pairOrder = getValidatedPairOrder(question, matchingPairOrders[question.id]);
         const targetById = new Map(question.matchingPairs.map(pair => [pair.targetId, pair.targetText]));
+        const pairById = new Map(question.matchingPairs.map(pair => [pair.id, pair]));
+        const pairAliases = presentationIds.pairAliases[question.id];
+        const targetAliases = presentationIds.targetAliases[question.id];
+        if (
+          !isPlainRecord(pairAliases) || !isPlainRecord(targetAliases) ||
+          question.matchingPairs.some(pair => typeof pairAliases[pair.id] !== 'string' || typeof targetAliases[pair.targetId] !== 'string')
+        ) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
         return {
           ...baseProjection(question),
           type: question.type,
-          pairs: question.matchingPairs.map(pair => ({ id: pair.id, prompt: pair.prompt })),
-          targets: targetOrder.map(id => ({ id, text: targetById.get(id)! }))
+          pairs: pairOrder.map(id => ({ id: pairAliases[id] as string, prompt: pairById.get(id)!.prompt })),
+          targets: targetOrder.map(id => ({ id: targetAliases[id] as string, text: targetById.get(id)! }))
         };
       }
       case 'free_text':
@@ -188,6 +254,65 @@ export function projectQuestionsForAttempt(
         };
     }
   });
+}
+
+function getValidatedPairOrder(question: MatchingQuestion, order: unknown): string[] {
+  const expected = new Set(question.matchingPairs.map(pair => pair.id));
+  if (
+    !Array.isArray(order) || order.length !== expected.size ||
+    order.some(id => typeof id !== 'string' || !expected.has(id)) ||
+    new Set(order).size !== expected.size
+  ) throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
+  return [...order] as string[];
+}
+
+/** Übersetzt nur zufällige Client-IDs in die privaten Snapshot-IDs vor der strikten Antwortprüfung. */
+export function parsePublicAttemptAnswers(
+  rawAnswers: unknown,
+  questions: readonly ExamQuestion[],
+  presentationIds: MatchingPresentationIds
+): AnswerMap {
+  if (!isPlainRecord(rawAnswers)) throw new Error('EXAM_ANSWERS_INVALID');
+  const canonical: Record<string, unknown> = { ...rawAnswers };
+  for (const question of questions) {
+    if (question.type !== 'matching' || !Object.prototype.hasOwnProperty.call(canonical, question.id)) continue;
+    const raw = canonical[question.id];
+    if (!Array.isArray(raw)) continue;
+    const pairIds = presentationIds.pairAliases[question.id];
+    const targetIds = presentationIds.targetAliases[question.id];
+    if (!isPlainRecord(pairIds) || !isPlainRecord(targetIds)) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+    canonical[question.id] = raw.map(entry => {
+      if (!isPlainRecord(entry) || typeof entry.pairId !== 'string' || typeof entry.targetId !== 'string') return entry;
+      const pairId = Object.entries(pairIds).find(([, publicId]) => publicId === entry.pairId)?.[0];
+      const targetId = Object.entries(targetIds).find(([, publicId]) => publicId === entry.targetId)?.[0];
+      if (!pairId || !targetId) throw new Error('EXAM_ANSWER_INVALID');
+      return { pairId, targetId };
+    });
+  }
+  return parseAttemptAnswers(canonical, questions);
+}
+
+/** Stellt gespeicherte Matching-Antworten bei Wiederaufnahme mit denselben Client-IDs dar. */
+export function projectAttemptAnswers(
+  answers: unknown,
+  questions: readonly ExamQuestion[],
+  presentationIds: MatchingPresentationIds
+): AnswerMap {
+  const canonical = parseAttemptAnswers(answers, questions);
+  const projected: AnswerMap = { ...canonical };
+  for (const question of questions) {
+    if (question.type !== 'matching') continue;
+    const entries = canonical[question.id];
+    if (!Array.isArray(entries)) continue;
+    const pairIds = presentationIds.pairAliases[question.id];
+    const targetIds = presentationIds.targetAliases[question.id];
+    if (!isPlainRecord(pairIds) || !isPlainRecord(targetIds)) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+    projected[question.id] = (entries as MatchingAnswerEntry[]).map(entry => ({
+      pairId: pairIds[entry.pairId] as string,
+      targetId: targetIds[entry.targetId] as string
+    }));
+  }
+  return projected;
 }
 
 /** Validiert die vollständige Antwortmap gegen genau die Fragen des veröffentlichten Snapshots. */
@@ -303,8 +428,10 @@ function gradeObjectiveQuestion(question: ExamQuestion, answer: AnswerValue | un
       const earned = mulDivHalfUpClamped(correctCount, max, question.matchingPairs.length, max);
       return { questionId: question.id, pointsEarnedMilli: earned, maxPointsMilli: max, requiresManualReview: false, correct: earned === max };
     }
-    case 'free_text':
-      return { questionId: question.id, pointsEarnedMilli: 0, maxPointsMilli: max, requiresManualReview: true };
+    case 'free_text': {
+      const answered = typeof answer === 'string' && answer.trim().length > 0;
+      return { questionId: question.id, pointsEarnedMilli: 0, maxPointsMilli: max, requiresManualReview: answered };
+    }
   }
 }
 

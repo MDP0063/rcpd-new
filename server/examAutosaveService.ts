@@ -4,7 +4,7 @@
  */
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
-import { evaluateExamAnswers, parseAttemptAnswers, projectQuestionsForAttempt } from './examRunner.ts';
+import { evaluateExamAnswers, parseAttemptAnswers, parsePublicAttemptAnswers, projectAttemptAnswers, projectQuestionsForAttempt } from './examRunner.ts';
 import type { ExamAttemptRecord, ExamVersionRecord, PublicExamAttempt } from './examAttemptService.ts';
 import { isValidId } from './examValidate.ts';
 
@@ -53,7 +53,9 @@ function publicProjection(
   version: ExamVersionRecord,
   serverTimeMs: number
 ): PublicExamAttempt {
-  const answers = parseAttemptAnswers(attempt.answers, version.questionsSnapshot);
+  const presentationIds = attempt.matchingPresentationIds;
+  if (!presentationIds || !attempt.matchingPairOrders) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+  const answers = projectAttemptAnswers(attempt.answers, version.questionsSnapshot, presentationIds);
   return {
     id: attempt.id,
     examId: attempt.examId,
@@ -67,8 +69,7 @@ function publicProjection(
     currentRevision: attempt.currentRevision,
     status: 'in_progress',
     answers,
-    matchingShuffleOrders: attempt.matchingShuffleOrders,
-    questions: projectQuestionsForAttempt(version.questionsSnapshot, attempt.matchingShuffleOrders),
+    questions: projectQuestionsForAttempt(version.questionsSnapshot, attempt.matchingShuffleOrders, presentationIds, attempt.matchingPairOrders),
     totalPossiblePointsMilli: attempt.totalPossiblePointsMilli,
     passingScoreBasisPoints: version.passingScoreBasisPoints,
     serverTimeIso: new Date(serverTimeMs).toISOString()
@@ -177,7 +178,8 @@ export async function saveExamAttemptAnswers(
       throw new Error('EXAM_REVISION_JUMP_INVALID');
     }
 
-    const answers = parseAttemptAnswers(rawAnswers, version.questionsSnapshot);
+    if (!attempt.matchingPresentationIds || !attempt.matchingPairOrders) throw new Error('EXAM_MATCHING_PRESENTATION_INVALID');
+    const answers = parsePublicAttemptAnswers(rawAnswers, version.questionsSnapshot, attempt.matchingPresentationIds);
     const currentAnswers = parseAttemptAnswers(attempt.answers, version.questionsSnapshot);
     if (JSON.stringify(answers) === JSON.stringify(currentAnswers)) {
       return {

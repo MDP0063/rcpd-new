@@ -60,6 +60,16 @@ class FirestoreExamTransaction implements ExamTransaction {
   private hasWrites = false;
   private readonly database: Firestore;
   private readonly transaction: Transaction;
+  private readonly readDocuments = new Map<string, ExamDocument | null>();
+
+  private cacheKey(collection: ExamCollection, id: string): string {
+    return JSON.stringify([collection, id]);
+  }
+
+  private remember<T extends ExamDocument>(collection: ExamCollection, document: T | null): T | null {
+    if (document) this.readDocuments.set(this.cacheKey(collection, document.id), clone(document));
+    return document;
+  }
 
   private assertCanRead(): void {
     if (this.hasWrites) throw new Error('EXAM_TRANSACTION_READ_AFTER_WRITE');
@@ -76,9 +86,13 @@ class FirestoreExamTransaction implements ExamTransaction {
   ): Promise<T | null> {
     this.assertCanRead();
     assertExamDocumentId(id);
+    const key = this.cacheKey(collection, id);
+    if (this.readDocuments.has(key)) return clone(this.readDocuments.get(key) as T | null);
     const reference = this.database.collection(collection).doc(storageId(id));
     const snapshot = await this.transaction.get(reference);
-    return documentFromSnapshot<T>(collection, snapshot, id);
+    const document = documentFromSnapshot<T>(collection, snapshot, id);
+    this.readDocuments.set(key, document ? clone(document) : null);
+    return document;
   }
 
   async list<T extends ExamDocument = ExamDocument>(
@@ -90,6 +104,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     return snapshot.docs.map(document => {
       const data = documentFromSnapshot<T>(collection, document);
       if (!data) throw new Error('EXAM_FIRESTORE_DOCUMENT_INVALID');
+      this.remember(collection, data);
       return data;
     });
   }
@@ -103,6 +118,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     assertExamAttemptCreate(collection, document);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.create(reference, clone(document));
+    this.readDocuments.set(this.cacheKey(collection, id), clone(document));
     this.hasWrites = true;
   }
 
@@ -113,11 +129,19 @@ class FirestoreExamTransaction implements ExamTransaction {
   ): Promise<void> {
     assertExamCanUpdate(collection);
     assertExamDocument(collection, id, document);
-    const existing = await this.get(collection, id);
+    const key = this.cacheKey(collection, id);
+    let existing = this.readDocuments.get(key);
+    if (!this.readDocuments.has(key)) {
+      // A single-document update may perform its read here, but only before any write.
+      // After the first write every document that will be updated must already have been read.
+      if (this.hasWrites) throw new Error('EXAM_TRANSACTION_READ_AFTER_WRITE');
+      existing = await this.get(collection, id);
+    }
     if (!existing) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
     if (collection === 'exam_attempts') assertExamAttemptUpdate(existing, document);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.set(reference, clone(document));
+    this.readDocuments.set(key, clone(document));
     this.hasWrites = true;
   }
 
@@ -139,6 +163,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     };
     const reference = this.database.collection('exam_attempts').doc(storageId(id));
     this.transaction.set(reference, clone(next));
+    this.readDocuments.set(this.cacheKey('exam_attempts', id), clone(next));
     this.hasWrites = true;
   }
 
@@ -147,6 +172,7 @@ class FirestoreExamTransaction implements ExamTransaction {
     assertExamDocumentId(id);
     const reference = this.database.collection(collection).doc(storageId(id));
     this.transaction.delete(reference);
+    this.readDocuments.set(this.cacheKey(collection, id), null);
     this.hasWrites = true;
   }
 }

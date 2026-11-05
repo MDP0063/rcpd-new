@@ -28,6 +28,7 @@ import {
 } from '../types/portal';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { ExamParticipantRunner } from './ExamParticipantRunner';
+import { ExamReviewCenter } from './ExamReviewCenter';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -57,7 +58,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'modules' | 'exam_center' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+    'modules' | 'exam_center' | 'exam_reviews' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('modules');
 
   // Granular Instructor Grading Form State
@@ -594,6 +595,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           <>
             <button
               type="button"
+              onClick={() => setActiveTab('exam_reviews')}
+              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${activeTab === 'exam_reviews' ? 'bg-amber-600 text-white font-semibold' : 'text-amber-800 dark:text-amber-400 hover:text-amber-950'}`}
+            >
+              Freitext bewerten
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('instructor_grading')}
               className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'instructor_grading'
@@ -857,6 +865,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       )}
 
       {activeTab === 'exam_center' && <ExamParticipantRunner />}
+      {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter />}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
       {(activeTab === 'tests' || activeTab === 'final_exams') && (

@@ -494,3 +494,125 @@ test('JSON-Repository: Wartungsmodus kann nicht versehentlich doppelt gestartet 
     assert.equal(await repository.isMaintenanceMode(), true);
   });
 });
+
+
+test('Firestore-Repository: mehrere Updates verwenden vorgelesene Dokumente ohne Read-after-Write', async () => {
+  const documents = new Map<string, Record<string, unknown>>();
+  const key = (collection: string, id: string) => `${collection}/${id}`;
+  const database = {
+    collection: (collectionName: string) => ({
+      doc: (id: string) => ({
+        collectionName,
+        id,
+        get: async () => {
+          const data = documents.get(`${collectionName}/${id}`);
+          return {
+            exists: Boolean(data),
+            id,
+            data: () => data ? structuredClone(data) : undefined
+          };
+        }
+      })
+    }),
+    runTransaction: async <T>(operation: (transaction: {
+      get: (reference: { collectionName: string; id: string }) => Promise<{
+        exists: boolean;
+        id: string;
+        data: () => Record<string, unknown> | undefined;
+      }>;
+      create: (reference: { collectionName: string; id: string }, data: Record<string, unknown>) => void;
+      set: (reference: { collectionName: string; id: string }, data: Record<string, unknown>) => void;
+      delete: (reference: { collectionName: string; id: string }) => void;
+    }) => Promise<T>): Promise<T> => {
+      let hasWrites = false;
+      return operation({
+        get: async reference => {
+          if (hasWrites) throw new Error('FAKE_FIRESTORE_READ_AFTER_WRITE');
+          const data = documents.get(key(reference.collectionName, reference.id));
+          return {
+            exists: Boolean(data),
+            id: reference.id,
+            data: () => data ? structuredClone(data) : undefined
+          };
+        },
+        create: (reference, data) => {
+          const documentKey = key(reference.collectionName, reference.id);
+          if (documents.has(documentKey)) throw new Error('FAKE_FIRESTORE_ALREADY_EXISTS');
+          hasWrites = true;
+          documents.set(documentKey, structuredClone(data));
+        },
+        set: (reference, data) => {
+          hasWrites = true;
+          documents.set(key(reference.collectionName, reference.id), structuredClone(data));
+        },
+        delete: reference => {
+          hasWrites = true;
+          documents.delete(key(reference.collectionName, reference.id));
+        }
+      });
+    }
+  };
+  const { createFirestoreExamRepository } = await import('./examRepository.ts');
+  const repository = createFirestoreExamRepository(database as never);
+
+  await repository.create('exam_masters', 'exam-1', { id: 'exam-1', title: 'Entwurf' });
+  await repository.create('exam_masters', 'exam-2', { id: 'exam-2', title: 'Zweiter Entwurf' });
+
+  await repository.runTransaction(async transaction => {
+    const first = await transaction.get('exam_masters', 'exam-1');
+    const second = await transaction.get('exam_masters', 'exam-2');
+    assert.ok(first);
+    assert.ok(second);
+    await transaction.update('exam_masters', 'exam-1', { ...first, title: 'Archiviert 1' });
+    await transaction.update('exam_masters', 'exam-2', { ...second, title: 'Archiviert 2' });
+  });
+
+  assert.equal((await repository.get('exam_masters', 'exam-1'))?.title, 'Archiviert 1');
+  assert.equal((await repository.get('exam_masters', 'exam-2'))?.title, 'Archiviert 2');
+});
+
+test('Firestore-Repository: einzelnes Repository-Update liest vor dem Schreiben', async () => {
+  const documents = new Map<string, Record<string, unknown>>([
+    ['exam_masters/exam-1', { id: 'exam-1', title: 'Vorher' }]
+  ]);
+  const database = {
+    collection: (collectionName: string) => ({
+      doc: (id: string) => ({
+        collectionName,
+        id,
+        get: async () => {
+          const data = documents.get(`${collectionName}/${id}`);
+          return {
+            exists: Boolean(data),
+            id,
+            data: () => data ? structuredClone(data) : undefined
+          };
+        }
+      })
+    }),
+    runTransaction: async <T>(operation: (transaction: {
+      get: (reference: { collectionName: string; id: string }) => Promise<{
+        exists: boolean; id: string; data: () => Record<string, unknown> | undefined;
+      }>;
+      set: (reference: { collectionName: string; id: string }, data: Record<string, unknown>) => void;
+      create: (reference: { collectionName: string; id: string }, data: Record<string, unknown>) => void;
+      delete: (reference: { collectionName: string; id: string }) => void;
+    }) => Promise<T>): Promise<T> => {
+      let hasWrites = false;
+      return operation({
+        get: async reference => {
+          if (hasWrites) throw new Error('FAKE_FIRESTORE_READ_AFTER_WRITE');
+          const data = documents.get(`${reference.collectionName}/${reference.id}`);
+          return { exists: Boolean(data), id: reference.id, data: () => data ? structuredClone(data) : undefined };
+        },
+        set: (reference, data) => { hasWrites = true; documents.set(`${reference.collectionName}/${reference.id}`, structuredClone(data)); },
+        create: (reference, data) => { hasWrites = true; documents.set(`${reference.collectionName}/${reference.id}`, structuredClone(data)); },
+        delete: reference => { hasWrites = true; documents.delete(`${reference.collectionName}/${reference.id}`); }
+      });
+    }
+  };
+  const { createFirestoreExamRepository } = await import('./examRepository.ts');
+  const repository = createFirestoreExamRepository(database as never);
+  await repository.update('exam_masters', 'exam-1', { id: 'exam-1', title: 'Nachher' });
+  assert.equal(documents.get('exam_masters/exam-1')?.title, 'Nachher');
+});

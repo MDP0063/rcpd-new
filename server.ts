@@ -33,10 +33,11 @@ import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, getExamWorkshopDefinitionHash, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, examWorkshopPublicationRequiresApproval, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
-import { projectExamWorkshopMaster } from './server/examWorkshopProjection.ts';
+import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server/examWorkshopProjection.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
+import { gradeExamAttempt, listExamReviews, listOwnExamResults } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1058,7 +1059,7 @@ async function startServer() {
           '/admin/exams/legacy-verifications',
           '/admin/exams/migrate-legacy'
         ].includes(req.path) ||
-        /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path) ||
+        /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/(submit|grade)$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
       (req.method === 'PUT' && (
@@ -1313,7 +1314,7 @@ async function startServer() {
         canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)
       );
       visible.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
-      res.json({ exams: visible.map(exam => projectExamWorkshopMaster(exam, context.actor.role === 'admin')) });
+      res.json({ exams: visible.map(exam => projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET)) });
     } catch (error) {
       next(error);
     }
@@ -1333,7 +1334,7 @@ async function startServer() {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
         return;
       }
-      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       next(error);
     }
@@ -1367,7 +1368,7 @@ async function startServer() {
         req.body.definition
       );
       recordExamWorkshopAudit(context.account.uid, 'Prüfungsentwurf erstellt', String(exam.id), 'Neuer Entwurf angelegt.');
-      res.status(201).json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.status(201).json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
         res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
@@ -1412,18 +1413,21 @@ async function startServer() {
         res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
         return;
       }
+      const definition = context.actor.role === 'admin'
+        ? req.body?.definition
+        : restoreDelegatedMatchingIds(req.body?.definition, existing, SESSION_SECRET);
       const exam = await updateExamDraft(
         getExamRepository(),
         req.params.id,
         context.account.uid,
-        req.body?.definition,
+        definition,
         undefined,
         expectedRevision,
         context.actor.role !== 'admin'
       );
       await refreshPendingExamPublicationRequest(getExamRepository(), req.params.id);
       recordExamWorkshopAudit(context.account.uid, 'Prüfung geändert', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, `Arbeitsrevision ${exam.workingRevision} gespeichert.`);
-      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin', SESSION_SECRET) });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
         res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
@@ -1591,7 +1595,7 @@ async function startServer() {
         ? { requiresApproval: false, ...result }
         : {
             requiresApproval: false,
-            master: projectExamWorkshopMaster(result.master, false),
+            master: projectExamWorkshopMaster(result.master, false, SESSION_SECRET),
             version: {
               id: result.version.id,
               examId: result.version.examId,
@@ -1717,6 +1721,10 @@ async function startServer() {
       EXAM_TIME_LIMIT_INVALID: { status: 409, message: 'Das Zeitlimit dieser Prüfung ist ungültig. Bitte wende dich an den Administrator.' },
       EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
       EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
+      EXAM_REVIEW_NOT_PENDING: { status: 409, message: 'Dieser Versuch wartet nicht mehr auf eine manuelle Bewertung.' },
+      EXAM_SELF_REVIEW_FORBIDDEN: { status: 403, message: 'Du darfst deinen eigenen Prüfungsversuch nicht bewerten.' },
+      EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
+      EXAM_MANUAL_GRADES_INCOMPLETE: { status: 400, message: 'Bitte bewerte alle offenen Freitextfragen.' },
       EXAM_ATTEMPT_FORBIDDEN: { status: 403, message: 'Du darfst nur deinen eigenen Prüfungsversuch speichern.' },
       EXAM_ATTEMPT_NOT_ACTIVE: { status: 409, message: 'Dieser Prüfungsversuch ist nicht mehr aktiv.' },
       EXAM_REVISION_INVALID: { status: 400, message: 'Die Autosave-Revision ist ungültig.' },
@@ -1739,6 +1747,62 @@ async function startServer() {
     }
     next(error);
   }
+
+  app.get('/api/academy/exam-reviews', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
+      const canReviewAnyCourse = Boolean(caller && (
+        caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
+        (permissions?.canGradeAssignedCourses && permissions.assignedCourseCodes.length > 0)
+      ));
+      if (!caller || !canReviewAnyCourse) {
+        res.status(403).json({ error: 'Für manuelle Prüfungsbewertungen fehlt die Berechtigung.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const role = caller.publicProfile.role;
+      const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
+      res.json({ reviews: await listExamReviews(getExamRepository(), allowed) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/grade', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id) {
+        res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
+        return;
+      }
+      if (attempt.userId === caller.uid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+      if (!canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || Object.keys(req.body).some(key => key !== 'grades')) {
+        res.status(400).json({ error: 'Die Bewertungsanfrage ist ungültig.' }); return;
+      }
+      const submission = await gradeExamAttempt(getExamRepository(), req.params.id, req.params.attemptId, caller.uid, req.body.grades);
+      recordExamWorkshopAudit(caller.uid, 'Freitextprüfung bewertet', req.params.id, `Versuch ${req.params.attemptId} manuell bewertet.`);
+      res.json({ submission });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.get('/api/academy/exam-results', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) { res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' }); return; }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      res.json({ results: await listOwnExamResults(getExamRepository(), participant.uid) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
 
 
   // Teilnehmer erhalten ausschließlich freigegebene Metadaten, niemals Fragen oder Lösungsschlüssel.

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle, ArrowLeft, BookOpen, Eye, FilePlus2,
+  AlertCircle, ArrowDown, ArrowLeft, ArrowUp, BookOpen, Eye, FilePlus2,
   Loader2, Plus, Save, Send, Trash2, X
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
@@ -108,6 +108,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     setDefinition(current => ({ ...current, [key]: value }));
 
   const openNew = () => {
+    if (saving || publishing) return;
     setSelectedId(null);
     setExpectedRevision(null);
     setDefinition(emptyDefinition());
@@ -116,7 +117,8 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     setMode('edit');
   };
 
-  const openExam = async (id: string) => {
+  const openExam = async (id: string, allowWhileBusy = false) => {
+    if (!allowWhileBusy && (saving || publishing)) return;
     setLoading(true);
     setError(null);
     const response = await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(id)}`, { cache: 'no-store' });
@@ -160,20 +162,23 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       return;
     }
     setSaving(true); setError(null); setNotice(null);
-    const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
-    const response = selectedId
-      ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
-      : await apiFetch<{ exam: ExamMaster }>('/api/workshop/exams', { method: 'POST', body: JSON.stringify(payload) });
-    setSaving(false);
-    if (!response.ok || !response.data?.exam) {
-      setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
-      return;
+    try {
+      const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
+      const response = selectedId
+        ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
+        : await apiFetch<{ exam: ExamMaster }>('/api/workshop/exams', { method: 'POST', body: JSON.stringify(payload) });
+      if (!response.ok || !response.data?.exam) {
+        setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
+        return;
+      }
+      setSelectedId(response.data.exam.id);
+      setExpectedRevision(response.data.exam.workingRevision ?? 1);
+      setNotice('Entwurf erfolgreich gespeichert.');
+      await loadExams();
+      await openExam(response.data.exam.id, true);
+    } finally {
+      setSaving(false);
     }
-    setSelectedId(response.data.exam.id);
-    setExpectedRevision(response.data.exam.workingRevision ?? 1);
-    setNotice('Entwurf erfolgreich gespeichert.');
-    await loadExams();
-    await openExam(response.data.exam.id);
   };
 
   const publish = async () => {
@@ -181,6 +186,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
     if (expectedRevision === null) { setError('Die aktuelle Prüfungsrevision fehlt. Bitte lade die Prüfung erneut.'); return; }
     if (!window.confirm('Prüfung jetzt zur Veröffentlichung einreichen?')) return;
     setPublishing(true); setError(null); setNotice(null);
+    try {
     const response = await apiFetch<{
       requiresApproval?: boolean;
       request?: { id?: string };
@@ -189,7 +195,6 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       `/api/workshop/exams/${encodeURIComponent(selectedId)}/publication-request`,
       { method: 'POST', body: JSON.stringify({ expectedRevision }) }
     );
-    setPublishing(false);
     if (!response.ok) {
       const issues = response.data?.validation?.errors || [];
       setError(issues.length
@@ -203,8 +208,11 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
       return;
     }
     setNotice('Prüfung wurde als unveränderliche Version veröffentlicht.');
-    await openExam(selectedId);
+    await openExam(selectedId, true);
     await loadExams();
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const patchQuestion = (index: number, patch: Partial<Question>) => {
@@ -231,21 +239,28 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
 
   const addQuestion = (type: QuestionType) => update('questions', [...definition.questions, defaultQuestion(type)]);
   const removeQuestion = (index: number) => update('questions', definition.questions.filter((_, i) => i !== index));
+  const moveQuestion = (index: number, offset: -1 | 1) => {
+    const target = index + offset;
+    if (target < 0 || target >= definition.questions.length) return;
+    const questions = [...definition.questions];
+    [questions[index], questions[target]] = [questions[target], questions[index]];
+    update('questions', questions);
+  };
 
   if (mode === 'list') return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {isAdmin && <AdminExamWorkshopGovernance onOpenExam={id => void openExam(id)} />}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Administration · Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Prüfungen erstellen, bearbeiten, prüfen und veröffentlichen.</p></div>
-        <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>
+        <button onClick={openNew} disabled={saving || publishing} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><FilePlus2 size={16}/> Neue Prüfung</button>
       </div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm flex gap-2"><AlertCircle size={17}/>{error}</div>}
       <div className="flex gap-3"><input className={inputClass} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Prüfung oder Lehrgang suchen…"/></div>
       {loading ? <div className="py-16 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2"/>Prüfungen werden geladen…</div> :
         filteredExams.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center"><BookOpen className="mx-auto text-slate-400 mb-3"/><p className="font-semibold text-slate-800 dark:text-slate-100">Noch keine Prüfungen gefunden</p><p className="text-sm text-slate-500 mt-1">Lege eine neue Prüfung an oder passe den Suchbegriff an.</p></div> :
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3 space-x-3"><button onClick={()=>void openExam(exam.id)} disabled={exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button>{isAdmin && exam.status !== 'archived' && <button onClick={()=>void archiveExam(exam)} className="text-rose-700 dark:text-rose-400 font-semibold">Archivieren</button>}</td></tr>)}</tbody></table></div>}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"><table className="w-full text-sm text-left"><thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Prüfung</th><th className="px-4 py-3">Art</th><th className="px-4 py-3">Lehrgänge</th><th className="px-4 py-3">Fragen</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aktion</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredExams.map(exam=><tr key={exam.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{exam.title || 'Unbenannter Entwurf'}<div className="text-xs font-normal text-slate-500 mt-1">{exam.updatedIso ? new Date(exam.updatedIso).toLocaleString('de-DE') : 'Noch nicht gespeichert'}</div></td><td className="px-4 py-3">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</td><td className="px-4 py-3">{(exam.assignedCourseCodes || []).join(', ') || '—'}</td><td className="px-4 py-3">{exam.questions?.length || 0}</td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${exam.status === 'published' ? 'bg-emerald-100 text-emerald-800' : exam.status === 'archived' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800'}`}>{exam.status === 'published' ? 'Veröffentlicht' : exam.status === 'archived' ? 'Archiviert' : 'Entwurf'}</span></td><td className="px-4 py-3 space-x-3"><button onClick={()=>void openExam(exam.id)} disabled={saving || publishing || exam.status==='archived' || exam.isLegacyFormat} className="text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40">Öffnen</button>{isAdmin && exam.status !== 'archived' && <button onClick={()=>void archiveExam(exam)} disabled={saving || publishing} className="text-rose-700 dark:text-rose-400 font-semibold disabled:opacity-40">Archivieren</button>}</td></tr>)}</tbody></table></div>}
     </div>
   );
 
@@ -268,11 +283,12 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button onClick={()=>setMode('list')} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
-        <div className="flex gap-2"><button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
+        <button onClick={()=>setMode('list')} disabled={saving || publishing} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-50"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
+        <div className="flex gap-2"><button onClick={()=>setMode('preview')} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm disabled:opacity-50"><Eye size={16}/> Vorschau</button>
           <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>
           <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
       </div>
+      <fieldset disabled={saving || publishing} className="min-w-0 space-y-6 border-0 p-0">
       <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedId ? 'Prüfung bearbeiten' : 'Neue Prüfung erstellen'}</h1><p className="text-sm text-slate-500 mt-1">Arbeitsstand und veröffentlichte Version bleiben getrennt.</p></div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm">{error}</div>}
       {notice && <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 p-3 text-sm">{notice}</div>}
@@ -304,7 +320,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
         <div className="flex flex-wrap justify-between items-center gap-2"><div><h2 className="font-bold text-slate-900 dark:text-white">Fragen ({definition.questions.length})</h2><p className="text-xs text-slate-500">Gesamtpunktzahl: {totalPoints.toLocaleString('de-DE')} Punkte</p></div>
           <select className={inputClass+' max-w-xs'} value="" onChange={e=>{if(e.target.value)addQuestion(e.target.value as QuestionType);}}><option value="">Fragetyp hinzufügen…</option><option value="single_choice">Single Choice</option><option value="multiple_choice">Multiple Choice</option><option value="true_false">Richtig / Falsch</option><option value="matching">Zuordnung</option><option value="free_text">Freitext</option></select></div>
         {definition.questions.map((question,index)=><article key={question.id} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-          <div className="flex items-center justify-between"><div className="font-semibold text-sm text-slate-800 dark:text-white">Frage {index+1} · {({single_choice:'Single Choice',multiple_choice:'Multiple Choice',true_false:'Richtig / Falsch',matching:'Zuordnung',free_text:'Freitext'} as Record<QuestionType,string>)[question.type]}</div><button onClick={()=>removeQuestion(index)} aria-label={`Frage ${index+1} entfernen`} className="text-rose-600 p-1"><Trash2 size={16}/></button></div>
+          <div className="flex items-center justify-between"><div className="font-semibold text-sm text-slate-800 dark:text-white">Frage {index+1} · {({single_choice:'Single Choice',multiple_choice:'Multiple Choice',true_false:'Richtig / Falsch',matching:'Zuordnung',free_text:'Freitext'} as Record<QuestionType,string>)[question.type]}</div><div className="flex items-center gap-2"><button type="button" onClick={()=>moveQuestion(index,-1)} disabled={index===0} aria-label={`Frage ${index+1} nach oben`} className="p-1 text-slate-500 disabled:opacity-30"><ArrowUp size={16}/></button><button type="button" onClick={()=>moveQuestion(index,1)} disabled={index===definition.questions.length-1} aria-label={`Frage ${index+1} nach unten`} className="p-1 text-slate-500 disabled:opacity-30"><ArrowDown size={16}/></button><button onClick={()=>removeQuestion(index)} aria-label={`Frage ${index+1} entfernen`} className="text-rose-600 p-1"><Trash2 size={16}/></button></div></div>
           <label><span className={labelClass}>Fragetext</span><textarea className={inputClass} rows={3} maxLength={2000} value={question.question} onChange={e=>patchQuestion(index,{question:e.target.value})}/></label>
           <div className="grid md:grid-cols-2 gap-3"><label><span className={labelClass}>Punkte</span><input className={inputClass} type="number" min="0.001" step="0.001" value={question.pointsMilli/1000} onChange={e=>patchQuestion(index,{pointsMilli:Math.round(Number(e.target.value)*1000)})}/></label><label><span className={labelClass}>Bild-URL (HTTPS, optional)</span><input className={inputClass} type="url" maxLength={500} value={question.imageUrl || ''} onChange={e=>patchQuestion(index,{imageUrl:e.target.value || undefined})} placeholder="https://…"/></label></div>
           {(question.type==='single_choice' || question.type==='multiple_choice') && <div className="space-y-2"><div className={labelClass}>Antwortmöglichkeiten · {question.type==='single_choice'?'eine richtige Antwort':'alle richtigen Antworten markieren'}</div>{(question.options || []).map((option,oi)=><div key={option.id} className="flex gap-2 items-center"><input className={inputClass} value={option.text} onChange={e=>patchQuestion(index,{options:question.options?.map((o,j)=>j===oi?{...o,text:e.target.value}:o)})}/><label className="flex items-center gap-1 text-xs whitespace-nowrap"><input type={question.type==='single_choice'?'radio':'checkbox'} name={`correct-${question.id}`} checked={question.type==='single_choice'?question.correctOptionId===option.id:(question.correctOptionIds||[]).includes(option.id)} onChange={e=>patchQuestion(index,question.type==='single_choice'?{correctOptionId:option.id}:{correctOptionIds:e.target.checked?[...(question.correctOptionIds||[]),option.id]:(question.correctOptionIds||[]).filter(id=>id!==option.id)})}/>{question.type==='single_choice'?'Richtig':'Korrekt'}</label><button type="button" onClick={()=>{const opts=(question.options||[]).filter((_,j)=>j!==oi);patchQuestion(index,{options:opts,correctOptionId:question.correctOptionId===option.id?opts[0]?.id:question.correctOptionId,correctOptionIds:(question.correctOptionIds||[]).filter(id=>id!==option.id)});}} className="text-rose-500"><X size={15}/></button></div>)}<button type="button" onClick={()=>patchQuestion(index,{options:[...(question.options||[]),{id:makeId(),text:''}]})} className="text-xs font-semibold text-sky-700 dark:text-sky-400 inline-flex gap-1 items-center"><Plus size={14}/> Antwort hinzufügen</button></div>}
@@ -323,6 +339,7 @@ export const ExamWorkshop: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false 
         {commentsLoading ? <p className="text-sm text-slate-500">Kommentare werden geladen…</p> : comments.length === 0 ? <p className="text-sm text-slate-500">Noch keine Kommentare.</p> : <ol className="space-y-2">{comments.map(comment => <li key={comment.id} className="rounded border border-slate-200 dark:border-slate-700 p-3"><div className="flex justify-between gap-2 text-xs text-slate-500"><span>{comment.authorName}</span><time>{new Date(comment.createdIso).toLocaleString('de-DE')}</time></div><p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p></li>)}</ol>}
         <div className="flex flex-col gap-2 sm:flex-row"><textarea value={commentBody} onChange={event => setCommentBody(event.target.value)} maxLength={4000} rows={2} placeholder="Kommentar zum Prüfungsverlauf…" className={inputClass}/><button type="button" disabled={!commentBody.trim()} onClick={() => void createComment()} className="rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Kommentar hinzufügen</button></div>
       </section>}
+      </fieldset>
     </div>
   );
 };

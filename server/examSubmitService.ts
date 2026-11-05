@@ -64,7 +64,7 @@ function validAttemptVersion(
   return version as unknown as ExamVersionRecord;
 }
 
-function toPublicSubmission(
+export function toPublicSubmission(
   attempt: ExamAttemptRecord,
   version: ExamVersionRecord
 ): PublicExamSubmission {

@@ -2,8 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   createMatchingShuffleOrders,
+  createMatchingPairOrders,
+  createMatchingPresentationIds,
   evaluateExamAnswers,
   parseAttemptAnswers,
+  parsePublicAttemptAnswers,
+  projectAttemptAnswers,
   projectQuestionsForAttempt
 } from './examRunner.ts';
 import type { ExamQuestion } from './examTypes.ts';
@@ -35,25 +39,34 @@ const questions: ExamQuestion[] = [
 
 test('Prüflingsprojektion entfernt Lösungsschlüssel, Erklärungen und Freitext-Rubriken', () => {
   const orders = createMatchingShuffleOrders(questions, upper => upper - 1);
-  const projected = projectQuestionsForAttempt(questions, orders);
+  const pairOrders = createMatchingPairOrders(questions, upper => 0);
+  let aliasIndex = 0;
+  const presentation = createMatchingPresentationIds(questions, () => `opaque-${aliasIndex++}`);
+  const projected = projectQuestionsForAttempt(questions, orders, presentation, pairOrders);
   const serialized = JSON.stringify(projected);
-  for (const secret of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'gradingRubric', 'explanation', 'targetId']) {
+  for (const secret of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'gradingRubric', 'explanation', 'targetId', 'p1', 'p2', 't1', 't2']) {
     assert.equal(serialized.includes(secret), false, secret);
   }
   const matching = projected.find(question => question.type === 'matching');
   assert.equal(matching?.type, 'matching');
   if (matching?.type === 'matching') {
-    assert.deepEqual(matching.targets.map(target => target.id), ['t1', 't2']);
-    assert.deepEqual(matching.pairs.map(pair => pair.id), ['p1', 'p2']);
+    assert.deepEqual(matching.targets.map(target => target.id), ['opaque-2', 'opaque-3']);
+    assert.deepEqual(matching.pairs.map(pair => pair.id), ['opaque-1', 'opaque-0']);
+    assert.deepEqual(parsePublicAttemptAnswers({ matching: [{ pairId: 'opaque-0', targetId: 'opaque-2' }] }, questions, presentation).matching,
+      [{ pairId: 'p1', targetId: 't1' }]);
+    assert.deepEqual(projectAttemptAnswers({ matching: [{ pairId: 'p1', targetId: 't1' }] }, questions, presentation).matching,
+      [{ pairId: 'opaque-0', targetId: 'opaque-2' }]);
   }
 });
 
 test('Matching-Zielreihenfolge wird pro Versuch gespeichert und streng validiert', () => {
   const matching = questions.filter(question => question.type === 'matching');
   const orders = createMatchingShuffleOrders(matching, upper => upper - 1);
+  const pairOrders = createMatchingPairOrders(matching, upper => 0);
+  const presentation = createMatchingPresentationIds(matching, (() => { let index = 0; return () => `safe-${index++}`; })());
   assert.deepEqual(orders.matching, ['t1', 't2']);
-  assert.throws(() => projectQuestionsForAttempt(matching, { matching: ['t1', 't1'] }), /EXAM_MATCHING_SHUFFLE_INVALID/);
-  assert.throws(() => projectQuestionsForAttempt(matching, {}), /EXAM_MATCHING_SHUFFLE_INVALID/);
+  assert.throws(() => projectQuestionsForAttempt(matching, { matching: ['t1', 't1'] }, presentation, pairOrders), /EXAM_MATCHING_SHUFFLE_INVALID/);
+  assert.throws(() => projectQuestionsForAttempt(matching, {}, presentation, pairOrders), /EXAM_MATCHING_SHUFFLE_INVALID/);
   assert.throws(() => createMatchingShuffleOrders(matching, () => 99), /EXAM_MATCHING_SHUFFLE_INVALID/);
 });
 
@@ -123,6 +136,16 @@ test('Eine reine automatisch bewertete Prüfung erhält einen endgültigen Beste
   assert.equal(result.status, 'passed');
   assert.equal(result.finalScoreBasisPoints, 10000);
   assert.equal(result.requiresManualReview, false);
+});
+
+test('Leerer Freitext benötigt keine manuelle Prüfung, beantworteter Freitext schon', () => {
+  const text = questions.filter(question => question.type === 'free_text');
+  const blank = evaluateExamAnswers(text, parseAttemptAnswers({}, text), 5000);
+  assert.equal(blank.status, 'failed');
+  assert.equal(blank.requiresManualReview, false);
+  assert.notEqual(blank.finalScoreBasisPoints, null);
+  assert.equal(evaluateExamAnswers(text, parseAttemptAnswers({ text: '  ' }, text), 5000).requiresManualReview, false);
+  assert.equal(evaluateExamAnswers(text, parseAttemptAnswers({ text: 'Antwort' }, text), 5000).status, 'pending_review');
 });
 
 test('Fehlerhafte Bestehensgrenzen und unsichere Gesamtpunktzahlen werden abgelehnt', () => {
