@@ -321,7 +321,8 @@ export interface AuditLogDoc {
     | 'COURSE_GRADE'
     | 'ANNOUNCEMENT'
     | 'CALENDAR_EVENT'
-    | 'SYSTEM_BACKUP';
+    | 'SYSTEM_BACKUP'
+    | 'EXAM_WORKSHOP';
   actionTitle: string;
   targetLabel: string;
   details: string;
