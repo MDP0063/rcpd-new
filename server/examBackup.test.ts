@@ -89,7 +89,7 @@ test('unvollständige oder zusätzliche Sammlungen werden abgelehnt', () => {
 test('Versionen ohne passenden Master werden abgelehnt', () => {
   const snapshot = emptySnapshot();
   snapshot.collections.exam_versions.push({
-    id: 'orphan__v1',
+    id: 'missing-master__v1',
     examId: 'missing-master',
     versionNumber: 1
   });
