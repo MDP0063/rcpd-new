@@ -31,7 +31,7 @@ import {
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
-import { canAccessExamWorkshopExam, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
+import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
@@ -136,7 +136,7 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 }
 
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
-import { getDefaultGranularPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
+import { getDefaultGranularPermissions, normalizeExamWorkshopPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
@@ -2284,6 +2284,17 @@ async function startServer() {
       );
     }
 
+    if (JSON.stringify(previousPerms.examWorkshop) !== JSON.stringify(nextPerms.examWorkshop)) {
+      appendAuditLog(
+        dbState,
+        caller,
+        'EXAM_WORKSHOP',
+        'Berechtigungen der Prüfungswerkstatt geändert',
+        `${target.publicProfile.displayName} (${target.publicProfile.badgeNumber})`,
+        `Werkstattzugang: ${nextPerms.examWorkshop?.hasAccess ? 'erteilt' : 'nicht erteilt'} · Zugangsbeantragung: ${nextPerms.examWorkshop?.canRequestAccess ? 'erlaubt' : 'nicht erlaubt'} · Rechte für Tests und Abschlussprüfungen wurden aktualisiert.`
+      );
+    }
+
     if (permissionsOrRoleChanged) {
       pushNotification(
         dbState,
@@ -4013,7 +4024,6 @@ jobs:
   // ==========================================================================
   app.post('/api/requests', (req, res) => {
     const {
-      requesterUid,
       category,
       title,
       requestedRole,
@@ -4023,10 +4033,34 @@ jobs:
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === requesterUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const caller = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
+    }
+
+    const allowedCategories: RequestCategory[] = ['rank_change', 'clearance', 'award', 'transfer', 'loa', 'exam_workshop_access'];
+    if (!allowedCategories.includes(category as RequestCategory)) {
+      res.status(400).json({ error: 'Die Antragskategorie ist ungültig.' });
+      return;
+    }
+    if (category === 'exam_workshop_access') {
+      const actor = resolveExamWorkshopActor(caller);
+      if (!canRequestExamWorkshopAccess(actor)) {
+        res.status(403).json({ error: 'Du darfst derzeit keinen Zugang zur Prüfungswerkstatt beantragen.' });
+        return;
+      }
+      if (hasExamWorkshopAccess(actor)) {
+        res.status(409).json({ error: 'Du besitzt bereits Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      if ((dbState.requests || []).some(item =>
+        item.requesterUid === caller.uid && item.category === 'exam_workshop_access' && item.status === 'pending'
+      )) {
+        res.status(409).json({ error: 'Für dein Konto liegt bereits ein offener Zugangsantrag vor.' });
+        return;
+      }
     }
 
     if (!title || !justification) {
@@ -4085,15 +4119,15 @@ jobs:
 
   app.put('/api/requests/:id/review', (req, res) => {
     const { id } = req.params;
-    const { reviewerUid, status, reviewerComment, applyRankChange } = req.body as {
-      reviewerUid?: string;
+    const { status, reviewerComment, applyRankChange } = req.body as {
       status?: RequestStatus;
       reviewerComment?: string;
       applyRankChange?: boolean;
     };
 
     const dbState = loadDatabase();
-    const reviewer = dbState.accounts.find(a => a.uid === reviewerUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const reviewer = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     const reviewerPerms =
       reviewer?.publicProfile.granularPermissions ||
       (reviewer ? getDefaultGranularPermissions(reviewer.publicProfile.role) : undefined);
@@ -4117,6 +4151,15 @@ jobs:
       return;
     }
 
+    if (targetReq.category === 'exam_workshop_access' && reviewer.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Zugangsanträge für die Prüfungswerkstatt dürfen ausschließlich vom Admin entschieden werden.' });
+      return;
+    }
+    if (status !== 'approved' && status !== 'rejected') {
+      res.status(400).json({ error: 'Der Antragsstatus ist ungültig.' });
+      return;
+    }
+
     // Strict Enforcement: Rank changes can ONLY be approved/applied by Admin!
     if (targetReq.category === 'rank_change' && reviewer.publicProfile.role !== 'admin') {
       res.status(403).json({
@@ -4132,6 +4175,28 @@ jobs:
     targetReq.reviewerName = reviewer.publicProfile.displayName;
     targetReq.reviewerComment = String(reviewerComment || '').trim().slice(0, 1500);
     targetReq.updatedIso = nowIso;
+
+    let accessGrantedNote = '';
+    if (targetReq.category === 'exam_workshop_access' && targetReq.status === 'approved') {
+      const applicant = dbState.accounts.find(account => account.uid === targetReq.requesterUid);
+      if (!applicant) {
+        res.status(409).json({ error: 'Das antragstellende Konto existiert nicht mehr.' });
+        return;
+      }
+      const currentPermissions = normalizeGranularPermissions(
+        applicant.publicProfile.role,
+        applicant.publicProfile.granularPermissions
+      );
+      applicant.publicProfile.granularPermissions = {
+        ...currentPermissions,
+        examWorkshop: normalizeExamWorkshopPermissions(applicant.publicProfile.role, {
+          ...currentPermissions.examWorkshop,
+          hasAccess: true
+        })
+      };
+      applicant.publicProfile.updatedIso = nowIso;
+      accessGrantedNote = ' · Zugang zur Prüfungswerkstatt wurde erteilt';
+    }
 
     let rankPromotedNote = '';
     // If Admin approves a rank_change request and applyRankChange is true, automatically promote the account!
@@ -4165,7 +4230,7 @@ jobs:
       `${targetReq.title} — ${targetReq.requesterName}`,
       `Entscheidung durch ${reviewer.publicProfile.displayName}: ${
         targetReq.reviewerComment || 'Keine Anmerkung'
-      }${rankPromotedNote}`
+      }${rankPromotedNote}${accessGrantedNote}`
     );
 
     pushNotification(
@@ -4175,7 +4240,7 @@ jobs:
       `Dein Antrag wurde ${targetReq.status === 'approved' ? 'GENEHMIGT' : 'ABGELEHNT'}`,
       `Antrag "${targetReq.title}" wurde von ${reviewer.publicProfile.displayName} bearbeitet.${
         targetReq.reviewerComment ? ` Vermerk: "${targetReq.reviewerComment}"` : ''
-      }${rankPromotedNote}`,
+      }${rankPromotedNote}${accessGrantedNote}`,
       'requests'
     );
 
