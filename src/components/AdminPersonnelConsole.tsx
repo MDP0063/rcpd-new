@@ -136,7 +136,6 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
   const [editCanManageEvents, setEditCanManageEvents] = useState(false);
   const [editCanPublishAnnouncements, setEditCanPublishAnnouncements] = useState(false);
   const [editCanReviewStandardRequests, setEditCanReviewStandardRequests] = useState(false);
-  const [editCanExportReports, setEditCanExportReports] = useState(false);
 
   // Create New Account State (Default Role: Trainee)
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -185,7 +184,6 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     setEditCanManageEvents(Boolean(perms?.canManageEvents));
     setEditCanPublishAnnouncements(Boolean(perms?.canPublishAnnouncements));
     setEditCanReviewStandardRequests(Boolean(perms?.canReviewStandardRequests));
-    setEditCanExportReports(Boolean(perms?.canExportReports));
   };
 
   const handleUpdateMyOwnCredentials = async (e: React.FormEvent) => {
@@ -230,8 +228,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           canGradeAssignedCourses: editCanGradeCourses,
           canManageEvents: editCanManageEvents,
           canPublishAnnouncements: editCanPublishAnnouncements,
-          canReviewStandardRequests: editCanReviewStandardRequests,
-          canExportReports: editCanExportReports
+          canReviewStandardRequests: editCanReviewStandardRequests
         }
       })
     });
@@ -1297,18 +1294,6 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                                       align="right"
                                       title="Fachanträge bearbeiten"
                                       description="Erlaubt die Vorprüfung von Lehrgangs- oder Auszeichnungsanträgen. Beförderungen und Rangänderungen bleiben weiterhin strikt dem Admin vorbehalten."
-                                    />
-                                  </label>
-                                  <label className="inline-flex items-center gap-2 cursor-pointer sm:col-span-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={editCanExportReports}
-                                      onChange={e => setEditCanExportReports(e.target.checked)}
-                                    />
-                                    <span>Leitungsberichte &amp; Ausbildungsmatrix exportieren</span>
-                                    <FieldTooltip
-                                      title="Berichts- & Datenexport"
-                                      description="Schaltet den Export von Ausbildungsständen und Statistiken als CSV-Tabelle oder druckfertigen PDF-Leitungsbericht frei."
                                     />
                                   </label>
                                 </div>
