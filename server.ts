@@ -2771,6 +2771,7 @@ jobs:
       }
 
       const examSnapshot = await repository.exportSnapshot();
+      validateLegacyVerificationSources(examSnapshot, dbState.exams, dbState.progress);
       const examSummary = {
         exam_masters: examSnapshot.collections.exam_masters.length,
         exam_versions: examSnapshot.collections.exam_versions.length,
@@ -2932,6 +2933,21 @@ jobs:
       }
 
       const summary = snapshot.summary;
+      const expectedTopExamCounts = {
+        examMastersCount: expectedExamCounts.exam_masters,
+        examVersionsCount: expectedExamCounts.exam_versions,
+        examAttemptsCount: expectedExamCounts.exam_attempts,
+        examProgressCount: expectedExamCounts.exam_progress,
+        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications
+      };
+      if (
+        !summary ||
+        Object.entries(expectedTopExamCounts).some(([key, count]) =>
+          summary[key as keyof typeof expectedTopExamCounts] !== count
+        )
+      ) {
+        throw new Error('PORTAL_BACKUP_EXAM_SUMMARY_MISMATCH');
+      }
       const expectedPortalCounts = {
         accountsCount: rawDb.accounts.length,
         applicationsCount: rawDb.applications!.length,
