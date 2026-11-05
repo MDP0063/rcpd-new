@@ -390,7 +390,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     (typeof value !== 'string' || value.trim().length > 0) &&
                     (!Array.isArray(value) || value.length > 0);
                   return (
-                    <button key={question.id} type="button" onClick={() => {
+                    <button key={question.id} type="button" disabled={submitting} onClick={() => {
                       if (debounceRef.current) clearTimeout(debounceRef.current);
                       debounceRef.current = null;
                       void enqueueSave();
@@ -423,7 +423,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     <div className="space-y-2">
                       {activeQuestion.options.map(option => (
                         <label key={option.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${answers[activeQuestion.id] === option.id ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
-                          <input type="radio" name={activeQuestion.id} checked={answers[activeQuestion.id] === option.id} onChange={() => updateAnswer(activeQuestion.id, option.id)} className="mt-0.5 text-sky-600 focus:ring-sky-500" />
+                          <input type="radio" name={activeQuestion.id} disabled={submitting} checked={answers[activeQuestion.id] === option.id} onChange={() => updateAnswer(activeQuestion.id, option.id)} className="mt-0.5 text-sky-600 focus:ring-sky-500" />
                           <span className="text-slate-800 dark:text-slate-200">{option.text}</span>
                         </label>
                       ))}
@@ -435,7 +435,7 @@ export const ExamParticipantRunner: React.FC = () => {
                       {activeQuestion.options.map(option => {
                         const selected = Array.isArray(answers[activeQuestion.id]) && (answers[activeQuestion.id] as string[]).includes(option.id);
                         return <label key={option.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${selected ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
-                          <input type="checkbox" checked={selected} onChange={event => {
+                          <input type="checkbox" disabled={submitting} checked={selected} onChange={event => {
                             const current = Array.isArray(answersRef.current[activeQuestion.id]) ? answersRef.current[activeQuestion.id] as string[] : [];
                             updateAnswer(activeQuestion.id, event.target.checked ? [...current, option.id] : current.filter(id => id !== option.id));
                           }} className="mt-0.5 rounded text-sky-600 focus:ring-sky-500" />
@@ -448,7 +448,7 @@ export const ExamParticipantRunner: React.FC = () => {
                     <div className="grid gap-2 sm:grid-cols-2">
                       {[{ value: true, label: 'Wahr' }, { value: false, label: 'Falsch' }].map(option => (
                         <label key={String(option.value)} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm font-medium ${answers[activeQuestion.id] === option.value ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40' : 'border-slate-200 dark:border-slate-700'}`}>
-                          <input type="radio" name={activeQuestion.id} checked={answers[activeQuestion.id] === option.value} onChange={() => updateAnswer(activeQuestion.id, option.value)} />
+                          <input type="radio" name={activeQuestion.id} disabled={submitting} checked={answers[activeQuestion.id] === option.value} onChange={() => updateAnswer(activeQuestion.id, option.value)} />
                           {option.label}
                         </label>
                       ))}
@@ -462,7 +462,7 @@ export const ExamParticipantRunner: React.FC = () => {
                         const usedTargets = new Set(current.filter(entry => entry.pairId !== pair.id).map(entry => entry.targetId));
                         return <div key={pair.id} className="grid gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700 sm:grid-cols-2 sm:items-center">
                           <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{pair.prompt}</span>
-                          <select value={selectedTarget} onChange={event => {
+                          <select disabled={submitting} value={selectedTarget} onChange={event => {
                             const next = current.filter(entry => entry.pairId !== pair.id);
                             if (event.target.value) next.push({ pairId: pair.id, targetId: event.target.value });
                             updateAnswer(activeQuestion.id, next);
@@ -476,14 +476,14 @@ export const ExamParticipantRunner: React.FC = () => {
                   )}
                   {activeQuestion.type === 'free_text' && (
                     <div className="space-y-2">
-                      <textarea value={typeof answers[activeQuestion.id] === 'string' ? answers[activeQuestion.id] as string : ''} maxLength={activeQuestion.maxAnswerLength} rows={7} onChange={event => updateAnswer(activeQuestion.id, event.target.value)} placeholder="Deine Antwort …" className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      <textarea disabled={submitting} value={typeof answers[activeQuestion.id] === 'string' ? answers[activeQuestion.id] as string : ''} maxLength={activeQuestion.maxAnswerLength} rows={7} onChange={event => updateAnswer(activeQuestion.id, event.target.value)} placeholder="Deine Antwort …" className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                       <div className="text-right text-xs text-slate-500">{typeof answers[activeQuestion.id] === 'string' ? (answers[activeQuestion.id] as string).length : 0}/{activeQuestion.maxAnswerLength} Zeichen · Manuelle Bewertung</div>
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                    <button type="button" disabled={currentQuestionIndex === 0} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.max(0, index - 1)); }} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
+                    <button type="button" disabled={submitting || currentQuestionIndex === 0} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.max(0, index - 1)); }} className={secondaryButton}><ArrowLeft className="h-4 w-4" /> Zurück</button>
                     {currentQuestionIndex < attempt.questions.length - 1 ? (
-                      <button type="button" onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
+                      <button type="button" disabled={submitting} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
                     ) : (
                       <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Prüfung abgeben</button>
                     )}
