@@ -159,6 +159,7 @@ export interface LegacyProgressRecord {
   scorePercent: number;
   attempts: number;
   courseCode?: string;
+  updatedIso?: string;
 }
 
 /** Create-only Nachweis in `exam_legacy_verifications` (§19.5). */
@@ -169,6 +170,10 @@ export interface LegacyVerificationDoc {
   examId: string;
   attemptCourseCode?: string;
   verifiedStatus: 'passed';
+  /** Ergebnisstand, den der Admin tatsächlich geprüft hat. */
+  verifiedScoreBasisPoints: number;
+  /** Bindet die Verifikation an die konkrete Version des Legacy-Datensatzes, sofern vorhanden. */
+  legacyUpdatedIso?: string;
   verifiedByUid: string;
   verifiedAtIso: string;
   reason: string;
