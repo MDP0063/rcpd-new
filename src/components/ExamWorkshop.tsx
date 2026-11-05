@@ -67,7 +67,7 @@ interface ExamWorkshopProps { currentUser: UserPublicProfile; }
 export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   const workshopPermissions = currentUser.granularPermissions?.examWorkshop;
   const isAdmin = currentUser.role === 'admin';
-  const canCreateAny = isAdmin || Boolean(workshopPermissions?.hasAccess && (workshopPermissions.tests.canCreate || workshopPermissions.finalExams.canCreate));
+  const canCreateActive = isAdmin || Boolean(workshopPermissions?.hasAccess && (activeStage === 'final_exam' ? workshopPermissions.finalExams.canCreate : workshopPermissions.tests.canCreate));
   const canViewTests = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.tests.canView);
   const canViewFinalExams = isAdmin || Boolean(workshopPermissions?.hasAccess && workshopPermissions.finalExams.canView);
   const [exams, setExams] = useState<ExamMaster[]>([]);
@@ -228,7 +228,7 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
         <div><div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Prüfungsverwaltung</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Prüfungswerkstatt</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Prüfungen erstellen, bearbeiten, prüfen und veröffentlichen.</p></div>
-        {canCreateAny && <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>}
+        {canCreateActive && <button onClick={openNew} className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"><FilePlus2 size={16}/> Neue Prüfung</button>}
       </div>
       {isAdmin && <ExamWorkshopReviewInbox
         onOpenRequest={(requestId, examId) => {
@@ -259,7 +259,7 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
     (selectedId
       ? selectedExam?.currentPublishedVersionId
         ? selectedCategoryPermissions.canUpdateExisting && !workshopPermissions.lockedUpdateExamIds.includes(selectedId)
-        : selectedCategoryPermissions.canEdit
+        : selectedCategoryPermissions.canEdit && !workshopPermissions.lockedUpdateExamIds.includes(selectedId)
       : selectedCategoryPermissions.canCreate)
   );
 
