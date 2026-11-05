@@ -112,6 +112,13 @@ export interface CompletedManualReviewItem extends ExamReviewItem {
   finalScoreBasisPoints: number | null;
   reviewedAtIso: string;
   reviewedByUid: string;
+  reviewCorrections: Array<{
+    reviewerUid: string; atIso: string; reason: string;
+    previousStatus: 'passed' | 'failed'; nextStatus: 'passed' | 'failed';
+    previousScoreBasisPoints: number | null; nextScoreBasisPoints: number | null;
+    previousGrades: Array<{ questionId: string; pointsEarnedMilli: number }>;
+    nextGrades: Array<{ questionId: string; pointsEarnedMilli: number }>;
+  }>;
   questions: Array<ReturnType<typeof pendingFreeTextQuestions>[number] & { pointsEarnedMilli: number }>;
 }
 
@@ -160,7 +167,8 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
       assessmentStage: version.assessmentStage, status: attempt.status as 'passed' | 'failed',
       finalScoreBasisPoints: Number.isSafeInteger(attempt.finalScoreBasisPoints) ? Number(attempt.finalScoreBasisPoints) : null,
-      reviewedAtIso: String(attempt.reviewedAtIso), reviewedByUid: String(attempt.reviewedByUid), questions
+      reviewedAtIso: String(attempt.reviewedAtIso), reviewedByUid: String(attempt.reviewedByUid),
+      reviewCorrections: Array.isArray(attempt.reviewCorrections) ? attempt.reviewCorrections as CompletedManualReviewItem['reviewCorrections'] : [], questions
     });
   }
   return results;
