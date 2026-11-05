@@ -434,6 +434,8 @@ export interface ExamRepositoryBackupSnapshot {
     exam_attempts: Array<Record<string, unknown> & { id: string }>;
     exam_progress: Array<Record<string, unknown> & { id: string }>;
     exam_legacy_verifications: Array<Record<string, unknown> & { id: string }>;
+    exam_comments: Array<Record<string, unknown> & { id: string }>;
+    exam_publication_requests: Array<Record<string, unknown> & { id: string }>;
   };
   summary: {
     exam_masters: number;
@@ -441,6 +443,8 @@ export interface ExamRepositoryBackupSnapshot {
     exam_attempts: number;
     exam_progress: number;
     exam_legacy_verifications: number;
+    exam_comments: number;
+    exam_publication_requests: number;
   };
 }
 
