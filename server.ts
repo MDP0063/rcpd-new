@@ -113,6 +113,7 @@ let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
 let examMaintenanceActive = false;
 let examMaintenanceOperation: 'backup' | 'restore' | null = null;
+let examRestoreInProgress = false;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
@@ -2755,6 +2756,13 @@ jobs:
       return;
     }
 
+    if (examMaintenanceActive) {
+      res.status(503).json({
+        error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
+      });
+      return;
+    }
+
     const repository = getExamRepository();
     let maintenanceStarted = false;
     try {
@@ -2977,12 +2985,13 @@ jobs:
     }
 
     const repository = getExamRepository();
-    if (examMaintenanceActive && examMaintenanceOperation === 'backup') {
+    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation === 'backup')) {
       res.status(503).json({
-        error: 'Eine Datensicherung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
+        error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
       });
       return;
     }
+    examRestoreInProgress = true;
     try {
       // Auch ein zuvor fehlgeschlagener Restore darf nur über einen erneuten vollständigen Restore fortgesetzt werden.
       examMaintenanceActive = true;
@@ -3076,6 +3085,8 @@ jobs:
       res.status(503).json({
         error: 'Die Wiederherstellung ist fehlgeschlagen. Das Prüfungssystem bleibt aus Sicherheitsgründen im Wartungsmodus. Bitte starte die vollständige Wiederherstellung erneut oder lasse den Datenbestand administrativ prüfen.'
       });
+    } finally {
+      examRestoreInProgress = false;
     }
   });
 
