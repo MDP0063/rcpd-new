@@ -12,7 +12,7 @@ const MAX_AUTOSAVE_BODY_BYTES = 64 * 1024;
 const MAX_REVISION_JUMP = 100;
 
 export interface SaveExamAttemptAnswersResult {
-  attempt: PublicExamAttempt;
+  attempt: PublicExamAttempt | null;
   saved: boolean;
   stale: boolean;
   expired: boolean;
