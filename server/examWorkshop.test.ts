@@ -117,6 +117,27 @@ test('Prüfungswerkstatt: Admin kann einen Entwurf anlegen und bearbeiten, ohne 
   });
 });
 
+test('Prüfungswerkstatt: veraltete Arbeitsrevisionen werden abgewiesen', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-revision-conflict', 'author-1', validDefinition);
+    const first = await updateExamDraft(
+      repository, 'exam-revision-conflict', 'editor-1',
+      { ...validDefinition, title: 'Aktualisierte Fassung' }, undefined, 1
+    );
+    assert.equal(first.workingRevision, 2);
+    await assert.rejects(
+      updateExamDraft(
+        repository, 'exam-revision-conflict', 'editor-2',
+        { ...validDefinition, title: 'Veraltete Fassung' }, undefined, 1
+      ),
+      /EXAM_WORKING_REVISION_CONFLICT/
+    );
+    const stored = await repository.get('exam_masters', 'exam-revision-conflict');
+    assert.equal(stored?.title, 'Aktualisierte Fassung');
+    assert.equal(stored?.workingRevision, 2);
+  });
+});
+
 test('Prüfungswerkstatt: die Prüfungsart eines bestehenden Entwurfs ist unveränderlich', async () => {
   await withRepository(async repository => {
     await createExamDraft(repository, 'exam-stage-immutable', 'author-1', validDefinition);
