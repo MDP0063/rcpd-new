@@ -271,6 +271,32 @@ export interface PortalRequestDoc {
   updatedIso: string;
 }
 
+export interface ExamWorkshopCategoryPermissions {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canUpdateExisting: boolean;
+}
+
+export interface ExamWorkshopPublicationPermissions {
+  newTestsRequireApproval: boolean;
+  newFinalExamsRequireApproval: boolean;
+  testUpdatesRequireApproval: boolean;
+  finalExamUpdatesRequireApproval: boolean;
+}
+
+export interface ExamWorkshopPermissions {
+  /** Admin-granted entry to the workshop. Admins always bypass this configuration. */
+  hasAccess: boolean;
+  /** Colonels default to true; other roles need explicit admin approval to request access. */
+  canRequestAccess: boolean;
+  tests: ExamWorkshopCategoryPermissions;
+  finalExams: ExamWorkshopCategoryPermissions;
+  publication: ExamWorkshopPublicationPermissions;
+  /** Exam IDs for which this account is explicitly barred from updating existing content. */
+  lockedUpdateExamIds: string[];
+}
+
 export interface GranularPermissions {
   assignedCourseCodes: string[]; // e.g. ['SOP-01', 'PC-102'] — allows instructor grading/editing only for these course codes
   canGradeAssignedCourses: boolean;
@@ -278,6 +304,7 @@ export interface GranularPermissions {
   canPublishAnnouncements: boolean;
   canReviewStandardRequests: boolean; // Non-rank requests (rank changes remain strictly Admin-only)
   canExportReports: boolean;
+  examWorkshop?: ExamWorkshopPermissions;
 }
 
 export interface AuditLogDoc {
