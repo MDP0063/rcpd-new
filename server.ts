@@ -30,6 +30,7 @@ import {
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
 import {
@@ -1264,6 +1265,109 @@ async function startServer() {
         return;
       }
       next(error);
+    }
+  });
+
+  function getExamParticipant(res: express.Response) {
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    if (!sessionUid) return null;
+    const account = loadDatabase().accounts.find(record => record.uid === sessionUid);
+    if (!account) return null;
+    return {
+      uid: account.uid,
+      displayName: account.publicProfile.displayName || account.username,
+      clearanceLevel: account.publicProfile.clearanceLevel
+    };
+  }
+
+  function sendExamAttemptError(error: unknown, res: express.Response, next: express.NextFunction) {
+    const code = error instanceof Error ? error.message : '';
+    const responses: Record<string, { status: number; message: string }> = {
+      EXAM_DOCUMENT_NOT_FOUND: { status: 404, message: 'Prüfung nicht gefunden.' },
+      EXAM_PARTICIPANT_INVALID: { status: 403, message: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' },
+      EXAM_ATTEMPT_COURSE_INVALID: { status: 400, message: 'Bitte wähle einen gültigen Lehrgang aus.' },
+      EXAM_REQUEST_TIME_INVALID: { status: 400, message: 'Die Anfrage konnte zeitlich nicht verarbeitet werden.' },
+      EXAM_NOT_STARTABLE: { status: 409, message: 'Diese Prüfung ist derzeit nicht zur Teilnahme freigegeben.' },
+      EXAM_COURSE_NOT_ASSIGNED: { status: 403, message: 'Diese Prüfung ist dem ausgewählten Lehrgang nicht zugewiesen.' },
+      EXAM_CLEARANCE_INSUFFICIENT: { status: 403, message: 'Deine aktuelle Freigabestufe reicht für diese Prüfung nicht aus.' },
+      EXAM_PUBLISHED_VERSION_INVALID: { status: 409, message: 'Die veröffentlichte Prüfungsversion ist derzeit nicht verfügbar.' },
+      EXAM_ATTEMPT_SNAPSHOT_INVALID: { status: 409, message: 'Der gespeicherte Prüfungsversuch ist nicht konsistent. Bitte wende dich an den Administrator.' },
+      EXAM_ATTEMPT_LIMIT_REACHED: { status: 409, message: 'Das zulässige Versuchskontingent für diesen Lehrgang ist ausgeschöpft.' },
+      EXAM_PREREQUISITE_NOT_MET: { status: 403, message: 'Die Voraussetzungen für diese Prüfung sind noch nicht erfüllt.' },
+      ACTIVE_ATTEMPT_DIFFERENT_COURSE: { status: 409, message: 'Für diese Prüfung läuft bereits ein Versuch in einem anderen Lehrgang. Dieser Versuch kann nicht übertragen werden.' },
+      EXAM_MULTIPLE_ACTIVE_ATTEMPTS: { status: 409, message: 'Es besteht ein widersprüchlicher aktiver Prüfungsstatus. Bitte wende dich an den Administrator.' },
+      EXAM_ATTEMPT_HISTORY_LIMIT: { status: 503, message: 'Die Prüfungshistorie ist zu umfangreich, um das Versuchskontingent sicher zu prüfen. Bitte wende dich an den Administrator.' },
+      EXAM_ATTEMPT_LIMIT_INVALID: { status: 409, message: 'Die Versuchseinstellungen dieser Prüfung sind ungültig. Bitte wende dich an den Administrator.' },
+      EXAM_EXTRA_ATTEMPTS_INVALID: { status: 409, message: 'Die administrativen Versuchseinstellungen sind ungültig. Bitte wende dich an den Administrator.' },
+      EXAM_PREREQUISITE_INVALID: { status: 409, message: 'Die Prüfungsvoraussetzungen sind ungültig. Bitte wende dich an den Administrator.' },
+      EXAM_MANUAL_UNLOCKS_INVALID: { status: 409, message: 'Die Freigabeeinstellungen dieser Prüfung sind ungültig. Bitte wende dich an den Administrator.' },
+      EXAM_TIME_LIMIT_INVALID: { status: 409, message: 'Das Zeitlimit dieser Prüfung ist ungültig. Bitte wende dich an den Administrator.' },
+      EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' }
+    };
+    const response = responses[code];
+    if (response) {
+      res.status(response.status).json({ error: response.message });
+      return;
+    }
+    next(error);
+  }
+
+  // Start und Wiederaufnahme liefern ausschließlich die sichere Prüflingsprojektion.
+  app.post('/api/academy/exams/:id/start', async (req, res, next) => {
+    const requestReceivedAtMs = Date.now();
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) {
+        res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const result = await startExamAttempt(
+        getExamRepository(),
+        req.params.id,
+        participant,
+        req.body?.attemptCourseCode,
+        requestReceivedAtMs
+      );
+      res.status(result.created ? 201 : 200).json({
+        attempt: projectStartedExamAttempt(result, requestReceivedAtMs)
+      });
+    } catch (error) {
+      sendExamAttemptError(error, res, next);
+    }
+  });
+
+  app.get('/api/academy/exams/:id/attempt', async (req, res, next) => {
+    const requestReceivedAtMs = Date.now();
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const participant = getExamParticipant(res);
+      if (!participant) {
+        res.status(403).json({ error: 'Das Teilnehmerkonto konnte nicht verifiziert werden.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const attempt = await getActiveExamAttempt(
+        getExamRepository(),
+        req.params.id,
+        participant.uid,
+        req.query.attemptCourseCode,
+        requestReceivedAtMs
+      );
+      if (!attempt) {
+        res.status(404).json({ error: 'Für diese Prüfung besteht kein aktiver Versuch.' });
+        return;
+      }
+      res.json({ attempt });
+    } catch (error) {
+      sendExamAttemptError(error, res, next);
     }
   });
 
