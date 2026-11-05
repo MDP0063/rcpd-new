@@ -2,6 +2,7 @@ import { assertExamDocument } from './examRepositoryRules.ts';
 import { legacyVerificationId, validateLegacyVerification } from './examLegacy.ts';
 import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
 import type { ExamCollection, ExamDocument, ExamRepositorySnapshot } from './examRepositoryTypes.ts';
+import type { LegacyVerificationDoc } from './examTypes.ts';
 import { normalizeCourseCode } from './examValidate.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -119,8 +120,9 @@ export function validateLegacyVerificationSources(
     progressById.set(record.id, record);
   }
 
-  for (const verification of snapshot.collections.exam_legacy_verifications) {
-    if (!validateLegacyVerification(verification).ok) fail('EXAM_BACKUP_LEGACY_VERIFICATION_INVALID');
+  for (const document of snapshot.collections.exam_legacy_verifications) {
+    if (!validateLegacyVerification(document).ok) fail('EXAM_BACKUP_LEGACY_VERIFICATION_INVALID');
+    const verification = document as LegacyVerificationDoc;
     if (verification.id !== legacyVerificationId(verification.legacyProgressId)) {
       fail('EXAM_BACKUP_LEGACY_VERIFICATION_ID_INVALID');
     }
