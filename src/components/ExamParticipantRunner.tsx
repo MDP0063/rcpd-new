@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock3,
   Cloud, CloudOff, Loader2, LockKeyhole, Send, ShieldCheck
@@ -199,7 +199,7 @@ export const ExamParticipantRunner: React.FC = () => {
     setStarting(true);
     setRunnerError('');
     const response = await apiFetch<{ attempt: PublicAttempt }>(
-      `/api/academy/exams/${encodeURIComponent(selectedExam.id)}/start`,
+      API_ENDPOINTS.ACADEMY_EXAM_START(selectedExam.id),
       { method: 'POST', body: JSON.stringify({ attemptCourseCode: selectedCourseCode }) }
     );
     if (response.ok && response.data?.attempt) {
@@ -217,7 +217,7 @@ export const ExamParticipantRunner: React.FC = () => {
     const nextRevision = revisionRef.current + 1;
     setSaveState('saving');
     const response = await apiFetch<SaveResponse>(
-      `/api/academy/exams/${encodeURIComponent(current.examId)}/attempts/${encodeURIComponent(current.id)}/autosave`,
+      API_ENDPOINTS.ACADEMY_EXAM_AUTOSAVE(current.examId, current.id),
       {
         method: 'PUT',
         body: JSON.stringify({ revision: nextRevision, answers: snapshot })
@@ -272,7 +272,7 @@ export const ExamParticipantRunner: React.FC = () => {
       }
 
       const response = await apiFetch<SubmitResponse>(
-        `/api/academy/exams/${encodeURIComponent(current.examId)}/attempts/${encodeURIComponent(current.id)}/submit`,
+        API_ENDPOINTS.ACADEMY_EXAM_SUBMIT(current.examId, current.id),
         { method: 'POST', body: JSON.stringify({}) }
       );
       if ((response.ok || response.status === 409) && response.data?.submission) {
