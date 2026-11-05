@@ -469,6 +469,8 @@ export interface PortalBackupSnapshot {
     examAttemptsCount: number;
     examProgressCount: number;
     examLegacyVerificationsCount: number;
+    examCommentsCount?: number;
+    examPublicationRequestsCount?: number;
   };
   examRepository: ExamRepositoryBackupSnapshot;
   database: {
