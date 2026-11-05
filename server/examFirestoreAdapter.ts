@@ -1,4 +1,5 @@
 import type { DocumentSnapshot, Firestore, Query, Transaction } from 'firebase-admin/firestore';
+import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
 import type {
   AttemptInvalidationAudit,
   ExamCollection,
