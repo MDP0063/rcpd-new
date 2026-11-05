@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { ExamRepository } from './examRepository.ts';
 import { mapLegacyExam, mapLegacyProgress } from './examLegacy.ts';
-import type { LegacyExamInput } from './examLegacy.ts';
+import type { LegacyExamInput, MigratedExamMaster } from './examLegacy.ts';
 import type { LegacyProgressRecord } from './examTypes.ts';
 
 export interface LegacyMigrationIssue {
@@ -78,7 +78,7 @@ function legacyProgressDocument(repository: ExamRepository, record: LegacyProgre
 function createMigratedVersion(
   examId: string,
   versionNumber: number,
-  master: ReturnType<typeof mapLegacyExam> extends { ok: true; master: infer T } ? T : never,
+  master: MigratedExamMaster,
   sourceFingerprint: string,
   masterFingerprint: string,
   legacy: LegacyExamInput,
@@ -184,6 +184,7 @@ export async function migrateLegacyExamData(
         }
         if (
           typeof existingMaster.latestVersionNumber !== 'number' ||
+          typeof existingMaster.currentPublishedVersionId !== 'string' ||
           !Number.isSafeInteger(existingMaster.latestVersionNumber) ||
           existingMaster.latestVersionNumber < 1 ||
           existingMaster.currentPublishedVersionId !== `${examId}__v${existingMaster.latestVersionNumber}` ||
