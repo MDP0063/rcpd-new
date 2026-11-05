@@ -1265,7 +1265,6 @@ async function startServer() {
       EXAM_ANSWER_QUESTION_UNKNOWN: { status: 400, message: 'Die Antwort enthält eine unbekannte Frage.' },
       EXAM_ANSWER_INVALID: { status: 400, message: 'Eine oder mehrere Antworten sind ungültig.' },
       EXAM_ATTEMPT_REVISION_INVALID: { status: 409, message: 'Der gespeicherte Revisionsstand ist ungültig.' },
-      EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' },
       EXAM_ATTEMPT_EXPIRED: { status: 409, message: 'Das Zeitlimit ist abgelaufen. Die verspäteten Antworten wurden nicht gespeichert.' },
       EXAM_ATTEMPT_DEADLINE_INVALID: { status: 409, message: 'Das gespeicherte Zeitlimit ist ungültig.' }
     };
