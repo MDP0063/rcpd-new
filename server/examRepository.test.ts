@@ -627,6 +627,7 @@ test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsis
       examId: 'exam-1',
       answers: { q1: 'Antwort' },
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 500,
       finalScoreBasisPoints: null
     });
     await repository.update('exam_attempts', 'attempt-correction', {
@@ -636,6 +637,7 @@ test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsis
       examId: 'exam-1',
       answers: { q1: 'Antwort' },
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 500,
       finalScoreBasisPoints: 5000,
       reviewedByUid: 'grader-1',
       reviewedAtIso: '2026-11-05T12:00:00.000Z'
@@ -647,6 +649,10 @@ test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsis
       reviewerUid: 'colonel-1',
       atIso: '2026-11-05T13:00:00.000Z',
       reason: 'Punkte anhand der Bewertungsrubrik erneut geprüft.',
+      previousReviewerUid: 'grader-1',
+      previousReviewedAtIso: '2026-11-05T12:00:00.000Z',
+      previousManualPointsMilli: 500,
+      nextManualPointsMilli: 800,
       previousStatus: 'passed',
       nextStatus: 'passed',
       previousScoreBasisPoints: 5000,
@@ -658,6 +664,7 @@ test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsis
       ...completed,
       status: 'passed',
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 800, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 800,
       finalScoreBasisPoints: 8000,
       reviewedByUid: 'colonel-1',
       reviewedAtIso: audit.atIso,
@@ -699,6 +706,10 @@ test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punk
         reviewerUid: 'colonel-1',
         atIso: '2026-11-05T13:00:00.000Z',
         reason: 'Punkte anhand der Bewertungsrubrik erneut geprüft.',
+        previousReviewerUid: 'grader-1',
+        previousReviewedAtIso: '2026-11-05T12:00:00.000Z',
+        previousManualPointsMilli: 500,
+        nextManualPointsMilli: 800,
         previousStatus: 'passed',
         nextStatus: 'passed',
         previousScoreBasisPoints: 5000,
