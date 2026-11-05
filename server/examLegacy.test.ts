@@ -15,7 +15,7 @@ import { scoreExam } from './examScore.ts';
 import type { LegacyProgressRecord, LegacyVerificationDoc } from './examTypes.ts';
 
 const legacyExam = (over: Partial<LegacyExamInput> = {}): LegacyExamInput => ({
-  id: 'ex1', title: 'Altprüfung', moduleCode: 'sop-01', assessmentStage: 'final_exam', passingScore: 75,
+  id: 'ex1', title: 'Altprüfung', moduleCode: 'sop-01', assessmentStage: 'final_exam', passingScore: 75, minClearance: 1,
   timeLimitMinutes: 30, examFormat: 'structured_quiz',
   questionsPayload: JSON.stringify([
     { id: 'q1', question: 'Frage 1', options: ['A', 'B', 'C'], correctIndex: 2, explanation: 'Weil' },
