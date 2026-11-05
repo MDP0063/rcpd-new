@@ -31,7 +31,7 @@ type ExamMaster = {
   currentPublishedVersionId?: string; isLegacyFormat?: boolean; examFormat?: string;
   workingRevision?: number;
 };
-type Definition = Omit<ExamMaster, 'id' | 'status' | 'updatedIso' | 'latestVersionNumber' | 'currentPublishedVersionId' | 'isLegacyFormat' | 'examFormat'>;
+type Definition = Omit<ExamMaster, 'id' | 'status' | 'updatedIso' | 'latestVersionNumber' | 'currentPublishedVersionId' | 'isLegacyFormat' | 'examFormat' | 'workingRevision'>;
 
 const makeId = () => crypto.randomUUID();
 const emptyDefinition = (): Definition => ({
@@ -134,11 +134,11 @@ export const ExamWorkshop: React.FC = () => {
   };
 
   const save = async () => {
-    setSaving(true); setError(null); setNotice(null);
     if (selectedId && expectedRevision === null) {
       setError('Die aktuelle Prüfungsrevision fehlt. Bitte lade die Prüfung erneut.');
       return;
     }
+    setSaving(true); setError(null); setNotice(null);
     const payload = { definition, ...(selectedId ? { expectedRevision } : {}) };
     const response = selectedId
       ? await apiFetch<{ exam: ExamMaster }>(`/api/workshop/exams/${encodeURIComponent(selectedId)}`, { method: 'PUT', body: JSON.stringify(payload) })
