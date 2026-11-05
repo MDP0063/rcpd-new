@@ -28,6 +28,8 @@ import {
   createJsonExamRepository,
   type ExamRepository
 } from './server/examRepository.ts';
+import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import type { LegacyProgressRecord } from './server/examTypes.ts';
 import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
@@ -2597,6 +2599,98 @@ jobs:
 
     saveDatabase(dbState);
     res.json({ ok: true, deploymentConfig: cfg });
+  });
+
+  // ADMIN ONLY: verify one historical passed exam result; identity comes only from the session.
+  app.post('/api/admin/exams/legacy-verifications', async (req, res, next) => {
+    try {
+      const sessionUid = res.locals.sessionUid as string;
+      const dbState = loadDatabase();
+      const caller = dbState.accounts.find(account => account.uid === sessionUid);
+      if (!caller || caller.publicProfile.role !== 'admin') {
+        res.status(403).json({ error: 'Nur der Administrator kann historische Prüfungsergebnisse verifizieren.' });
+        return;
+      }
+
+      const { legacyProgressId, reason } = req.body as {
+        legacyProgressId?: string;
+        reason?: string;
+      };
+      if (
+        typeof legacyProgressId !== 'string' ||
+        !legacyProgressId.trim() ||
+        legacyProgressId.length > 500 ||
+        typeof reason !== 'string' ||
+        !reason.trim() ||
+        reason.length > 1000
+      ) {
+        res.status(400).json({ error: 'Bitte einen gültigen Legacy-Nachweis und eine Begründung mit maximal 1.000 Zeichen angeben.' });
+        return;
+      }
+
+      const source = dbState.progress.find(record => record.id === legacyProgressId);
+      if (!source) {
+        res.status(404).json({ error: 'Der historische Fortschrittsdatensatz wurde nicht gefunden.' });
+        return;
+      }
+
+      const legacyRecord: LegacyProgressRecord = {
+        id: source.id,
+        userId: source.userId,
+        targetId: source.targetId,
+        targetType: source.targetType,
+        status: source.status,
+        scorePercent: source.scorePercent,
+        attempts: source.attempts,
+        ...(source.courseCode !== undefined ? { courseCode: source.courseCode } : {})
+      };
+
+      let verification;
+      try {
+        verification = createLegacyVerificationDoc(
+          legacyRecord,
+          caller.uid,
+          new Date().toISOString(),
+          reason
+        );
+      } catch (error) {
+        const code = error instanceof Error ? error.message : '';
+        if (code === 'EXAM_LEGACY_SOURCE_NOT_VERIFIABLE') {
+          res.status(409).json({ error: 'Nur historische, bereits bestandene Prüfungen können verifiziert werden.' });
+          return;
+        }
+        if (code === 'EXAM_LEGACY_COURSE_INVALID') {
+          res.status(409).json({ error: 'Der historische Lehrgangscode ist ungültig. Der Nachweis kann nicht sicher zugeordnet werden.' });
+          return;
+        }
+        if (code === 'EXAM_LEGACY_VERIFICATION_INVALID') {
+          res.status(400).json({ error: 'Der historische Datensatz enthält keine gültigen Verifikationsdaten.' });
+          return;
+        }
+        throw error;
+      }
+
+      const repository = getExamRepository();
+      if (await repository.getLegacyVerification(legacyRecord.id)) {
+        res.status(409).json({ error: 'Dieser historische Nachweis wurde bereits verifiziert.' });
+        return;
+      }
+
+      try {
+        await repository.createLegacyVerification(verification);
+      } catch (error) {
+        // The create-only repository operation also protects against concurrent duplicate requests.
+        if (error instanceof Error && error.message === 'EXAM_DOCUMENT_ALREADY_EXISTS') {
+          res.status(409).json({ error: 'Dieser historische Nachweis wurde bereits verifiziert.' });
+          return;
+        }
+        throw error;
+      }
+
+      res.status(201).json({ ok: true, verification });
+    } catch (error) {
+      next(error);
+    }
   });
 
   // ADMIN ONLY: 1-Click Full Database Backup Export
