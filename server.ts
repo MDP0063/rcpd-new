@@ -1399,6 +1399,205 @@ async function startServer() {
     }
   });
 
+  function sendExamWorkshopGovernanceError(error: unknown, res: express.Response, next: express.NextFunction) {
+    const code = error instanceof Error ? error.message : '';
+    const responses: Record<string, { status: number; message: string }> = {
+      EXAM_DOCUMENT_NOT_FOUND: { status: 404, message: 'Prüfung nicht gefunden.' },
+      EXAM_MASTER_ARCHIVED: { status: 409, message: 'Archivierte Prüfungen können nicht bearbeitet werden.' },
+      EXAM_WORKING_REVISION_CONFLICT: { status: 409, message: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version neu.' },
+      EXAM_PUBLICATION_REQUEST_PENDING: { status: 409, message: 'Für diese Prüfung liegt bereits ein offener Freigabeantrag vor.' },
+      EXAM_PUBLICATION_REQUEST_NOT_FOUND: { status: 404, message: 'Freigabeantrag nicht gefunden.' },
+      EXAM_PUBLICATION_REQUEST_NOT_PENDING: { status: 409, message: 'Dieser Freigabeantrag ist nicht mehr offen.' },
+      EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT: { status: 409, message: 'Der Freigabeantrag bezieht sich nicht mehr auf den aktuellen Prüfungsstand.' },
+      EXAM_PUBLICATION_REQUEST_DUPLICATE_PENDING: { status: 409, message: 'Für diese Prüfung existieren mehrere offene Freigabeanträge.' },
+      EXAM_COMMENT_INVALID: { status: 400, message: 'Der Kommentar ist ungültig oder zu lang.' },
+      EXAM_ASSESSMENT_STAGE_INVALID: { status: 400, message: 'Die Prüfungsart ist ungültig.' },
+      EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE: { status: 409, message: 'Historische interaktive Prüfungen können nicht über die neue Werkstatt veröffentlicht werden.' },
+      EXAM_VERSION_SEQUENCE_INVALID: { status: 409, message: 'Die Prüfungsversion konnte wegen eines Versionskonflikts nicht veröffentlicht werden.' },
+      EXAM_DOCUMENT_ALREADY_EXISTS: { status: 409, message: 'Die Prüfungsversion existiert bereits.' }
+    };
+    const response = responses[code];
+    if (response) {
+      res.status(response.status).json({ error: response.message });
+      return;
+    }
+    if (code === 'EXAM_PUBLICATION_VALIDATION_FAILED') {
+      res.status(422).json({
+        error: 'Die Prüfung ist noch nicht veröffentlichungsfähig.',
+        validation: (error as Error & { validation?: unknown }).validation
+      });
+      return;
+    }
+    next(error);
+  }
+
+  function getExamWorkshopExamAction(
+    context: ReturnType<typeof getExamWorkshopActor>,
+    exam: ExamDocument
+  ): 'edit' | 'update_existing' | null {
+    if (!context) return null;
+    const ownDraft =
+      exam.status === 'draft' &&
+      !exam.currentPublishedVersionId &&
+      exam.authorUid === context.account.uid;
+    return ownDraft ? 'edit' : 'update_existing';
+  }
+
+  app.get('/api/workshop/exams/:id/comments', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor) ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.json({ comments: await listExamComments(getExamRepository(), exam.id) });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/workshop/exams/:id/comments', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor) ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(403).json({ error: 'Du darfst für diese Prüfung keine Kommentare abgeben.' });
+        return;
+      }
+      const comment = await addExamComment(
+        getExamRepository(),
+        exam.id,
+        { uid: context.account.uid, displayName: context.account.publicProfile.displayName || context.account.username },
+        req.body?.body
+      );
+      res.status(201).json({ comment });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/workshop/exams/:id/publication-request', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      const action = getExamWorkshopExamAction(context, exam);
+      if (!action || !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, action, exam.id)) {
+        res.status(403).json({ error: 'Du darfst diese Prüfung nicht zur Veröffentlichung einreichen.' });
+        return;
+      }
+      const expectedRevision = req.body?.expectedRevision;
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+        res.status(400).json({ error: 'Die Prüfungsrevision fehlt oder ist ungültig. Bitte lade die Prüfung erneut.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const requiresApproval = examWorkshopPublicationRequiresApproval(
+        context.actor,
+        exam.assessmentStage,
+        Boolean(exam.currentPublishedVersionId)
+      );
+      if (requiresApproval) {
+        const request = await submitExamPublicationRequest(
+          getExamRepository(),
+          exam.id,
+          { uid: context.account.uid, displayName: context.account.publicProfile.displayName || context.account.username },
+          expectedRevision
+        );
+        res.status(202).json({ requiresApproval: true, request });
+        return;
+      }
+      const result = await publishExamDraft(getExamRepository(), exam.id, context.account.uid);
+      res.json({ requiresApproval: false, ...result });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.get('/api/admin/exam-workshop/publication-requests', async (_req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      if (!getExamWorkshopAdmin(res)) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge einsehen.' });
+        return;
+      }
+      res.json({ requests: await listPendingExamPublicationRequests(getExamRepository()) });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/admin/exam-workshop/publication-requests/:id/approve', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const reviewer = getExamWorkshopAdmin(res);
+      if (!reviewer) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge genehmigen.' });
+        return;
+      }
+      const request = await getExamRepository().get('exam_publication_requests', req.params.id) as ExamPublicationRequestDocument | null;
+      if (!request) {
+        res.status(404).json({ error: 'Freigabeantrag nicht gefunden.' });
+        return;
+      }
+      const result = await publishExamDraft(
+        getExamRepository(),
+        request.examId,
+        reviewer.uid,
+        new Date().toISOString(),
+        {
+          requestId: request.id,
+          reviewerName: reviewer.publicProfile.displayName,
+          reviewComment: typeof req.body?.reviewComment === 'string' ? req.body.reviewComment : ''
+        }
+      );
+      res.json({ request: await getExamRepository().get('exam_publication_requests', request.id), ...result });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.put('/api/admin/exam-workshop/publication-requests/:id/decision', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const reviewer = getExamWorkshopAdmin(res);
+      if (!reviewer) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge entscheiden.' });
+        return;
+      }
+      const decision = req.body?.decision;
+      if (decision !== 'returned' && decision !== 'rejected' && decision !== 'archived') {
+        res.status(400).json({ error: 'Die Entscheidung ist ungültig.' });
+        return;
+      }
+      const request = await updateExamPublicationRequestDecision(
+        getExamRepository(),
+        req.params.id,
+        { uid: reviewer.uid, displayName: reviewer.publicProfile.displayName },
+        decision,
+        typeof req.body?.reviewComment === 'string' ? req.body.reviewComment : ''
+      );
+      res.json({ request });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
   function getExamParticipant(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
