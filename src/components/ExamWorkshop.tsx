@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle, ArrowLeft, BookOpen, CheckCircle2, Clock3, Eye, FilePlus2,
+  AlertCircle, ArrowLeft, BookOpen, Eye, FilePlus2,
   Loader2, Plus, Save, Send, Trash2, X
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
