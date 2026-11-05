@@ -223,7 +223,8 @@ Existiert bereits ein aktiver Versuch desselben Nutzers für dieselbe Prüfung:
 Prüfungsstarts müssen transaktionssicher beziehungsweise im JSON-Backend vollständig serialisiert sein.
 
 - Aktive Versuche werden idempotent zurückgegeben.
-- Begrenzte Kontingente zählen alle nicht invalidierten Versuche des Nutzers für die Prüfung.
+- Begrenzte Kontingente zählen alle nicht invalidierten **neuen** Versuche des Nutzers für die Prüfung und den konkreten `attemptCourseCode`. Versuche aus anderen Lehrgängen verbrauchen kein Kontingent dieses Lehrgangs.
+- Historische Legacy-`attempts`-Zähler bleiben als unveränderte Statistik erhalten, werden aber nicht auf das neue Kontingent angerechnet. Das neue Limit gilt ausschließlich für im neuen Prüfungssystem gestartete Versuche.
 - `null`, `undefined` und `0` bedeuten unbegrenzt; positive sichere Ganzzahlen bedeuten begrenzt.
 - Ungültige Werte werden serverseitig abgelehnt.
 - Übungstests erlauben unbegrenzt viele Versuche.
@@ -587,13 +588,13 @@ Festgelegte Aggregatregeln:
 - `in_progress`: wird nicht als abgeschlossenes Ergebnis in `best` oder `last` aufgenommen.
 - Das Aggregat wird serverseitig aus den Versuchen aktualisiert; der Client kann es nicht setzen.
 
-Voraussetzungen werden primär aus den neuen, nicht invalidierten Versuchen ermittelt. Für historische Ergebnisse gilt:
+Voraussetzungen werden primär aus den neuen, nicht invalidierten Versuchen im selben `attemptCourseCode` wie die aktuelle Abschlussprüfung ermittelt. Ein Ergebnis aus einem anderen Lehrgang erfüllt die Voraussetzung nicht. Historische Legacy-Nachweise mit vorhandenem Lehrgangscode müssen zum aktuellen Lehrgang passen; fehlt im historischen Datensatz ein Lehrgangscode, bleibt er als globaler Legacy-Nachweis verwendbar. Für historische Ergebnisse gilt:
 - Ein Legacy-Progress-Datensatz wird nicht künstlich als vollständiger neuer Versuch mit erfundenen Antworten oder Zeitstempeln migriert.
 - Historische Progress-Datensätze bleiben als Legacy-Nachweise erhalten und werden ausdrücklich als solche gekennzeichnet.
 - Ein historisches `completed` kann eine reine Abschlussvoraussetzung erfüllen, sofern der Datensatz einen nachvollziehbaren Abschluss ausweist.
 - Ein historisches `passed` erfüllt eine Bestehensvoraussetzung nur nach expliziter Admin-Verifikation. Die Verifikation wird nicht in den Legacy-Progress-Datensatz zurückgeschrieben, sondern als eigener Datensatz in `exam_legacy_verifications` gespeichert. Er enthält mindestens `id`, `legacyProgressId`, `userId`, `examId`, optional `attemptCourseCode`, `verifiedStatus: 'passed'`, `verifiedByUid`, `verifiedAtIso` und eine verpflichtende Begründung. Die Dokumente sind create-only; eine doppelte Verifikation desselben Legacy-Nachweises wird verhindert. Die Voraussetzungsauswertung berücksichtigt nur eine gültige, eindeutig zuordenbare Verifikation für genau den betreffenden Nutzer, die Prüfung und – sofern vorhanden – den Lehrgang.
 - Phase 1 definiert den Typ dieses Verifikationsdatensatzes sowie die reine Auswertungsfunktion, die verifizierte Legacy-Nachweise von unverifizierten unterscheidet. Phase 2 ergänzt Repository-Lese-/Schreibmethoden und die Admin-Verifikationsroute.
-- Ein vorhandener Legacy-`attempts`-Zähler wird bei der Migration als verbrauchtes historisches Kontingent berücksichtigt, soweit er eine positive sichere Ganzzahl ist. Die Migration darf den Zähler nicht stillschweigend auf null setzen. Nicht rekonstruierbare Versuchseinzelheiten werden als Legacy-Lücke dokumentiert, nicht erfunden.
+- Ein vorhandener Legacy-`attempts`-Zähler bleibt bei der Migration als historische Statistik erhalten, soweit er eine positive sichere Ganzzahl ist. Er wird nicht auf das neue Versuchskontingent angerechnet, da das Altsystem dieses Limit nicht serverseitig durchgesetzt hat. Das neue Kontingent gilt ausschließlich für neue Versuche und wird je Nutzer, Prüfung und `attemptCourseCode` getrennt geführt. Die Migration darf den historischen Zähler nicht stillschweigend auf null setzen. Nicht rekonstruierbare Versuchseinzelheiten werden als Legacy-Lücke dokumentiert, nicht erfunden.
 - Bestehende aktive Prüfungen ohne Statusfeld werden bei erfolgreicher Migration als `published` übernommen; Entwürfe werden nur dann als `draft` behandelt, wenn ihr Entwurfsstatus tatsächlich belegt ist.
 
 ### 19.6 Vollständige Antwortschemas, Bewertung und Veröffentlichungsvalidierung
