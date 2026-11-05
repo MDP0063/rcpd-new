@@ -101,13 +101,32 @@ export class ExamRepository {
   async publishVersion(
     examId: string,
     version: ExamDocument,
-    nextMaster: ExamDocument
+    nextMaster: ExamDocument,
+    publicationRequest?: { id: string; document: ExamDocument }
   ): Promise<void> {
     assertExamDocument('exam_versions', version.id, version);
     assertExamDocument('exam_masters', examId, nextMaster);
+    if (publicationRequest) {
+      assertExamDocument('exam_publication_requests', publicationRequest.id, publicationRequest.document);
+    }
     return this.runTransaction(async transaction => {
       const current = await transaction.get('exam_masters', examId);
       if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
+      const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
+      const nextRevision = nextMaster.workingRevision === undefined ? 1 : nextMaster.workingRevision;
+      if (currentRevision !== nextRevision) throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+      let currentPublicationRequest: ExamDocument | null = null;
+      if (publicationRequest) {
+        currentPublicationRequest = await transaction.get('exam_publication_requests', publicationRequest.id);
+        if (
+          !currentPublicationRequest ||
+          currentPublicationRequest.status !== 'pending' ||
+          currentPublicationRequest.examId !== examId ||
+          currentPublicationRequest.submittedRevision !== currentRevision
+        ) {
+          throw new Error('EXAM_PUBLICATION_REQUEST_NOT_PENDING');
+        }
+      }
       if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
       if (current.status !== 'draft' && current.status !== 'published') {
         throw new Error('EXAM_MASTER_STATUS_INVALID');
@@ -131,6 +150,9 @@ export class ExamRepository {
       }
       await transaction.update('exam_masters', examId, nextMaster);
       await transaction.create('exam_versions', version.id, version);
+      if (publicationRequest) {
+        await transaction.update('exam_publication_requests', publicationRequest.id, publicationRequest.document);
+      }
     });
   }
 
