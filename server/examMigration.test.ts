@@ -51,7 +51,7 @@ async function withRepository(run: (repository: ReturnType<typeof createJsonExam
 test('Legacy-Migration importiert Master, unveränderliche Startversion und Fortschritt ohne erfundene Versuche', async () => {
   await withRepository(async repository => {
     const result = await migrateLegacyExamData(repository, [legacyExam()], [legacyProgress()], '2026-11-05T12:00:00.000Z');
-    assert.deepEqual(result.exams, { imported: 1, alreadyMigrated: 0, skipped: 0 });
+    assert.deepEqual(result.exams, { imported: 1, updated: 0, alreadyMigrated: 0, skipped: 0 });
     assert.deepEqual(result.progress, { imported: 1, updated: 0, alreadyMigrated: 0, skipped: 0 });
     assert.equal(result.issues.length, 0);
 
@@ -149,5 +149,49 @@ test('Legacy-Migration aktualisiert eine bestehende Legacy-Fortschrittsprojektio
     const progress = await repository.get('exam_progress', 'legacy_progress__progress-legacy-1');
     assert.equal(progress?.scoreBasisPoints, 9500);
     assert.equal((await repository.list('exam_progress', { where: [{ field: 'examId', value: 'exam-legacy-1' }] })).length, 1);
+  });
+});
+
+test('geänderte Legacy-Prüfungen erzeugen eine neue unveränderliche Version statt den alten Snapshot zu überschreiben', async () => {
+  await withRepository(async repository => {
+    await migrateLegacyExamData(repository, [legacyExam()], [], '2026-11-05T12:00:00.000Z');
+    const result = await migrateLegacyExamData(
+      repository,
+      [legacyExam({ title: 'Aktualisierte historische Prüfung', updatedIso: '2026-11-06T12:00:00.000Z' })],
+      [],
+      '2026-11-06T12:00:00.000Z'
+    );
+    assert.equal(result.exams.updated, 1);
+    const master = await repository.get('exam_masters', 'exam-legacy-1');
+    assert.equal(master?.latestVersionNumber, 2);
+    assert.equal(master?.currentPublishedVersionId, 'exam-legacy-1__v2');
+    assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v1'))?.title, 'Historischer Übungstest');
+    assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v2'))?.title, 'Aktualisierte historische Prüfung');
+    const repeated = await migrateLegacyExamData(
+      repository,
+      [legacyExam({ title: 'Aktualisierte historische Prüfung', updatedIso: '2026-11-06T12:00:00.000Z' })],
+      [],
+      '2026-11-07T12:00:00.000Z'
+    );
+    assert.equal(repeated.exams.alreadyMigrated, 1);
+  });
+});
+
+test('Legacy-Migration überschreibt keine nachträglich manuell bearbeitete Master-Definition', async () => {
+  await withRepository(async repository => {
+    await migrateLegacyExamData(repository, [legacyExam()], [], '2026-11-05T12:00:00.000Z');
+    const existing = await repository.get('exam_masters', 'exam-legacy-1');
+    assert.ok(existing);
+    await repository.update('exam_masters', 'exam-legacy-1', { ...existing, title: 'Manuell geändert' });
+    const result = await migrateLegacyExamData(
+      repository,
+      [legacyExam({ title: 'Neue Legacy-Quelle', updatedIso: '2026-11-06T12:00:00.000Z' })],
+      [],
+      '2026-11-06T12:00:00.000Z'
+    );
+    assert.equal(result.exams.skipped, 1);
+    assert.equal(result.issues[0]?.code, 'EXAM_MIGRATION_MASTER_MODIFIED');
+    assert.equal((await repository.get('exam_masters', 'exam-legacy-1'))?.title, 'Manuell geändert');
+    assert.equal(await repository.get('exam_versions', 'exam-legacy-1__v2'), null);
   });
 });
