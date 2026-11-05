@@ -29,6 +29,7 @@ import {
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { ExamParticipantRunner } from './ExamParticipantRunner';
 import { ExamReviewCenter } from './ExamReviewCenter';
+import { ExamCorrectionCenter } from './ExamCorrectionCenter';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -58,7 +59,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'modules' | 'exam_center' | 'exam_reviews' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+    'modules' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('modules');
 
   // Granular Instructor Grading Form State
@@ -591,6 +592,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           Abschlussarbeit / Prüfungen ({finalExams.length})
         </button>
 
+        {(currentUser.role === 'admin' || currentUser.role === 'colonel') && (
+          <button type="button" onClick={() => setActiveTab('exam_corrections')} className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${activeTab === 'exam_corrections' ? 'bg-amber-700 text-white' : 'text-amber-800 dark:text-amber-400'}`}>
+            Bewertungen korrigieren
+          </button>
+        )}
         {canEditAcademy && (
           <>
             <button
@@ -865,6 +871,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       )}
 
       {activeTab === 'exam_center' && <ExamParticipantRunner />}
+      {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter />}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}

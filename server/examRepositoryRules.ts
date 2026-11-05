@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { validateLegacyVerification } from './examLegacy.ts';
 import { EXAM_LIMITS } from './examTypes.ts';
 import type {
@@ -164,6 +165,76 @@ export function assertExamAttemptCreate(
 }
 
 export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocument): void {
+  if (existing.status === 'passed' || existing.status === 'failed') {
+    const previousHistory = Array.isArray(existing.reviewCorrections) ? existing.reviewCorrections : [];
+    const nextHistory = Array.isArray(next.reviewCorrections) ? next.reviewCorrections : [];
+    const allowedMutableFields = new Set([
+      'status', 'manuallyEarnedPointsMilli', 'preliminaryScoreBasisPoints',
+      'finalScoreBasisPoints', 'questionGrades', 'reviewedByUid', 'reviewedAtIso',
+      'reviewCorrections'
+    ]);
+    const stripMutable = (document: ExamDocument) => Object.fromEntries(
+      Object.entries(document).filter(([key]) => !allowedMutableFields.has(key))
+    );
+    const appended = nextHistory[nextHistory.length - 1] as Record<string, unknown> | undefined;
+    const previousGrades = Array.isArray(appended?.previousGrades) ? appended.previousGrades : null;
+    const nextGrades = Array.isArray(appended?.nextGrades) ? appended.nextGrades : null;
+    const previousScore = appended?.previousScoreBasisPoints;
+    const nextScore = appended?.nextScoreBasisPoints;
+    if (
+      nextHistory.length !== previousHistory.length + 1 ||
+      !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory)
+    ) throw new Error('EXAM_ATTEMPT_IMMUTABLE');
+    if (
+      (next.status !== 'passed' && next.status !== 'failed') ||
+      !isDeepStrictEqual(stripMutable(existing), stripMutable(next)) ||
+      !appended || typeof appended !== 'object' ||
+      typeof appended.reviewerUid !== 'string' || !appended.reviewerUid.trim() ||
+      typeof appended.atIso !== 'string' || Number.isNaN(Date.parse(appended.atIso)) ||
+      typeof appended.reason !== 'string' || appended.reason.trim().length < 10 || appended.reason.length > 1000 ||
+      !['passed', 'failed'].includes(String(appended.previousStatus)) ||
+      !['passed', 'failed'].includes(String(appended.nextStatus)) ||
+      appended.nextStatus !== next.status ||
+      !previousGrades || !nextGrades ||
+      !isDeepStrictEqual(appended.previousStatus, existing.status) ||
+      !isDeepStrictEqual(appended.previousScoreBasisPoints, existing.finalScoreBasisPoints ?? null) ||
+      !isDeepStrictEqual(appended.nextScoreBasisPoints, next.finalScoreBasisPoints ?? null) ||
+      !isDeepStrictEqual(next.reviewedByUid, appended.reviewerUid) ||
+      !isDeepStrictEqual(next.reviewedAtIso, appended.atIso) ||
+      !isDeepStrictEqual(appended.previousReviewerUid, existing.reviewedByUid) ||
+      !isDeepStrictEqual(appended.previousReviewedAtIso, existing.reviewedAtIso) ||
+      !isDeepStrictEqual(appended.previousManualPointsMilli, existing.manuallyEarnedPointsMilli) ||
+      !isDeepStrictEqual(appended.nextManualPointsMilli, next.manuallyEarnedPointsMilli) ||
+      !Number.isSafeInteger(appended.previousManualPointsMilli) || Number(appended.previousManualPointsMilli) < 0 ||
+      !Number.isSafeInteger(appended.nextManualPointsMilli) || Number(appended.nextManualPointsMilli) < 0 ||
+      !isDeepStrictEqual(
+        Object.keys(appended).sort(),
+        ['atIso', 'nextGrades', 'nextManualPointsMilli', 'nextScoreBasisPoints', 'nextStatus', 'previousGrades', 'previousManualPointsMilli', 'previousReviewedAtIso', 'previousReviewerUid', 'previousScoreBasisPoints', 'previousStatus', 'reason', 'reviewerUid'].sort()
+      ) ||
+      !previousGrades.every((grade: any, index: number, all: any[]) =>
+        grade && typeof grade.questionId === 'string' && grade.questionId.trim() &&
+        Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+        all.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+        Array.isArray(existing.questionGrades) &&
+        existing.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
+      ) ||
+      !nextGrades.every((grade: any, index: number, all: any[]) =>
+        grade && typeof grade.questionId === 'string' && grade.questionId.trim() &&
+        Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+        all.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+        Array.isArray(next.questionGrades) &&
+        next.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
+      ) ||
+      previousGrades.length === 0 ||
+      previousGrades.reduce((sum: number, grade: any) => sum + grade.pointsEarnedMilli, 0) !== appended.previousManualPointsMilli ||
+      nextGrades.reduce((sum: number, grade: any) => sum + grade.pointsEarnedMilli, 0) !== appended.nextManualPointsMilli ||
+      previousGrades.length !== nextGrades.length ||
+      previousGrades.some((grade: any) => !nextGrades.some((nextGrade: any) => nextGrade.questionId === grade.questionId)) ||
+      (nextScore !== null && (typeof nextScore !== 'number' || !Number.isSafeInteger(nextScore) || nextScore < 0 || nextScore > 10000)) ||
+      (previousScore !== null && (typeof previousScore !== 'number' || !Number.isSafeInteger(previousScore) || previousScore < 0 || previousScore > 10000))
+    ) throw new Error('EXAM_ATTEMPT_CORRECTION_INVALID');
+    return;
+  }
   if (existing.status !== 'in_progress' && existing.status !== 'pending_review') {
     throw new Error('EXAM_ATTEMPT_IMMUTABLE');
   }

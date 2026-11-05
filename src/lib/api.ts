@@ -166,6 +166,8 @@ export const API_ENDPOINTS = {
   ACADEMY_MODULE_PDF: (id: string) => `/api/academy/modules/${encodeURIComponent(id)}/pdf`,
   ACADEMY_EXAMS: '/api/academy/exams',
   ACADEMY_EXAM_REVIEWS: '/api/academy/exam-reviews',
+  ACADEMY_EXAM_REVIEW_CORRECTIONS: '/api/academy/exam-review-corrections',
+  ACADEMY_EXAM_REVIEW_CORRECT: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/correct-review`,
   ACADEMY_EXAM_RESULTS: '/api/academy/exam-results',
   ACADEMY_EXAM_CATALOG: '/api/academy/exams/catalog',
   ACADEMY_EXAM_START: (id: string) => `/api/academy/exams/${encodeURIComponent(id)}/start`,
