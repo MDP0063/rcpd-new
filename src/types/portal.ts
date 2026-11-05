@@ -112,6 +112,10 @@ export interface AcademyExamDoc {
   questionsPayload: string;
   interactiveWidgetCode: string;
   authorUid: string;
+  status?: 'draft' | 'published' | 'archived';
+  archivedAtIso?: string;
+  archivedByUid?: string;
+  archivedReason?: string;
   updatedIso?: string;
 }
 
@@ -247,7 +251,8 @@ export type RequestCategory =
   | 'clearance'
   | 'award'
   | 'transfer'
-  | 'loa';
+  | 'loa'
+  | 'exam_workshop_access';
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
@@ -261,6 +266,7 @@ export interface PortalRequestDoc {
   title: string;
   requestedRole?: OfficerRole;
   targetDetail: string;
+  examWorkshopAreas?: Array<'tests' | 'final_exams'>;
   justification: string;
   priority: 'normal' | 'high';
   status: RequestStatus;
@@ -271,6 +277,30 @@ export interface PortalRequestDoc {
   updatedIso: string;
 }
 
+export interface ExamWorkshopCategoryPermissions {
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canUpdateExisting: boolean;
+}
+
+export interface ExamWorkshopPublicationPermissions {
+  newTestsRequireApproval: boolean;
+  newFinalExamsRequireApproval: boolean;
+  testUpdatesRequireApproval: boolean;
+  finalExamUpdatesRequireApproval: boolean;
+}
+
+/** Separate from course grading and all other granular Academy permissions. */
+export interface ExamWorkshopPermissions {
+  hasAccess: boolean;
+  canRequestAccess: boolean;
+  tests: ExamWorkshopCategoryPermissions;
+  finalExams: ExamWorkshopCategoryPermissions;
+  publication: ExamWorkshopPublicationPermissions;
+  lockedUpdateExamIds: string[];
+}
+
 export interface GranularPermissions {
   assignedCourseCodes: string[]; // e.g. ['SOP-01', 'PC-102'] — allows instructor grading/editing only for these course codes
   canGradeAssignedCourses: boolean;
@@ -278,6 +308,7 @@ export interface GranularPermissions {
   canPublishAnnouncements: boolean;
   canReviewStandardRequests: boolean; // Non-rank requests (rank changes remain strictly Admin-only)
   canExportReports: boolean;
+  examWorkshop?: ExamWorkshopPermissions;
 }
 
 export interface AuditLogDoc {
@@ -293,7 +324,8 @@ export interface AuditLogDoc {
     | 'COURSE_GRADE'
     | 'ANNOUNCEMENT'
     | 'CALENDAR_EVENT'
-    | 'SYSTEM_BACKUP';
+    | 'SYSTEM_BACKUP'
+    | 'EXAM_WORKSHOP';
   actionTitle: string;
   targetLabel: string;
   details: string;
@@ -353,7 +385,7 @@ export interface CalendarEventDoc {
 export interface PortalNotificationDoc {
   id: string;
   recipientUid: string; // specific uid or 'ALL'
-  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message';
+  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review';
   title: string;
   message: string;
   linkSection:
@@ -367,7 +399,8 @@ export interface PortalNotificationDoc {
     | 'audit'
     | 'whitelist'
     | 'settings'
-    | 'personnel';
+    | 'personnel'
+    | 'exam_workshop';
   readByUids: string[];
   createdIso: string;
 }
@@ -407,6 +440,8 @@ export interface ExamRepositoryBackupSnapshot {
     exam_attempts: Array<Record<string, unknown> & { id: string }>;
     exam_progress: Array<Record<string, unknown> & { id: string }>;
     exam_legacy_verifications: Array<Record<string, unknown> & { id: string }>;
+    exam_comments: Array<Record<string, unknown> & { id: string }>;
+    exam_publication_requests: Array<Record<string, unknown> & { id: string }>;
   };
   summary: {
     exam_masters: number;
@@ -414,6 +449,8 @@ export interface ExamRepositoryBackupSnapshot {
     exam_attempts: number;
     exam_progress: number;
     exam_legacy_verifications: number;
+    exam_comments: number;
+    exam_publication_requests: number;
   };
 }
 
@@ -437,6 +474,8 @@ export interface PortalBackupSnapshot {
     examAttemptsCount: number;
     examProgressCount: number;
     examLegacyVerificationsCount: number;
+    examCommentsCount?: number;
+    examPublicationRequestsCount?: number;
   };
   examRepository: ExamRepositoryBackupSnapshot;
   database: {

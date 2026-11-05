@@ -24,17 +24,25 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
 
   const collectionKeys = Object.keys(value.collections).sort();
   const expectedKeys = [...EXAM_COLLECTIONS].sort();
-  if (
-    collectionKeys.length !== expectedKeys.length ||
-    collectionKeys.some((key, index) => key !== expectedKeys[index])
-  ) {
+  const legacyKeys = expectedKeys.filter(key => key !== 'exam_comments' && key !== 'exam_publication_requests');
+  const isLegacySnapshot =
+    collectionKeys.length === legacyKeys.length &&
+    collectionKeys.every((key, index) => key === legacyKeys[index]);
+  const isCurrentSnapshot =
+    collectionKeys.length === expectedKeys.length &&
+    collectionKeys.every((key, index) => key === expectedKeys[index]);
+  if (!isLegacySnapshot && !isCurrentSnapshot) {
     return fail('EXAM_BACKUP_COLLECTIONS_INCOMPLETE');
   }
 
   const collections = {} as Record<ExamCollection, ExamDocument[]>;
 
   for (const collection of EXAM_COLLECTIONS) {
-    const raw = value.collections[collection];
+    const raw = value.collections[collection] ?? (
+      isLegacySnapshot && (collection === 'exam_comments' || collection === 'exam_publication_requests')
+        ? []
+        : undefined
+    );
     if (!Array.isArray(raw)) return fail('EXAM_BACKUP_COLLECTION_INVALID');
     const seen = new Set<string>();
     const documents: ExamDocument[] = [];
@@ -89,6 +97,18 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
   for (const progress of collections.exam_progress) {
     if (typeof progress.examId !== 'string' || !masters.has(progress.examId)) {
       return fail('EXAM_BACKUP_PROGRESS_MASTER_MISSING');
+    }
+  }
+
+  for (const comment of collections.exam_comments) {
+    if (typeof comment.examId !== 'string' || !masters.has(comment.examId)) {
+      return fail('EXAM_BACKUP_COMMENT_MASTER_MISSING');
+    }
+  }
+
+  for (const request of collections.exam_publication_requests) {
+    if (typeof request.examId !== 'string' || !masters.has(request.examId)) {
+      return fail('EXAM_BACKUP_PUBLICATION_REQUEST_MASTER_MISSING');
     }
   }
 

@@ -10,6 +10,7 @@ interface AuditTrailConsoleProps {
 const CATEGORY_LABELS: Record<AuditLogDoc['category'], string> = {
   ACCOUNT_ROLE: 'Konto & Rangverwaltung',
   REQUEST_REVIEW: 'Antragsbearbeitung',
+  EXAM_WORKSHOP: 'Prüfungswerkstatt',
   ACADEMY_DOC: 'Handbücher & Prüfungen',
   COURSE_GRADE: 'Lehrgangs-Notenvergabe',
   ANNOUNCEMENT: 'Offizielle Bekanntmachung',

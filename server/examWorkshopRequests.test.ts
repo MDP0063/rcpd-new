@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
-import { createExamDraft } from './examWorkshop.ts';
+import { createExamDraft, publishExamDraft } from './examWorkshop.ts';
 import {
+  addExamComment,
+  archiveExamMaster,
   listPendingExamPublicationRequests,
   refreshPendingExamPublicationRequest,
   submitExamPublicationRequest,
@@ -83,5 +85,79 @@ test('publication request can be returned or archived with a reviewer decision',
     assert.equal(returned.status, 'returned');
     assert.equal(returned.reviewComment, 'Bitte Frage überarbeiten.');
     assert.equal((await listPendingExamPublicationRequests(repository)).length, 0);
+  });
+});
+
+test('publication request can be explicitly rejected without archiving the exam master', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_rejected', 'author_1', definition);
+    const request = await submitExamPublicationRequest(repository, 'exam_rejected', {
+      uid: 'author_1', displayName: 'Officer One'
+    });
+    const rejected = await updateExamPublicationRequestDecision(
+      repository,
+      request.id,
+      { uid: 'admin_1', displayName: 'Admin' },
+      'rejected',
+      'Bitte die Prüfungslogik überarbeiten.'
+    );
+    assert.equal(rejected.status, 'rejected');
+    assert.equal((await repository.get('exam_masters', 'exam_rejected'))?.status, 'draft');
+  });
+});
+
+test('archiving a rejected publication request also archives the exam master', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_archive', 'author_1', definition);
+    const request = await submitExamPublicationRequest(repository, 'exam_archive', {
+      uid: 'author_1', displayName: 'Officer One'
+    });
+    const archived = await updateExamPublicationRequestDecision(
+      repository,
+      request.id,
+      { uid: 'admin_1', displayName: 'Admin' },
+      'archived',
+      'Inhalt wird nicht verwendet.'
+    );
+    const master = await repository.get('exam_masters', 'exam_archive');
+    assert.equal(archived.status, 'archived');
+    assert.equal(master?.status, 'archived');
+    assert.equal(master?.startable, false);
+  });
+});
+
+test('direct publication closes a pending request atomically', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_direct', 'author_1', definition);
+    const request = await submitExamPublicationRequest(repository, 'exam_direct', { uid: 'author_1', displayName: 'Officer' });
+    await publishExamDraft(repository, 'exam_direct', 'admin_1');
+    const stored = await repository.get('exam_publication_requests', request.id);
+    assert.equal(stored?.status, 'published');
+    assert.equal(stored?.publishedVersionId, 'exam_direct__v1');
+  });
+});
+
+test('archived exams reject comments without writing a document', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_archived_comment', 'author_1', definition);
+    await repository.update('exam_masters', 'exam_archived_comment', {
+      ...(await repository.get('exam_masters', 'exam_archived_comment'))!, status: 'archived'
+    });
+    await assert.rejects(
+      addExamComment(repository, 'exam_archived_comment', { uid: 'user_1', displayName: 'Officer' }, 'Late change'),
+      /EXAM_MASTER_ARCHIVED/
+    );
+    assert.equal((await repository.list('exam_comments', { where: [{ field: 'examId', value: 'exam_archived_comment' }] })).length, 0);
+  });
+});
+
+test('admin archive closes all pending publication requests and makes the exam unavailable', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_archive_direct', 'author_1', definition);
+    const request = await submitExamPublicationRequest(repository, 'exam_archive_direct', { uid: 'author_1', displayName: 'Officer' });
+    const archived = await archiveExamMaster(repository, 'exam_archive_direct', { uid: 'admin_1', displayName: 'Admin' }, 'Prüfung wird ersetzt.');
+    assert.equal(archived.status, 'archived');
+    assert.equal(archived.startable, false);
+    assert.equal((await repository.get('exam_publication_requests', request.id))?.status, 'archived');
   });
 });

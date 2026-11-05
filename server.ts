@@ -26,14 +26,26 @@ import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore
 import {
   createFirestoreExamRepository,
   createJsonExamRepository,
-  type ExamRepository
+  type ExamRepository,
+  type ExamDocument
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
-import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { createExamDraft, getExamWorkshopDefinitionHash, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, examWorkshopPublicationRequiresApproval, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
+import { projectExamWorkshopMaster } from './server/examWorkshopProjection.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
+import {
+  addExamComment,
+  archiveExamMaster,
+  listExamComments,
+  refreshPendingExamPublicationRequest,
+  submitExamPublicationRequest,
+  updateExamPublicationRequestDecision,
+  type ExamPublicationRequestDocument
+} from './server/examWorkshopRequests.ts';
 import { listParticipantExamCatalog } from './server/examParticipantCatalog.ts';
 import type { LegacyExamInput } from './server/examLegacy.ts';
 import { migrateLegacyExamData } from './server/examMigration.ts';
@@ -135,7 +147,7 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 }
 
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
-import { getDefaultGranularPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
+import { getDefaultGranularPermissions, normalizeExamWorkshopPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
@@ -1034,6 +1046,9 @@ async function startServer() {
   // Während Backup/Restore werden alle prüfungsbezogenen Schreibwege serverseitig pausiert.
   app.use('/api', async (req, res, next) => {
     const isExamWrite =
+      (req.method === 'POST' && req.path === '/requests' && req.body?.category === 'exam_workshop_access') ||
+      (req.method === 'PUT' && /^\/requests\/[^/]+\/review$/.test(req.path) &&
+        (loadDatabase().requests || []).some(item => item.id === req.path.split('/')[2] && item.category === 'exam_workshop_access')) ||
       (req.method === 'POST' && (
         [
           '/academy/exams',
@@ -1046,7 +1061,18 @@ async function startServer() {
         /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
-      (req.method === 'PUT' && /^\/academy\/exams\/[^/]+$/.test(req.path)) ||
+      (req.method === 'PUT' && (
+        /^\/academy\/exams\/[^/]+$/.test(req.path) ||
+        /^\/workshop\/exams\/[^/]+$/.test(req.path)
+      )) ||
+      (req.method === 'POST' && (
+        req.path === '/workshop/exams' ||
+        /^\/admin\/exams\/[^/]+\/archive$/.test(req.path) ||
+        /^\/workshop\/exams\/[^/]+\/(comments|publication-request)$/.test(req.path) ||
+        /^\/admin\/exam-workshop\/publication-requests\/[^/]+\/(approve)$/.test(req.path) ||
+        /^\/workshop\/exams\/[^/]+\/publish$/.test(req.path)
+      )) ||
+      (req.method === 'PUT' && /^\/admin\/exam-workshop\/publication-requests\/[^/]+\/decision$/.test(req.path)) ||
       (req.method === 'DELETE' && req.path.startsWith('/academy/exams/'));
     if (!isExamWrite) {
       next();
@@ -1069,6 +1095,17 @@ async function startServer() {
   // ADMIN EXAM WORKSHOP API — ausschließlich für den Admin-Account
   // ==========================================================================
 
+  function getExamWorkshopAccount(res: express.Response): StoredAccountRecord | null {
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    if (!sessionUid) return null;
+    return loadDatabase().accounts.find(account => account.uid === sessionUid) || null;
+  }
+
+  function getExamWorkshopActor(res: express.Response) {
+    const account = getExamWorkshopAccount(res);
+    return account ? { account, actor: resolveExamWorkshopActor(account) } : null;
+  }
+
   function getExamWorkshopAdmin(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
@@ -1081,6 +1118,14 @@ async function startServer() {
     return examMaintenanceActive || await getExamRepository().isMaintenanceMode();
   }
 
+  function recordExamWorkshopAudit(actorUid: string, action: string, target: string, details: string): void {
+    const dbState = loadDatabase();
+    const actor = dbState.accounts.find(account => account.uid === actorUid);
+    if (!actor) return;
+    appendAuditLog(dbState, actor, 'EXAM_WORKSHOP', action, target, details.slice(0, 1000));
+    saveDatabase(dbState);
+  }
+
   app.get('/api/admin/exams', async (_req, res, next) => {
     try {
       if (!getExamWorkshopAdmin(res)) {
@@ -1090,7 +1135,7 @@ async function startServer() {
       res.setHeader('Cache-Control', 'no-store');
       const exams = await getExamRepository().list('exam_masters');
       exams.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
-      res.json({ exams });
+      res.json({ exams: exams.map(exam => projectExamWorkshopMaster(exam, true)) });
     } catch (error) {
       next(error);
     }
@@ -1108,7 +1153,7 @@ async function startServer() {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
         return;
       }
-      res.json({ exam });
+      res.json({ exam: projectExamWorkshopMaster(exam, true) });
     } catch (error) {
       next(error);
     }
@@ -1132,6 +1177,7 @@ async function startServer() {
         caller.uid,
         req.body?.definition
       );
+      recordExamWorkshopAudit(caller.uid, 'Prüfungsentwurf erstellt', String(master.id), 'Neuer Entwurf angelegt.');
       res.status(201).json({ exam: master });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
@@ -1160,6 +1206,7 @@ async function startServer() {
         caller.uid,
         req.body?.definition
       );
+      await refreshPendingExamPublicationRequest(getExamRepository(), req.params.id);
       res.json({ exam });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
@@ -1191,6 +1238,7 @@ async function startServer() {
         return;
       }
       const result = await publishExamDraft(getExamRepository(), req.params.id, caller.uid);
+      recordExamWorkshopAudit(caller.uid, 'Prüfung veröffentlicht', `${req.params.id} — ${(result.master as ExamDocument).title || 'Unbenannte Prüfung'}`, `Version ${result.version.versionNumber} veröffentlicht.`);
       res.json(result);
     } catch (error) {
       if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
@@ -1218,6 +1266,418 @@ async function startServer() {
         return;
       }
       next(error);
+    }
+  });
+
+  app.post('/api/admin/exams/:id/archive', async (req, res, next) => {
+    try {
+      const reviewer = getExamWorkshopAdmin(res);
+      if (!reviewer) {
+        res.status(403).json({ error: 'Nur der Administrator darf Prüfungen archivieren.' });
+        return;
+      }
+      const reason = req.body?.reason;
+      if (typeof reason !== 'string' || reason.trim().length < 3 || reason.length > 1000) {
+        res.status(400).json({ error: 'Bitte gib einen Archivierungsgrund mit höchstens 1.000 Zeichen ein.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await archiveExamMaster(getExamRepository(), req.params.id,
+        { uid: reviewer.uid, displayName: reviewer.publicProfile.displayName }, reason);
+      recordExamWorkshopAudit(reviewer.uid, 'Prüfung archiviert', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, reason);
+      res.json({ exam: projectExamWorkshopMaster(exam, true) });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  // ==========================================================================
+  // GRANULAR EXAM WORKSHOP API — authorization is resolved from the session.
+  // Admin-only management routes above remain available to the administrator.
+  // ==========================================================================
+
+  app.get('/api/workshop/exams', async (_req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const exams = await getExamRepository().list('exam_masters');
+      const visible = exams.filter(exam =>
+        (exam.assessmentStage === 'test' || exam.assessmentStage === 'final_exam') &&
+        canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)
+      );
+      visible.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
+      res.json({ exams: visible.map(exam => projectExamWorkshopMaster(exam, context.actor.role === 'admin')) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/workshop/exams/:id', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/workshop/exams', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const stage = req.body?.definition?.assessmentStage;
+      if (stage !== 'test' && stage !== 'final_exam') {
+        res.status(400).json({ error: 'Die Prüfungsart ist ungültig.' });
+        return;
+      }
+      if (!canAccessExamWorkshopExam(context.actor, stage, 'create')) {
+        res.status(403).json({ error: 'Du darfst in diesem Bereich keine Prüfungen erstellen.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await createExamDraft(
+        getExamRepository(),
+        newId('exam'),
+        context.account.uid,
+        req.body.definition
+      );
+      recordExamWorkshopAudit(context.account.uid, 'Prüfungsentwurf erstellt', String(exam.id), 'Neuer Entwurf angelegt.');
+      res.status(201).json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  app.put('/api/workshop/exams/:id', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const existing = await getExamRepository().get('exam_masters', req.params.id);
+      if (!existing) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (existing.assessmentStage !== 'test' && existing.assessmentStage !== 'final_exam') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      const isOwnUnpublishedDraft =
+        existing.status === 'draft' &&
+        !existing.currentPublishedVersionId &&
+        existing.authorUid === context.account.uid;
+      const action = isOwnUnpublishedDraft ? 'edit' : 'update_existing';
+      if (!canAccessExamWorkshopExam(context.actor, existing.assessmentStage, action, existing.id)) {
+        res.status(403).json({ error: 'Du darfst diese bestehende Prüfung nicht bearbeiten.' });
+        return;
+      }
+      const expectedRevision = req.body?.expectedRevision;
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+        res.status(400).json({ error: 'Die Prüfungsrevision fehlt oder ist ungültig. Bitte lade die Prüfung erneut.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await updateExamDraft(
+        getExamRepository(),
+        req.params.id,
+        context.account.uid,
+        req.body?.definition,
+        undefined,
+        expectedRevision,
+        context.actor.role !== 'admin'
+      );
+      await refreshPendingExamPublicationRequest(getExamRepository(), req.params.id);
+      recordExamWorkshopAudit(context.account.uid, 'Prüfung geändert', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, `Arbeitsrevision ${exam.workingRevision} gespeichert.`);
+      res.json({ exam: projectExamWorkshopMaster(exam, context.actor.role === 'admin') });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_MASTER_ARCHIVED') {
+        res.status(409).json({ error: 'Archivierte Prüfungen können nicht bearbeitet werden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_WORKING_REVISION_CONFLICT') {
+        res.status(409).json({ error: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version und übertrage deine Änderungen erneut.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_ASSESSMENT_STAGE_IMMUTABLE') {
+        res.status(409).json({ error: 'Die Prüfungsart kann nach dem Erstellen nicht mehr geändert werden.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  function sendExamWorkshopGovernanceError(error: unknown, res: express.Response, next: express.NextFunction) {
+    const code = error instanceof Error ? error.message : '';
+    const responses: Record<string, { status: number; message: string }> = {
+      EXAM_DOCUMENT_NOT_FOUND: { status: 404, message: 'Prüfung nicht gefunden.' },
+      EXAM_MASTER_ARCHIVED: { status: 409, message: 'Archivierte Prüfungen können nicht bearbeitet werden.' },
+      EXAM_WORKING_REVISION_CONFLICT: { status: 409, message: 'Die Prüfung wurde zwischenzeitlich geändert. Bitte lade die aktuelle Version neu.' },
+      EXAM_PUBLICATION_REQUEST_PENDING: { status: 409, message: 'Für diese Prüfung liegt bereits ein offener Freigabeantrag vor.' },
+      EXAM_PUBLICATION_REQUEST_NOT_FOUND: { status: 404, message: 'Freigabeantrag nicht gefunden.' },
+      EXAM_PUBLICATION_REQUEST_NOT_PENDING: { status: 409, message: 'Dieser Freigabeantrag ist nicht mehr offen.' },
+      EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT: { status: 409, message: 'Der Freigabeantrag bezieht sich nicht mehr auf den aktuellen Prüfungsstand.' },
+      EXAM_PUBLICATION_REQUEST_DUPLICATE_PENDING: { status: 409, message: 'Für diese Prüfung existieren mehrere offene Freigabeanträge.' },
+      EXAM_COMMENT_INVALID: { status: 400, message: 'Der Kommentar ist ungültig oder zu lang.' },
+      EXAM_ASSESSMENT_STAGE_INVALID: { status: 400, message: 'Die Prüfungsart ist ungültig.' },
+      EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE: { status: 409, message: 'Historische interaktive Prüfungen können nicht über die neue Werkstatt veröffentlicht werden.' },
+      EXAM_VERSION_SEQUENCE_INVALID: { status: 409, message: 'Die Prüfungsversion konnte wegen eines Versionskonflikts nicht veröffentlicht werden.' },
+      EXAM_DOCUMENT_ALREADY_EXISTS: { status: 409, message: 'Die Prüfungsversion existiert bereits.' }
+    };
+    const response = responses[code];
+    if (response) {
+      res.status(response.status).json({ error: response.message });
+      return;
+    }
+    if (code === 'EXAM_PUBLICATION_VALIDATION_FAILED') {
+      res.status(422).json({
+        error: 'Die Prüfung ist noch nicht veröffentlichungsfähig.',
+        validation: (error as Error & { validation?: unknown }).validation
+      });
+      return;
+    }
+    next(error);
+  }
+
+  function getExamWorkshopExamAction(
+    context: ReturnType<typeof getExamWorkshopActor>,
+    exam: ExamDocument
+  ): 'edit' | 'update_existing' | null {
+    if (!context) return null;
+    const ownDraft =
+      exam.status === 'draft' &&
+      !exam.currentPublishedVersionId &&
+      exam.authorUid === context.account.uid;
+    return ownDraft ? 'edit' : 'update_existing';
+  }
+
+  app.get('/api/workshop/exams/:id/comments', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor) ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.json({ comments: await listExamComments(getExamRepository(), exam.id) });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/workshop/exams/:id/comments', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor) ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(403).json({ error: 'Du darfst für diese Prüfung keine Kommentare abgeben.' });
+        return;
+      }
+      if (exam.status === 'archived') {
+        res.status(409).json({ error: 'Archivierte Prüfungen sind schreibgeschützt.' });
+        return;
+      }
+      const comment = await addExamComment(
+        getExamRepository(),
+        exam.id,
+        { uid: context.account.uid, displayName: context.account.publicProfile.displayName || context.account.username },
+        req.body?.body
+      );
+      const dbState = loadDatabase();
+      const author = dbState.accounts.find(account => account.uid === context.account.uid);
+      if (author) {
+        appendAuditLog(dbState, author, 'EXAM_WORKSHOP', 'Kommentar zur Prüfung erstellt', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, 'Kommentar im Prüfungsverlauf erstellt.');
+        saveDatabase(dbState);
+      }
+      res.status(201).json({ comment });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/workshop/exams/:id/publication-request', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!context || !exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !hasExamWorkshopAccess(context.actor)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      const action = getExamWorkshopExamAction(context, exam);
+      if (!action || !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, action, exam.id)) {
+        res.status(403).json({ error: 'Du darfst diese Prüfung nicht zur Veröffentlichung einreichen.' });
+        return;
+      }
+      const expectedRevision = req.body?.expectedRevision;
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+        res.status(400).json({ error: 'Die Prüfungsrevision fehlt oder ist ungültig. Bitte lade die Prüfung erneut.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const requiresApproval = examWorkshopPublicationRequiresApproval(
+        context.actor,
+        exam.assessmentStage,
+        Boolean(exam.currentPublishedVersionId)
+      );
+      if (requiresApproval) {
+        const request = await submitExamPublicationRequest(
+          getExamRepository(),
+          exam.id,
+          { uid: context.account.uid, displayName: context.account.publicProfile.displayName || context.account.username },
+          expectedRevision
+        );
+        recordExamWorkshopAudit(context.account.uid, 'Veröffentlichungsantrag eingereicht', `${exam.id} — ${exam.title || 'Unbenannte Prüfung'}`, `Revision ${request.submittedRevision}; Antrag ${request.id}.`);
+        res.status(202).json({ requiresApproval: true, request });
+        return;
+      }
+      const result = await publishExamDraft(
+        getExamRepository(), exam.id, context.account.uid, new Date().toISOString(), undefined, expectedRevision
+      );
+      recordExamWorkshopAudit(context.account.uid, 'Prüfung veröffentlicht', `${result.master.id} — ${(result.master as ExamDocument).title || 'Unbenannte Prüfung'}`, `Version ${result.version.versionNumber} veröffentlicht.`);
+      res.json(context.actor.role === 'admin'
+        ? { requiresApproval: false, ...result }
+        : {
+            requiresApproval: false,
+            master: projectExamWorkshopMaster(result.master, false),
+            version: {
+              id: result.version.id,
+              examId: result.version.examId,
+              versionNumber: result.version.versionNumber,
+              publishedAtIso: result.version.publishedAtIso
+            }
+          });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.get('/api/admin/exam-workshop/publication-requests', async (_req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      if (!getExamWorkshopAdmin(res)) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge einsehen.' });
+        return;
+      }
+      const requests = await getExamRepository().list<ExamPublicationRequestDocument>('exam_publication_requests', { limit: 500 });
+      requests.sort((a, b) => b.createdIso.localeCompare(a.createdIso));
+      res.json({ requests });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.post('/api/admin/exam-workshop/publication-requests/:id/approve', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const reviewer = getExamWorkshopAdmin(res);
+      if (!reviewer) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge genehmigen.' });
+        return;
+      }
+      const request = await getExamRepository().get('exam_publication_requests', req.params.id) as ExamPublicationRequestDocument | null;
+      if (!request) {
+        res.status(404).json({ error: 'Freigabeantrag nicht gefunden.' });
+        return;
+      }
+      const result = await publishExamDraft(
+        getExamRepository(),
+        request.examId,
+        reviewer.uid,
+        new Date().toISOString(),
+        {
+          requestId: request.id,
+          reviewerName: reviewer.publicProfile.displayName,
+          reviewComment: typeof req.body?.reviewComment === 'string' ? req.body.reviewComment : ''
+        }
+      );
+      recordExamWorkshopAudit(reviewer.uid, 'Veröffentlichung genehmigt', `${request.examId} — ${(result.master as ExamDocument).title || 'Unbenannte Prüfung'}`, `Antrag ${request.id}; Version ${result.version.versionNumber}.`);
+      res.json({ request: await getExamRepository().get('exam_publication_requests', request.id), ...result });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
+    }
+  });
+
+  app.put('/api/admin/exam-workshop/publication-requests/:id/decision', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const reviewer = getExamWorkshopAdmin(res);
+      if (!reviewer) {
+        res.status(403).json({ error: 'Nur der Administrator darf Freigabeanträge entscheiden.' });
+        return;
+      }
+      const decision = req.body?.decision;
+      if (decision !== 'returned' && decision !== 'rejected' && decision !== 'archived') {
+        res.status(400).json({ error: 'Die Entscheidung ist ungültig.' });
+        return;
+      }
+      if (typeof req.body?.reviewComment !== 'string' || req.body.reviewComment.trim().length < 3 || req.body.reviewComment.length > 1000) {
+        res.status(400).json({ error: 'Bitte gib eine nachvollziehbare Begründung mit höchstens 1.000 Zeichen ein.' });
+        return;
+      }
+      const request = await updateExamPublicationRequestDecision(
+        getExamRepository(),
+        req.params.id,
+        { uid: reviewer.uid, displayName: reviewer.publicProfile.displayName },
+        decision,
+        typeof req.body?.reviewComment === 'string' ? req.body.reviewComment : ''
+      );
+      recordExamWorkshopAudit(reviewer.uid, decision === 'returned' ? 'Prüfung zur Überarbeitung zurückgegeben' : decision === 'rejected' ? 'Veröffentlichung abgelehnt' : 'Prüfung archiviert', request.examId, `Antrag ${request.id}; ${request.reviewComment || 'Begründung nicht angegeben.'}`);
+      res.json({ request });
+    } catch (error) {
+      sendExamWorkshopGovernanceError(error, res, next);
     }
   });
 
@@ -1766,9 +2226,8 @@ async function startServer() {
     }));
 
     // Filter out final_exam for trainees on the backend as well
-    const visibleExams = isTrainee
-      ? dbState.exams.filter(ex => ex.assessmentStage !== 'final_exam')
-      : dbState.exams;
+    const visibleExams = dbState.exams.filter(exam => exam.status !== 'archived' &&
+      (!isTrainee || exam.assessmentStage !== 'final_exam'));
 
     const canSeeAllProgress =
       isAdmin ||
@@ -2126,6 +2585,17 @@ async function startServer() {
         `Rolle: ${nextRole.toUpperCase()} · Status: ${target.publicProfile.whitelistStatus} · Lehrgangs-Freigaben: ${
           nextPerms.assignedCourseCodes.join(', ') || 'Keine'
         }`
+      );
+    }
+
+    if (JSON.stringify(previousPerms.examWorkshop) !== JSON.stringify(nextPerms.examWorkshop)) {
+      appendAuditLog(
+        dbState,
+        caller,
+        'EXAM_WORKSHOP',
+        'Berechtigungen der Prüfungswerkstatt geändert',
+        `${target.publicProfile.displayName} (${target.publicProfile.badgeNumber})`,
+        `Werkstattzugang: ${nextPerms.examWorkshop?.hasAccess ? 'erteilt' : 'nicht erteilt'} · Zugangsbeantragung: ${nextPerms.examWorkshop?.canRequestAccess ? 'erlaubt' : 'nicht erlaubt'} · Rechte für Tests und Abschlussprüfungen wurden aktualisiert.`
       );
     }
 
@@ -2550,17 +3020,19 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetCode = String(moduleCode || 'TEST-01').trim();
-    if (!caller || !canActorEditCourseCode(caller, targetCode)) {
+    const stage = assessmentStage === 'final_exam' ? 'final_exam' : assessmentStage === 'test' ? 'test' : null;
+    const actor = caller ? resolveExamWorkshopActor(caller) : null;
+    if (!caller || !actor || !stage ||
+        !canAccessExamWorkshopExam(actor, stage, 'create') ||
+        (actor.role !== 'admin' && examWorkshopPublicationRequiresApproval(actor, stage, false)) ||
+        !canActorEditCourseCode(caller, targetCode)) {
       res.status(403).json({
-        error:
-          'Zugriff verweigert. Nur Admin, Colonel oder für diesen Lehrgangs-Code freigeschaltete Ausbilder dürfen Prüfungen anlegen.'
+        error: 'Zugriff verweigert. Die Prüfungswerkstatt-Berechtigung und die Veröffentlichungsregel erlauben diese Legacy-Anlage nicht.'
       });
       return;
     }
-
-    const stage = assessmentStage === 'final_exam' ? 'final_exam' : 'test';
     const newExam: AcademyExamDoc = {
       id: newId('exam'),
       title: String(title).trim(),
@@ -2588,34 +3060,41 @@ async function startServer() {
       `${newExam.moduleCode} — ${newExam.title}`,
       `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
     );
+    appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung angelegt', `${newExam.moduleCode} — ${newExam.title}`, `Prüfungsbereich: ${stage}.`);
     saveDatabase(dbState);
     res.json({ exam: newExam });
   });
 
   app.delete('/api/academy/exams/:examId', (req, res) => {
-    const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetExam = dbState.exams.find(e => e.id === req.params.examId);
     if (!targetExam) {
       res.status(404).json({ error: 'Prüfung nicht gefunden.' });
       return;
     }
-    if (!caller || !canActorEditCourseCode(caller, targetExam.moduleCode)) {
-      res.status(403).json({ error: 'Zugriff verweigert.' });
+    if (!caller || caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Nur der Administrator darf ältere Prüfungen archivieren.' });
       return;
     }
-    dbState.exams = dbState.exams.filter(e => e.id !== req.params.examId);
+    const reason = req.body?.reason;
+    if (typeof reason !== 'string' || reason.trim().length < 3 || reason.length > 1000) {
+      res.status(400).json({ error: 'Bitte gib einen Archivierungsgrund mit höchstens 1.000 Zeichen ein.' });
+      return;
+    }
+    const archiveTime = new Date().toISOString();
+    Object.assign(targetExam, { status: 'archived', archivedAtIso: archiveTime, archivedByUid: caller.uid, archivedReason: reason.trim(), updatedIso: archiveTime });
     appendAuditLog(
       dbState,
       caller,
       'ACADEMY_DOC',
-      'Prüfung / Test gelöscht',
+      'Ältere Prüfung archiviert',
       `${targetExam.moduleCode} — ${targetExam.title}`,
-      `Prüfung wurde durch ${caller.publicProfile.displayName} entfernt.`
+      reason.trim()
     );
+    appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung archiviert', `${targetExam.moduleCode} — ${targetExam.title}`, reason.trim());
     saveDatabase(dbState);
-    res.json({ deleted: true });
+    res.json({ archived: true });
   });
 
   // 9b. GRANULAR INSTRUCTOR COURSE GRADING (/api/academy/instructor-grade)
@@ -2633,7 +3112,7 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const instructor = dbState.accounts.find(a => a.uid === instructorUid);
+    const instructor = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const student = dbState.accounts.find(a => a.uid === targetUserUid);
 
     if (!instructor || !student) {
@@ -2650,6 +3129,16 @@ async function startServer() {
       });
       return;
     }
+    if (targetType !== 'module') {
+      res.status(400).json({ error: 'Über diesen älteren Ausbilderpfad dürfen nur Lehrgangsfortschritte, keine Prüfungsresultate bewertet werden.' });
+      return;
+    }
+    const numericScore = Number(scorePercent);
+    if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 100 ||
+        (status !== 'passed' && status !== 'failed' && status !== 'completed')) {
+      res.status(400).json({ error: 'Bewertungsstatus oder Punktzahl ist ungültig.' });
+      return;
+    }
 
     const nowIso = new Date().toISOString();
     const targetId = `crs_${normalizedCode}_${targetUserUid}`;
@@ -2662,11 +3151,11 @@ async function startServer() {
       userId: student.uid,
       userName: student.publicProfile.displayName,
       targetId,
-      targetType: targetType || 'test',
+      targetType: 'module',
       targetTitle: String(targetTitle || `Lehrgang ${normalizedCode}`).trim(),
       courseCode: normalizedCode,
       status: status || 'passed',
-      scorePercent: Number(scorePercent ?? 100),
+      scorePercent: Math.round(numericScore),
       attempts: existingIdx !== -1 ? dbState.progress[existingIdx].attempts + 1 : 1,
       evaluatedByName: `${instructor.publicProfile.displayName} (${instructor.publicProfile.badgeNumber})`,
       instructorFeedback: String(instructorFeedback || '').trim(),
@@ -3242,7 +3731,9 @@ jobs:
         exam_versions: examSnapshot.collections.exam_versions.length,
         exam_attempts: examSnapshot.collections.exam_attempts.length,
         exam_progress: examSnapshot.collections.exam_progress.length,
-        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length,
+        exam_comments: examSnapshot.collections.exam_comments.length,
+        exam_publication_requests: examSnapshot.collections.exam_publication_requests.length
       };
 
       const nowIso = new Date().toISOString();
@@ -3278,7 +3769,9 @@ jobs:
           examVersionsCount: examSummary.exam_versions,
           examAttemptsCount: examSummary.exam_attempts,
           examProgressCount: examSummary.exam_progress,
-          examLegacyVerificationsCount: examSummary.exam_legacy_verifications
+          examLegacyVerificationsCount: examSummary.exam_legacy_verifications,
+          examCommentsCount: examSummary.exam_comments,
+          examPublicationRequestsCount: examSummary.exam_publication_requests
         },
         examRepository: {
           ...examSnapshot,
@@ -3393,11 +3886,16 @@ jobs:
         exam_versions: examSnapshot.collections.exam_versions.length,
         exam_attempts: examSnapshot.collections.exam_attempts.length,
         exam_progress: examSnapshot.collections.exam_progress.length,
-        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length,
+        exam_comments: examSnapshot.collections.exam_comments.length,
+        exam_publication_requests: examSnapshot.collections.exam_publication_requests.length
       };
       if (
         !examCounts ||
-        Object.entries(expectedExamCounts).some(([key, count]) => examCounts[key as keyof typeof expectedExamCounts] !== count)
+        Object.entries(expectedExamCounts).some(([key, count]) => {
+          const actual = examCounts[key as keyof typeof expectedExamCounts];
+          return actual !== undefined ? actual !== count : count !== 0;
+        })
       ) {
         throw new Error('EXAM_BACKUP_SUMMARY_MISMATCH');
       }
@@ -3408,12 +3906,16 @@ jobs:
         examVersionsCount: expectedExamCounts.exam_versions,
         examAttemptsCount: expectedExamCounts.exam_attempts,
         examProgressCount: expectedExamCounts.exam_progress,
-        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications
+        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications,
+        examCommentsCount: expectedExamCounts.exam_comments,
+        examPublicationRequestsCount: expectedExamCounts.exam_publication_requests
       };
       if (
         !summary ||
         Object.entries(expectedTopExamCounts).some(([key, count]) =>
-          summary[key as keyof typeof expectedTopExamCounts] !== count
+          summary[key as keyof typeof expectedTopExamCounts] !== undefined
+            ? summary[key as keyof typeof expectedTopExamCounts] !== count
+            : count !== 0
         )
       ) {
         throw new Error('PORTAL_BACKUP_EXAM_SUMMARY_MISMATCH');
@@ -3539,7 +4041,9 @@ jobs:
           examVersionsCount: examSnapshot.collections.exam_versions.length,
           examAttemptsCount: examSnapshot.collections.exam_attempts.length,
           examProgressCount: examSnapshot.collections.exam_progress.length,
-          examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length
+          examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length,
+          examCommentsCount: examSnapshot.collections.exam_comments.length,
+          examPublicationRequestsCount: examSnapshot.collections.exam_publication_requests.length
         }
       });
     } catch (error) {
@@ -3858,7 +4362,6 @@ jobs:
   // ==========================================================================
   app.post('/api/requests', (req, res) => {
     const {
-      requesterUid,
       category,
       title,
       requestedRole,
@@ -3868,10 +4371,40 @@ jobs:
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === requesterUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const caller = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
+    }
+
+    const allowedCategories: RequestCategory[] = ['rank_change', 'clearance', 'award', 'transfer', 'loa', 'exam_workshop_access'];
+    if (!allowedCategories.includes(category as RequestCategory)) {
+      res.status(400).json({ error: 'Die Antragskategorie ist ungültig.' });
+      return;
+    }
+    if (category === 'exam_workshop_access') {
+      const actor = resolveExamWorkshopActor(caller);
+      if (!canRequestExamWorkshopAccess(actor)) {
+        res.status(403).json({ error: 'Du darfst derzeit keinen Zugang zur Prüfungswerkstatt beantragen.' });
+        return;
+      }
+      if (hasExamWorkshopAccess(actor)) {
+        res.status(409).json({ error: 'Du besitzt bereits Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const areas = req.body?.examWorkshopAreas;
+      if (!Array.isArray(areas) || areas.length < 1 || areas.length > 2 ||
+          areas.some((area: unknown) => area !== 'tests' && area !== 'final_exams') || new Set(areas).size !== areas.length) {
+        res.status(400).json({ error: 'Bitte wähle mindestens einen gültigen Prüfungsbereich aus.' });
+        return;
+      }
+      if ((dbState.requests || []).some(item =>
+        item.requesterUid === caller.uid && item.category === 'exam_workshop_access' && item.status === 'pending'
+      )) {
+        res.status(409).json({ error: 'Für dein Konto liegt bereits ein offener Zugangsantrag vor.' });
+        return;
+      }
     }
 
     if (!title || !justification) {
@@ -3889,6 +4422,7 @@ jobs:
       category: (category as RequestCategory) || 'rank_change',
       title: String(title).trim().slice(0, 150),
       requestedRole: requestedRole ? (requestedRole as OfficerRole) : undefined,
+      ...(category === 'exam_workshop_access' ? { examWorkshopAreas: [...req.body.examWorkshopAreas] } : {}),
       targetDetail: String(targetDetail || '').trim().slice(0, 200),
       justification: String(justification).trim().slice(0, 4000),
       priority: priority === 'high' ? 'high' : 'normal',
@@ -3910,6 +4444,10 @@ jobs:
       newReq.title,
       `Antragsteller: ${caller.publicProfile.displayName} (${caller.publicProfile.badgeNumber})`
     );
+    if (newReq.category === 'exam_workshop_access') {
+      appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Zugriff auf Prüfungswerkstatt beantragt', newReq.title,
+        `Beantragte Bereiche: ${(newReq.examWorkshopAreas || []).join(', ')}.`);
+    }
 
     // Notify Admin immediately in real-time when a new request is submitted
     const adminAcc = dbState.accounts.find(a => a.publicProfile.role === 'admin');
@@ -3930,15 +4468,15 @@ jobs:
 
   app.put('/api/requests/:id/review', (req, res) => {
     const { id } = req.params;
-    const { reviewerUid, status, reviewerComment, applyRankChange } = req.body as {
-      reviewerUid?: string;
+    const { status, reviewerComment, applyRankChange } = req.body as {
       status?: RequestStatus;
       reviewerComment?: string;
       applyRankChange?: boolean;
     };
 
     const dbState = loadDatabase();
-    const reviewer = dbState.accounts.find(a => a.uid === reviewerUid);
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    const reviewer = sessionUid ? dbState.accounts.find(a => a.uid === sessionUid) : undefined;
     const reviewerPerms =
       reviewer?.publicProfile.granularPermissions ||
       (reviewer ? getDefaultGranularPermissions(reviewer.publicProfile.role) : undefined);
@@ -3962,6 +4500,15 @@ jobs:
       return;
     }
 
+    if (targetReq.category === 'exam_workshop_access' && reviewer.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Zugangsanträge für die Prüfungswerkstatt dürfen ausschließlich vom Admin entschieden werden.' });
+      return;
+    }
+    if (status !== 'approved' && status !== 'rejected') {
+      res.status(400).json({ error: 'Der Antragsstatus ist ungültig.' });
+      return;
+    }
+
     // Strict Enforcement: Rank changes can ONLY be approved/applied by Admin!
     if (targetReq.category === 'rank_change' && reviewer.publicProfile.role !== 'admin') {
       res.status(403).json({
@@ -3971,12 +4518,58 @@ jobs:
       return;
     }
 
+    let workshopGrantAreas: Array<'tests' | 'final_exams'> | null = null;
+    if (targetReq.category === 'exam_workshop_access' && status === 'approved') {
+      const requestedAreas = Array.isArray(targetReq.examWorkshopAreas) ? targetReq.examWorkshopAreas : [];
+      const rawGrantAreas = (req.body as { examWorkshopAreas?: unknown }).examWorkshopAreas;
+      if (!Array.isArray(rawGrantAreas) || rawGrantAreas.length < 1 || rawGrantAreas.some((area: unknown) =>
+        (area !== 'tests' && area !== 'final_exams') || !requestedAreas.includes(area as 'tests' | 'final_exams')
+      ) || new Set(rawGrantAreas).size !== rawGrantAreas.length) {
+        res.status(400).json({ error: 'Die Freigabe muss auf gültige, beantragte Prüfungsbereiche begrenzt sein.' });
+        return;
+      }
+      if (!dbState.accounts.some(account => account.uid === targetReq.requesterUid)) {
+        res.status(409).json({ error: 'Das antragstellende Konto existiert nicht mehr.' });
+        return;
+      }
+      workshopGrantAreas = rawGrantAreas as Array<'tests' | 'final_exams'>;
+    }
+
     const nowIso = new Date().toISOString();
     targetReq.status = status || 'approved';
     targetReq.reviewerUid = reviewer.uid;
     targetReq.reviewerName = reviewer.publicProfile.displayName;
     targetReq.reviewerComment = String(reviewerComment || '').trim().slice(0, 1500);
     targetReq.updatedIso = nowIso;
+
+    let accessGrantedNote = '';
+    if (targetReq.category === 'exam_workshop_access' && targetReq.status === 'approved') {
+      const applicant = dbState.accounts.find(account => account.uid === targetReq.requesterUid);
+      if (!applicant) {
+        res.status(409).json({ error: 'Das antragstellende Konto existiert nicht mehr.' });
+        return;
+      }
+      const currentPermissions = normalizeGranularPermissions(
+        applicant.publicProfile.role,
+        applicant.publicProfile.granularPermissions
+      );
+      const grantAreas = workshopGrantAreas || [];
+      const previousWorkshop = currentPermissions.examWorkshop;
+      const grantedCategory = { canView: true, canCreate: true, canEdit: true, canUpdateExisting: true };
+      applicant.publicProfile.granularPermissions = {
+        ...currentPermissions,
+        examWorkshop: normalizeExamWorkshopPermissions(applicant.publicProfile.role, {
+          ...previousWorkshop,
+          hasAccess: true,
+          ...(grantAreas.includes('tests') ? { tests: grantedCategory } : {}),
+          ...(grantAreas.includes('final_exams') ? { finalExams: grantedCategory } : {})
+        })
+      };
+      applicant.publicProfile.updatedIso = nowIso;
+      accessGrantedNote = ' · Zugang zur Prüfungswerkstatt wurde erteilt';
+      appendAuditLog(dbState, reviewer, 'EXAM_WORKSHOP', 'Zugriff auf Prüfungswerkstatt genehmigt', applicant.publicProfile.displayName,
+        `Freigegebene Bereiche: ${grantAreas.join(', ')}. canGradeAssignedCourses blieb unverändert.`);
+    }
 
     let rankPromotedNote = '';
     // If Admin approves a rank_change request and applyRankChange is true, automatically promote the account!
@@ -4010,8 +4603,12 @@ jobs:
       `${targetReq.title} — ${targetReq.requesterName}`,
       `Entscheidung durch ${reviewer.publicProfile.displayName}: ${
         targetReq.reviewerComment || 'Keine Anmerkung'
-      }${rankPromotedNote}`
+      }${rankPromotedNote}${accessGrantedNote}`
     );
+    if (targetReq.category === 'exam_workshop_access' && targetReq.status === 'rejected') {
+      appendAuditLog(dbState, reviewer, 'EXAM_WORKSHOP', 'Zugangsantrag abgelehnt', `${targetReq.title} — ${targetReq.requesterName}`,
+        targetReq.reviewerComment || 'Keine Begründung angegeben.');
+    }
 
     pushNotification(
       dbState,
@@ -4020,7 +4617,7 @@ jobs:
       `Dein Antrag wurde ${targetReq.status === 'approved' ? 'GENEHMIGT' : 'ABGELEHNT'}`,
       `Antrag "${targetReq.title}" wurde von ${reviewer.publicProfile.displayName} bearbeitet.${
         targetReq.reviewerComment ? ` Vermerk: "${targetReq.reviewerComment}"` : ''
-      }${rankPromotedNote}`,
+      }${rankPromotedNote}${accessGrantedNote}`,
       'requests'
     );
 

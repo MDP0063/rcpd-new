@@ -15,7 +15,9 @@ function emptySnapshot(): ExamRepositorySnapshot {
       exam_versions: [],
       exam_attempts: [],
       exam_progress: [],
-      exam_legacy_verifications: []
+      exam_legacy_verifications: [],
+      exam_comments: [],
+      exam_publication_requests: []
     }
   };
 }

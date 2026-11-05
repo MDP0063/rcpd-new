@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { checkSnapshotSize, validateExamForPublication } from './examValidate.ts';
@@ -21,7 +22,7 @@ export interface ExamWorkshopDraftInput {
 const QUESTION_KEYS = new Set([
   'id', 'type', 'question', 'pointsMilli', 'explanation', 'imageUrl',
   'options', 'correctOptionId', 'correctOptionIds', 'correctBoolean',
-  'matchingPairs', 'gradingRubric', 'maxAnswerLength', 'legacyCorrectIndex'
+  'matchingPairs', 'matchingTargets', 'gradingRubric', 'maxAnswerLength', 'legacyCorrectIndex'
 ]);
 
 function invalid(path: string): never {
@@ -33,6 +34,33 @@ function boundedInteger(value: unknown, min: number, max: number, path: string):
     return invalid(path);
   }
   return value;
+}
+
+function validateMatchingIntegrity(questions: ExamQuestion[]): void {
+  for (const [index, rawQuestion] of (questions as unknown as Array<Record<string, unknown>>).entries()) {
+    if (rawQuestion.type !== 'matching') continue;
+    const pairs = rawQuestion.matchingPairs;
+    if (!Array.isArray(pairs) || pairs.length < 1 || pairs.length > EXAM_LIMITS.maxMatchingPairs) {
+      invalid(`questions[${index}].matchingPairs`);
+    }
+    const pairIds = new Set<string>();
+    const targetIds = new Set<string>();
+    for (const [pairIndex, rawPair] of pairs.entries()) {
+      if (!isPlainObject(rawPair) || !isValidId(rawPair.id) || !isValidId(rawPair.targetId)) {
+        invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      }
+      if (pairIds.has(rawPair.id) || targetIds.has(rawPair.targetId) || pairIds.has(rawPair.targetId)) {
+        invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      }
+      if (
+        typeof rawPair.prompt !== 'string' || !rawPair.prompt.trim() || rawPair.prompt.length > EXAM_LIMITS.maxOptionLength ||
+        typeof rawPair.targetText !== 'string' || !rawPair.targetText.trim() || rawPair.targetText.length > EXAM_LIMITS.maxOptionLength
+      ) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+      pairIds.add(rawPair.id);
+      targetIds.add(rawPair.targetId);
+    }
+    if ([...targetIds].some(id => pairIds.has(id))) invalid(`questions[${index}].matchingPairs`);
+  }
 }
 
 /** Validiert und begrenzt den speicherbaren Arbeitsstand, ohne unvollständige Entwürfe zu verbieten. */
@@ -149,10 +177,15 @@ function toMaster(
     examFormat: 'structured_quiz',
     isLegacyFormat: false,
     startable: false,
-    questions: input.questions,
+    questions: input.questions.map(question => {
+      const copy = { ...question } as ExamQuestion & { matchingTargets?: unknown };
+      delete copy.matchingTargets;
+      return copy;
+    }),
     authorUid,
     updatedIso,
-    latestVersionNumber: 0
+    latestVersionNumber: 0,
+    workingRevision: 1
   };
 }
 
@@ -164,6 +197,7 @@ export async function createExamDraft(
   nowIso = new Date().toISOString()
 ) {
   const input = parseExamWorkshopDraft(definition);
+  validateMatchingIntegrity(input.questions);
   const master = toMaster(id, input, authorUid, nowIso);
   await repository.create('exam_masters', id, master);
   return master;
@@ -174,40 +208,212 @@ export async function updateExamDraft(
   id: string,
   editorUid: string,
   definition: unknown,
-  nowIso = new Date().toISOString()
+  nowIso = new Date().toISOString(),
+  expectedRevision?: number,
+  preserveSensitiveFields = false
 ) {
-  const current = await repository.get('exam_masters', id);
-  if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
-  if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
-
   const input = parseExamWorkshopDraft(definition);
-  const next: ExamDocument = {
-    ...current,
-    ...input,
-    title: input.title.trim(),
-    // A published snapshot remains active while the admin edits the next working version.
-    status: current.currentPublishedVersionId ? 'published' : 'draft',
-    examFormat: 'structured_quiz',
-    isLegacyFormat: false,
-    startable: current.currentPublishedVersionId ? current.startable !== false : false,
-    updatedIso: nowIso,
-    lastModifiedByUid: editorUid
+  return repository.runTransaction(async transaction => {
+    const current = await transaction.get('exam_masters', id);
+    if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
+    if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+    if (input.assessmentStage !== current.assessmentStage) {
+      throw new Error('EXAM_ASSESSMENT_STAGE_IMMUTABLE');
+    }
+    const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
+    if (
+      typeof currentRevision !== 'number' ||
+      !Number.isSafeInteger(currentRevision) ||
+      currentRevision < 1 ||
+      !Number.isSafeInteger(currentRevision + 1)
+    ) throw new Error('EXAM_WORKING_REVISION_INVALID');
+    if (expectedRevision !== undefined && expectedRevision !== currentRevision) {
+      throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+    }
+    const existingQuestions = new Map((Array.isArray(current.questions) ? current.questions : [])
+      .filter((question): question is Record<string, unknown> => Boolean(question) && typeof question === 'object')
+      .map(question => [String(question.id || ''), question]));
+    const editedMatchingTargetQuestions = new Set<string>();
+    for (const [index, rawQuestion] of (input.questions as unknown as Array<Record<string, unknown>>).entries()) {
+      if (rawQuestion.type !== 'matching') continue;
+      const currentQuestion = existingQuestions.get(String(rawQuestion.id || ''));
+      const oldPairs = Array.isArray(currentQuestion?.matchingPairs)
+        ? currentQuestion.matchingPairs as Array<Record<string, unknown>>
+        : [];
+      if (preserveSensitiveFields && currentQuestion && !Array.isArray(rawQuestion.matchingTargets)) {
+        invalid(`questions[${index}].matchingTargets`);
+      }
+      const targetItems = Array.isArray(rawQuestion.matchingTargets)
+        ? rawQuestion.matchingTargets as Array<Record<string, unknown>>
+        : [];
+      const targetTexts = new Map<string, string>();
+      for (const target of targetItems) {
+        if (!isPlainObject(target) || !isValidId(target.id) || typeof target.text !== 'string' || !target.text.trim() || target.text.length > EXAM_LIMITS.maxOptionLength || targetTexts.has(target.id)) {
+          invalid(`questions[${index}].matchingTargets`);
+        }
+        targetTexts.set(target.id, target.text);
+      }
+      if (!Array.isArray(rawQuestion.matchingPairs)) invalid(`questions[${index}].matchingPairs`);
+      if (preserveSensitiveFields && currentQuestion) {
+        if (oldPairs.some(pair => !isPlainObject(pair) || !isValidId(pair.id) || !isValidId(pair.targetId))) {
+          invalid(`questions[${index}].matchingPairs`);
+        }
+        const oldPairsById = new Map(oldPairs.map(pair => [String(pair.id || ''), pair]));
+        const oldTargetIds = new Set(oldPairs.map(pair => {
+          if (!isValidId(pair.id) || !isValidId(pair.targetId)) invalid(`questions[${index}].matchingPairs`);
+          return pair.targetId;
+        }));
+        const submittedPairs = rawQuestion.matchingPairs as Array<Record<string, unknown>>;
+        const nextPairs: Array<Record<string, unknown>> = submittedPairs.map((pair, pairIndex) => {
+          if (!isPlainObject(pair) || !isValidId(pair.id) || typeof pair.prompt !== 'string') invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const old = oldPairsById.get(pair.id);
+          const targetId = old ? old.targetId : pair.targetId;
+          if (!isValidId(targetId)) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const targetText = targetTexts.get(targetId);
+          if (typeof targetText !== 'string') invalid(`questions[${index}].matchingTargets`);
+          return { ...pair, targetId, targetText };
+        });
+        const newTargetIds = nextPairs
+          .filter(pair => !oldPairsById.has(String(pair.id)))
+          .map(pair => pair.targetId as string);
+        const expectedTargetIds = new Set([...oldTargetIds, ...newTargetIds]);
+        if (expectedTargetIds.size !== oldTargetIds.size + newTargetIds.length || targetTexts.size !== expectedTargetIds.size || [...expectedTargetIds].some(targetId => !targetTexts.has(targetId))) {
+          invalid(`questions[${index}].matchingTargets`);
+        }
+        if (newTargetIds.some(targetId => oldTargetIds.has(targetId))) invalid(`questions[${index}].matchingPairs`);
+        const nextByPairId = new Map(nextPairs.map(pair => [String(pair.id), pair]));
+        const retainedPairsInMasterOrder = oldPairs.flatMap(pair => {
+          const nextPair = nextByPairId.get(String(pair.id));
+          return nextPair ? [nextPair] : [];
+        });
+        const addedPairs = nextPairs.filter(pair => !oldPairsById.has(String(pair.id)));
+        rawQuestion.matchingPairs = [...retainedPairsInMasterOrder, ...addedPairs];
+        editedMatchingTargetQuestions.add(String(rawQuestion.id || ''));
+      } else if (Array.isArray(rawQuestion.matchingTargets)) {
+        const targetsById = targetTexts;
+        const submittedPairs = rawQuestion.matchingPairs as Array<Record<string, unknown>>;
+        rawQuestion.matchingPairs = submittedPairs.map((pair, pairIndex) => {
+          if (!isPlainObject(pair) || !isValidId(pair.targetId)) invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          const targetText = targetsById.get(pair.targetId);
+          if (typeof pair.prompt !== 'string' || typeof targetText !== 'string') invalid(`questions[${index}].matchingPairs[${pairIndex}]`);
+          return { ...pair, targetText };
+        });
+        if (targetsById.size !== submittedPairs.length) invalid(`questions[${index}].matchingTargets`);
+      }
+    }
+    if (preserveSensitiveFields) {
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) {
+        const previous = existingQuestions.get(String(question.id || ''));
+        if (!previous) continue;
+        for (const key of ['correctOptionId', 'correctOptionIds', 'correctBoolean', 'explanation', 'gradingRubric']) {
+          if (Object.prototype.hasOwnProperty.call(previous, key)) question[key] = structuredClone(previous[key]);
+        }
+        if (Array.isArray(question.matchingPairs) && Array.isArray(previous.matchingPairs)) {
+          const oldPairs = new Map((previous.matchingPairs as Array<Record<string, unknown>>).map(pair => [String(pair.id || ''), pair]));
+          question.matchingPairs = (question.matchingPairs as Array<Record<string, unknown>>).map(pair => {
+            const old = oldPairs.get(String(pair.id || ''));
+            if (!old || !Object.prototype.hasOwnProperty.call(old, 'targetId')) return pair;
+            return {
+              ...pair,
+              targetId: old.targetId,
+              targetText: editedMatchingTargetQuestions.has(String(question.id || '')) && typeof pair.targetText === 'string'
+                ? pair.targetText
+                : old.targetText
+            };
+          });
+        }
+      }
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) delete question.matchingTargets;
+    } else {
+      for (const question of input.questions as unknown as Array<Record<string, unknown>>) delete question.matchingTargets;
+    }
+    validateMatchingIntegrity(input.questions);
+    const next: ExamDocument = {
+      ...current,
+      ...input,
+      workingRevision: currentRevision + 1,
+      title: input.title.trim(),
+      status: current.currentPublishedVersionId ? 'published' : 'draft',
+      examFormat: 'structured_quiz',
+      isLegacyFormat: false,
+      startable: current.currentPublishedVersionId ? current.startable !== false : false,
+      updatedIso: nowIso,
+      lastModifiedByUid: editorUid
+    };
+    await transaction.update('exam_masters', id, next);
+    return next;
+  });
+}
+
+export function getExamWorkshopDefinitionHash(master: ExamDocument): string {
+  const definition = {
+    title: master.title,
+    moduleCode: master.moduleCode,
+    assignedCourseCodes: master.assignedCourseCodes ?? [],
+    assessmentStage: master.assessmentStage,
+    minClearance: master.minClearance,
+    passingScoreBasisPoints: master.passingScoreBasisPoints,
+    timeLimitMinutes: master.timeLimitMinutes,
+    maxAttempts: master.maxAttempts ?? null,
+    prerequisites: master.prerequisites ?? [],
+    questions: master.questions ?? []
   };
-  await repository.update('exam_masters', id, next);
-  return next;
+  return createHash('sha256').update(JSON.stringify(definition), 'utf8').digest('hex');
 }
 
 export async function publishExamDraft(
   repository: ExamRepository,
   id: string,
   publisherUid: string,
-  nowIso = new Date().toISOString()
+  nowIso = new Date().toISOString(),
+  publicationReview?: { requestId: string; reviewerName: string; reviewComment?: string },
+  expectedRevision?: number
 ) {
   const current = await repository.get('exam_masters', id);
   if (!current) throw new Error('EXAM_DOCUMENT_NOT_FOUND');
   if (current.status === 'archived') throw new Error('EXAM_MASTER_ARCHIVED');
+  const currentRevision = current.workingRevision === undefined ? 1 : current.workingRevision;
+  if (expectedRevision !== undefined && expectedRevision !== currentRevision) {
+    throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+  }
   if (current.examFormat === 'interactive_code' || current.isLegacyFormat === true) {
     throw new Error('EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE');
+  }
+
+  let nextPublicationRequest: ExamDocument | undefined;
+  if (publicationReview) {
+    const request = await repository.get('exam_publication_requests', publicationReview.requestId);
+    const revision = current.workingRevision === undefined ? 1 : current.workingRevision;
+    if (
+      !request ||
+      request.status !== 'pending' ||
+      request.examId !== id ||
+      request.submittedRevision !== revision ||
+      request.submittedHash !== getExamWorkshopDefinitionHash(current)
+    ) throw new Error('EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT');
+    nextPublicationRequest = {
+      ...request,
+      status: 'published',
+      reviewedByUid: publisherUid,
+      reviewedByName: publicationReview.reviewerName.trim().slice(0, 120),
+      reviewedAtIso: nowIso,
+      reviewComment: (publicationReview.reviewComment || '').trim().slice(0, 1000),
+      updatedIso: nowIso
+    };
+  } else {
+    // A direct publication closes any pending review in the same repository transaction.
+    const pending = await repository.list<ExamDocument & { status?: string; examId?: string; submittedRevision?: number }>(
+      'exam_publication_requests',
+      { where: [{ field: 'examId', value: id }, { field: 'status', value: 'pending' }], limit: 2 }
+    );
+    if (pending.length > 1) throw new Error('EXAM_PUBLICATION_REQUEST_DUPLICATE_PENDING');
+    if (pending[0]) {
+      if (pending[0].submittedRevision !== currentRevision) throw new Error('EXAM_PUBLICATION_REQUEST_REVISION_CONFLICT');
+      nextPublicationRequest = {
+        ...pending[0], status: 'published', reviewedByUid: publisherUid,
+        reviewedAtIso: nowIso, reviewComment: 'Der Prüfungsstand wurde direkt veröffentlicht.', updatedIso: nowIso
+      };
+    }
   }
 
   const definition = {
@@ -233,9 +439,7 @@ export async function publishExamDraft(
     typeof latestVersionNumber !== 'number' ||
     !Number.isSafeInteger(latestVersionNumber) ||
     latestVersionNumber < 0
-  ) {
-    throw new Error('EXAM_VERSION_SEQUENCE_INVALID');
-  }
+  ) throw new Error('EXAM_VERSION_SEQUENCE_INVALID');
   const versionNumber = latestVersionNumber + 1;
   if (!Number.isSafeInteger(versionNumber)) throw new Error('EXAM_VERSION_SEQUENCE_INVALID');
 
@@ -259,8 +463,7 @@ export async function publishExamDraft(
     startable: true,
     questionsSnapshot: current.questions ?? []
   };
-  const size = checkSnapshotSize(version);
-  if (!size.ok) throw new Error('EXAM_SNAPSHOT_TOO_LARGE');
+  if (!checkSnapshotSize(version).ok) throw new Error('EXAM_SNAPSHOT_TOO_LARGE');
 
   const nextMaster = {
     ...current,
@@ -274,6 +477,14 @@ export async function publishExamDraft(
     lastPublishedByUid: publisherUid,
     lastPublishedAtIso: nowIso
   };
-  await repository.publishVersion(id, version, nextMaster);
+  if (nextPublicationRequest) nextPublicationRequest.publishedVersionId = version.id;
+  await repository.publishVersion(
+    id,
+    version,
+    nextMaster,
+    nextPublicationRequest
+      ? { id: String(nextPublicationRequest.id), document: nextPublicationRequest }
+      : undefined
+  );
   return { master: nextMaster, version };
 }
