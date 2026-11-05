@@ -41,6 +41,32 @@ export function assertExamDocument(
     throw new Error('EXAM_DOCUMENT_INVALID');
   }
 
+  if (collection === 'exam_comments') {
+    if (
+      typeof document.examId !== 'string' || !document.examId.trim() ||
+      typeof document.authorUid !== 'string' || !document.authorUid.trim() ||
+      typeof document.authorName !== 'string' || document.authorName.length > 120 ||
+      typeof document.body !== 'string' || !document.body.trim() || document.body.length > 4000 ||
+      typeof document.createdIso !== 'string' || Number.isNaN(Date.parse(document.createdIso))
+    ) throw new Error('EXAM_COMMENT_INVALID');
+  }
+
+  if (collection === 'exam_publication_requests') {
+    if (
+      typeof document.examId !== 'string' || !document.examId.trim() ||
+      typeof document.requestedByUid !== 'string' || !document.requestedByUid.trim() ||
+      typeof document.requestedByName !== 'string' || document.requestedByName.length > 120 ||
+      (document.assessmentStage !== 'test' && document.assessmentStage !== 'final_exam') ||
+      (document.requestKind !== 'new' && document.requestKind !== 'update') ||
+      !['pending', 'published', 'returned', 'archived'].includes(String(document.status)) ||
+      typeof document.submittedRevision !== 'number' || !Number.isSafeInteger(document.submittedRevision) || document.submittedRevision < 1 ||
+      typeof document.submittedHash !== 'string' || !/^[a-f0-9]{64}$/.test(document.submittedHash) ||
+      typeof document.createdIso !== 'string' || Number.isNaN(Date.parse(document.createdIso)) ||
+      typeof document.updatedIso !== 'string' || Number.isNaN(Date.parse(document.updatedIso)) ||
+      (document.reviewComment !== undefined && (typeof document.reviewComment !== 'string' || document.reviewComment.length > 1000))
+    ) throw new Error('EXAM_PUBLICATION_REQUEST_INVALID');
+  }
+
   if (collection === 'exam_versions') {
     if (
       typeof document.examId !== 'string' ||
@@ -123,7 +149,7 @@ export function assertExamQuery(collection: ExamCollection, query: ExamQuery = {
 }
 
 export function assertExamCanUpdate(collection: ExamCollection): void {
-  if (collection === 'exam_versions' || collection === 'exam_legacy_verifications') {
+  if (collection === 'exam_versions' || collection === 'exam_legacy_verifications' || collection === 'exam_comments') {
     throw new Error('EXAM_DOCUMENT_APPEND_ONLY');
   }
 }
