@@ -200,7 +200,7 @@ test('Ein Request genau zum Deadline-Zeitpunkt ist noch zulässig', async () => 
 test('Ein Autosave-Body über 64 KB wird abgelehnt', async () => {
   await withAttempt(async repository => {
     await assert.rejects(
-      saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q2: 'x'.repeat(65_000) }, at(1)),
+      saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, Object.fromEntries(Array.from({ length: 70 }, (_, index) => [`unknown-${index}`, 'x'.repeat(1000)])), at(1)),
       /EXAM_AUTOSAVE_TOO_LARGE/
     );
   });
