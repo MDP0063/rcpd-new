@@ -92,7 +92,7 @@ function toPublicSubmission(
       ? attempt.finalScoreBasisPoints
       : null,
     requiresManualReview: attempt.status === 'pending_review',
-    questionResults: grades.map(grade => {
+    questionResults: version.assessmentStage === 'final_exam' ? [] : grades.map(grade => {
       const question = questionsById.get(grade.questionId);
       const result: PublicExamSubmission['questionResults'][number] = {
         questionId: grade.questionId,
