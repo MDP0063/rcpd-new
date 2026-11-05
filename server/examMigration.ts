@@ -32,8 +32,9 @@ function sameDocument(existing: Record<string, unknown>, expected: Record<string
   return stableJson(left) === stableJson(right);
 }
 
-function legacyProgressDocument(record: LegacyProgressRecord) {
-  const evidence = mapLegacyProgress(record);
+async function legacyProgressDocument(repository: ExamRepository, record: LegacyProgressRecord) {
+  const verification = await repository.getLegacyVerification(record.id);
+  const evidence = mapLegacyProgress(record, verification ? [verification] : []);
   if (!evidence) return null;
   const id = `legacy_progress__${encodeURIComponent(record.id)}`;
   return {
@@ -102,6 +103,7 @@ export async function migrateLegacyExamData(
       historicalAssignedCourseCodes: mapped.master.assignedCourseCodes,
       assessmentStage: mapped.master.assessmentStage,
       passingScoreBasisPoints: mapped.master.passingScoreBasisPoints,
+      minClearance: mapped.master.minClearance,
       timeLimitMinutes: mapped.master.timeLimitMinutes,
       maxAttempts: mapped.master.maxAttempts,
       examFormat: mapped.master.examFormat,
@@ -109,6 +111,7 @@ export async function migrateLegacyExamData(
       startable: mapped.master.startable,
       interactiveWidgetCode: mapped.master.interactiveWidgetCode,
       questionsSnapshot: mapped.master.questions,
+      minClearance: mapped.master.minClearance,
       source: 'legacy_migration',
       sourceUpdatedIso: legacy.updatedIso ?? null
     };
@@ -141,7 +144,7 @@ export async function migrateLegacyExamData(
   // Existing masters may have been created by an earlier partial run or by a later authoring flow.
   // Progress is imported only when its exam reference exists in the new repository.
   for (const record of legacyProgress) {
-    const document = legacyProgressDocument(record);
+    const document = await legacyProgressDocument(repository, record);
     if (!document) continue;
     try {
       const master = await repository.get('exam_masters', document.examId);
