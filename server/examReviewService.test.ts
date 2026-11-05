@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { gradeExamAttempt, listExamReviews, listOwnExamResults } from './examReviewService.ts';
+import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -53,6 +53,35 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }]), /EXAM_REVIEW_NOT_PENDING/);
     assert.equal((await listOwnExamResults(repository, 'student-1')).length, 1);
     assert.deepEqual(await listOwnExamResults(repository, 'student-2'), []);
+
+    const completedReviews = await listCompletedManualReviews(repository);
+    assert.equal(completedReviews.length, 1);
+    assert.equal(completedReviews[0].questions[0].pointsEarnedMilli, 500);
+    const beforeInvalidCorrection = await repository.get('exam_attempts', 'review-attempt');
+    await assert.rejects(
+      correctCompletedExamReview(repository, 'review-exam', 'review-attempt', 'colonel', [{ questionId: 'text', pointsEarnedMilli: 900 }], 'too short'),
+      /EXAM_REVIEW_CORRECTION_REASON_INVALID/
+    );
+    assert.deepEqual(await repository.get('exam_attempts', 'review-attempt'), beforeInvalidCorrection);
+    await assert.rejects(
+      correctCompletedExamReview(repository, 'review-exam', 'review-attempt', 'student-1', [{ questionId: 'text', pointsEarnedMilli: 900 }], 'Korrektur wegen fehlerhafter Bewertung'),
+      /EXAM_SELF_REVIEW_FORBIDDEN/
+    );
+    const corrected = await correctCompletedExamReview(
+      repository, 'review-exam', 'review-attempt', 'colonel',
+      [{ questionId: 'text', pointsEarnedMilli: 900 }],
+      'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.',
+      '2026-11-05T12:10:00.000Z'
+    );
+    assert.equal(corrected.status, 'passed');
+    assert.equal(corrected.finalScoreBasisPoints, 9500);
+    const correctedAttempt = await repository.get('exam_attempts', 'review-attempt');
+    assert.equal(correctedAttempt?.reviewCorrections?.length, 1);
+    assert.equal(correctedAttempt?.reviewCorrections?.[0].reason, 'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.');
+    assert.equal(correctedAttempt?.reviewCorrections?.[0].previousGrades[0].pointsEarnedMilli, 500);
+    assert.equal(correctedAttempt?.reviewCorrections?.[0].nextGrades[0].pointsEarnedMilli, 900);
+    assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
+
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
