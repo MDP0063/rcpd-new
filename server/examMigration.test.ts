@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
+import { createLegacyVerificationDoc } from './examLegacy.ts';
 import { migrateLegacyExamData } from './examMigration.ts';
 import type { LegacyExamInput } from './examLegacy.ts';
 import type { LegacyProgressRecord } from './examTypes.ts';
@@ -110,5 +111,24 @@ test('Legacy-Migration überspringt fehlerhafte Prüfungen und Fortschritt ohne 
     ]);
     assert.equal((await repository.list('exam_masters')).length, 0);
     assert.equal((await repository.list('exam_progress', { where: [{ field: 'userId', value: 'user-1' }] })).length, 0);
+  });
+});
+
+test('Legacy-Migration übernimmt ausschließlich passende Admin-Verifikationen in die Fortschrittsprojektion', async () => {
+  await withRepository(async repository => {
+    const source = legacyProgress();
+    const verification = createLegacyVerificationDoc(
+      source,
+      'admin-1',
+      '2026-11-05T12:00:00.000Z',
+      'Historischen Eintrag anhand der Unterlagen geprüft'
+    );
+    await repository.createLegacyVerification(verification);
+    const result = await migrateLegacyExamData(repository, [legacyExam()], [source], '2026-11-05T12:00:00.000Z');
+    assert.equal(result.progress.imported, 1);
+    const progress = await repository.get('exam_progress', 'legacy_progress__progress-legacy-1');
+    assert.equal(progress?.verified, true);
+    assert.equal(progress?.satisfiesPassed, true);
+    assert.equal(progress?.legacyVerificationId, verification.id);
   });
 });
