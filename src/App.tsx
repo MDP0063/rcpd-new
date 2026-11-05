@@ -582,6 +582,8 @@ export default function App() {
   const canEditAcademy = currentRoleMeta.canEditAcademy || hasScopedCourseRights;
   const canManageUsers = currentRoleMeta.canManageUsers; // Strictly Admin ONLY
   const canViewTech = currentRoleMeta.canViewTechPipeline; // Strictly Admin ONLY
+  const canAccessExamWorkshop = currentUserProfile.role === 'admin' ||
+    currentUserProfile.granularPermissions?.examWorkshop?.hasAccess === true;
 
   // Progress & Metrics Computation
   const myProgress = userProgress.filter(p => p.userId === currentUserProfile.uid);
@@ -1409,17 +1411,16 @@ export default function App() {
               </div>
 
               {/* Group 3: Strictly Admin Only */}
-              {(canManageUsers || canViewTech) && (
+              {(canManageUsers || canViewTech || canAccessExamWorkshop) && (
                 <div className="space-y-1 pt-2 border-t border-slate-800">
                   <div className="px-3 pb-1 text-[10px] font-mono uppercase tracking-wider text-sky-400">
-                    Administration (Nur Admin)
+                    Administration & Prüfungswerkstatt
                   </div>
 
-                  {canManageUsers && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection('exam_workshop')}
+                  {canAccessExamWorkshop && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection('exam_workshop')}
                         className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'exam_workshop'
                             ? 'bg-sky-600 text-white font-semibold'
@@ -1428,8 +1429,11 @@ export default function App() {
                       >
                         <FilePlus2 className="w-4 h-4" />
                         Prüfungswerkstatt
-                      </button>
+                    </button>
+                  )}
 
+                  {canManageUsers && (
+                    <>
                       <button
                         type="button"
                         onClick={() => setActiveSection('personnel')}
@@ -1505,11 +1509,11 @@ export default function App() {
                 { id: 'settings', label: 'Einstellungen' },
                 ...(canManageUsers
                   ? [
-                      { id: 'exam_workshop', label: 'Prüfungswerkstatt' },
                       { id: 'personnel', label: 'Admin: Konten' },
                       { id: 'audit', label: 'Admin: Audit-Log' }
                     ]
                   : []),
+                ...(canAccessExamWorkshop ? [{ id: 'exam_workshop', label: 'Prüfungswerkstatt' }] : []),
                 ...(canViewTech ? [{ id: 'deployment', label: 'Render CI/CD' }] : [])
               ] as { id: ActiveSection; label: string }[]
             ).map(tab => (
@@ -2464,8 +2468,8 @@ export default function App() {
           {/* ========================================================================
               VIEW 10: STRICTLY ADMIN ONLY — ACCOUNT, PASSWORD, ROLE & GRANULAR PERMISSIONS
               ======================================================================== */}
-          {activeSection === 'exam_workshop' && currentUserProfile.role === 'admin' && (
-            <ExamWorkshop />
+          {activeSection === 'exam_workshop' && canAccessExamWorkshop && (
+            <ExamWorkshop currentUser={currentUserProfile} />
           )}
 
           {activeSection === 'personnel' && canManageUsers && (
