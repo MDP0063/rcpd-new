@@ -37,7 +37,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { gradeExamAttempt, listExamReviews, listOwnExamResults } from './server/examReviewService.ts';
+import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1722,6 +1722,11 @@ async function startServer() {
       EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
       EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
       EXAM_REVIEW_NOT_PENDING: { status: 409, message: 'Dieser Versuch wartet nicht mehr auf eine manuelle Bewertung.' },
+      EXAM_REVIEW_CORRECTION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die korrigiert werden kann.' },
+      EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
+      EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
+      EXAM_REVIEW_CORRECTION_LIMIT: { status: 409, message: 'Für diesen Prüfungsversuch wurde die maximale Zahl an Korrekturen erreicht.' },
+      EXAM_ATTEMPT_CORRECTION_INVALID: { status: 409, message: 'Die Korrekturhistorie des Prüfungsversuchs ist ungültig.' },
       EXAM_SELF_REVIEW_FORBIDDEN: { status: 403, message: 'Du darfst deinen eigenen Prüfungsversuch nicht bewerten.' },
       EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
       EXAM_MANUAL_GRADES_INCOMPLETE: { status: 400, message: 'Bitte bewerte alle offenen Freitextfragen.' },
@@ -1790,6 +1795,46 @@ async function startServer() {
       }
       const submission = await gradeExamAttempt(getExamRepository(), req.params.id, req.params.attemptId, caller.uid, req.body.grades);
       recordExamWorkshopAudit(caller.uid, 'Freitextprüfung bewertet', req.params.id, `Versuch ${req.params.attemptId} manuell bewertet.`);
+      res.json({ submission });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+
+  // Nachträgliche Korrekturen abgeschlossener manueller Bewertungen sind Admins und Colonels vorbehalten.
+  app.get('/api/academy/exam-review-corrections', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      res.json({ reviews: await listCompletedManualReviews(getExamRepository()) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/correct-review', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+          Object.keys(req.body).some(key => key !== 'grades' && key !== 'reason')) {
+        res.status(400).json({ error: 'Die Korrekturanfrage ist ungültig.' }); return;
+      }
+      const submission = await correctCompletedExamReview(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
+        req.body.grades, req.body.reason
+      );
+      recordExamWorkshopAudit(caller.uid, 'Manuelle Prüfungsbewertung korrigiert', req.params.id,
+        'Versuch ' + req.params.attemptId + ' korrigiert. Begründung: ' + String(req.body.reason).trim().slice(0, 800));
       res.json({ submission });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
