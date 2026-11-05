@@ -30,7 +30,8 @@ import {
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
-import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { createExamDraft, parseExamWorkshopDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { canAccessExamWorkshopExam, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
@@ -1069,12 +1070,16 @@ async function startServer() {
   // ADMIN EXAM WORKSHOP API — ausschließlich für den Admin-Account
   // ==========================================================================
 
-  function getExamWorkshopAdmin(res: express.Response) {
+  function getExamWorkshopActor(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
-    const dbState = loadDatabase();
-    const caller = dbState.accounts.find(account => account.uid === sessionUid);
-    return caller?.publicProfile.role === 'admin' ? caller : null;
+    const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+    return caller ? { account: caller, actor: resolveExamWorkshopActor(caller) } : null;
+  }
+
+  function getExamWorkshopAdmin(res: express.Response) {
+    const context = getExamWorkshopActor(res);
+    return context?.actor.role === 'admin' ? context.account : null;
   }
 
   async function examWorkshopMaintenanceActive(): Promise<boolean> {
@@ -1083,12 +1088,19 @@ async function startServer() {
 
   app.get('/api/admin/exams', async (_req, res, next) => {
     try {
-      if (!getExamWorkshopAdmin(res)) {
-        res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
         return;
       }
       res.setHeader('Cache-Control', 'no-store');
-      const exams = await getExamRepository().list('exam_masters');
+      const allExams = await getExamRepository().list('exam_masters');
+      const exams = context.actor.role === 'admin'
+        ? allExams
+        : allExams.filter(exam =>
+            (exam.assessmentStage === 'test' || exam.assessmentStage === 'final_exam') &&
+            canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view')
+          );
       exams.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
       res.json({ exams });
     } catch (error) {
@@ -1098,13 +1110,22 @@ async function startServer() {
 
   app.get('/api/admin/exams/:id', async (req, res, next) => {
     try {
-      if (!getExamWorkshopAdmin(res)) {
-        res.status(403).json({ error: 'Die Prüfungswerkstatt ist ausschließlich dem Administrator vorbehalten.' });
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
         return;
       }
       res.setHeader('Cache-Control', 'no-store');
       const exam = await getExamRepository().get('exam_masters', req.params.id);
       if (!exam) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (
+        context.actor.role !== 'admin' &&
+        ((exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view'))
+      ) {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
         return;
       }
@@ -1117,20 +1138,25 @@ async function startServer() {
   app.post('/api/admin/exams', async (req, res, next) => {
     try {
       res.setHeader('Cache-Control', 'no-store');
-      const caller = getExamWorkshopAdmin(res);
-      if (!caller) {
-        res.status(403).json({ error: 'Nur der Administrator darf Prüfungen in der Werkstatt anlegen.' });
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
         return;
       }
       if (await examWorkshopMaintenanceActive()) {
         res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
         return;
       }
+      const definition = parseExamWorkshopDraft(req.body?.definition);
+      if (!canAccessExamWorkshopExam(context.actor, definition.assessmentStage, 'create')) {
+        res.status(403).json({ error: 'Du darfst in diesem Prüfungsbereich keine neuen Inhalte erstellen.' });
+        return;
+      }
       const master = await createExamDraft(
         getExamRepository(),
         newId('exam'),
-        caller.uid,
-        req.body?.definition
+        context.account.uid,
+        definition
       );
       res.status(201).json({ exam: master });
     } catch (error) {
@@ -1145,19 +1171,33 @@ async function startServer() {
   app.put('/api/academy/exams/:id', async (req, res, next) => {
     try {
       res.setHeader('Cache-Control', 'no-store');
-      const caller = getExamWorkshopAdmin(res);
-      if (!caller) {
-        res.status(403).json({ error: 'Nur der Administrator darf Prüfungsentwürfe bearbeiten.' });
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Du hast keinen Zugriff auf die Prüfungswerkstatt.' });
         return;
       }
       if (await examWorkshopMaintenanceActive()) {
         res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
         return;
       }
+      const current = await getExamRepository().get('exam_masters', req.params.id);
+      if (!current) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (current.assessmentStage !== 'test' && current.assessmentStage !== 'final_exam') {
+        res.status(409).json({ error: 'Der Prüfungsbereich ist ungültig.' });
+        return;
+      }
+      const action = current.currentPublishedVersionId ? 'update_existing' : 'edit';
+      if (!canAccessExamWorkshopExam(context.actor, current.assessmentStage, action, current.id)) {
+        res.status(403).json({ error: 'Du darfst diesen Prüfungsentwurf nicht bearbeiten oder aktualisieren.' });
+        return;
+      }
       const exam = await updateExamDraft(
         getExamRepository(),
         req.params.id,
-        caller.uid,
+        context.account.uid,
         req.body?.definition
       );
       res.json({ exam });
