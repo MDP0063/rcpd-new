@@ -46,7 +46,7 @@ export function assertExamDocument(
     if (
       typeof document.examId !== 'string' || !document.examId.trim() ||
       typeof document.authorUid !== 'string' || !document.authorUid.trim() ||
-      typeof document.authorName !== 'string' || !document.authorName.trim() ||
+      typeof document.authorName !== 'string' || !document.authorName.trim() || document.authorName.length > 120 ||
       typeof document.body !== 'string' || !document.body.trim() ||
       document.body.length > 4000 ||
       typeof document.createdIso !== 'string' || Number.isNaN(Date.parse(document.createdIso))
@@ -152,7 +152,7 @@ export function assertExamQuery(collection: ExamCollection, query: ExamQuery = {
 }
 
 export function assertExamCanUpdate(collection: ExamCollection): void {
-  if (collection === 'exam_versions' || collection === 'exam_legacy_verifications') {
+  if (collection === 'exam_versions' || collection === 'exam_legacy_verifications' || collection === 'exam_comments') {
     throw new Error('EXAM_DOCUMENT_APPEND_ONLY');
   }
 }
