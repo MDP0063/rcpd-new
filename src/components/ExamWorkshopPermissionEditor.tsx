@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { ExamWorkshopCategoryPermissions, ExamWorkshopPermissions } from '../types/portal';
+import { apiFetch } from '../lib/api';
 
 interface Props {
   value: ExamWorkshopPermissions;
@@ -10,6 +11,15 @@ const checkboxClass = 'h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-
 const labelClass = 'flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200';
 
 export const ExamWorkshopPermissionEditor: React.FC<Props> = ({ value, onChange }) => {
+  const [exams, setExams] = useState<{ id: string; title: string; assessmentStage: 'test' | 'final_exam' }[]>([]);
+  useEffect(() => {
+    let active = true;
+    void apiFetch<{ exams: { id: string; title: string; assessmentStage: 'test' | 'final_exam' }[] }>('/api/admin/exams', { cache: 'no-store' })
+      .then(response => {
+        if (active && response.ok && response.data) setExams(response.data.exams || []);
+      });
+    return () => { active = false; };
+  }, []);
   const update = (patch: Partial<ExamWorkshopPermissions>) => onChange({ ...value, ...patch });
   const updateCategory = (
     key: 'tests' | 'finalExams',
@@ -99,14 +109,24 @@ export const ExamWorkshopPermissionEditor: React.FC<Props> = ({ value, onChange 
           <p className="mt-2 text-xs text-slate-500">
             Diese Prüfungen dürfen von diesem Konto unabhängig von den allgemeinen Rechten niemals aktualisiert werden.
           </p>
-          <input
-            className="mt-3 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white"
-            value={value.lockedUpdateExamIds.join(', ')}
-            onChange={e => update({
-              lockedUpdateExamIds: [...new Set(e.target.value.split(',').map(id => id.trim()).filter(Boolean))].slice(0, 500)
+          <select
+            multiple
+            value={value.lockedUpdateExamIds}
+            onChange={event => update({
+              lockedUpdateExamIds: Array.from(event.currentTarget.selectedOptions, option => option.value).slice(0, 500)
             })}
-            placeholder="Prüfungs-IDs, durch Komma getrennt"
-          />
+            aria-label="Prüfungen auswählen, die dieses Konto nicht aktualisieren darf"
+            className="mt-3 min-h-32 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white"
+          >
+            {exams.map(exam => (
+              <option key={exam.id} value={exam.id}>
+                {exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Test'} · {exam.title || 'Unbenannter Entwurf'} · {exam.id}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Mehrfachauswahl mit Strg (Windows) bzw. Cmd (Mac). {exams.length} Prüfungen verfügbar.
+          </p>
         </details>
       </div>
     </section>
