@@ -54,7 +54,16 @@ export interface ExamTransaction {
   delete(collection: ExamCollection, id: string): Promise<void>;
 }
 
+export interface ExamRepositorySnapshot {
+  formatVersion: 1;
+  collections: Record<ExamCollection, ExamDocument[]>;
+}
+
 export interface ExamStorageAdapter {
+  exportSnapshot(): Promise<ExamRepositorySnapshot>;
+  replaceSnapshot(snapshot: ExamRepositorySnapshot): Promise<void>;
+  isMaintenanceMode(): Promise<boolean>;
+  setMaintenanceMode(enabled: boolean, allowExisting?: boolean): Promise<void>;
   get<T extends ExamDocument = ExamDocument>(
     collection: ExamCollection,
     id: string
