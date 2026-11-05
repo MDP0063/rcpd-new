@@ -31,6 +31,7 @@ import {
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
+import { canAccessExamWorkshopExam, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
@@ -1046,7 +1047,14 @@ async function startServer() {
         /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
-      (req.method === 'PUT' && /^\/academy\/exams\/[^/]+$/.test(req.path)) ||
+      (req.method === 'PUT' && (
+        /^\/academy\/exams\/[^/]+$/.test(req.path) ||
+        /^\/workshop\/exams\/[^/]+$/.test(req.path)
+      )) ||
+      (req.method === 'POST' && (
+        req.path === '/workshop/exams' ||
+        /^\/workshop\/exams\/[^/]+\/publish$/.test(req.path)
+      )) ||
       (req.method === 'DELETE' && req.path.startsWith('/academy/exams/'));
     if (!isExamWrite) {
       next();
@@ -1068,6 +1076,17 @@ async function startServer() {
   // ==========================================================================
   // ADMIN EXAM WORKSHOP API — ausschließlich für den Admin-Account
   // ==========================================================================
+
+  function getExamWorkshopAccount(res: express.Response): StoredAccountRecord | null {
+    const sessionUid = res.locals.sessionUid as string | undefined;
+    if (!sessionUid) return null;
+    return loadDatabase().accounts.find(account => account.uid === sessionUid) || null;
+  }
+
+  function getExamWorkshopActor(res: express.Response) {
+    const account = getExamWorkshopAccount(res);
+    return account ? { account, actor: resolveExamWorkshopActor(account) } : null;
+  }
 
   function getExamWorkshopAdmin(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
@@ -1215,6 +1234,142 @@ async function startServer() {
         error.message === 'EXAM_DOCUMENT_ALREADY_EXISTS'
       )) {
         res.status(409).json({ error: 'Die Prüfungsversion konnte wegen eines Versionskonflikts nicht veröffentlicht werden. Bitte lade den aktuellen Stand neu.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  // ==========================================================================
+  // GRANULAR EXAM WORKSHOP API — authorization is resolved from the session.
+  // Admin-only management routes above remain available to the administrator.
+  // ==========================================================================
+
+  app.get('/api/workshop/exams', async (_req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const exams = await getExamRepository().list('exam_masters');
+      const visible = exams.filter(exam =>
+        (exam.assessmentStage === 'test' || exam.assessmentStage === 'final_exam') &&
+        canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)
+      );
+      visible.sort((a, b) => String(b.updatedIso ?? '').localeCompare(String(a.updatedIso ?? '')));
+      res.json({ exams: visible });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/workshop/exams/:id', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const exam = await getExamRepository().get('exam_masters', req.params.id);
+      if (!exam || (exam.assessmentStage !== 'test' && exam.assessmentStage !== 'final_exam') ||
+          !canAccessExamWorkshopExam(context.actor, exam.assessmentStage, 'view', exam.id)) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      res.json({ exam });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/workshop/exams', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const stage = req.body?.definition?.assessmentStage;
+      if (stage !== 'test' && stage !== 'final_exam') {
+        res.status(400).json({ error: 'Die Prüfungsart ist ungültig.' });
+        return;
+      }
+      if (!canAccessExamWorkshopExam(context.actor, stage, 'create')) {
+        res.status(403).json({ error: 'Du darfst in diesem Bereich keine Prüfungen erstellen.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await createExamDraft(
+        getExamRepository(),
+        newId('exam'),
+        context.account.uid,
+        req.body.definition
+      );
+      res.status(201).json({ exam });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  app.put('/api/workshop/exams/:id', async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      const context = getExamWorkshopActor(res);
+      if (!context || !hasExamWorkshopAccess(context.actor)) {
+        res.status(403).json({ error: 'Kein Zugang zur Prüfungswerkstatt.' });
+        return;
+      }
+      const existing = await getExamRepository().get('exam_masters', req.params.id);
+      if (!existing) {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (existing.assessmentStage !== 'test' && existing.assessmentStage !== 'final_exam') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      const isOwnUnpublishedDraft =
+        existing.status === 'draft' &&
+        !existing.currentPublishedVersionId &&
+        existing.authorUid === context.account.uid;
+      const action = isOwnUnpublishedDraft ? 'edit' : 'update_existing';
+      if (!canAccessExamWorkshopExam(context.actor, existing.assessmentStage, action, existing.id)) {
+        res.status(403).json({ error: 'Du darfst diese bestehende Prüfung nicht bearbeiten.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Die Prüfungswerkstatt ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      const exam = await updateExamDraft(
+        getExamRepository(),
+        req.params.id,
+        context.account.uid,
+        req.body?.definition
+      );
+      res.json({ exam });
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('EXAM_WORKSHOP_INPUT_INVALID:')) {
+        res.status(400).json({ error: 'Die Prüfungsdaten enthalten ungültige oder unzulässige Angaben.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (error instanceof Error && error.message === 'EXAM_MASTER_ARCHIVED') {
+        res.status(409).json({ error: 'Archivierte Prüfungen können nicht bearbeitet werden.' });
         return;
       }
       next(error);
