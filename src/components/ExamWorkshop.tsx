@@ -156,11 +156,12 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
     setSaving(false);
     if (!response.ok || !response.data?.exam) {
       setError(response.error || 'Der Entwurf konnte nicht gespeichert werden.');
-      return;
+      return false;
     }
     setSelectedId(response.data.exam.id);
     setNotice('Entwurf erfolgreich gespeichert.');
     await loadExams();
+    return true;
   };
 
   const publish = async () => {
@@ -175,6 +176,7 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
       ? 'Prüfung freigeben und veröffentlichen'
       : requiresApproval ? 'Prüfung zur Admin-Freigabe einreichen' : 'Prüfung jetzt veröffentlichen';
     if (!window.confirm(`${label}? Dadurch wird der aktuelle Prüfungsstand verbindlich eingereicht bzw. veröffentlicht.`)) return;
+    if (canEditSelected && !(await save())) return;
     setPublishing(true); setError(null); setNotice(null);
     let response;
     if (isAdmin && selectedPublicationRequestId) {
