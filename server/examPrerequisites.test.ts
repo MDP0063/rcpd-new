@@ -4,7 +4,7 @@ import { evaluatePrerequisites } from './examPrerequisites.ts';
 import { attempt } from './examTestFixtures.ts';
 import type { LegacyProgressRecord, LegacyVerificationDoc } from './examTypes.ts';
 
-const ctx = (over = {}) => ({ userId: 'u1', attempts: [], legacyProgress: [], legacyVerifications: [], ...over });
+const ctx = (over = {}) => ({ userId: 'u1', attemptCourseCode: 'SOP-01', attempts: [], legacyProgress: [], legacyVerifications: [], ...over });
 const passedPre = [{ examId: 'e1', mode: 'passed' as const }];
 
 const legacyPassed: LegacyProgressRecord = {
@@ -45,8 +45,8 @@ test('Mindestergebnis wird gegen den maßgeblichen Versuch geprüft', () => {
   assert.ok(evaluatePrerequisites(pre, ctx({ attempts: [attempt('passed', 9000)] })).met);
 });
 
-test('Versuche anderer Nutzer oder Prüfungen zählen nicht', () => {
-  const others = [attempt('passed', 9000, { userId: 'u2' }), attempt('passed', 9000, { examId: 'e9' })];
+test('Versuche anderer Nutzer, Prüfungen oder Lehrgänge zählen nicht', () => {
+  const others = [attempt('passed', 9000, { userId: 'u2' }), attempt('passed', 9000, { examId: 'e9' }), attempt('passed', 9000, { attemptCourseCode: 'SOP-02' })];
   assert.ok(!evaluatePrerequisites(passedPre, ctx({ attempts: others })).met);
 });
 
@@ -89,4 +89,13 @@ test('mehrere Voraussetzungen müssen alle erfüllt sein', () => {
   const r = evaluatePrerequisites(pre, ctx({ attempts: [attempt('passed', 9000)] }));
   assert.ok(!r.met);
   assert.deepEqual(r.checks.map(c => c.met), [true, false]);
+});
+
+test('Legacy-Nachweise gelten nur im gleichen Lehrgang; fehlender Lehrgangscode bleibt global', () => {
+  const pre = [{ examId: 'e1', mode: 'completed' as const }];
+  const same = { ...legacyPassed, courseCode: 'sop-01' };
+  const other = { ...legacyPassed, courseCode: 'SOP-02' };
+  assert.ok(evaluatePrerequisites(pre, ctx({ legacyProgress: [same] })).met);
+  assert.ok(!evaluatePrerequisites(pre, ctx({ legacyProgress: [other] })).met);
+  assert.ok(evaluatePrerequisites(pre, ctx({ legacyProgress: [legacyPassed] })).met);
 });
