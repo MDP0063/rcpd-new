@@ -58,7 +58,9 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
     ? null
     : boundedInteger(maxAttemptsValue, 0, Number.MAX_SAFE_INTEGER, 'maxAttempts');
 
-  const rawCourses = value.assignedCourseCodes === undefined ? [] : value.assignedCourseCodes;
+  const rawCourses = value.assignedCourseCodes === undefined
+    ? (moduleCode ? [moduleCode] : [])
+    : value.assignedCourseCodes;
   if (!Array.isArray(rawCourses) || rawCourses.length > EXAM_LIMITS.maxCourseCodes) return invalid('assignedCourseCodes');
   const assignedCourseCodes: string[] = [];
   const seenCourses = new Set<string>();
@@ -112,7 +114,8 @@ export function parseExamWorkshopDraft(value: unknown): ExamWorkshopDraftInput {
 
   return {
     title,
-    moduleCode: moduleCode || assignedCourseCodes[0] || '',
+    // assignedCourseCodes is authoritative; moduleCode is retained only as a legacy compatibility field.
+    moduleCode: assignedCourseCodes[0] || '',
     assessmentStage,
     minClearance,
     timeLimitMinutes,
