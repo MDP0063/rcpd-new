@@ -106,11 +106,17 @@ export function validateLegacyVerificationSources(
 
   const examIds = new Set<string>();
   for (const exam of legacyExams) {
-    if (isRecord(exam) && typeof exam.id === 'string') examIds.add(exam.id);
+    if (!isRecord(exam) || typeof exam.id !== 'string' || !exam.id.trim() || examIds.has(exam.id)) {
+      fail('EXAM_BACKUP_LEGACY_EXAMS_INVALID');
+    }
+    examIds.add(exam.id);
   }
   const progressById = new Map<string, Record<string, unknown>>();
   for (const record of legacyProgress) {
-    if (isRecord(record) && typeof record.id === 'string') progressById.set(record.id, record);
+    if (!isRecord(record) || typeof record.id !== 'string' || !record.id.trim() || progressById.has(record.id)) {
+      fail('EXAM_BACKUP_LEGACY_PROGRESS_INVALID');
+    }
+    progressById.set(record.id, record);
   }
 
   for (const verification of snapshot.collections.exam_legacy_verifications) {
