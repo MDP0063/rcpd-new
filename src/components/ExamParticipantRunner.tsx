@@ -210,9 +210,9 @@ export const ExamParticipantRunner: React.FC = () => {
     setStarting(false);
   };
 
-  const saveAnswers = useCallback(async (): Promise<boolean> => {
+  const saveAnswers = useCallback(async (allowDuringSubmit = false): Promise<boolean> => {
     const current = attemptRef.current;
-    if (!current || submittingRef.current) return false;
+    if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
     const nextRevision = revisionRef.current + 1;
     setSaveState('saving');
@@ -258,7 +258,7 @@ export const ExamParticipantRunner: React.FC = () => {
       // bewusst keine Antworten; ausgewertet wird ausschließlich der bestätigte Serverstand.
       await saveQueueRef.current.catch(() => undefined);
       if (!automatic) {
-        const saved = await saveAnswers();
+        const saved = await saveAnswers(true);
         if (!saved) {
           const latest = attemptRef.current;
           if (latest?.deadlineIso && Date.now() + serverOffsetMs >= new Date(latest.deadlineIso).getTime()) {
