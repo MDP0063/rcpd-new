@@ -616,3 +616,97 @@ test('Firestore-Repository: einzelnes Repository-Update liest vor dem Schreiben'
   await repository.update('exam_masters', 'exam-1', { id: 'exam-1', title: 'Nachher' });
   assert.equal(documents.get('exam_masters/exam-1')?.title, 'Nachher');
 });
+
+
+test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsistente Audit-Korrektur', async () => {
+  await withRepository(async repository => {
+    await repository.create('exam_attempts', 'attempt-correction', {
+      id: 'attempt-correction',
+      status: 'in_progress',
+      userId: 'student-1',
+      examId: 'exam-1',
+      answers: { q1: 'Antwort' },
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      finalScoreBasisPoints: null
+    });
+    await repository.update('exam_attempts', 'attempt-correction', {
+      id: 'attempt-correction',
+      status: 'passed',
+      userId: 'student-1',
+      examId: 'exam-1',
+      answers: { q1: 'Antwort' },
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      finalScoreBasisPoints: 5000,
+      reviewedByUid: 'grader-1',
+      reviewedAtIso: '2026-11-05T12:00:00.000Z'
+    });
+
+    const completed = await repository.get('exam_attempts', 'attempt-correction');
+    assert.ok(completed);
+    const audit = {
+      reviewerUid: 'colonel-1',
+      atIso: '2026-11-05T13:00:00.000Z',
+      reason: 'Punkte anhand der Bewertungsrubrik erneut geprüft.',
+      previousStatus: 'passed',
+      nextStatus: 'passed',
+      previousScoreBasisPoints: 5000,
+      nextScoreBasisPoints: 8000,
+      previousGrades: [{ questionId: 'q1', pointsEarnedMilli: 500 }],
+      nextGrades: [{ questionId: 'q1', pointsEarnedMilli: 800 }]
+    };
+    await repository.update('exam_attempts', 'attempt-correction', {
+      ...completed,
+      status: 'passed',
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 800, requiresManualReview: false }],
+      finalScoreBasisPoints: 8000,
+      reviewedByUid: 'colonel-1',
+      reviewedAtIso: audit.atIso,
+      reviewCorrections: [audit]
+    });
+    assert.equal((await repository.get('exam_attempts', 'attempt-correction'))?.finalScoreBasisPoints, 8000);
+  });
+});
+
+test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punkten abgelehnt', async () => {
+  await withRepository(async repository => {
+    await repository.create('exam_attempts', 'attempt-tampered-correction', {
+      id: 'attempt-tampered-correction',
+      status: 'in_progress',
+      userId: 'student-1',
+      examId: 'exam-1',
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      finalScoreBasisPoints: null
+    });
+    await repository.update('exam_attempts', 'attempt-tampered-correction', {
+      id: 'attempt-tampered-correction',
+      status: 'passed',
+      userId: 'student-1',
+      examId: 'exam-1',
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      finalScoreBasisPoints: 5000,
+      reviewedByUid: 'grader-1',
+      reviewedAtIso: '2026-11-05T12:00:00.000Z'
+    });
+    const completed = await repository.get('exam_attempts', 'attempt-tampered-correction');
+    assert.ok(completed);
+    await assert.rejects(repository.update('exam_attempts', 'attempt-tampered-correction', {
+      ...completed,
+      questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 800, requiresManualReview: false }],
+      finalScoreBasisPoints: 8000,
+      reviewedByUid: 'colonel-1',
+      reviewedAtIso: '2026-11-05T13:00:00.000Z',
+      reviewCorrections: [{
+        reviewerUid: 'colonel-1',
+        atIso: '2026-11-05T13:00:00.000Z',
+        reason: 'Punkte anhand der Bewertungsrubrik erneut geprüft.',
+        previousStatus: 'passed',
+        nextStatus: 'passed',
+        previousScoreBasisPoints: 5000,
+        nextScoreBasisPoints: 8000,
+        previousGrades: [{ questionId: 'q1', pointsEarnedMilli: 500 }],
+        nextGrades: [{ questionId: 'q1', pointsEarnedMilli: 700 }]
+      }]
+    }), /EXAM_ATTEMPT_CORRECTION_INVALID/);
+    assert.equal((await repository.get('exam_attempts', 'attempt-tampered-correction'))?.finalScoreBasisPoints, 5000);
+  });
+});
