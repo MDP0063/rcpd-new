@@ -399,6 +399,7 @@ test('JSON-Repository: dedizierte Legacy-Verifikationsmethoden lesen und erstell
       userId: 'user-1',
       examId: 'exam-1',
       verifiedStatus: 'passed' as const,
+      verifiedScoreBasisPoints: 8800,
       verifiedByUid: 'admin-1',
       verifiedAtIso: '2026-11-05T12:00:00.000Z',
       reason: 'Historischen Nachweis geprüft'
