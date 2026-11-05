@@ -13,23 +13,42 @@ import {
   assertExamQuery
 } from './examRepositoryRules.ts';
 import { legacyVerificationId } from './examLegacy.ts';
+import { validateExamRepositorySnapshot } from './examBackup.ts';
 import type { LegacyVerificationDoc } from './examTypes.ts';
 import {
   type AttemptInvalidationAudit,
   type ExamCollection,
   type ExamDocument,
   type ExamQuery,
+  type ExamRepositorySnapshot,
   type ExamStorageAdapter,
   type ExamTransaction
 } from './examRepositoryTypes.ts';
 
 export * from './examRepositoryTypes.ts';
 
-export class ExamRepository implements ExamStorageAdapter {
+export class ExamRepository {
   private readonly adapter: ExamStorageAdapter;
 
   constructor(adapter: ExamStorageAdapter) {
     this.adapter = adapter;
+  }
+
+  async exportSnapshot(): Promise<ExamRepositorySnapshot> {
+    return validateExamRepositorySnapshot(await this.adapter.exportSnapshot());
+  }
+
+  async restoreSnapshot(snapshot: unknown): Promise<void> {
+    const validated = validateExamRepositorySnapshot(snapshot);
+    await this.adapter.replaceSnapshot(validated);
+  }
+
+  async isMaintenanceMode(): Promise<boolean> {
+    return this.adapter.isMaintenanceMode();
+  }
+
+  async setMaintenanceMode(enabled: boolean, allowExisting = false): Promise<void> {
+    return this.adapter.setMaintenanceMode(enabled, allowExisting);
   }
 
   async get<T extends ExamDocument = ExamDocument>(

@@ -267,7 +267,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
 
     await onRefreshState();
     onStatusToast(
-      `Komplett-Backup (${data.summary.accountsCount} Konten, ${data.summary.modulesCount} Lehrbücher, ${data.summary.examsCount} Prüfungen) heruntergeladen.`
+      `Vollständiges V4-Backup heruntergeladen: ${data.summary.accountsCount} Konten, ${data.summary.examsCount} Legacy-Prüfungen, ${data.summary.examMastersCount} Prüfungs-Master, ${data.summary.examVersionsCount} Versionen, ${data.summary.examAttemptsCount} Versuche und ${data.summary.examLegacyVerificationsCount} Legacy-Verifikationen.`
     );
   };
 
@@ -280,6 +280,22 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
       try {
         const parsed = JSON.parse(String(reader.result));
         const dbObj = parsed.database ? parsed.database : parsed;
+        const requiredExamCollections = [
+          'exam_masters',
+          'exam_versions',
+          'exam_attempts',
+          'exam_progress',
+          'exam_legacy_verifications'
+        ];
+        if (
+          parsed.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+          !parsed.examRepository?.collections ||
+          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name]))
+        ) {
+          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein neues vollständiges V4-Backup.');
+          setBackupPreview(null);
+          return;
+        }
         if (!Array.isArray(dbObj.accounts)) {
           onStatusToast('Ungültiges Dateiformat: Keine Benutzerkonten (accounts) in der Datei gefunden.');
           setBackupPreview(null);
@@ -314,6 +330,11 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
         accountsCount: number;
         modulesCount: number;
         examsCount: number;
+        examMastersCount: number;
+        examVersionsCount: number;
+        examAttemptsCount: number;
+        examProgressCount: number;
+        examLegacyVerificationsCount: number;
       };
     }>(API_ENDPOINTS.ADMIN_RESTORE, {
       method: 'POST',
@@ -336,7 +357,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
     }
     await Promise.all([onRefreshState(), loadDeploymentManifests()]);
     onStatusToast(
-      `Backup erfolgreich eingespielt! (${res.data.summary.accountsCount} Konten, ${res.data.summary.modulesCount} Lehrbücher, ${res.data.summary.examsCount} Prüfungen aktiv).`
+      `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen, ${res.data.summary.examAttemptsCount} Versuche und ${res.data.summary.examLegacyVerificationsCount} Legacy-Verifikationen.`
     );
   };
 

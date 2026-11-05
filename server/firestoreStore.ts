@@ -26,6 +26,8 @@ export interface FirestoreStore {
   scheduleSave(state: StateLike): void;
   /** Wartet, bis alles geschrieben ist (z. B. vor dem Beenden). */
   flush(): Promise<void>;
+  /** Persistiert ausstehende Änderungen und wirft bei einem Schreibfehler statt ihn zu verschlucken. */
+  flushStrict(): Promise<void>;
   /** Token, mit dem sich der Browser bei Firebase anmeldet. */
   createCustomToken(uid: string): Promise<string>;
 }
@@ -72,6 +74,7 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
   let pending: StateLike | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let running: Promise<void> | null = null;
+  let strictFlushing = false;
 
   async function writeOnce(): Promise<void> {
     const state = pending;
@@ -123,7 +126,7 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
   }
 
   function schedule(delayMs: number): void {
-    if (timer) return;
+    if (strictFlushing || timer) return;
     timer = setTimeout(() => {
       timer = null;
       void run();
@@ -175,6 +178,31 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
       }
       await run();
       if (running) await running;
+    },
+
+    async flushStrict() {
+      strictFlushing = true;
+      let failed = false;
+      try {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        if (running) await running;
+        while (pending) {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          await writeOnce();
+        }
+      } catch (error) {
+        failed = true;
+        throw error;
+      } finally {
+        strictFlushing = false;
+        if (pending) schedule(failed ? RETRY_DELAY_MS : SAVE_DELAY_MS);
+      }
     },
 
     createCustomToken(uid) {

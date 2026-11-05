@@ -29,6 +29,10 @@ import {
   type ExamRepository
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import {
+  validateExamRepositorySnapshot,
+  validateLegacyVerificationSources
+} from './server/examBackup.ts';
 import type { LegacyProgressRecord } from './server/examTypes.ts';
 import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
@@ -107,6 +111,9 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 // Mit Firestore liegt der Zustand im Speicher des Servers und wird gebündelt nach Firestore geschrieben.
 let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
+let examMaintenanceActive = false;
+let examMaintenanceOperation: 'backup' | 'restore' | null = null;
+let examRestoreInProgress = false;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
@@ -864,6 +871,12 @@ function saveDatabase(state: PortalDatabaseState) {
   fs.renameSync(tmpFile, DB_FILE);
 }
 
+/** Persistiert einen vollständigen Portal-State und bestätigt Firestore-Schreibfehler an den Aufrufer. */
+async function saveDatabaseAndWait(state: PortalDatabaseState): Promise<void> {
+  saveDatabase(state);
+  if (store) await store.flushStrict();
+}
+
 /** Prüft die Felder eines Lehrmaterials. Gibt eine Fehlermeldung zurück oder null. */
 function validateModuleFields(
   fields: { title?: unknown; externalUrl?: unknown; pdfDataUrl?: unknown; requiredRole?: unknown },
@@ -1060,6 +1073,33 @@ async function startServer() {
       return;
     }
     next();
+  });
+
+  // Während Backup/Restore werden alle bisherigen prüfungsbezogenen Schreibwege serverseitig pausiert.
+  app.use('/api', async (req, res, next) => {
+    const isExamWrite =
+      (req.method === 'POST' && [
+        '/academy/exams',
+        '/academy/instructor-grade',
+        '/progress',
+        '/admin/exams/legacy-verifications'
+      ].includes(req.path)) ||
+      (req.method === 'DELETE' && req.path.startsWith('/academy/exams/'));
+    if (!isExamWrite) {
+      next();
+      return;
+    }
+    try {
+      if (examMaintenanceActive || await getExamRepository().isMaintenanceMode()) {
+        res.status(503).json({
+          error: 'Prüfungsfunktionen sind wegen einer laufenden Datensicherung oder Wiederherstellung vorübergehend pausiert.'
+        });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
   });
 
   // 1. Health Endpoint (Supports both /api/health and /api/v1/health)
@@ -2676,6 +2716,12 @@ jobs:
       }
 
       const repository = getExamRepository();
+      if (examMaintenanceActive || await repository.isMaintenanceMode()) {
+        res.status(503).json({
+          error: 'Prüfungsfunktionen sind wegen einer laufenden Datensicherung oder Wiederherstellung vorübergehend pausiert.'
+        });
+        return;
+      }
       if (await repository.getLegacyVerification(legacyRecord.id)) {
         res.status(409).json({ error: 'Dieser historische Nachweis wurde bereits verifiziert.' });
         return;
@@ -2698,77 +2744,137 @@ jobs:
     }
   });
 
-  // ADMIN ONLY: 1-Click Full Database Backup Export
-  app.get('/api/admin/backup', (req, res) => {
-    const adminUid = String(req.query.adminUid || '');
-    const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === adminUid);
-    if (!caller || caller.publicProfile.role !== 'admin') {
+  // ADMIN ONLY: Complete portal + ExamRepository backup.
+  app.get('/api/admin/backup', async (_req, res, next) => {
+    const sessionUid = res.locals.sessionUid as string;
+    const initialState = loadDatabase();
+    const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
+    if (!initialCaller || initialCaller.publicProfile.role !== 'admin') {
       res.status(403).json({
         error: 'Zugriff verweigert. Nur der Administrator kann Datenbank-Backups exportieren.'
       });
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const cfg = ensureDeploymentConfig(dbState);
-    cfg.lastBackupExportIso = nowIso;
-    cfg.updatedIso = nowIso;
-    appendAuditLog(
-      dbState,
-      caller,
-      'SYSTEM_BACKUP',
-      'Vollständiges Datenbank-Backup exportiert',
-      'CA_POST_PORTAL_BACKUP_V3',
-      `${dbState.accounts.length} Konten, ${dbState.modules.length} Handbücher, ${dbState.exams.length} Prüfungen gesichert.`
-    );
-    saveDatabase(dbState);
+    if (examMaintenanceActive) {
+      res.status(503).json({
+        error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
+      });
+      return;
+    }
 
-    const snapshot: PortalBackupSnapshot = {
-      snapshotFormat: 'CA_POST_PORTAL_BACKUP_V3',
-      exportedAtIso: nowIso,
-      exportedByUsername: caller.username,
-      summary: {
-        accountsCount: dbState.accounts.length,
-        modulesCount: dbState.modules.length,
-        examsCount: dbState.exams.length,
-        applicationsCount: dbState.applications.length,
-        progressCount: dbState.progress.length,
-        announcementsCount: (dbState.announcements || []).length,
-        messagesCount: (dbState.messages || []).length,
-        requestsCount: (dbState.requests || []).length,
-        eventsCount: (dbState.events || []).length,
-        auditLogsCount: (dbState.auditLogs || []).length
-      },
-      database: {
-        version: dbState.version || 3,
-        accounts: dbState.accounts,
-        applications: dbState.applications,
-        modules: dbState.modules,
-        exams: dbState.exams,
-        progress: dbState.progress,
-        announcements: dbState.announcements || [],
-        messages: dbState.messages || [],
-        requests: dbState.requests || [],
-        events: dbState.events || [],
-        auditLogs: dbState.auditLogs || [],
-        notifications: dbState.notifications || [],
-        deploymentConfig: cfg
+    const repository = getExamRepository();
+    let maintenanceStarted = false;
+    try {
+      // Das persistente Flag pausiert auch Legacy-Prüfungsschreibwege und bleibt bei Server-Neustarts sichtbar.
+      examMaintenanceActive = true;
+      examMaintenanceOperation = 'backup';
+      await repository.setMaintenanceMode(true);
+      maintenanceStarted = true;
+
+      const dbState = loadDatabase();
+      const caller = dbState.accounts.find(account => account.uid === sessionUid);
+      if (!caller || caller.publicProfile.role !== 'admin') {
+        throw new Error('BACKUP_ADMIN_SESSION_INVALID');
       }
-    };
 
-    res.json(snapshot);
+      const examSnapshot = await repository.exportSnapshot();
+      validateLegacyVerificationSources(examSnapshot, dbState.exams, dbState.progress);
+      const examSummary = {
+        exam_masters: examSnapshot.collections.exam_masters.length,
+        exam_versions: examSnapshot.collections.exam_versions.length,
+        exam_attempts: examSnapshot.collections.exam_attempts.length,
+        exam_progress: examSnapshot.collections.exam_progress.length,
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+      };
+
+      const nowIso = new Date().toISOString();
+      const cfg = ensureDeploymentConfig(dbState);
+      cfg.lastBackupExportIso = nowIso;
+      cfg.updatedIso = nowIso;
+      appendAuditLog(
+        dbState,
+        caller,
+        'SYSTEM_BACKUP',
+        'Vollständiges Portal- und Prüfungsbackup exportiert',
+        'CA_POST_PORTAL_BACKUP_V4',
+        `${dbState.accounts.length} Konten, ${dbState.exams.length} Legacy-Prüfungen und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
+      );
+      await saveDatabaseAndWait(dbState);
+
+      const snapshot: PortalBackupSnapshot = {
+        snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4',
+        exportedAtIso: nowIso,
+        exportedByUsername: caller.username,
+        summary: {
+          accountsCount: dbState.accounts.length,
+          modulesCount: dbState.modules.length,
+          examsCount: dbState.exams.length,
+          applicationsCount: dbState.applications.length,
+          progressCount: dbState.progress.length,
+          announcementsCount: (dbState.announcements || []).length,
+          messagesCount: (dbState.messages || []).length,
+          requestsCount: (dbState.requests || []).length,
+          eventsCount: (dbState.events || []).length,
+          auditLogsCount: (dbState.auditLogs || []).length,
+          examMastersCount: examSummary.exam_masters,
+          examVersionsCount: examSummary.exam_versions,
+          examAttemptsCount: examSummary.exam_attempts,
+          examProgressCount: examSummary.exam_progress,
+          examLegacyVerificationsCount: examSummary.exam_legacy_verifications
+        },
+        examRepository: {
+          ...examSnapshot,
+          summary: examSummary
+        },
+        database: {
+          version: dbState.version || 3,
+          accounts: dbState.accounts,
+          applications: dbState.applications,
+          modules: dbState.modules,
+          exams: dbState.exams,
+          progress: dbState.progress,
+          announcements: dbState.announcements || [],
+          messages: dbState.messages || [],
+          requests: dbState.requests || [],
+          events: dbState.events || [],
+          auditLogs: dbState.auditLogs || [],
+          notifications: dbState.notifications || [],
+          deploymentConfig: cfg
+        }
+      };
+
+      await repository.setMaintenanceMode(false);
+      maintenanceStarted = false;
+      examMaintenanceActive = false;
+      examMaintenanceOperation = null;
+      res.json(snapshot);
+    } catch (error) {
+      if (maintenanceStarted) {
+        try {
+          await repository.setMaintenanceMode(false);
+          examMaintenanceActive = false;
+          examMaintenanceOperation = null;
+        } catch (releaseError) {
+          console.error('[Backup] Wartungsmodus konnte nach fehlgeschlagenem Export nicht aufgehoben werden:', releaseError);
+        }
+      } else {
+        try {
+          examMaintenanceActive = await repository.isMaintenanceMode();
+          examMaintenanceOperation = examMaintenanceActive ? 'restore' : null;
+        } catch {
+          examMaintenanceActive = true;
+        }
+      }
+      next(error);
+    }
   });
 
-  // ADMIN ONLY: 1-Click Full Database Restore
-  app.post('/api/admin/restore', (req, res) => {
-    const { adminUid, snapshot } = req.body as {
-      adminUid?: string;
-      snapshot?: Partial<PortalBackupSnapshot> & Partial<PortalDatabaseState>;
-    };
-
-    const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === adminUid);
+  // ADMIN ONLY: Restore a complete V4 snapshot across portal state and ExamRepository.
+  app.post('/api/admin/restore', async (req, res, next) => {
+    const sessionUid = res.locals.sessionUid as string;
+    const currentState = loadDatabase();
+    const caller = currentState.accounts.find(account => account.uid === sessionUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
       res.status(403).json({
         error: 'Zugriff verweigert. Nur der Administrator kann ein Datenbank-Backup einspielen.'
@@ -2776,104 +2882,217 @@ jobs:
       return;
     }
 
-    if (!snapshot || typeof snapshot !== 'object') {
-      res.status(400).json({ error: 'Ungültige Backup-Datei.' });
-      return;
-    }
-
-    const rawDb = (
-      snapshot.database ? snapshot.database : snapshot
-    ) as Partial<PortalDatabaseState>;
-    if (!Array.isArray(rawDb.accounts) || rawDb.accounts.length === 0) {
+    const snapshot = req.body?.snapshot as Partial<PortalBackupSnapshot> | undefined;
+    if (
+      !snapshot ||
+      typeof snapshot !== 'object' ||
+      snapshot.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+      typeof snapshot.exportedAtIso !== 'string' ||
+      Number.isNaN(Date.parse(snapshot.exportedAtIso)) ||
+      typeof snapshot.exportedByUsername !== 'string' ||
+      !snapshot.database ||
+      typeof snapshot.database !== 'object' ||
+      !snapshot.examRepository ||
+      typeof snapshot.examRepository !== 'object'
+    ) {
       res.status(400).json({
-        error: 'Die Backup-Datei enthält keine gültigen Benutzerkonten (accounts).'
+        error: 'Ungültiges oder unvollständiges Backup. Bitte erstelle ein neues vollständiges V4-Backup.'
       });
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const restoredAccounts: StoredAccountRecord[] = rawDb.accounts.map(acc => ({
-      ...acc,
-      sessionVersion: Math.max(
-        acc.sessionVersion ?? 0,
-        dbState.accounts.find(current => current.uid === acc.uid)?.sessionVersion ?? 0
-      ),
-      isOnline: acc.uid === caller.uid ? true : Boolean(acc.isOnline),
-      lastSeenIso: acc.uid === caller.uid ? nowIso : acc.lastSeenIso || nowIso,
-      publicProfile: {
-        ...acc.publicProfile,
-        granularPermissions:
-          acc.publicProfile?.granularPermissions ||
-          getDefaultGranularPermissions(acc.publicProfile?.role || 'trainee'),
-        isOnline: acc.uid === caller.uid ? true : Boolean(acc.publicProfile?.isOnline),
-        lastSeenIso: acc.uid === caller.uid ? nowIso : acc.publicProfile?.lastSeenIso || nowIso
-      }
-    }));
-
-    if (!restoredAccounts.some(a => a.uid === caller.uid)) {
-      restoredAccounts.unshift({
-        ...caller,
-        isOnline: true,
-        lastSeenIso: nowIso
+    const rawDb = snapshot.database as Partial<PortalDatabaseState>;
+    const requiredArrays = [
+      'accounts', 'applications', 'modules', 'exams', 'progress',
+      'announcements', 'messages', 'requests', 'events', 'auditLogs', 'notifications'
+    ] as const;
+    if (
+      !requiredArrays.every(key => Array.isArray(rawDb[key])) ||
+      !Number.isSafeInteger(rawDb.version) ||
+      !rawDb.deploymentConfig ||
+      typeof rawDb.deploymentConfig !== 'object' ||
+      Array.isArray(rawDb.deploymentConfig) ||
+      !rawDb.accounts?.length ||
+      !rawDb.accounts.every(account =>
+        account && typeof account.uid === 'string' && account.uid.trim().length > 0 &&
+        account.publicProfile && typeof account.publicProfile === 'object'
+      ) ||
+      new Set(rawDb.accounts.map(account => account.uid)).size !== rawDb.accounts.length
+    ) {
+      res.status(400).json({
+        error: 'Das Backup enthält nicht alle erforderlichen Portal-Daten oder keine gültigen Benutzerkonten.'
       });
+      return;
     }
 
-    const currentCfg = ensureDeploymentConfig(dbState);
-    const incomingCfg = rawDb.deploymentConfig || currentCfg;
+    let examSnapshot;
+    try {
+      examSnapshot = validateExamRepositorySnapshot(snapshot.examRepository);
+      validateLegacyVerificationSources(examSnapshot, rawDb.exams, rawDb.progress);
 
-    const nextState: PortalDatabaseState = {
-      version: 3,
-      accounts: restoredAccounts,
-      applications: Array.isArray(rawDb.applications) ? rawDb.applications : [],
-      modules: Array.isArray(rawDb.modules) ? rawDb.modules : [],
-      exams: Array.isArray(rawDb.exams) ? rawDb.exams : [],
-      progress: Array.isArray(rawDb.progress) ? rawDb.progress : [],
-      announcements: Array.isArray(rawDb.announcements)
-        ? rawDb.announcements
-        : dbState.announcements || [],
-      messages: Array.isArray(rawDb.messages) ? rawDb.messages : dbState.messages || [],
-      requests: Array.isArray(rawDb.requests) ? rawDb.requests : dbState.requests || [],
-      events: Array.isArray(rawDb.events) ? rawDb.events : dbState.events || [],
-      auditLogs: Array.isArray(rawDb.auditLogs) ? rawDb.auditLogs : dbState.auditLogs || [],
-      notifications: Array.isArray(rawDb.notifications)
-        ? rawDb.notifications
-        : dbState.notifications || [],
-      deploymentConfig: {
-        ...currentCfg,
-        ...incomingCfg,
-        lastBackupRestoreIso: nowIso,
-        updatedIso: nowIso
+      const examCounts = snapshot.examRepository.summary;
+      const expectedExamCounts = {
+        exam_masters: examSnapshot.collections.exam_masters.length,
+        exam_versions: examSnapshot.collections.exam_versions.length,
+        exam_attempts: examSnapshot.collections.exam_attempts.length,
+        exam_progress: examSnapshot.collections.exam_progress.length,
+        exam_legacy_verifications: examSnapshot.collections.exam_legacy_verifications.length
+      };
+      if (
+        !examCounts ||
+        Object.entries(expectedExamCounts).some(([key, count]) => examCounts[key as keyof typeof expectedExamCounts] !== count)
+      ) {
+        throw new Error('EXAM_BACKUP_SUMMARY_MISMATCH');
       }
-    };
 
-    migrateLegacyPasswords(nextState);
-
-    appendAuditLog(
-      nextState,
-      caller,
-      'SYSTEM_BACKUP',
-      'Datenbank-Backup wiederhergestellt',
-      'CA_POST_PORTAL_BACKUP_V3',
-      `${nextState.accounts.length} Konten und ${nextState.modules.length} Handbücher erfolgreich eingespielt.`
-    );
-    saveDatabase(nextState);
-
-    res.json({
-      ok: true,
-      restoredAtIso: nowIso,
-      summary: {
-        accountsCount: nextState.accounts.length,
-        modulesCount: nextState.modules.length,
-        examsCount: nextState.exams.length,
-        applicationsCount: nextState.applications.length,
-        progressCount: nextState.progress.length,
-        announcementsCount: (nextState.announcements || []).length,
-        messagesCount: (nextState.messages || []).length,
-        requestsCount: (nextState.requests || []).length,
-        eventsCount: (nextState.events || []).length,
-        auditLogsCount: (nextState.auditLogs || []).length
+      const summary = snapshot.summary;
+      const expectedTopExamCounts = {
+        examMastersCount: expectedExamCounts.exam_masters,
+        examVersionsCount: expectedExamCounts.exam_versions,
+        examAttemptsCount: expectedExamCounts.exam_attempts,
+        examProgressCount: expectedExamCounts.exam_progress,
+        examLegacyVerificationsCount: expectedExamCounts.exam_legacy_verifications
+      };
+      if (
+        !summary ||
+        Object.entries(expectedTopExamCounts).some(([key, count]) =>
+          summary[key as keyof typeof expectedTopExamCounts] !== count
+        )
+      ) {
+        throw new Error('PORTAL_BACKUP_EXAM_SUMMARY_MISMATCH');
       }
-    });
+      const expectedPortalCounts = {
+        accountsCount: rawDb.accounts.length,
+        applicationsCount: rawDb.applications!.length,
+        modulesCount: rawDb.modules!.length,
+        examsCount: rawDb.exams!.length,
+        progressCount: rawDb.progress!.length,
+        announcementsCount: rawDb.announcements!.length,
+        messagesCount: rawDb.messages!.length,
+        requestsCount: rawDb.requests!.length,
+        eventsCount: rawDb.events!.length,
+        auditLogsCount: rawDb.auditLogs!.length
+      };
+      if (
+        !summary ||
+        Object.entries(expectedPortalCounts).some(([key, count]) =>
+          summary[key as keyof typeof expectedPortalCounts] !== count
+        )
+      ) {
+        throw new Error('PORTAL_BACKUP_SUMMARY_MISMATCH');
+      }
+    } catch (error) {
+      console.warn('[Backup Restore] Backup-Prüfung fehlgeschlagen:', error);
+      res.status(400).json({
+        error: 'Das Backup ist unvollständig oder enthält ungültige Prüfungsdaten beziehungsweise beschädigte Referenzen. Es wurden keine Daten verändert.'
+      });
+      return;
+    }
+
+    const repository = getExamRepository();
+    if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation === 'backup')) {
+      res.status(503).json({
+        error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
+      });
+      return;
+    }
+    examRestoreInProgress = true;
+    try {
+      // Auch ein zuvor fehlgeschlagener Restore darf nur über einen erneuten vollständigen Restore fortgesetzt werden.
+      examMaintenanceActive = true;
+      examMaintenanceOperation = 'restore';
+      await repository.setMaintenanceMode(true, true);
+
+      const nowIso = new Date().toISOString();
+      const restoredAccounts: StoredAccountRecord[] = rawDb.accounts!.map(acc => ({
+        ...acc,
+        sessionVersion: Math.max(
+          acc.sessionVersion ?? 0,
+          currentState.accounts.find(current => current.uid === acc.uid)?.sessionVersion ?? 0
+        ),
+        isOnline: acc.uid === caller.uid ? true : Boolean(acc.isOnline),
+        lastSeenIso: acc.uid === caller.uid ? nowIso : acc.lastSeenIso || nowIso,
+        publicProfile: {
+          ...acc.publicProfile,
+          granularPermissions:
+            acc.publicProfile?.granularPermissions ||
+            getDefaultGranularPermissions(acc.publicProfile?.role || 'trainee'),
+          isOnline: acc.uid === caller.uid ? true : Boolean(acc.publicProfile?.isOnline),
+          lastSeenIso: acc.uid === caller.uid ? nowIso : acc.publicProfile?.lastSeenIso || nowIso
+        }
+      }));
+
+      if (!restoredAccounts.some(account => account.uid === caller.uid)) {
+        restoredAccounts.unshift({
+          ...caller,
+          isOnline: true,
+          lastSeenIso: nowIso
+        });
+      }
+
+      const currentCfg = ensureDeploymentConfig(currentState);
+      const incomingCfg = rawDb.deploymentConfig || currentCfg;
+      const nextState: PortalDatabaseState = {
+        version: 3,
+        accounts: restoredAccounts,
+        applications: rawDb.applications!,
+        modules: rawDb.modules!,
+        exams: rawDb.exams!,
+        progress: rawDb.progress!,
+        announcements: rawDb.announcements!,
+        messages: rawDb.messages!,
+        requests: rawDb.requests!,
+        events: rawDb.events!,
+        auditLogs: rawDb.auditLogs!,
+        notifications: rawDb.notifications!,
+        deploymentConfig: {
+          ...currentCfg,
+          ...incomingCfg,
+          lastBackupRestoreIso: nowIso,
+          updatedIso: nowIso
+        }
+      };
+
+      migrateLegacyPasswords(nextState);
+      appendAuditLog(
+        nextState,
+        caller,
+        'SYSTEM_BACKUP',
+        'Vollständiges Portal- und Prüfungsbackup wiederhergestellt',
+        'CA_POST_PORTAL_BACKUP_V4',
+        `${nextState.accounts.length} Konten, ${nextState.exams.length} Legacy-Prüfungen und ${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.`
+      );
+
+      // Beide Speichergrenzen bleiben gesperrt, bis beide Schreibvorgänge bestätigt wurden.
+      await saveDatabaseAndWait(nextState);
+      await repository.restoreSnapshot(examSnapshot);
+      await repository.setMaintenanceMode(false);
+      examMaintenanceActive = false;
+      examMaintenanceOperation = null;
+
+      res.json({
+        ok: true,
+        restoredAtIso: nowIso,
+        summary: {
+          accountsCount: nextState.accounts.length,
+          modulesCount: nextState.modules.length,
+          examsCount: nextState.exams.length,
+          progressCount: nextState.progress.length,
+          examMastersCount: examSnapshot.collections.exam_masters.length,
+          examVersionsCount: examSnapshot.collections.exam_versions.length,
+          examAttemptsCount: examSnapshot.collections.exam_attempts.length,
+          examProgressCount: examSnapshot.collections.exam_progress.length,
+          examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length
+        }
+      });
+    } catch (error) {
+      console.error('[Backup Restore] Wiederherstellung fehlgeschlagen; Wartungsmodus bleibt aktiv:', error);
+      res.status(503).json({
+        error: 'Die Wiederherstellung ist fehlgeschlagen. Das Prüfungssystem bleibt aus Sicherheitsgründen im Wartungsmodus. Bitte starte die vollständige Wiederherstellung erneut oder lasse den Datenbestand administrativ prüfen.'
+      });
+    } finally {
+      examRestoreInProgress = false;
+    }
   });
 
   // ADMIN ONLY: Optional Render Deploy Hook Trigger

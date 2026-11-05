@@ -443,3 +443,54 @@ test('JSON-Repository: Legacy-Verifikationen verwenden eine deterministische Nac
     });
   });
 });
+
+
+test('JSON-Repository: Exam-Snapshot exportiert alle Sammlungen und Restore ersetzt sie atomar', async () => {
+  await withRepository(async repository => {
+    await repository.create('exam_masters', 'old-exam', { id: 'old-exam', status: 'draft' });
+    await repository.setMaintenanceMode(true);
+    const exported = await repository.exportSnapshot();
+    assert.equal(exported.formatVersion, 1);
+    assert.equal(exported.collections.exam_masters.length, 1);
+    assert.deepEqual(exported.collections.exam_attempts, []);
+
+    const replacement = {
+      formatVersion: 1 as const,
+      collections: {
+        exam_masters: [{ id: 'new-exam', status: 'draft' }],
+        exam_versions: [],
+        exam_attempts: [],
+        exam_progress: [],
+        exam_legacy_verifications: []
+      }
+    };
+    await repository.restoreSnapshot(replacement);
+    assert.equal(await repository.get('exam_masters', 'old-exam'), null);
+    assert.ok(await repository.get('exam_masters', 'new-exam'));
+    assert.equal(await repository.isMaintenanceMode(), true);
+
+    await repository.setMaintenanceMode(false);
+    assert.equal(await repository.isMaintenanceMode(), false);
+  });
+});
+
+test('JSON-Repository: Snapshot-Export und Restore erfordern den Wartungsmodus', async () => {
+  await withRepository(async repository => {
+    await assert.rejects(repository.exportSnapshot(), /EXAM_MAINTENANCE_REQUIRED/);
+    await assert.rejects(repository.restoreSnapshot({
+      formatVersion: 1,
+      collections: {
+        exam_masters: [], exam_versions: [], exam_attempts: [], exam_progress: [], exam_legacy_verifications: []
+      }
+    }), /EXAM_MAINTENANCE_REQUIRED/);
+  });
+});
+
+test('JSON-Repository: Wartungsmodus kann nicht versehentlich doppelt gestartet werden', async () => {
+  await withRepository(async repository => {
+    await repository.setMaintenanceMode(true);
+    await assert.rejects(repository.setMaintenanceMode(true), /EXAM_MAINTENANCE_ALREADY_ACTIVE/);
+    await repository.setMaintenanceMode(true, true);
+    assert.equal(await repository.isMaintenanceMode(), true);
+  });
+});
