@@ -24,9 +24,16 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
 
   const collectionKeys = Object.keys(value.collections).sort();
   const expectedKeys = [...EXAM_COLLECTIONS].sort();
+  const legacyKeys = expectedKeys.filter(key =>
+    key !== 'exam_comments' && key !== 'exam_publication_requests'
+  );
+  const isLegacySnapshot =
+    collectionKeys.length === legacyKeys.length &&
+    collectionKeys.every((key, index) => key === legacyKeys[index]);
   if (
-    collectionKeys.length !== expectedKeys.length ||
-    collectionKeys.some((key, index) => key !== expectedKeys[index])
+    !isLegacySnapshot &&
+    (collectionKeys.length !== expectedKeys.length ||
+      collectionKeys.some((key, index) => key !== expectedKeys[index]))
   ) {
     return fail('EXAM_BACKUP_COLLECTIONS_INCOMPLETE');
   }
@@ -35,6 +42,11 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
 
   for (const collection of EXAM_COLLECTIONS) {
     const raw = value.collections[collection];
+    if (raw === undefined && isLegacySnapshot &&
+      (collection === 'exam_comments' || collection === 'exam_publication_requests')) {
+      collections[collection] = [];
+      continue;
+    }
     if (!Array.isArray(raw)) return fail('EXAM_BACKUP_COLLECTION_INVALID');
     const seen = new Set<string>();
     const documents: ExamDocument[] = [];
