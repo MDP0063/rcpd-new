@@ -22,6 +22,23 @@ export function roundDivHalfUp(numerator: number, denominator: number): number {
   return Number((2n * n + d) / (2n * d));
 }
 
+/**
+ * a * b / den, kaufmännisch gerundet, vollständig in BigInt gerechnet (das Produkt wird nie als Number gebildet).
+ * Das Ergebnis wird erst nach Begrenzung auf 0..cap zurück in eine Number gewandelt (cap muss eine sichere Ganzzahl sein).
+ */
+export function mulDivHalfUpClamped(a: number, b: number, den: number, cap: number): number {
+  if (
+    !isNonNegativeSafeInteger(a) || !isNonNegativeSafeInteger(b) ||
+    !isPositiveSafeInteger(den) || !isNonNegativeSafeInteger(cap)
+  ) {
+    throw new RangeError('mulDivHalfUpClamped erwartet sichere nichtnegative Ganzzahlen (Nenner > 0).');
+  }
+  const d = BigInt(den);
+  const q = (2n * BigInt(a) * BigInt(b) + d) / (2n * d);
+  const c = BigInt(cap);
+  return Number(q > c ? c : q);
+}
+
 /** Begrenzt auf 0..max. */
 export function clampInt(value: number, max: number): number {
   return Math.min(Math.max(value, 0), max);
@@ -52,11 +69,8 @@ export function meetsPassingScore(
 
 /** Ergebnis in Basispunkten (0..10000), gerundet. Nur für Anzeige und Mindestwerte, nicht für Bestehen. */
 export function scoreBasisPoints(earnedPointsMilli: number, totalPossiblePointsMilli: number): number {
-  if (totalPossiblePointsMilli <= 0) return 0;
-  return clampInt(
-    roundDivHalfUp(earnedPointsMilli * BASIS_POINTS_FULL, totalPossiblePointsMilli),
-    BASIS_POINTS_FULL
-  );
+  if (!isPositiveSafeInteger(totalPossiblePointsMilli) || !isNonNegativeSafeInteger(earnedPointsMilli)) return 0;
+  return mulDivHalfUpClamped(earnedPointsMilli, BASIS_POINTS_FULL, totalPossiblePointsMilli, BASIS_POINTS_FULL);
 }
 
 /** Ganze Prozentzahl für die Anzeige (halbe Prozent aufwärts), z. B. 7449 -> 74. */

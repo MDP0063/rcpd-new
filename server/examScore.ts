@@ -6,10 +6,9 @@
  */
 import { hasOwn } from './examAnswers.ts';
 import {
-  clampInt,
+  mulDivHalfUpClamped,
   isNonNegativeSafeInteger,
   meetsPassingScore,
-  roundDivHalfUp,
   scoreBasisPoints
 } from './examMath.ts';
 import type { AnswerMap, ExamQuestion, QuestionType } from './examTypes.ts';
@@ -85,7 +84,7 @@ export function scoreAutoQuestion(question: ExamQuestion, answer: unknown): numb
       }
       // P = max(0, (R - F) / N * P_max)
       const net = Math.max(0, right - wrong);
-      return clampInt(roundDivHalfUp(net * max, correct.size), max);
+      return mulDivHalfUpClamped(net, max, correct.size, max);
     }
 
     case 'matching': {
@@ -107,7 +106,7 @@ export function scoreAutoQuestion(question: ExamQuestion, answer: unknown): numb
         if (targetByPair.get(pairId) === targetId) correct += 1;
       }
       // P = K / N * P_max
-      return clampInt(roundDivHalfUp(correct * max, pairs.length), max);
+      return mulDivHalfUpClamped(correct, max, pairs.length, max);
     }
 
     case 'free_text':
@@ -141,6 +140,7 @@ export function scoreExam(
       throw new RangeError(`Ungültige Punktzahl bei Frage ${q.id}.`);
     }
     total += q.pointsMilli;
+    if (!Number.isSafeInteger(total)) throw new RangeError('Die Gesamtpunktzahl überschreitet den zulässigen Bereich.');
     const answer = hasOwn(answers, q.id) ? answers[q.id] : undefined;
     const answered = isAnswered(q, answer);
 

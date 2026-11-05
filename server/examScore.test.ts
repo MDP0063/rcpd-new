@@ -116,3 +116,23 @@ test('fremde Antwort-Schlüssel und Prototype-Namen beeinflussen die Bewertung n
   const r = scoreExam([SC], answers, 7500);
   assert.equal(r.autoEarnedPointsMilli, 1000);
 });
+
+test('große gültige Punktzahlen: Teilpunkte und Prozent exakt', () => {
+  const big = 4_000_000_000_000_001; // ungerade, Produkt mit Anzahl > 2^53
+  const mc: MultipleChoiceQuestion = { ...MC, pointsMilli: big, correctOptionIds: ['a', 'b', 'c'], options: [...MC.options, { id: 'e', text: 'E' }] };
+  const ref = (k: bigint, n: bigint) => Number((2n * k * BigInt(big) + n) / (2n * n));
+  assert.equal(scoreAutoQuestion(mc, ['a', 'b']), ref(2n, 3n));
+  assert.equal(scoreAutoQuestion(mc, ['a', 'b', 'c']), big);
+  const m: MatchingQuestion = { ...MATCH, pointsMilli: big };
+  assert.equal(scoreAutoQuestion(m, [{ pairId: 'p1', targetId: 't1' }, { pairId: 'p2', targetId: 't2' }]), ref(2n, 3n));
+  const r = scoreExam([m], { q4: [{ pairId: 'p1', targetId: 't1' }, { pairId: 'p2', targetId: 't2' }] }, 6667);
+  assert.equal(r.finalScoreBasisPoints, 6667);
+  assert.equal(r.status, 'failed'); // 66,666...% liegt exakt unter 66,67 %, auch wenn die Anzeige 6667 lautet
+  assert.equal(scoreExam([m], { q4: [{ pairId: 'p1', targetId: 't1' }, { pairId: 'p2', targetId: 't2' }] }, 6666).status, 'passed');
+});
+
+test('Gesamtpunktzahl über dem sicheren Bereich wird abgelehnt', () => {
+  const a = { ...SC, id: 'x1', pointsMilli: Number.MAX_SAFE_INTEGER };
+  const b = { ...SC, id: 'x2', pointsMilli: 1 };
+  assert.throws(() => scoreExam([a, b], {}, 7500), RangeError);
+});

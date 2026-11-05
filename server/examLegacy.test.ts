@@ -51,7 +51,7 @@ test('abgebildete Altprüfung wird wie bisher bewertet (Anteil richtiger Antwort
   assert.equal(score.status, 'failed');
 });
 
-test('Übungstest: unbegrenzte Versuche; unbekannte Stufe wird als Test behandelt', () => {
+test('Übungstest: unbegrenzte Versuche', () => {
   const r = mapLegacyExam(legacyExam({ assessmentStage: 'test' }));
   assert.ok(r.ok && r.master.maxAttempts === null);
 });
@@ -74,6 +74,10 @@ test('fehlerhafte Altdaten werden nicht migriert und nichts wird geraten', () =>
     { questionsPayload: JSON.stringify([{ id: 'q1', question: 'F', options: ['A'], correctIndex: 0 }]) },
     { questionsPayload: JSON.stringify([{ id: 'q1', question: 'F', options: ['A', 'B'], correctIndex: 0 }, { id: 'q1', question: 'G', options: ['A', 'B'], correctIndex: 1 }]) },
     { examFormat: 'unbekannt' },
+    { assessmentStage: 'exam' },
+    { assessmentStage: '' },
+    { assessmentStage: undefined as never },
+    { assessmentStage: 'FINAL_EXAM' },
     { passingScore: 120 },
     { timeLimitMinutes: -1 },
     { title: ' ' }
@@ -145,4 +149,10 @@ test('mit Verifikation erfüllt altes "passed" die Bestehensvoraussetzung', () =
 test('Verifikations-ID ist deterministisch und pfadsicher', () => {
   assert.equal(legacyVerificationId('lp1'), legacyVerificationId('lp1'));
   assert.ok(!legacyVerificationId('a/b').includes('/'));
+});
+
+test('unbekannte Prüfungsstufe führt zu einem nachvollziehbaren Migrationsfehler', () => {
+  const r = mapLegacyExam(legacyExam({ assessmentStage: 'practice' }));
+  assert.ok(!r.ok);
+  if (!r.ok) assert.ok(r.errors.some(e => e.includes('Prüfungsstufe')));
 });

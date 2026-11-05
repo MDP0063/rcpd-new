@@ -119,6 +119,9 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   const warnings: string[] = [];
 
   if (!isValidId(legacy.id)) errors.push('Ungültige Prüfungs-ID.');
+  if (legacy.assessmentStage !== 'test' && legacy.assessmentStage !== 'final_exam') {
+    errors.push('Unbekannte Prüfungsstufe; erlaubt sind nur "test" und "final_exam".');
+  }
   if (typeof legacy.title !== 'string' || !legacy.title.trim()) errors.push('Der Titel fehlt.');
   if (legacy.examFormat !== 'structured_quiz' && legacy.examFormat !== 'interactive_code') {
     errors.push('Unbekanntes Prüfungsformat.');
@@ -139,7 +142,7 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   }
   if (errors.length > 0) return { ok: false, errors };
 
-  const stage: AssessmentStage = legacy.assessmentStage === 'final_exam' ? 'final_exam' : 'test';
+  const stage: AssessmentStage = legacy.assessmentStage as AssessmentStage; // oben geprüft
   if (!Number.isInteger(rawScore)) warnings.push('Die Bestehensgrenze war keine ganze Prozentzahl und wurde gerundet.');
   const code = normalizeCourseCode(legacy.moduleCode);
   if (!code) warnings.push('Der Lehrgangscode ist ungültig; die Prüfung ist keinem Lehrgang zugewiesen.');
