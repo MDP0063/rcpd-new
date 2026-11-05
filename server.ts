@@ -2642,7 +2642,8 @@ jobs:
         status: source.status,
         scorePercent: source.scorePercent,
         attempts: source.attempts,
-        ...(source.courseCode !== undefined ? { courseCode: source.courseCode } : {})
+        ...(source.courseCode !== undefined ? { courseCode: source.courseCode } : {}),
+        ...(source.updatedIso !== undefined ? { updatedIso: source.updatedIso } : {})
       };
 
       let verification;
@@ -2661,6 +2662,10 @@ jobs:
         }
         if (code === 'EXAM_LEGACY_COURSE_INVALID') {
           res.status(409).json({ error: 'Der historische Lehrgangscode ist ungültig. Der Nachweis kann nicht sicher zugeordnet werden.' });
+          return;
+        }
+        if (code === 'EXAM_LEGACY_SCORE_INVALID') {
+          res.status(409).json({ error: 'Das historische Prüfungsergebnis ist ungültig und kann nicht verifiziert werden.' });
           return;
         }
         if (code === 'EXAM_LEGACY_VERIFICATION_INVALID') {
