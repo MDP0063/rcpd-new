@@ -997,8 +997,8 @@ async function startServer() {
 
   // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
   app.use('/api', (req, res, next) => {
-    const isExamAutosave = req.method === 'PUT' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/autosave$/.test(req.path);
-    const isExamSubmit = req.method === 'POST' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(req.path);
+    const isExamAutosave = req.method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(req.path);
+    const isExamSubmit = req.method === 'POST' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path);
     if (isExamAutosave || isExamSubmit) res.locals.examRequestReceivedAtMs = Date.now();
     if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
       next();
@@ -1042,7 +1042,7 @@ async function startServer() {
           '/admin/exams/legacy-verifications',
           '/admin/exams/migrate-legacy'
         ].includes(req.path) ||
-        /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(req.path) ||
+        /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path) ||
         /^\/admin\/exams\/[^/]+\/publish$/.test(req.path)
       )) ||
       (req.method === 'PUT' && /^\/academy\/exams\/[^/]+$/.test(req.path)) ||
