@@ -7,6 +7,10 @@ interface CorrectionAudit {
   reviewerUid: string;
   atIso: string;
   reason: string;
+  previousReviewerUid: string;
+  previousReviewedAtIso: string;
+  previousManualPointsMilli: number;
+  nextManualPointsMilli: number;
   previousStatus: 'passed' | 'failed';
   nextStatus: 'passed' | 'failed';
   previousScoreBasisPoints: number | null;
@@ -164,7 +168,8 @@ export const ExamCorrectionCenter: React.FC = () => {
         {review.reviewCorrections.length > 0 && <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
           <h4 className="text-sm font-semibold">Korrekturhistorie</h4>
           {review.reviewCorrections.map((entry, index) => <div key={entry.atIso + index} className="rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-950">
-            <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · {entry.reviewerUid}</p>
+            <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · korrigiert von {entry.reviewerUid}</p>
+            <p className="mt-1 text-slate-500">Vorherige Bewertung: {entry.previousReviewerUid} · {new Date(entry.previousReviewedAtIso).toLocaleString('de-DE')}</p>
             <p className="mt-1">Ergebnis: {entry.previousStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.previousScoreBasisPoints)}) → {entry.nextStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.nextScoreBasisPoints)})</p>
             <p className="mt-1 whitespace-pre-wrap">Begründung: {entry.reason}</p>
             <p className="mt-1 text-slate-500">Punkte: {entry.previousGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')} → {entry.nextGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')}</p>
