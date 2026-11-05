@@ -63,7 +63,7 @@ class FirestoreExamTransaction implements ExamTransaction {
   private readonly readDocuments = new Map<string, ExamDocument | null>();
 
   private cacheKey(collection: ExamCollection, id: string): string {
-    return `${collection}\\0${id}`;
+    return JSON.stringify([collection, id]);
   }
 
   private remember<T extends ExamDocument>(collection: ExamCollection, document: T | null): T | null {
@@ -90,7 +90,9 @@ class FirestoreExamTransaction implements ExamTransaction {
     if (this.readDocuments.has(key)) return clone(this.readDocuments.get(key) as T | null);
     const reference = this.database.collection(collection).doc(storageId(id));
     const snapshot = await this.transaction.get(reference);
-    return this.remember(collection, documentFromSnapshot<T>(collection, snapshot, id));
+    const document = documentFromSnapshot<T>(collection, snapshot, id);
+    this.readDocuments.set(key, document ? clone(document) : null);
+    return document;
   }
 
   async list<T extends ExamDocument = ExamDocument>(
