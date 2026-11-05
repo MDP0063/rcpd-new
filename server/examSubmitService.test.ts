@@ -10,7 +10,7 @@ import { submitExamAttempt } from './examSubmitService.ts';
 
 async function withAttempt(
   run: (repository: ReturnType<typeof createJsonExamRepository>) => Promise<void>,
-  options: { timeLimitMinutes?: number } = {}
+  options: { timeLimitMinutes?: number; assessmentStage?: 'test' | 'final_exam' } = {}
 ): Promise<void> {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-submit-'));
   try {
@@ -28,7 +28,7 @@ async function withAttempt(
       examId: 'exam-1',
       versionNumber: 1,
       title: 'Submit-Test',
-      assessmentStage: 'test',
+      assessmentStage: options.assessmentStage ?? 'test',
       minClearance: 0,
       timeLimitMinutes: options.timeLimitMinutes ?? 30,
       passingScoreBasisPoints: 7500,
@@ -104,7 +104,7 @@ nodeTest('Eingang exakt zur Deadline ist eine reguläre Abgabe', async () => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(30));
     assert.equal(result.expired, false);
-    assert.equal(result.submission.status, 'passed');
+    assert.equal(result.submission.status, 'pending_review');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
   });
 });
@@ -114,7 +114,7 @@ nodeTest('Verspätete Abgabe ignoriert Request-Payloads und finalisiert den letz
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(31));
     assert.equal(result.expired, true);
-    assert.equal(result.submission.status, 'passed');
+    assert.equal(result.submission.status, 'pending_review');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
     const stored = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(stored?.submissionReason, 'time_expired');
@@ -147,12 +147,11 @@ nodeTest('Versuche anderer Prüfungen und unbekannte Versuche werden nicht abgeg
 
 nodeTest('Abgabe nach Admin-Invalidierung wird abgelehnt', async () => {
   await withAttempt(async repository => {
-    const attempt = await repository.get('exam_attempts', 'attempt-1');
-    assert.ok(attempt);
-    await repository.update('exam_attempts', 'attempt-1', {
-      ...attempt,
-      status: 'invalidated_by_admin'
-    });
+    await repository.runTransaction(transaction => transaction.invalidateAttempt('attempt-1', {
+      adminUid: 'admin-1',
+      atIso: new Date(at(1)).toISOString(),
+      reason: 'Testinvalidierung'
+    }));
     await assert.rejects(
       submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2)),
       /EXAM_ATTEMPT_NOT_ACTIVE/
@@ -162,20 +161,8 @@ nodeTest('Abgabe nach Admin-Invalidierung wird abgelehnt', async () => {
 
 nodeTest('Abschlussprüfungen geben keine Richtig/Falsch-Hinweise oder Erklärungen an Teilnehmer zurück', async () => {
   await withAttempt(async repository => {
-    const version = await repository.get('exam_versions', 'exam-1__v1');
-    assert.ok(version);
-    await repository.update('exam_versions', 'exam-1__v1', {
-      ...version,
-      assessmentStage: 'final_exam'
-    });
-    const attempt = await repository.get('exam_attempts', 'attempt-1');
-    assert.ok(attempt);
-    await repository.update('exam_attempts', 'attempt-1', {
-      ...attempt,
-      assessmentStage: 'final_exam'
-    });
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
     assert.equal('correct' in result.submission.questionResults[0], false);
     assert.equal('explanation' in result.submission.questionResults[0], false);
-  });
+  }, { assessmentStage: 'final_exam' });
 });
