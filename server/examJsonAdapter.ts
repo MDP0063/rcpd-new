@@ -261,10 +261,13 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
     return this.runExclusive(async () => {
       const state = await this.readState();
       if (!state.maintenanceMode) throw new Error('EXAM_MAINTENANCE_REQUIRED');
-      return {
-        formatVersion: 1,
-        collections: clone(state.collections)
-      };
+      const collections = Object.fromEntries(
+        EXAM_COLLECTIONS.map(collection => [
+          collection,
+          Object.values(state.collections[collection]).map(document => clone(document))
+        ])
+      ) as import('./examRepositoryTypes.ts').ExamRepositorySnapshot['collections'];
+      return { formatVersion: 1, collections };
     });
   }
 
