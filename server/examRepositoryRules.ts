@@ -192,8 +192,31 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       !Array.isArray(appended.previousGrades) || !Array.isArray(appended.nextGrades) ||
       !isDeepStrictEqual(appended.previousStatus, existing.status) ||
       !isDeepStrictEqual(appended.previousScoreBasisPoints, existing.finalScoreBasisPoints ?? null) ||
+      !isDeepStrictEqual(appended.nextScoreBasisPoints, next.finalScoreBasisPoints ?? null) ||
       !isDeepStrictEqual(next.reviewedByUid, appended.reviewerUid) ||
-      !isDeepStrictEqual(next.reviewedAtIso, appended.atIso)
+      !isDeepStrictEqual(next.reviewedAtIso, appended.atIso) ||
+      !isDeepStrictEqual(
+        Object.keys(appended).sort(),
+        ['atIso', 'nextGrades', 'nextScoreBasisPoints', 'nextStatus', 'previousGrades', 'previousScoreBasisPoints', 'previousStatus', 'reason', 'reviewerUid'].sort()
+      ) ||
+      !appended.previousGrades.every((grade: any, index: number, all: any[]) =>
+        grade && typeof grade.questionId === 'string' && grade.questionId.trim() &&
+        Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+        all.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+        Array.isArray(existing.questionGrades) &&
+        existing.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
+      ) ||
+      !appended.nextGrades.every((grade: any, index: number, all: any[]) =>
+        grade && typeof grade.questionId === 'string' && grade.questionId.trim() &&
+        Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+        all.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+        Array.isArray(next.questionGrades) &&
+        next.questionGrades.some((current: any) => current?.questionId === grade.questionId && current.pointsEarnedMilli === grade.pointsEarnedMilli)
+      ) ||
+      appended.previousGrades.length !== appended.nextGrades.length ||
+      appended.previousGrades.some((grade: any) => !appended.nextGrades.some((nextGrade: any) => nextGrade.questionId === grade.questionId)) ||
+      (appended.nextScoreBasisPoints !== null && (!Number.isSafeInteger(appended.nextScoreBasisPoints) || appended.nextScoreBasisPoints < 0 || appended.nextScoreBasisPoints > 10000)) ||
+      (appended.previousScoreBasisPoints !== null && (!Number.isSafeInteger(appended.previousScoreBasisPoints) || appended.previousScoreBasisPoints < 0 || appended.previousScoreBasisPoints > 10000))
     ) throw new Error('EXAM_ATTEMPT_CORRECTION_INVALID');
     return;
   }
