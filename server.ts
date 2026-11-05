@@ -111,6 +111,7 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 // Mit Firestore liegt der Zustand im Speicher des Servers und wird gebündelt nach Firestore geschrieben.
 let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
+let examMaintenanceActive = false;
 let memoryState: PortalDatabaseState | null = null;
 const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 
@@ -1087,7 +1088,7 @@ async function startServer() {
       return;
     }
     try {
-      if (await getExamRepository().isMaintenanceMode()) {
+      if (examMaintenanceActive || await getExamRepository().isMaintenanceMode()) {
         res.status(503).json({
           error: 'Prüfungsfunktionen sind wegen einer laufenden Datensicherung oder Wiederherstellung vorübergehend pausiert.'
         });
@@ -2713,6 +2714,12 @@ jobs:
       }
 
       const repository = getExamRepository();
+      if (examMaintenanceActive || await repository.isMaintenanceMode()) {
+        res.status(503).json({
+          error: 'Prüfungsfunktionen sind wegen einer laufenden Datensicherung oder Wiederherstellung vorübergehend pausiert.'
+        });
+        return;
+      }
       if (await repository.getLegacyVerification(legacyRecord.id)) {
         res.status(409).json({ error: 'Dieser historische Nachweis wurde bereits verifiziert.' });
         return;
@@ -2736,7 +2743,7 @@ jobs:
   });
 
   // ADMIN ONLY: Complete portal + ExamRepository backup.
-  app.get('/api/admin/backup', async (req, res, next) => {
+  app.get('/api/admin/backup', async (_req, res, next) => {
     const sessionUid = res.locals.sessionUid as string;
     const initialState = loadDatabase();
     const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
@@ -2751,8 +2758,9 @@ jobs:
     let maintenanceStarted = false;
     try {
       // Das persistente Flag pausiert auch Legacy-Prüfungsschreibwege und bleibt bei Server-Neustarts sichtbar.
-      await repository.setMaintenanceMode(true);
+      examMaintenanceActive = true;
       maintenanceStarted = true;
+      await repository.setMaintenanceMode(true);
 
       const dbState = loadDatabase();
       const caller = dbState.accounts.find(account => account.uid === sessionUid);
@@ -2827,11 +2835,13 @@ jobs:
 
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
+      examMaintenanceActive = false;
       res.json(snapshot);
     } catch (error) {
       if (maintenanceStarted) {
         try {
           await repository.setMaintenanceMode(false);
+          examMaintenanceActive = false;
         } catch (releaseError) {
           console.error('[Backup] Wartungsmodus konnte nach fehlgeschlagenem Export nicht aufgehoben werden:', releaseError);
         }
@@ -2942,6 +2952,7 @@ jobs:
     const repository = getExamRepository();
     try {
       // Auch ein zuvor fehlgeschlagener Restore darf nur über einen erneuten vollständigen Restore fortgesetzt werden.
+      examMaintenanceActive = true;
       await repository.setMaintenanceMode(true, true);
 
       const nowIso = new Date().toISOString();
@@ -3008,6 +3019,7 @@ jobs:
       await saveDatabaseAndWait(nextState);
       await repository.restoreSnapshot(examSnapshot);
       await repository.setMaintenanceMode(false);
+      examMaintenanceActive = false;
 
       res.json({
         ok: true,
