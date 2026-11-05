@@ -27,6 +27,7 @@ import {
   UserPublicProfile
 } from '../types/portal';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { ExamParticipantRunner } from './ExamParticipantRunner';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -56,7 +57,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'modules' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+    'modules' | 'exam_center' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('modules');
 
   // Granular Instructor Grading Form State
@@ -524,6 +525,18 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg w-fit">
         <button
           type="button"
+          onClick={() => setActiveTab('exam_center')}
+          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+            activeTab === 'exam_center'
+              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
+              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Prüfungszentrum
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('modules')}
           className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'modules'
@@ -836,6 +849,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           )}
         </div>
       )}
+
+      {activeTab === 'exam_center' && <ExamParticipantRunner />}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
       {(activeTab === 'tests' || activeTab === 'final_exams') && (
