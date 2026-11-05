@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import type { UserPublicProfile } from '../types/portal';
+import { ExamWorkshopComments } from './ExamWorkshopComments';
 
 type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'matching' | 'free_text';
 type Option = { id: string; text: string };
@@ -199,6 +200,18 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
   );
 
   const totalPoints = definition.questions.reduce((sum, question) => sum + question.pointsMilli, 0) / 1000;
+  const selectedExam = selectedId ? exams.find(exam => exam.id === selectedId) : undefined;
+  const selectedCategoryPermissions = definition.assessmentStage === 'final_exam'
+    ? workshopPermissions?.finalExams
+    : workshopPermissions?.tests;
+  const canEditSelected = isAdmin || Boolean(
+    workshopPermissions?.hasAccess && selectedCategoryPermissions &&
+    (selectedId
+      ? selectedExam?.currentPublishedVersionId
+        ? selectedCategoryPermissions.canUpdateExisting && !workshopPermissions.lockedUpdateExamIds.includes(selectedId)
+        : selectedCategoryPermissions.canEdit
+      : selectedCategoryPermissions.canCreate)
+  );
 
   if (mode === 'preview') return (
     <div className="space-y-6">
@@ -218,13 +231,17 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={()=>setMode('list')} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><ArrowLeft size={16}/> Zur Prüfungsübersicht</button>
-        <div className="flex gap-2"><button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
-          <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>
-          <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button></div>
+        <div className="flex gap-2">
+          <button onClick={()=>setMode('preview')} className="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"><Eye size={16}/> Vorschau</button>
+          {canEditSelected && <button onClick={()=>void save()} disabled={saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving?<Loader2 className="animate-spin" size={16}/>:<Save size={16}/>} Entwurf speichern</button>}
+          {isAdmin && <button onClick={()=>void publish()} disabled={!selectedId || saving || publishing} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?<Loader2 className="animate-spin" size={16}/>:<Send size={16}/>} Veröffentlichen</button>}
+        </div>
       </div>
       <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedId ? 'Prüfung bearbeiten' : 'Neue Prüfung erstellen'}</h1><p className="text-sm text-slate-500 mt-1">Arbeitsstand und veröffentlichte Version bleiben getrennt.</p></div>
       {error && <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 text-rose-800 p-3 text-sm">{error}</div>}
       {notice && <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 p-3 text-sm">{notice}</div>}
+      {!canEditSelected && <div className="rounded-md border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/30 p-3 text-sm text-sky-900 dark:text-sky-200">Du hast für diesen Inhalt Leserechte, aber keine Bearbeitungs- oder Aktualisierungsrechte.</div>}
+      <fieldset disabled={!canEditSelected} className="space-y-6 disabled:opacity-80">
       <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
         <h2 className="font-bold text-slate-900 dark:text-white">Prüfungsparameter</h2>
         <div className="grid md:grid-cols-2 gap-4">
@@ -264,6 +281,8 @@ export const ExamWorkshop: React.FC<ExamWorkshopProps> = ({ currentUser }) => {
         </article>)}
         {definition.questions.length===0 && <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500">Noch keine Fragen hinzugefügt.</div>}
       </section>
+      </fieldset>
+      {selectedId && <ExamWorkshopComments examId={selectedId} />}
     </div>
   );
 };
