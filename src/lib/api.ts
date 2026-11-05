@@ -165,6 +165,7 @@ export const API_ENDPOINTS = {
   ACADEMY_MODULES: '/api/academy/modules',
   ACADEMY_MODULE_PDF: (id: string) => `/api/academy/modules/${encodeURIComponent(id)}/pdf`,
   ACADEMY_EXAMS: '/api/academy/exams',
+  ACADEMY_EXAM_CATALOG: '/api/academy/exams/catalog',
   PROGRESS: '/api/progress',
   ANNOUNCEMENTS: '/api/announcements',
   MESSAGES: '/api/messages',
