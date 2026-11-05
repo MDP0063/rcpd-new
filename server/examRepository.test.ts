@@ -682,6 +682,7 @@ test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punk
       userId: 'student-1',
       examId: 'exam-1',
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 500,
       finalScoreBasisPoints: null
     });
     await repository.update('exam_attempts', 'attempt-tampered-correction', {
@@ -690,6 +691,7 @@ test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punk
       userId: 'student-1',
       examId: 'exam-1',
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 500, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 500,
       finalScoreBasisPoints: 5000,
       reviewedByUid: 'grader-1',
       reviewedAtIso: '2026-11-05T12:00:00.000Z'
@@ -699,6 +701,7 @@ test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punk
     await assert.rejects(repository.update('exam_attempts', 'attempt-tampered-correction', {
       ...completed,
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 800, requiresManualReview: false }],
+      manuallyEarnedPointsMilli: 800,
       finalScoreBasisPoints: 8000,
       reviewedByUid: 'colonel-1',
       reviewedAtIso: '2026-11-05T13:00:00.000Z',
