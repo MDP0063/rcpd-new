@@ -1162,6 +1162,7 @@ async function startServer() {
 
   app.post('/api/admin/exams', async (req, res, next) => {
     try {
+      res.setHeader('Cache-Control', 'no-store');
       const caller = getExamWorkshopAdmin(res);
       if (!caller) {
         res.status(403).json({ error: 'Nur der Administrator darf Prüfungen in der Werkstatt anlegen.' });
@@ -1189,6 +1190,7 @@ async function startServer() {
 
   app.put('/api/academy/exams/:id', async (req, res, next) => {
     try {
+      res.setHeader('Cache-Control', 'no-store');
       const caller = getExamWorkshopAdmin(res);
       if (!caller) {
         res.status(403).json({ error: 'Nur der Administrator darf Prüfungsentwürfe bearbeiten.' });
@@ -1224,6 +1226,7 @@ async function startServer() {
 
   app.post('/api/admin/exams/:id/publish', async (req, res, next) => {
     try {
+      res.setHeader('Cache-Control', 'no-store');
       const caller = getExamWorkshopAdmin(res);
       if (!caller) {
         res.status(403).json({ error: 'Nur der Administrator darf Prüfungen veröffentlichen.' });
