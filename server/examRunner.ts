@@ -153,6 +153,7 @@ export function projectQuestionsForAttempt(
   questions: readonly ExamQuestion[],
   matchingShuffleOrders: MatchingShuffleOrders
 ): PublicExamQuestion[] {
+  if (!isPlainRecord(matchingShuffleOrders)) throw new Error('EXAM_MATCHING_SHUFFLE_INVALID');
   return questions.map(question => {
     switch (question.type) {
       case 'single_choice':
@@ -284,6 +285,7 @@ function gradeObjectiveQuestion(question: ExamQuestion, answer: AnswerValue | un
     case 'multiple_choice': {
       const selected = Array.isArray(answer) ? answer as string[] : [];
       const correctIds = new Set(question.correctOptionIds);
+      if (correctIds.size === 0) throw new Error('EXAM_GRADING_INPUT_INVALID');
       const right = selected.filter(id => correctIds.has(id)).length;
       const wrong = selected.length - right;
       const earned = mulDivHalfUpClamped(Math.max(0, right - wrong), max, correctIds.size, max);
@@ -295,6 +297,7 @@ function gradeObjectiveQuestion(question: ExamQuestion, answer: AnswerValue | un
     }
     case 'matching': {
       const entries = Array.isArray(answer) ? answer as MatchingAnswerEntry[] : [];
+      if (question.matchingPairs.length === 0) throw new Error('EXAM_GRADING_INPUT_INVALID');
       const correctByPair = new Map(question.matchingPairs.map(pair => [pair.id, pair.targetId]));
       const correctCount = entries.filter(entry => correctByPair.get(entry.pairId) === entry.targetId).length;
       const earned = mulDivHalfUpClamped(correctCount, max, question.matchingPairs.length, max);
@@ -311,10 +314,14 @@ export function evaluateExamAnswers(
   answers: AnswerMap,
   passingScoreBasisPoints: number
 ): ExamGradeResult {
+  if (!Array.isArray(questions) || questions.length === 0) throw new Error('EXAM_GRADING_INPUT_INVALID');
   let totalPossiblePointsMilli = 0;
   let automaticallyEarnedPointsMilli = 0;
   let requiresManualReview = false;
   const questionGrades = questions.map(question => {
+    if (!Number.isSafeInteger(question.pointsMilli) || question.pointsMilli <= 0) {
+      throw new Error('EXAM_GRADING_INPUT_INVALID');
+    }
     totalPossiblePointsMilli += question.pointsMilli;
     const grade = gradeObjectiveQuestion(question, answers[question.id]);
     automaticallyEarnedPointsMilli += grade.pointsEarnedMilli;
