@@ -131,72 +131,8 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
   return diff <= ONLINE_THRESHOLD_MS;
 }
 
-export function getDefaultGranularPermissions(role: OfficerRole): GranularPermissions {
-  if (role === 'admin') {
-    return {
-      assignedCourseCodes: ['*'],
-      canGradeAssignedCourses: true,
-      canManageEvents: true,
-      canPublishAnnouncements: true,
-      canReviewStandardRequests: true,
-      canExportReports: true
-    };
-  }
-  if (role === 'colonel') {
-    return {
-      assignedCourseCodes: ['*'],
-      canGradeAssignedCourses: true,
-      canManageEvents: true,
-      canPublishAnnouncements: true,
-      canReviewStandardRequests: true,
-      canExportReports: true
-    };
-  }
-  return {
-    assignedCourseCodes: [],
-    canGradeAssignedCourses: false,
-    canManageEvents: false,
-    canPublishAnnouncements: false,
-    canReviewStandardRequests: false,
-    canExportReports: false
-  };
-}
-
-function normalizeGranularPermissions(
-  role: OfficerRole,
-  incoming?: Partial<GranularPermissions>
-): GranularPermissions {
-  const defaults = getDefaultGranularPermissions(role);
-  if (role === 'admin') {
-    return defaults;
-  }
-  if (!incoming) return defaults;
-  return {
-    assignedCourseCodes: Array.isArray(incoming.assignedCourseCodes)
-      ? incoming.assignedCourseCodes.map(c => String(c).trim().toUpperCase()).filter(Boolean)
-      : defaults.assignedCourseCodes,
-    canGradeAssignedCourses:
-      typeof incoming.canGradeAssignedCourses === 'boolean'
-        ? incoming.canGradeAssignedCourses
-        : defaults.canGradeAssignedCourses,
-    canManageEvents:
-      typeof incoming.canManageEvents === 'boolean'
-        ? incoming.canManageEvents
-        : defaults.canManageEvents,
-    canPublishAnnouncements:
-      typeof incoming.canPublishAnnouncements === 'boolean'
-        ? incoming.canPublishAnnouncements
-        : defaults.canPublishAnnouncements,
-    canReviewStandardRequests:
-      typeof incoming.canReviewStandardRequests === 'boolean'
-        ? incoming.canReviewStandardRequests
-        : defaults.canReviewStandardRequests,
-    canExportReports:
-      typeof incoming.canExportReports === 'boolean'
-        ? incoming.canExportReports
-        : defaults.canExportReports
-  };
-}
+export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
+import { getDefaultGranularPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
@@ -1739,15 +1675,18 @@ async function startServer() {
     const isAdmin = caller.publicProfile.role === 'admin';
     const isTrainee = caller.publicProfile.role === 'trainee';
     const callerPerms =
-      caller.publicProfile.granularPermissions ||
-      getDefaultGranularPermissions(caller.publicProfile.role);
+      normalizeGranularPermissions(
+        caller.publicProfile.role,
+        caller.publicProfile.granularPermissions
+      );
 
     // Recompute live online flags for all accounts
     const publicRoster = dbState.accounts.map(a => ({
       ...a.publicProfile,
-      granularPermissions:
-        a.publicProfile.granularPermissions ||
-        getDefaultGranularPermissions(a.publicProfile.role),
+      granularPermissions: normalizeGranularPermissions(
+        a.publicProfile.role,
+        a.publicProfile.granularPermissions
+      ),
       isOnline: computeIsOnline(a),
       lastSeenIso: a.lastSeenIso
     }));
@@ -1760,8 +1699,7 @@ async function startServer() {
     const canSeeAllProgress =
       isAdmin ||
       caller.publicProfile.role === 'colonel' ||
-      callerPerms.canGradeAssignedCourses ||
-      callerPerms.canExportReports;
+      callerPerms.canGradeAssignedCourses;
 
     const canSeeAllRequests =
       isAdmin ||
@@ -1790,9 +1728,10 @@ async function startServer() {
             lastSeenIso: a.lastSeenIso,
             publicProfile: {
               ...a.publicProfile,
-              granularPermissions:
-                a.publicProfile.granularPermissions ||
-                getDefaultGranularPermissions(a.publicProfile.role),
+              granularPermissions: normalizeGranularPermissions(
+                a.publicProfile.role,
+                a.publicProfile.granularPermissions
+              ),
               isOnline: computeIsOnline(a),
               lastSeenIso: a.lastSeenIso
             },
