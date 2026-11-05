@@ -1418,11 +1418,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setActiveSection('exam_workshop')}
-                        className={\`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer \${
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'exam_workshop'
                             ? 'bg-sky-600 text-white font-semibold'
                             : 'text-sky-400 hover:bg-slate-800'
-                        }\`}
+                        }`}
                       >
                         <FilePlus2 className="w-4 h-4" />
                         Prüfungswerkstatt
