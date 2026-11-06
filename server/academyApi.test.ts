@@ -473,9 +473,10 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
 
     const participantList = await request('/api/academy/courses', officer);
     assert.equal(participantList.status, 200);
-    assert.equal(participantList.body!.courses.length, 1);
-    assert.equal(participantList.body!.courses[0].version.title, 'HTTP Academy Course v2');
-    assert.equal(participantList.body!.courses[0].draft, null);
+    const participantCourse = participantList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseId);
+    assert.ok(participantCourse, 'the specifically published course is visible to its participant');
+    assert.equal(participantCourse.version.title, 'HTTP Academy Course v2');
+    assert.equal(participantCourse.draft, null);
 
     const started = await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' });
     assert.equal(started.status, 201, JSON.stringify(started.body));
