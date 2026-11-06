@@ -221,10 +221,7 @@ export function validateCourseParticipation(
       !isNonEmpty(participation.createdIso) || !isNonEmpty(participation.updatedIso)) {
     return invalid('ACADEMY_PARTICIPATION_STATE_INVALID', 'Teilnahmestatus und Zeitstempel müssen gültig sein.');
   }
-  if (participation.status === 'in_progress' && !isNonEmpty(participation.startedIso)) {
-    return invalid('ACADEMY_PARTICIPATION_START_TIMESTAMP_MISSING', 'Eine aktive Teilnahme benötigt einen Startzeitpunkt.');
-  }
-  if (participation.status === 'completed' && (!isNonEmpty(participation.startedIso) || !isNonEmpty(participation.completedIso))) {
+  if (participation.status === 'completed' && !isNonEmpty(participation.completedIso)) {
     return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt Start- und Abschlusszeitpunkt.');
   }
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
