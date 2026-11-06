@@ -73,8 +73,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [submittingGrade, setSubmittingGrade] = useState(false);
 
   const [moduleSearchQuery, setModuleSearchQuery] = useState('');
+  const [moduleSortOrder, setModuleSortOrder] = useState<'alphabetical' | 'updated'>('alphabetical');
   const [isLibraryNavigationOpen, setIsLibraryNavigationOpen] = useState(false);
-  const [activeModuleId, setActiveModuleId] = useState<string | null>(modules[0]?.id || null);
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   // Interactive Test/Exam Runner State
@@ -145,12 +146,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     return [module.title, module.code, module.category, module.pdfFileName || '']
       .some(value => value.toLocaleLowerCase('de-DE').includes(normalizedModuleSearch));
   });
+  const sortedModules = [...filteredModules].sort((a, b) => {
+    if (moduleSortOrder === 'updated') {
+      const dateA = a.updatedIso ? Date.parse(a.updatedIso) : Number.NaN;
+      const dateB = b.updatedIso ? Date.parse(b.updatedIso) : Number.NaN;
+      if (Number.isFinite(dateA) && Number.isFinite(dateB) && dateA !== dateB) return dateB - dateA;
+      if (Number.isFinite(dateA) !== Number.isFinite(dateB)) return Number.isFinite(dateA) ? -1 : 1;
+    }
+    return a.title.localeCompare(b.title, 'de-DE');
+  });
 
-  const currentModule =
-    filteredModules.find(m => m.id === activeModuleId) ||
-    filteredModules[0] ||
-    (normalizedModuleSearch ? modules.find(m => m.id === activeModuleId) : null) ||
-    null;
+  const currentModule = modules.find(module => module.id === activeModuleId) || null;
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
   const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
@@ -551,6 +557,44 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 </p>
               </div>
             </div>
+          ) : !currentModule ? (
+            <section aria-labelledby="academy-library-heading" className="space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div>
+                  <h2 id="academy-library-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Lernbibliothek</h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Alle für dich zugänglichen veröffentlichten Materialien an einem Ort.</p>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{filteredModules.length} von {modules.length} Materialien</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
+                <div>
+                  <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
+                  <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Dateiname" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label htmlFor="academy-library-sort" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sortieren</label>
+                  <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                    <option value="alphabetical">Alphabetisch</option>
+                    <option value="updated">Zuletzt aktualisiert</option>
+                  </select>
+                </div>
+              </div>
+              {sortedModules.length === 0 ? (
+                <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
+              ) : (
+                <div className="border-y border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800" aria-label="Bibliotheksmaterialien">
+                  {sortedModules.map(module => (
+                    <button key={module.id} type="button" onClick={() => { setActiveModuleId(module.id); setIsLibraryNavigationOpen(false); }} className="w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
+                      <span className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <span className="font-medium text-sm text-slate-900 dark:text-white">{module.title}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{module.code}</span>
+                      </span>
+                      <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">{module.category}{module.pdfFileName ? ` · ${module.pdfFileName}` : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
           ) : (
             <div className={`grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
               {isLibraryNavigationOpen && (
@@ -607,7 +651,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         </h2>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
                         <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                           {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
                         </button>
