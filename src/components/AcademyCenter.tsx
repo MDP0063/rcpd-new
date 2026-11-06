@@ -28,6 +28,7 @@ import { ExamParticipantRunner } from './ExamParticipantRunner';
 import { ExamReviewCenter } from './ExamReviewCenter';
 import { ExamCorrectionCenter } from './ExamCorrectionCenter';
 import { AcademyLearningCenter } from './AcademyLearningCenter';
+import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -59,6 +60,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
+  const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
+  const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
 
   // Granular Instructor Grading Form State
   const [gradeTargetUserUid, setGradeTargetUserUid] = useState<string>('');
@@ -571,7 +574,19 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           </section>
         </section>
       )}
-      {activeTab === 'courses' && <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
+      {activeTab === 'courses' && (
+        <section className="space-y-5">
+          {canAuthorCourses && (
+            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800" role="group" aria-label="Kursbereich">
+              <button type="button" aria-pressed={courseAreaMode === 'learning'} onClick={() => setCourseAreaMode('learning')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${courseAreaMode === 'learning' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Lernen</button>
+              <button type="button" aria-pressed={courseAreaMode === 'management'} onClick={() => setCourseAreaMode('management')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${courseAreaMode === 'management' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kurse und Programme verwalten</button>
+            </div>
+          )}
+          {courseAreaMode === 'management' && canAuthorCourses
+            ? <AcademyAuthoringCenter currentUser={currentUser} onStatusToast={onStatusToast} />
+            : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
+        </section>
+      )}
       {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} />}
 
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
