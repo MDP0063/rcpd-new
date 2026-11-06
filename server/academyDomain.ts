@@ -150,6 +150,9 @@ export function validateProgramVersion(
   if (new Set(version.courseReferences.map(ref => ref.courseId)).size !== version.courseReferences.length) {
     return invalid('ACADEMY_PROGRAM_DUPLICATE_COURSE', 'Ein Kurs darf innerhalb einer Programmversion nur einmal zugeordnet sein.');
   }
+  if (!version.courseReferences.some(ref => ref.requirement === 'required')) {
+    return invalid('ACADEMY_PROGRAM_REQUIRED_COURSE_MISSING', 'Ein Programm benötigt mindestens einen Pflichtkurs, damit sein Abschluss eindeutig bestimmt werden kann.');
+  }
   if (version.courseReferences.some(ref =>
     !isNonEmpty(ref.courseId) ||
     !['required', 'recommended'].includes(ref.requirement) ||
@@ -292,6 +295,22 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
   }
   if ((note.content || '').length > 20_000) {
     return invalid('ACADEMY_NOTE_CONTENT_TOO_LONG', 'Der Notiztext überschreitet die zulässige Länge.');
+  }
+  return { ok: true };
+}
+
+export function validateProgramParticipation(participation: AcademyProgramParticipationDoc): AcademyValidationResult {
+  if (!isRecord(participation) || !isNonEmpty(participation.id) || !isNonEmpty(participation.userUid) ||
+      !isNonEmpty(participation.programId) || !isNonEmpty(participation.programVersionId) ||
+      !isNonEmpty(participation.createdIso) || !isNonEmpty(participation.updatedIso) ||
+      !Array.isArray(participation.requiredCoursePins) || participation.requiredCoursePins.length < 1 ||
+      !participation.requiredCoursePins.every(pin => isRecord(pin) && isNonEmpty(pin.courseId) &&
+        isNonEmpty(pin.courseVersionId) && isNonEmpty(pin.courseParticipationId))) {
+    return invalid('ACADEMY_PROGRAM_PARTICIPATION_INVALID', 'Programmteilnahme und alle gepinnten Pflichtkursversionen müssen gültig referenziert sein.');
+  }
+  if (new Set(participation.requiredCoursePins.map(pin => pin.courseId)).size !== participation.requiredCoursePins.length ||
+      new Set(participation.requiredCoursePins.map(pin => pin.courseParticipationId)).size !== participation.requiredCoursePins.length) {
+    return invalid('ACADEMY_PROGRAM_PARTICIPATION_DUPLICATE_PIN', 'Ein Pflichtkurs und eine Kursteilnahme dürfen innerhalb einer Programmteilnahme nur einmal gepinnt sein.');
   }
   return { ok: true };
 }
