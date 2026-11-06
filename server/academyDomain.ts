@@ -101,6 +101,7 @@ export function validateCourseVersion(
 }
 
 export function validateCourseDraft(courseId: string, draft: AcademyCourseDraftDoc): AcademyValidationResult {
+  if (!isRecord(draft)) return invalid('ACADEMY_COURSE_DRAFT_INVALID', 'Der Kursentwurf ist ungültig.');
   if (!isNonEmpty(courseId) || draft.id !== courseId || draft.courseId !== courseId ||
       !Number.isSafeInteger(draft.workingRevision) || draft.workingRevision < 1 ||
       !isNonEmpty(draft.updatedIso) || !isNonEmpty(draft.updatedByUid)) {
@@ -150,6 +151,7 @@ export function validateProgramVersion(
 }
 
 export function validateProgramDraft(programId: string, draft: AcademyProgramDraftDoc): AcademyValidationResult {
+  if (!isRecord(draft)) return invalid('ACADEMY_PROGRAM_DRAFT_INVALID', 'Der Programmentwurf ist ungültig.');
   if (!isNonEmpty(programId) || draft.id !== programId || draft.programId !== programId ||
       !Number.isSafeInteger(draft.workingRevision) || draft.workingRevision < 1 ||
       !isNonEmpty(draft.updatedIso) || !isNonEmpty(draft.updatedByUid)) {
@@ -165,6 +167,7 @@ export function validateProgramDraft(programId: string, draft: AcademyProgramDra
 }
 
 export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyValidationResult {
+  if (!isRecord(master)) return invalid('ACADEMY_COURSE_MASTER_INVALID', 'Der Kursstammsatz ist ungültig.');
   if (!['draft', 'published', 'archived'].includes(master.publicationStatus) || !['available', 'unavailable'].includes(master.availability)) {
     return invalid('ACADEMY_COURSE_STATE_INVALID', 'Veröffentlichungsstatus oder Verfügbarkeit des Kurses ist ungültig.');
   }
@@ -185,6 +188,7 @@ export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyVal
 }
 
 export function validateProgramMaster(master: AcademyProgramMasterDoc): AcademyValidationResult {
+  if (!isRecord(master)) return invalid('ACADEMY_PROGRAM_MASTER_INVALID', 'Der Programmstammsatz ist ungültig.');
   if (!['draft', 'published', 'archived'].includes(master.publicationStatus) || !['available', 'unavailable'].includes(master.availability)) {
     return invalid('ACADEMY_PROGRAM_STATE_INVALID', 'Veröffentlichungsstatus oder Verfügbarkeit des Programms ist ungültig.');
   }
