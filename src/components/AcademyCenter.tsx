@@ -580,7 +580,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       )}
       {activeTab === 'courses' && (
         <section className="space-y-5">
-          {canManageVersionedMaterials && (
+          {canAuthorCourses && (
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800" role="group" aria-label="Kursbereich">
               <button type="button" aria-pressed={courseAreaMode === 'learning'} onClick={() => setCourseAreaMode('learning')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${courseAreaMode === 'learning' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Lernen</button>
               <button type="button" aria-pressed={courseAreaMode === 'management'} onClick={() => setCourseAreaMode('management')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${courseAreaMode === 'management' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kurse und Programme verwalten</button>
@@ -596,7 +596,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
         <div className="space-y-5">
-          {canAuthorCourses && (
+          {canManageVersionedMaterials && (
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800" role="group" aria-label="Bibliotheksverwaltung">
               <button type="button" aria-pressed={libraryAreaMode === 'materials'} onClick={() => setLibraryAreaMode('materials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'materials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Materialien</button>
               {canAuthorCourses && (
