@@ -17,6 +17,7 @@ import type { UserPublicProfile } from '../types/portal';
 
 interface Props {
   currentUser: UserPublicProfile;
+  area: 'courses' | 'notes';
   onStatusToast: (message: string) => void;
 }
 
@@ -54,7 +55,6 @@ interface ProgramParticipationDetail {
   };
 }
 type Screen = 'catalog' | 'course' | 'program';
-type Area = 'courses' | 'notes';
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted = 'text-sm text-slate-600 dark:text-slate-300';
@@ -78,8 +78,7 @@ function dateLabel(value?: string): string {
   return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(date);
 }
 
-export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, onStatusToast }) => {
-  const [area, setArea] = useState<Area>('courses');
+export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast }) => {
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
@@ -310,20 +309,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, onStatusTo
     onStatusToast('Private Notiz gelöscht.');
   };
 
-  const navButton = (value: Area, label: string) => (
-    <button type="button" onClick={() => { setArea(value); setScreen('catalog'); }} aria-current={area === value ? 'page' : undefined}
-      className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${area === value ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
-      {label}
-    </button>
-  );
-
   return (
     <div className="space-y-6">
-      <nav aria-label="Kurs- und Notizbereiche" className="flex flex-wrap items-center gap-1 border-b border-slate-200 dark:border-slate-800">
-        {navButton('courses', 'Programme & Kurse')}
-        {navButton('notes', 'Meine Notizen')}
-      </nav>
-
       {area === 'courses' && (
         <>
           {screen !== 'catalog' && (
