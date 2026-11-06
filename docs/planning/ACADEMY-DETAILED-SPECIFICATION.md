@@ -510,12 +510,34 @@ Eine separate fachliche Review-Queue, zweite Person als Pflichtfreigeber oder zu
 - Die Zuordnung eines neuen Materials zu Kursen bzw. die Umstellung bestehender Kursversionen ist eine separate bewusste fachliche Handlung.
 - Für rein redaktionelle Metadatenkorrekturen ohne Änderung des Dokuments oder seiner fachlichen Bedeutung ist noch festzulegen, ob sie ohne neue Dokumentversion zulässig sind. Diese Grenze darf nicht durch ein stilles Überschreiben des PDF-Inhalts verwischt werden.
 
+### 10.3.5 Pflichtmetadaten – Option A beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option A (schlanke Pflichtangaben):**
+- **Titel:** verpflichtend; muss das Material für Nutzer verständlich und unterscheidbar benennen.
+- **Kategorie:** verpflichtend; ordnet das Material einem fachlichen Themenbereich zu.
+- **Dokumenttyp:** verpflichtend; beschreibt die Art bzw. Funktion des Dokuments (z. B. Handbuch, Richtlinie oder Merkblatt), nicht sein Dateiformat.
+- **Beschreibung:** optional; ergänzt den Titel um Kontext, ohne für jeden Upload einen künstlichen Beschreibungstext zu erzwingen.
+- **Erforderlicher Rang:** optional; nur setzen, wenn für das Material tatsächlich eine entsprechende Zugriffsbeschränkung fachlich vorgesehen ist. Ein leerer Wert darf nicht durch einen willkürlichen Standardrang ersetzt werden.
+- **Materialcode:** wird automatisch und eindeutig durch das System vergeben. Nutzer müssen keine Kennung erfinden oder manuell eintippen.
+- **Dokumentversionskennung:** wird zusätzlich pro konkreter Datei-/Dokumentfassung erzeugt und ist von der stabilen Materialkennung zu unterscheiden.
+- **Geschätzte Lesezeit:** soll nach Möglichkeit aus dem Dokumentinhalt abgeleitet werden. Ist eine verlässliche automatische Schätzung nicht möglich, bleibt sie optional oder wird nicht angezeigt; sie ist keine Pflichtangabe.
+
+Die schlanke Pflichtfeldregel ist verbindlich. Die konkreten Auswahllisten für Kategorien und Dokumenttypen, die automatische Kennungsstruktur und die technische Berechnung der Lesezeit bleiben gesonderte Detailfragen. Freitext für Kategorie oder Dokumenttyp ist nicht automatisch freigegeben; diese Eingaben müssen für konsistente Suche und Filter kontrolliert gestaltet werden.
+
+Für die Oberfläche:
+- Pflichtfelder werden sichtbar als erforderlich gekennzeichnet; optionale Felder sind entsprechend markiert oder in einen optionalen Abschnitt gruppiert.
+- Feldbeschriftungen und Hinweise müssen Zweck und erwartete Eingabe verständlich benennen.
+- Validierungsfehler bleiben konkret dem Feld zugeordnet; bereits eingegebene Angaben bleiben bei einem Fehler soweit möglich erhalten.
+- Die Systemkennung wird nach Anlage angezeigt, ist aber nicht als manuell zu bearbeitendes Pflichtfeld zu präsentieren.
+
+**Begründung:** Die Bibliothek benötigt genug strukturierte Angaben für Auffindbarkeit und eindeutige Einordnung, soll aber keine unnötige Datenerfassung erzwingen. Die Trennung zwischen Thema/Kategorie und Dokumenttyp folgt etablierten Taxonomieprinzipien: Themen beschreiben, worum es inhaltlich geht; Inhaltstypen beschreiben die Art bzw. den Zweck des Inhalts. Die Werte sollen kontrolliert, verständlich und für die tatsächlichen RCPD-Materialien passend sein.
+
 ### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
 - Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, zurückziehen und archivieren? (Für Veröffentlichung ist Option A beschlossen: dieselbe berechtigte Person darf ihren Entwurf selbst veröffentlichen.)
-- Darf dieselbe berechtigte Person ihren eigenen Entwurf veröffentlichen oder ist eine zweite Person erforderlich?
-- Welche Metadaten sind verpflichtend, welche optional und welche werden automatisch erzeugt?
+
+- Welche konkreten Werte/Hierarchien sollen die kontrollierten Kategorien und Dokumenttypen enthalten?
 - Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
 - Welche Dateigrößen- und Uploadgrenzen sind für den tatsächlichen Betrieb angemessen?
 - Welche serverseitigen PDF-Prüfungen und Sicherheitsmaßnahmen werden eingesetzt?
