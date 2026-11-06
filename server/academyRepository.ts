@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -33,6 +33,89 @@ export class AcademyRepository {
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyQuery(collection, query); return this.adapter.list<T>(collection, query);
+  }
+  async listMaterialCategories(): Promise<AcademyMaterialCategoryDoc[]> {
+    return this.adapter.list<AcademyMaterialCategoryDoc>('academy_material_categories', { limit: 1000 });
+  }
+  async createMaterialCategory(category: AcademyMaterialCategoryDoc): Promise<void> {
+    assertValid(validateMaterialCategory(category));
+    if (category.revision !== 1 || category.status !== 'active' ||
+        category.archivedIso !== undefined || category.archivedByUid !== undefined) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_INITIAL_STATE_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const existing = await tx.list<AcademyMaterialCategoryDoc>('academy_material_categories');
+      const normalizedName = category.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE');
+      if (existing.some(item => item.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE') === normalizedName)) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_NAME_ALREADY_EXISTS');
+      }
+      await tx.create('academy_material_categories', category.id, category);
+    });
+  }
+  async updateMaterialCategory(
+    category: AcademyMaterialCategoryDoc,
+    expectedRevision: number,
+    actorUid: string
+  ): Promise<void> {
+    if (!actorUid.trim() || category.updatedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
+    assertValid(validateMaterialCategory(category));
+    if (!Number.isSafeInteger(expectedRevision) || category.revision !== expectedRevision + 1) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', category.id);
+      if (!current) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(current));
+      if (current.revision !== expectedRevision ||
+          category.createdIso !== current.createdIso || category.createdByUid !== current.createdByUid ||
+          category.status !== current.status || category.archivedIso !== current.archivedIso ||
+          category.archivedByUid !== current.archivedByUid) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+      }
+      const categories = await tx.list<AcademyMaterialCategoryDoc>('academy_material_categories');
+      const normalizedName = category.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE');
+      if (categories.some(item => item.id !== category.id &&
+          item.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE') === normalizedName)) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_NAME_ALREADY_EXISTS');
+      }
+      await tx.update('academy_material_categories', category.id, category);
+    });
+  }
+  async setMaterialCategoryArchived(
+    categoryId: string,
+    archived: boolean,
+    expectedRevision: number,
+    actorUid: string,
+    now: string
+  ): Promise<AcademyMaterialCategoryDoc> {
+    if (!actorUid.trim()) throw new Error('ACADEMY_ACTOR_REQUIRED');
+    if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', categoryId);
+      if (!current) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(current));
+      if (current.revision !== expectedRevision) throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+      if ((current.status === 'archived') === archived) throw new Error('ACADEMY_MATERIAL_CATEGORY_STATE_UNCHANGED');
+      const next: AcademyMaterialCategoryDoc = {
+        ...current,
+        status: archived ? 'archived' : 'active',
+        revision: current.revision + 1,
+        updatedIso: now,
+        updatedByUid: actorUid,
+        ...(archived
+          ? { archivedIso: now, archivedByUid: actorUid }
+          : {})
+      };
+      if (!archived) {
+        delete next.archivedIso;
+        delete next.archivedByUid;
+      }
+      assertValid(validateMaterialCategory(next));
+      await tx.update('academy_material_categories', categoryId, next);
+      return next;
+    });
   }
   private runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.adapter.runTransaction(operation);
