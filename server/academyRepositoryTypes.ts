@@ -1,7 +1,8 @@
-import type { AcademyMaterialCategoryDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
 
 export const ACADEMY_COLLECTIONS = [
   'academy_material_categories',
+  'academy_material_category_assignments',
   'academy_courses',
   'academy_course_drafts',
   'academy_course_versions',
@@ -32,6 +33,7 @@ export interface AcademyStorageAdapter {
 }
 export interface AcademyDocumentMap {
   academy_material_categories: AcademyMaterialCategoryDoc;
+  academy_material_category_assignments: AcademyMaterialCategoryAssignmentDoc;
   academy_courses: AcademyCourseMasterDoc;
   academy_course_drafts: AcademyCourseDraftDoc;
   academy_course_versions: AcademyCourseVersionDoc;
