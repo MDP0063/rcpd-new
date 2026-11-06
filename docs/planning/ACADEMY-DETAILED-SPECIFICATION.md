@@ -453,21 +453,147 @@ Es wurde ausdrücklich besprochen, wie neue Materialien in die Bibliothek gelang
 Verbindlich festgehalten:
 - Dokumente dürfen extern erstellt werden, etwa als PDF, und anschließend hochgeladen werden.
 - Eine verpflichtende PDF-Designvorlage ist **nicht** beschlossen.
-- Eine einheitliche Verwaltungsoberfläche für Upload, Metadaten, Versionen und Freigabe ist als Zielbild sinnvoll, aber der genaue Workflow ist noch nicht entschieden.
-- Es ist nicht beschlossen, dass die Plattform einen vollständigen PDF-Editor oder ein internes Layoutsystem bereitstellen muss.
-- Umgekehrt ist auch kein vollständiger Uploadprozess bis ins letzte Detail festgelegt.
+- Die Plattform muss keinen vollständigen PDF-Editor oder ein internes Layoutsystem bereitstellen.
+- Upload und Veröffentlichung sind zwei getrennte Handlungen.
+- **BESCHLOSSEN am 06.11.2026 – Veröffentlichungsworkflow Option B:** Ein neu hochgeladenes Material wird zunächst als Entwurf angelegt. Es wird nicht allein durch den erfolgreichen Upload veröffentlicht. Erst eine bewusste, ausdrücklich ausgelöste Veröffentlichungsaktion macht die geprüfte Fassung für den regulären Bibliotheksbestand verfügbar.
+- Der erfolgreiche Upload bestätigt daher nur, dass die Datei als Entwurf übernommen wurde. Er darf nicht mit einer Veröffentlichung verwechselt werden.
+- Nicht veröffentlichte Entwürfe dürfen nicht in der regulären Teilnehmer-Bibliothek, der globalen Bibliothekssuche, Teilnehmerempfehlungen oder als aktuelle veröffentlichte Kursmaterialfassung erscheinen.
+- Ein Entwurf muss im Verwaltungsbereich für entsprechend berechtigte Personen auffindbar und eindeutig als Entwurf gekennzeichnet sein.
+- Die Entscheidung über Entwurf und Veröffentlichung ergänzt die bereits beschlossene Dokumentversionierung: eine veröffentlichte Kursversion referenziert weiterhin eine konkrete veröffentlichte Dokumentversion; ein Entwurf verändert keine bestehende Referenz.
+- Nach der Veröffentlichung darf eine in Kursen oder historischen Vorgängen verwendete Materialfassung nicht stillschweigend durch Bearbeiten überschrieben werden. Eine inhaltliche Änderung wird als neue Dokumentfassung vorbereitet und nach bewusster Veröffentlichung zur aktuellen Bibliotheksfassung. Historische Kursverweise bleiben auf ihrer konkreten Fassung.
+- Die frühere Frage, ob ein PDF-Template verpflichtend sein soll, bleibt mit **Nein / nicht beschlossen** beantwortet.
+
+Der fachliche Mindestablauf ist damit:
+1. Berechtigte Person startet „Material hinzufügen“.
+2. Sie erfasst die für das Material erforderlichen Angaben und wählt eine lokale PDF-Datei aus.
+3. Die Plattform prüft die Datei serverseitig und übernimmt sie als Entwurf.
+4. Die Verwaltungsoberfläche zeigt den Entwurf mit Dateiname, Metadaten, Upload-/Prüfstatus und einer klaren Kennzeichnung „Nicht veröffentlicht“.
+5. Eine berechtigte Person kontrolliert Inhalt und Angaben und löst die Veröffentlichung ausdrücklich aus.
+6. Erst nach erfolgreicher serverseitiger Prüfung und bestätigter Speicherung wechselt die Fassung in den Status „Veröffentlicht“ und wird für berechtigte Teilnehmer in der Bibliothek verfügbar.
+7. Eine spätere inhaltliche Änderung an einer veröffentlichten Fassung erzeugt eine neue Entwurfsfassung; sie ersetzt die bisher veröffentlichte Fassung erst durch eine eigene bewusste Veröffentlichung.
+
+Die Oberfläche muss die Zustände klar unterscheiden: Datei lokal ausgewählt, Upload läuft, Entwurf gespeichert, Prüfung fehlgeschlagen, Veröffentlichung läuft und veröffentlicht. Ein Uploadfehler darf keinen scheinbar gespeicherten Entwurf erzeugen; ein Veröffentlichungsfehler darf den bereits gespeicherten Entwurf nicht als veröffentlicht anzeigen.
+
+**BESCHLOSSEN am 06.11.2026 – Veröffentlichungsberechtigung Option A:** Dieselbe Person, die einen Entwurf mit entsprechender bestehender Berechtigung angelegt oder bearbeitet hat, darf ihn auch selbst bewusst veröffentlichen. Es ist keine zweite Person und kein Vier-Augen-Prinzip vorgeschrieben. Die Veröffentlichung bleibt eine separate, ausdrücklich ausgelöste Aktion. Admin und Colonel behalten ihre bestehende übergreifende Verwaltungsbefugnis; weitere Rollen dürfen nur innerhalb ihrer bereits zugewiesenen Kurs-/Verwaltungsberechtigungen handeln. Eine Veröffentlichung darf niemals allein aus der Uploadberechtigung oder einem automatischen Speichervorgang folgen. Die genaue technische Abbildung und Prüfung der Rechte bleibt Implementierungsarbeit.
+
+### 10.3.1 Dateiauswahl, Prüfung und Upload-Rückmeldung
+
+Die Datei ist nicht allein anhand ihres Namens oder eines vom Browser gemeldeten MIME-Typs als PDF zu akzeptieren. Die serverseitige Prüfung muss den tatsächlichen Dateiinhalt berücksichtigen. OWASP empfiehlt eine mehrschichtige Prüfung unter anderem von erlaubter Dateiendung, MIME-Angabe, Signatur und Inhalt; keine einzelne Prüfung reicht allein aus. Die Datei muss außerdem Größenlimits haben und darf nur durch berechtigte Nutzer hochgeladen werden.
+
+Für den Upload-Dialog gelten folgende UX-Leitlinien:
+- Zulässiges Format und maximale Dateigröße müssen vor der Auswahl sichtbar sein, sobald die Grenzen festgelegt sind.
+- Dateiname und Dateigröße werden nach Auswahl angezeigt; die Auswahl kann vor dem Upload ersetzt werden.
+- Drag-and-drop kann zusätzlich angeboten werden, darf aber nicht der einzige Weg sein.
+- Uploadfortschritt und anschließende Verarbeitung werden getrennt und verständlich dargestellt.
+- Erfolgreicher Upload bestätigt ausdrücklich „Entwurf gespeichert“ und nennt den nächsten sinnvollen Schritt; nicht „Material veröffentlicht“.
+- Fehler müssen konkret benennen, ob Dateityp, Größe, beschädigte Datei, Passwortschutz, fehlgeschlagene Übertragung oder eine serverseitige Prüfung das Problem verursacht hat.
+- Bei einem Fehler bleiben Metadaten und Formularangaben erhalten, soweit dies technisch sicher möglich ist; die Datei kann erneut ausgewählt werden.
+- Die Statusrückmeldung muss auch assistiven Technologien zugänglich sein; Fehler werden dem jeweiligen Eingabefeld zugeordnet und nicht nur farblich dargestellt.
+- Der Nutzer darf nicht durch wiederholtes Klicken unbeabsichtigt mehrere Entwürfe desselben Uploads erzeugen. Die technische Operation sollte eine sichere Wiederholung ermöglichen.
+
+Die genaue maximale PDF-Größe, die Zahl gleichzeitiger Uploads, erlaubte PDF-Untertypen, Viren-/Malware-Prüfung, PDF-Parser-/Sandbox-Lösung und Aufbewahrung fehlgeschlagener Uploads bleiben technische Entscheidungen und müssen anhand des tatsächlichen Hosting-/Speichermodells geprüft werden.
+
+#### PDF-Sicherheit und Uploadgrenzen – fachliche Leitplanken und Empfehlung (noch nicht abschließend beschlossen)
+
+Der aktuelle Ist-Stand ist keine ausreichende Sicherheitsprüfung: `isSafePdfDataUrl` kontrolliert derzeit nur den Data-URL-Präfix und die Base64-Zeichen. Die Prüfung bestätigt weder die PDF-Signatur noch die strukturelle Lesbarkeit oder Schadsoftwarefreiheit. Der Browser liest die Datei als Base64-Data-URL ein. Der allgemeine JSON-Parser ist auf 25 MB begrenzt. Bei Firestore werden PDF-Daten in `blobs` in Teilstücke von 700.000 Zeichen zerlegt; das 1-MiB-Dokumentlimit wird dadurch adressiert, nicht aber Upload-, Speicher- oder Verarbeitungsrisiken.
+
+**Empfohlene Mindestanforderungen:**
+- Nur PDF-Dateien zulassen; Dateiendung und gemeldeter MIME-Typ sind unterstützende Plausibilitätsprüfungen, keine Vertrauensgrundlage.
+- Dateigröße bereits im Browser vor dem Einlesen prüfen und zwingend nochmals serverseitig anhand der dekodierten Bytes. Die Serverprüfung ist maßgeblich.
+- Base64-Daten strikt dekodieren; ungültige Kodierung, leere Dateien, übergroße Dateien und Größenüberschreitungen ablehnen.
+- PDF-Signatur und tatsächliche Parser-/Strukturlesbarkeit serverseitig prüfen. Eine Signatur allein genügt nicht.
+- Passwortgeschützte, beschädigte, abgeschnittene oder nicht unterstützte PDFs nicht veröffentlichen; klare Fehlerursache zurückmelden. Kein stilles Überspringen der Prüfung.
+- Dateinamen nicht als Speicherpfad oder Dokumentidentität verwenden. Serverseitige Material-/Datei-IDs verwenden und den Originalnamen nur als bereinigte Anzeigeinformation behalten.
+- Upload und Abruf bleiben authentifiziert und autorisiert; Abruf muss die bestehenden Rang-/Zugriffsregeln serverseitig durchsetzen.
+- Unvertrauenswürdige PDF-Inhalte nicht als HTML ausführen. Parser/Renderer aktuell halten und Verarbeitung mit begrenzten Ressourcen durchführen.
+- Malwareprüfung bzw. Content Disarm and Reconstruction (CDR) prüfen. Falls ein geeigneter, datenschutzkonformer Scanner verfügbar ist, Upload bis zum abgeschlossenen Scan als „in Prüfung“ behandeln und bei Scannerfehlern nicht freigeben. Keine vertraulichen RCPD-Dateien ohne gesonderte Datenschutz-/Vertragsprüfung an öffentliche Scan-Dienste senden.
+- Temporäre Dateien, Fehlerabbrüche und Wiederholungen sicher behandeln; keine unvollständigen oder mehrfachen Materialentwürfe erzeugen. Speicher- und Request-Limits müssen zusammenpassen.
+
+**Größenempfehlung zur Entscheidung:** Maximal **15 MB pro PDF-Datei (Rohdatei)**. Bei Base64 entstehen daraus ungefähr 20 MB Daten vor JSON-Overhead. Das liegt unter dem derzeitigen 25-MB-JSON-Limit und lässt etwas Reserve für Metadaten/Request-Struktur. Das Limit muss serverseitig auf den dekodierten PDF-Bytes gelten; die JSON-Request-Grenze bleibt ein separater Schutz. Diese Zahl ist eine Empfehlung, noch kein Beschluss. Vor Implementierung ist sie mit realen Dokumentgrößen und Hosting-/Speicherbedingungen zu verifizieren.
+
+**UX-Rückmeldungen:** Die erlaubte Dateigröße und der Dateityp stehen vor der Dateiauswahl. Spezifische Fehlerzustände werden verständlich benannt (zu groß, falscher Typ, leer, beschädigt/nicht lesbar, passwortgeschützt, Prüfung fehlgeschlagen, Upload nicht verfügbar). Metadaten bleiben nach Fehlern erhalten, soweit sicher möglich. Upload erfolgreich bedeutet nur „Entwurf gespeichert“, nicht „veröffentlicht“.
+
+### 10.3.2 Veröffentlichung einer Entwurfsfassung
+
+Die Veröffentlichungsaktion ist von der Uploadaktion getrennt und muss die tatsächliche Fassung eindeutig benennen. Vor der Aktion sollen mindestens Titel, Materialcode, Version und Dateiname sichtbar sein, damit nicht versehentlich ein anderer Entwurf freigegeben wird.
+
+Die Veröffentlichung muss serverseitig autorisiert und als eine nachvollziehbare Zustandsänderung gespeichert werden. Die Teilnehmeransicht darf eine Fassung erst dann erhalten, wenn der Server den Veröffentlichungsstatus bestätigt hat. Ein Client-seitiger Statuswechsel oder eine Erfolgsmeldung vor bestätigter Speicherung reicht nicht aus.
+
+Eine separate fachliche Review-Queue, zweite Person als Pflichtfreigeber oder zusätzliche Freigabestufe wird durch Option B nicht automatisch eingeführt. Diese Frage bleibt separat offen.
+
+### 10.3.3 Nachträgliche Änderungen und neue Fassungen
+
+- Ein unveröffentlichter Entwurf kann vor Veröffentlichung korrigiert werden.
+- Eine veröffentlichte Fassung bleibt als konkrete Version erhalten.
+- Eine neue inhaltliche Fassung wird als neuer Entwurf mit Bezug auf das bestehende Bibliotheksmaterial vorbereitet.
+- Die Veröffentlichung der neuen Fassung ändert die aktuelle Bibliotheksfassung, aber nicht automatisch bereits veröffentlichte Kursversionen oder historische Nachweise.
+- Die Zuordnung eines neuen Materials zu Kursen bzw. die Umstellung bestehender Kursversionen ist eine separate bewusste fachliche Handlung.
+- Für rein redaktionelle Metadatenkorrekturen ohne Änderung des Dokuments oder seiner fachlichen Bedeutung ist noch festzulegen, ob sie ohne neue Dokumentversion zulässig sind. Diese Grenze darf nicht durch ein stilles Überschreiben des PDF-Inhalts verwischt werden.
+
+### 10.3.5 Pflichtmetadaten – Option A beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option A (schlanke Pflichtangaben):**
+- **Titel:** verpflichtend; muss das Material für Nutzer verständlich und unterscheidbar benennen.
+- **Kategorie:** verpflichtend; ordnet das Material einem fachlichen Themenbereich zu.
+- **Dokumenttyp:** verpflichtend; beschreibt die Art bzw. Funktion des Dokuments (z. B. Handbuch, Richtlinie oder Merkblatt), nicht sein Dateiformat.
+- **Beschreibung:** optional; ergänzt den Titel um Kontext, ohne für jeden Upload einen künstlichen Beschreibungstext zu erzwingen.
+- **Erforderlicher Rang:** optional; nur setzen, wenn für das Material tatsächlich eine entsprechende Zugriffsbeschränkung fachlich vorgesehen ist. Ein leerer Wert darf nicht durch einen willkürlichen Standardrang ersetzt werden.
+- **Materialcode:** wird automatisch und eindeutig durch das System vergeben. Nutzer müssen keine Kennung erfinden oder manuell eintippen.
+- **Dokumentversionskennung:** wird zusätzlich pro konkreter Datei-/Dokumentfassung erzeugt und ist von der stabilen Materialkennung zu unterscheiden.
+- **Geschätzte Lesezeit:** soll nach Möglichkeit aus dem Dokumentinhalt abgeleitet werden. Ist eine verlässliche automatische Schätzung nicht möglich, bleibt sie optional oder wird nicht angezeigt; sie ist keine Pflichtangabe.
+
+Die schlanke Pflichtfeldregel ist verbindlich. Die konkreten Auswahllisten für Kategorien und Dokumenttypen, die automatische Kennungsstruktur und die technische Berechnung der Lesezeit bleiben gesonderte Detailfragen. Freitext für Kategorie oder Dokumenttyp ist nicht automatisch freigegeben; diese Eingaben müssen für konsistente Suche und Filter kontrolliert gestaltet werden.
+
+Für die Oberfläche:
+- Pflichtfelder werden sichtbar als erforderlich gekennzeichnet; optionale Felder sind entsprechend markiert oder in einen optionalen Abschnitt gruppiert.
+- Feldbeschriftungen und Hinweise müssen Zweck und erwartete Eingabe verständlich benennen.
+- Validierungsfehler bleiben konkret dem Feld zugeordnet; bereits eingegebene Angaben bleiben bei einem Fehler soweit möglich erhalten.
+- Die Systemkennung wird nach Anlage angezeigt, ist aber nicht als manuell zu bearbeitendes Pflichtfeld zu präsentieren.
+
+**Begründung:** Die Bibliothek benötigt genug strukturierte Angaben für Auffindbarkeit und eindeutige Einordnung, soll aber keine unnötige Datenerfassung erzwingen. Die Trennung zwischen Thema/Kategorie und Dokumenttyp folgt etablierten Taxonomieprinzipien: Themen beschreiben, worum es inhaltlich geht; Inhaltstypen beschreiben die Art bzw. den Zweck des Inhalts. Die Werte sollen kontrolliert, verständlich und für die tatsächlichen RCPD-Materialien passend sein.
+
+### 10.3.6 Kategorien und Dokumenttypen – Option A beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option A:** Fachliche Kategorien und Dokumenttypen werden als zwei getrennte, kontrollierte Auswahllisten geführt.
+
+- **Kategorie** beantwortet: Welches fachliche Thema behandelt das Material?
+- **Dokumenttyp** beantwortet: Was für eine Art bzw. Funktion hat das Dokument?
+- Ein Material erhält eine fachliche Hauptkategorie und einen Dokumenttyp. Mehrfach-Tags oder zusätzliche Zuordnungen sind damit nicht automatisch beschlossen.
+- Beide Werte werden unabhängig voneinander gespeichert, angezeigt und für Suche/Filter nutzbar gemacht.
+- Die Werte werden zentral kontrolliert gepflegt. Unkontrollierte freie Eingaben, die unbemerkt neue Schreibweisen oder Dubletten erzeugen, sind nicht vorgesehen.
+- Die konkreten Listenwerte und eine mögliche Untergliederung sind noch festzulegen. Sie müssen anhand des tatsächlichen RCPD-Materialbestands geprüft werden; keine theoretische Vollständigkeit und keine unnötig feingranulare Taxonomie.
+- Die vorhandenen Kategorien im aktuellen Code sind nur Bestandswerte, keine bestätigte Ziel-Taxonomie. Sie vermischen derzeit Themenbereiche (z. B. „California Penal Code“, „Tactical Operations“, „Radio & Dispatch“, „Field Training (FTO)“) mit Dokument-/Funktionsbezeichnungen (z. B. „SOP & Policy“, „Supervisor Directive“). Sie dürfen daher nicht ungeprüft als neue Kategorienliste übernommen werden.
+
+Die Trennung folgt dem Zweck der Felder: Kategorien bilden die fachliche Themenordnung, Dokumenttypen beschreiben die Form/Funktion des Materials. Dadurch kann beispielsweise ein Dokument zum Thema „Tactical Operations“ den Typ „SOP / Dienstanweisung“ erhalten, ohne dass beide Informationen in einem einzigen Feld konkurrieren.
+
+### 10.3.7 Berechtigungen für Entwürfe, Rücknahme und Archivierung – Option B beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option B:** Die Berechtigung zur laufenden Entwurfsverwaltung wird von der Befugnis getrennt, veröffentlichte Materialien zurückzuziehen oder zu archivieren.
+
+- Bereits entsprechend berechtigte Kursverantwortliche dürfen Entwürfe innerhalb ihrer zugewiesenen Kurszuständigkeit anlegen und bearbeiten sowie diese selbst ausdrücklich veröffentlichen.
+- Das Zurückziehen und Archivieren bereits veröffentlichter Materialien bleibt Admin und Colonel vorbehalten.
+- Für Entwürfe gilt weiterhin die konkrete Kurszuständigkeit. Ein automatisch generierter Materialcode ist eine Materialkennung und darf nicht als Ersatz für den Kurs-/Zuständigkeitsbezug der Berechtigungsprüfung verwendet werden.
+- Die Entscheidung erweitert keine sonstigen Rollenrechte und führt keine neuen pauschalen Berechtigungen ein.
+- Die konkrete technische Rechteprüfung muss serverseitig erfolgen; UI-Ausblendung allein genügt nicht.
+- Admin und Colonel behalten ihre bestehende übergreifende Verwaltungsbefugnis.
+- Ein Rückzug/Archivierungsvorgang muss nachvollziehbar protokolliert werden und darf historische Kursversionen, Abschlüsse oder deren konkrete Dokumentreferenzen nicht stillschweigend verändern.
+
+### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
-- Wer darf Uploads anlegen und veröffentlichen?
-- Wie werden Titel, Materialcode, Kategorie, Thema, Dokumenttyp und Beschreibung erfasst?
-- Gibt es Entwurfs-, Prüf- und Veröffentlichungsstatus?
-- Wie wird eine neue Version mit der bisherigen verknüpft?
-- Wie werden fehlerhafte, beschädigte, passwortgeschützte oder nicht unterstützte Dateien behandelt?
-- Wie wird geprüft, ob PDF-Text extrahierbar oder OCR nötig ist?
-- Wie werden betroffene Kursreferenzen bei neuer Version sichtbar gemacht?
-- Wie wird ein Material zurückgezogen, ohne historische Verweise zu zerstören?
+- Die fachliche Trennung der Berechtigungen ist mit Option B beschlossen; die serverseitige Umsetzung und sichere Zuordnung zu Kurszuständigkeiten bleibt Implementierungsarbeit.
 
-Das sind offene Konzept- und technische Prüfpunkte, keine bereits beschlossenen Verwaltungsfunktionen.
+- Welche konkreten Werte und ggf. Untergliederungen sollen die getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen enthalten?
+- Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
+- Welche Dateigrößen- und Uploadgrenzen sind für den tatsächlichen Betrieb angemessen?
+- Welche serverseitigen PDF-Prüfungen und Sicherheitsmaßnahmen werden eingesetzt?
+- Wie werden passwortgeschützte, beschädigte, leere, nicht unterstützte oder ungewöhnliche PDF-Dateien behandelt?
+- Wie wird Text-Extraktion geprüft und wann wird OCR angeboten bzw. benötigt?
+- Wie werden bei Veröffentlichung betroffene Kursverantwortliche über eine neue Fassung informiert, ohne bestehende Kursversionen automatisch umzustellen?
+- Welche Metadatenänderungen benötigen eine neue Dokumentversion?
+- Wie werden Upload-/Veröffentlichungsfehler, Wiederholungen und parallele Bearbeitungen behandelt?
+
+Diese Punkte bleiben offen, soweit sie nicht ausdrücklich in den vorstehenden Abschnitten als beschlossen gekennzeichnet sind.
 
 ### 10.4 Archivierung und endgültige Löschung – Option A beschlossen
 
@@ -980,8 +1106,10 @@ Wichtige Abgrenzung:
 Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen vor einer konkreten Umsetzung geklärt werden:
 
 ### Bibliothek und Upload
-- vollständiger Upload-, Metadaten-, Entwurfs-, Prüf- und Veröffentlichungsworkflow;
-- Rollen und Rechte für Upload, Änderung, Freigabe, Archivierung und endgültige Löschung;
+- **Entwurfs- und bewusste Veröffentlichung Option B ist beschlossen**; offen sind die Rollen, die veröffentlichen dürfen, und ob ein Vier-Augen-Prinzip zusätzlich erforderlich sein soll;
+- vollständiger Metadatenworkflow, Pflichtfelder und Materialcode-Regeln;
+- Rollen und Rechte für Upload, Änderung, Veröffentlichung, Rückzug, Archivierung und endgültige Löschung;
+- maximale Dateigröße, Uploadgrenzen, konkrete serverseitige PDF-Validierung und sichere Speicherung;
 - Materialcodes und Metadatenmodell;
 - Umgang mit beschädigten, passwortgeschützten, nicht unterstützten oder unlesbaren PDFs;
 - Volltext-Extraktion und OCR-Qualität bei Scans;
@@ -1028,3 +1156,67 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 6. Keine vertraulichen Daten durch UI-Projektionen oder Benachrichtigungen offenlegen.
 7. Jede nötige Backend-/Datenmodell-Erweiterung ist separat zu beschreiben; sie ist nicht automatisch durch ein UI-Konzept autorisiert.
 8. Das vollständige Meldesystem und noch nicht spezifizierte Academy-Bereiche bleiben eigenständige zukünftige Planungsaufgaben.
+
+
+## Lernbibliothek – PDF-Grenze und Validierungs-/Fehlerzustände (06.11.2026)
+
+**BESCHLOSSEN:** Maximale Rohdateigröße pro PDF: **15 MB**. Die Grenze bezieht sich auf die ursprüngliche Datei vor Base64-Kodierung. Sie ist clientseitig frühzeitig anzuzeigen und serverseitig verbindlich anhand der tatsächlichen Bytes zu prüfen. Die technische Request-Grenze muss Base64- und JSON-Overhead berücksichtigen und darf nicht einfach mit 15 MB gleichgesetzt werden. Hosting-, Parser- und Speichergrenzen sind vor Implementierung zu verifizieren.
+
+**BESCHLOSSEN am 06.11.2026 – PDF-Sicherheitsprüfung Option A:**
+- PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
+- Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
+- Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
+- Malwareprüfung muss vor Veröffentlichung erfolgreich abgeschlossen sein. Während der Prüfung bleibt die Datei im privaten, nicht für Teilnehmer sichtbaren Prüf-/Quarantänestatus. Ist der Scanner nicht verfügbar oder schlägt die Prüfung technisch fehl, bleibt die Datei unveröffentlicht; der Upload kann später erneut geprüft werden.
+- Parser und Scanner benötigen Ressourcenlimits (Zeit, Speicher, Seiten-/Objektkomplexität) und eine isolierte Verarbeitung. Die konkrete Scan-/CDR-Lösung und Hosting-Kompatibilität sind noch technische Prüfpunkte.
+- Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
+- Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
+
+**Vorgeschlagene nutzerverständliche Fehlerzustände – UX-Details noch zu bestätigen:**
+1. Datei fehlt: „Bitte wähle eine PDF-Datei aus.“
+2. Falscher Dateityp bzw. keine echte PDF: „Die ausgewählte Datei ist keine gültige PDF-Datei.“
+3. Datei leer: „Die ausgewählte Datei ist leer.“
+4. Zu groß: „Die PDF darf höchstens 15 MB groß sein.“
+5. Beschädigt/abgeschnitten/nicht lesbar: „Die PDF kann nicht gelesen werden. Bitte prüfe die Datei oder lade eine neue Fassung hoch.“
+6. Passwortgeschützt/verschlüsselt: „Passwortgeschützte PDFs können nicht hochgeladen werden. Bitte lade eine ungeschützte Fassung hoch.“
+7. Malwareprüfung negativ: neutrale Ablehnung ohne unnötige technische Details; Datei nicht veröffentlichen und keine Behauptung über die Absicht des Uploaders.
+8. Scan-/Prüfdienst nicht verfügbar: „Die Sicherheitsprüfung ist derzeit nicht verfügbar. Die Datei wurde nicht veröffentlicht. Bitte versuche es später erneut.“
+9. Netzwerk-/Serverfehler: Uploadstatus klar als fehlgeschlagen kennzeichnen und erneuten Versuch ermöglichen; keine falsche Erfolgsbestätigung.
+
+Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken. Die technischen Sicherheitsanforderungen sind beschlossen; die genaue Formulierung und Darstellung der Fehlermeldungen bleibt eine UX-Ausarbeitung und ist noch nicht einzeln beschlossen.
+
+**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die Sicherheitsanforderungen sind fachlich beschlossen, stellen aber keine Implementierungsfreigabe dar. Die konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technische Prüfarbeit.
+
+
+## Lernbibliothek – Kategorien und Dokumenttypen: nächster Vorschlag (06.11.2026)
+
+**Bereits beschlossen:** getrennte kontrollierte Listen; pro Material genau eine Hauptkategorie (fachliches Thema) und ein Dokumenttyp (Art/Funktion des Dokuments). Freie Eingaben und Mehrfach-Tags sind damit nicht automatisch freigegeben.
+
+**Belegte Materialbeispiele aus der bisherigen Academy-Planung:** „Funkcodes der RCPD“, „Kommunikationsrichtlinien“, „Verhaltensrichtlinien“, „Grundlagen des Polizeidienstes“, „Dienstvorschriften“ und „Einsatzgrundlagen“. Zusätzlich wurden als Kurs-/Themenfelder Funkcodes, Kommunikation, Dienstvorschriften und taktische Grundlagen genannt. Das sind Planungsbeispiele, kein nachgewiesener vollständiger Bestand bereits hochgeladener Dokumente.
+
+**Empfohlener Startsatz Kategorien (fachliches Thema):**
+1. Kommunikation und Funk – z. B. Funkcodes der RCPD, Kommunikationsrichtlinien.
+2. Dienstvorschriften und Verhalten – z. B. Verhaltensrichtlinien, allgemeine Dienstvorschriften.
+3. Einsatzlehre und Taktik – z. B. Einsatzgrundlagen und taktische Grundlagen.
+4. Polizeiliche Grundlagen – z. B. Grundlagen des Polizeidienstes.
+5. Recht und Gesetzgebung – z. B. California Penal Code, aber nur, sofern dazu tatsächlich Bibliotheksmaterialien geführt werden. FTO/Ausbildung ist nicht automatisch eine Themenkategorie; FTO kann stattdessen Kurs-/Programmkontext sein, sofern es kein eigenes fachliches Thema beschreibt.
+
+**Empfohlener Startsatz Dokumenttypen (Art/Funktion):**
+1. Standard Operating Procedure (SOP) / Standardverfahren.
+2. Richtlinie / Policy.
+3. Dienstanweisung / Directive.
+4. Nachschlagewerk / Referenzliste – z. B. Funkcodeliste.
+5. Schulungsunterlage / Lernmaterial – z. B. Grundlagen des Polizeidienstes oder Einsatzgrundlagen, wenn sie Lerninhalte vermitteln.
+
+**Zuordnung der bekannten Beispiele als Arbeitshypothese:**
+- „Funkcodes der RCPD“ → Kommunikation und Funk + Nachschlagewerk / Referenzliste.
+- „Kommunikationsrichtlinien“ → Kommunikation und Funk + Richtlinie / Policy.
+- „Verhaltensrichtlinien“ → Dienstvorschriften und Verhalten + Richtlinie / Policy.
+- „Grundlagen des Polizeidienstes“ → Polizeiliche Grundlagen + Schulungsunterlage / Lernmaterial.
+- „Dienstvorschriften“ → Dienstvorschriften und Verhalten + Dokumenttyp muss anhand des tatsächlichen Inhalts unterschieden werden (SOP, Richtlinie oder Dienstanweisung).
+- „Einsatzgrundlagen“ → Einsatzlehre und Taktik + Schulungsunterlage / Lernmaterial, sofern es sich um eine Lehrunterlage handelt.
+
+**UX-/Taxonomiebegründung:** Kategorien beschreiben das Thema, nicht Format, Zielgruppe oder organisatorische Zuständigkeit. Dokumenttypen beschreiben dagegen die Art/Funktion. PDF ist ein Dateiformat und kein Dokumenttyp. Die Listen sollen nur tatsächlich vorhandene bzw. absehbar zu veröffentlichende Inhalte abbilden, verständlich benannt und bei wachsendem Bestand überprüft werden. Nicht jede denkbare Polizeifachdomäne wird vorsorglich als Kategorie angelegt.
+
+**Offene Validierung vor endgültiger Festlegung:** tatsächliche Materialtitel/Dateien vollständig sichten; prüfen, ob „Dienstvorschriften und Verhalten“ zwei trennbare Themen sind; klären, ob „Ausbildung und Training“ als Bibliothekskategorie nötig ist oder ob es nur Kurs-/Programmstruktur bleibt; prüfen, ob SOP, Richtlinie und Dienstanweisung in den vorhandenen Materialien wirklich unterscheidbare Dokumenttypen sind. Die Vorschlagslisten sind noch nicht beschlossen.
+
+**Recherchegrundlage:** [GOV.UK Taxonomy Principles](https://www.gov.uk/government/publications/govuk-topic-taxonomy-principles/govuk-taxonomy-principles) (Themen statt Formate/Zielgruppen; nur vorhandene Inhalte klassifizieren; klare, unterscheidbare Bezeichnungen); [Office for National Statistics – Taxonomy Best Practice Framework](https://www.ons.gov.uk/methodology/classificationsandstandards/taxonomybestpracticeframework) (Zweck, Nutzerbedarf, geringe unnötige Komplexität, klare Governance und gepflegte Begriffe); [Nielsen Norman Group – Tree Testing](https://www.nngroup.com/articles/tree-testing/) (Auffindbarkeit und Verständlichkeit einer Kategorienhierarchie anhand konkreter Suchaufgaben prüfen).

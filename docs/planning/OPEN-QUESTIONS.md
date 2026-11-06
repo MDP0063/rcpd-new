@@ -16,10 +16,14 @@
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
 
 ### Lernbibliothek und Materialien
-- Verwaltungsworkflow für Upload, Metadaten, Entwurf, Freigabe und Versionserstellung.
-- Verlässliche Materialcodes, Kategorien, Tags und Datumsfelder.
+- Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
+- Konkrete Werte der Kategorien-/Dokumenttyp-Listen anhand des vollständigen tatsächlichen Materialbestands validieren. Ein begründeter Startvorschlag steht in der Academy-Spezifikation, ist aber noch nicht beschlossen; automatische Materialcode-/Versionskennung technisch spezifizieren.
+- **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
+- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur- und Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; erfolgreiche Malwareprüfung vor Veröffentlichung; bei negativem Ergebnis oder Scanner-/Prüfausfall unveröffentlicht bleiben. Konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technisch offen. Die genaue UX-Darstellung der Fehlermeldungen wird noch ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
+- Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
+- Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
-- Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
+- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die fachlichen Sicherheitsanforderungen sind beschlossen, konkrete technische Auswahl bleibt offen.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
 - **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
 
@@ -194,7 +198,10 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - UX-/Accessibility-Empfehlungen benötigen vor ihrer Vorstellung aktuelle Recherche und Quellen mit konkreter RCPD-Begründung.
 
 ### Academy
-- Der exakte Upload-/Metadaten-/Entwurfs-/Prüf-/Freigabeprozess ist offen; ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
+- **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
+- **Beschlossen:** maximale PDF-Rohdateigröße 15 MB; serverseitige Validierung und erfolgreiche Sicherheitsprüfung sind vor Veröffentlichung erforderlich.
+- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur-/Parserprüfung, Ablehnung beschädigter und passwortgeschützter Dateien, Malwareprüfung vor Veröffentlichung und Fail-closed bei Prüf-/Scanner-Ausfall.
+- Offen bleiben die Rollen-/Freigaberegeln,  Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
 - Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
 - Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
 - Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
@@ -206,3 +213,11 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 ### Dokumentationsqualität
 - Die verfügbaren Erinnerungen sind keine vollständigen Wortprotokolle aller älteren Chats. Neue Details aus später wieder verfügbaren Originalgesprächen müssen ergänzt werden, statt sie durch Vermutungen zu ersetzen.
 - Bei jedem neuen Gesprächsschritt ist vor einer Rückfrage das Entscheidungsregister und die passende Detail-Spezifikation zu prüfen.
+
+
+### Nächster Abschlussabschnitt Lernbibliothek
+- Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
+- Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
+- Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
+- Rücknahme/Archivierung veröffentlichter Materialien, Auswirkungen auf Kursreferenzen und Benachrichtigung betroffener Kursverantwortlicher abschließen.
+- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
