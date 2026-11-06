@@ -248,7 +248,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(materialCreated.status, 201, JSON.stringify(materialCreated.body));
     const materialId = materialCreated.body!.master.id as string;
     const materialCode = materialCreated.body!.master.code as string;
-    assert.match(materialCode, /^MAT-2026-[A-F0-9]{12}$/);
+    assert.match(materialCode, /^MAT-\\d{4}-[A-F0-9]{12}$/);
     assert.equal(materialCreated.body!.master.publicationStatus, 'draft');
     assert.equal(materialCreated.body!.draft.createdByUid, 'academy-admin');
 
