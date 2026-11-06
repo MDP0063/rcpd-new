@@ -1156,3 +1156,32 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 6. Keine vertraulichen Daten durch UI-Projektionen oder Benachrichtigungen offenlegen.
 7. Jede nötige Backend-/Datenmodell-Erweiterung ist separat zu beschreiben; sie ist nicht automatisch durch ein UI-Konzept autorisiert.
 8. Das vollständige Meldesystem und noch nicht spezifizierte Academy-Bereiche bleiben eigenständige zukünftige Planungsaufgaben.
+
+
+## Lernbibliothek – PDF-Grenze und Validierungs-/Fehlerzustände (06.11.2026)
+
+**BESCHLOSSEN:** Maximale Rohdateigröße pro PDF: **15 MB**. Die Grenze bezieht sich auf die ursprüngliche Datei vor Base64-Kodierung. Sie ist clientseitig frühzeitig anzuzeigen und serverseitig verbindlich anhand der tatsächlichen Bytes zu prüfen. Die technische Request-Grenze muss Base64- und JSON-Overhead berücksichtigen und darf nicht einfach mit 15 MB gleichgesetzt werden. Hosting-, Parser- und Speichergrenzen sind vor Implementierung zu verifizieren.
+
+**Fachliche Sicherheitsanforderungen – als Planungsgrundlage, konkrete technische Umsetzung noch zu prüfen:**
+- PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
+- Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
+- Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
+- Malwareprüfung muss vor Veröffentlichung erfolgreich abgeschlossen sein. Während der Prüfung bleibt die Datei im privaten, nicht für Teilnehmer sichtbaren Prüf-/Quarantänestatus. Ist der Scanner nicht verfügbar oder schlägt die Prüfung technisch fehl, bleibt die Datei unveröffentlicht; der Upload kann später erneut geprüft werden.
+- Parser und Scanner benötigen Ressourcenlimits (Zeit, Speicher, Seiten-/Objektkomplexität) und eine isolierte Verarbeitung. Die konkrete Scan-/CDR-Lösung und Hosting-Kompatibilität sind noch technische Prüfpunkte.
+- Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
+- Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
+
+**Vorgesehene nutzerverständliche Fehlerzustände:**
+1. Datei fehlt: „Bitte wähle eine PDF-Datei aus.“
+2. Falscher Dateityp bzw. keine echte PDF: „Die ausgewählte Datei ist keine gültige PDF-Datei.“
+3. Datei leer: „Die ausgewählte Datei ist leer.“
+4. Zu groß: „Die PDF darf höchstens 15 MB groß sein.“
+5. Beschädigt/abgeschnitten/nicht lesbar: „Die PDF kann nicht gelesen werden. Bitte prüfe die Datei oder lade eine neue Fassung hoch.“
+6. Passwortgeschützt/verschlüsselt: „Passwortgeschützte PDFs können nicht hochgeladen werden. Bitte lade eine ungeschützte Fassung hoch.“
+7. Malwareprüfung negativ: neutrale Ablehnung ohne unnötige technische Details; Datei nicht veröffentlichen und keine Behauptung über die Absicht des Uploaders.
+8. Scan-/Prüfdienst nicht verfügbar: „Die Sicherheitsprüfung ist derzeit nicht verfügbar. Die Datei wurde nicht veröffentlicht. Bitte versuche es später erneut.“
+9. Netzwerk-/Serverfehler: Uploadstatus klar als fehlgeschlagen kennzeichnen und erneuten Versuch ermöglichen; keine falsche Erfolgsbestätigung.
+
+Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken.
+
+**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die obigen Sicherheitsanforderungen sind Planungsanforderungen und keine Implementierungsfreigabe.
