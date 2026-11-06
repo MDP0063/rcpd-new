@@ -354,19 +354,21 @@ export function createAcademyApiRouter(
           repository.get<AcademyCourseVersionDoc>('academy_course_versions', pin.courseVersionId),
           repository.getCourseParticipation(pin.courseParticipationId)
         ]);
-        if (!courseVersion || courseVersion.courseId !== pin.courseId || !courseParticipation ||
-            courseParticipation.userUid !== actor.uid || courseParticipation.courseId !== pin.courseId ||
-            courseParticipation.courseVersionId !== pin.courseVersionId) {
+        if (!courseVersion || courseVersion.courseId !== pin.courseId ||
+            (courseParticipation && (courseParticipation.userUid !== actor.uid ||
+             courseParticipation.courseId !== pin.courseId || courseParticipation.courseVersionId !== pin.courseVersionId))) {
           throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
         }
         return { pin, version: courseVersion, participation: courseParticipation };
       }));
-      const completedCount = requiredCourses.filter(item => item.participation.status === 'completed').length;
+      const completedCount = requiredCourses.filter(item => item.participation?.status === 'completed').length;
+      const startedCount = requiredCourses.filter(item => Boolean(item.participation)).length;
       const progress = {
         requiredCourseCount: requiredCourses.length,
+        startedRequiredCourseCount: startedCount,
         completedRequiredCourseCount: completedCount,
         completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
-        status: completedCount === requiredCourses.length ? 'completed' : 'in_progress'
+        status: completedCount === requiredCourses.length ? 'completed' : startedCount === 0 ? 'not_started' : 'in_progress'
       };
       res.json({ participation, version, requiredCourses, progress });
     } catch (error) { fail(res, error, next); }
