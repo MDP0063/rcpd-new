@@ -1151,11 +1151,11 @@ async function startServer() {
       const account = loadDatabase().accounts.find(item => item.uid === uid);
       return account ? { uid: account.uid, role: account.publicProfile.role } : null;
     },
-    async (actorUid, actionTitle, targetLabel, details) => {
+    async (actorUid, actionTitle, targetLabel, details, category = 'ACADEMY_DOC') => {
       const state = loadDatabase();
       const actor = state.accounts.find(item => item.uid === actorUid);
       if (!actor) throw new Error('ACADEMY_AUDIT_ACTOR_MISSING');
-      appendAuditLog(state, actor, 'ACADEMY_DOC', actionTitle, targetLabel, details);
+      appendAuditLog(state, actor, category, actionTitle, targetLabel, details);
       await saveDatabaseAndWait(state);
     }
   ));
