@@ -315,3 +315,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN am 06.11.2026 – Priorisierung der Materialverwaltung:** Die erste Ausbaustufe der neuen Materialverwaltung unterstützt Text-/Markdown-Inhalte und codebasierte Inhalte. PDF-Upload, separate PDF-Speicherung, PDF-Parser, Malwareprüfung und die dafür erforderliche Infrastruktur werden bis zu einer späteren Ausbaustufe zurückgestellt. In dieser Phase werden dafür weder ein separates privates GitHub-Repository noch neue externe Speicher-/Prüfdienste, Konto-Verknüpfungen oder laufende Zusatzkosten eingerichtet. Das Materialmodell soll später um dateibasierte Formate erweiterbar bleiben, ohne die Master-/Versionsstruktur neu aufzubauen. Bereits beschlossene PDF-Sicherheitsanforderungen bleiben Anforderungen für die spätere Wiederaufnahme und werden nicht aufgehoben.
 
 - **Umsetzungsstand Dokumenttyp-Verwaltung:** Die zentrale Pflege der kontrollierten Dokumenttyp-Liste wird im Branch `feature/academy-managed-document-types` als eigene Verwaltung für Admin und Colonel umgesetzt. Es werden keine vordefinierten Taxonomiewerte eingeführt; die konkreten Werte müssen weiterhin anhand der tatsächlichen Materialien festgelegt bzw. von der berechtigten Verwaltung gepflegt werden.
+
+### Implementierungsstand der Lernbibliothek (06.11.2026)
+
+- PR #59 hat die zentrale dynamische Kategorienverwaltung geliefert und ist gemergt.
+- PR #60 hat die zentrale dynamische Dokumenttypenverwaltung geliefert und ist gemergt. Beide kontrollierten Listen bleiben voneinander getrennt und beginnen ohne vorgegebene Werte.
+- Der Branch `feature/academy-versioned-text-code-materials` setzt die erste versionierte Materialverwaltung für Markdown und gespeicherten Code um. Er führt keine Codeausführung und keine PDF-/Dateiablage ein.
+- Die Materialstruktur trennt Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Materialversion. Das Speichern eines Entwurfs veröffentlicht nicht; eine ausdrückliche Veröffentlichung erzeugt einen neuen Snapshot. Kursreferenzen bleiben an konkrete `materialId`-/`materialVersionId`-Paare gebunden.
+- Die neue Verwaltung nutzt die bestehende Kurszuständigkeit getrennt vom Materialcode. Kursverantwortliche veröffentlichen im zugewiesenen Bereich selbst; Archivierung bleibt Admin/Colonel vorbehalten. Der Teilnehmer-Reader und die Materialauswahl im Kurseditor sind noch nicht Teil dieses Implementierungsschritts.
+
