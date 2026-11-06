@@ -102,7 +102,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
   const canCreate = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const ownCourseParticipationByCourse = useMemo(
-    () => new Map(courseParticipations.map(item => [item.courseId, item])),
+    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
   const programPinByCourse = useMemo(() => {
