@@ -129,6 +129,12 @@ export function validateProgramVersion(
 }
 
 export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyValidationResult {
+  if (!['draft', 'published', 'archived'].includes(master.publicationStatus) || !['available', 'unavailable'].includes(master.availability)) {
+    return invalid('ACADEMY_COURSE_STATE_INVALID', 'Veröffentlichungsstatus oder Verfügbarkeit des Kurses ist ungültig.');
+  }
+  if (master.publicationStatus === 'archived' && (!isNonEmpty(master.archivedIso) || !isNonEmpty(master.archivedByUid) || !isNonEmpty(master.archiveReason))) {
+    return invalid('ACADEMY_COURSE_ARCHIVE_AUDIT_MISSING', 'Ein archivierter Kurs benötigt Zeitpunkt, verantwortliche Person und Begründung.');
+  }
   if (!isNonEmpty(master.id) || !isNonEmpty(master.code) || !isNonEmpty(master.ownerUid)) {
     return invalid('ACADEMY_COURSE_MASTER_INVALID', 'Kurs-ID, Kurskennung und verantwortlicher Nutzer sind erforderlich.');
   }
@@ -143,6 +149,12 @@ export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyVal
 }
 
 export function validateProgramMaster(master: AcademyProgramMasterDoc): AcademyValidationResult {
+  if (!['draft', 'published', 'archived'].includes(master.publicationStatus) || !['available', 'unavailable'].includes(master.availability)) {
+    return invalid('ACADEMY_PROGRAM_STATE_INVALID', 'Veröffentlichungsstatus oder Verfügbarkeit des Programms ist ungültig.');
+  }
+  if (master.publicationStatus === 'archived' && (!isNonEmpty(master.archivedIso) || !isNonEmpty(master.archivedByUid) || !isNonEmpty(master.archiveReason))) {
+    return invalid('ACADEMY_PROGRAM_ARCHIVE_AUDIT_MISSING', 'Ein archiviertes Programm benötigt Zeitpunkt, verantwortliche Person und Begründung.');
+  }
   if (!isNonEmpty(master.id) || !isNonEmpty(master.code) || !isNonEmpty(master.ownerUid)) {
     return invalid('ACADEMY_PROGRAM_MASTER_INVALID', 'Programm-ID, Programmkennung und verantwortlicher Nutzer sind erforderlich.');
   }
