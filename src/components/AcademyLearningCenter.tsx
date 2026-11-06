@@ -88,6 +88,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<CourseEntry | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseParticipationDetail | null>(null);
@@ -195,13 +196,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setCourseDetail(null);
     setScreen('course');
     const participation = ownCourseParticipationByCourse.get(entry.master.id);
+    setDetailLoading(Boolean(participation));
     if (participation) {
       const response = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(participation.id));
       if (!response.ok || !response.data) {
+        setDetailLoading(false);
         onStatusToast(response.error || 'Kursteilnahme konnte nicht geladen werden.');
         return;
       }
       setCourseDetail(response.data);
+      setDetailLoading(false);
     }
   };
 
@@ -216,13 +220,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       onStatusToast(response.error || 'Der Kurs konnte nicht gestartet werden.');
       return;
     }
+    setDetailLoading(true);
     const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(response.data.participation.id));
     if (!detail.ok || !detail.data) {
+      setDetailLoading(false);
       onStatusToast(detail.error || 'Der Kurs wurde gestartet, aber seine Details konnten nicht geladen werden.');
       await loadLearningData();
       return;
     }
     setCourseDetail(detail.data);
+    setDetailLoading(false);
     await loadLearningData();
     onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
   };
@@ -260,6 +267,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
     const detail = await apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(response.data.participation.id));
     if (detail.ok && detail.data) setProgramDetail(detail.data);
+    setDetailLoading(false);
     await loadLearningData();
     onStatusToast('Programmteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
   };
@@ -269,13 +277,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setProgramDetail(null);
     setScreen('program');
     const participation = programParticipations.find(item => item.programId === entry.master.id);
+    setDetailLoading(Boolean(participation));
     if (participation) {
       const response = await apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(participation.id));
       if (!response.ok || !response.data) {
+        setDetailLoading(false);
         onStatusToast(response.error || 'Programmfortschritt konnte nicht geladen werden.');
         return;
       }
       setProgramDetail(response.data);
+      setDetailLoading(false);
     }
   };
 
