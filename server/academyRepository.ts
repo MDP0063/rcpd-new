@@ -195,17 +195,38 @@ export class AcademyRepository {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
     const participationId = `participation_${encodeURIComponent(userUid)}_${encodeURIComponent(courseId)}`;
     return this.runTransaction(async tx => {
+      const programParticipations = await tx.list<AcademyProgramParticipationDoc>('academy_program_participations', {
+        where: [{ field: 'userUid', value: userUid }], limit: 1000
+      });
+      if (programParticipations.length >= 1000) throw new Error('ACADEMY_PROGRAM_PARTICIPATION_HISTORY_LIMIT');
+      const pinnedVersionIds = [...new Set(programParticipations.flatMap(item =>
+        item.requiredCoursePins.filter(pin => pin.courseId === courseId).map(pin => pin.courseVersionId)
+      ))];
+      if (pinnedVersionIds.length > 1) throw new Error('ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT');
+
       const master = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
       if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(master));
-      if (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId) {
+      const pinnedVersionId = pinnedVersionIds[0];
+      if (!pinnedVersionId &&
+          (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId)) {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
-      const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId);
+      // A program participant may start the exact course version that was pinned at enrollment,
+      // even if the catalog has since moved to a newer version or the course was archived.
+      const targetVersionId = pinnedVersionId || master.currentPublishedVersionId!;
+      const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', targetVersionId);
       if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       assertValid(validateCourseVersion(courseId, version));
       const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
-      if (existing) throw new Error('ACADEMY_PARTICIPATION_ALREADY_EXISTS');
+      if (existing) {
+        assertValid(validateCourseParticipation(existing));
+        if (existing.courseVersionId !== version.id) throw new Error('ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT');
+        if (existing.status === 'voluntarily_ended' || existing.status === 'administratively_ended') {
+          throw new Error('ACADEMY_PARTICIPATION_ALREADY_EXISTS');
+        }
+        throw new Error('ACADEMY_PARTICIPATION_ALREADY_EXISTS');
+      }
       const participation: AcademyCourseParticipationDoc = {
         id: participationId, userUid, courseId, courseVersionId: version.id,
         status: 'in_progress', startedIso: now, lastActivityIso: now,
@@ -231,6 +252,10 @@ export class AcademyRepository {
       assertValid(validateProgramVersion(programId, version));
       const existingProgramParticipation = await tx.get<AcademyProgramParticipationDoc>('academy_program_participations', participationId);
       if (existingProgramParticipation) throw new Error('ACADEMY_PROGRAM_PARTICIPATION_ALREADY_EXISTS');
+      const otherProgramParticipations = await tx.list<AcademyProgramParticipationDoc>('academy_program_participations', {
+        where: [{ field: 'userUid', value: userUid }], limit: 1000
+      });
+      if (otherProgramParticipations.length >= 1000) throw new Error('ACADEMY_PROGRAM_PARTICIPATION_HISTORY_LIMIT');
 
       const pins: AcademyProgramCoursePin[] = [];
       for (const reference of version.courseReferences.filter(item => item.requirement === 'required')) {
@@ -243,6 +268,10 @@ export class AcademyRepository {
         const courseVersion = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', course.currentPublishedVersionId);
         if (!courseVersion) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
         assertValid(validateCourseVersion(course.id, courseVersion));
+        const conflictingProgramPin = otherProgramParticipations.some(item =>
+          item.requiredCoursePins.some(pin => pin.courseId === course.id && pin.courseVersionId !== courseVersion.id)
+        );
+        if (conflictingProgramPin) throw new Error('ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT');
         const courseParticipationId = `participation_${encodeURIComponent(userUid)}_${encodeURIComponent(course.id)}`;
         const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', courseParticipationId);
         if (existing) {
