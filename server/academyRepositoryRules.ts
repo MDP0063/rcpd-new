@@ -22,3 +22,14 @@ export function assertAcademyQuery(collection: AcademyCollection, query: Academy
     if (typeof filter.value === 'number' && !Number.isFinite(filter.value)) throw new Error('ACADEMY_QUERY_VALUE_INVALID');
   }
 }
+
+export function assertAcademyCanUpdate(collection: AcademyCollection): void {
+  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections') {
+    throw new Error('ACADEMY_DOCUMENT_APPEND_ONLY');
+  }
+}
+export function assertAcademyCanDelete(collection: AcademyCollection): void {
+  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections' || collection === 'academy_private_notes') {
+    throw new Error('ACADEMY_DOCUMENT_DELETE_FORBIDDEN');
+  }
+}
