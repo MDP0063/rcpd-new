@@ -266,7 +266,6 @@ export class AcademyRepository {
         planned.push({ participation: courseParticipation, isNew });
         pins.push({ courseId: course.id, courseVersionId: courseVersion.id, courseParticipationId });
       }
-      if (pins.length === 0) throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_MISSING');
       const participation: AcademyProgramParticipationDoc = {
         id: participationId, userUid, programId, programVersionId: version.id,
         requiredCoursePins: pins, createdIso: now, updatedIso: now
