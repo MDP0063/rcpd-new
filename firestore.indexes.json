@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "academy_repo_material_versions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "materialId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "versionNumber",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
