@@ -50,8 +50,8 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
     if (!parsed || typeof parsed !== 'object' || ![1, 2].includes((parsed as ParsedState).version) || !(parsed as ParsedState).collections) throw new Error('ACADEMY_JSON_STORE_INVALID');
     const state = empty();
     for (const collection of ACADEMY_COLLECTIONS) {
-      const docs = (parsed as State).collections[collection];
-      if (docs === undefined && (parsed as State).version === 1 && (collection === 'academy_course_drafts' || collection === 'academy_program_drafts')) continue;
+      const docs = (parsed as ParsedState).collections[collection];
+      if (docs === undefined && (parsed as ParsedState).version === 1 && (collection === 'academy_course_drafts' || collection === 'academy_program_drafts')) continue;
       if (!docs || typeof docs !== 'object' || Array.isArray(docs)) throw new Error('ACADEMY_JSON_STORE_INVALID');
       for (const [key, doc] of Object.entries(docs)) {
         if (!doc || typeof doc.id !== 'string' || keyOf(doc.id) !== key) throw new Error('ACADEMY_JSON_STORE_INVALID');
