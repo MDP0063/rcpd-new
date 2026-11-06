@@ -187,9 +187,11 @@ test('JSON adapter upgrades legacy schema v1 without losing existing collections
     assert.deepEqual(await repository.get('academy_courses', 'legacy-course'), { id: 'legacy-course' });
     await repository.create('academy_courses', master.id, master);
     const upgraded = JSON.parse(await readFile(join(directory, 'academy-db.json'), 'utf8'));
-    assert.equal(upgraded.version, 4);
+    assert.equal(upgraded.version, 5);
     assert.deepEqual(upgraded.collections.academy_material_categories, {});
     assert.deepEqual(upgraded.collections.academy_material_category_assignments, {});
+    assert.deepEqual(upgraded.collections.academy_material_document_types, {});
+    assert.deepEqual(upgraded.collections.academy_material_document_type_assignments, {});
     assert.deepEqual(upgraded.collections.academy_course_drafts, {});
     assert.deepEqual(upgraded.collections.academy_program_drafts, {});
     assert.ok(upgraded.collections.academy_courses['doc:legacy-course']);
