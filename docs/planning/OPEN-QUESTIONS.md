@@ -17,7 +17,7 @@
 
 ### Lernbibliothek und Materialien
 - Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
-- Konkrete Werte der Kategorien-/Dokumenttyp-Listen anhand des vollständigen tatsächlichen Materialbestands validieren. Ein begründeter Startvorschlag steht in der Academy-Spezifikation, ist aber noch nicht beschlossen; automatische Materialcode-/Versionskennung technisch spezifizieren.
+- **Kategorienwerte:** keine feste Vorab-Liste mehr erforderlich; Kategorien werden durch die berechtigte Academy-Verwaltung in der Website gepflegt. **Dokumenttyp-Werte** bleiben eine getrennte, noch zu klärende kontrollierte Liste. Automatische Materialcode-/Versionskennung technisch spezifizieren.
 - **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
 - **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur- und Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; erfolgreiche Malwareprüfung vor Veröffentlichung; bei negativem Ergebnis oder Scanner-/Prüfausfall unveröffentlicht bleiben. Konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technisch offen. Die genaue UX-Darstellung der Fehlermeldungen wird noch ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
