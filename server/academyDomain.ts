@@ -43,9 +43,9 @@ export function validateCourseVersion(
   if (!Number.isSafeInteger(version.versionNumber) || version.versionNumber < 1) {
     return invalid('ACADEMY_COURSE_VERSION_INVALID', 'Die Kursversionsnummer ist ungültig.');
   }
-  if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(isRecord) ||
-      !Array.isArray(version.chapters) || !version.chapters.every(isRecord) ||
-      !Array.isArray(version.completionRequirements) || !version.completionRequirements.every(isRecord)) {
+  if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(value => isRecord(value)) ||
+      !Array.isArray(version.chapters) || !version.chapters.every(value => isRecord(value)) ||
+      !Array.isArray(version.completionRequirements) || !version.completionRequirements.every(value => isRecord(value))) {
     return invalid('ACADEMY_COURSE_STRUCTURE_INVALID', 'Lernziele, Kapitel und Abschlussbedingungen müssen gültige Listen sein.');
   }
   if (!hasUniqueIds(version.learningObjectives) ||
@@ -62,7 +62,7 @@ export function validateCourseVersion(
     if (!isNonEmpty(chapter.id) || !isNonEmpty(chapter.title) ||
         chapter.title.length > 200 ||
         (chapter.description !== undefined && chapter.description.length > 1000) ||
-        !Array.isArray(chapter.materialReferences) || !chapter.materialReferences.every(isRecord) ||
+        !Array.isArray(chapter.materialReferences) || !chapter.materialReferences.every(value => isRecord(value)) ||
         typeof chapter.required !== 'boolean' ||
         !Number.isSafeInteger(chapter.order) || chapter.order < 0) {
       return invalid('ACADEMY_COURSE_CHAPTER_INVALID', 'Jedes Kapitel benötigt gültige ID, Titel, Reihenfolge, Pflichtstatus und Materialliste.');
@@ -126,13 +126,13 @@ export function validateProgramVersion(
   if (!isNonEmpty(version.title) || version.title.trim().length > 200) {
     return invalid('ACADEMY_PROGRAM_TITLE_INVALID', 'Der Programmname muss zwischen 1 und 200 Zeichen lang sein.');
   }
-  if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(isRecord) || version.learningObjectives.length < 3 || version.learningObjectives.length > 6) {
+  if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(value => isRecord(value)) || version.learningObjectives.length < 3 || version.learningObjectives.length > 6) {
     return invalid('ACADEMY_PROGRAM_OBJECTIVES_COUNT', 'Ein Programm benötigt drei bis sechs konkrete Lernziele.');
   }
   if (version.learningObjectives.some(objective => !isNonEmpty(objective.description))) {
     return invalid('ACADEMY_PROGRAM_OBJECTIVE_INVALID', 'Alle Lernziele benötigen eine konkrete Beschreibung.');
   }
-  if (!Array.isArray(version.courseReferences) || !version.courseReferences.every(isRecord) ||
+  if (!Array.isArray(version.courseReferences) || !version.courseReferences.every(value => isRecord(value)) ||
       !hasUniqueIds(version.learningObjectives) ||
       version.learningObjectives.some(objective => !isNonEmpty(objective.id) || !isNonEmpty(objective.description))) {
     return invalid('ACADEMY_PROGRAM_STRUCTURE_INVALID', 'Programmziele und Kurszuordnungen müssen gültige Listen mit eindeutigen IDs sein.');
