@@ -122,7 +122,7 @@ test('publication rejects master identity changes and unpublished version metada
   const changedOwner = { ...publishedMaster, ownerUid: 'attacker-1' };
   await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 2, 'owner-1'), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   const unpublished = { ...version, publishedIso: undefined, publishedByUid: undefined };
-  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2, 'owner-1'), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2, 'owner-1'), /ACADEMY_ACTOR_MISMATCH/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
