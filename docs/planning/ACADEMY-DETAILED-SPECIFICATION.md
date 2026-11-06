@@ -493,6 +493,26 @@ Für den Upload-Dialog gelten folgende UX-Leitlinien:
 
 Die genaue maximale PDF-Größe, die Zahl gleichzeitiger Uploads, erlaubte PDF-Untertypen, Viren-/Malware-Prüfung, PDF-Parser-/Sandbox-Lösung und Aufbewahrung fehlgeschlagener Uploads bleiben technische Entscheidungen und müssen anhand des tatsächlichen Hosting-/Speichermodells geprüft werden.
 
+#### PDF-Sicherheit und Uploadgrenzen – fachliche Leitplanken und Empfehlung (noch nicht abschließend beschlossen)
+
+Der aktuelle Ist-Stand ist keine ausreichende Sicherheitsprüfung: `isSafePdfDataUrl` kontrolliert derzeit nur den Data-URL-Präfix und die Base64-Zeichen. Die Prüfung bestätigt weder die PDF-Signatur noch die strukturelle Lesbarkeit oder Schadsoftwarefreiheit. Der Browser liest die Datei als Base64-Data-URL ein. Der allgemeine JSON-Parser ist auf 25 MB begrenzt. Bei Firestore werden PDF-Daten in `blobs` in Teilstücke von 700.000 Zeichen zerlegt; das 1-MiB-Dokumentlimit wird dadurch adressiert, nicht aber Upload-, Speicher- oder Verarbeitungsrisiken.
+
+**Empfohlene Mindestanforderungen:**
+- Nur PDF-Dateien zulassen; Dateiendung und gemeldeter MIME-Typ sind unterstützende Plausibilitätsprüfungen, keine Vertrauensgrundlage.
+- Dateigröße bereits im Browser vor dem Einlesen prüfen und zwingend nochmals serverseitig anhand der dekodierten Bytes. Die Serverprüfung ist maßgeblich.
+- Base64-Daten strikt dekodieren; ungültige Kodierung, leere Dateien, übergroße Dateien und Größenüberschreitungen ablehnen.
+- PDF-Signatur und tatsächliche Parser-/Strukturlesbarkeit serverseitig prüfen. Eine Signatur allein genügt nicht.
+- Passwortgeschützte, beschädigte, abgeschnittene oder nicht unterstützte PDFs nicht veröffentlichen; klare Fehlerursache zurückmelden. Kein stilles Überspringen der Prüfung.
+- Dateinamen nicht als Speicherpfad oder Dokumentidentität verwenden. Serverseitige Material-/Datei-IDs verwenden und den Originalnamen nur als bereinigte Anzeigeinformation behalten.
+- Upload und Abruf bleiben authentifiziert und autorisiert; Abruf muss die bestehenden Rang-/Zugriffsregeln serverseitig durchsetzen.
+- Unvertrauenswürdige PDF-Inhalte nicht als HTML ausführen. Parser/Renderer aktuell halten und Verarbeitung mit begrenzten Ressourcen durchführen.
+- Malwareprüfung bzw. Content Disarm and Reconstruction (CDR) prüfen. Falls ein geeigneter, datenschutzkonformer Scanner verfügbar ist, Upload bis zum abgeschlossenen Scan als „in Prüfung“ behandeln und bei Scannerfehlern nicht freigeben. Keine vertraulichen RCPD-Dateien ohne gesonderte Datenschutz-/Vertragsprüfung an öffentliche Scan-Dienste senden.
+- Temporäre Dateien, Fehlerabbrüche und Wiederholungen sicher behandeln; keine unvollständigen oder mehrfachen Materialentwürfe erzeugen. Speicher- und Request-Limits müssen zusammenpassen.
+
+**Größenempfehlung zur Entscheidung:** Maximal **15 MB pro PDF-Datei (Rohdatei)**. Bei Base64 entstehen daraus ungefähr 20 MB Daten vor JSON-Overhead. Das liegt unter dem derzeitigen 25-MB-JSON-Limit und lässt etwas Reserve für Metadaten/Request-Struktur. Das Limit muss serverseitig auf den dekodierten PDF-Bytes gelten; die JSON-Request-Grenze bleibt ein separater Schutz. Diese Zahl ist eine Empfehlung, noch kein Beschluss. Vor Implementierung ist sie mit realen Dokumentgrößen und Hosting-/Speicherbedingungen zu verifizieren.
+
+**UX-Rückmeldungen:** Die erlaubte Dateigröße und der Dateityp stehen vor der Dateiauswahl. Spezifische Fehlerzustände werden verständlich benannt (zu groß, falscher Typ, leer, beschädigt/nicht lesbar, passwortgeschützt, Prüfung fehlgeschlagen, Upload nicht verfügbar). Metadaten bleiben nach Fehlern erhalten, soweit sicher möglich. Upload erfolgreich bedeutet nur „Entwurf gespeichert“, nicht „veröffentlicht“.
+
 ### 10.3.2 Veröffentlichung einer Entwurfsfassung
 
 Die Veröffentlichungsaktion ist von der Uploadaktion getrennt und muss die tatsächliche Fassung eindeutig benennen. Vor der Aktion sollen mindestens Titel, Materialcode, Version und Dateiname sichtbar sein, damit nicht versehentlich ein anderer Entwurf freigegeben wird.
@@ -546,10 +566,22 @@ Für die Oberfläche:
 
 Die Trennung folgt dem Zweck der Felder: Kategorien bilden die fachliche Themenordnung, Dokumenttypen beschreiben die Form/Funktion des Materials. Dadurch kann beispielsweise ein Dokument zum Thema „Tactical Operations“ den Typ „SOP / Dienstanweisung“ erhalten, ohne dass beide Informationen in einem einzigen Feld konkurrieren.
 
+### 10.3.7 Berechtigungen für Entwürfe, Rücknahme und Archivierung – Option B beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option B:** Die Berechtigung zur laufenden Entwurfsverwaltung wird von der Befugnis getrennt, veröffentlichte Materialien zurückzuziehen oder zu archivieren.
+
+- Bereits entsprechend berechtigte Kursverantwortliche dürfen Entwürfe innerhalb ihrer zugewiesenen Kurszuständigkeit anlegen und bearbeiten sowie diese selbst ausdrücklich veröffentlichen.
+- Das Zurückziehen und Archivieren bereits veröffentlichter Materialien bleibt Admin und Colonel vorbehalten.
+- Für Entwürfe gilt weiterhin die konkrete Kurszuständigkeit. Ein automatisch generierter Materialcode ist eine Materialkennung und darf nicht als Ersatz für den Kurs-/Zuständigkeitsbezug der Berechtigungsprüfung verwendet werden.
+- Die Entscheidung erweitert keine sonstigen Rollenrechte und führt keine neuen pauschalen Berechtigungen ein.
+- Die konkrete technische Rechteprüfung muss serverseitig erfolgen; UI-Ausblendung allein genügt nicht.
+- Admin und Colonel behalten ihre bestehende übergreifende Verwaltungsbefugnis.
+- Ein Rückzug/Archivierungsvorgang muss nachvollziehbar protokolliert werden und darf historische Kursversionen, Abschlüsse oder deren konkrete Dokumentreferenzen nicht stillschweigend verändern.
+
 ### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
-- Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, zurückziehen und archivieren? (Für Veröffentlichung ist Option A beschlossen: dieselbe berechtigte Person darf ihren Entwurf selbst veröffentlichen.)
+- Die fachliche Trennung der Berechtigungen ist mit Option B beschlossen; die serverseitige Umsetzung und sichere Zuordnung zu Kurszuständigkeiten bleibt Implementierungsarbeit.
 
 - Welche konkreten Werte und ggf. Untergliederungen sollen die getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen enthalten?
 - Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
