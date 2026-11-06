@@ -232,7 +232,6 @@ export class AcademyRepository {
       const existingProgramParticipation = await tx.get<AcademyProgramParticipationDoc>('academy_program_participations', participationId);
       if (existingProgramParticipation) throw new Error('ACADEMY_PROGRAM_PARTICIPATION_ALREADY_EXISTS');
 
-      const planned: Array<{ participation: AcademyCourseParticipationDoc; isNew: boolean }> = [];
       const pins: AcademyProgramCoursePin[] = [];
       for (const reference of version.courseReferences.filter(item => item.requirement === 'required')) {
         const course = await tx.get<AcademyCourseMasterDoc>('academy_courses', reference.courseId);
@@ -246,24 +245,15 @@ export class AcademyRepository {
         assertValid(validateCourseVersion(course.id, courseVersion));
         const courseParticipationId = `participation_${encodeURIComponent(userUid)}_${encodeURIComponent(course.id)}`;
         const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', courseParticipationId);
-        let courseParticipation: AcademyCourseParticipationDoc;
-        let isNew = false;
         if (existing) {
           assertValid(validateCourseParticipation(existing));
           if (existing.courseVersionId !== courseVersion.id) throw new Error('ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT');
           if (existing.status === 'voluntarily_ended' || existing.status === 'administratively_ended') {
             throw new Error('ACADEMY_PROGRAM_COURSE_PARTICIPATION_ENDED');
           }
-          courseParticipation = existing;
-        } else {
-          courseParticipation = {
-            id: courseParticipationId, userUid, courseId: course.id, courseVersionId: courseVersion.id,
-            status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
-          };
-          assertValid(validateCourseParticipation(courseParticipation));
-          isNew = true;
         }
-        planned.push({ participation: courseParticipation, isNew });
+        // Pin the stable participation identity without creating a course participation.
+        // A course is only "started" after the participant explicitly starts that course.
         pins.push({ courseId: course.id, courseVersionId: courseVersion.id, courseParticipationId });
       }
       const participation: AcademyProgramParticipationDoc = {
@@ -271,9 +261,6 @@ export class AcademyRepository {
         requiredCoursePins: pins, createdIso: now, updatedIso: now
       };
       assertValid(validateProgramParticipation(participation));
-      for (const item of planned) if (item.isNew) {
-        await tx.create('academy_course_participations', item.participation.id, item.participation);
-      }
       await tx.create('academy_program_participations', participation.id, participation);
       return participation;
     });
