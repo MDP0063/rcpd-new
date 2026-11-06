@@ -147,7 +147,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   });
 
   const currentModule =
-    modules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
+    filteredModules.find(m => m.id === activeModuleId) ||
+    filteredModules[0] ||
+    (normalizedModuleSearch ? modules.find(m => m.id === activeModuleId) : null) ||
+    null;
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
   const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
