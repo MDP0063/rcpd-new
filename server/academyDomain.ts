@@ -186,6 +186,9 @@ export function validateCourseParticipation(
 }
 
 export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidationResult {
+  if (note.kind !== 'note' && note.kind !== 'bookmark') {
+    return invalid('ACADEMY_NOTE_KIND_INVALID', 'Der Notiztyp ist ungültig.');
+  }
   if (!isNonEmpty(note.id) || !isNonEmpty(note.ownerUid) ||
       !isNonEmpty(note.materialId) || !isNonEmpty(note.materialVersionId)) {
     return invalid('ACADEMY_NOTE_REFERENCE_MISSING', 'Notiz, Eigentümer und konkrete Materialversion müssen referenziert sein.');
