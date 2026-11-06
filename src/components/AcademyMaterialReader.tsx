@@ -47,16 +47,16 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    };
   return {
    h1:heading('h1'),h2:heading('h2'),h3:heading('h3'),h4:heading('h4'),h5:heading('h5'),h6:heading('h6'),
-   p:({children,...props}:any)=><p {...props} className="my-3 leading-7 text-slate-800 dark:text-slate-200">{children}</p>,
-   ul:({children,...props}:any)=><ul {...props} className="my-3 list-disc space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ul>,
-   ol:({children,...props}:any)=><ol {...props} className="my-3 list-decimal space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ol>,
-   blockquote:({children,...props}:any)=><blockquote {...props} className="my-4 border-l-4 border-slate-300 pl-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
-   pre:({children,...props}:any)=><pre {...props} className="my-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">{children}</pre>,
-   code:({children,className,...props}:any)=><code {...props} className={className||'rounded bg-slate-100 px-1 py-0.5 text-sm dark:bg-slate-800'}>{children}</code>,
-   a:({children,href,...props}:any)=><a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
-   table:({children,...props}:any)=><div className="my-4 overflow-x-auto"><table {...props} className="min-w-full border-collapse text-sm">{children}</table></div>,
-   th:({children,...props}:any)=><th {...props} className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
-   td:({children,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>
+   p:({children,node:_node,...props}:any)=><p {...props} className="my-3 leading-7 text-slate-800 dark:text-slate-200">{children}</p>,
+   ul:({children,node:_node,...props}:any)=><ul {...props} className="my-3 list-disc space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ul>,
+   ol:({children,node:_node,...props}:any)=><ol {...props} className="my-3 list-decimal space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ol>,
+   blockquote:({children,node:_node,...props}:any)=><blockquote {...props} className="my-4 border-l-4 border-slate-300 pl-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
+   pre:({children,node:_node,...props}:any)=><pre {...props} className="my-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">{children}</pre>,
+   code:({children,className,node:_node,...props}:any)=><code {...props} className={className||'rounded bg-slate-100 px-1 py-0.5 text-sm dark:bg-slate-800'}>{children}</code>,
+   a:({children,href,node:_node,...props}:any)=><a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
+   table:({children,node:_node,...props}:any)=><div className="my-4 overflow-x-auto"><table {...props} className="min-w-full border-collapse text-sm">{children}</table></div>,
+   th:({children,node:_node,...props}:any)=><th {...props} className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
+   td:({children,node:_node,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>
   } satisfies Components;
  },[headings]);
  return <section className={panel+' space-y-4 p-4 sm:p-5'} aria-labelledby="academy-course-materials-heading">

@@ -338,6 +338,30 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(courseMaterialPublished.status, 201, JSON.stringify(courseMaterialPublished.body));
     assert.equal(courseMaterialPublished.body!.version.chapters[0].materialReferences[0].materialVersionId, materialVersion1Id);
 
+    const readerParticipation = await request('/api/academy/courses/' + courseWithMaterialId + '/participations', officer, { method: 'POST' });
+    assert.equal(readerParticipation.status, 201, JSON.stringify(readerParticipation.body));
+    const readerParticipationId = readerParticipation.body!.participation.id as string;
+    const readerDetail = await request('/api/academy/participations/' + readerParticipationId, officer);
+    assert.equal(readerDetail.status, 200, JSON.stringify(readerDetail.body));
+    assert.equal(readerDetail.body!.materials[0].accessStatus, 'available');
+    assert.equal(readerDetail.body!.materials[0].materialVersionId, materialVersion1Id);
+    const pinnedMaterialContent = await request(
+      '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialVersion1Id,
+      officer
+    );
+    assert.equal(pinnedMaterialContent.status, 200, JSON.stringify(pinnedMaterialContent.body));
+    assert.equal(pinnedMaterialContent.body!.material.content, '# Operations\\n\\nErste Fassung.');
+    const unpinnedMaterialContent = await request(
+      '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialId + '__v2',
+      officer
+    );
+    assert.equal(unpinnedMaterialContent.status, 404, 'reader must reject a material version that is not pinned in this course version');
+    const foreignParticipationContent = await request(
+      '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialVersion1Id,
+      officer2
+    );
+    assert.equal(foreignParticipationContent.status, 404, 'reader must not disclose another participant’s pinned material');
+
     const courseWithInvalidMaterial = await request('/api/academy/courses', admin, {
       method: 'POST',
       ...json({
@@ -369,6 +393,11 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ expectedRevision: 2, reason: 'Material is replaced by a newer policy.' })
     });
     assert.equal(archivedMaterial.status, 200);
+    const archivedPinnedMaterialContent = await request(
+      '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialVersion1Id,
+      officer
+    );
+    assert.equal(archivedPinnedMaterialContent.status, 200, 'archiving a material must not break an existing pinned course version');
     assert.equal(archivedMaterial.body!.master.publicationStatus, 'archived');
     assert.equal((await request('/api/academy/materials/' + materialId, admin)).body!.versions.length, 2);
 
