@@ -453,21 +453,79 @@ Es wurde ausdrücklich besprochen, wie neue Materialien in die Bibliothek gelang
 Verbindlich festgehalten:
 - Dokumente dürfen extern erstellt werden, etwa als PDF, und anschließend hochgeladen werden.
 - Eine verpflichtende PDF-Designvorlage ist **nicht** beschlossen.
-- Eine einheitliche Verwaltungsoberfläche für Upload, Metadaten, Versionen und Freigabe ist als Zielbild sinnvoll, aber der genaue Workflow ist noch nicht entschieden.
-- Es ist nicht beschlossen, dass die Plattform einen vollständigen PDF-Editor oder ein internes Layoutsystem bereitstellen muss.
-- Umgekehrt ist auch kein vollständiger Uploadprozess bis ins letzte Detail festgelegt.
+- Die Plattform muss keinen vollständigen PDF-Editor oder ein internes Layoutsystem bereitstellen.
+- Upload und Veröffentlichung sind zwei getrennte Handlungen.
+- **BESCHLOSSEN am 06.11.2026 – Veröffentlichungsworkflow Option B:** Ein neu hochgeladenes Material wird zunächst als Entwurf angelegt. Es wird nicht allein durch den erfolgreichen Upload veröffentlicht. Erst eine bewusste, ausdrücklich ausgelöste Veröffentlichungsaktion macht die geprüfte Fassung für den regulären Bibliotheksbestand verfügbar.
+- Der erfolgreiche Upload bestätigt daher nur, dass die Datei als Entwurf übernommen wurde. Er darf nicht mit einer Veröffentlichung verwechselt werden.
+- Nicht veröffentlichte Entwürfe dürfen nicht in der regulären Teilnehmer-Bibliothek, der globalen Bibliothekssuche, Teilnehmerempfehlungen oder als aktuelle veröffentlichte Kursmaterialfassung erscheinen.
+- Ein Entwurf muss im Verwaltungsbereich für entsprechend berechtigte Personen auffindbar und eindeutig als Entwurf gekennzeichnet sein.
+- Die Entscheidung über Entwurf und Veröffentlichung ergänzt die bereits beschlossene Dokumentversionierung: eine veröffentlichte Kursversion referenziert weiterhin eine konkrete veröffentlichte Dokumentversion; ein Entwurf verändert keine bestehende Referenz.
+- Nach der Veröffentlichung darf eine in Kursen oder historischen Vorgängen verwendete Materialfassung nicht stillschweigend durch Bearbeiten überschrieben werden. Eine inhaltliche Änderung wird als neue Dokumentfassung vorbereitet und nach bewusster Veröffentlichung zur aktuellen Bibliotheksfassung. Historische Kursverweise bleiben auf ihrer konkreten Fassung.
+- Die frühere Frage, ob ein PDF-Template verpflichtend sein soll, bleibt mit **Nein / nicht beschlossen** beantwortet.
+
+Der fachliche Mindestablauf ist damit:
+1. Berechtigte Person startet „Material hinzufügen“.
+2. Sie erfasst die für das Material erforderlichen Angaben und wählt eine lokale PDF-Datei aus.
+3. Die Plattform prüft die Datei serverseitig und übernimmt sie als Entwurf.
+4. Die Verwaltungsoberfläche zeigt den Entwurf mit Dateiname, Metadaten, Upload-/Prüfstatus und einer klaren Kennzeichnung „Nicht veröffentlicht“.
+5. Eine berechtigte Person kontrolliert Inhalt und Angaben und löst die Veröffentlichung ausdrücklich aus.
+6. Erst nach erfolgreicher serverseitiger Prüfung und bestätigter Speicherung wechselt die Fassung in den Status „Veröffentlicht“ und wird für berechtigte Teilnehmer in der Bibliothek verfügbar.
+7. Eine spätere inhaltliche Änderung an einer veröffentlichten Fassung erzeugt eine neue Entwurfsfassung; sie ersetzt die bisher veröffentlichte Fassung erst durch eine eigene bewusste Veröffentlichung.
+
+Die Oberfläche muss die Zustände klar unterscheiden: Datei lokal ausgewählt, Upload läuft, Entwurf gespeichert, Prüfung fehlgeschlagen, Veröffentlichung läuft und veröffentlicht. Ein Uploadfehler darf keinen scheinbar gespeicherten Entwurf erzeugen; ein Veröffentlichungsfehler darf den bereits gespeicherten Entwurf nicht als veröffentlicht anzeigen.
+
+Noch nicht beschlossen sind ein gesonderter fachlicher Prüfstatus, ein zweites Freigabe-/Vier-Augen-Verfahren oder eine zwingende Trennung zwischen Ersteller und veröffentlichender Person. Die bewusste Veröffentlichung ist beschlossen; zusätzliche Freigabestufen sind es nicht.
+
+### 10.3.1 Dateiauswahl, Prüfung und Upload-Rückmeldung
+
+Die Datei ist nicht allein anhand ihres Namens oder eines vom Browser gemeldeten MIME-Typs als PDF zu akzeptieren. Die serverseitige Prüfung muss den tatsächlichen Dateiinhalt berücksichtigen. OWASP empfiehlt eine mehrschichtige Prüfung unter anderem von erlaubter Dateiendung, MIME-Angabe, Signatur und Inhalt; keine einzelne Prüfung reicht allein aus. Die Datei muss außerdem Größenlimits haben und darf nur durch berechtigte Nutzer hochgeladen werden.
+
+Für den Upload-Dialog gelten folgende UX-Leitlinien:
+- Zulässiges Format und maximale Dateigröße müssen vor der Auswahl sichtbar sein, sobald die Grenzen festgelegt sind.
+- Dateiname und Dateigröße werden nach Auswahl angezeigt; die Auswahl kann vor dem Upload ersetzt werden.
+- Drag-and-drop kann zusätzlich angeboten werden, darf aber nicht der einzige Weg sein.
+- Uploadfortschritt und anschließende Verarbeitung werden getrennt und verständlich dargestellt.
+- Erfolgreicher Upload bestätigt ausdrücklich „Entwurf gespeichert“ und nennt den nächsten sinnvollen Schritt; nicht „Material veröffentlicht“.
+- Fehler müssen konkret benennen, ob Dateityp, Größe, beschädigte Datei, Passwortschutz, fehlgeschlagene Übertragung oder eine serverseitige Prüfung das Problem verursacht hat.
+- Bei einem Fehler bleiben Metadaten und Formularangaben erhalten, soweit dies technisch sicher möglich ist; die Datei kann erneut ausgewählt werden.
+- Die Statusrückmeldung muss auch assistiven Technologien zugänglich sein; Fehler werden dem jeweiligen Eingabefeld zugeordnet und nicht nur farblich dargestellt.
+- Der Nutzer darf nicht durch wiederholtes Klicken unbeabsichtigt mehrere Entwürfe desselben Uploads erzeugen. Die technische Operation sollte eine sichere Wiederholung ermöglichen.
+
+Die genaue maximale PDF-Größe, die Zahl gleichzeitiger Uploads, erlaubte PDF-Untertypen, Viren-/Malware-Prüfung, PDF-Parser-/Sandbox-Lösung und Aufbewahrung fehlgeschlagener Uploads bleiben technische Entscheidungen und müssen anhand des tatsächlichen Hosting-/Speichermodells geprüft werden.
+
+### 10.3.2 Veröffentlichung einer Entwurfsfassung
+
+Die Veröffentlichungsaktion ist von der Uploadaktion getrennt und muss die tatsächliche Fassung eindeutig benennen. Vor der Aktion sollen mindestens Titel, Materialcode, Version und Dateiname sichtbar sein, damit nicht versehentlich ein anderer Entwurf freigegeben wird.
+
+Die Veröffentlichung muss serverseitig autorisiert und als eine nachvollziehbare Zustandsänderung gespeichert werden. Die Teilnehmeransicht darf eine Fassung erst dann erhalten, wenn der Server den Veröffentlichungsstatus bestätigt hat. Ein Client-seitiger Statuswechsel oder eine Erfolgsmeldung vor bestätigter Speicherung reicht nicht aus.
+
+Eine separate fachliche Review-Queue, zweite Person als Pflichtfreigeber oder zusätzliche Freigabestufe wird durch Option B nicht automatisch eingeführt. Diese Frage bleibt separat offen.
+
+### 10.3.3 Nachträgliche Änderungen und neue Fassungen
+
+- Ein unveröffentlichter Entwurf kann vor Veröffentlichung korrigiert werden.
+- Eine veröffentlichte Fassung bleibt als konkrete Version erhalten.
+- Eine neue inhaltliche Fassung wird als neuer Entwurf mit Bezug auf das bestehende Bibliotheksmaterial vorbereitet.
+- Die Veröffentlichung der neuen Fassung ändert die aktuelle Bibliotheksfassung, aber nicht automatisch bereits veröffentlichte Kursversionen oder historische Nachweise.
+- Die Zuordnung eines neuen Materials zu Kursen bzw. die Umstellung bestehender Kursversionen ist eine separate bewusste fachliche Handlung.
+- Für rein redaktionelle Metadatenkorrekturen ohne Änderung des Dokuments oder seiner fachlichen Bedeutung ist noch festzulegen, ob sie ohne neue Dokumentversion zulässig sind. Diese Grenze darf nicht durch ein stilles Überschreiben des PDF-Inhalts verwischt werden.
+
+### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
-- Wer darf Uploads anlegen und veröffentlichen?
-- Wie werden Titel, Materialcode, Kategorie, Thema, Dokumenttyp und Beschreibung erfasst?
-- Gibt es Entwurfs-, Prüf- und Veröffentlichungsstatus?
-- Wie wird eine neue Version mit der bisherigen verknüpft?
-- Wie werden fehlerhafte, beschädigte, passwortgeschützte oder nicht unterstützte Dateien behandelt?
-- Wie wird geprüft, ob PDF-Text extrahierbar oder OCR nötig ist?
-- Wie werden betroffene Kursreferenzen bei neuer Version sichtbar gemacht?
-- Wie wird ein Material zurückgezogen, ohne historische Verweise zu zerstören?
+- Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, veröffentlichen, zurückziehen und archivieren?
+- Darf dieselbe berechtigte Person ihren eigenen Entwurf veröffentlichen oder ist eine zweite Person erforderlich?
+- Welche Metadaten sind verpflichtend, welche optional und welche werden automatisch erzeugt?
+- Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
+- Welche Dateigrößen- und Uploadgrenzen sind für den tatsächlichen Betrieb angemessen?
+- Welche serverseitigen PDF-Prüfungen und Sicherheitsmaßnahmen werden eingesetzt?
+- Wie werden passwortgeschützte, beschädigte, leere, nicht unterstützte oder ungewöhnliche PDF-Dateien behandelt?
+- Wie wird Text-Extraktion geprüft und wann wird OCR angeboten bzw. benötigt?
+- Wie werden bei Veröffentlichung betroffene Kursverantwortliche über eine neue Fassung informiert, ohne bestehende Kursversionen automatisch umzustellen?
+- Welche Metadatenänderungen benötigen eine neue Dokumentversion?
+- Wie werden Upload-/Veröffentlichungsfehler, Wiederholungen und parallele Bearbeitungen behandelt?
 
-Das sind offene Konzept- und technische Prüfpunkte, keine bereits beschlossenen Verwaltungsfunktionen.
+Diese Punkte bleiben offen, soweit sie nicht ausdrücklich in den vorstehenden Abschnitten als beschlossen gekennzeichnet sind.
 
 ### 10.4 Archivierung und endgültige Löschung – Option A beschlossen
 
@@ -980,8 +1038,10 @@ Wichtige Abgrenzung:
 Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen vor einer konkreten Umsetzung geklärt werden:
 
 ### Bibliothek und Upload
-- vollständiger Upload-, Metadaten-, Entwurfs-, Prüf- und Veröffentlichungsworkflow;
-- Rollen und Rechte für Upload, Änderung, Freigabe, Archivierung und endgültige Löschung;
+- **Entwurfs- und bewusste Veröffentlichung Option B ist beschlossen**; offen sind die Rollen, die veröffentlichen dürfen, und ob ein Vier-Augen-Prinzip zusätzlich erforderlich sein soll;
+- vollständiger Metadatenworkflow, Pflichtfelder und Materialcode-Regeln;
+- Rollen und Rechte für Upload, Änderung, Veröffentlichung, Rückzug, Archivierung und endgültige Löschung;
+- maximale Dateigröße, Uploadgrenzen, konkrete serverseitige PDF-Validierung und sichere Speicherung;
 - Materialcodes und Metadatenmodell;
 - Umgang mit beschädigten, passwortgeschützten, nicht unterstützten oder unlesbaren PDFs;
 - Volltext-Extraktion und OCR-Qualität bei Scans;
