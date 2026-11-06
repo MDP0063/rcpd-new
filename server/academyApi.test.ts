@@ -592,7 +592,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(started.body!.participation.status, 'in_progress');
     assert.equal((await request(`/api/academy/courses/${courseId}/participations`, officer)).status, 403);
     assert.equal((await request(`/api/academy/courses/${courseId}/participations`, admin)).status, 200);
-    assert.equal((await request('/api/academy/participations', officer)).body!.participations.length, 1);
+    assert.equal((await request('/api/academy/participations', officer)).body!.participations.length, 2, 'the participant has the reader fixture plus this course participation');
     assert.equal((await request('/api/academy/participations', admin)).body!.participations.length, 0);
     assert.equal((await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' })).status, 409);
 
