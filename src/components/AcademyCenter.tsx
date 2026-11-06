@@ -75,7 +75,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
   const [submittingGrade, setSubmittingGrade] = useState(false);
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [moduleSearchQuery, setModuleSearchQuery] = useState('');
+  const [isLibraryNavigationOpen, setIsLibraryNavigationOpen] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(modules[0]?.id || null);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
@@ -141,12 +142,15 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const practiceTests = exams.filter(e => e.assessmentStage !== 'final_exam');
   const finalExams = exams.filter(e => e.assessmentStage === 'final_exam');
 
-  const filteredModules = modules.filter(m =>
-    selectedCategory === 'ALL' ? true : m.category === selectedCategory
-  );
+  const normalizedModuleSearch = moduleSearchQuery.trim().toLocaleLowerCase('de-DE');
+  const filteredModules = modules.filter(module => {
+    if (!normalizedModuleSearch) return true;
+    return [module.title, module.code, module.category, module.pdfFileName || '']
+      .some(value => value.toLocaleLowerCase('de-DE').includes(normalizedModuleSearch));
+  });
 
   const currentModule =
-    modules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
+    filteredModules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
   const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
@@ -557,75 +561,28 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Left 4 Cols */}
-              <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Handbuch-Verzeichnis
-                  </h2>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                    Wähle ein Lehrmodul zum Lesen aus
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    KATEGORIE FILTERN
-                  </label>
-                  <select
-                    value={selectedCategory}
-                    onChange={e => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
-                  >
-                    <option value="ALL">Alle Kategorien ({modules.length})</option>
-                    <option value="SOP & Policy">SOP &amp; Policy</option>
-                    <option value="California Penal Code">California Penal Code</option>
-                    <option value="Tactical Operations">Tactical Operations</option>
-                    <option value="Radio & Dispatch">Radio &amp; Dispatch</option>
-                    <option value="Field Training (FTO)">Field Training (FTO)</option>
-                    <option value="Supervisor Directive">Supervisor Directive</option>
-                  </select>
-                </div>
-
-                <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {filteredModules.map(mod => {
-                    const prog = getModuleProgress(mod.id);
-                    const isSelected = currentModule?.id === mod.id;
-                    return (
-                      <div
-                        key={mod.id}
-                        onClick={() => setActiveModuleId(mod.id)}
-                        className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-sky-50 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-700'
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs font-mono font-semibold text-sky-700 dark:text-sky-400">
-                          <span>{mod.code}</span>
-                          <span>·</span>
-                          <span className="uppercase">{mod.requiredRole}+</span>
-                          <span className="ml-auto">
-                            {prog?.status === 'completed' && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" />
-                            )}
-                          </span>
-                        </div>
-                        <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
-                          {mod.title}
-                        </div>
-                        <div className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                          {mod.category} · {mod.pdfFileName ? `PDF: ${mod.pdfFileName}` : mod.embedType}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
+            <div className={`grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
+              {isLibraryNavigationOpen && (
+                <aside id="academy-material-navigation" aria-label="Materialnavigation" className="lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
+                  <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
+                  <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                  {filteredModules.length === 0 ? <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p> : (
+                    <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                      {filteredModules.map(mod => {
+                        const isSelected = currentModule?.id === mod.id;
+                        return <button key={mod.id} type="button" onClick={() => setActiveModuleId(mod.id)} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
+                          <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{mod.code}</span>
+                          <span className="block mt-1 text-sm font-semibold text-slate-900 dark:text-white">{mod.title}</span>
+                          <span className="block mt-0.5 text-xs text-slate-600 dark:text-slate-400">{mod.category}</span>
+                        </button>;
+                      })}
+                    </div>
+                  )}
+                </aside>
+              )}
               {/* Right 8 Cols: Viewer */}
-              <div className="lg:col-span-8">
+              <div className={isLibraryNavigationOpen ? 'lg:col-span-8' : 'w-full'}>
                 {currentModule && (
                   ROLE_HIERARCHY[currentUser.role].rankOrder >
                   ROLE_HIERARCHY[currentModule.requiredRole].rankOrder ? (
@@ -660,27 +617,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleMarkModuleComplete(currentModule)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          {getModuleProgress(currentModule.id)?.status === 'completed'
-                            ? 'Erneut als gelesen protokollieren'
-                            : 'Als durchgearbeitet markieren'}
+                        <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} aria-controls="academy-material-navigation" className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
+                          {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
                         </button>
-
-                        {canEditAcademy && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteModule(currentModule.id)}
-                            className="p-2 text-slate-500 hover:text-rose-600 rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer"
-                            title="Lehrmaterial löschen"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </div>
 
