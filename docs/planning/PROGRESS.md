@@ -210,5 +210,5 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - PR #62 ergänzt die Kurseditor-Auswahl konkreter veröffentlichter Materialversionen und einen Teilnehmer-Reader innerhalb einer bestehenden Kursteilnahme.
 - Der Reader lädt Inhalte ausschließlich über eine serverseitig geprüfte Route, die die exakte Materialversion in der gepinnten Kursversion verifiziert. Rollenbeschränkungen werden serverseitig geprüft.
 - Markdown wird mit `react-markdown`, `remark-gfm` und `rehype-sanitize` ohne Raw-HTML-Durchleitung dargestellt. Code bleibt Quelltext und wird nicht ausgeführt.
-- PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler; die CI-Prüfung läuft auf diesem separaten Bugfix-Branch.
+- PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler. TypeScript-Prüfung, Produktionsbuild und 329 Tests liefen erfolgreich; eine manuelle Browserprüfung wurde nicht durchgeführt.
 - Notizen/Lesezeichen, Autosave und geräteübergreifende Leseposition bleiben ein eigener Folgeabschnitt.
