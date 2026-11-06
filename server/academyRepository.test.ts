@@ -22,7 +22,8 @@ const version: AcademyCourseVersionDoc = {
   title: 'Grundlagen', summary: '',
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
-  completionRequirements: [], createdIso: now, createdByUid: 'owner-1', workingRevision: 1
+  completionRequirements: [], publishedIso: now, publishedByUid: 'owner-1',
+  createdIso: now, createdByUid: 'owner-1', workingRevision: 1
 };
 const publishedMaster: AcademyCourseMasterDoc = {
   ...master, publicationStatus: 'published', currentPublishedVersionId: 'course-1__v1',
@@ -78,4 +79,13 @@ test('private note repository methods enforce owner isolation', async () => with
   await assert.rejects(repository.deleteOwnPrivateNote('admin-1', note.id), /ACADEMY_NOTE_NOT_FOUND/);
   await repository.deleteOwnPrivateNote('owner-1', note.id);
   assert.deepEqual(await repository.listOwnPrivateNotes('owner-1'), []);
+}));
+
+test('publication rejects master identity changes and unpublished version metadata', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  const changedOwner = { ...publishedMaster, ownerUid: 'attacker-1' };
+  await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 1), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  const unpublished = { ...version, publishedIso: undefined, publishedByUid: undefined };
+  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 1), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
