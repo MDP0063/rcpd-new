@@ -187,3 +187,36 @@ test('leerer Speicher ergibt null', () => {
     null
   );
 });
+
+
+test('Academy collections, including private notes, round-trip through Firestore state storage', () => {
+  const index: PersistIndex = new Map();
+  const state = baseState();
+  state.academy_courses = [{ id: 'course_1', code: 'SOP-01' }];
+  state.academy_course_versions = [{ id: 'course_1__v1', courseId: 'course_1' }];
+  state.academy_programs = [{ id: 'program_1', code: 'BASIC-01' }];
+  state.academy_program_versions = [{ id: 'program_1__v1', programId: 'program_1' }];
+  state.academy_course_participations = [{ id: 'participation_1', userUid: 'u1' }];
+  state.academy_program_participations = [{ id: 'program_participation_1', userUid: 'u1' }];
+  state.academy_progress_evidence = [{ id: 'evidence_1', participationId: 'participation_1' }];
+  state.academy_completion_corrections = [{ id: 'correction_1', participationId: 'participation_1' }];
+  state.academy_private_notes = [{
+    id: 'note_1', ownerUid: 'u1', materialId: 'mat_1', materialVersionId: 'mat_1__v1',
+    kind: 'note', content: 'private', tags: []
+  }];
+
+  const store = new Map<string, Doc>();
+  const plan = planWrites(index, state, 0);
+  const raw = applyToFake(plan.ops, store);
+  plan.commit();
+  const loaded = assembleState(raw, 1)!;
+  assert.deepEqual(loaded.state.academy_courses, state.academy_courses);
+  assert.deepEqual(loaded.state.academy_course_versions, state.academy_course_versions);
+  assert.deepEqual(loaded.state.academy_programs, state.academy_programs);
+  assert.deepEqual(loaded.state.academy_program_versions, state.academy_program_versions);
+  assert.deepEqual(loaded.state.academy_course_participations, state.academy_course_participations);
+  assert.deepEqual(loaded.state.academy_program_participations, state.academy_program_participations);
+  assert.deepEqual(loaded.state.academy_progress_evidence, state.academy_progress_evidence);
+  assert.deepEqual(loaded.state.academy_completion_corrections, state.academy_completion_corrections);
+  assert.deepEqual(loaded.state.academy_private_notes, state.academy_private_notes);
+});
