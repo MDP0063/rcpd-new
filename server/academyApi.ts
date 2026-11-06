@@ -125,7 +125,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       const existing = await repository.list<AcademyCourseMasterDoc>('academy_courses');
       if (existing.some(item => item.code.toUpperCase() === code)) { res.status(409).json({ error: 'ACADEMY_CODE_ALREADY_EXISTS' }); return; }
       const now = new Date().toISOString();
-      const courseId = id('course');
+      const courseId = `course_${code.toLowerCase()}`;
       const master: AcademyCourseMasterDoc = {
         id: courseId, code, ownerUid: actor.uid, publicationStatus: 'draft', availability: 'available',
         latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
@@ -229,7 +229,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       const existing = await repository.list<AcademyProgramMasterDoc>('academy_programs');
       if (existing.some(item => item.code.toUpperCase() === code)) { res.status(409).json({ error: 'ACADEMY_CODE_ALREADY_EXISTS' }); return; }
       const now = new Date().toISOString();
-      const programId = id('program');
+      const programId = `program_${code.toLowerCase()}`;
       const master: AcademyProgramMasterDoc = {
         id: programId, code, ownerUid: actor.uid, publicationStatus: 'draft', availability: 'available',
         latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
