@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc
+  AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import type { AcademyRepository } from './academyRepository.ts';
@@ -28,9 +28,11 @@ function id(prefix: string): string {
 function statusFor(error: unknown): number {
   const code = error instanceof Error ? error.message : '';
   if (code.includes('NOT_FOUND')) return 404;
-  if (code.includes('ACCESS_DENIED') || code.includes('OWNER_MISMATCH') || code.includes('ACTOR_MISMATCH')) return 403;
+  if (code.includes('ACCESS_DENIED') || code.includes('OWNER_MISMATCH') || code.includes('ACTOR_MISMATCH') || code.includes('EVIDENCE_ACTOR_FORBIDDEN') || code.includes('INSTRUCTOR_REQUIRED')) return 403;
   if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') ||
-      code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY')) return 409;
+      code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
+      code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
+      code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED')) return 409;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
   if (code.startsWith('ACADEMY_')) return 400;
@@ -73,7 +75,7 @@ function makeProgramDraft(programId: string, body: Record<string, unknown>, work
 export function createAcademyApiRouter(
   repository: AcademyRepository,
   resolveActor: ActorResolver,
-  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string) => Promise<void>
+  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>
 ) {
   const router = Router();
 
@@ -311,6 +313,127 @@ export function createAcademyApiRouter(
       await repository.publishProgramVersion(master.id, version, nextMaster, expected, actor.uid);
       await recordAudit(actor.uid, 'Academy-Programmversion veröffentlicht', master.code, `Version ${version.versionNumber} veröffentlicht.`);
       res.status(201).json({ master: nextMaster, version });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/courses/:courseId/participations', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.startCourseParticipation(actor.uid, req.params.courseId, new Date().toISOString());
+      await recordAudit(actor.uid, 'Academy-Kursteilnahme begonnen', req.params.courseId, `Teilnahme an Kursversion ${participation.courseVersionId} begonnen.`, 'ACADEMY_PROGRESS');
+      res.status(201).json({ participation });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/participations', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participations = await repository.listOwnCourseParticipations(actor.uid);
+      res.json({ participations });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/courses/:courseId/participations', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!canManage(actor, master.ownerUid)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      const participations = await repository.listCourseParticipations(master.id);
+      res.json({ participations });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/participations/:participationId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+      const isOwner = participation.userUid === actor.uid;
+      const isManager = Boolean(master && canManage(actor, master.ownerUid));
+      if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const [version, evidence] = await Promise.all([
+        repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId),
+        repository.listParticipationEvidence(participation.id)
+      ]);
+      res.json({ participation, version, evidence });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/participations/:participationId/evidence', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_EVIDENCE_BODY_INVALID' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+      const isOwner = participation.userUid === actor.uid;
+      const isInstructor = Boolean(master && canManage(actor, master.ownerUid));
+      if (!isOwner && !isInstructor) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
+      if (!version) { res.status(404).json({ error: 'ACADEMY_PINNED_VERSION_MISSING' }); return; }
+      const requirementId = text(req.body.requirementId, 120);
+      const requirement = version.completionRequirements.find(item => item.id === requirementId);
+      if (!requirement) { res.status(404).json({ error: 'ACADEMY_COMPLETION_REQUIREMENT_NOT_FOUND' }); return; }
+      if (requirement.type === 'required_assessment') {
+        res.status(409).json({ error: 'ACADEMY_EVIDENCE_EXTERNAL_SOURCE_REQUIRED' }); return;
+      }
+      const selfEvidence = ['required_chapter', 'required_material', 'accepted_self_confirmation'].includes(requirement.type);
+      const instructorEvidence = ['practical_task', 'instructor_confirmation'].includes(requirement.type);
+      if (selfEvidence && !isOwner) { res.status(403).json({ error: 'ACADEMY_EVIDENCE_ACTOR_FORBIDDEN' }); return; }
+      if (instructorEvidence && !isInstructor) { res.status(403).json({ error: 'ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED' }); return; }
+      const now = new Date().toISOString();
+      const evidence: AcademyProgressEvidenceDoc = {
+        id: `evidence_${encodeURIComponent(participation.id)}_${encodeURIComponent(requirement.id)}`,
+        participationId: participation.id,
+        requirementId: requirement.id,
+        evidenceType: requirement.type,
+        sourceId: requirement.targetId,
+        recordedByUid: actor.uid,
+        recordedIso: now,
+        ...(req.body.details === undefined ? {} : { details: text(req.body.details, 2000) })
+      };
+      const result = await repository.recordProgressEvidence(participation.id, evidence, actor.uid, isInstructor);
+      await recordAudit(actor.uid, 'Academy-Fortschrittsnachweis erfasst', master?.code || participation.courseId, `Nachweis für Abschlussbedingung ${requirement.id} erfasst.`, 'ACADEMY_PROGRESS');
+      res.status(201).json(result);
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/participations/:participationId/correction', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (actor.role !== 'admin') { res.status(403).json({ error: 'ACADEMY_COMPLETION_CORRECTION_FORBIDDEN' }); return; }
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_CORRECTION_BODY_INVALID' }); return; }
+      const expectedStatus = req.body.expectedStatus;
+      const correctedStatus = req.body.correctedStatus;
+      if (!['in_progress', 'completed'].includes(String(expectedStatus)) ||
+          !['in_progress', 'completed'].includes(String(correctedStatus))) {
+        res.status(400).json({ error: 'ACADEMY_COMPLECTION_CORRECTION_STATUS_INVALID' }); return;
+      }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const reason = text(req.body.reason, 1000);
+      if (reason.length < 10) { res.status(400).json({ error: 'ACADEMY_COMPLETION_CORRECTION_REASON_REQUIRED' }); return; }
+      const now = new Date().toISOString();
+      const correction: AcademyCompletionCorrectionDoc = {
+        id: id('correction'),
+        participationId: participation.id,
+        previousStatus: expectedStatus as AcademyCompletionCorrectionDoc['previousStatus'],
+        correctedStatus: correctedStatus as AcademyCompletionCorrectionDoc['correctedStatus'],
+        reason,
+        actorUid: actor.uid,
+        correctedIso: now
+      };
+      const updated = await repository.correctCourseParticipation(participation.id, correction, expectedStatus as 'in_progress' | 'completed');
+      await recordAudit(actor.uid, 'Academy-Kursabschluss korrigiert', participation.courseId, `Teilnahme ${participation.id}: ${correction.previousStatus} → ${correction.correctedStatus}. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+      res.json({ participation: updated, correction });
     } catch (error) { fail(res, error, next); }
   });
 
