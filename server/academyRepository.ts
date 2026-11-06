@@ -260,7 +260,7 @@ export class AcademyRepository {
       const participantSelfEvidence = ['required_chapter', 'required_material', 'accepted_self_confirmation'].includes(requirement.type);
       const instructorEvidence = ['practical_task', 'instructor_confirmation'].includes(requirement.type);
       if (participantSelfEvidence && participation.userUid !== actorUid) throw new Error('ACADEMY_EVIDENCE_ACTOR_FORBIDDEN');
-      if (instructorEvidence && !instructorAuthorized) throw new Error('ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED');
+      if (instructorEvidence && (!instructorAuthorized || participation.userUid === actorUid)) throw new Error('ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED');
 
       const previousEvidence = await tx.list<AcademyProgressEvidenceDoc>('academy_progress_evidence', {
         where: [{ field: 'participationId', value: participationId }], limit: 1000
