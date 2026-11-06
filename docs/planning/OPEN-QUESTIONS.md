@@ -1,7 +1,7 @@
 # RCPD – Offene Fragen und Prüffelder
 
 **Stand:** 06.11.2026  
-**Wichtig:** Diese Liste ist kein Feature-Backlog und keine Genehmigung zur Umsetzung. Jeder Punkt ist auf tatsächliche Notwendigkeit zu prüfen. Keine Scope Creep.
+**Wichtig:** Diese Liste ist kein Feature-Backlog und keine Genehmigung zur Umsetzung. Jeder Punkt ist auf tatsächliche Notwendigkeit zu prüfen. Keine Scope Creep. Die ausführlichen bereits festgelegten Regeln stehen in `PORTAL-REDESIGN-DETAILS.md` und `ACADEMY-DETAILED-SPECIFICATION.md`; hier bleiben nur echte offene Entscheidungen und Prüffelder.
 
 ## 1. Academy – verbleibende fachliche Klärungen
 
@@ -21,7 +21,7 @@
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
 - Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
-- Ob ein Kurs eine konkrete Dokumentversion referenziert oder eine kontrolliert gepflegte Referenz auf eine genehmigte Version verwendet, ist im Detail der technischen Spezifikation zu validieren; fachlich gilt: keine unbemerkte Änderung veröffentlichter Kursinhalte.
+- **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
 
 ### Reader, Notizen und Lesezeichen
 - Konkrete Toolbar- und Werkzeuganordnung erst in der Designphase.
@@ -179,3 +179,30 @@ Vor einer Empfehlung ist für jeden Bereich zu dokumentieren:
 10. Problem, Evidenz, Auswirkung, Empfehlung und Status.
 
 Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS sind vorläufig und am aktuellen Code erneut zu verifizieren.
+
+
+## 10. Ergänzende offene Punkte nach der ausführlichen Rekonstruktion
+
+### Gesamtportal
+- Modulweise Bestandsaudits mit konkreten Komponenten, Rollen, Datenquellen und Abläufen sind noch durchzuführen; Inventarisierung allein ist kein abgeschlossenes UX-Audit.
+- Für jedes Modul muss geprüft werden, welche Zustände bereits im Datenmodell existieren und welche nur scheinbar aus der UI abgeleitet werden.
+- Die tatsächliche Rollen-/Aufgabenmatrix muss aus dem bestehenden Berechtigungsmodell ermittelt werden.
+- Globale Navigation, mobile Navigation, Such-/Schnellzugriff, Breadcrumbs und Kontextwiederherstellung sind weiterhin offen.
+- Die mögliche Command Palette/Ctrl+K darf erst nach Nutzwert-, Redundanz-, Accessibility- und Rollenprüfung empfohlen werden.
+- Dashboard-Widgets und Fortschrittsdarstellungen bleiben offen, bis eine autoritative Quelle für jeden Fortschritt feststeht.
+- Für Kommunikation, Anträge, Kalender, Personal, Berichte/Audit, Whitelist, Betrieb und Login/Einstellungen sind noch vollständige fachliche Ablaufkonzepte auszuarbeiten.
+- UX-/Accessibility-Empfehlungen benötigen vor ihrer Vorstellung aktuelle Recherche und Quellen mit konkreter RCPD-Begründung.
+
+### Academy
+- Der exakte Upload-/Metadaten-/Entwurfs-/Prüf-/Freigabeprozess ist offen; ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
+- Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
+- Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
+- Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
+- Empfehlungsregeln für unabhängige neue Empfehlungen, veraltete/entzogene Inhalte, Fristen und Erinnerungen sind offen.
+- Die Draft-Grading-Erweiterung ist fachlich beschlossen, aber backendseitig zu spezifizieren und gegen den aktuellen Code zu prüfen.
+- Der Default der erstmaligen Ergebnisfreigabe bei fehlender Prüfungseinstellung bleibt eine explizite Entscheidung; keine Annahme treffen.
+- Der spätere Kontext-Meldebutton ist als Integrationspunkt vorzusehen; der vollständige Meldeprozess ist ein separates Planungsvorhaben.
+
+### Dokumentationsqualität
+- Die verfügbaren Erinnerungen sind keine vollständigen Wortprotokolle aller älteren Chats. Neue Details aus später wieder verfügbaren Originalgesprächen müssen ergänzt werden, statt sie durch Vermutungen zu ersetzen.
+- Bei jedem neuen Gesprächsschritt ist vor einer Rückfrage das Entscheidungsregister und die passende Detail-Spezifikation zu prüfen.

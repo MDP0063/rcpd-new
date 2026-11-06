@@ -1,7 +1,7 @@
 # RCPD – Gesamt-Masterplan des Portal-Redesigns
 
 **Stand:** 06.11.2026  
-**Planungsstatus:** Fortlaufende fachliche und UX-Konzeption. Die Academy ist detailliert, aber noch nicht vollständig abgeschlossen. Die übrigen Portalmodule sind inventarisiert, jedoch noch nicht jeweils vollständig konzipiert.  
+**Planungsstatus:** Fortlaufende fachliche und UX-Konzeption. Für die Academy liegt zusätzlich eine ausführliche Detail-Spezifikation vor; die Gesamtkonzeption ist dennoch nicht abgeschlossen. Die übrigen Portalmodule sind inventarisiert und in einer ausführlichen Gesamtportalplanung mit Audit-Aufträgen beschrieben, aber noch nicht jeweils vollständig fachlich konzipiert. 
 **Wichtige Abgrenzung:** Dieses Dokument beschreibt Zielbild, Arbeitsrahmen und Planungsstand. Es behauptet nicht, dass alle beschriebenen Zielzustände bereits implementiert sind.
 
 ## 1. Projektziel und Geltungsbereich
@@ -235,6 +235,8 @@ Konkrete Berichtstypen, Kennzahlen, Filter und Exportmöglichkeiten sind noch ni
 
 ## 12. Academy – Zielbild und verbindliche Teilkonzepte
 
+Die vollständigen Abläufe, Entscheidungsfolgen, Sonderfälle und offenen Punkte stehen in [ACADEMY-DETAILED-SPECIFICATION.md](./ACADEMY-DETAILED-SPECIFICATION.md). Die nachfolgenden Punkte sind die Masterplan-Zusammenfassung und ersetzen diese Detail-Spezifikation nicht.
+
 Die Academy ist zugleich operativer Ausbildungsarbeitsbereich und freie Wissensbibliothek. Empfehlungen und Lernpfade unterstützen, sind aber keine pauschalen Zugangsvoraussetzungen.
 
 ### 12.1 Hauptnavigation – Option A beschlossen
@@ -336,3 +338,19 @@ Jede Entscheidung erhält Status, Datum/Zeitraum, Option (falls relevant), Begr�
 
 Vor jeder UX-Empfehlung: aktuelle etablierte Plattformmuster und maßgebliche Accessibility-Standards recherchieren, Quellen nennen und die Empfehlung anhand des konkreten RCPD-Ablaufs begründen. Der Nutzer möchte Claude später als kritische unabhängige Review-Instanz einsetzen; dafür müssen sämtliche relevanten Entscheidungen und offenen Fragen vollständig übergeben werden.
 
+
+
+## 16. Ausführliche Planungsdokumente und Rekonstruktionsstand
+
+Der Masterplan ist bewusst eine Übersicht und kein Ersatz für die ausführlichen fachlichen Spezifikationen. Für die weitere Arbeit gilt folgende Aufteilung:
+
+- **Gesamtportal, UX-Arbeitsweise und Modulkonzeption:** `PORTAL-REDESIGN-DETAILS.md`.
+- **Academy mit Kurs-/Programmlebenszyklus, Lernbibliothek, Reader, Notizen, Prüfungen, Examiner und Ergebnisfreigabe:** `ACADEMY-DETAILED-SPECIFICATION.md`.
+- **Verbindliche gewählte Optionen und Grundsatzentscheidungen:** `DECISIONS.md`.
+- **Modulabdeckung und tatsächlicher Auditstatus:** `MODULE-INVENTORY.md`.
+- **Noch nicht entschiedene Punkte und technische Prüffelder:** `OPEN-QUESTIONS.md`.
+- **Grenzen und Herkunft der Gesprächsrekonstruktion:** `RECONSTRUCTION-NOTES.md`.
+
+Bei UX-Empfehlungen bleibt die verbindliche Rechercheanforderung bestehen: aktuelle etablierte Muster und maßgebliche Accessibility-Standards prüfen, geeignete Quellen nennen und die Empfehlung anhand konkreter RCPD-Aufgaben begründen.
+
+Die aktuell verfügbaren Erinnerungen erlauben eine detaillierte Rekonstruktion zahlreicher Academy-Regeln und übergreifender Projektvorgaben. Sie enthalten aber nicht die vollständigen Wortprotokolle aller älteren Chats. Die Dokumentation kennzeichnet deshalb fehlende oder unsichere Informationen offen und ergänzt sie nicht durch erfundene Entscheidungen.

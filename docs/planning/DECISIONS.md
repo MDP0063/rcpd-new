@@ -1,7 +1,7 @@
 # RCPD – Verbindliche Entscheidungen
 
 **Stand:** 06.11.2026  
-**Status:** Konsolidierung aus dem verfügbaren Projektgedächtnis und aktuellen Gesprächsentscheidungen. Die Liste ist bewusst fachlich; technische Implementierung muss separat geprüft werden.
+**Status:** Verbindliches Entscheidungsregister aus dem verfügbaren Projektgedächtnis und den Gesprächsentscheidungen. Diese Datei dient als kompakter Index der gewählten Regeln. Die ausführliche Bedeutung, konkrete Abläufe, Randfälle und Auswirkungen stehen ergänzend in [PORTAL-REDESIGN-DETAILS.md](./PORTAL-REDESIGN-DETAILS.md) und [ACADEMY-DETAILED-SPECIFICATION.md](./ACADEMY-DETAILED-SPECIFICATION.md). Technische Implementierung muss separat geprüft werden.
 
 Nur Einträge mit Status **BESCHLOSSEN** gelten als verbindlich. Eine Empfehlung in einer früheren Unterhaltung gilt nicht als Beschluss, sofern der Projektinhaber sie nicht angenommen hat.
 
@@ -222,3 +222,64 @@ Die folgenden Themen wurden als Audit-/Konzeptfelder oder Vorschläge angesproch
 - **BESCHLOSSEN:** Academy-Empfehlungen, Prüfungsfreigaben, Kursstatus und Teilnehmerfortschritt sind getrennt zu behandeln; interne Änderungen vor Ergebnisfreigabe lösen keine Teilnehmerbenachrichtigung oder Folgeempfehlung aus.
 - **BESCHLOSSEN:** Examiner und Prüfungsdetails bleiben berechtigungsabhängig; keine vertraulichen Inhalte für andere Rollen offenlegen.
 - **BESCHLOSSEN:** vollständige Academy-Planung ist noch nicht abgeschlossen; die oben genannten Beschlüsse sind kein Signal zur sofortigen Implementierung aller Funktionen.
+
+
+## J. Auslegung der Beschlüsse und verbindliche Detailverweise
+
+Die nachstehenden Klarstellungen sollen verhindern, dass die knappen Einträge oben bei späteren UX- oder Implementierungsarbeiten falsch verkürzt werden. Die Detail-Spezifikationen sind mit diesem Entscheidungsregister zusammen zu lesen.
+
+### J.1 Übergreifendes Portal
+
+- **BESCHLOSSEN:** Das Zielbild ist ein professionelles Einsatz- und Verwaltungsportal, kein generisches Admin-Dashboard und kein dekoratives Command-Center. „Ruhig“ bedeutet nicht, fachlich notwendige Informationen zu verstecken; es bedeutet, sie nach Rolle, Aufgabe und Kontext zu ordnen.
+- **BESCHLOSSEN:** Die Oberfläche darf bestehende Funktionen nicht verlieren, nur weil ein Element redundant aussieht. Zuerst muss nachgewiesen werden, dass dieselbe Funktion an anderer Stelle vollständig und verständlich erhalten bleibt.
+- **BESCHLOSSEN:** Mobile UX ist ein eigenständiger Nutzungskontext. Eine Desktopnavigation wird nicht einfach verkleinert oder horizontal zusammengedrängt.
+- **BESCHLOSSEN:** Technische Bestandsprüfungen sind zunächst read-only. Technische Möglichkeiten begründen keine neue fachliche Funktion.
+- **BESCHLOSSEN:** Ein unabhängiger Claude-Review darf Entscheidungen herausfordern, aber nicht selbst ändern. Alternativen und Auswirkungen werden dokumentiert; die Entscheidung liegt beim Projektinhaber.
+- **BESCHLOSSEN:** Jeder neue UX-Vorschlag benötigt aktuelle Recherche, Quellen und eine Begründung anhand des konkreten RCPD-Ablaufs.
+- **BESCHLOSSEN:** Ein Merge nach `main` kann wegen Render-Autodeployment eine Live-Veröffentlichung auslösen. Branch, Merge und Deployment bleiben deshalb getrennte und ausdrücklich kontrollierte Schritte.
+
+### J.2 Verbindliche Bedeutungsunterschiede in der Academy
+
+Die folgenden Begriffe dürfen nicht als Synonyme behandelt werden:
+
+| Begriff A | Begriff B | Verbindliche Abgrenzung |
+|---|---|---|
+| Kurs veröffentlicht | Kurs verfügbar | Veröffentlichungsstand und Verfügbarkeit sind getrennte Ebenen |
+| Kurs verfügbar | Nutzer hat begonnen | Verfügbarkeit ist keine Teilnahme |
+| Kurs geöffnet | Kurs begonnen | Erst bewusste Lernaktivität beginnt Teilnahme |
+| Material geöffnet | Material verstanden/abgeschlossen | Öffnen ist kein Verständnis- oder Abschlussnachweis |
+| Kursabschluss | Prüfungsergebnis | Ein Kursabschluss und ein freigegebenes Prüfungsergebnis sind unterschiedliche Vorgänge |
+| historischer Abschluss | aktuelle Qualifikationsgültigkeit | Wiederqualifizierung setzt historischen Abschluss nicht zurück |
+| interne Bewertung | veröffentlichtes Ergebnis | Teilnehmer sehen ausschließlich ausdrücklich freigegebene Fassungen |
+| Claim öffnen | Claim übernehmen | Öffnen des Vorgangs beansprucht ihn nicht |
+| gespeicherter Draft | endgültig abgeschlossene Bewertung | Drafts bleiben bearbeitbar; Abschluss benötigt bewusste Finalisierung |
+| Ergebnis korrigiert | korrigiertes Ergebnis veröffentlicht | Korrektur bleibt intern, bis eine neue manuelle Freigabe erfolgt |
+| Berechtigungsverlust | Löschung persönlicher Historie | Zugriff entfällt, Historie wird nicht automatisch gelöscht |
+| Empfehlung ausblenden | Kurszugriff entfernen | Ausblenden entfernt nur den Empfehlungseintrag aus der persönlichen Ansicht |
+
+### J.3 Konkrete Sonderfälle, die Teil der Beschlüsse sind
+
+- **BESCHLOSSEN:** Ein archivierter Kurs kann von laufenden Teilnehmern grundsätzlich weiter abgeschlossen werden; neue Teilnehmer starten ihn nicht regulär.
+- **BESCHLOSSEN:** Ein Teilnehmer, der eine Kursversion bereits begonnen hat, bleibt standardmäßig auf dieser Version, auch wenn eine neuere Version veröffentlicht wird.
+- **BESCHLOSSEN:** Ein Programmabschluss bleibt historisch bestehen, auch wenn später eine Wiederqualifizierung erforderlich wird.
+- **BESCHLOSSEN:** Eine Kurskorrektur muss die ursprüngliche Entscheidung, den Korrekturzeitpunkt, die handelnde Person und den Grund nachvollziehbar halten.
+- **BESCHLOSSEN:** Bei möglichen doppelten Teilnahmen wird nicht automatisch zusammengeführt oder ein vermeintlich besserer Datensatz ausgewählt. Erst Prüfung, dann protokollierte Korrektur.
+- **BESCHLOSSEN:** Kursmeldungs-Lesestatus wird einzeln geführt. Das Öffnen eines Kurses oder Menüs markiert nicht alle Meldungen als gelesen.
+- **BESCHLOSSEN:** Eine ausgeblendete Empfehlung kehrt nicht nach einem Reload oder einer bloßen Fortschritts-/Versionsänderung zurück.
+- **BESCHLOSSEN:** Persönliche Notizen bleiben bei Berechtigungsverlust grundsätzlich erhalten, vermitteln aber keinerlei Zugriff auf die Quelle.
+- **BESCHLOSSEN:** Bei Reader-Navigation bleibt die Navigation zunächst eingeklappt; das Inhaltsverzeichnis wird nur angezeigt, wenn es auslesbar ist. Seitenminiaturen und direkte Seitennavigation bleiben.
+- **BESCHLOSSEN:** Bei Disconnect im Examiner wird der Claim maximal 30 Minuten gehalten; nach Wiederverbindung ist ein neuer Claim erforderlich, sofern der Vorgang nicht anderweitig vergeben wurde.
+- **BESCHLOSSEN:** Während einer Claim-Warnphase pausiert ein Disconnect den Warnungstimer, nicht aber die maximale 30-Minuten-Haltezeit des Disconnect-Falls.
+- **BESCHLOSSEN:** Wenn ein Claim verloren geht, wird die Schreibberechtigung sofort entzogen. Gespeicherte Arbeit bleibt, ungespeicherte Änderungen werden nicht automatisch gesichert.
+- **BESCHLOSSEN:** Eine Revision erzeugt keinen neuen Prüfungsversuch. Sie kehrt als eigener Revision-Vorgang in die gemeinsame Arbeitsliste zurück.
+- **BESCHLOSSEN:** Nach einer veröffentlichten Ergebnis-Korrektur bleibt die bisherige Veröffentlichung sichtbar, bis eine neue Fassung manuell freigegeben ist.
+- **BESCHLOSSEN:** Ein interner Korrekturstand löst keine Teilnehmerbenachrichtigung und keine Folgeempfehlung aus.
+- **BESCHLOSSEN:** Teilnehmer erhalten im Examiner-/Ergebniskontext ausschließlich freigegebene Ergebnisse und Feedback; andere Prüfer erhalten nur die für ihre Berechtigung vorgesehenen Informationen.
+
+### J.4 Ausführliche Spezifikationen als verbindliche Auslegung
+
+- Für globale UX-Grundsätze, Modulkommentare, Navigations- und Auditregeln gilt `PORTAL-REDESIGN-DETAILS.md`.
+- Für Academy, Kurs- und Programmlebenszyklen, Materialversionen, Notizen, Prüfungen, Examiner, Korrekturen und Freigaben gilt `ACADEMY-DETAILED-SPECIFICATION.md`.
+- Für die Rekonstruktionsgrenzen gilt `RECONSTRUCTION-NOTES.md`.
+
+Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie nicht durch eine allgemeine Formulierung an anderer Stelle als beschlossen interpretiert werden. Bei einem echten Widerspruch gilt die ausdrücklich bestätigte spätere Entscheidung des Projektinhabers; der Widerspruch muss dokumentiert und aufgelöst werden.
