@@ -1,3 +1,5 @@
+import type { OfficerRole } from './portal.ts';
+
 /**
  * Fachliche Academy-Domänenmodelle.
  *
@@ -36,6 +38,8 @@ export interface AcademyMaterialCategoryAssignmentDoc {
   id: string;
   materialId: string;
   categoryId: string;
+  /** Set only for immutable references retained by a published material version. */
+  materialVersionId?: string;
   revision: number;
   createdIso: string;
   createdByUid: string;
@@ -64,11 +68,87 @@ export interface AcademyMaterialDocumentTypeAssignmentDoc {
   id: string;
   materialId: string;
   documentTypeId: string;
+  /** Set only for immutable references retained by a published material version. */
+  materialVersionId?: string;
   revision: number;
   createdIso: string;
   createdByUid: string;
   updatedIso: string;
   updatedByUid: string;
+}
+
+export type AcademyMaterialContentFormat = 'markdown' | 'code';
+
+export interface AcademyMaterialMasterDoc {
+  id: string;
+  code: string;
+  ownerUid: string;
+  /** Separate course scope used for delegated instructor permissions; never the generated material code. */
+  responsibleCourseCode?: string;
+  publicationStatus: AcademyPublicationStatus;
+  currentPublishedVersionId?: string;
+  latestVersionNumber: number;
+  workingRevision: number;
+  lastPublishedWorkingRevision?: number;
+  createdIso: string;
+  updatedIso: string;
+  archivedIso?: string;
+  archivedByUid?: string;
+  archiveReason?: string;
+}
+
+export interface AcademyMaterialDraftDoc {
+  id: string;
+  materialId: string;
+  title: string;
+  description?: string;
+  categoryId: string;
+  documentTypeId: string;
+  requiredRole?: OfficerRole;
+  contentFormat: AcademyMaterialContentFormat;
+  content: string;
+  /** Optional syntax-highlighting hint; code is stored only and is never executed. */
+  codeLanguage?: string;
+  workingRevision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
+export interface AcademyMaterialVersionDoc {
+  id: string;
+  materialId: string;
+  versionNumber: number;
+  title: string;
+  description?: string;
+  categoryId: string;
+  documentTypeId: string;
+  requiredRole?: OfficerRole;
+  contentFormat: AcademyMaterialContentFormat;
+  content: string;
+  codeLanguage?: string;
+  publishedIso: string;
+  publishedByUid: string;
+  createdIso: string;
+  createdByUid: string;
+  workingRevision: number;
+}
+
+export interface AcademyMaterialVersionSummary {
+  id: string;
+  materialId: string;
+  versionNumber: number;
+  title: string;
+  contentFormat: AcademyMaterialContentFormat;
+  publishedIso: string;
+  publishedByUid: string;
+}
+
+export interface AcademyMaterialListItem {
+  master: AcademyMaterialMasterDoc;
+  draft: Pick<AcademyMaterialDraftDoc, 'title' | 'categoryId' | 'documentTypeId' | 'contentFormat' | 'workingRevision' | 'updatedIso'> | null;
+  currentVersion: AcademyMaterialVersionSummary | null;
 }
 
 export type AcademyCompletionEvidenceType =
