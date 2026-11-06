@@ -204,3 +204,53 @@ test('course draft can be revised repeatedly with a monotonically increasing rev
   assert.deepEqual(await repository.getCourseDraft(master.id), revised);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.workingRevision, 3);
 }));
+
+
+test('course participation pins the published version and completes only after every required evidence is recorded', async () => withRepository(async repository => {
+  const requirements = [
+    { id: 'req-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true },
+    { id: 'req-instructor', type: 'instructor_confirmation' as const, targetId: 'practical-1', required: true }
+  ];
+  const draft = { ...courseDraft, completionRequirements: requirements };
+  const publishedVersion = { ...version, completionRequirements: requirements };
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, draft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, publishedVersion, publishedMaster, 2, 'owner-1');
+
+  const participation = await repository.startCourseParticipation('learner-1', master.id, now);
+  assert.equal(participation.courseVersionId, publishedVersion.id);
+  assert.equal(participation.status, 'in_progress');
+  await assert.rejects(repository.startCourseParticipation('learner-1', master.id, now), /ACADEMY_PARTICIPATION_ALREADY_EXISTS/);
+
+  const selfEvidence = {
+    id: `evidence_${encodeURIComponent(participation.id)}_req-chapter`,
+    participationId: participation.id, requirementId: 'req-chapter',
+    evidenceType: 'required_chapter' as const, sourceId: 'chapter-1',
+    recordedByUid: 'learner-1', recordedIso: now
+  };
+  const partial = await repository.recordProgressEvidence(participation.id, selfEvidence, 'learner-1', false);
+  assert.equal(partial.participation.status, 'in_progress');
+
+  const instructorEvidence = {
+    id: `evidence_${encodeURIComponent(participation.id)}_req-instructor`,
+    participationId: participation.id, requirementId: 'req-instructor',
+    evidenceType: 'instructor_confirmation' as const, sourceId: 'practical-1',
+    recordedByUid: 'owner-1', recordedIso: now
+  };
+  const completed = await repository.recordProgressEvidence(participation.id, instructorEvidence, 'owner-1', true);
+  assert.equal(completed.participation.status, 'completed');
+  assert.equal((await repository.listParticipationEvidence(participation.id)).length, 2);
+  await assert.rejects(repository.recordProgressEvidence(participation.id, instructorEvidence, 'owner-1', true), /ACADEMY_PARTICIPATION_NOT_ACTIVE/);
+
+  const correction = {
+    id: 'correction-1', participationId: participation.id,
+    previousStatus: 'completed' as const, correctedStatus: 'in_progress' as const,
+    reason: 'The completion evidence was entered against the wrong participant.',
+    actorUid: 'admin-1', correctedIso: now
+  };
+  const reopened = await repository.correctCourseParticipation(participation.id, correction, 'completed');
+  assert.equal(reopened.status, 'in_progress');
+  assert.equal(reopened.completedIso, undefined);
+  assert.equal((await repository.get('academy_completion_corrections', correction.id))?.id, correction.id);
+  await assert.rejects(repository.correctCourseParticipation(participation.id, correction, 'completed'), /ACADEMY_COMPLETION_CORRECTION_CONFLICT/);
+}));
