@@ -48,6 +48,20 @@ const programDraft: AcademyProgramDraftDoc = {
   workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
 };
 
+
+const programVersion = {
+  id: 'program-1__v1', programId: 'program-1', versionNumber: 1,
+  title: 'Grundausbildung', summary: '',
+  learningObjectives: [1, 2, 3].map(n => ({ id: `goal-${n}`, description: `Lernziel ${n}` })),
+  courseReferences: [{ courseId: 'course-1', requirement: 'required' as const, order: 0 }],
+  publishedIso: now, publishedByUid: 'owner-1',
+  createdIso: now, createdByUid: 'owner-1', workingRevision: 2
+};
+const publishedProgramMaster: AcademyProgramMasterDoc = {
+  ...programMaster, publicationStatus: 'published', currentPublishedVersionId: 'program-1__v1',
+  latestVersionNumber: 1, workingRevision: 2, updatedIso: now
+};
+
 test('Academy repository creates, reads and filters documents', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
   assert.deepEqual(await repository.get('academy_courses', master.id), master);
@@ -141,4 +155,12 @@ test('draft writes reject audit metadata from a different actor', async () => wi
   await repository.create('academy_courses', master.id, master);
   await assert.rejects(repository.saveCourseDraft(master.id, courseDraft, 1, 'admin-1'), /ACADEMY_ACTOR_MISMATCH/);
   assert.equal(await repository.getCourseDraft(master.id), null);
+}));
+
+test('program publication uses the saved draft and atomically advances its version pointer', async () => withRepository(async repository => {
+  await repository.create('academy_programs', programMaster.id, programMaster);
+  await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
+  await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgramMaster, 2, 'owner-1');
+  assert.deepEqual(await repository.get('academy_program_versions', programVersion.id), programVersion);
+  assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.currentPublishedVersionId, programVersion.id);
 }));
