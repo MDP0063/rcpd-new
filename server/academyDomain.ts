@@ -1,7 +1,9 @@
 import type {
   AcademyCourseMasterDoc,
+  AcademyCourseDraftDoc,
   AcademyCourseVersionDoc,
   AcademyProgramMasterDoc,
+  AcademyProgramDraftDoc,
   AcademyProgramVersionDoc,
   AcademyCourseParticipationDoc,
   AcademyProgramParticipationDoc,
@@ -94,6 +96,21 @@ export function validateCourseVersion(
   return { ok: true };
 }
 
+export function validateCourseDraft(courseId: string, draft: AcademyCourseDraftDoc): AcademyValidationResult {
+  if (!isNonEmpty(courseId) || draft.id !== courseId || draft.courseId !== courseId ||
+      !Number.isSafeInteger(draft.workingRevision) || draft.workingRevision < 1 ||
+      !isNonEmpty(draft.updatedIso) || !isNonEmpty(draft.updatedByUid)) {
+    return invalid('ACADEMY_COURSE_DRAFT_INVALID', 'Kursentwurf, Revision und Änderungsmetadaten sind ungültig.');
+  }
+  return validateCourseVersion(courseId, {
+    ...draft,
+    id: `${courseId}__v1`,
+    versionNumber: 1,
+    createdIso: draft.updatedIso,
+    createdByUid: draft.updatedByUid
+  });
+}
+
 export function validateProgramVersion(
   programId: string,
   version: AcademyProgramVersionDoc
@@ -126,6 +143,21 @@ export function validateProgramVersion(
     return invalid('ACADEMY_PROGRAM_COURSE_REFERENCE_INVALID', 'Jede Kurszuordnung benötigt einen gültigen Kurs, eine Reihenfolge und die Einstufung erforderlich oder empfohlen.');
   }
   return { ok: true };
+}
+
+export function validateProgramDraft(programId: string, draft: AcademyProgramDraftDoc): AcademyValidationResult {
+  if (!isNonEmpty(programId) || draft.id !== programId || draft.programId !== programId ||
+      !Number.isSafeInteger(draft.workingRevision) || draft.workingRevision < 1 ||
+      !isNonEmpty(draft.updatedIso) || !isNonEmpty(draft.updatedByUid)) {
+    return invalid('ACADEMY_PROGRAM_DRAFT_INVALID', 'Programmentwurf, Revision und Änderungsmetadaten sind ungültig.');
+  }
+  return validateProgramVersion(programId, {
+    ...draft,
+    id: `${programId}__v1`,
+    versionNumber: 1,
+    createdIso: draft.updatedIso,
+    createdByUid: draft.updatedByUid
+  });
 }
 
 export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyValidationResult {
