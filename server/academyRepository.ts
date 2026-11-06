@@ -26,11 +26,11 @@ function programDraftMatchesVersion(draft: AcademyProgramDraftDoc, version: Acad
 export class AcademyRepository {
   private readonly adapter: AcademyStorageAdapter;
   constructor(adapter: AcademyStorageAdapter) { this.adapter = adapter; }
-  get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
+  async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocumentId(id); return this.adapter.get<T>(collection, id);
   }
-  list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
+  async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyQuery(collection, query); return this.adapter.list<T>(collection, query);
   }
