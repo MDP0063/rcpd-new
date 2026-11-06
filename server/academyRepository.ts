@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory } from './academyDomain.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -54,6 +54,7 @@ export class AcademyRepository {
       const existing = await tx.get<AcademyMaterialCategoryAssignmentDoc>(
         'academy_material_category_assignments', materialId
       );
+      if (existing) assertValid(validateMaterialCategoryAssignment(existing));
       if (existing?.categoryId === categoryId) return existing;
       const next: AcademyMaterialCategoryAssignmentDoc = {
         id: materialId,
@@ -65,6 +66,7 @@ export class AcademyRepository {
         updatedIso: now,
         updatedByUid: actorUid
       };
+      assertValid(validateMaterialCategoryAssignment(next));
       if (existing) await tx.update('academy_material_category_assignments', materialId, next);
       else await tx.create('academy_material_category_assignments', materialId, next);
       return next;
@@ -76,7 +78,10 @@ export class AcademyRepository {
       const existing = await tx.get<AcademyMaterialCategoryAssignmentDoc>(
         'academy_material_category_assignments', materialId
       );
-      if (existing) await tx.delete('academy_material_category_assignments', materialId);
+      if (existing) {
+        assertValid(validateMaterialCategoryAssignment(existing));
+        await tx.delete('academy_material_category_assignments', materialId);
+      }
     });
   }
   async deleteMaterialCategory(
