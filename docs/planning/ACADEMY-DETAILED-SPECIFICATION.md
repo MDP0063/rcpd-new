@@ -532,12 +532,26 @@ Für die Oberfläche:
 
 **Begründung:** Die Bibliothek benötigt genug strukturierte Angaben für Auffindbarkeit und eindeutige Einordnung, soll aber keine unnötige Datenerfassung erzwingen. Die Trennung zwischen Thema/Kategorie und Dokumenttyp folgt etablierten Taxonomieprinzipien: Themen beschreiben, worum es inhaltlich geht; Inhaltstypen beschreiben die Art bzw. den Zweck des Inhalts. Die Werte sollen kontrolliert, verständlich und für die tatsächlichen RCPD-Materialien passend sein.
 
+### 10.3.6 Kategorien und Dokumenttypen – Option A beschlossen
+
+**BESCHLOSSEN am 06.11.2026 – Option A:** Fachliche Kategorien und Dokumenttypen werden als zwei getrennte, kontrollierte Auswahllisten geführt.
+
+- **Kategorie** beantwortet: Welches fachliche Thema behandelt das Material?
+- **Dokumenttyp** beantwortet: Was für eine Art bzw. Funktion hat das Dokument?
+- Ein Material erhält eine fachliche Hauptkategorie und einen Dokumenttyp. Mehrfach-Tags oder zusätzliche Zuordnungen sind damit nicht automatisch beschlossen.
+- Beide Werte werden unabhängig voneinander gespeichert, angezeigt und für Suche/Filter nutzbar gemacht.
+- Die Werte werden zentral kontrolliert gepflegt. Unkontrollierte freie Eingaben, die unbemerkt neue Schreibweisen oder Dubletten erzeugen, sind nicht vorgesehen.
+- Die konkreten Listenwerte und eine mögliche Untergliederung sind noch festzulegen. Sie müssen anhand des tatsächlichen RCPD-Materialbestands geprüft werden; keine theoretische Vollständigkeit und keine unnötig feingranulare Taxonomie.
+- Die vorhandenen Kategorien im aktuellen Code sind nur Bestandswerte, keine bestätigte Ziel-Taxonomie. Sie vermischen derzeit Themenbereiche (z. B. „California Penal Code“, „Tactical Operations“, „Radio & Dispatch“, „Field Training (FTO)“) mit Dokument-/Funktionsbezeichnungen (z. B. „SOP & Policy“, „Supervisor Directive“). Sie dürfen daher nicht ungeprüft als neue Kategorienliste übernommen werden.
+
+Die Trennung folgt dem Zweck der Felder: Kategorien bilden die fachliche Themenordnung, Dokumenttypen beschreiben die Form/Funktion des Materials. Dadurch kann beispielsweise ein Dokument zum Thema „Tactical Operations“ den Typ „SOP / Dienstanweisung“ erhalten, ohne dass beide Informationen in einem einzigen Feld konkurrieren.
+
 ### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
 - Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, zurückziehen und archivieren? (Für Veröffentlichung ist Option A beschlossen: dieselbe berechtigte Person darf ihren Entwurf selbst veröffentlichen.)
 
-- Welche konkreten Werte/Hierarchien sollen die kontrollierten Kategorien und Dokumenttypen enthalten?
+- Welche konkreten Werte und ggf. Untergliederungen sollen die getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen enthalten?
 - Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
 - Welche Dateigrößen- und Uploadgrenzen sind für den tatsächlichen Betrieb angemessen?
 - Welche serverseitigen PDF-Prüfungen und Sicherheitsmaßnahmen werden eingesetzt?
