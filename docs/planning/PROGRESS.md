@@ -146,7 +146,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 **BESCHLOSSEN am 06.11.2026:** maximal 15 MB Rohdateigröße pro PDF. Base64-/JSON-Overhead muss bei Requestgrenzen berücksichtigt werden; technische Hostinggrenzen sind vor Implementierung zu verifizieren.
 
-**Nächster Punkt ausgearbeitet:** fachliche Validierungs- und Fehlerzustände für PDFs stehen in `ACADEMY-DETAILED-SPECIFICATION.md`. Beschädigte, abgeschnittene, leere, nicht lesbare und passwortgeschützte PDFs werden abgelehnt. Signatur- und Parserprüfung sowie erfolgreiche Malwareprüfung sind vor Veröffentlichung erforderlich. Bei Scanner-Ausfall bleibt das Material unveröffentlicht. Die konkrete Parser-/Scanner-/Quarantänearchitektur ist noch offen.
+**Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur- und Parserprüfung, Ablehnung leerer/beschädigter/abgeschnittener/unlesbarer/passwortgeschützter PDFs, erfolgreiche Malwareprüfung vor Veröffentlichung und Fail-closed bei negativem Scan oder Prüfdienstausfall. Konkrete Fehlermeldungstexte/-darstellung und technische Parser-/Scanner-/Quarantänearchitektur bleiben offen.
 
 
 ## 11. PDF-Sicherheitsprüfung – Option A beschlossen (06.11.2026)
