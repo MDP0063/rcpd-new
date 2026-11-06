@@ -135,6 +135,8 @@ export interface AcademyMaterialVersionDoc {
   workingRevision: number;
 }
 
+export type AcademyMaterialReaderContent = Pick<AcademyMaterialVersionDoc, 'title' | 'description' | 'contentFormat' | 'content' | 'codeLanguage'>;
+
 export interface AcademyMaterialVersionSummary {
   id: string;
   materialId: string;

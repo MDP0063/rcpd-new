@@ -351,6 +351,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     );
     assert.equal(pinnedMaterialContent.status, 200, JSON.stringify(pinnedMaterialContent.body));
     assert.equal(pinnedMaterialContent.body!.material.content, '# Operations\n\nErste Fassung.');
+    assert.equal('publishedByUid' in pinnedMaterialContent.body!.material, false, 'participant reader responses must not expose internal audit UIDs');
     const unpinnedMaterialContent = await request(
       '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialId + '__v2',
       officer

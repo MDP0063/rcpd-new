@@ -5,7 +5,7 @@ import type {
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
   AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
-  AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem
+  AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import { canReadMaterialRole, courseVersionReferencesMaterial } from './academyMaterialReaderAccess.ts';
@@ -907,7 +907,14 @@ export function createAcademyApiRouter(
       if (!master || !materialVersion || materialVersion.materialId !== master.id || materialVersion.id !== req.params.materialVersionId ||
           !materialVersion.publishedIso || !materialVersion.publishedByUid) { res.status(404).json({ error: 'ACADEMY_MATERIAL_VERSION_NOT_FOUND' }); return; }
       if (!canReadMaterialRole(actor.role, materialVersion.requiredRole)) { res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return; }
-      res.json({ material: materialVersion });
+      const material: AcademyMaterialReaderContent = {
+        title: materialVersion.title,
+        description: materialVersion.description,
+        contentFormat: materialVersion.contentFormat,
+        content: materialVersion.content,
+        codeLanguage: materialVersion.codeLanguage
+      };
+      res.json({ material });
     } catch (error) { fail(res, error, next); }
   });
 

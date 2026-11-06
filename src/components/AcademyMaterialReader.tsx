@@ -3,7 +3,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyCourseMaterialReaderItem, AcademyMaterialVersionDoc } from '../types/academy';
+import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } from '../types/academy';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
 interface HeadingItem { id: string; level: number; title: string; line: number; }
@@ -30,7 +30,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');
   if(!selected||selected.accessStatus!=='available'){setLoading(false);return()=>{active=false;};}
   setLoading(true);
-  void apiFetch<{material:AcademyMaterialVersionDoc}>(API_ENDPOINTS.ACADEMY_COURSE_MATERIAL_VERSION(participationId,selected.materialId,selected.materialVersionId))
+  void apiFetch<{material:AcademyMaterialReaderContent}>(API_ENDPOINTS.ACADEMY_COURSE_MATERIAL_VERSION(participationId,selected.materialId,selected.materialVersionId))
    .then(r=>{if(!active)return;if(!r.ok||!r.data)setLoadError(r.error||'Das Lernmaterial konnte nicht geladen werden.');else setCurrentVersion(r.data.material);})
    .catch(e=>{if(active)setLoadError(e instanceof Error?e.message:'Das Lernmaterial konnte nicht geladen werden.');})
    .finally(()=>{if(active)setLoading(false);});
