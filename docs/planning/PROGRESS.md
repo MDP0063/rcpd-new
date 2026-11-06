@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A und getrennter Kategorien-/Dokumenttyp-Listen Option A  
+**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A und getrennter Kategorien-/Dokumenttyp-Listen Option A und Berechtigungen Option B  
 **Basisstand von main:** Merge-Commit von PR #44: `8f8f3a4f17a05f10fcff6b770461a643a718eeb8`.  
 **Aktueller Dokumentationsbranch:** `docs/deep-redesign-reconstruction`.
 
@@ -130,3 +130,16 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die Standardberechtigungen in `server/rolePermissions.ts` geben diese Kursverwaltungs-/Bewertungsberechtigung für gewöhnliche Rollen zunächst nicht frei; sie kann über die granularen Berechtigungen gezielt gesetzt werden.
 - Das ist ein technischer Ist-Befund, keine Entscheidung, dass dieselbe Berechtigung künftig automatisch auch Rücknahme und Archivierung veröffentlichter Materialien erlauben soll.
 - Mit automatisch vergebenen Materialcodes muss die künftige Berechtigungsprüfung außerdem auf einer stabilen Kurs-/Zuständigkeitszuordnung beruhen und darf nicht versehentlich den generierten Materialcode als Kurscode behandeln.
+
+
+## Lernbibliothek – Berechtigungen Option B und PDF-Uploadprüfung
+
+**BESCHLOSSEN am 06.11.2026 – Option B:** Kursverantwortliche mit passender bestehender Zuständigkeit dürfen Entwürfe anlegen/bearbeiten und selbst ausdrücklich veröffentlichen. Zurückziehen und Archivieren veröffentlichter Materialien bleiben Admin und Colonel vorbehalten. Materialcode und Kurszuständigkeit müssen getrennt behandelt werden.
+
+**Technischer Ist-Stand auf main:**
+- `server.ts`: allgemeiner JSON-Request-Parser mit 25 MB; PDF wird aktuell als Base64-Data-URL im JSON übertragen.
+- `server/validate.ts`: `isSafePdfDataUrl` prüft derzeit nur Präfix und Base64-Zeichen, keine PDF-Signatur und keine strukturelle Lesbarkeit.
+- `src/components/AcademyCenter.tsx`: Datei wird clientseitig per `FileReader.readAsDataURL` eingelesen; im gezeigten Handler keine vorgelagerte Dateigrößenprüfung.
+- `server/stateDiff.ts`: Firestore-PDF-Feld wird in Blob-Teile zu 700.000 Zeichen zerlegt, um das 1-MiB-Dokumentlimit zu umgehen.
+
+**Empfehlung, noch nicht beschlossen:** 15 MB maximale Rohdateigröße pro PDF. Das entspricht ungefähr 20 MB Base64 vor JSON-Overhead und lässt Reserve unter dem derzeitigen 25-MB-Request-Limit. Serverseitige Byte-Prüfung, PDF-Signatur plus Parserprüfung, sichere Dateinamen/IDs, private autorisierte Speicherung/Abrufe, Ressourcenlimits und eine datenschutzkonforme Malware-/CDR-Prüfung sind als Mindestmaßnahmen auszuarbeiten. Fehler-/Scanstatus darf nicht als Veröffentlichung missverstanden werden.
