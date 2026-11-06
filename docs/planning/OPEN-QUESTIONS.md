@@ -19,11 +19,11 @@
 - Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
 - Konkrete Werte und ggf. Untergliederungen der getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen anhand des tatsächlichen Materialbestands festlegen; automatische Materialcode-/Versionskennung technisch spezifizieren.
 - **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
-- **Als fachliche Planungsanforderung ausgearbeitet, technische Auswahl offen:** PDF-Signatur plus Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; Malwareprüfung vor Veröffentlichung; bei nicht verfügbarem Scanner unveröffentlicht bleiben. OCR/Volltextindexierung bleibt gesondert offen.
+- **Empfehlung, noch nicht beschlossen:** PDF-Signatur plus Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; Malwareprüfung vor Veröffentlichung; bei nicht verfügbarem Scanner unveröffentlicht bleiben. Die konkreten Fehlerzustände sind als Vorschlag in der Academy-Spezifikation ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
 - Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
-- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die fachlichen Ablehnungs- und Fehlerzustände sind in der Academy-Spezifikation ausgearbeitet.
+- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die vorgeschlagenen Ablehnungs- und Fehlerzustände sind in der Academy-Spezifikation ausgearbeitet und müssen noch bestätigt werden.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
 - **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
 
