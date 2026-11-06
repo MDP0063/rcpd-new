@@ -185,7 +185,7 @@ export class AcademyRepository {
   }
 }
 export function createJsonAcademyRepository(dataDirectory: string): AcademyRepository {
-  return new AcademyRepository(new JsonAcademyStorageAdapter(join(dataDirectory, 'academy-db-v1.json')));
+  return new AcademyRepository(new JsonAcademyStorageAdapter(join(dataDirectory, 'academy-db.json')));
 }
 export function createFirestoreAcademyRepository(database: Firestore): AcademyRepository {
   return new AcademyRepository(new FirestoreAcademyStorageAdapter(database));
