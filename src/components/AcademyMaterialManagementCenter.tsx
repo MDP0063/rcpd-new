@@ -265,14 +265,16 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       setBusy(false);
       return;
     }
-    if (editingMaster && 'draft' in response.data) {
-      const savedDraft = response.data.draft;
+    if (editingMaster && draft) {
+      const saved = response.data as { draft: AcademyMaterialDraftDoc };
+      const savedDraft = saved.draft;
       setDraft(savedDraft);
       setEditingMaster(current => current ? { ...current, workingRevision: savedDraft.workingRevision, updatedIso: savedDraft.updatedIso } : current);
       setFormDirty(false);
-    } else if ('master' in response.data) {
-      setEditingMaster(response.data.master);
-      setDraft(response.data.draft);
+    } else {
+      const created = response.data as { master: AcademyMaterialMasterDoc; draft: AcademyMaterialDraftDoc };
+      setEditingMaster(created.master);
+      setDraft(created.draft);
       setFormDirty(false);
       setCurrentVersion(null);
       setVersions([]);
