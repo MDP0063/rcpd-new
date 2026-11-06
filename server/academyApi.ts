@@ -32,7 +32,8 @@ function statusFor(error: unknown): number {
   if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') ||
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
-      code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED')) return 409;
+      code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION')) return 409;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
   if (code.startsWith('ACADEMY_')) return 400;
@@ -421,6 +422,11 @@ export function createAcademyApiRouter(
       if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const reason = text(req.body.reason, 1000);
       if (reason.length < 10) { res.status(400).json({ error: 'ACADEMY_COMPLETION_CORRECTION_REASON_REQUIRED' }); return; }
+      if (req.body.invalidatedEvidenceIds !== undefined &&
+          (!Array.isArray(req.body.invalidatedEvidenceIds) ||
+           req.body.invalidatedEvidenceIds.some(value => typeof value !== 'string'))) {
+        res.status(400).json({ error: 'ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INVALID' }); return;
+      }
       const now = new Date().toISOString();
       const correction: AcademyCompletionCorrectionDoc = {
         id: id('correction'),
