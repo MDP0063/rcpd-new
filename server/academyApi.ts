@@ -87,6 +87,12 @@ function materialDraftFromBody(
     ? undefined
     : body.requiredRole as OfficerRole;
   const description = body.description === undefined ? undefined : boundedText(body.description, 2000, true);
+  if (body.description !== undefined && description === null) {
+    throw new Error('ACADEMY_MATERIAL_DESCRIPTION_INVALID');
+  }
+  if (body.codeLanguage !== undefined && typeof body.codeLanguage !== 'string') {
+    throw new Error('ACADEMY_MATERIAL_CODE_LANGUAGE_INVALID');
+  }
   const codeLanguage = contentFormat === 'code' && typeof body.codeLanguage === 'string'
     ? body.codeLanguage.trim() || undefined : undefined;
   return {
@@ -94,8 +100,8 @@ function materialDraftFromBody(
     materialId,
     title: typeof body.title === 'string' ? body.title.trim() : '',
     ...(description == null || description === '' ? {} : { description }),
-    categoryId: text(body.categoryId, 150),
-    documentTypeId: text(body.documentTypeId, 150),
+    categoryId: typeof body.categoryId === 'string' ? body.categoryId.trim() : '',
+    documentTypeId: typeof body.documentTypeId === 'string' ? body.documentTypeId.trim() : '',
     ...(requiredRole === undefined ? {} : { requiredRole }),
     contentFormat,
     content: typeof body.content === 'string' ? body.content : '',
