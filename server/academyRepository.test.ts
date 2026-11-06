@@ -99,13 +99,13 @@ test('stale course revision cannot publish', async () => withRepository(async re
 
 test('repository orders and offsets version queries consistently', async () => withRepository(async repository => {
   for (const number of [1, 3, 2]) {
-    const item = { ...version, id: `course-1__v${number}`, versionNumber: number };
-    await repository.create('academy_course_versions', item.id, item);
+    const item: AcademyCourseMasterDoc = { ...master, id: `course-${number}`, code: `BASIC-0${number}`, latestVersionNumber: number };
+    await repository.create('academy_courses', item.id, item);
   }
-  const page = await repository.list<AcademyCourseVersionDoc>('academy_course_versions', {
-    where: [{ field: 'courseId', value: 'course-1' }], orderBy: 'versionNumber', orderDirection: 'desc', offset: 1, limit: 1
+  const page = await repository.list<AcademyCourseMasterDoc>('academy_courses', {
+    orderBy: 'latestVersionNumber', orderDirection: 'desc', offset: 1, limit: 1
   });
-  assert.deepEqual(page.map(item => item.versionNumber), [2]);
+  assert.deepEqual(page.map(item => item.latestVersionNumber), [2]);
 }));
 
 test('private note repository methods enforce owner isolation', async () => withRepository(async repository => {

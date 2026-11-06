@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { extractHeadings } from '../src/components/AcademyMaterialReader.tsx';
+import { extractHeadings } from '../src/lib/academyMaterialOutline.ts';
 
 test('reader outline matches Markdown heading levels, duplicate slugs and fenced-code boundaries', () => {
   const headings = extractHeadings('Intro\n===\n\n# Repeated\n\n## Repeated\n\n````ts\n# not a heading\n```\n# still code\n````\n\n### After code');
