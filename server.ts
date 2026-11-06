@@ -276,7 +276,8 @@ function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDo
       });
     } else if (
       log.category === 'ACADEMY_DOC' &&
-      !log.actionTitle.toLowerCase().includes('gelöscht')
+      !log.actionTitle.toLowerCase().includes('gelöscht') &&
+      !log.actionTitle.toLowerCase().includes('entwurf')
     ) {
       const isExam =
         log.actionTitle.toLowerCase().includes('prüfung') ||
