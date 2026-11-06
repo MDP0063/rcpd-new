@@ -183,7 +183,8 @@ Die folgenden Themen wurden als Audit-/Konzeptfelder oder Vorschläge angesproch
 ### Kategorienverwaltung
 - **BESCHLOSSEN:** Bibliothekskategorien werden nicht als feste Code-Liste vorgegeben. Berechtigte Administratoren und Colonels können Kategorien direkt in der Website erstellen, umbenennen, archivieren und reaktivieren; die Berechtigung folgt dem bestehenden Academy-Verwaltungszugriff.
 - **BESCHLOSSEN:** Kategorien besitzen stabile interne IDs. Eine Umbenennung ändert keine Materialreferenz; Änderungen werden mit Revision und verantwortlicher Person nachvollziehbar gespeichert.
-- **BESCHLOSSEN:** Kategorien werden nicht endgültig gelöscht, sondern archiviert. Archivierte Kategorien bleiben für bestehende/historische Materialverweise erhalten, können aber neuen Materialien nicht mehr zugewiesen werden. Sie können reaktiviert werden.
+- **BESCHLOSSEN:** Kategorien können archiviert und reaktiviert werden. Zusätzlich ist endgültiges Löschen vorgesehen, aber nur solange keine Materialzuordnung auf die Kategorie verweist. Die Löschprüfung erfolgt serverseitig und transaktional; bei bestehenden Verweisen wird das Löschen abgelehnt und Archivierung bleibt möglich. Historische/aktive Referenzen werden niemals durch Löschen einer Kategorie gebrochen.
+- **BESCHLOSSEN:** Material-Kategorie-Zuordnungen werden über stabile Kategorie-IDs gespeichert. Materialverwaltung muss die Zuordnungsreferenz atomar beim Erstellen/Ändern eines Materials pflegen; die Löschsperre prüft diese Referenzen serverseitig.
 - **KLARSTELLUNG:** Kategorie und Dokumenttyp sind getrennte Metadaten. Die dynamische Kategorienverwaltung legt keine Dokumenttyp-Liste fest und ersetzt sie nicht.
 
 ### Dokumentversionierung und Upload
