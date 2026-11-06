@@ -716,21 +716,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   Noch keine {activeTab === 'final_exams' ? 'Abschlussprüfungen' : 'Übungstests'} hinterlegt
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  Als Admin oder Colonel kannst du neue Tests und interaktive Prüfungen direkt über die Schaltfläche einbinden.
+                  In diesem Bereich sind derzeit keine Prüfungen verfügbar.
                 </p>
               </div>
-              {canEditAcademy && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExamStage(activeTab === 'final_exams' ? 'final_exam' : 'test');
-                    setActiveTab('add_code_test');
-                  }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
-                >
-                  <Code2 className="w-4 h-4" /> Jetzt {activeTab === 'final_exams' ? 'Abschlussprüfung' : 'Übungstest'} hinzufügen
-                </button>
-              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -793,16 +781,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         </h2>
                       </div>
 
-                      {currentUser.role === 'admin' && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteExam(currentExam.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer"
-                          title="Prüfung löschen"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
                     </div>
 
                     {/* Sandboxed Interactive Code Widget */}
