@@ -2,6 +2,10 @@ import type { Firestore, Transaction, DocumentSnapshot, Query } from 'firebase-a
 import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
+// Keep the repository's collections separate from legacy PortalDatabaseState collections.
+export function academyFirestoreCollectionName(collection: AcademyCollection): string {
+  return `academy_repo_${collection.slice('academy_'.length)}`;
+}
 const storageId = (id: string) => encodeURIComponent(id);
 const clone = <T,>(value: T): T => structuredClone(value);
 function fromSnapshot<T extends AcademyDocument>(collection: AcademyCollection, snapshot: DocumentSnapshot, expectedId?: string): T | null {
@@ -11,7 +15,7 @@ function fromSnapshot<T extends AcademyDocument>(collection: AcademyCollection, 
   assertAcademyDocument(collection, data.id, data as AcademyDocument); return clone(data) as T;
 }
 function buildQuery(database: Firestore, collection: AcademyCollection, query: AcademyQuery = {}): Query {
-  assertAcademyQuery(collection, query); let result: Query = database.collection(collection);
+  assertAcademyQuery(collection, query); let result: Query = database.collection(academyFirestoreCollectionName(collection));
   for (const filter of query.where ?? []) result = result.where(filter.field, '==', filter.value);
   return result.limit(query.limit ?? 1000);
 }
@@ -26,7 +30,7 @@ class FirestoreTransaction implements AcademyTransaction {
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     this.canRead(); assertAcademyDocumentId(id); const key = this.key(collection, id);
     if (this.cache.has(key)) return clone(this.cache.get(key) as T | null);
-    const snap = await this.transaction.get(this.database.collection(collection).doc(storageId(id)));
+    const snap = await this.transaction.get(this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id)));
     const doc = fromSnapshot<T>(collection, snap, id); this.cache.set(key, doc ? clone(doc) : null); return doc;
   }
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
