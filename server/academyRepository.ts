@@ -22,6 +22,7 @@ function programDraftMatchesVersion(draft: AcademyProgramDraftDoc, version: Acad
     draft.summary === version.summary &&
     JSON.stringify(draft.learningObjectives) === JSON.stringify(version.learningObjectives) &&
     JSON.stringify(draft.courseReferences) === JSON.stringify(version.courseReferences);
+}
 
 function materialDraftMatchesVersion(draft: AcademyMaterialDraftDoc, version: AcademyMaterialVersionDoc): boolean {
   return draft.title === version.title &&
@@ -32,7 +33,6 @@ function materialDraftMatchesVersion(draft: AcademyMaterialDraftDoc, version: Ac
     draft.contentFormat === version.contentFormat &&
     draft.content === version.content &&
     draft.codeLanguage === version.codeLanguage;
-}
 }
 export class AcademyRepository {
   private readonly adapter: AcademyStorageAdapter;
