@@ -365,7 +365,7 @@ export function createAcademyApiRouter(
       const progress = {
         requiredCourseCount: requiredCourses.length,
         completedRequiredCourseCount: completedCount,
-        completionPercentage: Math.round(completedCount / requiredCourses.length * 100),
+        completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
         status: completedCount === requiredCourses.length ? 'completed' : 'in_progress'
       };
       res.json({ participation, version, requiredCourses, progress });
