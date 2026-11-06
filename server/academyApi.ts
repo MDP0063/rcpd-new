@@ -357,11 +357,12 @@ export function createAcademyApiRouter(
       const isOwner = participation.userUid === actor.uid;
       const isManager = Boolean(master && canManage(actor, master.ownerUid));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
-      const [version, evidence] = await Promise.all([
+      const [version, evidence, corrections] = await Promise.all([
         repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId),
-        repository.listParticipationEvidence(participation.id)
+        repository.listParticipationEvidence(participation.id),
+        repository.listParticipationCorrections(participation.id)
       ]);
-      res.json({ participation, version, evidence });
+      res.json({ participation, version, evidence, corrections });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -389,8 +390,7 @@ export function createAcademyApiRouter(
       if (selfEvidence && !isOwner) { res.status(403).json({ error: 'ACADEMY_EVIDENCE_ACTOR_FORBIDDEN' }); return; }
       if (instructorEvidence && !isInstructor) { res.status(403).json({ error: 'ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED' }); return; }
       const now = new Date().toISOString();
-      const evidence: AcademyProgressEvidenceDoc = {
-        id: `evidence_${encodeURIComponent(participation.id)}_${encodeURIComponent(requirement.id)}`,
+      const evidence: Omit<AcademyProgressEvidenceDoc, 'id'> = {
         participationId: participation.id,
         requirementId: requirement.id,
         evidenceType: requirement.type,
@@ -429,7 +429,10 @@ export function createAcademyApiRouter(
         correctedStatus: correctedStatus as AcademyCompletionCorrectionDoc['correctedStatus'],
         reason,
         actorUid: actor.uid,
-        correctedIso: now
+        correctedIso: now,
+        ...(Array.isArray(req.body.invalidatedEvidenceIds)
+          ? { invalidatedEvidenceIds: req.body.invalidatedEvidenceIds.filter((value): value is string => typeof value === 'string') }
+          : {})
       };
       const updated = await repository.correctCourseParticipation(participation.id, correction, expectedStatus as 'in_progress' | 'completed');
       await recordAudit(actor.uid, 'Academy-Kursabschluss korrigiert', participation.courseId, `Teilnahme ${participation.id}: ${correction.previousStatus} → ${correction.correctedStatus}. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
