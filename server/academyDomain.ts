@@ -10,7 +10,8 @@ import type {
   AcademyCompletionCorrectionDoc,
   AcademyProgramParticipationDoc,
   AcademyPrivateNoteDoc,
-  AcademyMaterialCategoryDoc
+  AcademyMaterialCategoryDoc,
+  AcademyMaterialCategoryAssignmentDoc
 } from '../src/types/academy.ts';
 
 export type AcademyValidationResult =
@@ -31,6 +32,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function hasUniqueIds(values: Array<{ id: string }>): boolean {
   return new Set(values.map(value => value.id)).size === values.length;
+}
+
+export function validateMaterialCategoryAssignment(
+  assignment: AcademyMaterialCategoryAssignmentDoc
+): AcademyValidationResult {
+  if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
+      !isNonEmpty(assignment.materialId) || assignment.id !== assignment.materialId ||
+      !isNonEmpty(assignment.categoryId) ||
+      !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
+      !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
+      !isNonEmpty(assignment.updatedIso) || !isNonEmpty(assignment.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_ASSIGNMENT_INVALID', 'Material-Kategorie-Zuordnung und Änderungsmetadaten müssen gültig sein.');
+  }
+  return { ok: true };
 }
 
 export function validateMaterialCategory(category: AcademyMaterialCategoryDoc): AcademyValidationResult {
