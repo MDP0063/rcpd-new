@@ -6,15 +6,21 @@ import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyCourseMaterialReaderItem, AcademyMaterialVersionDoc } from '../types/academy';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
-interface HeadingItem { id: string; level: number; title: string; }
+interface HeadingItem { id: string; level: number; title: string; line: number; }
 const panel='rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted='text-sm text-slate-600 dark:text-slate-300';
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 function slugify(value:string):string{return value.toLocaleLowerCase('de-DE').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'abschnitt';}
 function extractHeadings(markdown:string):HeadingItem[]{
- const counts=new Map<string,number>();const result:HeadingItem[]=[];
- for(const line of markdown.split(/\r?\n/)){const m=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);if(!m)continue;
- const title=m[2].replace(/\[(.*?)\]\([^)]*\)/g,'$1').replace(/[*_`~]/g,'').trim();const base=slugify(title);const count=counts.get(base)||0;counts.set(base,count+1);result.push({id:count?base+'-'+count:base,level:m[1].length,title});}
+ const counts=new Map<string,number>();const result:HeadingItem[]=[];const lines=markdown.split(/\r?\n/);let fence='';
+ for(let index=0;index<lines.length;index++){
+  const line=lines[index];const fenceMatch=line.match(/^\s*(`{3,}|~{3,})/);
+  if(fenceMatch){const marker=fenceMatch[1][0];if(!fence)fence=marker;else if(fence===marker)fence='';continue;}
+  if(fence)continue;
+  const m=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);if(!m)continue;
+  const title=m[2].replace(/\[(.*?)\]\([^)]*\)/g,'$1').replace(/[*_`~]/g,'').trim();const base=slugify(title);const count=counts.get(base)||0;counts.set(base,count+1);
+  result.push({id:count?base+'-'+count:base,level:m[1].length,title,line:index+1});
+ }
  return result;
 }
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
@@ -32,7 +38,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  },[participationId,selected]);
  const headings=useMemo(()=>currentVersion?.contentFormat==='markdown'?extractHeadings(currentVersion.content):[],[currentVersion]);
  const components=useMemo(()=>{
-  let index=0;const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6')=>({children,...props}:any=>{const item=headings[index++];return React.createElement(tag,{...props,id:item?.id,className:'scroll-mt-6 mt-7 mb-3 font-semibold text-slate-900 dark:text-white'},children);});
+  const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6')=>({children,node,...props}:any=>{const line=node?.position?.start?.line;const item=headings.find(h=>h.line===line);return React.createElement(tag,{...props,id:item?.id,className:'scroll-mt-6 mt-7 mb-3 font-semibold text-slate-900 dark:text-white'},children);});
   return {
    h1:heading('h1'),h2:heading('h2'),h3:heading('h3'),h4:heading('h4'),h5:heading('h5'),h6:heading('h6'),
    p:({children,...props}:any)=><p {...props} className="my-3 leading-7 text-slate-800 dark:text-slate-200">{children}</p>,
