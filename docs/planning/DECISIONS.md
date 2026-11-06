@@ -1,0 +1,196 @@
+# RCPD – Verbindliche Entscheidungen
+
+**Stand:** 06.11.2026  
+**Status:** Konsolidierung aus dem verfügbaren Projektgedächtnis und aktuellen Gesprächsentscheidungen. Die Liste ist bewusst fachlich; technische Implementierung muss separat geprüft werden.
+
+Nur Einträge mit Status **BESCHLOSSEN** gelten als verbindlich. Eine Empfehlung in einer früheren Unterhaltung gilt nicht als Beschluss, sofern der Projektinhaber sie nicht angenommen hat.
+
+## A. Übergreifendes Design und Arbeitsweise
+
+- **BESCHLOSSEN – Designrichtung B:** Modernes, professionelles, ruhiges, institutionell-operatives Portal. Keine spielerische/neonartige Überladung.
+- **BESCHLOSSEN – UX-Leitlinie:** fachliche Vollständigkeit ohne überladene Oberflächen; administrative Funktionen belasten Teilnehmeransichten nicht unnötig; kontextbezogene Anzeige; unnötige Navigation und Statusanzeigen vermeiden.
+- **BESCHLOSSEN – Planungsreihenfolge:** Modulkonzepte zuerst vollständig ausarbeiten, danach Cross-Module-Alignment, technische Machbarkeit, Designsystem und globale Navigation/Detailgestaltung.
+- **BESCHLOSSEN – Repository-Grenzen:** separater Branch; kein Commit auf main, kein Merge und kein Produktionsdeployment ohne ausdrückliche Freigabe.
+- **BESCHLOSSEN – Qualitätsmaßstab:** Sicherheits-, Datenintegritäts- und Zuverlässigkeitsfragen nicht vertagen; keine ungeprüften Testerfolge behaupten.
+
+## B. Academy – Grundkonzept und Navigation
+
+- **BESCHLOSSEN:** Academy ist operativer Ausbildungsarbeitsbereich und frei zugängliche Wissensbibliothek; kein erzwungener linearer Lernpfad.
+- **BESCHLOSSEN:** Library bleibt vollständige unabhängige Wissenssammlung; Kurse/Programme referenzieren kanonisches Material, statt Inhalte zu duplizieren.
+- **BESCHLOSSEN:** Programme besitzen Lernziele; Kurse sind eigenständige Fachmodule, können mehreren Programmen zugeordnet und standalone genutzt werden.
+- **BESCHLOSSEN:** Kursreihenfolge dient Orientierung und erzeugt keine pauschalen Zugangssperren.
+- **BESCHLOSSEN:** Kurse können optional Kapitel, Materialien und freiwillige Wissenstests enthalten; Abschlussprüfung ist außerhalb der Kapitel und nicht für jeden Kurs zwingend.
+- **BESCHLOSSEN:** Freiwillige Wissenstests sind keine Kursabschlussbedingung.
+- **BESCHLOSSEN – Hauptnavigation Option A:** Übersicht, Kurse, Lernbibliothek, Prüfungen, Meine Notizen. Examiner ist rollen-/berechtigungsabhängig integriert und kein sechster allgemeiner Hauptmenüpunkt.
+- **BESCHLOSSEN:** konkrete grafische Navigation (Sidebar, Icons, mobile Navigation, Untermenüs) wird erst in der späteren Designphase festgelegt.
+- **BESCHLOSSEN:** Kurs-/Programmveröffentlichung, Zugriffsberechtigung und persönlicher Fortschritt sind vollständig getrennte Ebenen.
+
+## C. Academy – Empfehlungen und Benachrichtigungen
+
+- **BESCHLOSSEN – Empfehlungen Option C:** manuelle Empfehlungen berechtigter Ausbilder/Admins plus automatische regelbasierte Empfehlungen; jede Empfehlung hat nachvollziehbaren Grund; freiwillig und keine Zugangsvoraussetzung.
+- **BESCHLOSSEN – Deduplizierung Option B:** gleiches Lernobjekt grundsätzlich nur einmal in der persönlichen Liste; mehrere Gründe werden zusammengeführt und bleiben nachvollziehbar; Herkunft, verantwortlicher Ausbilder und persönlicher Hinweis bleiben erkennbar.
+- **BESCHLOSSEN – Lebenszyklus Option C:** Kurs-Empfehlung endet nach tatsächlichem Kursabschluss; Prüfungs-Empfehlung erst nach Erfüllung der fachlichen Voraussetzung; Material-Öffnen reicht nicht als Erledigung. Erledigte Empfehlungen bleiben historisch nachvollziehbar.
+- **BESCHLOSSEN – Priorisierung Option B:** ausdrücklich gesetzte Dringlichkeit/Frist; offene erforderliche Ausbildungsbestandteile; konkreter Lernbedarf (z. B. nach nicht bestandenem Wissenstest); weitere persönliche Ausbilderempfehlungen; freiwillige Ergänzungen. Innerhalb gleicher Gruppe Aktualität. Herkunft allein erzeugt keine Dringlichkeit.
+- **BESCHLOSSEN – Ausblenden Option B:** Nutzer kann einzelne persönliche Empfehlungen ausblenden. Das entfernt nur die Empfehlung aus der persönlichen Ansicht, nicht den Zugang zum Kurs/Material. Keine Bewertung oder komplexe Beeinflussung. Ausgeblendete Empfehlung bleibt ausgeblendet; nur eine tatsächlich neue eigenständige Empfehlung darf sie erneut erscheinen lassen.
+- **BESCHLOSSEN – Meldungslesestatus Option C:** Kurs kann Anzahl neuer Meldungen anzeigen; einzelne Meldungen bleiben getrennt ungelesen; bloßes Öffnen des Kurses/Meldungsmenüs markiert nicht pauschal als gelesen; erst Öffnen des zugehörigen Inhalts markiert die Meldung als gelesen.
+- **BESCHLOSSEN:** dezente Kennzeichnung am betroffenen Inhalt (Kurs, Prüfungsergebnis, Material).
+
+## D. Teilnehmerprüfungen und Examiner
+
+### Teilnehmerprüfungen
+- **BESCHLOSSEN:** Prüfungen, für die Teilnehmer grundsätzlich nicht berechtigt sind, bleiben verborgen. Vorgesehene Prüfungen mit noch fehlenden fachlichen Voraussetzungen bleiben sichtbar; Voraussetzungen verständlich erklären, soweit zuverlässige Daten und Freigabe vorliegen. Interne Clearance-/Berechtigungsdetails und geschützte Prüfungsinformationen nicht offenlegen.
+- **BESCHLOSSEN:** Prüfungsarten aktuell nur `test` und `final_exam`; keine dritte Kategorie erfinden.
+- **BESCHLOSSEN:** Voraussetzungen serverseitig prüfen; aktiven Versuch im selben Kurskontext fortsetzen.
+- **BESCHLOSSEN:** Startseite zeigt Prüfung/Kurs, Typ, Zeit, Versuche, Bestehensgrenze, Voraussetzungen/Unlock-Status, Beschreibung und tatsächliche Regeln.
+- **BESCHLOSSEN:** informierte Startbestätigung zeigt reale Konsequenzen (Timerbeginn, Versuchverbrauch, Unterbrechungs-/Resetregeln).
+- **BESCHLOSSEN:** Fragenansicht mit einer zentralen Frage, direkter Fragenübersicht, Status beantwortet/offen/markiert/aktuell; als beantwortet nur nach Speicherung; Übersicht mobil einklappbar.
+- **BESCHLOSSEN:** Server-Timer, Autosave, Resume und Revision-Concurrency sind durch die vorhandene Engine vorgesehen; UI zeigt echte Speicherzustände und verspricht keine ungesicherte Offline-Funktion.
+- **BESCHLOSSEN:** vor Endabgabe offene/markierte Fragen anzeigen, warnen und bewusste Bestätigung verlangen; nur bestätigte Speicherung zählt.
+- **BESCHLOSSEN:** Abgabe, Bewertung und Ergebnisfreigabe sind getrennt. Nach Abgabe Bestätigung; Ergebnis/Details nur gemäß Freigaberegeln.
+- **BESCHLOSSEN:** aggregiertes Ergebnis zuerst; Detailanalyse nur bei entsprechender Freigabe. Finale Fragen/Antworten/Lösungen bis Release schützen.
+- **BESCHLOSSEN:** Bilder in Fragen responsiv und zoombar; Alt-Text soweit Modell vorhanden.
+- **BESCHLOSSEN – Tastatur Option C:** vollständige Tastaturbedienung als Grundlage; gezielte Fokusverbesserungen bei Fragenwechsel, Fragenübersicht, Dialogen und Bildzoom; sichtbarer Fokus; Fokus nach Dialog sinnvoll zurück; keine unnötigen Shortcuts.
+- **BESCHLOSSEN:** Prüfungshistorie zeigt pass/fail, Bewertungsstatus, Feedback und nur freigegebene Details. Erschöpfte Versuche bleiben gesperrt, Verlauf bleibt sichtbar. Zusatzversuch nur, wenn System/Regeln dies unterstützen.
+- **BESCHLOSSEN:** keine falschen Lernfortschrittsangaben.
+
+### Examiner
+- **BESCHLOSSEN:** integriert in Academy, rollen-/berechtigungsabhängig; gemeinsame Aufgabenliste für Bewertung, Genehmigung, Korrektur etc.
+- **BESCHLOSSEN:** Filter nach Kurs, Prüfungstyp, Status, „Meine beanspruchten Vorgänge“ und Teilnehmersuche.
+- **BESCHLOSSEN:** Teilnehmersuche live, Teilnamen und case-insensitive; Tippfehlertoleranz zunächst nicht.
+- **BESCHLOSSEN:** jeder Vorgang einzeln, auch mehrere beim selben Teilnehmer; nicht gruppieren.
+- **BESCHLOSSEN:** Sortierung nach tatsächlicher Dringlichkeit/Deadline/Wartezeit, keine erfundenen Prioritäten.
+- **BESCHLOSSEN:** Öffnen öffnet direkt den Grading Workspace und beansprucht keinen Vorgang.
+- **BESCHLOSSEN:** nach Abschluss bewusster Wechsel zum nächsten offenen Vorgang, kein automatischer Abschluss.
+- **BESCHLOSSEN:** Kontextpanel einklappbar.
+- **BESCHLOSSEN:** Claim serverseitig persistent über Browserneustart/Geräte hinweg; andere sehen Status/Verantwortlichen, nicht vertrauliche Inhalte/Notizen.
+- **BESCHLOSSEN:** manuelles Freigeben/Transfer/Admin-Neuzuweisung/Inaktivitätsfreigabe; Hinweis auf Claim-Regeln vor Claim und Bestätigung danach; nicht beim bloßen Listenöffnen.
+- **BESCHLOSSEN:** Claim-Status „Claimed“/„In progress“, Name in Details.
+- **BESCHLOSSEN:** manuelle Übergabe an anderen autorisierten Prüfer; Vorgesetzte können administrativ neu zuweisen; Claim/Transfer/Release/Reassignment werden geloggt.
+- **BESCHLOSSEN:** Verlust der Verantwortung führt sofort zu Write-lock; lesbare Ansicht soweit berechtigt; gespeicherte Änderungen bleiben, ungespeicherte nicht still speichern.
+- **BESCHLOSSEN:** Verbindungsabbruch hält Claim maximal 30 Minuten, danach Auto-Release; nach Wiederverbindung neu claimen.
+- **BESCHLOSSEN:** 30 Minuten Inaktivität lösen Warnung aus; 10 Minuten Reaktionszeit, danach Auto-Release. Aktivität ist tatsächliche Arbeit, nicht offener Tab.
+- **BESCHLOSSEN:** Resume während Warnung setzt Warnung zurück und neue 30 Minuten; Disconnect während Warning pausiert Warnungstimer, Claim maximal 30 Minuten halten.
+- **BESCHLOSSEN:** manuelle Verlängerung nur bei echter weiterer Arbeit, nicht durch bloßen Klick.
+- **BESCHLOSSEN:** Warnung im Grading-Bereich und In-App-Notification, Anzeige ungefähr „9 Minuten“, nicht sekundengenau.
+- **BESCHLOSSEN:** Release-Gründe spezifisch loggen.
+- **BESCHLOSSEN:** nach Auto-Release einmalige Zusammenfassung des zuletzt gespeicherten Zustands; keine ungespeicherten Änderungen/Write-Rechte; danach volle Historie.
+- **BESCHLOSSEN:** Supervisor nur bei auffälligen automatischen Releases benachrichtigen; keine automatisierte Leistungseinstufung; Schwellenwerte später.
+- **BESCHLOSSEN:** Supervisor-Einzelbearbeitung, keine Bulk-Reassignment.
+- **BESCHLOSSEN:** Prüfer kann freiwillig ohne Grund freigeben; Bestätigung mit „zurück + speichern“, „freigeben + verwerfen“, „abbrechen“; gespeicherte Steps bleiben, ungespeicherte entfallen.
+- **BESCHLOSSEN:** abgeschlossene Vorgänge verschwinden aus offener Liste, bleiben Historie.
+- **BESCHLOSSEN:** Revision-Return in gemeinsame Liste, ggf. neuer Claim, Status „Revision“; gespeicherte Schritte bleiben; kein neuer Exam. Berechtigte Prüfer gleichberechtigt, ursprünglicher Prüfer ohne Priorität; ursprünglicher Prüfer bleibt sichtbar.
+- **BESCHLOSSEN:** konkretes Feedback zu betroffenen Schritten/Grund ist Pflicht; neuer Prüfer darf weitere Fehler korrigieren; alles wird geloggt.
+- **BESCHLOSSEN:** Benachrichtigungen für direkte Übergabe, Admin-Reassignment, drohende Auto-Freigabe und wichtige Action Requests; keine Notification für jeden Notenwechsel. Neuer Verantwortlicher erhält Prozess/Kurs/Grund/Link; alter Prüfer Verlust-/Neuzuweisungsinfo.
+- **BESCHLOSSEN:** Grading UI Split View auf Desktop, responsive Tablet/Mobil.
+- **BESCHLOSSEN – Drafts Konzept C:** einzelne Änderungen automatisch als Draft speichern, bewusster finaler Abschluss; Backend-Erweiterung erforderlich, da aktuelle Engine vollständiges Review atomar speichert.
+- **BESCHLOSSEN:** Abschlussübersicht und separate Abschlussbestätigung; Punkte/Gesamtergebnis falls berechenbar, Feedback, unvollständige Schritte; zurück zum Editieren; final bestätigen.
+- **BESCHLOSSEN:** unvollständige Pflichtbewertungen blockieren Abschluss; optionales Feedback nur verpflichtend, wenn Prüfungsregeln es verlangen.
+- **BESCHLOSSEN:** Bewertungsabschluss und Ergebnisfreigabe getrennt; Release-Regeln je Prüfung; Teilnehmernotification nur bei tatsächlicher Freigabe.
+- **BESCHLOSSEN:** Ergebnisnotification enthält Prüfungsname, Kurs, Ergebnis verfügbar; pass/fail nur wenn freigegeben und vorhanden; direkter Link; keine Punktdetails, Antworten oder geschützten Fragen.
+- **BESCHLOSSEN:** Korrektur nach Freigabe: intern speichern, danach erneute manuelle Freigabe; altes Ergebnis bleibt sichtbar, bis neues freigegeben ist.
+- **BESCHLOSSEN:** neutrale Teilnehmermeldung bei laufender Korrektur: „Deine Bewertung wird derzeit überprüft. Dein zuletzt freigegebenes Ergebnis bleibt gültig, bis eine mögliche Änderung veröffentlicht wird.“
+- **BESCHLOSSEN:** keine unabhängige Ergebnis-Widerrufsfunktion.
+- **BESCHLOSSEN:** Korrekturrechte nur Admins/Colonels; alte Version intern erhalten.
+- **BESCHLOSSEN:** Prüferhistorie zentral und kompakt in Teilnehmerakte, keine doppelten Daten; vollständige read-only Bewertungsansicht für berechtigte Prüfer.
+- **BESCHLOSSEN:** Korrekturhistorie mit Person, Zeit, Frage/Bewertungsschritt, alt/neu, Begründung soweit vorhanden; gesamte Historie bleibt.
+- **BESCHLOSSEN:** beteiligte Prüfer und berechtigte Vorgesetzte sehen volle Details; andere autorisierte Prüfer nur Status/Verantwortlichkeit; Teilnehmer nur freigegebenes Ergebnis/Feedback.
+- **BESCHLOSSEN:** Sortierung nach Abschlussdatum neueste zuerst; Korrektur ändert Position nicht; alternative Sortierung nach Teilnehmer/letzter Änderung.
+- **BESCHLOSSEN:** dynamisches Nachladen; Filter/Sortierung erhalten; getrennte Leerzustände; Fehler nicht als leer darstellen.
+
+## E. Ergebnisfreigabe
+
+- **BESCHLOSSEN:** jede abgeschlossene Bewertung besitzt einen internen Bewertungsstand.
+- **BESCHLOSSEN:** Teilnehmeransicht basiert ausschließlich auf ausdrücklich freigegebenem Ergebnis.
+- **BESCHLOSSEN:** erste Freigabe folgt einer je Prüfung konfigurierbaren Einstellung (automatisch/manuell).
+- **BESCHLOSSEN:** jede spätere Korrektur erfordert immer neue manuelle Freigabe.
+- **BESCHLOSSEN:** vorheriges veröffentlichtes Ergebnis bleibt bis zur neuen Freigabe sichtbar.
+- **BESCHLOSSEN:** interne und veröffentlichte Versionen werden getrennt protokolliert.
+- **BESCHLOSSEN:** technische Umsetzung dieser Anforderungen wurde in separatem Branch erlaubt; kein Merge/main-Deployment ohne Zustimmung.
+- **OFFEN:** Standardverhalten der erstmaligen Ergebnisfreigabe, wenn für eine Prüfung keine Einstellung existiert. Vor Implementation klären, falls bestehendes Modell keinen klaren Default liefert.
+- **BESCHLOSSEN – Testanforderungen:** automatische Erstfreigabe; manuelle Erstfreigabe verborgen; Korrektur erhält altes veröffentlichtes Snapshot; neue Korrektur bleibt unveröffentlicht; neue Snapshot-Freigabe; Notification nur nach atomarer Veröffentlichung; unberechtigte Freigabe abgewiesen; Nebenläufigkeit/Idempotenz; Rollback/Fehler; öffentliche API gibt keine internen/unfreigegebenen Daten zurück; Altprüfungs-Kompatibilität.
+
+## F. Kurse und Programme – Status, Versionierung und Historie (38 Beschlüsse)
+
+1. **BESCHLOSSEN:** Veröffentlichungsstatus, Verfügbarkeit/Zugriff und persönlicher Fortschritt sind drei getrennte Ebenen. Archivierung/Änderungen löschen keine historischen Abschlüsse.
+2. **BESCHLOSSEN:** veröffentlichte Kurse vorübergehend verbergen über gesonderte Verfügbarkeitssteuerung, ohne Veröffentlichung/Historie zurückzusetzen.
+3. **BESCHLOSSEN:** Archivierung entfernt aus regulärem Angebot; historische Referenz bleibt für frühere Absolventen soweit Rechte erlauben; Abschlüsse bleiben.
+4. **BESCHLOSSEN:** laufende Teilnahmen dürfen bei Archivierung grundsätzlich fortgesetzt/abgeschlossen werden; neue Teilnehmer starten archivierte Kurse nicht regulär.
+5. **BESCHLOSSEN:** Wiederaktivierung archivierter Kurse möglich und protokolliert; unveränderte Version bleibt, wesentliche Änderungen erzeugen neue Version.
+6. **BESCHLOSSEN:** wesentliche Änderungen an Lerninhalten, Ausbildungszielen, Struktur, fachlichen Anforderungen, Kapiteln, Materialien oder fachlich relevanter Reihenfolge erfordern neue Kursversion. Redaktionelle Änderungen dürfen innerhalb der Version erfolgen.
+7. **BESCHLOSSEN:** Teilnehmer mit Zugang und noch nicht begonnen erhalten neueste Version; laufende Teilnahme bleibt standardmäßig bei begonnener Version; Abschlüsse behalten Version.
+8. **BESCHLOSSEN:** neue Kursversion entsteht als separater Entwurf; bisher veröffentlichte Version bleibt verfügbar; ausdrückliche Veröffentlichung macht neue Version aktuell.
+9. **BESCHLOSSEN:** alte Versionen grundsätzlich ohne Zeitlimit abschließbar; Ausnahme nur bei ausdrücklich gesetzter verbindlicher Umstellungsfrist aus fachlichem/sicherheitsrelevantem Grund; Betroffene informieren; Fortschritt nicht still löschen.
+10. **BESCHLOSSEN:** jeder Kurs besitzt ausdrückliche Abschlussbedingungen. Automatischer Abschluss nur mit zuverlässigen Nachweisen; alternativ manuelle Bestätigung. Öffnen/Durchblättern reicht nicht.
+11. **BESCHLOSSEN:** jeder erforderliche Bestandteil hat konkrete Abschlussbedingung. Erforderliches Material kann Teilnehmer-Selbsterklärung erlauben, klar gekennzeichnet. Wissenstests, praktische Aufgaben, Pflichtkapitel und Materialien brauchen passende Nachweise.
+12. **BESCHLOSSEN:** neue Kursversion freiwillig wiederholbar; jeder Versionsabschluss separat dokumentiert. Pflichtwiederqualifizierung ist eigenständig.
+13. **BESCHLOSSEN:** Kursabschluss und Prüfungsergebnis getrennt; freiwilliger Test kann nicht bestanden sein, Kurs dennoch abgeschlossen. Prüfung verhindert Abschluss nur bei ausdrücklich verpflichtender Anforderung.
+14. **BESCHLOSSEN:** Teilnahme beginnt mit erster bewusst ausgeführter kursbezogener Lernaktivität; bloßes Öffnen/Download zählt nicht.
+15. **BESCHLOSSEN:** Inaktivität ändert Status nicht automatisch; letzter tatsächlicher Lernzeitpunkt separat.
+16. **BESCHLOSSEN:** Teilnehmer kann Teilnahme freiwillig abbrechen; Fortschritt/History bleiben; spätere Wiederaufnahme möglich, wenn Kurs/Version zugänglich.
+17. **BESCHLOSSEN:** Wiederaufnahme setzt bestehende Teilnahme fort; erfüllte Bestandteile bleiben erhalten; kein Neustart bei null.
+18. **BESCHLOSSEN:** Admin kann Teilnahme fachlich/organisatorisch begründet beenden; Grund dokumentieren; nicht abgeschlossen; spätere Wiederaufnahme bewusste Admin-Entscheidung. Teilnahmebeendigung und Berechtigungsentzug getrennt.
+19. **BESCHLOSSEN:** Berechtigungsverlust entzieht Zugriff, ändert persönlichen Fortschritt/Teilnahmestatus nicht automatisch.
+20. **BESCHLOSSEN:** fehlerhafte Kursabschlüsse durch berechtigte Admins korrigierbar; Originalentscheidung bleibt, Zeitpunkt/Person/Grund dokumentiert; korrigierter Status wird angezeigt; Wiederqualifizierung eigenständig.
+21. **BESCHLOSSEN:** gemeinsame Teilnahmehistorie. Teilnehmer sehen Kurs/Version, Fortschritt/Status, Beginn/Abschluss, eigene Abbrüche/Wiederaufnahmen. Admins zusätzlich administrative Beendigungen, Verantwortliche, Gründe, Korrekturen und Berechtigungsänderungen. Über Kursdetails, kein neuer Hauptbereich.
+22. **BESCHLOSSEN:** Kontolöschung erhält historische Abschlüsse/Teilnahmevorgänge grundsätzlich soweit rechtlich zulässig; historische Identität nachvollziehbar soweit zulässig; Konto verliert Zugriff; personenbezogene Daten nach Lösch-/Aufbewahrungsregeln behandeln.
+23. **BESCHLOSSEN:** fehlerhafte Kontozuordnung durch berechtigte Admins korrigierbar; Fortschritte/Abschlüsse neu zuordnen, nicht duplizieren; Originalzuordnung, Zeitpunkt, Person, Grund dokumentieren. Keine normale Übertragung zwischen Personen.
+24. **BESCHLOSSEN:** Konflikte/duplizierte Teilnahmen nicht automatisch zusammenführen; Admin prüft; Originaldatensätze und Abschlussnachweise bleiben nachvollziehbar; keine doppelten Abschlüsse/Überschreibung.
+25. **BESCHLOSSEN:** mögliche Duplikate erkennen, Admin prüft; keine automatische Auswahl des vermeintlich neueren/besseren Abschlusses; sichere Zusammenführung.
+26. **BESCHLOSSEN:** stabile interne IDs für Benutzer, Teilnahmen, Kurse, Kursversionen, Nachweise. Profiländerungen ändern historische Identität nicht. Korrekturen als neue Ereignisse, nicht still überschreiben. Audit: Zeit, verantwortliche Identität, Vorgang, Aktion, Ergebnis, ggf. Grund; keine unnötigen Klicklogs/sensiblen Daten.
+27. **BESCHLOSSEN:** gleichzeitige Änderungen mit serverseitiger Aktualitätsprüfung/Version; keine blinde Überschreibung; verständlicher Konflikt; Transaktionen/optimistische Nebenläufigkeitskontrolle.
+28. **BESCHLOSSEN:** Datenschutz durch Zweckbindung, Rechtsgrundlage, Datenminimierung, Aufbewahrungsfristen/-kriterien, Löschen oder Anonymisieren nach Frist; Audit nicht als Datenschutzumgehung; keine pauschale unbegrenzte Speicherung.
+29. **BESCHLOSSEN:** atomare Transaktionen, Idempotenz und wiederholbare Operationen ohne doppelte Ergebnisse; gespeicherter Zustand muss feststellbar sein.
+30. **BESCHLOSSEN:** ein tatsächlicher Kursabschluss kann mehreren Programmen angerechnet werden, sofern die jeweilige Programmversion Kurs und Kursversion anerkennt; keine künstlichen separaten Teilnahmen.
+31. **BESCHLOSSEN:** Programm-Anforderungen versionieren. Abgeschlossene Programme bleiben historisch abgeschlossen; neue Anforderungen nicht rückwirkend. Für laufende Teilnahmen ausdrücklich festlegen, ob neue Anforderungen gelten. Pflichtwiederqualifizierung eigenständig.
+32. **BESCHLOSSEN:** laufende Programmteilnahmen bleiben standardmäßig bei begonnener Version; kein automatischer Wechsel. Admin kann bewusst umstellen; bestehende Kursabschlüsse übernehmen, wenn gültig; zusätzliche/nicht passende Anforderungen ausweisen; Umstellung protokollieren.
+33. **BESCHLOSSEN:** fachlich/sicherheitsrelevant unzureichende Kursabschlüsse werden nicht gelöscht. Berechtigte Verantwortliche können verpflichtende Wiederqualifizierung mit Grund, Person, ggf. Frist anordnen. Originalabschluss und neue Anforderung getrennt; Teilnehmer informieren.
+34. **BESCHLOSSEN:** Programmabschluss bei Erfüllung aller ausdrücklich erforderlichen Bedingungen der Programmversion. Empfohlene/optionale Kurse verhindern Abschluss nicht. Abschlussprüfung nur verpflichtend, wenn explizit Voraussetzung. Spätere Wiederqualifizierung getrennt.
+35. **BESCHLOSSEN:** Wiederqualifizierung zentral beim Kurs/Qualifikationsnachweis; betroffene Programme berücksichtigen dieselbe Anforderung; keine mehrfachen Wiederholungen; Programmabschluss wird nicht rückwirkend ungültig; offene Anforderungen separat.
+36. **BESCHLOSSEN:** historischer Programmabschluss und aktuelle Qualifikationsgültigkeit getrennt. Offene Wiederqualifizierung setzt historischen Abschluss nicht zurück.
+37. **BESCHLOSSEN:** Wiederqualifizierungsanforderung definiert Umfang: betroffene Qualifikation/Kursversion/Kompetenz, Teilnehmer/Gruppe, Grund, erforderlicher neuer Nachweis, ggf. Frist. Normale Kursversionsänderung löst keine automatische Wiederqualifizierung aus.
+38. **BESCHLOSSEN:** neuer Qualifikationsnachweis zentral dokumentiert und von Programmen referenziert, die ihn anerkennen. Keine doppelten Wiederqualifizierungen; keine Überschreibung alter Kurs-/Programmabschlüsse.
+
+## G. Lernbibliothek, Dokumente, Reader, Notizen
+
+### Dokumentversionierung und Upload
+- **BESCHLOSSEN – Dokumentversionierung Option B:** veröffentlichte Kursversionen verweisen auf konkrete Dokumentversionen; neue Bibliotheksfassung ändert ältere Kursreferenz nicht automatisch. Admin entscheidet bewusst über Umstellung; wesentliche Änderungen können neue Kursversion erfordern.
+- **BESCHLOSSEN:** Bibliothek zeigt regulär die aktuell veröffentlichte Materialfassung; ältere Fassungen bleiben für historische Kursverweise einsehbar, soweit Zugriffsrechte dies erlauben.
+- **BESCHLOSSEN:** Dokumente können extern erstellt (z. B. PDF) und hochgeladen werden; keine verpflichtende PDF-Designvorlage beschlossen. Einheitliche Verwaltungsoberfläche und Metadaten/Freigabe sind als Zielbild vorgesehen, Detailworkflow noch auszuarbeiten.
+- **BESCHLOSSEN – Archivierung/Löschung Option A:** veröffentlichte oder bereits in veröffentlichten Kursen verwendete Dokumente regulär archivieren oder fachlich zurückziehen, nicht normal endgültig löschen. Endgültige Löschung ist ein administrativer Ausnahmevorgang unter Berücksichtigung von Datenschutz, Aufbewahrung und historischen Abhängigkeiten. Unveröffentlichte, ungenutzte Entwürfe können einfacher gelöscht werden.
+- **BESCHLOSSEN:** fachlich zurückgezogene Dokumente müssen nachvollziehbar gekennzeichnet werden; historische Kursverknüpfungen und Abschlüsse werden nicht automatisch verändert.
+
+### Suche und Filter
+- **BESCHLOSSEN – globale Suche Option A:** zentrale Suche durchsucht standardmäßig alle für den Nutzer zugänglichen Bibliotheksdokumente, unabhängig von aktueller Kategorie.
+- **BESCHLOSSEN – Sortierung Option A:** Relevanz ist Standardsortierung; alternative Sortierung alphabetisch oder nach tatsächlichem Aktualisierungsdatum.
+- **BESCHLOSSEN – Filterdarstellung Option A:** kompakte, zunächst eingeklappte Filter; aktive Filter sichtbar und einzeln entfernbar oder gemeinsam zurücksetzbar; mobile Bedienung platzsparend.
+- **VORSCHLAG, nicht beschlossen:** mögliche Filter nach Kategorie, Dokumenttyp, Thema und Aktualisierungszeitraum – nur wenn verlässliche Metadaten vorliegen.
+- **VORSCHLAG, nicht beschlossen:** Suchfelder Titel, Materialcode, Kategorien/Themen, Metadaten und Volltext, sofern technisch zuverlässig; OCR für Scans ist gesondert zu prüfen.
+
+### Reader
+- **BESCHLOSSEN:** eigener großzügiger Lesebereich; Rückkehr zur vorherigen Bibliotheksposition.
+- **BESCHLOSSEN:** Navigation standardmäßig eingeklappt; bei Bedarf linkes Panel mit Inhaltsverzeichnis (sofern auslesbar) und Seitenminiaturen; direkte Seitennavigation.
+- **BESCHLOSSEN:** kontinuierliches vertikales Scrollen als Standarddarstellung (im Gespräch am 06.11.2026 bestätigt).
+- **BESCHLOSSEN:** Reader-Werkzeuge sollen die Lesefläche nicht unnötig verdrängen; Zoom, Seitenanpassung, Seitennavigation und Dokumentensuche gehören zum geplanten Reader-Funktionsumfang.
+- **BESCHLOSSEN:** letzte Leseposition speichern und Wiederaufnahme ermöglichen.
+- **BESCHLOSSEN:** persönliche Bookmarks und Notizen integrieren; Reader-Werkzeuge in ein-/ausklappbarem Panel.
+- **OFFEN:** genaue visuelle Position/Anordnung von Reader-Toolbar, Navigation, Suche und Werkzeugen wird später im UX-/Designabschnitt festgelegt.
+
+### Notizen und Lesezeichen
+- **BESCHLOSSEN – Versionsbindung Option A:** Notizen und Lesezeichen sind an die konkrete Dokumentversion gebunden; keine automatische Übertragung auf neue Fassungen. Ein Hinweis auf Notizen zu älteren Fassungen kann beim Öffnen neuer Fassungen erscheinen.
+- **BESCHLOSSEN – Synchronisierung Option A:** automatische serverseitige Speicherung und geräteübergreifende Synchronisierung über Benutzerkonto; sichtbarer Speicherstatus; Speicherfehler erkennbar; keine Zusage vollständiger Offline-Bearbeitung.
+- **BESCHLOSSEN – Berechtigungsverlust Option A:** persönliche Notizen und Lesezeichen bleiben beim Nutzer; Quelle als nicht zugänglich kennzeichnen; historische Versions-/Seitenzuordnung erhalten; Notizen gewähren keinen Zugriff auf gesperrte Dokumente.
+- **BESCHLOSSEN – endgültige Dokumententfernung Option A:** Notizen/Lesezeichen bleiben grundsätzlich erhalten und Quelle wird als nicht verfügbar markiert; gesetzlich erforderliche Löschung personenbezogener Daten hat Vorrang.
+- **BESCHLOSSEN:** Notizen privat; keine Sharing-Funktion in erster Ausbaustufe.
+- **BESCHLOSSEN:** Notizen sollen Rich Text, Autosave mit Status, Quellen-/Seitenverknüpfungen, Mehrfachquellen, Warnung bei veralteten Seitenreferenzen, Titel-/Volltextsuche und Tags/Themen unterstützen.
+
+## H. Kontextbezogene Meldefunktion
+
+- **BESCHLOSSEN – Integrationsanforderung:** In der Academy soll später ein gut erreichbarer kontextbezogener Meldebutton direkt an geeigneten Inhalten/Modulen erreichbar sein (z. B. unangemessene Inhalte, mögliche Rechtsverstöße, fachliche oder technische Probleme).
+- **BESCHLOSSEN:** Button soll den betroffenen Inhalt bzw. Modulkontext automatisch zuordnen.
+- **BESCHLOSSEN:** die eigentliche Melde-, Prüfungs-, Bearbeitungs- und Administrationsmechanik wird später als eigener Bereich separat konzipiert. Sie wird nicht in die laufende Lernbibliotheksplanung hineingezogen.
+- **OFFEN:** genauer Umfang, Rollen, Verfahrensablauf, Datenschutz, rechtliche Anforderungen und technische Architektur des späteren Meldesystems.
+
+## I. Historische und weitere Beschlüsse
+- **BESCHLOSSEN:** Academy-Empfehlungen, Prüfungsfreigaben, Kursstatus und Teilnehmerfortschritt sind getrennt zu behandeln; interne Änderungen vor Ergebnisfreigabe lösen keine Teilnehmerbenachrichtigung oder Folgeempfehlung aus.
+- **BESCHLOSSEN:** Examiner und Prüfungsdetails bleiben berechtigungsabhängig; keine vertraulichen Inhalte für andere Rollen offenlegen.
+- **BESCHLOSSEN:** vollständige Academy-Planung ist noch nicht abgeschlossen; die oben genannten Beschlüsse sind kein Signal zur sofortigen Implementierung aller Funktionen.
