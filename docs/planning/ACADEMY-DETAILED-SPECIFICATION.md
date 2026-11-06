@@ -1172,15 +1172,6 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 - Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
 
 **Vorgeschlagene nutzerverständliche Fehlerzustände – UX-Details noch zu bestätigen:**
-- PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
-- Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
-- Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
-- Malwareprüfung muss vor Veröffentlichung erfolgreich abgeschlossen sein. Während der Prüfung bleibt die Datei im privaten, nicht für Teilnehmer sichtbaren Prüf-/Quarantänestatus. Ist der Scanner nicht verfügbar oder schlägt die Prüfung technisch fehl, bleibt die Datei unveröffentlicht; der Upload kann später erneut geprüft werden.
-- Parser und Scanner benötigen Ressourcenlimits (Zeit, Speicher, Seiten-/Objektkomplexität) und eine isolierte Verarbeitung. Die konkrete Scan-/CDR-Lösung und Hosting-Kompatibilität sind noch technische Prüfpunkte.
-- Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
-- Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
-
-**Vorgeschlagene nutzerverständliche Fehlerzustände – UX-Details noch zu bestätigen:**
 1. Datei fehlt: „Bitte wähle eine PDF-Datei aus.“
 2. Falscher Dateityp bzw. keine echte PDF: „Die ausgewählte Datei ist keine gültige PDF-Datei.“
 3. Datei leer: „Die ausgewählte Datei ist leer.“
