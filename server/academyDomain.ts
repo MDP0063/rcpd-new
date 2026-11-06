@@ -254,6 +254,16 @@ export function validateCompletionCorrection(correction: AcademyCompletionCorrec
       correction.previousStatus === correction.correctedStatus) {
     return invalid('ACADEMY_COMPLETION_CORRECTION_INVALID', 'Eine Abschlusskorrektur benötigt einen gültigen Statuswechsel, eine Begründung und einen verantwortlichen Administrator.');
   }
+  if (correction.invalidatedEvidenceIds !== undefined &&
+      (!Array.isArray(correction.invalidatedEvidenceIds) ||
+       correction.invalidatedEvidenceIds.some(id => !isNonEmpty(id)) ||
+       new Set(correction.invalidatedEvidenceIds).size !== correction.invalidatedEvidenceIds.length ||
+       correction.invalidatedEvidenceIds.length > 100)) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INVALID', 'Ungültige oder doppelte Nachweisreferenzen in der Abschlusskorrektur.');
+  }
+  if (correction.correctedStatus === 'completed' && (correction.invalidatedEvidenceIds?.length ?? 0) > 0) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INVALID', 'Eine Korrektur auf abgeschlossen darf keine Nachweise gleichzeitig entwerten.');
+  }
   return { ok: true };
 }
 
