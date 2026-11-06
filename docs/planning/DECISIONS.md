@@ -13,6 +13,34 @@ Nur Einträge mit Status **BESCHLOSSEN** gelten als verbindlich. Eine Empfehlung
 - **BESCHLOSSEN – Repository-Grenzen:** separater Branch; kein Commit auf main, kein Merge und kein Produktionsdeployment ohne ausdrückliche Freigabe.
 - **BESCHLOSSEN – Qualitätsmaßstab:** Sicherheits-, Datenintegritäts- und Zuverlässigkeitsfragen nicht vertagen; keine ungeprüften Testerfolge behaupten.
 
+
+## A1. Gesamtes Portal-Redesign – verbindlicher Rahmen (05.–06.11.2026)
+
+- **BESCHLOSSEN:** Das Redesign umfasst das gesamte RCPD-Portal, nicht nur die Academy.
+- **BESCHLOSSEN:** Ausgangspunkt ist Designrichtung B „Modernes Einsatz- und Verwaltungsportal“. Die konkrete visuelle Ausgestaltung darf das UX-Audit begründet verfeinern; sie ist noch nicht final festgelegt.
+- **BESCHLOSSEN:** Der aktuelle Schwerpunkt liegt auf Bestandsaufnahme, UX-Audit, funktionalem Konzept und Informationsarchitektur. Das finale grafische Design wird bewusst zurückgestellt, bis UX, Informationsarchitektur und technische Machbarkeit ausreichend geklärt sind.
+- **BESCHLOSSEN:** Bestehende technische Architektur, Datenmodelle/Datenbankstruktur, Geschäftslogik und Berechtigungen sollen durch das UI/UX-Redesign grundsätzlich nicht verändert werden.
+- **BESCHLOSSEN:** Vorhandene Funktionen und Berechtigungen bleiben erhalten. Redundante, unnötige, widersprüchliche oder unklare Bedienelemente dürfen nach Audit begründet neu organisiert oder entfernt werden, ohne die fachliche Funktion zu verlieren.
+- **BESCHLOSSEN:** Jede relevante Layout-, UX-, Interaktions- und Modulentscheidung ist konkret zu begründen. Allgemeine Designintuition reicht nicht.
+- **BESCHLOSSEN:** Zuerst vollständige Bestandsaufnahme aller Module, Rollen, Workflows, Datenquellen und Desktop-/Mobile-Verhalten; danach funktionales/IA-Konzept, Cross-Module-Abgleich, technische Machbarkeit, Designsystem, globaler Rahmen, modulweise Gestaltung und QA.
+- **BESCHLOSSEN:** Vor UX-/Layout-/Navigations-/Interaktionsempfehlungen aktuelle etablierte Plattformmuster und maßgebliche UX-/Accessibility-Standards recherchieren, Quellen nennen und die Empfehlung anhand des konkreten RCPD-Arbeitsablaufs begründen.
+- **BESCHLOSSEN:** Alle bereits getroffenen Entscheidungen müssen in einem Review-Dokument erhalten bleiben. Eine spätere unabhängige Claude-Review-Instanz darf jede Entscheidung kritisch hinterfragen; keine Festlegung ist gegen sachliche Kritik immun.
+- **BESCHLOSSEN:** Claude-Review darf nicht dazu führen, dass Nutzerentscheidungen stillschweigend überschrieben werden. Kritik, Alternativen und Auswirkungen werden dokumentiert; der Projektinhaber entscheidet.
+- **BESCHLOSSEN:** Mobile UX ist ein eigenständiger Audit- und Designgegenstand, nicht nur eine verkleinerte Desktopoberfläche.
+- **BESCHLOSSEN:** Rollenorientierte und aufgabenorientierte UI ist ein Leitprinzip; konkrete Rollenansichten müssen aus den tatsächlich vorhandenen Rollen/Rechten abgeleitet werden, keine neuen Berechtigungen erfinden.
+- **BESCHLOSSEN:** Bestehende Funktionen und Architektur zuerst read-only untersuchen; keine Implementierung während der konzeptionellen Bestandsaufnahme ohne ausdrückliche Freigabe.
+- **BESCHLOSSEN:** Repository-Arbeit erfolgt auf separatem Branch. Kein Commit auf `main`, kein eigenmächtiger Merge und kein Produktionsdeployment. Ein Merge löst wegen Render-Autodeploy eine Live-Veröffentlichung aus.
+
+### Noch keine verbindlichen Entscheidungen
+Die folgenden Themen wurden als Audit-/Konzeptfelder oder Vorschläge angesprochen, aber nicht als konkrete UI-Entscheidung beschlossen:
+- endgültige Sidebar-/Header-/Tab-Hierarchie;
+- Command Palette bzw. Ctrl/Cmd+K als zusätzliche Funktion;
+- konkrete Dashboard-Widgets und Anordnung;
+- endgültige mobile Navigationsform;
+- konkrete Rollen-Dashboard-Layouts;
+- einheitliche Design-Tokens, Farben, Typografie und Komponenten;
+- neue Berichtskennzahlen, Exportfunktionen oder Personalattribute.
+
 ## B. Academy – Grundkonzept und Navigation
 
 - **BESCHLOSSEN:** Academy ist operativer Ausbildungsarbeitsbereich und frei zugängliche Wissensbibliothek; kein erzwungener linearer Lernpfad.
