@@ -217,8 +217,15 @@ export function validateCourseParticipation(
       !isNonEmpty(participation.courseId) || !isNonEmpty(participation.courseVersionId)) {
     return invalid('ACADEMY_PARTICIPATION_REFERENCE_MISSING', 'Teilnahme, Nutzer, Kurs und Kursversion müssen eindeutig referenziert sein.');
   }
-  if (participation.status === 'completed' && !isNonEmpty(participation.completedIso)) {
-    return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt einen Abschlusszeitpunkt.');
+  if (!['in_progress', 'completed', 'voluntarily_ended', 'administratively_ended'].includes(participation.status) ||
+      !isNonEmpty(participation.createdIso) || !isNonEmpty(participation.updatedIso)) {
+    return invalid('ACADEMY_PARTICIPATION_STATE_INVALID', 'Teilnahmestatus und Zeitstempel müssen gültig sein.');
+  }
+  if (participation.status === 'in_progress' && !isNonEmpty(participation.startedIso)) {
+    return invalid('ACADEMY_PARTICIPATION_START_TIMESTAMP_MISSING', 'Eine aktive Teilnahme benötigt einen Startzeitpunkt.');
+  }
+  if (participation.status === 'completed' && (!isNonEmpty(participation.startedIso) || !isNonEmpty(participation.completedIso))) {
+    return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt Start- und Abschlusszeitpunkt.');
   }
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
       (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endReason))) {
