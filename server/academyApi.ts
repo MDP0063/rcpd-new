@@ -23,6 +23,12 @@ const canManage = (actor: AcademyApiActor, ownerUid: string) =>
 function text(value: unknown, max: number): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
+function boundedText(value: unknown, max: number, allowEmpty = false): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (normalized.length > max || (!allowEmpty && normalized.length === 0)) return null;
+  return normalized;
+}
 function id(prefix: string): string {
   return `${prefix}_${randomUUID().replaceAll('-', '')}`;
 }
@@ -124,11 +130,16 @@ export function createAcademyApiRouter(
       const actor = getActor(req, res);
       if (!requireEditor(actor, res)) return;
       if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_BODY_INVALID' }); return; }
+      const name = boundedText(req.body.name, 80);
+      const description = req.body.description === undefined ? undefined : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_INVALID' }); return;
+      }
       const now = new Date().toISOString();
       const category: AcademyMaterialCategoryDoc = {
         id: id('material_category'),
-        name: text(req.body.name, 80),
-        ...(req.body.description === undefined ? {} : { description: text(req.body.description, 300) }),
+        name,
+        ...(description === undefined ? {} : { description }),
         status: 'active',
         revision: 1,
         createdIso: now,
@@ -152,12 +163,17 @@ export function createAcademyApiRouter(
       if (!existing) { res.status(404).json({ error: 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND' }); return; }
       const expectedRevision = revision(req.body.expectedRevision);
       if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const name = req.body.name === undefined ? existing.name : boundedText(req.body.name, 80);
+      const description = req.body.description === undefined
+        ? existing.description
+        : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_INVALID' }); return;
+      }
       const category: AcademyMaterialCategoryDoc = {
         ...existing,
-        name: req.body.name === undefined ? existing.name : text(req.body.name, 80),
-        description: req.body.description === undefined
-          ? existing.description
-          : text(req.body.description, 300),
+        name,
+        description,
         revision: expectedRevision + 1,
         updatedIso: new Date().toISOString(),
         updatedByUid: actor.uid
