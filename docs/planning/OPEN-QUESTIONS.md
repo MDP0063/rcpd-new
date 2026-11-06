@@ -21,7 +21,7 @@
 - Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
 - Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
-- Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen; kontrollierte Kategorie-/Dokumenttypwerte konkretisieren.
+- Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
 - Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
