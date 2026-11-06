@@ -135,6 +135,8 @@ export interface AcademyMaterialVersionDoc {
   workingRevision: number;
 }
 
+export type AcademyMaterialReaderContent = Pick<AcademyMaterialVersionDoc, 'title' | 'description' | 'contentFormat' | 'content' | 'codeLanguage'>;
+
 export interface AcademyMaterialVersionSummary {
   id: string;
   materialId: string;
@@ -178,6 +180,13 @@ export interface AcademyCourseChapter {
   materialReferences: AcademyCourseMaterialReference[];
   required: boolean;
   order: number;
+}
+
+export interface AcademyCourseMaterialReaderItem {
+  chapterId: string; chapterTitle: string; chapterOrder: number;
+  materialId: string; materialVersionId: string; required: boolean; order: number;
+  accessStatus: 'available' | 'restricted' | 'unavailable';
+  materialCode?: string; title?: string; versionNumber?: number; contentFormat?: AcademyMaterialContentFormat;
 }
 
 export interface AcademyCourseCompletionRequirement {
