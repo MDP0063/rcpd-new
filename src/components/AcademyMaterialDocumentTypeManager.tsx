@@ -184,9 +184,9 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   );
 
   return (
-    <section className="space-y-5" aria-labelledby="academy-documentType-heading">
+    <section className="space-y-5" aria-labelledby="academy-document-type-heading">
       <header className="space-y-1">
-        <h2 id="academy-documentType-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Dokumenttypen verwalten</h2>
+        <h2 id="academy-document-type-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Dokumenttypen verwalten</h2>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Dokumenttypen können hier erstellt, umbenannt, archiviert, reaktiviert und – solange kein Material darauf verweist – endgültig gelöscht werden. Die Kennung bleibt bei einer Umbenennung stabil.
         </p>
@@ -197,30 +197,30 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{editing ? 'Dokumenttyp bearbeiten' : 'Dokumenttyp hinzufügen'}</h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Dokumenttypen sind globale Bibliotheks-Metadaten und werden nicht als Freitext an jedem Dokument gepflegt.
+              Dokumenttypen beschreiben die Art oder Funktion eines Materials. Sie werden zentral gepflegt und nicht als Freitext am einzelnen Material eingegeben.
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label htmlFor="academy-document-type-name" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypname</label>
             <input
-              id="academy-documentType-name"
+              id="academy-document-type-name"
               className={inputClass}
               value={name}
               onChange={event => setName(event.target.value)}
               maxLength={80}
               required
               aria-invalid={formErrorField === 'name'}
-              aria-describedby={formErrorField === 'name' ? 'academy-documentType-name-hint academy-document-type-form-error' : 'academy-documentType-name-hint'}
+              aria-describedby={formErrorField === 'name' ? 'academy-document-type-name-hint academy-document-type-form-error' : 'academy-document-type-name-hint'}
               disabled={busy}
             />
-            <p id="academy-documentType-name-hint" className="text-xs text-slate-500 dark:text-slate-400">1 bis 80 Zeichen</p>
+            <p id="academy-document-type-name-hint" className="text-xs text-slate-500 dark:text-slate-400">1 bis 80 Zeichen</p>
           </div>
 
           <div className="space-y-1.5">
             <label htmlFor="academy-document-type-description" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung (optional)</label>
             <textarea
-              id="academy-documentType-description"
+              id="academy-document-type-description"
               className={inputClass}
               value={description}
               onChange={event => setDescription(event.target.value)}
@@ -228,12 +228,12 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
               rows={3}
               disabled={busy}
               aria-invalid={formErrorField === 'description'}
-              aria-describedby={formErrorField === 'description' ? 'academy-documentType-description-hint academy-documentType-form-error' : 'academy-documentType-description-hint'}
+              aria-describedby={formErrorField === 'description' ? 'academy-document-type-description-hint academy-document-type-form-error' : 'academy-document-type-description-hint'}
             />
-            <p id="academy-documentType-description-hint" className="text-xs text-slate-500 dark:text-slate-400">Bis zu 300 Zeichen</p>
+            <p id="academy-document-type-description-hint" className="text-xs text-slate-500 dark:text-slate-400">Bis zu 300 Zeichen</p>
           </div>
 
-          {formError && <p id="academy-documentType-form-error" role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
+          {formError && <p id="academy-document-type-form-error" role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
 
           <div className="flex flex-wrap gap-2">
             <button type="submit" className={primaryButton} disabled={busy}>
@@ -256,7 +256,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
           <div className="space-y-1.5">
             <label htmlFor="academy-document-type-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypen durchsuchen</label>
-            <input id="academy-documentType-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
+            <input id="academy-document-type-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
           </div>
 
           {loading ? (
@@ -268,7 +268,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
             </div>
           ) : visibleDocumentTypes.length === 0 ? (
             <p role="status" className="rounded-md border border-dashed border-slate-300 p-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
-              {documentTypes.length === 0 ? 'Noch keine Dokumenttypenen angelegt.' : 'Kein Dokumenttyp entspricht deiner Suche.'}
+              {documentTypes.length === 0 ? 'Noch keine Dokumenttypen angelegt.' : 'Kein Dokumenttyp entspricht deiner Suche.'}
             </p>
           ) : (
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
