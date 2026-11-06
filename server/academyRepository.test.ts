@@ -106,7 +106,7 @@ test('publication rejects master identity changes and unpublished version metada
   await repository.create('academy_courses', master.id, master);
   await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
   const changedOwner = { ...publishedMaster, ownerUid: 'attacker-1' };
-  await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 2), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 2, 'owner-1'), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   const unpublished = { ...version, publishedIso: undefined, publishedByUid: undefined };
   await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2, 'owner-1'), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
@@ -135,4 +135,10 @@ test('program drafts are persisted with optimistic revision checks', async () =>
   await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
   assert.deepEqual(await repository.getProgramDraft(programMaster.id), programDraft);
   assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.workingRevision, 2);
+}));
+
+test('draft writes reject audit metadata from a different actor', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await assert.rejects(repository.saveCourseDraft(master.id, courseDraft, 1, 'admin-1'), /ACADEMY_ACTOR_MISMATCH/);
+  assert.equal(await repository.getCourseDraft(master.id), null);
 }));
