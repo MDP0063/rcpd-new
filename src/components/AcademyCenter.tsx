@@ -29,6 +29,7 @@ import { ExamReviewCenter } from './ExamReviewCenter';
 import { ExamCorrectionCenter } from './ExamCorrectionCenter';
 import { AcademyLearningCenter } from './AcademyLearningCenter';
 import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
+import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -61,6 +62,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
+  const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
 
   // Granular Instructor Grading Form State
@@ -590,7 +592,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
-        <div>
+        <div className="space-y-5">
+          {canAuthorCourses && (
+            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800" role="group" aria-label="Bibliotheksverwaltung">
+              <button type="button" aria-pressed={libraryAreaMode === 'materials'} onClick={() => setLibraryAreaMode('materials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'materials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Materialien</button>
+              <button type="button" aria-pressed={libraryAreaMode === 'categories'} onClick={() => setLibraryAreaMode('categories')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'categories' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kategorien verwalten</button>
+            </div>
+          )}
+          {libraryAreaMode === 'categories' && canAuthorCourses ? (
+            <AcademyMaterialCategoryManager onStatusToast={onStatusToast} />
+          ) : (
+          <div>
           {modules.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center space-y-4 shadow-xs">
               <BookOpen className="w-10 h-10 text-sky-600 mx-auto" />
@@ -776,6 +788,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 )}
               </div>
             </div>
+          )}
+          </div>
           )}
         </div>
       )}
