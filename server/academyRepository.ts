@@ -67,7 +67,8 @@ export class AcademyRepository {
   async getCourseDraft(courseId: string): Promise<AcademyCourseDraftDoc | null> {
     return this.adapter.get<AcademyCourseDraftDoc>('academy_course_drafts', courseId);
   }
-  async saveCourseDraft(courseId: string, draft: AcademyCourseDraftDoc, expectedRevision: number): Promise<void> {
+  async saveCourseDraft(courseId: string, draft: AcademyCourseDraftDoc, expectedRevision: number, actorUid: string): Promise<void> {
+    if (!actorUid.trim() || draft.updatedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
     assertValid(validateCourseDraft(courseId, draft));
     if (!Number.isSafeInteger(expectedRevision) || draft.workingRevision !== expectedRevision + 1) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
     return this.runTransaction(async tx => {
@@ -86,7 +87,8 @@ export class AcademyRepository {
   async getProgramDraft(programId: string): Promise<AcademyProgramDraftDoc | null> {
     return this.adapter.get<AcademyProgramDraftDoc>('academy_program_drafts', programId);
   }
-  async saveProgramDraft(programId: string, draft: AcademyProgramDraftDoc, expectedRevision: number): Promise<void> {
+  async saveProgramDraft(programId: string, draft: AcademyProgramDraftDoc, expectedRevision: number, actorUid: string): Promise<void> {
+    if (!actorUid.trim() || draft.updatedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
     assertValid(validateProgramDraft(programId, draft));
     if (!Number.isSafeInteger(expectedRevision) || draft.workingRevision !== expectedRevision + 1) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
     return this.runTransaction(async tx => {
@@ -102,7 +104,8 @@ export class AcademyRepository {
       await tx.update('academy_programs', programId, { ...master, workingRevision: draft.workingRevision, updatedIso: draft.updatedIso });
     });
   }
-  async publishCourseVersion(courseId: string, version: AcademyCourseVersionDoc, nextMaster: AcademyCourseMasterDoc, expectedRevision: number): Promise<void> {
+  async publishCourseVersion(courseId: string, version: AcademyCourseVersionDoc, nextMaster: AcademyCourseMasterDoc, expectedRevision: number, publisherUid: string): Promise<void> {
+    if (!publisherUid.trim() || version.publishedByUid !== publisherUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
     assertValid(validateCourseVersion(courseId, version));
     assertValid(validateCourseMaster(nextMaster));
     return this.runTransaction(async tx => {
@@ -127,7 +130,8 @@ export class AcademyRepository {
       await tx.update('academy_courses', courseId, nextMaster);
     });
   }
-  async publishProgramVersion(programId: string, version: AcademyProgramVersionDoc, nextMaster: AcademyProgramMasterDoc, expectedRevision: number): Promise<void> {
+  async publishProgramVersion(programId: string, version: AcademyProgramVersionDoc, nextMaster: AcademyProgramMasterDoc, expectedRevision: number, publisherUid: string): Promise<void> {
+    if (!publisherUid.trim() || version.publishedByUid !== publisherUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
     assertValid(validateProgramVersion(programId, version));
     assertValid(validateProgramMaster(nextMaster));
     return this.runTransaction(async tx => {
