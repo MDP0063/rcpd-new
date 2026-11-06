@@ -81,8 +81,13 @@ test('version-2 JSON Academy stores without the new category collection remain r
     await writeFile(path.join(directory, 'academy-db.json'), JSON.stringify({ version: 2, collections }));
     const repository = createJsonAcademyRepository(directory);
     assert.deepEqual(await repository.listMaterialCategories(), []);
-    const saved = JSON.parse(await readFile(path.join(directory, 'academy-db.json'), 'utf8')) as { version: number };
-    assert.equal(saved.version, 2, 'a read-only compatibility check must not rewrite existing data');
+    await repository.createMaterialCategory(category('category-migrated', 'Nach der Migration'));
+    const saved = JSON.parse(await readFile(path.join(directory, 'academy-db.json'), 'utf8')) as {
+      version: number;
+      collections: { academy_material_categories?: Record<string, AcademyMaterialCategoryDoc> };
+    };
+    assert.equal(saved.version, 3);
+    assert.equal(Object.values(saved.collections.academy_material_categories || {})[0]?.id, 'category-migrated');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
