@@ -141,6 +141,23 @@ export function createAcademyApiRouter(
 ) {
   const router = Router();
 
+  async function withPinnedMaterialLabels(draft: AcademyCourseDraftDoc): Promise<AcademyCourseDraftDoc> {
+    const chapters = await Promise.all(draft.chapters.map(async chapter => {
+      if (!Array.isArray(chapter.materialReferences)) return chapter;
+      const materialReferences = await Promise.all(chapter.materialReferences.map(async reference => {
+        if (typeof reference.materialId !== 'string' || typeof reference.materialVersionId !== 'string') return reference;
+        const pinnedVersion = await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
+        if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) {
+          const { title: _title, versionNumber: _versionNumber, ...withoutSnapshot } = reference;
+          return withoutSnapshot;
+        }
+        return { ...reference, title: pinnedVersion.title, versionNumber: pinnedVersion.versionNumber };
+      }));
+      return { ...chapter, materialReferences };
+    }));
+    return { ...draft, chapters };
+  }
+
   function getActor(req: Request, res: Response): AcademyApiActor | null {
     const uid = res.locals.sessionUid as string | undefined;
     return uid ? resolveActor(uid) : null;
@@ -571,10 +588,13 @@ export function createAcademyApiRouter(
           chapters: await Promise.all(storedDraft.chapters.map(async chapter => ({
             ...chapter,
             materialReferences: await Promise.all(chapter.materialReferences.map(async reference => {
-              if (reference.title && reference.versionNumber) return reference;
+              if (typeof reference.materialId !== 'string' || typeof reference.materialVersionId !== 'string') return reference;
               const pinnedVersion = await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
-              if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) return reference;
-              return { ...reference, title: reference.title || pinnedVersion.title, versionNumber: reference.versionNumber || pinnedVersion.versionNumber };
+              if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) {
+                const { title: _title, versionNumber: _versionNumber, ...withoutSnapshot } = reference;
+                return withoutSnapshot;
+              }
+              return { ...reference, title: pinnedVersion.title, versionNumber: pinnedVersion.versionNumber };
             }))
           })))
         } : null;
@@ -599,7 +619,7 @@ export function createAcademyApiRouter(
         id: courseId, code, ownerUid: actor.uid, publicationStatus: 'draft', availability: 'available',
         latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
       };
-      const draft = makeCourseDraft(courseId, req.body, 1, actor.uid, now);
+      const draft = await withPinnedMaterialLabels(makeCourseDraft(courseId, req.body, 1, actor.uid, now));
       await repository.createCourseWithDraft(master, draft);
       await recordAudit(actor.uid, 'Academy-Kursentwurf erstellt', code, `Kurs ${code} angelegt; Arbeitsrevision 1.`);
       res.status(201).json({ master, draft });
@@ -635,7 +655,7 @@ export function createAcademyApiRouter(
       if (!isObject(req.body) || !isObject(req.body.draft)) { res.status(400).json({ error: 'ACADEMY_DRAFT_BODY_INVALID' }); return; }
       const expected = revision(req.body.expectedRevision);
       if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
-      const draft = makeCourseDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString());
+      const draft = await withPinnedMaterialLabels(makeCourseDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString()));
       await repository.saveCourseDraft(master.id, draft, expected, actor.uid);
       await recordAudit(actor.uid, 'Academy-Kursentwurf geändert', master.code, `Arbeitsrevision ${draft.workingRevision} gespeichert.`);
       res.json({ draft });
