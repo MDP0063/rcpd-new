@@ -67,6 +67,9 @@ test('private note repository methods enforce owner isolation', async () => with
     materialVersionId: 'material-1__v1', kind: 'note', content: 'Privat',
     tags: [], createdIso: now, updatedIso: now
   };
+  await assert.rejects(repository.get('academy_private_notes', note.id), /ACADEMY_NOTE_OWNER_METHOD_REQUIRED/);
+  await assert.rejects(repository.list('academy_private_notes', { where: [{ field: 'ownerUid', value: 'owner-1' }] }), /ACADEMY_NOTE_OWNER_METHOD_REQUIRED/);
+  await assert.rejects(repository.create('academy_private_notes', note.id, note), /ACADEMY_NOTE_OWNER_METHOD_REQUIRED/);
   await repository.saveOwnPrivateNote('owner-1', note);
   assert.deepEqual(await repository.listOwnPrivateNotes('owner-1'), [note]);
   assert.deepEqual(await repository.listOwnPrivateNotes('admin-1'), []);
