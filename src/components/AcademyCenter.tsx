@@ -278,7 +278,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {
         method: 'POST',
         body: JSON.stringify({
-          actorUid: currentUser.uid,
           title: modTitle,
           code: modCode,
           category: modCategory,
@@ -357,7 +356,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const handleDeleteModule = async (id: string) => {
     if (!canEditAcademy) return;
     const res = await apiFetch(
-      `${API_ENDPOINTS.ACADEMY_MODULES}/${id}?actorUid=${encodeURIComponent(currentUser.uid)}`,
+      `${API_ENDPOINTS.ACADEMY_MODULES}/${id}`,
       { method: 'DELETE' }
     );
     if (res.ok) {
