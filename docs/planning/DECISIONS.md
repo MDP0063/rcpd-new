@@ -290,3 +290,5 @@ Die folgenden Begriffe dürfen nicht als Synonyme behandelt werden:
 - Für die Rekonstruktionsgrenzen gilt `RECONSTRUCTION-NOTES.md`.
 
 Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie nicht durch eine allgemeine Formulierung an anderer Stelle als beschlossen interpretiert werden. Bei einem echten Widerspruch gilt die ausdrücklich bestätigte spätere Entscheidung des Projektinhabers; der Widerspruch muss dokumentiert und aufgelöst werden.
+
+- **BESCHLOSSEN – Veröffentlichungsberechtigung Option A (06.11.2026):** Dieselbe Person, die einen Entwurf mit entsprechender bestehender Berechtigung angelegt oder bearbeitet hat, darf ihn selbst bewusst veröffentlichen. Kein verpflichtendes Vier-Augen-Prinzip und keine zweite freigebende Person. Admin und Colonel behalten ihre bestehende übergreifende Verwaltungsbefugnis; weitere Rollen handeln nur innerhalb ihrer zugewiesenen Berechtigungen. Veröffentlichung bleibt eine separate, ausdrücklich ausgelöste Aktion.
