@@ -150,7 +150,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   });
 
   const currentModule =
-    filteredModules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
+    modules.find(m => m.id === activeModuleId) || filteredModules[0] || null;
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
   const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
@@ -547,7 +547,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   Noch keine Lehrbücher oder Dokumente hinterlegt
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
-                  Als Admin oder Colonel kannst du PDF-Lehrbücher, externe Dokumente oder Code-Module jederzeit über die Schaltfläche hinzufügen.
+                  In der Lernbibliothek sind derzeit keine Materialien hinterlegt.
                 </p>
               </div>
             </div>
@@ -608,7 +608,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} aria-controls="academy-material-navigation" className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
+                        <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                           {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
                         </button>
                       </div>
