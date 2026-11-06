@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -189,6 +189,130 @@ export class AcademyRepository {
           !version.publishedIso || !version.publishedByUid) throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
       await tx.create('academy_program_versions', versionId, version);
       await tx.update('academy_programs', programId, nextMaster);
+    });
+  }
+  async startCourseParticipation(userUid: string, courseId: string, now: string): Promise<AcademyCourseParticipationDoc> {
+    if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
+    const participationId = `participation_${encodeURIComponent(userUid)}_${encodeURIComponent(courseId)}`;
+    return this.runTransaction(async tx => {
+      const master = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(master));
+      if (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId) {
+        throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
+      }
+      const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId);
+      if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+      assertValid(validateCourseVersion(courseId, version));
+      const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+      if (existing) throw new Error('ACADEMY_PARTICIPATION_ALREADY_EXISTS');
+      const participation: AcademyCourseParticipationDoc = {
+        id: participationId, userUid, courseId, courseVersionId: version.id,
+        status: 'in_progress', startedIso: now, lastActivityIso: now,
+        createdIso: now, updatedIso: now
+      };
+      assertValid(validateCourseParticipation(participation));
+      await tx.create('academy_course_participations', participation.id, participation);
+      return participation;
+    });
+  }
+  async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
+    return this.adapter.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+  }
+  async listOwnCourseParticipations(userUid: string): Promise<AcademyCourseParticipationDoc[]> {
+    if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
+    return this.adapter.list<AcademyCourseParticipationDoc>('academy_course_participations', {
+      where: [{ field: 'userUid', value: userUid }], limit: 1000
+    });
+  }
+  async listCourseParticipations(courseId: string): Promise<AcademyCourseParticipationDoc[]> {
+    if (!courseId.trim()) throw new Error('ACADEMY_COURSE_REQUIRED');
+    return this.adapter.list<AcademyCourseParticipationDoc>('academy_course_participations', {
+      where: [{ field: 'courseId', value: courseId }], limit: 1000
+    });
+  }
+  async listParticipationEvidence(participationId: string): Promise<AcademyProgressEvidenceDoc[]> {
+    return this.adapter.list<AcademyProgressEvidenceDoc>('academy_progress_evidence', {
+      where: [{ field: 'participationId', value: participationId }], limit: 1000
+    });
+  }
+  async recordProgressEvidence(
+    participationId: string,
+    evidence: AcademyProgressEvidenceDoc,
+    actorUid: string,
+    instructorAuthorized: boolean
+  ): Promise<{ participation: AcademyCourseParticipationDoc; evidence: AcademyProgressEvidenceDoc }> {
+    if (!actorUid.trim() || evidence.recordedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
+    assertValid(validateProgressEvidence(evidence));
+    const expectedEvidenceId = `evidence_${encodeURIComponent(participationId)}_${encodeURIComponent(evidence.requirementId)}`;
+    if (evidence.id !== expectedEvidenceId || evidence.participationId !== participationId) throw new Error('ACADEMY_PROGRESS_EVIDENCE_ID_INVALID');
+    return this.runTransaction(async tx => {
+      const participation = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+      if (!participation) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseParticipation(participation));
+      if (participation.status !== 'in_progress') throw new Error('ACADEMY_PARTICIPATION_NOT_ACTIVE');
+      const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
+      if (!version || version.courseId !== participation.courseId) throw new Error('ACADEMY_PINNED_VERSION_MISSING');
+      const requirement = version.completionRequirements.find(item => item.id === evidence.requirementId);
+      if (!requirement) throw new Error('ACADEMY_COMPLETION_REQUIREMENT_NOT_FOUND');
+      if (requirement.type !== evidence.evidenceType || requirement.targetId !== evidence.sourceId) {
+        throw new Error('ACADEMY_PROGRESS_EVIDENCE_REQUIREMENT_MISMATCH');
+      }
+      if (requirement.type === 'required_assessment') throw new Error('ACADEMY_EVIDENCE_EXTERNAL_SOURCE_REQUIRED');
+      const participantSelfEvidence = ['required_chapter', 'required_material', 'accepted_self_confirmation'].includes(requirement.type);
+      const instructorEvidence = ['practical_task', 'instructor_confirmation'].includes(requirement.type);
+      if (participantSelfEvidence && participation.userUid !== actorUid) throw new Error('ACADEMY_EVIDENCE_ACTOR_FORBIDDEN');
+      if (instructorEvidence && !instructorAuthorized) throw new Error('ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED');
+      const existing = await tx.get<AcademyProgressEvidenceDoc>('academy_progress_evidence', evidence.id);
+      if (existing) throw new Error('ACADEMY_PROGRESS_EVIDENCE_ALREADY_EXISTS');
+      const previousEvidence = await tx.list<AcademyProgressEvidenceDoc>('academy_progress_evidence', {
+        where: [{ field: 'participationId', value: participationId }], limit: 1000
+      });
+      const completedRequirements = new Set(previousEvidence.map(item => item.requirementId));
+      completedRequirements.add(evidence.requirementId);
+      const required = version.completionRequirements.filter(item => item.required);
+      const isComplete = required.length > 0 && required.every(item => completedRequirements.has(item.id));
+      const nextParticipation: AcademyCourseParticipationDoc = {
+        ...participation,
+        status: isComplete ? 'completed' : 'in_progress',
+        lastActivityIso: evidence.recordedIso,
+        updatedIso: evidence.recordedIso,
+        ...(isComplete ? { completedIso: evidence.recordedIso } : {})
+      };
+      assertValid(validateCourseParticipation(nextParticipation));
+      await tx.create('academy_progress_evidence', evidence.id, evidence);
+      await tx.update('academy_course_participations', participationId, nextParticipation);
+      return { participation: nextParticipation, evidence };
+    });
+  }
+  async correctCourseParticipation(
+    participationId: string,
+    correction: AcademyCompletionCorrectionDoc,
+    expectedStatus: 'in_progress' | 'completed'
+  ): Promise<AcademyCourseParticipationDoc> {
+    assertValid(validateCompletionCorrection(correction));
+    if (correction.participationId !== participationId || correction.previousStatus !== expectedStatus) {
+      throw new Error('ACADEMY_COMPLETION_CORRECTION_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      if (current.status !== expectedStatus || !['in_progress', 'completed'].includes(current.status)) {
+        throw new Error('ACADEMY_COMPLETION_CORRECTION_CONFLICT');
+      }
+      if (correction.correctedStatus === current.status) throw new Error('ACADEMY_COMPLETION_CORRECTION_NOOP');
+      const next: AcademyCourseParticipationDoc = {
+        ...current,
+        status: correction.correctedStatus,
+        updatedIso: correction.correctedIso,
+        ...(correction.correctedStatus === 'completed'
+          ? { completedIso: correction.correctedIso }
+          : { completedIso: undefined })
+      };
+      assertValid(validateCourseParticipation(next));
+      await tx.create('academy_completion_corrections', correction.id, correction);
+      await tx.update('academy_course_participations', participationId, next);
+      return next;
     });
   }
   async listOwnPrivateNotes(ownerUid: string): Promise<AcademyPrivateNoteDoc[]> {
