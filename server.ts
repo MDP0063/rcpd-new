@@ -30,6 +30,12 @@ import {
   type ExamDocument
 } from './server/examRepository.ts';
 import { createLegacyVerificationDoc } from './server/examLegacy.ts';
+import { createAcademyApiRouter } from './server/academyApi.ts';
+import {
+  createFirestoreAcademyRepository,
+  createJsonAcademyRepository,
+  type AcademyRepository
+} from './server/academyRepository.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
 import { createExamDraft, getExamWorkshopDefinitionHash, publishExamDraft, updateExamDraft } from './server/examWorkshop.ts';
 import { canAccessExamWorkshopExam, canRequestExamWorkshopAccess, examWorkshopPublicationRequiresApproval, hasExamWorkshopAccess, resolveExamWorkshopActor } from './server/examWorkshopAccess.ts';
@@ -154,6 +160,7 @@ const DB_FILE = path.join(DATA_DIR, 'portal-db-v3.json');
 // Mit Firestore liegt der Zustand im Speicher des Servers und wird gebündelt nach Firestore geschrieben.
 let store: FirestoreStore | null = null;
 let examRepository: ExamRepository | null = null;
+let academyRepository: AcademyRepository | null = null;
 let examMaintenanceActive = false;
 let examMaintenanceOperation: 'backup' | 'restore' | 'migration' | null = null;
 let examRestoreInProgress = false;
@@ -952,6 +959,9 @@ async function startServer() {
   examRepository = store
     ? createFirestoreExamRepository(store.getDatabase())
     : createJsonExamRepository(DATA_DIR);
+  academyRepository = store
+    ? createFirestoreAcademyRepository(store.getDatabase())
+    : createJsonAcademyRepository(DATA_DIR);
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -1132,6 +1142,15 @@ async function startServer() {
       next(error);
     }
   });
+
+  if (!academyRepository) throw new Error('ACADEMY_REPOSITORY_NOT_INITIALIZED');
+  app.use('/api/academy', createAcademyApiRouter(
+    academyRepository,
+    uid => {
+      const account = loadDatabase().accounts.find(item => item.uid === uid);
+      return account ? { uid: account.uid, role: account.publicProfile.role } : null;
+    }
+  ));
 
   // ==========================================================================
   // ADMIN EXAM WORKSHOP API — ausschließlich für den Admin-Account
