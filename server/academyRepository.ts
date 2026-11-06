@@ -22,10 +22,13 @@ export class AcademyRepository {
     return this.adapter.runTransaction(operation);
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
+    if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocument(collection, id, document);
     return this.runTransaction(tx => tx.create(collection, id, document));
   }
   async update<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
+    if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections') throw new Error('ACADEMY_DOCUMENT_APPEND_ONLY');
+    if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocument(collection, id, document);
     return this.runTransaction(tx => tx.update(collection, id, document));
   }
