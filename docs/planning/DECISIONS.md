@@ -320,7 +320,7 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 
 - PR #59 hat die zentrale dynamische Kategorienverwaltung geliefert und ist gemergt.
 - PR #60 hat die zentrale dynamische Dokumenttypenverwaltung geliefert und ist gemergt. Beide kontrollierten Listen bleiben voneinander getrennt und beginnen ohne vorgegebene Werte.
-- Der Branch `feature/academy-versioned-text-code-materials` setzt die erste versionierte Materialverwaltung für Markdown und gespeicherten Code um. Er führt keine Codeausführung und keine PDF-/Dateiablage ein.
+- Draft-PR #61 auf Branch `feature/academy-versioned-text-code-materials` setzt die erste versionierte Materialverwaltung für Markdown und gespeicherten Code um. Er führt keine Codeausführung und keine PDF-/Dateiablage ein.
 - Die Materialstruktur trennt Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Materialversion. Das Speichern eines Entwurfs veröffentlicht nicht; eine ausdrückliche Veröffentlichung erzeugt einen neuen Snapshot. Kursreferenzen bleiben an konkrete `materialId`-/`materialVersionId`-Paare gebunden.
 - Die neue Verwaltung nutzt die bestehende Kurszuständigkeit getrennt vom Materialcode. Kursverantwortliche veröffentlichen im zugewiesenen Bereich selbst; Archivierung bleibt Admin/Colonel vorbehalten. Der Teilnehmer-Reader und die Materialauswahl im Kurseditor sind noch nicht Teil dieses Implementierungsschritts.
 
