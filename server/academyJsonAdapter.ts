@@ -22,7 +22,9 @@ class JsonTransaction implements AcademyTransaction {
   }
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
     this.canRead(); assertAcademyQuery(collection, query);
-    return clone(Object.values(this.state.collections[collection]).filter(doc => matches(doc, query)).slice(0, query.limit ?? 1000)) as T[];
+    const values = Object.values(this.state.collections[collection]).filter(doc => matches(doc, query));
+    if (query.orderBy) values.sort((a, b) => { const left=(a as any)[query.orderBy!], right=(b as any)[query.orderBy!]; const cmp=typeof left==='number'&&typeof right==='number'?left-right:String(left??'').localeCompare(String(right??'')); return query.orderDirection==='desc'?-cmp:cmp; });
+    const offset=query.offset??0; return clone(values.slice(offset,offset+(query.limit??1000))) as T[];
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
     assertAcademyDocument(collection, id, document); const key = keyOf(id);
@@ -88,7 +90,11 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
     assertAcademyDocumentId(id); return this.exclusive(async () => { const state = await this.read(); const doc = state.collections[collection][keyOf(id)]; return doc ? clone(doc) as T : null; });
   }
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
-    assertAcademyQuery(collection, query); return this.exclusive(async () => clone(Object.values((await this.read()).collections[collection]).filter(doc => matches(doc, query)).slice(0, query.limit ?? 1000)) as T[]);
+    assertAcademyQuery(collection, query); return this.exclusive(async () => {
+      const values=Object.values((await this.read()).collections[collection]).filter(doc=>matches(doc,query));
+      if(query.orderBy) values.sort((a,b)=>{const left=(a as any)[query.orderBy!],right=(b as any)[query.orderBy!];const cmp=typeof left==='number'&&typeof right==='number'?left-right:String(left??'').localeCompare(String(right??''));return query.orderDirection==='desc'?-cmp:cmp;});
+      const offset=query.offset??0;return clone(values.slice(offset,offset+(query.limit??1000))) as T[];
+    });
   }
   async runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.exclusive(async () => {

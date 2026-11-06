@@ -20,6 +20,8 @@ interface MaterialDetailResponse {
   draft: AcademyMaterialDraftDoc | null;
   currentVersion: AcademyMaterialVersionDoc | null;
   versions: AcademyMaterialVersionSummary[];
+  hasMoreVersions?: boolean;
+  nextVersionOffset?: number | null;
 }
 
 type FormErrors = Partial<Record<
@@ -93,6 +95,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [draft, setDraft] = useState<AcademyMaterialDraftDoc | null>(null);
   const [currentVersion, setCurrentVersion] = useState<AcademyMaterialVersionDoc | null>(null);
   const [versions, setVersions] = useState<AcademyMaterialVersionSummary[]>([]);
+  const [hasMoreVersions, setHasMoreVersions] = useState(false);
+  const [nextVersionOffset, setNextVersionOffset] = useState<number | null>(null);
+  const [loadingMoreVersions, setLoadingMoreVersions] = useState(false);
   const [responsibleCourseCode, setResponsibleCourseCode] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -137,6 +142,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setDraft(null);
     setCurrentVersion(null);
     setVersions([]);
+    setHasMoreVersions(false); setNextVersionOffset(null); setLoadingMoreVersions(false);
     setResponsibleCourseCode('');
     setTitle('');
     setDescription('');
@@ -155,6 +161,16 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     resetEditor();
   };
 
+  const loadMoreVersions = async () => {
+    if (!editingMaster || nextVersionOffset === null || loadingMoreVersions) return;
+    setLoadingMoreVersions(true);
+    const response = await apiFetch<Pick<MaterialDetailResponse, 'versions' | 'hasMoreVersions' | 'nextVersionOffset'>>(API_ENDPOINTS.ACADEMY_MATERIAL(editingMaster.id) + '?offset=' + nextVersionOffset);
+    setLoadingMoreVersions(false);
+    if (!response.ok || !response.data) { onStatusToast(messageFor(response.error)); return; }
+    setVersions(items => [...items, ...response.data!.versions.filter(version => !items.some(existing => existing.id === version.id))]);
+    setHasMoreVersions(Boolean(response.data.hasMoreVersions)); setNextVersionOffset(response.data.nextVersionOffset ?? null);
+  };
+
   const openMaterial = async (materialId: string) => {
     if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein anderes Material öffnen?')) return;
     setBusy(true);
@@ -169,6 +185,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setDraft(loadedDraft);
     setCurrentVersion(loadedCurrent);
     setVersions(loadedVersions);
+    setHasMoreVersions(Boolean(response.data.hasMoreVersions)); setNextVersionOffset(response.data.nextVersionOffset ?? null);
     setResponsibleCourseCode(master.responsibleCourseCode || '');
     setTitle(loadedDraft?.title || loadedCurrent?.title || '');
     setDescription(loadedDraft?.description || '');
@@ -443,9 +460,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Versionshistorie</p>
                   <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
                     {versions.map(version => (
-                      <li key={version.id}>v{version.versionNumber} · {formatDate(version.publishedIso)}</li>
+                      <li key={version.id}>v{version.versionNumber} · {version.title} · {formatDate(version.publishedIso)}</li>
                     ))}
                   </ul>
+                  {hasMoreVersions && <button type="button" className={secondary + ' mt-3'} onClick={loadMoreVersions} disabled={loadingMoreVersions}>{loadingMoreVersions ? 'Weitere Versionen werden geladen …' : 'Ältere Versionen laden'}</button>}
                 </div>
               )}
             </div>

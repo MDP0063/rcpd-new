@@ -15,6 +15,9 @@ export function assertAcademyQuery(collection: AcademyCollection, query: Academy
   if (!query || typeof query !== 'object' || Array.isArray(query) || (query.where !== undefined && !Array.isArray(query.where))) throw new Error('ACADEMY_QUERY_INVALID');
   if (collection !== 'academy_courses' && collection !== 'academy_programs' && collection !== 'academy_material_categories' && collection !== 'academy_material_document_types' && collection !== 'academy_materials' && (!query.where || query.where.length === 0)) throw new Error('ACADEMY_QUERY_FILTER_REQUIRED');
   if (query.limit !== undefined && (!Number.isSafeInteger(query.limit) || query.limit < 1 || query.limit > 1000)) throw new Error('ACADEMY_QUERY_LIMIT_INVALID');
+  if (query.offset !== undefined && (!Number.isSafeInteger(query.offset) || query.offset < 0 || query.offset > 1_000_000)) throw new Error('ACADEMY_QUERY_OFFSET_INVALID');
+  if (query.orderBy !== undefined && (typeof query.orderBy !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/.test(query.orderBy))) throw new Error('ACADEMY_QUERY_ORDER_INVALID');
+  if (query.orderDirection !== undefined && query.orderDirection !== 'asc' && query.orderDirection !== 'desc') throw new Error('ACADEMY_QUERY_ORDER_INVALID');
   for (const filter of query.where ?? []) {
     if (!filter || typeof filter.field !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/.test(filter.field)) throw new Error('ACADEMY_QUERY_FIELD_INVALID');
     const type = typeof filter.value;

@@ -454,22 +454,19 @@ export function createAcademyApiRouter(
       if (!canManageMaterialCourse(actor, master.responsibleCourseCode)) {
         res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
       }
+      const rawOffset = req.query.offset;
+      const offset = rawOffset === undefined ? 0 : Number(rawOffset);
+      if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) { res.status(400).json({ error: 'ACADEMY_MATERIAL_HISTORY_OFFSET_INVALID' }); return; }
+      const pageSize = 50;
       const [draft, versions] = await Promise.all([
         repository.getMaterialDraft(master.id),
-        repository.list<AcademyMaterialVersionDoc>('academy_material_versions', {
-          where: [{ field: 'materialId', value: master.id }], limit: 100
-        })
+        repository.list<AcademyMaterialVersionDoc>('academy_material_versions', { where: [{ field: 'materialId', value: master.id }], orderBy: 'versionNumber', orderDirection: 'desc', offset, limit: pageSize + 1 })
       ]);
-      versions.sort((a, b) => b.versionNumber - a.versionNumber);
-      const currentVersion = master.currentPublishedVersionId
-        ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId)
-        : null;
-      const versionSummaries: AcademyMaterialVersionSummary[] = versions.map(version => ({
-        id: version.id, materialId: version.materialId, versionNumber: version.versionNumber,
-        title: version.title, contentFormat: version.contentFormat,
-        publishedIso: version.publishedIso, publishedByUid: version.publishedByUid
-      }));
-      res.json({ master, draft, currentVersion, versions: versionSummaries });
+      const hasMoreVersions = versions.length > pageSize;
+      const page = versions.slice(0, pageSize);
+      const currentVersion = master.currentPublishedVersionId ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId) : null;
+      const versionSummaries: AcademyMaterialVersionSummary[] = page.map(version => ({ id: version.id, materialId: version.materialId, versionNumber: version.versionNumber, title: version.title, contentFormat: version.contentFormat, publishedIso: version.publishedIso, publishedByUid: version.publishedByUid }));
+      res.json({ master, draft, currentVersion, versions: versionSummaries, hasMoreVersions, nextVersionOffset: hasMoreVersions ? offset + pageSize : null });
     } catch (error) { fail(res, error, next); }
   });
 
