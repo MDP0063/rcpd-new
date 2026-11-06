@@ -301,3 +301,6 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 
 
 - **BESCHLOSSEN am 06.11.2026 – PDF-Uploadgrenze:** maximal 15 MB pro ursprünglicher PDF-Datei (Rohdatei, vor Base64-Kodierung). Serverseitige Prüfung ist verbindlich; Request-Limit und Hosting müssen Base64-/JSON-Overhead berücksichtigen.
+
+
+- **BESCHLOSSEN am 06.11.2026 – PDF-Sicherheitsprüfung Option A:** echte PDF-Signatur und strukturelle Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare sowie passwortgeschützte/verschlüsselte PDFs ablehnen. Malwareprüfung muss vor Veröffentlichung erfolgreich sein. Während Prüfung bleibt die Datei privat; bei negativem Ergebnis, Scanner-Ausfall oder technischem Prüfproblem keine Veröffentlichung (Fail-closed). Parser/Scanner benötigen Ressourcenlimits und isolierte Verarbeitung. Konkrete Parser-, Scanner-, Quarantäne- und Hostingarchitektur bleibt technische Prüfarbeit. Keine Implementierungsfreigabe.
