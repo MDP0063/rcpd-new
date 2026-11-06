@@ -184,33 +184,33 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(duplicateDocumentType.status, 409);
 
-    const renamedDocumentType = await request('/api/academy/materials/document-types/${documentTypeId}', colonel, {
+    const renamedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '', colonel, {
       method: 'PUT', ...json({ expectedRevision: 1, name: 'Dienstanweisung', description: 'Aktualisierte Beschreibung.' })
     });
     assert.equal(renamedDocumentType.status, 200, JSON.stringify(renamedDocumentType.body));
     assert.equal(renamedDocumentType.body!.documentType.id, documentTypeId);
     assert.equal(renamedDocumentType.body!.documentType.revision, 2);
 
-    const staleDocumentTypeEdit = await request('/api/academy/materials/document-types/${documentTypeId}', admin, {
+    const staleDocumentTypeEdit = await request('/api/academy/materials/document-types/' + documentTypeId + '', admin, {
       method: 'PUT', ...json({ expectedRevision: 1, name: 'Veraltete Änderung' })
     });
     assert.equal(staleDocumentTypeEdit.status, 409);
 
-    const archivedDocumentType = await request('/api/academy/materials/document-types/${documentTypeId}/archive', admin, {
+    const archivedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '/archive', admin, {
       method: 'POST', ...json({ expectedRevision: 2 })
     });
     assert.equal(archivedDocumentType.status, 200);
     assert.equal(archivedDocumentType.body!.documentType.status, 'archived');
     assert.equal(archivedDocumentType.body!.documentType.archivedByUid, 'academy-admin');
 
-    const restoredDocumentType = await request('/api/academy/materials/document-types/${documentTypeId}/restore', colonel, {
+    const restoredDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '/restore', colonel, {
       method: 'POST', ...json({ expectedRevision: 3 })
     });
     assert.equal(restoredDocumentType.status, 200);
     assert.equal(restoredDocumentType.body!.documentType.status, 'active');
     assert.equal(restoredDocumentType.body!.documentType.id, documentTypeId);
 
-    const deletedDocumentType = await request('/api/academy/materials/document-types/${documentTypeId}', admin, {
+    const deletedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '', admin, {
       method: 'DELETE', ...json({ expectedRevision: 4 })
     });
     assert.equal(deletedDocumentType.status, 204);
