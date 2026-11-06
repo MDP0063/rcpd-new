@@ -32,13 +32,13 @@ class FirestoreTransaction implements AcademyTransaction {
     return snap.docs.map(item => { const doc = fromSnapshot<T>(collection, item); if (!doc) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID'); this.cache.set(this.key(collection, doc.id), clone(doc)); return doc; });
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
-    assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
+    assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
     if (!this.cache.has(key)) { const existing = await this.get(collection, id); if (existing) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS'); }
     else if (this.cache.get(key)) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
     this.transaction.create(this.database.collection(collection).doc(storageId(id)), clone(document)); this.cache.set(key, clone(document)); this.hasWrites = true;
   }
   async update<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
-    assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
+    assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
     let existing = this.cache.get(key);
     if (!this.cache.has(key)) { if (this.hasWrites) throw new Error('ACADEMY_TRANSACTION_READ_AFTER_WRITE'); existing = await this.get(collection, id); }
     if (!existing) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
