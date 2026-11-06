@@ -274,6 +274,23 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(publishedProgram.status, 201, JSON.stringify(publishedProgram.body));
 
+    const programStarted = await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' });
+    assert.equal(programStarted.status, 201, JSON.stringify(programStarted.body));
+    assert.equal(programStarted.body!.participation.programVersionId, publishedProgram.body!.version.id);
+    assert.equal(programStarted.body!.participation.requiredCoursePins.length, 1);
+    assert.equal(programStarted.body!.participation.requiredCoursePins[0].courseVersionId, published.body!.version.id);
+    assert.equal(programStarted.body!.participation.requiredCoursePins[0].courseParticipationId, participationId);
+    assert.equal((await request('/api/academy/program-participations', officer)).body!.participations.length, 1);
+    assert.equal((await request('/api/academy/program-participations', admin)).body!.participations.length, 0);
+    const programDetail = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
+    assert.equal(programDetail.status, 200, JSON.stringify(programDetail.body));
+    assert.equal(programDetail.body!.progress.requiredCourseCount, 1);
+    assert.equal(programDetail.body!.progress.completedRequiredCourseCount, 1);
+    assert.equal(programDetail.body!.progress.completionPercentage, 100);
+    assert.equal(programDetail.body!.progress.status, 'completed');
+    assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
+    assert.equal((await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' })).status, 409);
+
     const adminNote = await request('/api/academy/notes', admin, {
       method: 'POST',
       ...json({ ownerUid: 'academy-officer', materialId: 'manual-1', materialVersionId: 'manual-1__v1', kind: 'note', content: 'Admin private text' })

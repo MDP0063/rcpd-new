@@ -295,3 +295,19 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
   }
   return { ok: true };
 }
+
+export function validateProgramParticipation(participation: AcademyProgramParticipationDoc): AcademyValidationResult {
+  if (!isRecord(participation) || !isNonEmpty(participation.id) || !isNonEmpty(participation.userUid) ||
+      !isNonEmpty(participation.programId) || !isNonEmpty(participation.programVersionId) ||
+      !isNonEmpty(participation.createdIso) || !isNonEmpty(participation.updatedIso) ||
+      !Array.isArray(participation.requiredCoursePins) ||
+      !participation.requiredCoursePins.every(pin => isRecord(pin) && isNonEmpty(pin.courseId) &&
+        isNonEmpty(pin.courseVersionId) && isNonEmpty(pin.courseParticipationId))) {
+    return invalid('ACADEMY_PROGRAM_PARTICIPATION_INVALID', 'Programmteilnahme und alle gepinnten Pflichtkursversionen müssen gültig referenziert sein.');
+  }
+  if (new Set(participation.requiredCoursePins.map(pin => pin.courseId)).size !== participation.requiredCoursePins.length ||
+      new Set(participation.requiredCoursePins.map(pin => pin.courseParticipationId)).size !== participation.requiredCoursePins.length) {
+    return invalid('ACADEMY_PROGRAM_PARTICIPATION_DUPLICATE_PIN', 'Ein Pflichtkurs und eine Kursteilnahme dürfen innerhalb einer Programmteilnahme nur einmal gepinnt sein.');
+  }
+  return { ok: true };
+}

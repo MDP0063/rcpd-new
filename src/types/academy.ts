@@ -186,11 +186,19 @@ export interface AcademyCompletionCorrectionDoc {
   invalidatedEvidenceIds?: string[];
 }
 
+export interface AcademyProgramCoursePin {
+  courseId: string;
+  courseVersionId: string;
+  courseParticipationId: string;
+}
+
 export interface AcademyProgramParticipationDoc {
   id: string;
   userUid: string;
   programId: string;
   programVersionId: string;
+  /** Required courses only; each pin binds the program to an exact course version and participation. */
+  requiredCoursePins: AcademyProgramCoursePin[];
   createdIso: string;
   updatedIso: string;
 }

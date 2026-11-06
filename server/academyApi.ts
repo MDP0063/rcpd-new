@@ -33,7 +33,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED')) return 409;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
   if (code.startsWith('ACADEMY_')) return 400;
@@ -314,6 +314,61 @@ export function createAcademyApiRouter(
       await repository.publishProgramVersion(master.id, version, nextMaster, expected, actor.uid);
       await recordAudit(actor.uid, 'Academy-Programmversion veröffentlicht', master.code, `Version ${version.versionNumber} veröffentlicht.`);
       res.status(201).json({ master: nextMaster, version });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/programs/:programId/participations', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.startProgramParticipation(actor.uid, req.params.programId, new Date().toISOString());
+      await recordAudit(actor.uid, 'Academy-Programmteilnahme begonnen', req.params.programId,
+        `Programmversion ${participation.programVersionId} begonnen; ${participation.requiredCoursePins.length} Pflichtkursversion(en) gepinnt.`, 'ACADEMY_PROGRESS');
+      res.status(201).json({ participation });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/program-participations', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participations = await repository.listOwnProgramParticipations(actor.uid);
+      res.json({ participations });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/program-participations/:participationId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.getProgramParticipation(req.params.participationId);
+      if (!participation || participation.userUid !== actor.uid) {
+        res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return;
+      }
+      const version = await repository.get<AcademyProgramVersionDoc>('academy_program_versions', participation.programVersionId);
+      if (!version || version.programId !== participation.programId) {
+        res.status(404).json({ error: 'ACADEMY_PINNED_VERSION_MISSING' }); return;
+      }
+      const requiredCourses = await Promise.all(participation.requiredCoursePins.map(async pin => {
+        const [courseVersion, courseParticipation] = await Promise.all([
+          repository.get<AcademyCourseVersionDoc>('academy_course_versions', pin.courseVersionId),
+          repository.getCourseParticipation(pin.courseParticipationId)
+        ]);
+        if (!courseVersion || courseVersion.courseId !== pin.courseId || !courseParticipation ||
+            courseParticipation.userUid !== actor.uid || courseParticipation.courseId !== pin.courseId ||
+            courseParticipation.courseVersionId !== pin.courseVersionId) {
+          throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
+        }
+        return { pin, version: courseVersion, participation: courseParticipation };
+      }));
+      const completedCount = requiredCourses.filter(item => item.participation.status === 'completed').length;
+      const progress = {
+        requiredCourseCount: requiredCourses.length,
+        completedRequiredCourseCount: completedCount,
+        completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
+        status: completedCount === requiredCourses.length ? 'completed' : 'in_progress'
+      };
+      res.json({ participation, version, requiredCourses, progress });
     } catch (error) { fail(res, error, next); }
   });
 

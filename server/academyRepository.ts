@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -214,6 +214,77 @@ export class AcademyRepository {
       assertValid(validateCourseParticipation(participation));
       await tx.create('academy_course_participations', participation.id, participation);
       return participation;
+    });
+  }
+  async startProgramParticipation(userUid: string, programId: string, now: string): Promise<AcademyProgramParticipationDoc> {
+    if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
+    const participationId = `program_participation_${encodeURIComponent(userUid)}_${encodeURIComponent(programId)}`;
+    return this.runTransaction(async tx => {
+      const program = await tx.get<AcademyProgramMasterDoc>('academy_programs', programId);
+      if (!program) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateProgramMaster(program));
+      if (program.publicationStatus !== 'published' || program.availability !== 'available' || !program.currentPublishedVersionId) {
+        throw new Error('ACADEMY_PROGRAM_NOT_STARTABLE');
+      }
+      const version = await tx.get<AcademyProgramVersionDoc>('academy_program_versions', program.currentPublishedVersionId);
+      if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+      assertValid(validateProgramVersion(programId, version));
+      const existingProgramParticipation = await tx.get<AcademyProgramParticipationDoc>('academy_program_participations', participationId);
+      if (existingProgramParticipation) throw new Error('ACADEMY_PROGRAM_PARTICIPATION_ALREADY_EXISTS');
+
+      const planned: Array<{ participation: AcademyCourseParticipationDoc; isNew: boolean }> = [];
+      const pins: AcademyProgramCoursePin[] = [];
+      for (const reference of version.courseReferences.filter(item => item.requirement === 'required')) {
+        const course = await tx.get<AcademyCourseMasterDoc>('academy_courses', reference.courseId);
+        if (!course) throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_MISSING');
+        assertValid(validateCourseMaster(course));
+        if (course.publicationStatus !== 'published' || course.availability !== 'available' || !course.currentPublishedVersionId) {
+          throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_NOT_STARTABLE');
+        }
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', course.currentPublishedVersionId);
+        if (!courseVersion) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+        assertValid(validateCourseVersion(course.id, courseVersion));
+        const courseParticipationId = `participation_${encodeURIComponent(userUid)}_${encodeURIComponent(course.id)}`;
+        const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', courseParticipationId);
+        let courseParticipation: AcademyCourseParticipationDoc;
+        let isNew = false;
+        if (existing) {
+          assertValid(validateCourseParticipation(existing));
+          if (existing.courseVersionId !== courseVersion.id) throw new Error('ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT');
+          if (existing.status === 'voluntarily_ended' || existing.status === 'administratively_ended') {
+            throw new Error('ACADEMY_PROGRAM_COURSE_PARTICIPATION_ENDED');
+          }
+          courseParticipation = existing;
+        } else {
+          courseParticipation = {
+            id: courseParticipationId, userUid, courseId: course.id, courseVersionId: courseVersion.id,
+            status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
+          };
+          assertValid(validateCourseParticipation(courseParticipation));
+          isNew = true;
+        }
+        planned.push({ participation: courseParticipation, isNew });
+        pins.push({ courseId: course.id, courseVersionId: courseVersion.id, courseParticipationId });
+      }
+      const participation: AcademyProgramParticipationDoc = {
+        id: participationId, userUid, programId, programVersionId: version.id,
+        requiredCoursePins: pins, createdIso: now, updatedIso: now
+      };
+      assertValid(validateProgramParticipation(participation));
+      for (const item of planned) if (item.isNew) {
+        await tx.create('academy_course_participations', item.participation.id, item.participation);
+      }
+      await tx.create('academy_program_participations', participation.id, participation);
+      return participation;
+    });
+  }
+  async getProgramParticipation(participationId: string): Promise<AcademyProgramParticipationDoc | null> {
+    return this.adapter.get<AcademyProgramParticipationDoc>('academy_program_participations', participationId);
+  }
+  async listOwnProgramParticipations(userUid: string): Promise<AcademyProgramParticipationDoc[]> {
+    if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
+    return this.adapter.list<AcademyProgramParticipationDoc>('academy_program_participations', {
+      where: [{ field: 'userUid', value: userUid }], limit: 1000
     });
   }
   async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
