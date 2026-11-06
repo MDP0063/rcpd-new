@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
-import type { AcademyCourseMasterDoc, AcademyCourseVersionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
   const directory = await mkdtemp(join(tmpdir(), 'academy-repository-'));
@@ -23,11 +23,29 @@ const version: AcademyCourseVersionDoc = {
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
   completionRequirements: [], publishedIso: now, publishedByUid: 'owner-1',
-  createdIso: now, createdByUid: 'owner-1', workingRevision: 1
+  createdIso: now, createdByUid: 'owner-1', workingRevision: 2
 };
 const publishedMaster: AcademyCourseMasterDoc = {
   ...master, publicationStatus: 'published', currentPublishedVersionId: 'course-1__v1',
-  latestVersionNumber: 1, updatedIso: now
+  latestVersionNumber: 1, workingRevision: 2, updatedIso: now
+};
+
+const courseDraft: AcademyCourseDraftDoc = {
+  id: 'course-1', courseId: 'course-1', title: 'Grundlagen', summary: '',
+  learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
+  chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
+  completionRequirements: [], workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
+};
+const programMaster: AcademyProgramMasterDoc = {
+  id: 'program-1', code: 'BASIC-PROGRAM', ownerUid: 'owner-1',
+  publicationStatus: 'draft', availability: 'available',
+  latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
+};
+const programDraft: AcademyProgramDraftDoc = {
+  id: 'program-1', programId: 'program-1', title: 'Grundausbildung', summary: '',
+  learningObjectives: [1, 2, 3].map(n => ({ id: `goal-${n}`, description: `Lernziel ${n}` })),
+  courseReferences: [{ courseId: 'course-1', requirement: 'required', order: 0 }],
+  workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
 };
 
 test('Academy repository creates, reads and filters documents', async () => withRepository(async repository => {
@@ -39,7 +57,8 @@ test('Academy repository creates, reads and filters documents', async () => with
 
 test('course publication atomically stores immutable version and advances master pointer', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.publishCourseVersion(master.id, version, publishedMaster, 1);
+  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2);
   assert.deepEqual(await repository.get('academy_course_versions', version.id), version);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.currentPublishedVersionId, version.id);
   await assert.rejects(repository.update('academy_course_versions', version.id, version), /ACADEMY_DOCUMENT_APPEND_ONLY/);
@@ -47,9 +66,10 @@ test('course publication atomically stores immutable version and advances master
 
 test('concurrent publication of the same version permits exactly one writer', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1);
   const results = await Promise.allSettled([
-    repository.publishCourseVersion(master.id, version, publishedMaster, 1),
-    repository.publishCourseVersion(master.id, version, publishedMaster, 1)
+    repository.publishCourseVersion(master.id, version, publishedMaster, 2),
+    repository.publishCourseVersion(master.id, version, publishedMaster, 2)
   ]);
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
   assert.equal(results.filter(result => result.status === 'rejected').length, 1);
@@ -58,7 +78,8 @@ test('concurrent publication of the same version permits exactly one writer', as
 
 test('stale course revision cannot publish', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await assert.rejects(repository.publishCourseVersion(master.id, version, publishedMaster, 2), /ACADEMY_WORKING_REVISION_CONFLICT/);
+  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  await assert.rejects(repository.publishCourseVersion(master.id, version, publishedMaster, 3), /ACADEMY_WORKING_REVISION_CONFLICT/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
@@ -83,10 +104,11 @@ test('private note repository methods enforce owner isolation', async () => with
 
 test('publication rejects master identity changes and unpublished version metadata', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1);
   const changedOwner = { ...publishedMaster, ownerUid: 'attacker-1' };
-  await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 1), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 2), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   const unpublished = { ...version, publishedIso: undefined, publishedByUid: undefined };
-  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 1), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
@@ -98,4 +120,19 @@ test('generic repository writes cannot bypass typed lifecycle operations', async
   await repository.create('academy_courses', master.id, master);
   await assert.rejects(repository.update('academy_courses', master.id, master), /ACADEMY_MASTER_UPDATE_METHOD_REQUIRED/);
   await assert.rejects(repository.delete('academy_courses', master.id), /ACADEMY_MASTER_ARCHIVE_METHOD_REQUIRED/);
+}));
+
+test('course draft saves persist content and reject stale concurrent revisions', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  assert.deepEqual(await repository.getCourseDraft(master.id), courseDraft);
+  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.workingRevision, 2);
+  await assert.rejects(repository.saveCourseDraft(master.id, courseDraft, 1), /ACADEMY_WORKING_REVISION_CONFLICT/);
+}));
+
+test('program drafts are persisted with optimistic revision checks', async () => withRepository(async repository => {
+  await repository.create('academy_programs', programMaster.id, programMaster);
+  await repository.saveProgramDraft(programMaster.id, programDraft, 1);
+  assert.deepEqual(await repository.getProgramDraft(programMaster.id), programDraft);
+  assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.workingRevision, 2);
 }));
