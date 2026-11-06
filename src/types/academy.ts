@@ -1,0 +1,183 @@
+/**
+ * Fachliche Academy-Domänenmodelle.
+ *
+ * Master-Datensätze enthalten stabile Identität und Lebenszyklussteuerung.
+ * Versionen sind unveränderliche fachliche Snapshots; Teilnahmen pinnen eine
+ * konkrete Kursversion. Persönliche Notizen sind ausschließlich serverseitig
+ * zu speichern und dürfen nie Bestandteil des öffentlichen Portal-State sein.
+ */
+
+export type AcademyPublicationStatus = 'draft' | 'published' | 'archived';
+export type AcademyAvailability = 'available' | 'unavailable';
+export type AcademyParticipationStatus =
+  | 'in_progress'
+  | 'completed'
+  | 'voluntarily_ended'
+  | 'administratively_ended';
+export type AcademyProgramCourseRequirement = 'required' | 'recommended';
+export type AcademyCompletionEvidenceType =
+  | 'required_chapter'
+  | 'required_material'
+  | 'required_assessment'
+  | 'practical_task'
+  | 'instructor_confirmation'
+  | 'accepted_self_confirmation';
+
+export interface AcademyLearningObjective {
+  id: string;
+  description: string;
+}
+
+export interface AcademyCourseMaterialReference {
+  materialId: string;
+  materialVersionId: string;
+  required: boolean;
+  order: number;
+}
+
+export interface AcademyCourseChapter {
+  id: string;
+  title: string;
+  description?: string;
+  materialReferences: AcademyCourseMaterialReference[];
+  required: boolean;
+  order: number;
+}
+
+export interface AcademyCourseCompletionRequirement {
+  id: string;
+  type: AcademyCompletionEvidenceType;
+  targetId: string;
+  required: boolean;
+  description?: string;
+}
+
+export interface AcademyCourseMasterDoc {
+  id: string;
+  code: string;
+  ownerUid: string;
+  publicationStatus: AcademyPublicationStatus;
+  availability: AcademyAvailability;
+  currentPublishedVersionId?: string;
+  latestVersionNumber: number;
+  workingRevision: number;
+  createdIso: string;
+  updatedIso: string;
+  archivedIso?: string;
+  archivedByUid?: string;
+  archiveReason?: string;
+}
+
+export interface AcademyCourseVersionDoc {
+  id: string;
+  courseId: string;
+  versionNumber: number;
+  title: string;
+  summary: string;
+  learningObjectives: AcademyLearningObjective[];
+  chapters: AcademyCourseChapter[];
+  completionRequirements: AcademyCourseCompletionRequirement[];
+  publishedIso?: string;
+  publishedByUid?: string;
+  createdIso: string;
+  createdByUid: string;
+  /** Revision des bearbeiteten Entwurfs; schützt vor Lost Updates. */
+  workingRevision: number;
+}
+
+export interface AcademyProgramCourseReference {
+  courseId: string;
+  requirement: AcademyProgramCourseRequirement;
+  order: number;
+}
+
+export interface AcademyProgramMasterDoc {
+  id: string;
+  code: string;
+  ownerUid: string;
+  publicationStatus: AcademyPublicationStatus;
+  availability: AcademyAvailability;
+  currentPublishedVersionId?: string;
+  latestVersionNumber: number;
+  workingRevision: number;
+  createdIso: string;
+  updatedIso: string;
+  archivedIso?: string;
+  archivedByUid?: string;
+  archiveReason?: string;
+}
+
+export interface AcademyProgramVersionDoc {
+  id: string;
+  programId: string;
+  versionNumber: number;
+  title: string;
+  summary: string;
+  learningObjectives: AcademyLearningObjective[];
+  courseReferences: AcademyProgramCourseReference[];
+  publishedIso?: string;
+  publishedByUid?: string;
+  createdIso: string;
+  createdByUid: string;
+  workingRevision: number;
+}
+
+export interface AcademyCourseParticipationDoc {
+  id: string;
+  userUid: string;
+  courseId: string;
+  courseVersionId: string;
+  status: AcademyParticipationStatus;
+  startedIso?: string;
+  lastActivityIso?: string;
+  completedIso?: string;
+  endedIso?: string;
+  endedByUid?: string;
+  endReason?: string;
+  createdIso: string;
+  updatedIso: string;
+}
+
+export interface AcademyProgressEvidenceDoc {
+  id: string;
+  participationId: string;
+  requirementId: string;
+  evidenceType: AcademyCompletionEvidenceType;
+  sourceId: string;
+  recordedByUid: string;
+  recordedIso: string;
+  details?: string;
+}
+
+export interface AcademyCompletionCorrectionDoc {
+  id: string;
+  participationId: string;
+  previousStatus: AcademyParticipationStatus;
+  correctedStatus: AcademyParticipationStatus;
+  reason: string;
+  actorUid: string;
+  correctedIso: string;
+}
+
+export interface AcademyProgramParticipationDoc {
+  id: string;
+  userUid: string;
+  programId: string;
+  programVersionId: string;
+  createdIso: string;
+  updatedIso: string;
+}
+
+export interface AcademyPrivateNoteDoc {
+  id: string;
+  ownerUid: string;
+  materialId: string;
+  materialVersionId: string;
+  kind: 'note' | 'bookmark';
+  title?: string;
+  content?: string;
+  tags: string[];
+  /** Page/text anchoring intentionally omitted until a stable PDF anchor strategy is selected. */
+  createdIso: string;
+  updatedIso: string;
+}
