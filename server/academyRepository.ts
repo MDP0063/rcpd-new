@@ -24,7 +24,8 @@ function programDraftMatchesVersion(draft: AcademyProgramDraftDoc, version: Acad
     JSON.stringify(draft.courseReferences) === JSON.stringify(version.courseReferences);
 }
 export class AcademyRepository {
-  constructor(private readonly adapter: AcademyStorageAdapter) {}
+  private readonly adapter: AcademyStorageAdapter;
+  constructor(adapter: AcademyStorageAdapter) { this.adapter = adapter; }
   get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocumentId(id); return this.adapter.get<T>(collection, id);
