@@ -54,7 +54,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Academy-Lernbibliothek: noch offene Rollen-/Freigaberegeln, Metadaten/Materialcodes, Dateiprüfung/Uploadgrenzen und Rückzug/Benachrichtigung entscheiden.
+1. Academy-Lernbibliothek: noch offene Rollen für Entwurfspflege/Rückzug/Archivierung, Metadaten/Materialcodes, Dateiprüfung/Uploadgrenzen und Rückzug/Benachrichtigung entscheiden.
 2. Restliche Academy-Fragen und Cross-Module-Abhängigkeiten prüfen.
 3. Alle übrigen Portalmodule anhand des tatsächlichen Bestands systematisch auditieren.
 4. Rollen- und Aufgabenmatrix aus bestehenden Berechtigungen ableiten.
@@ -100,7 +100,7 @@ Die Detail-Spezifikation hält nun fest:
 - `server.ts`: der generische JSON-Parser erlaubt für große API-Anfragen derzeit 25 MB Request-Body. Das ist keine explizite fachliche PDF-Größengrenze; Base64 vergrößert die Übertragungsgröße zusätzlich.
 - Der bestehende Code ist ein technischer Ist-Befund, keine Freigabe zur Implementierung.
 
-**Nächste offene Entscheidung:** Wer darf einen Entwurf veröffentlichen – dieselbe Person mit bestehender Kurscode-Bearbeitungsberechtigung oder zwingend eine zweite berechtigte Person?
+**Weiterer Beschluss am 06.11.2026:** Veröffentlichungsberechtigung Option A. Dieselbe Person darf ihren Entwurf mit der dafür erforderlichen bestehenden Berechtigung selbst bewusst veröffentlichen; kein Vier-Augen-Prinzip. Admin und Colonel behalten übergreifende Verwaltungsbefugnis, weitere Rollen handeln innerhalb ihrer zugewiesenen Berechtigungen.
 
 **UX-/Security-Recherche vom 06.11.2026:**
 - [GOV.UK Design System – File upload](https://design-system.service.gov.uk/components/file-upload/): konkrete Fehlermeldungen für falschen Dateityp, zu große, leere, passwortgeschützte oder nicht hochladbare Dateien; Uploadkomponente und Fehlerzustände.
