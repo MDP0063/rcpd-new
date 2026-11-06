@@ -150,11 +150,39 @@ test('publishing creates immutable snapshots and a changed draft requires a new 
   assert.equal((await repository.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', secondVersion.id))!.materialVersionId, secondVersion.id);
 }));
 
-test('material metadata references protect both master and published snapshots from taxonomy deletion', async () => withRepository(async repository => {
+test('historical material versions keep old taxonomy entries protected after the working draft changes category', async () => withRepository(async repository => {
   await setupMaterialRepository(repository);
+  const nextCategory: AcademyMaterialCategoryDoc = {
+    id: 'category-training', name: 'Training', status: 'active', revision: 1,
+    createdIso: later, createdByUid: 'admin-1', updatedIso: later, updatedByUid: 'admin-1'
+  };
+  const nextDocumentType: AcademyMaterialDocumentTypeDoc = {
+    id: 'type-checklist', name: 'Checkliste', status: 'active', revision: 1,
+    createdIso: later, createdByUid: 'admin-1', updatedIso: later, updatedByUid: 'admin-1'
+  };
+  await repository.createMaterialCategory(nextCategory);
+  await repository.createMaterialDocumentType(nextDocumentType);
   await repository.createMaterialWithDraft(master, draft);
+
+  const firstVersion = version(1, draft, 1);
+  const publishedMaster: AcademyMaterialMasterDoc = {
+    ...master, publicationStatus: 'published', currentPublishedVersionId: firstVersion.id,
+    latestVersionNumber: 1, lastPublishedWorkingRevision: 1, updatedIso: later
+  };
+  await repository.publishMaterialVersion(master.id, firstVersion, publishedMaster, 1, 'admin-1');
+
+  const changedDraft: AcademyMaterialDraftDoc = {
+    ...draft, categoryId: nextCategory.id, documentTypeId: nextDocumentType.id,
+    workingRevision: 2, updatedIso: '2026-11-06T12:06:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveMaterialDraft(master.id, changedDraft, 1, 'admin-1');
+  assert.equal((await repository.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', master.id))?.categoryId, nextCategory.id);
+  assert.equal((await repository.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', master.id))?.documentTypeId, nextDocumentType.id);
+
   await assert.rejects(repository.deleteMaterialCategory(category.id, 1, 'admin-1'), /ACADEMY_MATERIAL_CATEGORY_IN_USE/);
   await assert.rejects(repository.deleteMaterialDocumentType(documentType.id, 1, 'admin-1'), /ACADEMY_MATERIAL_DOCUMENT_TYPE_IN_USE/);
+  assert.equal((await repository.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', firstVersion.id))?.categoryId, category.id);
+  assert.equal((await repository.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', firstVersion.id))?.documentTypeId, documentType.id);
 }));
 
 test('course publication requires an exact existing published material version', async () => withRepository(async repository => {
