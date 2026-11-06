@@ -18,12 +18,12 @@
 ### Lernbibliothek und Materialien
 - Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
 - Konkrete Werte und ggf. Untergliederungen der getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen anhand des tatsächlichen Materialbestands festlegen; automatische Materialcode-/Versionskennung technisch spezifizieren.
-- Entscheidung über empfohlenes 15-MB-Rohdateilimit; Hosting-/Speicherbedingungen und reale Dokumentgrößen verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen festlegen.
-- Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
+- **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
+- **Als fachliche Planungsanforderung ausgearbeitet, technische Auswahl offen:** PDF-Signatur plus Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; Malwareprüfung vor Veröffentlichung; bei nicht verfügbarem Scanner unveröffentlicht bleiben. OCR/Volltextindexierung bleibt gesondert offen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
 - Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
-- Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
+- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die fachlichen Ablehnungs- und Fehlerzustände sind in der Academy-Spezifikation ausgearbeitet.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
 - **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
 
@@ -199,6 +199,7 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 
 ### Academy
 - **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
+- **Beschlossen:** maximale PDF-Rohdateigröße 15 MB; serverseitige Validierung und erfolgreiche Sicherheitsprüfung sind vor Veröffentlichung erforderlich.
 - Offen bleiben die Rollen-/Freigaberegeln,  Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
 - Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
 - Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
@@ -211,3 +212,11 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 ### Dokumentationsqualität
 - Die verfügbaren Erinnerungen sind keine vollständigen Wortprotokolle aller älteren Chats. Neue Details aus später wieder verfügbaren Originalgesprächen müssen ergänzt werden, statt sie durch Vermutungen zu ersetzen.
 - Bei jedem neuen Gesprächsschritt ist vor einer Rückfrage das Entscheidungsregister und die passende Detail-Spezifikation zu prüfen.
+
+
+### Nächster Abschlussabschnitt Lernbibliothek
+- Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
+- Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
+- Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
+- Rücknahme/Archivierung veröffentlichter Materialien, Auswirkungen auf Kursreferenzen und Benachrichtigung betroffener Kursverantwortlicher abschließen.
+- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
