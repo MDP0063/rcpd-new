@@ -321,6 +321,7 @@ export interface AuditLogDoc {
     | 'ACCOUNT_ROLE'
     | 'REQUEST_REVIEW'
     | 'ACADEMY_DOC'
+    | 'ACADEMY_PROGRESS'
     | 'COURSE_GRADE'
     | 'ANNOUNCEMENT'
     | 'CALENDAR_EVENT'
