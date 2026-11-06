@@ -2985,7 +2985,6 @@ async function startServer() {
   // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
   app.post('/api/academy/modules', (req, res) => {
     const {
-      actorUid,
       title,
       code,
       category,
@@ -3000,7 +2999,7 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const courseCode = String(code || 'SOP-01').trim();
     if (!caller || !canActorEditCourseCode(caller, courseCode)) {
       res.status(403).json({
@@ -3054,7 +3053,6 @@ async function startServer() {
   app.put('/api/academy/modules/:modId', (req, res) => {
     const { modId } = req.params;
     const {
-      actorUid,
       title,
       code,
       category,
@@ -3069,7 +3067,7 @@ async function startServer() {
     } = req.body;
 
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const idx = dbState.modules.findIndex(m => m.id === modId);
     if (idx === -1) {
       res.status(404).json({ error: 'Lehrmaterial nicht gefunden.' });
@@ -3157,9 +3155,8 @@ async function startServer() {
   });
 
   app.delete('/api/academy/modules/:modId', (req, res) => {
-    const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === actorUid);
+    const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetMod = dbState.modules.find(m => m.id === req.params.modId);
     if (!targetMod) {
       res.status(404).json({ error: 'Modul nicht gefunden.' });
