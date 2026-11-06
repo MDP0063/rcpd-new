@@ -16,9 +16,9 @@
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
 
 ### Lernbibliothek und Materialien
-- Rollen und Berechtigungen: Welche bestehenden Rollen dürfen Entwürfe anlegen/bearbeiten, zurückziehen und archivieren? (Selbstveröffentlichung durch dieselbe berechtigte Person ist mit Option A beschlossen; kein Vier-Augen-Prinzip.)
+- Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
 - Konkrete Werte und ggf. Untergliederungen der getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen anhand des tatsächlichen Materialbestands festlegen; automatische Materialcode-/Versionskennung technisch spezifizieren.
-- Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
+- Entscheidung über empfohlenes 15-MB-Rohdateilimit; Hosting-/Speicherbedingungen und reale Dokumentgrößen verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen festlegen.
 - Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
 - Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
