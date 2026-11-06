@@ -27,6 +27,7 @@ import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { ExamParticipantRunner } from './ExamParticipantRunner';
 import { ExamReviewCenter } from './ExamReviewCenter';
 import { ExamCorrectionCenter } from './ExamCorrectionCenter';
+import { AcademyLearningCenter } from './AcademyLearningCenter';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -56,7 +57,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'modules' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+    'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
 
   // Granular Instructor Grading Form State
@@ -494,12 +495,32 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       <header className="space-y-1">
         <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Ausbildungsbereich</div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Academy</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildungsinhalte, Lernmaterialien und Prüfungen.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">Programme, Kurse, Lernbibliothek, Prüfungen und persönliche Notizen.</p>
       </header>
-      <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
-        <button type="button" onClick={() => setActiveTab('overview')} aria-current={activeTab === 'overview' ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${activeTab === 'overview' ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Übersicht</button>
-        <button type="button" onClick={() => setActiveTab('modules')} aria-current={activeTab === 'modules' ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${activeTab === 'modules' ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Lernbibliothek</button>
-        <button type="button" onClick={() => { setActiveTab('exam_center'); setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({}); }} aria-current={['exam_center', 'tests', 'final_exams'].includes(activeTab) ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${['exam_center', 'tests', 'final_exams'].includes(activeTab) ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Prüfungen</button>
+      <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
+        {[
+          { id: 'overview' as const, label: 'Übersicht' },
+          { id: 'courses' as const, label: 'Kurse' },
+          { id: 'modules' as const, label: 'Lernbibliothek' },
+          { id: 'exam_center' as const, label: 'Prüfungen' },
+          { id: 'notes' as const, label: 'Meine Notizen' }
+        ].map(item => {
+          const selected = item.id === 'exam_center'
+            ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
+            : activeTab === item.id;
+          return <button key={item.id} type="button"
+            onClick={() => {
+              setActiveTab(item.id);
+              if (item.id === 'exam_center') {
+                setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
+              }
+              if (item.id === 'modules') { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }
+            }}
+            aria-current={selected ? 'page' : undefined}
+            className={`px-3 py-2 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${selected ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
+            {item.label}
+          </button>;
+        })}
       </nav>
       {['exam_center', 'tests', 'final_exams'].includes(activeTab) && (
         <nav aria-label="Prüfungsbereiche" className="flex flex-wrap gap-2">
@@ -524,6 +545,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Direkteinstieg in die derzeit verfügbaren Lernmaterialien und Prüfungen.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" onClick={() => setActiveTab('courses')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Programme & Kurse</span>
+              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Lernpfade ansehen, Teilnahmen beginnen und Fortschritt nachweisen</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('notes')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Meine Notizen</span>
+              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Private Notizen und Lesezeichen öffnen</span>
+            </button>
             <button type="button" onClick={() => setActiveTab('modules')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
               <span className="block text-sm font-semibold text-slate-900 dark:text-white">Lernbibliothek</span>
               <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{modules.length}</span>
@@ -542,6 +571,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           </section>
         </section>
       )}
+      {activeTab === 'courses' && <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
+      {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} />}
+
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
         <div>
