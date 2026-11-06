@@ -1197,8 +1197,8 @@ Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereit
 1. Kommunikation und Funk – z. B. Funkcodes der RCPD, Kommunikationsrichtlinien.
 2. Dienstvorschriften und Verhalten – z. B. Verhaltensrichtlinien, allgemeine Dienstvorschriften.
 3. Einsatzlehre und Taktik – z. B. Einsatzgrundlagen und taktische Grundlagen.
-4. Recht und Gesetzgebung – z. B. California Penal Code, sofern dazu tatsächlich Materialien geführt werden.
-5. Ausbildung und Training – z. B. FTO-/Ausbildungsinhalte, sofern diese als eigenständige Bibliotheksmaterialien statt nur als Kursstruktur geführt werden.
+4. Polizeiliche Grundlagen – z. B. Grundlagen des Polizeidienstes.
+5. Recht und Gesetzgebung – z. B. California Penal Code, aber nur, sofern dazu tatsächlich Bibliotheksmaterialien geführt werden. FTO/Ausbildung ist nicht automatisch eine Themenkategorie; FTO kann stattdessen Kurs-/Programmkontext sein, sofern es kein eigenes fachliches Thema beschreibt.
 
 **Empfohlener Startsatz Dokumenttypen (Art/Funktion):**
 1. Standard Operating Procedure (SOP) / Standardverfahren.
@@ -1211,7 +1211,7 @@ Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereit
 - „Funkcodes der RCPD“ → Kommunikation und Funk + Nachschlagewerk / Referenzliste.
 - „Kommunikationsrichtlinien“ → Kommunikation und Funk + Richtlinie / Policy.
 - „Verhaltensrichtlinien“ → Dienstvorschriften und Verhalten + Richtlinie / Policy.
-- „Grundlagen des Polizeidienstes“ → Ausbildung und Training + Schulungsunterlage / Lernmaterial.
+- „Grundlagen des Polizeidienstes“ → Polizeiliche Grundlagen + Schulungsunterlage / Lernmaterial.
 - „Dienstvorschriften“ → Dienstvorschriften und Verhalten + Dokumenttyp muss anhand des tatsächlichen Inhalts unterschieden werden (SOP, Richtlinie oder Dienstanweisung).
 - „Einsatzgrundlagen“ → Einsatzlehre und Taktik + Schulungsunterlage / Lernmaterial, sofern es sich um eine Lehrunterlage handelt.
 
