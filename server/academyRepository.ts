@@ -100,6 +100,7 @@ export class AcademyRepository {
     return this.adapter.list<AcademyPrivateNoteDoc>('academy_private_notes', { where: [{ field: 'ownerUid', value: ownerUid }], limit: 1000 });
   }
   async getOwnPrivateNote(ownerUid: string, noteId: string): Promise<AcademyPrivateNoteDoc | null> {
+    if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
     const note = await this.adapter.get<AcademyPrivateNoteDoc>('academy_private_notes', noteId);
     return note?.ownerUid === ownerUid ? note : null;
   }
@@ -114,6 +115,7 @@ export class AcademyRepository {
     });
   }
   async deleteOwnPrivateNote(ownerUid: string, noteId: string): Promise<void> {
+    if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
     return this.runTransaction(async tx => {
       const existing = await tx.get<AcademyPrivateNoteDoc>('academy_private_notes', noteId);
       if (!existing || existing.ownerUid !== ownerUid) throw new Error('ACADEMY_NOTE_NOT_FOUND');
