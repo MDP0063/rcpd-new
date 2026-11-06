@@ -616,6 +616,26 @@ Die technische Materialversion soll einen klaren Inhaltsformat-Bezeichner besitz
 
 Die zentrale Dokumenttyp-Verwaltung wird als kontrollierte Liste für berechtigte Admin-/Colonel-Nutzer bereitgestellt. Sie startet ohne automatisch vorgegebene Werte. Die konkreten Dokumenttypen werden anhand des tatsächlichen Materialbestands festgelegt und anschließend über die Verwaltung gepflegt. Kategorie und Dokumenttyp bleiben getrennte Metadaten.
 
+#### Technische Umsetzung der Text-/Code-Materialverwaltung (Stand 06.11.2026)
+
+Der aktuelle Implementierungsschritt verwendet drei getrennte Ebenen:
+
+- **Materialstamm:** stabile interne ID, automatisch generierter Materialcode, getrennte optionale Kurszuständigkeit und aktueller Veröffentlichungszeiger.
+- **Arbeitsentwurf:** bearbeitbare Metadaten und Inhalt mit optimistischer Arbeitsrevision.
+- **Veröffentlichte Materialversion:** unveränderlicher Snapshot der Metadaten und des Inhalts. Die Versions-ID folgt dem Muster `materialId__vN`.
+
+Das automatische Kennungsformat lautet `MAT-YYYY-XXXXXXXXXXXX` (12 hexadezimale Zeichen nach dem Jahrespräfix). Die Materialkennung identifiziert den Stamm; sie ersetzt nicht die Kurskennung oder Kurszuständigkeit. Die konkrete Dokumentversion wird mit der separaten Versions-ID referenziert.
+
+Das Speichern eines Entwurfs ändert nicht den aktuellen Veröffentlichungszeiger. Eine bewusste Veröffentlichung legt einen neuen unveränderlichen Snapshot an und verschiebt den Zeiger atomar. Eine Arbeitsrevision kann nur einmal veröffentlicht werden; eine spätere Änderung benötigt eine weitere bewusste Veröffentlichung. Versionshistorie und bisherige Kursreferenzen werden nicht überschrieben.
+
+Kategorie und Dokumenttyp werden in Entwürfen als stabile IDs referenziert. Bei jeder Veröffentlichung werden diese Metadatenreferenzen zusätzlich unter der konkreten Materialversions-ID festgehalten. Die historische Zuordnung bleibt damit auch nach einer Umbenennung oder Archivierung des Taxonomieeintrags erhalten. Ein Eintrag darf erst endgültig gelöscht werden, wenn weder der aktuelle Materialstamm noch eine veröffentlichte Materialfassung darauf verweist.
+
+**Berechtigung und Zuständigkeit:** Das getrennte Feld `responsibleCourseCode` definiert die Kurszuständigkeit; der automatisch erzeugte Materialcode hat keine Berechtigungsfunktion. Admin und Colonel dürfen global verwalten. Kursverantwortliche benötigen die vorhandene Berechtigung `canGradeAssignedCourses` sowie eine passende `assignedCourseCodes`-Zuordnung. Sie dürfen im eigenen Zuständigkeitsbereich Entwürfe erstellen/bearbeiten und selbst veröffentlichen. Archivierung veröffentlichter Materialien bleibt Admin und Colonel vorbehalten. Die Prüfungen erfolgen serverseitig.
+
+**Kursintegration:** Bei der Veröffentlichung einer Kursversion werden alle konkreten `materialId`-/`materialVersionId`-Referenzen serverseitig auf Existenz, Materialzugehörigkeit und veröffentlichten/nicht archivierten Zustand geprüft. Kursversionen erhalten weiterhin keine dynamischen Verweise auf die jeweils neueste Materialfassung.
+
+Die erste API-/Verwaltungsstufe unterstützt Markdown-Text und gespeicherten Quelltext. Code wird nicht ausgeführt. Der derzeitige Verwaltungsschritt stellt die neue Materialstruktur noch nicht als fertigen Teilnehmer-Reader bereit; Materialauswahl im Kurseditor, sichere Markdown-Darstellung, Suche/Filter und die Einbindung in Notizen/Lesezeichen werden als nachfolgende Integrationsarbeit behandelt. Bestehende Legacy-Materialien werden nicht automatisch migriert.
+
 ### 10.4 Archivierung und endgültige Löschung – Option A beschlossen
 
 Veröffentlichte Dokumente oder Materialien, die bereits in veröffentlichten Kursen verwendet wurden, sollen im Normalbetrieb archiviert oder fachlich zurückgezogen werden und nicht regulär endgültig gelöscht werden.
