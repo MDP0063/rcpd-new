@@ -41,28 +41,28 @@ class FirestoreTransaction implements AcademyTransaction {
     assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
     if (!this.cache.has(key)) { const existing = await this.get(collection, id); if (existing) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS'); }
     else if (this.cache.get(key)) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
-    this.transaction.create(this.database.collection(collection).doc(storageId(id)), clone(document)); this.cache.set(key, clone(document)); this.hasWrites = true;
+    this.transaction.create(this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id)), clone(document)); this.cache.set(key, clone(document)); this.hasWrites = true;
   }
   async update<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
     assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = this.key(collection, id);
     let existing = this.cache.get(key);
     if (!this.cache.has(key)) { if (this.hasWrites) throw new Error('ACADEMY_TRANSACTION_READ_AFTER_WRITE'); existing = await this.get(collection, id); }
     if (!existing) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
-    this.transaction.set(this.database.collection(collection).doc(storageId(id)), clone(document)); this.cache.set(key, clone(document)); this.hasWrites = true;
+    this.transaction.set(this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id)), clone(document)); this.cache.set(key, clone(document)); this.hasWrites = true;
   }
   async delete(collection: AcademyCollection, id: string): Promise<void> {
     assertAcademyCanDelete(collection); assertAcademyDocumentId(id); const key = this.key(collection, id);
     let existing = this.cache.get(key);
     if (!this.cache.has(key)) { if (this.hasWrites) throw new Error('ACADEMY_TRANSACTION_READ_AFTER_WRITE'); existing = await this.get(collection, id); }
     if (!existing) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
-    this.transaction.delete(this.database.collection(collection).doc(storageId(id))); this.cache.set(key, null); this.hasWrites = true;
+    this.transaction.delete(this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id))); this.cache.set(key, null); this.hasWrites = true;
   }
 }
 export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
   private readonly database: Firestore;
   constructor(database: Firestore) { this.database = database; }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
-    assertAcademyDocumentId(id); return fromSnapshot<T>(collection, await this.database.collection(collection).doc(storageId(id)).get(), id);
+    assertAcademyDocumentId(id); return fromSnapshot<T>(collection, await this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id)).get(), id);
   }
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
     const snap = await buildQuery(this.database, collection, query).get();
