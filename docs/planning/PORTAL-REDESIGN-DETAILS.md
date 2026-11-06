@@ -585,3 +585,14 @@ Die folgenden Punkte dürfen nicht als bereits genehmigte Funktionen dargestellt
 Neue Erkenntnisse werden mit Datum und Status ergänzt. Eine technische Beobachtung darf nicht nachträglich als Nutzerentscheidung dargestellt werden. Eine spätere Änderung eines Beschlusses erhält einen eigenen Eintrag mit Begründung und Verweis auf den ersetzten Stand.
 
 Wenn aus dem verfügbaren Kontext nur eine unvollständige Erinnerung vorhanden ist, wird das ausdrücklich vermerkt. Fehlende Details werden als offen dokumentiert und nicht durch plausible, aber unbestätigte Annahmen ersetzt.
+
+
+## 12. Verbindliche Arbeitsweise: endproduktorientierte Abschnittsentwicklung (06.11.2026)
+
+Für das gesamte Redesign gilt ab jetzt das detaillierte Modell in [`DEVELOPMENT-MODEL.md`](./DEVELOPMENT-MODEL.md). Die bisherige gründliche Recherche und Konzeption wird ausdrücklich beibehalten. Neu ist die organisatorische Verzahnung von Gesamtplanung und fachlich vollständigen Entwicklungsabschnitten: Wir planen nicht mehr zwangsläufig das gesamte Portal bis in jedes Detail, bevor irgendein Bereich umgesetzt wird. Stattdessen werden Abschnitte vollständig und mit Blick auf das endgültige Gesamtsystem geplant, recherchiert, prototypisch validiert, technisch geprüft, implementiert und getestet.
+
+**Keine Ziel- oder Qualitätsabsenkung:** Es werden keine Funktionen oder relevanten Sonderfälle gestrichen, keine Recherche- oder Accessibility-Schritte übersprungen und keine unfertigen Provisorien aus Zeitgründen als Endlösung akzeptiert. Ein Abschnitt wird nur organisatorisch begrenzt, nicht fachlich künstlich amputiert. Zusammengehörige Funktionen und Abhängigkeiten müssen gemeinsam betrachtet werden.
+
+**Endproduktorientierung:** Globale Navigation, Rollen-/Aufgabenlogik, Designsystem, gemeinsame Komponenten, Datenverantwortung und Modulübergänge werden frühzeitig so weit geplant, dass die erste Umsetzung nicht in eine Sackgasse führt. Bereits erarbeitete Konzepte und Komponenten werden wiederverwendet. Überarbeitung bleibt erlaubt und erwünscht, wenn Tests oder belastbare Erkenntnisse tatsächliche Verbesserungen nahelegen.
+
+**Academy im aktuellen Ablauf:** Die Academy ist weit fortgeschritten. Wir schließen ihre offenen fachlichen Punkte und prüfen die Konsistenz, ohne technische Implementierungsdetails zu erfinden, die erst nach Architektur-/Machbarkeitsprüfung entschieden werden können. Gleichzeitig werden globale Grundlagen und Abhängigkeiten des Gesamtportals weiter ausgearbeitet. Die Academy wird nicht als isoliertes Produkt behandelt und ihr Abschluss bedeutet nicht, dass die übrigen Module warten müssen.
