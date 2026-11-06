@@ -45,7 +45,7 @@ export function validateMaterialCategoryAssignment(
   if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
       !isNonEmpty(assignment.materialId) || !isNonEmpty(assignment.categoryId) ||
       (assignment.materialVersionId !== undefined
-        ? (!isNonEmpty(assignment.materialVersionId) || assignment.id !== assignment.materialId + '__' + assignment.materialVersionId)
+        ? (!isNonEmpty(assignment.materialVersionId) || assignment.id !== assignment.materialVersionId || !assignment.materialVersionId.startsWith(assignment.materialId + '__'))
         : assignment.id !== assignment.materialId) ||
       !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
       !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
