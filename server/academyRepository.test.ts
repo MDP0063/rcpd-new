@@ -230,11 +230,46 @@ test('program enrollment pins required course versions without prematurely start
   assert.equal(await repository.getCourseParticipation(pinnedCourseParticipationId), null);
   assert.deepEqual(await repository.listOwnCourseParticipations('learner-1'), []);
 
+  const secondDraft = { ...requiredCourseDraft, title: 'Grundlagen Version 2', workingRevision: 3, updatedIso: now };
+  await repository.saveCourseDraft(master.id, secondDraft, 2, 'owner-1');
+  const secondVersion = {
+    ...requiredCourseVersion, id: 'course-1__v2', versionNumber: 2, title: 'Grundlagen Version 2',
+    createdIso: now, createdByUid: 'owner-1', publishedIso: now, publishedByUid: 'owner-1', workingRevision: 3
+  };
+  const secondMaster = {
+    ...publishedMaster, currentPublishedVersionId: secondVersion.id, latestVersionNumber: 2,
+    workingRevision: 3, updatedIso: now
+  };
+  await repository.publishCourseVersion(master.id, secondVersion, secondMaster, 3, 'owner-1');
+
   const courseParticipation = await repository.startCourseParticipation('learner-1', master.id, now);
   assert.equal(courseParticipation.id, pinnedCourseParticipationId);
   assert.equal(courseParticipation.courseVersionId, requiredCourseVersion.id);
+  assert.notEqual(courseParticipation.courseVersionId, secondVersion.id);
   assert.equal(courseParticipation.status, 'in_progress');
   await assert.rejects(repository.startProgramParticipation('learner-1', programMaster.id, now), /ACADEMY_PROGRAM_PARTICIPATION_ALREADY_EXISTS/);
+
+  const conflictingProgramMaster = {
+    ...programMaster, id: 'program-2', code: 'ADVANCED-PROGRAM'
+  };
+  const conflictingProgramDraft = {
+    ...programDraft, id: 'program-2', programId: 'program-2', updatedByUid: 'owner-1'
+  };
+  const conflictingProgramVersion = {
+    ...programVersion, id: 'program-2__v1', programId: 'program-2',
+    courseReferences: [{ courseId: master.id, requirement: 'required' as const, order: 0 }]
+  };
+  const conflictingProgramPublishedMaster = {
+    ...conflictingProgramMaster, publicationStatus: 'published' as const,
+    currentPublishedVersionId: conflictingProgramVersion.id, latestVersionNumber: 1,
+    workingRevision: 2, updatedIso: now
+  };
+  await repository.createProgramWithDraft(conflictingProgramMaster, { ...conflictingProgramDraft, workingRevision: 1 });
+  await repository.publishProgramVersion('program-2', conflictingProgramVersion, conflictingProgramPublishedMaster, 1, 'owner-1').catch(async error => {
+    // Rebuild with the first saved revision because createProgramWithDraft starts at revision 1.
+    throw error;
+  });
+  await assert.rejects(repository.startProgramParticipation('learner-1', 'program-2', now), /ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT/);
 }));
 
 test('course participation pins the published version and completes only after every required evidence is recorded', async () => withRepository(async repository => {
