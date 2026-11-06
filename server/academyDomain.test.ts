@@ -124,3 +124,14 @@ test('program course references require unique courses and non-negative order', 
   };
   assert.equal(validateProgramVersion('program_1', invalidOrder).ok, false);
 });
+
+test('archived course masters require complete audit metadata', () => {
+  const archived = {
+    ...courseMaster,
+    publicationStatus: 'archived' as const,
+    archivedIso: '2026-11-06T11:00:00.000Z',
+    archivedByUid: 'admin_1'
+  };
+  assert.equal(validateCourseMaster(archived).ok, false);
+  assert.equal(validateCourseMaster({ ...archived, archiveReason: 'Kurs wurde ersetzt.' }).ok, true);
+});
