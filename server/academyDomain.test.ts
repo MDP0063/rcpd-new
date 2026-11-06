@@ -135,3 +135,10 @@ test('archived course masters require complete audit metadata', () => {
   assert.equal(validateCourseMaster(archived).ok, false);
   assert.equal(validateCourseMaster({ ...archived, archiveReason: 'Kurs wurde ersetzt.' }).ok, true);
 });
+
+test('domain validators return validation errors for malformed runtime values', () => {
+  assert.equal(validateCourseVersion('course_1', null as never).ok, false);
+  assert.equal(validateProgramVersion('program_1', null as never).ok, false);
+  assert.equal(validateCourseMaster(null as never).ok, false);
+  assert.equal(validatePrivateNote(null as never).ok, false);
+});
