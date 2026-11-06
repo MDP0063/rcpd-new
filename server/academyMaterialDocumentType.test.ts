@@ -146,11 +146,14 @@ test('version-4 JSON Academy stores without documentType assignments remain read
     await repository.createMaterialDocumentType(documentType('documentType-migrated', 'Nach der Migration'));
     const saved = JSON.parse(await readFile(path.join(directory, 'academy-db.json'), 'utf8')) as {
       version: number;
-      collections: { academy_material_document_types?: Record<string, AcademyMaterialDocumentTypeDoc>; academy_material_document_type_assignments?: Record<string, unknown> };
+      collections: { academy_material_document_types?: Record<string, AcademyMaterialDocumentTypeDoc>; academy_material_document_type_assignments?: Record<string, unknown>; academy_materials?: Record<string, unknown>; academy_material_drafts?: Record<string, unknown>; academy_material_versions?: Record<string, unknown> };
     };
-    assert.equal(saved.version, 5);
+    assert.equal(saved.version, 6);
     assert.equal(Object.values(saved.collections.academy_material_document_types || {})[0]?.id, 'documentType-migrated');
     assert.deepEqual(saved.collections.academy_material_document_type_assignments, {});
+    assert.deepEqual(saved.collections.academy_materials, {});
+    assert.deepEqual(saved.collections.academy_material_drafts, {});
+    assert.deepEqual(saved.collections.academy_material_versions, {});
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
