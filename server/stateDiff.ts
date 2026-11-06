@@ -26,7 +26,16 @@ export const COLLECTIONS: readonly CollectionSpec[] = [
   { name: 'requests', idField: 'id' },
   { name: 'events', idField: 'id' },
   { name: 'auditLogs', idField: 'id' },
-  { name: 'notifications', idField: 'id' }
+  { name: 'notifications', idField: 'id' },
+  { name: 'academy_courses', idField: 'id' },
+  { name: 'academy_course_versions', idField: 'id' },
+  { name: 'academy_programs', idField: 'id' },
+  { name: 'academy_program_versions', idField: 'id' },
+  { name: 'academy_course_participations', idField: 'id' },
+  { name: 'academy_program_participations', idField: 'id' },
+  { name: 'academy_progress_evidence', idField: 'id' },
+  { name: 'academy_completion_corrections', idField: 'id' },
+  { name: 'academy_private_notes', idField: 'id' }
 ];
 
 /** Felder, die über 1 MiB groß werden können und deshalb in Teilstücke zerlegt werden. */
