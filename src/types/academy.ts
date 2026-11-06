@@ -31,6 +31,18 @@ export interface AcademyMaterialCategoryDoc {
   archivedByUid?: string;
 }
 
+/** Stable material-to-category link; id is the material master ID. */
+export interface AcademyMaterialCategoryAssignmentDoc {
+  id: string;
+  materialId: string;
+  categoryId: string;
+  revision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
 export type AcademyCompletionEvidenceType =
   | 'required_chapter'
   | 'required_material'
