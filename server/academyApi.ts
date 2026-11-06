@@ -4,7 +4,8 @@ import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
   AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
-  AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc
+  AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
+  AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import type { AcademyRepository } from './academyRepository.ts';
@@ -12,6 +13,8 @@ import type { AcademyRepository } from './academyRepository.ts';
 export interface AcademyApiActor {
   uid: string;
   role: OfficerRole;
+  canGradeAssignedCourses?: boolean;
+  assignedCourseCodes?: string[];
 }
 
 type ActorResolver = (uid: string) => AcademyApiActor | null;
@@ -60,6 +63,49 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 function revision(value: unknown): number | null {
   return Number.isSafeInteger(value) && Number(value) >= 1 ? Number(value) : null;
+}
+const canManageMaterialCourse = (actor: AcademyApiActor, courseCode?: string) => {
+  if (actor.role === 'admin' || actor.role === 'colonel') return true;
+  if (actor.canGradeAssignedCourses !== true) return false;
+  const assigned = Array.isArray(actor.assignedCourseCodes) ? actor.assignedCourseCodes : [];
+  if (!courseCode) return assigned.includes('*');
+  const normalized = courseCode.trim().toUpperCase();
+  return assigned.includes('*') || assigned.some(code => code.toUpperCase() === normalized);
+};
+const canArchiveMaterials = (actor: AcademyApiActor) => actor.role === 'admin' || actor.role === 'colonel';
+function materialDraftFromBody(
+  materialId: string,
+  body: Record<string, unknown>,
+  workingRevision: number,
+  actorUid: string,
+  now: string,
+  existing?: AcademyMaterialDraftDoc
+): AcademyMaterialDraftDoc {
+  const contentFormat = body.contentFormat === 'markdown' || body.contentFormat === 'code'
+    ? body.contentFormat : '' as AcademyMaterialDraftDoc['contentFormat'];
+  const requiredRole = body.requiredRole === undefined || body.requiredRole === ''
+    ? undefined
+    : body.requiredRole as OfficerRole;
+  const description = body.description === undefined ? undefined : boundedText(body.description, 2000, true);
+  const codeLanguage = contentFormat === 'code' && typeof body.codeLanguage === 'string'
+    ? body.codeLanguage.trim() || undefined : undefined;
+  return {
+    id: materialId,
+    materialId,
+    title: typeof body.title === 'string' ? body.title.trim() : '',
+    ...(description == null || description === '' ? {} : { description }),
+    categoryId: text(body.categoryId, 150),
+    documentTypeId: text(body.documentTypeId, 150),
+    ...(requiredRole === undefined ? {} : { requiredRole }),
+    contentFormat,
+    content: typeof body.content === 'string' ? body.content : '',
+    ...(codeLanguage === undefined ? {} : { codeLanguage }),
+    workingRevision,
+    createdIso: existing?.createdIso ?? now,
+    createdByUid: existing?.createdByUid ?? actorUid,
+    updatedIso: now,
+    updatedByUid: actorUid
+  };
 }
 function makeCourseDraft(courseId: string, body: Record<string, unknown>, workingRevision: number, actorUid: string, now: string): AcademyCourseDraftDoc {
   return {
@@ -331,6 +377,170 @@ export function createAcademyApiRouter(
       await recordAudit(actor.uid, 'Academy-Dokumenttyp endgültig gelöscht', deleted.name,
         `Dokumenttyp ${deleted.id} endgültig gelöscht; zum Löschzeitpunkt waren keine Materialzuordnungen vorhanden.`);
       res.status(204).end();
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/materials', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const masters = await repository.list<AcademyMaterialMasterDoc>('academy_materials');
+      const visible = masters.filter(master => canManageMaterialCourse(actor, master.responsibleCourseCode));
+      const materials = await Promise.all(visible.map(async master => {
+        const draft = await repository.getMaterialDraft(master.id);
+        const version = master.currentPublishedVersionId
+          ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId)
+          : null;
+        const draftSummary = draft ? {
+          title: draft.title, categoryId: draft.categoryId, documentTypeId: draft.documentTypeId,
+          contentFormat: draft.contentFormat, workingRevision: draft.workingRevision, updatedIso: draft.updatedIso
+        } : null;
+        const versionSummary: AcademyMaterialVersionSummary | null = version ? {
+          id: version.id, materialId: version.materialId, versionNumber: version.versionNumber,
+          title: version.title, contentFormat: version.contentFormat,
+          publishedIso: version.publishedIso, publishedByUid: version.publishedByUid
+        } : null;
+        return { master, draft: draftSummary, currentVersion: versionSummary };
+      }));
+      materials.sort((a, b) => b.master.updatedIso.localeCompare(a.master.updatedIso));
+      res.json({ materials });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_BODY_INVALID' }); return; }
+      const responsibleCourseCode = typeof req.body.responsibleCourseCode === 'string' && req.body.responsibleCourseCode.trim()
+        ? req.body.responsibleCourseCode.trim().toUpperCase() : undefined;
+      if (!canManageMaterialCourse(actor, responsibleCourseCode) ||
+          (!responsibleCourseCode && actor.role !== 'admin' && actor.role !== 'colonel')) {
+        res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
+      }
+      if (responsibleCourseCode && !/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(responsibleCourseCode)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_COURSE_SCOPE_INVALID' }); return;
+      }
+      const now = new Date().toISOString();
+      const materialId = id('material');
+      const code = 'MAT-' + new Date().getUTCFullYear() + '-' + randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase();
+      const master: AcademyMaterialMasterDoc = {
+        id: materialId, code, ownerUid: actor.uid,
+        ...(responsibleCourseCode ? { responsibleCourseCode } : {}),
+        publicationStatus: 'draft', latestVersionNumber: 0, workingRevision: 1,
+        createdIso: now, updatedIso: now
+      };
+      const draft = materialDraftFromBody(materialId, req.body, 1, actor.uid, now);
+      await repository.createMaterialWithDraft(master, draft);
+      await recordAudit(actor.uid, 'Academy-Materialentwurf erstellt', code,
+        'Material ' + materialId + ' als Entwurf angelegt; Arbeitsrevision 1.');
+      res.status(201).json({ master, draft });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/materials/:materialId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyMaterialMasterDoc>('academy_materials', req.params.materialId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, master.responsibleCourseCode)) {
+        res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
+      }
+      const [draft, versions] = await Promise.all([
+        repository.getMaterialDraft(master.id),
+        repository.list<AcademyMaterialVersionDoc>('academy_material_versions', {
+          where: [{ field: 'materialId', value: master.id }], limit: 100
+        })
+      ]);
+      versions.sort((a, b) => b.versionNumber - a.versionNumber);
+      const currentVersion = master.currentPublishedVersionId
+        ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId)
+        : null;
+      const versionSummaries: AcademyMaterialVersionSummary[] = versions.map(version => ({
+        id: version.id, materialId: version.materialId, versionNumber: version.versionNumber,
+        title: version.title, contentFormat: version.contentFormat,
+        publishedIso: version.publishedIso, publishedByUid: version.publishedByUid
+      }));
+      res.json({ master, draft, currentVersion, versions: versionSummaries });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.put('/materials/:materialId/draft', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyMaterialMasterDoc>('academy_materials', req.params.materialId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, master.responsibleCourseCode)) {
+        res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
+      }
+      if (!isObject(req.body) || !isObject(req.body.draft)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_DRAFT_BODY_INVALID' }); return;
+      }
+      const expected = revision(req.body.expectedRevision);
+      if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
+      const existing = await repository.getMaterialDraft(master.id);
+      if (!existing) { res.status(404).json({ error: 'ACADEMY_MATERIAL_DRAFT_NOT_FOUND' }); return; }
+      const draft = materialDraftFromBody(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString(), existing);
+      await repository.saveMaterialDraft(master.id, draft, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Materialentwurf geändert', master.code,
+        'Arbeitsrevision ' + draft.workingRevision + ' gespeichert.');
+      res.json({ draft });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/:materialId/publish', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyMaterialMasterDoc>('academy_materials', req.params.materialId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, master.responsibleCourseCode)) {
+        res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
+      }
+      const expected = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
+      const draft = await repository.getMaterialDraft(master.id);
+      if (!draft) { res.status(409).json({ error: 'ACADEMY_MATERIAL_DRAFT_MISSING' }); return; }
+      const now = new Date().toISOString();
+      const versionNumber = master.latestVersionNumber + 1;
+      const version: AcademyMaterialVersionDoc = {
+        id: master.id + '__v' + versionNumber, materialId: master.id, versionNumber,
+        title: draft.title, ...(draft.description === undefined ? {} : { description: draft.description }),
+        categoryId: draft.categoryId, documentTypeId: draft.documentTypeId,
+        ...(draft.requiredRole === undefined ? {} : { requiredRole: draft.requiredRole }),
+        contentFormat: draft.contentFormat, content: draft.content,
+        ...(draft.codeLanguage === undefined ? {} : { codeLanguage: draft.codeLanguage }),
+        publishedIso: now, publishedByUid: actor.uid,
+        createdIso: now, createdByUid: actor.uid, workingRevision: expected
+      };
+      const nextMaster: AcademyMaterialMasterDoc = {
+        ...master, publicationStatus: 'published',
+        currentPublishedVersionId: version.id, latestVersionNumber: versionNumber,
+        lastPublishedWorkingRevision: expected, updatedIso: now
+      };
+      await repository.publishMaterialVersion(master.id, version, nextMaster, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Materialversion veröffentlicht', master.code,
+        'Version ' + version.versionNumber + ' veröffentlicht (' + version.id + ').');
+      res.status(201).json({ master: nextMaster, version });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/:materialId/archive', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (!canArchiveMaterials(actor)) { res.status(403).json({ error: 'ACADEMY_MATERIAL_ARCHIVE_FORBIDDEN' }); return; }
+      const expected = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      const reason = isObject(req.body) ? boundedText(req.body.reason, 1000) : null;
+      if (expected === null || reason === null || reason.length < 10) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_ARCHIVE_REASON_INVALID' }); return;
+      }
+      const master = await repository.archiveMaterial(req.params.materialId, expected, actor.uid, reason, new Date().toISOString());
+      await recordAudit(actor.uid, 'Academy-Material archiviert', master.code,
+        'Material ' + master.id + ' archiviert. Begründung: ' + reason);
+      res.json({ master });
     } catch (error) { fail(res, error, next); }
   });
 
