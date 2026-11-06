@@ -300,6 +300,12 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
 
   const isCourseEditor = mode === 'new-course' || mode === 'course';
   const isProgramEditor = mode === 'new-program' || mode === 'program';
+  const leaveEditor = () => {
+    const hasUnsavedChanges = (isCourseEditor && courseDirty) || (isProgramEditor && programDirty);
+    if (hasUnsavedChanges && !window.confirm('Es gibt ungespeicherte Änderungen. Möchtest du den Editor wirklich verlassen und diese Änderungen verwerfen?')) return;
+    setMode('list');
+    setFormError([]);
+  };
 
   if (loading && mode === 'list') {
     return <section className={panel} aria-live="polite"><p className="text-sm text-slate-600 dark:text-slate-300">Kurs- und Programmdaten werden geladen …</p></section>;
@@ -369,7 +375,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
         <section className="mx-auto max-w-3xl space-y-5">
           <header className="flex items-start justify-between gap-3">
             <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Kursverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{courseMaster ? 'Kursentwurf bearbeiten' : 'Neuen Kurs anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{courseMaster ? courseCode + ' · Revision ' + courseDraft?.workingRevision : 'Ein neuer Kurs beginnt als unveröffentlichter Entwurf.'}</p></div>
-            <button type="button" className={secondary} onClick={() => { setMode('list'); setFormError([]); }}>Zurück zur Verwaltung</button>
+            <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
           <form className="space-y-5" noValidate onSubmit={saveCourse}>
@@ -390,12 +396,12 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               {courseChapters.map((item, index) => {
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
                 return <div key={item.id} className="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => { setCourseChapters(items => items.filter(chapter => chapter.id !== item.id).map((chapter, order) => ({ ...chapter, order }))); setCourseRequirements(items => items.filter(requirement => !(requirement.type === 'required_chapter' && requirement.targetId === item.id))); setCourseDirty(true); }}>Kapitel entfernen</button></div>
+                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} disabled={item.materialReferences.length > 0} title={item.materialReferences.length > 0 ? 'Kapitel mit bestehenden Materialreferenzen können erst nach der Materialverwaltung geändert werden.' : undefined} onClick={() => { setCourseChapters(items => items.filter(chapter => chapter.id !== item.id).map((chapter, order) => ({ ...chapter, order }))); setCourseRequirements(items => items.filter(requirement => !(requirement.type === 'required_chapter' && requirement.targetId === item.id))); setCourseDirty(true); }}>Kapitel entfernen</button></div>
                   <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, title: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={item.required} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, required: event.target.checked } : chapter)); setCourseDirty(true); }} className="mt-1" />Kapitel ist als Pflichtinhalt gekennzeichnet</label>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={completionRequired} onChange={event => setChapterCompletionRequired(item.id, event.target.checked)} className="mt-1" />Für dieses Kapitel ist ein eigener Abschlussnachweis erforderlich</label>
-                  {item.materialReferences.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{item.materialReferences.length} bestehende Materialreferenz(en) werden unverändert beibehalten.</p>}
+                  {item.materialReferences.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{item.materialReferences.length} bestehende Materialreferenz(en) werden unverändert beibehalten. Dieses Kapitel kann erst entfernt werden, wenn die Versionierung der Lernbibliothek eine sichere Änderung der Zuordnung ermöglicht.</p>}
                 </div>;
               })}
               <p className="text-xs text-slate-500 dark:text-slate-400">Die Zuordnung konkreter Dokumentversionen folgt mit der versionierten Lernbibliothek. Bereits vorhandene Referenzen bleiben beim Speichern erhalten.</p>
@@ -413,7 +419,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
         <section className="mx-auto max-w-3xl space-y-5">
           <header className="flex items-start justify-between gap-3">
             <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Programmverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{programMaster ? 'Programmentwurf bearbeiten' : 'Neues Programm anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neues Programm beginnt als unveröffentlichter Entwurf.'}</p></div>
-            <button type="button" className={secondary} onClick={() => { setMode('list'); setFormError([]); }}>Zurück zur Verwaltung</button>
+            <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
           <form className="space-y-5" noValidate onSubmit={saveProgram}>
