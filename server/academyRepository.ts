@@ -58,10 +58,17 @@ export class AcademyRepository {
       const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MASTER_ARCHIVED');
-      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${courseId}__v${nextNumber}`;
-      if (version.id !== versionId || version.versionNumber !== nextNumber || nextMaster.latestVersionNumber !== nextNumber || nextMaster.currentPublishedVersionId !== versionId || nextMaster.publicationStatus !== 'published') throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
+      if (version.id !== versionId || version.versionNumber !== nextNumber ||
+          nextMaster.id !== current.id || nextMaster.code !== current.code ||
+          nextMaster.ownerUid !== current.ownerUid || nextMaster.createdIso !== current.createdIso ||
+          nextMaster.availability !== current.availability ||
+          nextMaster.latestVersionNumber !== nextNumber ||
+          nextMaster.currentPublishedVersionId !== versionId ||
+          nextMaster.publicationStatus !== 'published' ||
+          !version.publishedIso || !version.publishedByUid) throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
       await tx.create('academy_course_versions', versionId, version);
       await tx.update('academy_courses', courseId, nextMaster);
     });
@@ -73,10 +80,17 @@ export class AcademyRepository {
       const current = await tx.get<AcademyProgramMasterDoc>('academy_programs', programId);
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MASTER_ARCHIVED');
-      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${programId}__v${nextNumber}`;
-      if (version.id !== versionId || version.versionNumber !== nextNumber || nextMaster.latestVersionNumber !== nextNumber || nextMaster.currentPublishedVersionId !== versionId || nextMaster.publicationStatus !== 'published') throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
+      if (version.id !== versionId || version.versionNumber !== nextNumber ||
+          nextMaster.id !== current.id || nextMaster.code !== current.code ||
+          nextMaster.ownerUid !== current.ownerUid || nextMaster.createdIso !== current.createdIso ||
+          nextMaster.availability !== current.availability ||
+          nextMaster.latestVersionNumber !== nextNumber ||
+          nextMaster.currentPublishedVersionId !== versionId ||
+          nextMaster.publicationStatus !== 'published' ||
+          !version.publishedIso || !version.publishedByUid) throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
       await tx.create('academy_program_versions', versionId, version);
       await tx.update('academy_programs', programId, nextMaster);
     });
