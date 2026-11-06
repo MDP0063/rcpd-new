@@ -81,7 +81,7 @@ test('material domain validation accepts Markdown and code but rejects unsafe or
   assert.equal(validateMaterialDraft(master.id, { ...draft, content: ' ' }).ok, false);
   assert.equal(validateMaterialDraft(master.id, { ...draft, content: 'x'.repeat(200_001) }).ok, false);
   assert.equal(validateMaterialDraft(master.id, { ...draft, codeLanguage: 'not valid language!' }).ok, false);
-  assert.equal(validateMaterialVersion(master.id, version(1, draft, 1)), undefined as never);
+  assert.deepEqual(validateMaterialVersion(master.id, version(1, draft, 1)), { ok: true });
 });
 
 test('material creation stores master, first draft and metadata references atomically', async () => withRepository(async repository => {
