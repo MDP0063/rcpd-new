@@ -23,12 +23,12 @@ class JsonTransaction implements AcademyTransaction {
     return clone(Object.values(this.state.collections[collection]).filter(doc => matches(doc, query)).slice(0, query.limit ?? 1000)) as T[];
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
-    assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = keyOf(id);
+    assertAcademyDocument(collection, id, document); const key = keyOf(id);
     if (this.state.collections[collection][key]) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
     this.state.collections[collection][key] = clone(document); this.hasWrites = true;
   }
   async update<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
-    assertAcademyDocument(collection, id, document); const key = keyOf(id);
+    assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = keyOf(id);
     if (!this.state.collections[collection][key]) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
     this.state.collections[collection][key] = clone(document); this.hasWrites = true;
   }
