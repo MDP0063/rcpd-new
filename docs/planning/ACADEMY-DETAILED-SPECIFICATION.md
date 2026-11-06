@@ -430,6 +430,10 @@ Die Bibliotheksstartseite soll einen schnellen Einstieg in den gesamten zugängl
 
 Kategorien können als Kacheln oder vergleichbare klare Einstiege erscheinen. Die einzelnen Dokumente werden dagegen in einer kompakten Liste dargestellt; Dokumenteinträge sollen nicht unnötig große Karten werden.
 
+Die Kategorienamen werden nicht als unveränderliche Liste im Code festgeschrieben. Die Academy-Verwaltung bietet eine eigene Kategorienpflege: berechtigte Administratoren und Colonels können Kategorien erstellen, umbenennen, archivieren und reaktivieren. Jede Kategorie hat eine stabile interne ID; Umbenennungen ändern keine bestehenden Dokumentreferenzen. Archivierte Kategorien bleiben für bereits zugeordnete/historische Materialien auflösbar, werden aber bei der Zuweisung neuer Materialien nicht angeboten. Ein endgültiges Löschen ist nicht Teil der normalen Kategorienpflege.
+
+Kategorie und Dokumenttyp bleiben getrennte Metadaten. Die Pflege der Kategorien entscheidet nicht automatisch über die spätere Dokumenttyp-Taxonomie.
+
 Die genaue visuelle Ausgestaltung bleibt offen. Empfehlungen und zuletzt geöffnete Dokumente dürfen nur auf tatsächlichen Nutzungs-/Empfehlungsdaten beruhen und müssen Zugriffsrechte respektieren. Das Vorhandensein dieser Einstiege darf keine neue fachliche Pflicht oder künstliche Priorität erzeugen.
 
 ### 10.2 Materialversionierung – Option B beschlossen
