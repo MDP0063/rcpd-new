@@ -56,6 +56,17 @@ import {
   validateLegacyVerificationSources
 } from './server/examBackup.ts';
 import type { LegacyProgressRecord } from './server/examTypes.ts';
+import type {
+  AcademyCourseMasterDoc,
+  AcademyCourseVersionDoc,
+  AcademyProgramMasterDoc,
+  AcademyProgramVersionDoc,
+  AcademyCourseParticipationDoc,
+  AcademyProgramParticipationDoc,
+  AcademyProgressEvidenceDoc,
+  AcademyCompletionCorrectionDoc,
+  AcademyPrivateNoteDoc
+} from './src/types/academy.ts';
 import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
@@ -112,6 +123,16 @@ export interface PortalDatabaseState {
   modules: TrainingModuleDoc[];
   exams: AcademyExamDoc[];
   progress: UserProgressDoc[];
+  academy_courses?: AcademyCourseMasterDoc[];
+  academy_course_versions?: AcademyCourseVersionDoc[];
+  academy_programs?: AcademyProgramMasterDoc[];
+  academy_program_versions?: AcademyProgramVersionDoc[];
+  academy_course_participations?: AcademyCourseParticipationDoc[];
+  academy_program_participations?: AcademyProgramParticipationDoc[];
+  academy_progress_evidence?: AcademyProgressEvidenceDoc[];
+  academy_completion_corrections?: AcademyCompletionCorrectionDoc[];
+  /** Private collection: never include in public state responses. */
+  academy_private_notes?: AcademyPrivateNoteDoc[];
   announcements?: AnnouncementDoc[];
   messages?: DirectMessageDoc[];
   requests?: PortalRequestDoc[];
@@ -205,6 +226,16 @@ function pushNotification(
   if (!Array.isArray(state.notifications)) {
     state.notifications = [];
   }
+  // New Academy collections are additive: existing legacy modules/progress remain untouched.
+  if (!Array.isArray(state.academy_courses)) state.academy_courses = [];
+  if (!Array.isArray(state.academy_course_versions)) state.academy_course_versions = [];
+  if (!Array.isArray(state.academy_programs)) state.academy_programs = [];
+  if (!Array.isArray(state.academy_program_versions)) state.academy_program_versions = [];
+  if (!Array.isArray(state.academy_course_participations)) state.academy_course_participations = [];
+  if (!Array.isArray(state.academy_program_participations)) state.academy_program_participations = [];
+  if (!Array.isArray(state.academy_progress_evidence)) state.academy_progress_evidence = [];
+  if (!Array.isArray(state.academy_completion_corrections)) state.academy_completion_corrections = [];
+  if (!Array.isArray(state.academy_private_notes)) state.academy_private_notes = [];
   const item: PortalNotificationDoc = {
     id: newId('notif'),
     recipientUid,
@@ -673,6 +704,15 @@ Unmittelbarer Zwang darf nur angewendet werden, soweit mildere Mittel (insbesond
     modules: defaultModules,
     exams: defaultExams,
     progress: [],
+    academy_courses: [],
+    academy_course_versions: [],
+    academy_programs: [],
+    academy_program_versions: [],
+    academy_course_participations: [],
+    academy_program_participations: [],
+    academy_progress_evidence: [],
+    academy_completion_corrections: [],
+    academy_private_notes: [],
     announcements: defaultAnnouncements,
     messages: [],
     requests: [],
