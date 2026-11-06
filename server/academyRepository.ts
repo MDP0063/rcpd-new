@@ -34,7 +34,7 @@ export class AcademyRepository {
   }
   async delete(collection: AcademyCollection, id: string): Promise<void> {
     assertAcademyDocumentId(id);
-    if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections') {
+    if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections' || collection === 'academy_private_notes') {
       throw new Error('ACADEMY_DOCUMENT_APPEND_ONLY');
     }
     return this.runTransaction(tx => tx.delete(collection, id));
