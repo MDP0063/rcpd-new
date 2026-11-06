@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A und Pflichtmetadaten Option A  
+**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A und getrennter Kategorien-/Dokumenttyp-Listen Option A  
 **Basisstand von main:** Merge-Commit von PR #44: `8f8f3a4f17a05f10fcff6b770461a643a718eeb8`.  
 **Aktueller Dokumentationsbranch:** `docs/deep-redesign-reconstruction`.
 
@@ -35,7 +35,7 @@ Die verfügbaren Erinnerungen enthalten:
 - Draft-Konzept C, Ergebnisfreigabe und Korrekturhistorie.
 - Empfehlungen: Erstellung C, Deduplizierung B, Lebenszyklus C, Priorisierung B, Ausblenden B.
 - Kursmeldungs-Lesestatus C.
-- Lernbibliothek: Dokumentversionierung B; Archivierung/Löschung A; globale Suche A; Sortierung A; Filterdarstellung A; Upload-/Veröffentlichungsworkflow B; Selbstveröffentlichung durch dieselbe berechtigte Person A; Pflichtmetadaten A (Titel, Kategorie, Dokumenttyp verpflichtend; Beschreibung/Rang optional; Kennungen automatisch).
+- Lernbibliothek: Dokumentversionierung B; Archivierung/Löschung A; globale Suche A; Sortierung A; Filterdarstellung A; Upload-/Veröffentlichungsworkflow B; Selbstveröffentlichung durch dieselbe berechtigte Person A; Pflichtmetadaten A (Titel, Kategorie, Dokumenttyp verpflichtend; Beschreibung/Rang optional; Kennungen automatisch); getrennte kontrollierte Kategorien-/Dokumenttyp-Listen A.
 - Reader: Navigation eingeklappt A; kontinuierliches vertikales Scrollen.
 - Notizen/Lesezeichen: Versionsbindung A; Synchronisierung A; Erhalt bei Berechtigungsverlust A; Erhalt bei Quelldokumententfernung A, vorbehaltlich rechtlicher Löschpflichten.
 - Kontextbezogener Meldebutton als spätere Integrationsanforderung; vollständiges Meldesystem wird später separat geplant.
@@ -54,7 +54,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Academy-Lernbibliothek: noch offene Rollen für Entwurfspflege/Rückzug/Archivierung, Kategorien-/Dokumenttypwerte, Dateiprüfung/Uploadgrenzen und Rückzug/Benachrichtigung entscheiden.
+1. Academy-Lernbibliothek: noch offene Rollen für Entwurfspflege/Rückzug/Archivierung, konkrete Kategorien-/Dokumenttypwerte, Dateiprüfung/Uploadgrenzen und Rückzug/Benachrichtigung entscheiden.
 2. Restliche Academy-Fragen und Cross-Module-Abhängigkeiten prüfen.
 3. Alle übrigen Portalmodule anhand des tatsächlichen Bestands systematisch auditieren.
 4. Rollen- und Aufgabenmatrix aus bestehenden Berechtigungen ableiten.
@@ -115,3 +115,8 @@ Die Detail-Spezifikation hält nun fest:
 Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch offen. Kategorie bezeichnet das fachliche Thema; Dokumenttyp die Art/Funktion des Dokuments. Keine freie, unkontrollierte Werteliste ohne Prüfung.
 
 **Nächster Konzeptpunkt:** kontrollierte Kategorien und Dokumenttypen so festlegen, dass sie zu den tatsächlichen RCPD-Materialien passen und Suche/Filter unterstützen.
+
+
+## 10. Kategorien und Dokumenttypen – Option A
+
+**BESCHLOSSEN am 06.11.2026:** Zwei getrennte, kontrollierte Listen. Kategorie beschreibt das fachliche Thema; Dokumenttyp die Art/Funktion des Dokuments. Pro Material eine Hauptkategorie und ein Dokumenttyp. Keine automatische Freigabe von Mehrfach-Tags oder freien Eingaben. Die konkreten Werte bleiben anhand des realen Materialbestands zu definieren. Die sechs bisherigen Codewerte sind gemischt und dürfen nicht ungeprüft als Ziel-Taxonomie gelten.
