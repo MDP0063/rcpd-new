@@ -125,6 +125,9 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const courseId = created.body!.master.id as string;
     assert.equal(created.body!.master.ownerUid, 'academy-admin');
     assert.equal(created.body!.draft.updatedByUid, 'academy-admin');
+    const draftState = await request('/api/portal/state?uid=academy-admin', admin);
+    assert.equal(draftState.status, 200);
+    assert.equal(draftState.body!.recentPublicActivity.some((item: { title: string }) => item.title === 'SOP-HTTP-01'), false);
 
     const duplicateCode = await request('/api/academy/courses', colonel, {
       method: 'POST',
@@ -164,6 +167,9 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(published.status, 201, JSON.stringify(published.body));
     assert.equal(published.body!.version.versionNumber, 1);
     assert.equal(published.body!.master.publicationStatus, 'published');
+    const publishedState = await request('/api/portal/state?uid=academy-officer', officer);
+    assert.equal(publishedState.status, 200);
+    assert.equal(publishedState.body!.recentPublicActivity.some((item: { title: string }) => item.title === 'SOP-HTTP-01'), true);
 
     const participantList = await request('/api/academy/courses', officer);
     assert.equal(participantList.status, 200);
