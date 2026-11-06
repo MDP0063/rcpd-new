@@ -28,11 +28,11 @@ export class AcademyRepository {
     if (collection !== 'academy_courses' && collection !== 'academy_programs') throw new Error('ACADEMY_TYPED_CREATE_REQUIRED');
     assertAcademyDocument(collection, id, document);
     if (collection === 'academy_courses') {
-      const master = document as AcademyCourseMasterDoc;
+      const master = document as unknown as AcademyCourseMasterDoc;
       assertValid(validateCourseMaster(master));
       if (master.publicationStatus !== 'draft' || master.latestVersionNumber !== 0 || master.currentPublishedVersionId) throw new Error('ACADEMY_MASTER_MUST_START_AS_DRAFT');
     } else {
-      const master = document as AcademyProgramMasterDoc;
+      const master = document as unknown as AcademyProgramMasterDoc;
       assertValid(validateProgramMaster(master));
       if (master.publicationStatus !== 'draft' || master.latestVersionNumber !== 0 || master.currentPublishedVersionId) throw new Error('ACADEMY_MASTER_MUST_START_AS_DRAFT');
     }
