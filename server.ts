@@ -3893,7 +3893,7 @@ jobs:
         dbState,
         caller,
         'SYSTEM_BACKUP',
-        'Vollständiges Portal- und Prüfungsbackup exportiert',
+        'Portal- und Prüfungsdatenexport (ohne private Notizen)',
         'CA_POST_PORTAL_BACKUP_V4',
         `${dbState.accounts.length} Konten, ${dbState.exams.length} Legacy-Prüfungen und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
       );
@@ -3917,7 +3917,6 @@ jobs:
           academyProgramParticipationsCount: (dbState.academy_program_participations || []).length,
           academyProgressEvidenceCount: (dbState.academy_progress_evidence || []).length,
           academyCompletionCorrectionsCount: (dbState.academy_completion_corrections || []).length,
-          academyPrivateNotesCount: (dbState.academy_private_notes || []).length,
           announcementsCount: (dbState.announcements || []).length,
           messagesCount: (dbState.messages || []).length,
           requestsCount: (dbState.requests || []).length,
@@ -3950,7 +3949,6 @@ jobs:
           academy_program_participations: dbState.academy_program_participations || [],
           academy_progress_evidence: dbState.academy_progress_evidence || [],
           academy_completion_corrections: dbState.academy_completion_corrections || [],
-          academy_private_notes: dbState.academy_private_notes || [],
           announcements: dbState.announcements || [],
           messages: dbState.messages || [],
           requests: dbState.requests || [],
@@ -4181,7 +4179,9 @@ jobs:
         academy_program_participations: rawDb.academy_program_participations || currentState.academy_program_participations || [],
         academy_progress_evidence: rawDb.academy_progress_evidence || currentState.academy_progress_evidence || [],
         academy_completion_corrections: rawDb.academy_completion_corrections || currentState.academy_completion_corrections || [],
-        academy_private_notes: rawDb.academy_private_notes || currentState.academy_private_notes || [],
+        // Private notes are intentionally excluded from administrator-readable exports.
+        // A restore must never import or overwrite them; keep the live owner-private collection intact.
+        academy_private_notes: currentState.academy_private_notes || [],
         deploymentConfig: {
           ...currentCfg,
           ...incomingCfg,
@@ -4195,7 +4195,7 @@ jobs:
         nextState,
         caller,
         'SYSTEM_BACKUP',
-        'Vollständiges Portal- und Prüfungsbackup wiederhergestellt',
+        'Portal- und Prüfungsdaten wiederhergestellt (private Notizen unverändert)',
         'CA_POST_PORTAL_BACKUP_V4',
         `${nextState.accounts.length} Konten, ${nextState.exams.length} Legacy-Prüfungen und ${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.`
       );
