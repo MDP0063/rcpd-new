@@ -4,12 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
-type State = { version: 4; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
-type ParsedState = { version: 1 | 2 | 3 | 4; collections: Partial<Record<AcademyCollection, Record<string, AcademyDocument>>> };
+type State = { version: 5; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
+type ParsedState = { version: 1 | 2 | 3 | 4 | 5; collections: Partial<Record<AcademyCollection, Record<string, AcademyDocument>>> };
 const queues = new Map<string, Promise<void>>();
 const keyOf = (id: string) => `doc:${encodeURIComponent(id)}`;
 const clone = <T,>(value: T): T => structuredClone(value);
-const empty = (): State => ({ version: 4, collections: Object.fromEntries(ACADEMY_COLLECTIONS.map(name => [name, {}])) as State['collections'] });
+const empty = (): State => ({ version: 5, collections: Object.fromEntries(ACADEMY_COLLECTIONS.map(name => [name, {}])) as State['collections'] });
 const matches = (doc: AcademyDocument, query: AcademyQuery) => (query.where ?? []).every(filter => Object.is((doc as unknown as Record<string, unknown>)[filter.field], filter.value));
 
 class JsonTransaction implements AcademyTransaction {
@@ -51,14 +51,15 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return empty(); throw error;
     }
     let parsed: unknown; try { parsed = JSON.parse(raw); } catch { throw new Error('ACADEMY_JSON_STORE_INVALID'); }
-    if (!parsed || typeof parsed !== 'object' || ![1, 2, 3, 4].includes((parsed as ParsedState).version) || !(parsed as ParsedState).collections) throw new Error('ACADEMY_JSON_STORE_INVALID');
+    if (!parsed || typeof parsed !== 'object' || ![1, 2, 3, 4, 5].includes((parsed as ParsedState).version) || !(parsed as ParsedState).collections) throw new Error('ACADEMY_JSON_STORE_INVALID');
     const state = empty();
     for (const collection of ACADEMY_COLLECTIONS) {
       const docs = (parsed as ParsedState).collections[collection];
       if (docs === undefined && (
         ((parsed as ParsedState).version === 1 && (collection === 'academy_course_drafts' || collection === 'academy_program_drafts')) ||
         ((parsed as ParsedState).version <= 2 && collection === 'academy_material_categories') ||
-        ((parsed as ParsedState).version <= 3 && collection === 'academy_material_category_assignments')
+        ((parsed as ParsedState).version <= 3 && collection === 'academy_material_category_assignments') ||
+        ((parsed as ParsedState).version <= 4 && (collection === 'academy_material_document_types' || collection === 'academy_material_document_type_assignments'))
       )) continue;
       if (!docs || typeof docs !== 'object' || Array.isArray(docs)) throw new Error('ACADEMY_JSON_STORE_INVALID');
       for (const [key, doc] of Object.entries(docs)) {
