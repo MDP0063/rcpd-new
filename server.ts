@@ -1149,7 +1149,12 @@ async function startServer() {
     academyRepository,
     uid => {
       const account = loadDatabase().accounts.find(item => item.uid === uid);
-      return account ? { uid: account.uid, role: account.publicProfile.role } : null;
+      return account ? {
+        uid: account.uid,
+        role: account.publicProfile.role,
+        canGradeAssignedCourses: (account.publicProfile.granularPermissions || getDefaultGranularPermissions(account.publicProfile.role)).canGradeAssignedCourses,
+        assignedCourseCodes: (account.publicProfile.granularPermissions || getDefaultGranularPermissions(account.publicProfile.role)).assignedCourseCodes
+      } : null;
     },
     async (actorUid, actionTitle, targetLabel, details, category = 'ACADEMY_DOC') => {
       const state = loadDatabase();
