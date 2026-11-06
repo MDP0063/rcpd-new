@@ -223,6 +223,13 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ expectedStatus: 'completed', correctedStatus: 'in_progress', reason: 'Correction test reason' })
     });
     assert.equal(forbiddenCorrection.status, 403);
+    const correctionWithoutInvalidation = await request(`/api/academy/participations/${participationId}/correction`, admin, {
+      method: 'POST', ...json({
+        expectedStatus: 'completed', correctedStatus: 'in_progress',
+        reason: 'The completion was recorded in error.'
+      })
+    });
+    assert.equal(correctionWithoutInvalidation.status, 409);
     const corrected = await request(`/api/academy/participations/${participationId}/correction`, admin, {
       method: 'POST', ...json({
         expectedStatus: 'completed', correctedStatus: 'in_progress',
