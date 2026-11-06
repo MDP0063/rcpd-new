@@ -472,7 +472,6 @@ export interface PortalBackupSnapshot {
   academyProgramParticipationsCount?: number;
   academyProgressEvidenceCount?: number;
   academyCompletionCorrectionsCount?: number;
-  academyPrivateNotesCount?: number;
     announcementsCount?: number;
     messagesCount?: number;
     requestsCount?: number;
@@ -502,7 +501,6 @@ export interface PortalBackupSnapshot {
     academy_program_participations?: import('./academy').AcademyProgramParticipationDoc[];
     academy_progress_evidence?: import('./academy').AcademyProgressEvidenceDoc[];
     academy_completion_corrections?: import('./academy').AcademyCompletionCorrectionDoc[];
-    academy_private_notes?: import('./academy').AcademyPrivateNoteDoc[];
     announcements?: AnnouncementDoc[];
     messages?: DirectMessageDoc[];
     requests?: PortalRequestDoc[];

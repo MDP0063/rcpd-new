@@ -37,23 +37,59 @@ export function validateCourseVersion(
   if (!Number.isSafeInteger(version.versionNumber) || version.versionNumber < 1) {
     return invalid('ACADEMY_COURSE_VERSION_INVALID', 'Die Kursversionsnummer ist ungültig.');
   }
-  if (!Array.isArray(version.chapters) || !Array.isArray(version.completionRequirements)) {
-    return invalid('ACADEMY_COURSE_STRUCTURE_INVALID', 'Kapitel und Abschlussbedingungen müssen gültige Listen sein.');
+  if (!Array.isArray(version.learningObjectives) ||
+      !Array.isArray(version.chapters) ||
+      !Array.isArray(version.completionRequirements)) {
+    return invalid('ACADEMY_COURSE_STRUCTURE_INVALID', 'Lernziele, Kapitel und Abschlussbedingungen müssen gültige Listen sein.');
   }
-  if (!hasUniqueIds(version.chapters) || !hasUniqueIds(version.completionRequirements)) {
-    return invalid('ACADEMY_COURSE_DUPLICATE_CHILD_ID', 'Kapitel und Abschlussbedingungen benötigen eindeutige IDs.');
+  if (!hasUniqueIds(version.learningObjectives) ||
+      !hasUniqueIds(version.chapters) ||
+      !hasUniqueIds(version.completionRequirements)) {
+    return invalid('ACADEMY_COURSE_DUPLICATE_CHILD_ID', 'Lernziele, Kapitel und Abschlussbedingungen benötigen eindeutige IDs.');
+  }
+  if (version.learningObjectives.some(objective =>
+    !isNonEmpty(objective.id) || !isNonEmpty(objective.description) || objective.description.length > 500
+  )) {
+    return invalid('ACADEMY_COURSE_OBJECTIVE_INVALID', 'Jedes Lernziel benötigt eine ID und eine konkrete Beschreibung (maximal 500 Zeichen).');
   }
   for (const chapter of version.chapters) {
-    if (!isNonEmpty(chapter.title) || !Array.isArray(chapter.materialReferences)) {
-      return invalid('ACADEMY_COURSE_CHAPTER_INVALID', 'Jedes Kapitel benötigt einen Titel und eine Materialliste.');
+    if (!isNonEmpty(chapter.id) || !isNonEmpty(chapter.title) ||
+        chapter.title.length > 200 ||
+        (chapter.description !== undefined && chapter.description.length > 1000) ||
+        !Array.isArray(chapter.materialReferences) ||
+        typeof chapter.required !== 'boolean' ||
+        !Number.isSafeInteger(chapter.order) || chapter.order < 0) {
+      return invalid('ACADEMY_COURSE_CHAPTER_INVALID', 'Jedes Kapitel benötigt gültige ID, Titel, Reihenfolge, Pflichtstatus und Materialliste.');
     }
     const refs = chapter.materialReferences;
     if (new Set(refs.map(ref => ref.materialId)).size !== refs.length) {
       return invalid('ACADEMY_COURSE_DUPLICATE_MATERIAL', 'Ein Material darf innerhalb eines Kapitels nur einmal referenziert werden.');
     }
-    if (refs.some(ref => !isNonEmpty(ref.materialId) || !isNonEmpty(ref.materialVersionId))) {
-      return invalid('ACADEMY_COURSE_MATERIAL_VERSION_REQUIRED', 'Kursmaterialien müssen auf eine konkrete Materialversion verweisen.');
+    if (refs.some(ref =>
+      !isNonEmpty(ref.materialId) ||
+      !isNonEmpty(ref.materialVersionId) ||
+      typeof ref.required !== 'boolean' ||
+      !Number.isSafeInteger(ref.order) || ref.order < 0
+    )) {
+      return invalid('ACADEMY_COURSE_MATERIAL_VERSION_REQUIRED', 'Kursmaterialien müssen auf eine konkrete Materialversion verweisen und gültige Reihenfolgen besitzen.');
     }
+  }
+  const allowedEvidenceTypes = new Set([
+    'required_chapter',
+    'required_material',
+    'required_assessment',
+    'practical_task',
+    'instructor_confirmation',
+    'accepted_self_confirmation'
+  ]);
+  if (version.completionRequirements.some(requirement =>
+    !isNonEmpty(requirement.id) ||
+    !isNonEmpty(requirement.targetId) ||
+    !allowedEvidenceTypes.has(requirement.type) ||
+    typeof requirement.required !== 'boolean' ||
+    (requirement.description !== undefined && requirement.description.length > 1000)
+  )) {
+    return invalid('ACADEMY_COURSE_COMPLETION_REQUIREMENT_INVALID', 'Abschlussbedingungen benötigen einen gültigen Typ, ein Ziel und einen Pflichtstatus.');
   }
   return { ok: true };
 }
@@ -74,14 +110,20 @@ export function validateProgramVersion(
   if (version.learningObjectives.some(objective => !isNonEmpty(objective.description))) {
     return invalid('ACADEMY_PROGRAM_OBJECTIVE_INVALID', 'Alle Lernziele benötigen eine konkrete Beschreibung.');
   }
-  if (!Array.isArray(version.courseReferences) || !hasUniqueIds(version.learningObjectives)) {
-    return invalid('ACADEMY_PROGRAM_STRUCTURE_INVALID', 'Programmziele und Kurszuordnungen müssen gültige Listen sein.');
+  if (!Array.isArray(version.courseReferences) ||
+      !hasUniqueIds(version.learningObjectives) ||
+      version.learningObjectives.some(objective => !isNonEmpty(objective.id) || !isNonEmpty(objective.description))) {
+    return invalid('ACADEMY_PROGRAM_STRUCTURE_INVALID', 'Programmziele und Kurszuordnungen müssen gültige Listen mit eindeutigen IDs sein.');
   }
   if (new Set(version.courseReferences.map(ref => ref.courseId)).size !== version.courseReferences.length) {
     return invalid('ACADEMY_PROGRAM_DUPLICATE_COURSE', 'Ein Kurs darf innerhalb einer Programmversion nur einmal zugeordnet sein.');
   }
-  if (version.courseReferences.some(ref => !isNonEmpty(ref.courseId) || !['required', 'recommended'].includes(ref.requirement))) {
-    return invalid('ACADEMY_PROGRAM_COURSE_REFERENCE_INVALID', 'Jede Kurszuordnung benötigt einen gültigen Kurs und die Einstufung erforderlich oder empfohlen.');
+  if (version.courseReferences.some(ref =>
+    !isNonEmpty(ref.courseId) ||
+    !['required', 'recommended'].includes(ref.requirement) ||
+    !Number.isSafeInteger(ref.order) || ref.order < 0
+  )) {
+    return invalid('ACADEMY_PROGRAM_COURSE_REFERENCE_INVALID', 'Jede Kurszuordnung benötigt einen gültigen Kurs, eine Reihenfolge und die Einstufung erforderlich oder empfohlen.');
   }
   return { ok: true };
 }
