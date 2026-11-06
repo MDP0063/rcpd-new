@@ -14,7 +14,8 @@ const matches = (doc: AcademyDocument, query: AcademyQuery) => (query.where ?? [
 
 class JsonTransaction implements AcademyTransaction {
   hasWrites = false;
-  constructor(private readonly state: State) {}
+  private readonly state: State;
+  constructor(state: State) { this.state = state; }
   private canRead() { if (this.hasWrites) throw new Error('ACADEMY_TRANSACTION_READ_AFTER_WRITE'); }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     this.canRead(); assertAcademyDocumentId(id); const doc = this.state.collections[collection][keyOf(id)]; return doc ? clone(doc) as T : null;
