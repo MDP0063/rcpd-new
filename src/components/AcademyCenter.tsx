@@ -495,7 +495,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       <header className="space-y-1">
         <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Ausbildungsbereich</div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Academy</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildungsinhalte, Lernmaterialien und Prüfungen.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">Programme, Kurse, Lernbibliothek, Prüfungen und persönliche Notizen.</p>
       </header>
       <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
         {[
@@ -545,6 +545,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Direkteinstieg in die derzeit verfügbaren Lernmaterialien und Prüfungen.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" onClick={() => setActiveTab('courses')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Programme & Kurse</span>
+              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Lernpfade ansehen, Teilnahmen beginnen und Fortschritt nachweisen</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('notes')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Meine Notizen</span>
+              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Private Notizen und Lesezeichen öffnen</span>
+            </button>
             <button type="button" onClick={() => setActiveTab('modules')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
               <span className="block text-sm font-semibold text-slate-900 dark:text-white">Lernbibliothek</span>
               <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{modules.length}</span>
