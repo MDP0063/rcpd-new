@@ -601,6 +601,21 @@ Noch zu definieren sind insbesondere:
 
 Diese Punkte bleiben offen, soweit sie nicht ausdrücklich in den vorstehenden Abschnitten als beschlossen gekennzeichnet sind.
 
+### 10.3.8 Erste Ausbaustufe: Text- und Codeinhalte (beschlossen 06.11.2026)
+
+Die erste umzusetzende Materialausbaustufe unterstützt Inhalte, die direkt in der Academy erstellt und bearbeitet werden können:
+
+- **Text / Markdown:** strukturierter Text mit Überschriften, Absätzen, Listen, Links und weiteren ausdrücklich unterstützten Markdown-Elementen.
+- **Code:** eigenständige Codeinhalte, die als Quelltext gespeichert und lesbar dargestellt werden. Eine automatische Ausführung von Materialcode im Portal ist damit nicht beschlossen und bleibt außerhalb der ersten Ausbaustufe, solange sie nicht gesondert fachlich und sicherheitstechnisch freigegeben wurde.
+
+Für beide Inhaltsarten gelten dieselben fachlichen Materialgrundsätze: Pflichtmetadaten (Titel, Kategorie und Dokumenttyp), optionale Beschreibung und Zugriffsbeschränkung, automatisch vergebene Materialkennung, konkrete Versionskennung, Entwurfsstatus und ausdrücklich getrennte Veröffentlichung. Veröffentlichte Fassungen bleiben unverändert; Änderungen werden als neue Entwurfsfassung angelegt. Kursversionen referenzieren weiterhin eine konkrete Materialversion.
+
+Die technische Materialversion soll einen klaren Inhaltsformat-Bezeichner besitzen und den jeweiligen Inhaltstyp strukturiert speichern. Dadurch können später dateibasierte Formate ergänzt werden, ohne Materialidentität, Metadaten, Veröffentlichungsworkflow, Versionshistorie oder Kursreferenzen neu aufzubauen.
+
+**PDF-Unterstützung ist ausdrücklich zurückgestellt** und gehört nicht zur ersten Text-/Code-Ausbaustufe. Vorerst werden keine separate private GitHub-Ablage, kein zusätzlicher Datei-/Objektspeicher, kein PDF-Parser, kein Malware-Scanner, keine entsprechenden externen Dienste oder Kontoverknüpfungen eingerichtet. Dafür dürfen in dieser Phase keine laufenden Zusatzkosten entstehen. Die bereits dokumentierten PDF-Anforderungen – einschließlich Dateigrößenbegrenzung, struktureller Prüfung, Malwareprüfung und Fail-closed-Verhalten – bleiben für eine spätere Wiederaufnahme erhalten, sind aber keine aktuelle Implementierungsfreigabe.
+
+Die zentrale Dokumenttyp-Verwaltung wird als kontrollierte Liste für berechtigte Admin-/Colonel-Nutzer bereitgestellt. Sie startet ohne automatisch vorgegebene Werte. Die konkreten Dokumenttypen werden anhand des tatsächlichen Materialbestands festgelegt und anschließend über die Verwaltung gepflegt. Kategorie und Dokumenttyp bleiben getrennte Metadaten.
+
 ### 10.4 Archivierung und endgültige Löschung – Option A beschlossen
 
 Veröffentlichte Dokumente oder Materialien, die bereits in veröffentlichten Kursen verwendet wurden, sollen im Normalbetrieb archiviert oder fachlich zurückgezogen werden und nicht regulär endgültig gelöscht werden.
