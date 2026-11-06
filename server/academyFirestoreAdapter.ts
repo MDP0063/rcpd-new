@@ -18,7 +18,9 @@ function buildQuery(database: Firestore, collection: AcademyCollection, query: A
 class FirestoreTransaction implements AcademyTransaction {
   private hasWrites = false;
   private cache = new Map<string, AcademyDocument | null>();
-  constructor(private readonly database: Firestore, private readonly transaction: Transaction) {}
+  private readonly database: Firestore;
+  private readonly transaction: Transaction;
+  constructor(database: Firestore, transaction: Transaction) { this.database = database; this.transaction = transaction; }
   private key(collection: AcademyCollection, id: string) { return JSON.stringify([collection, id]); }
   private canRead() { if (this.hasWrites) throw new Error('ACADEMY_TRANSACTION_READ_AFTER_WRITE'); }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
@@ -53,7 +55,8 @@ class FirestoreTransaction implements AcademyTransaction {
   }
 }
 export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
-  constructor(private readonly database: Firestore) {}
+  private readonly database: Firestore;
+  constructor(database: Firestore) { this.database = database; }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     assertAcademyDocumentId(id); return fromSnapshot<T>(collection, await this.database.collection(collection).doc(storageId(id)).get(), id);
   }
