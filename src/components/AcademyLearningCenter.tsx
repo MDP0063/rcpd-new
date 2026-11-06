@@ -81,6 +81,12 @@ function dateLabel(value?: string): string {
   return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(date);
 }
 
+function availabilityNotice(master: { publicationStatus: string; availability: string }): string | null {
+  if (master.publicationStatus === 'archived') return 'Archiviert';
+  if (master.availability === 'unavailable') return 'Derzeit nicht verfügbar';
+  return null;
+}
+
 export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast }) => {
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
@@ -370,6 +376,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               <div className="flex justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Entwurf'}</p>
+                                  {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                   <h4 className="mt-1 font-semibold text-slate-900 dark:text-white">{entry.version?.title || entry.draft?.title || entry.master.code}</h4>
                                   <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Programmversion.'}</p>
                                 </div>
@@ -400,6 +407,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             <div key={entry.master.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
                               <div className="min-w-0">
                                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Keine Veröffentlichung'}</p>
+                                {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                 <h4 className="font-medium text-slate-900 dark:text-white">{entry.version?.title || entry.master.code}</h4>
                                 <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Kursversion.'}</p>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
