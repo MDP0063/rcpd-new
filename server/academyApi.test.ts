@@ -115,6 +115,55 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal((await request('/api/academy/courses', officer)).status, 200);
     assert.equal((await request('/api/academy/courses', officer, { method: 'POST', ...json({ code: 'NOPE', title: 'Nope' }) })).status, 403);
 
+    // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
+    const spoofedModuleCreate = await request('/api/academy/modules', officer, {
+      method: 'POST',
+      ...json({
+        actorUid: 'academy-admin', title: 'Spoofed Module', code: 'SOP-LEGACY-01',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'pdf_upload',
+        contentMarkdown: '', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 15
+      })
+    });
+    assert.equal(spoofedModuleCreate.status, 403);
+
+    const legacyModule = await request('/api/academy/modules', admin, {
+      method: 'POST',
+      ...json({
+        title: 'Session-bound Module', code: 'SOP-LEGACY-01',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'pdf_upload',
+        contentMarkdown: '', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 15
+      })
+    });
+    assert.equal(legacyModule.status, 200, JSON.stringify(legacyModule.body));
+    assert.equal(legacyModule.body!.module.authorUid, 'academy-admin');
+    const legacyModuleId = legacyModule.body!.module.id as string;
+
+    const spoofedModuleUpdate = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
+      method: 'PUT',
+      ...json({ actorUid: 'academy-officer', title: 'Spoofed update' })
+    });
+    assert.equal(spoofedModuleUpdate.status, 403);
+
+    const sessionModuleUpdate = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
+      method: 'PUT',
+      ...json({ title: 'Updated by authenticated administrator' })
+    });
+    assert.equal(sessionModuleUpdate.status, 200, JSON.stringify(sessionModuleUpdate.body));
+    assert.equal(sessionModuleUpdate.body!.module.title, 'Updated by authenticated administrator');
+
+    const spoofedModuleDelete = await request(`/api/academy/modules/${legacyModuleId}?actorUid=academy-officer`, admin, {
+      method: 'DELETE'
+    });
+    assert.equal(spoofedModuleDelete.status, 403);
+
+    const sessionModuleDelete = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
+      method: 'DELETE'
+    });
+    assert.equal(sessionModuleDelete.status, 200, JSON.stringify(sessionModuleDelete.body));
+    assert.equal(sessionModuleDelete.body!.deleted, true);
+
     const created = await request('/api/academy/courses', admin, {
       method: 'POST',
       ...json({
