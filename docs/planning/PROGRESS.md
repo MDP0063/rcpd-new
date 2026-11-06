@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A und getrennter Kategorien-/Dokumenttyp-Listen Option A und Berechtigungen Option B  
+**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A, getrennte Kategorien-/Dokumenttyp-Listen Option A, Berechtigungen Option B und PDF-Grenze 15 MB  
 **Basisstand von main:** Merge-Commit von PR #44: `8f8f3a4f17a05f10fcff6b770461a643a718eeb8`.  
 **Aktueller Dokumentationsbranch:** `docs/deep-redesign-reconstruction`.
 
@@ -54,7 +54,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Academy-Lernbibliothek: noch offene Rollen für Entwurfspflege/Rückzug/Archivierung, konkrete Kategorien-/Dokumenttypwerte, Dateiprüfung/Uploadgrenzen und Rückzug/Benachrichtigung entscheiden.
+1. Academy-Lernbibliothek: konkrete Kategorien-/Dokumenttypwerte; automatische Kennungen/Lesezeit; technische Parser-/Scan-/OCR-Auswahl; Rücknahme/Archivierung und Benachrichtigungen abschließen.
 2. Restliche Academy-Fragen und Cross-Module-Abhängigkeiten prüfen.
 3. Alle übrigen Portalmodule anhand des tatsächlichen Bestands systematisch auditieren.
 4. Rollen- und Aufgabenmatrix aus bestehenden Berechtigungen ableiten.
@@ -142,4 +142,6 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - `src/components/AcademyCenter.tsx`: Datei wird clientseitig per `FileReader.readAsDataURL` eingelesen; im gezeigten Handler keine vorgelagerte Dateigrößenprüfung.
 - `server/stateDiff.ts`: Firestore-PDF-Feld wird in Blob-Teile zu 700.000 Zeichen zerlegt, um das 1-MiB-Dokumentlimit zu umgehen.
 
-**Empfehlung, noch nicht beschlossen:** 15 MB maximale Rohdateigröße pro PDF. Das entspricht ungefähr 20 MB Base64 vor JSON-Overhead und lässt Reserve unter dem derzeitigen 25-MB-Request-Limit. Serverseitige Byte-Prüfung, PDF-Signatur plus Parserprüfung, sichere Dateinamen/IDs, private autorisierte Speicherung/Abrufe, Ressourcenlimits und eine datenschutzkonforme Malware-/CDR-Prüfung sind als Mindestmaßnahmen auszuarbeiten. Fehler-/Scanstatus darf nicht als Veröffentlichung missverstanden werden.
+**BESCHLOSSEN am 06.11.2026:** maximal 15 MB Rohdateigröße pro PDF. Base64-/JSON-Overhead muss bei Requestgrenzen berücksichtigt werden; technische Hostinggrenzen sind vor Implementierung zu verifizieren.
+
+**Nächster Punkt ausgearbeitet:** fachliche Validierungs- und Fehlerzustände für PDFs stehen in `ACADEMY-DETAILED-SPECIFICATION.md`. Beschädigte, abgeschnittene, leere, nicht lesbare und passwortgeschützte PDFs werden abgelehnt. Signatur- und Parserprüfung sowie erfolgreiche Malwareprüfung sind vor Veröffentlichung erforderlich. Bei Scanner-Ausfall bleibt das Material unveröffentlicht. Die konkrete Parser-/Scanner-/Quarantänearchitektur ist noch offen.
