@@ -40,7 +40,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
@@ -212,6 +212,19 @@ export function createAcademyApiRouter(
       await recordAudit(actor.uid, 'Academy-Materialkategorie reaktiviert', category.name,
         `Kategorie ${category.id} reaktiviert.`);
       res.json({ category });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.delete('/materials/categories/:categoryId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const deleted = await repository.deleteMaterialCategory(req.params.categoryId, expectedRevision, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Materialkategorie endgültig gelöscht', deleted.name,
+        `Kategorie ${deleted.id} endgültig gelöscht; zum Löschzeitpunkt waren keine Materialzuordnungen vorhanden.`);
+      res.status(204).end();
     } catch (error) { fail(res, error, next); }
   });
 
