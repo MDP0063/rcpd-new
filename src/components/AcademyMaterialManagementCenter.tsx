@@ -151,10 +151,12 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   };
 
   const startNew = () => {
+    if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein neues Material beginnen?')) return;
     resetEditor();
   };
 
   const openMaterial = async (materialId: string) => {
+    if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein anderes Material öffnen?')) return;
     setBusy(true);
     const response = await apiFetch<MaterialDetailResponse>(API_ENDPOINTS.ACADEMY_MATERIAL(materialId));
     if (!response.ok || !response.data) {
@@ -571,7 +573,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 </button>
               )}
               {editingMaster && globalManager && editingMaster.publicationStatus !== 'archived' && (
-                <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy}>Material archivieren</button>
+                <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
               )}
               <button type="button" className={secondary} onClick={startNew} disabled={busy}>Formular zurücksetzen</button>
             </div>
