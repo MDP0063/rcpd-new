@@ -90,3 +90,37 @@ test('private notes require owner and exact material version; bookmark cannot co
   assert.equal(validatePrivateNote({ ...note, materialVersionId: '' }).ok, false);
   assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: 'text' }).ok, false);
 });
+
+test('course versions reject duplicate objectives and malformed chapter ordering', () => {
+  const duplicateObjectives = {
+    ...courseVersion,
+    learningObjectives: [
+      { id: 'goal_1', description: 'Ziel eins' },
+      { id: 'goal_1', description: 'Ziel zwei' }
+    ]
+  };
+  assert.equal(validateCourseVersion('course_1', duplicateObjectives).ok, false);
+
+  const malformedChapter = structuredClone(courseVersion);
+  malformedChapter.chapters[0].order = -1;
+  assert.equal(validateCourseVersion('course_1', malformedChapter).ok, false);
+
+  const malformedRequirement = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'requirement_1',
+      type: 'unknown' as never,
+      targetId: 'chapter_1',
+      required: true
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', malformedRequirement).ok, false);
+});
+
+test('program course references require unique courses and non-negative order', () => {
+  const invalidOrder = {
+    ...programVersion,
+    courseReferences: [{ courseId: 'course_1', requirement: 'required' as const, order: -1 }]
+  };
+  assert.equal(validateProgramVersion('program_1', invalidOrder).ok, false);
+});
