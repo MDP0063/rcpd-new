@@ -16,14 +16,15 @@
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
 
 ### Lernbibliothek und Materialien
-- Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
-- Kategorien werden zentral durch die berechtigte Academy-Verwaltung gepflegt. Die technische CRUD-Verwaltung ist vorhanden; die Zuordnungsreferenz muss beim späteren Materialschreiben atomar mitgeführt werden.
-- Dokumenttypen bleiben eine getrennte kontrollierte Liste. Die zentrale CRUD-Verwaltung für Admin/Colonel wird im aktuellen Feature-Branch ergänzt. Konkrete Werte werden anhand des realen Materialbestands festgelegt; es werden keine Standardwerte vorweggenommen.
-- Automatische Materialcode-/Versionskennung technisch spezifizieren und mit der ersten Text-/Code-Materialverwaltung integrieren.
-- Die erste Materialausbaustufe umfasst Text-/Markdown-Inhalte und Code als gespeicherten Quelltext. Codeausführung im Portal ist nicht Teil dieser Stufe und braucht eine gesonderte fachliche und technische Freigabe.
-- Technische serverseitige Durchsetzung der bestehenden Kurszuständigkeit für Entwurfsanlage/-bearbeitung/-veröffentlichung verifizieren und umsetzen.
-- Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
-- Metadatenänderungen definieren, die eine neue Materialversion erfordern, gegenüber rein redaktionellen Änderungen ohne neue Version.
+- **Umgesetzt auf dem aktuellen Feature-Branch:** Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Versionen; automatische Material-/Versionskennung; Pflichtmetadaten-IDs; Markdown und gespeicherter Code als Inhaltsformate.
+- **Umgesetzt auf dem aktuellen Feature-Branch:** Kurszuständigkeit wird unabhängig vom Materialcode gespeichert und serverseitig gegen bestehende `canGradeAssignedCourses`-/`assignedCourseCodes`-Berechtigungen geprüft. Kursverantwortliche dürfen innerhalb des zugewiesenen Bereichs Entwürfe erstellen/bearbeiten und selbst veröffentlichen; Archivierung bleibt Admin/Colonel vorbehalten.
+- **Umgesetzt auf dem aktuellen Feature-Branch:** Kategorie-/Dokumenttyp-Zuordnungen werden gemeinsam mit Materialentwürfen aktualisiert. Veröffentlichte Versionen erhalten eigene unveränderliche Zuordnungsreferenzen. Dadurch schützt der Referenzcheck sowohl aktuelle Materialien als auch historische Fassungen vor vorzeitiger Taxonomie-Löschung.
+- **Umgesetzt auf dem aktuellen Feature-Branch:** Kursveröffentlichung prüft serverseitig, ob jede exakte Materialversion existiert, zum Material gehört, veröffentlicht und nicht archiviert ist.
+- **Weiter offen:** Teilnehmer-Lernbibliothek/Reader für die neue Materialstruktur und deren Zugriffsschutz; dabei sichere Markdown-Darstellung, Codeanzeige ohne Ausführung und Notizen-/Lesezeichenbindung an konkrete Materialversionen integrieren.
+- **Weiter offen:** Materialauswahl im Kurseditor. Kurskapitel müssen veröffentlichte Materialfassungen gezielt wählen können; die Oberfläche muss den konkreten Versionsbezug sichtbar und unveränderlich speichern.
+- **Weiter offen:** Suche und Filter für die neue Materialstruktur sowie belastbare Anzeige-/Sortiermetadaten.
+- Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung und konkrete Auswirkungen einer neuen Fassung auf laufende Kursentwürfe abschließen.
+- Bestehende Legacy-Materialien bleiben unberührt, bis ein gesonderter Migrations-/Kompatibilitätsplan beschlossen und umgesetzt ist.
 
 **Zurückgestellt – PDF und dateibasierte Materialien (nicht Teil der aktuellen Ausbaustufe):**
 - Separate dauerhafte Dateiablage, privates Speicher-Repository, PDF-Upload/-Abruf und externe Speicherverknüpfungen.
