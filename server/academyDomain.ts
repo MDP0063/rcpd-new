@@ -6,6 +6,8 @@ import type {
   AcademyProgramDraftDoc,
   AcademyProgramVersionDoc,
   AcademyCourseParticipationDoc,
+  AcademyProgressEvidenceDoc,
+  AcademyCompletionCorrectionDoc,
   AcademyProgramParticipationDoc,
   AcademyPrivateNoteDoc
 } from '../src/types/academy.ts';
@@ -96,6 +98,14 @@ export function validateCourseVersion(
     (requirement.description !== undefined && requirement.description.length > 1000)
   )) {
     return invalid('ACADEMY_COURSE_COMPLETION_REQUIREMENT_INVALID', 'Abschlussbedingungen benötigen einen gültigen Typ, ein Ziel und einen Pflichtstatus.');
+  }
+  if (version.completionRequirements.some(requirement =>
+    (requirement.type === 'required_chapter' && !version.chapters.some(chapter => chapter.id === requirement.targetId)) ||
+    (requirement.type === 'required_material' && !version.chapters.some(chapter =>
+      chapter.materialReferences.some(reference => reference.materialId === requirement.targetId)
+    ))
+  )) {
+    return invalid('ACADEMY_COURSE_COMPLETION_TARGET_MISSING', 'Kapitel- und Material-Abschlussbedingungen müssen auf tatsächlich enthaltene Kursinhalte verweisen.');
   }
   return { ok: true };
 }
@@ -215,12 +225,52 @@ export function validateCourseParticipation(
       !isNonEmpty(participation.courseId) || !isNonEmpty(participation.courseVersionId)) {
     return invalid('ACADEMY_PARTICIPATION_REFERENCE_MISSING', 'Teilnahme, Nutzer, Kurs und Kursversion müssen eindeutig referenziert sein.');
   }
+  if (!['in_progress', 'completed', 'voluntarily_ended', 'administratively_ended'].includes(participation.status) ||
+      !isNonEmpty(participation.createdIso) || !isNonEmpty(participation.updatedIso)) {
+    return invalid('ACADEMY_PARTICIPATION_STATE_INVALID', 'Teilnahmestatus und Zeitstempel müssen gültig sein.');
+  }
   if (participation.status === 'completed' && !isNonEmpty(participation.completedIso)) {
-    return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt einen Abschlusszeitpunkt.');
+    return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt Start- und Abschlusszeitpunkt.');
   }
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
       (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endReason))) {
     return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt Zeitpunkt und Begründung.');
+  }
+  return { ok: true };
+}
+
+export function validateProgressEvidence(evidence: AcademyProgressEvidenceDoc): AcademyValidationResult {
+  if (!isRecord(evidence) || !isNonEmpty(evidence.id) ||
+      !isNonEmpty(evidence.participationId) || !isNonEmpty(evidence.requirementId) ||
+      !isNonEmpty(evidence.sourceId) || !isNonEmpty(evidence.recordedByUid) ||
+      !isNonEmpty(evidence.recordedIso) ||
+      !['required_chapter', 'required_material', 'required_assessment', 'practical_task', 'instructor_confirmation', 'accepted_self_confirmation'].includes(evidence.evidenceType)) {
+    return invalid('ACADEMY_PROGRESS_EVIDENCE_INVALID', 'Der Fortschrittsnachweis enthält ungültige Referenzen oder Metadaten.');
+  }
+  if (evidence.details !== undefined && (typeof evidence.details !== 'string' || evidence.details.length > 2000)) {
+    return invalid('ACADEMY_PROGRESS_EVIDENCE_DETAILS_INVALID', 'Die Nachweisdetails dürfen höchstens 2000 Zeichen enthalten.');
+  }
+  return { ok: true };
+}
+
+export function validateCompletionCorrection(correction: AcademyCompletionCorrectionDoc): AcademyValidationResult {
+  if (!isRecord(correction) || !isNonEmpty(correction.id) || !isNonEmpty(correction.participationId) ||
+      !isNonEmpty(correction.reason) || correction.reason.trim().length < 10 ||
+      correction.reason.length > 1000 || !isNonEmpty(correction.actorUid) || !isNonEmpty(correction.correctedIso) ||
+      !['in_progress', 'completed'].includes(correction.previousStatus) ||
+      !['in_progress', 'completed'].includes(correction.correctedStatus) ||
+      correction.previousStatus === correction.correctedStatus) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_INVALID', 'Eine Abschlusskorrektur benötigt einen gültigen Statuswechsel, eine Begründung und einen verantwortlichen Administrator.');
+  }
+  if (correction.invalidatedEvidenceIds !== undefined &&
+      (!Array.isArray(correction.invalidatedEvidenceIds) ||
+       correction.invalidatedEvidenceIds.some(id => !isNonEmpty(id)) ||
+       new Set(correction.invalidatedEvidenceIds).size !== correction.invalidatedEvidenceIds.length ||
+       correction.invalidatedEvidenceIds.length > 100)) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INVALID', 'Ungültige oder doppelte Nachweisreferenzen in der Abschlusskorrektur.');
+  }
+  if (correction.correctedStatus === 'completed' && (correction.invalidatedEvidenceIds?.length ?? 0) > 0) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INVALID', 'Eine Korrektur auf abgeschlossen darf keine Nachweise gleichzeitig entwerten.');
   }
   return { ok: true };
 }

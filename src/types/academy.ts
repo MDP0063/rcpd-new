@@ -182,6 +182,8 @@ export interface AcademyCompletionCorrectionDoc {
   reason: string;
   actorUid: string;
   correctedIso: string;
+  /** Evidence remains append-only; corrections may explicitly invalidate selected records. */
+  invalidatedEvidenceIds?: string[];
 }
 
 export interface AcademyProgramParticipationDoc {

@@ -12,6 +12,7 @@ const CATEGORY_LABELS: Record<AuditLogDoc['category'], string> = {
   REQUEST_REVIEW: 'Antragsbearbeitung',
   EXAM_WORKSHOP: 'Prüfungswerkstatt',
   ACADEMY_DOC: 'Handbücher & Prüfungen',
+  ACADEMY_PROGRESS: 'Academy-Fortschritt',
   COURSE_GRADE: 'Lehrgangs-Notenvergabe',
   ANNOUNCEMENT: 'Offizielle Bekanntmachung',
   CALENDAR_EVENT: 'Kalender & Einsätze',

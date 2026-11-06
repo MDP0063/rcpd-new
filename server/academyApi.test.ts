@@ -118,7 +118,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       ...json({
         code: 'SOP-HTTP-01', title: 'HTTP Academy Course', summary: 'Initial draft',
         learningObjectives: [{ id: 'objective-1', description: 'Understand the basic process.' }],
-        chapters: [], completionRequirements: []
+        chapters: [{ id: 'chapter-1', title: 'Introduction', materialReferences: [], required: true, order: 0 }],
+        completionRequirements: [
+          { id: 'req-chapter', type: 'required_chapter', targetId: 'chapter-1', required: true },
+          { id: 'req-instructor', type: 'instructor_confirmation', targetId: 'practical-task-1', required: true },
+          { id: 'req-assessment', type: 'required_assessment', targetId: 'exam-1', required: false }
+        ]
       })
     });
     assert.equal(created.status, 201, JSON.stringify(created.body));
@@ -148,7 +153,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
         draft: {
           title: 'HTTP Academy Course v2', summary: 'Saved draft',
           learningObjectives: [{ id: 'objective-1', description: 'Understand the updated process.' }],
-          chapters: [], completionRequirements: []
+          chapters: [{ id: 'chapter-1', title: 'Introduction', materialReferences: [], required: true, order: 0 }],
+          completionRequirements: [
+            { id: 'req-chapter', type: 'required_chapter', targetId: 'chapter-1', required: true },
+            { id: 'req-instructor', type: 'instructor_confirmation', targetId: 'practical-task-1', required: true },
+            { id: 'req-assessment', type: 'required_assessment', targetId: 'exam-1', required: false }
+          ]
         }
       })
     });
@@ -176,6 +186,74 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(participantList.body!.courses.length, 1);
     assert.equal(participantList.body!.courses[0].version.title, 'HTTP Academy Course v2');
     assert.equal(participantList.body!.courses[0].draft, null);
+
+    const started = await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' });
+    assert.equal(started.status, 201, JSON.stringify(started.body));
+    const participationId = started.body!.participation.id as string;
+    assert.equal(started.body!.participation.userUid, 'academy-officer');
+    assert.equal(started.body!.participation.courseVersionId, published.body!.version.id);
+    assert.equal(started.body!.participation.status, 'in_progress');
+    assert.equal((await request(`/api/academy/courses/${courseId}/participations`, officer)).status, 403);
+    assert.equal((await request(`/api/academy/courses/${courseId}/participations`, admin)).status, 200);
+    assert.equal((await request('/api/academy/participations', officer)).body!.participations.length, 1);
+    assert.equal((await request('/api/academy/participations', admin)).body!.participations.length, 0);
+    assert.equal((await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' })).status, 409);
+
+    const blockedAssessment = await request(`/api/academy/participations/${participationId}/evidence`, officer, {
+      method: 'POST', ...json({ requirementId: 'req-assessment' })
+    });
+    assert.equal(blockedAssessment.status, 409);
+    const selfEvidence = await request(`/api/academy/participations/${participationId}/evidence`, officer, {
+      method: 'POST', ...json({ requirementId: 'req-chapter' })
+    });
+    assert.equal(selfEvidence.status, 201, JSON.stringify(selfEvidence.body));
+    assert.equal(selfEvidence.body!.participation.status, 'in_progress');
+    const forbiddenInstructorEvidence = await request(`/api/academy/participations/${participationId}/evidence`, officer, {
+      method: 'POST', ...json({ requirementId: 'req-instructor' })
+    });
+    assert.equal(forbiddenInstructorEvidence.status, 403);
+    const instructorEvidence = await request(`/api/academy/participations/${participationId}/evidence`, admin, {
+      method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Practical task checked.' })
+    });
+    assert.equal(instructorEvidence.status, 201, JSON.stringify(instructorEvidence.body));
+    assert.equal(instructorEvidence.body!.participation.status, 'completed');
+    assert.ok(instructorEvidence.body!.participation.completedIso);
+
+    const forbiddenCorrection = await request(`/api/academy/participations/${participationId}/correction`, colonel, {
+      method: 'POST', ...json({ expectedStatus: 'completed', correctedStatus: 'in_progress', reason: 'Correction test reason' })
+    });
+    assert.equal(forbiddenCorrection.status, 403);
+    const correctionWithoutInvalidation = await request(`/api/academy/participations/${participationId}/correction`, admin, {
+      method: 'POST', ...json({
+        expectedStatus: 'completed', correctedStatus: 'in_progress',
+        reason: 'The completion was recorded in error.'
+      })
+    });
+    assert.equal(correctionWithoutInvalidation.status, 409);
+    const corrected = await request(`/api/academy/participations/${participationId}/correction`, admin, {
+      method: 'POST', ...json({
+        expectedStatus: 'completed', correctedStatus: 'in_progress',
+        reason: 'The completion was recorded in error.',
+        invalidatedEvidenceIds: [instructorEvidence.body!.evidence.id]
+      })
+    });
+    assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+    assert.equal(corrected.body!.participation.status, 'in_progress');
+    assert.equal(corrected.body!.correction.previousStatus, 'completed');
+    const correctedAgain = await request(`/api/academy/participations/${participationId}/correction`, admin, {
+      method: 'POST', ...json({ expectedStatus: 'completed', correctedStatus: 'in_progress', reason: 'A stale correction request.' })
+    });
+    assert.equal(correctedAgain.status, 409);
+    const replacementEvidence = await request(`/api/academy/participations/${participationId}/evidence`, admin, {
+      method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Practical task rechecked.' })
+    });
+    assert.equal(replacementEvidence.status, 201, JSON.stringify(replacementEvidence.body));
+    assert.notEqual(replacementEvidence.body!.evidence.id, instructorEvidence.body!.evidence.id);
+    assert.equal(replacementEvidence.body!.participation.status, 'completed');
+    const detail = await request(`/api/academy/participations/${participationId}`, officer);
+    assert.equal(detail.status, 200);
+    assert.equal(detail.body!.evidence.length, 3);
+    assert.equal(detail.body!.corrections.length, 1);
 
     const createdProgram = await request('/api/academy/programs', admin, {
       method: 'POST',
