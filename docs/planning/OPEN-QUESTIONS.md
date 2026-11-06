@@ -17,11 +17,11 @@
 
 ### Lernbibliothek und Materialien
 - **In `main` umgesetzt:** Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Versionen; automatische Material-/Versionskennung; Pflichtmetadaten-IDs; Markdown und gespeicherter Code als Inhaltsformate.
-- **Umgesetzt auf dem aktuellen Feature-Branch:** Kurszuständigkeit wird unabhängig vom Materialcode gespeichert und serverseitig gegen bestehende `canGradeAssignedCourses`-/`assignedCourseCodes`-Berechtigungen geprüft. Kursverantwortliche dürfen innerhalb des zugewiesenen Bereichs Entwürfe erstellen/bearbeiten und selbst veröffentlichen; Archivierung bleibt Admin/Colonel vorbehalten.
-- **Umgesetzt auf dem aktuellen Feature-Branch:** Kategorie-/Dokumenttyp-Zuordnungen werden gemeinsam mit Materialentwürfen aktualisiert. Veröffentlichte Versionen erhalten eigene unveränderliche Zuordnungsreferenzen. Dadurch schützt der Referenzcheck sowohl aktuelle Materialien als auch historische Fassungen vor vorzeitiger Taxonomie-Löschung.
-- **Umgesetzt auf dem aktuellen Feature-Branch:** Kursveröffentlichung prüft serverseitig, ob jede exakte Materialversion existiert, zum Material gehört, veröffentlicht und nicht archiviert ist.
-- **Mit PR #62 in `main` umgesetzt:** Teilnehmer-Reader mit serverseitiger Prüfung der Kursteilnahme, exakter Kurs-/Materialversionsbindung, rollenabhängigem Zugriff, sicherer Markdown-Darstellung und Codeanzeige ohne Ausführung.
-- **Mit PR #62 in `main` umgesetzt:** Materialauswahl im Kurseditor. Kapitel wählen veröffentlichte Fassungen und speichern die konkrete Versions-ID unveränderlich.
+- **In `main` umgesetzt:** Kurszuständigkeit wird unabhängig vom Materialcode gespeichert und serverseitig gegen bestehende `canGradeAssignedCourses`-/`assignedCourseCodes`-Berechtigungen geprüft. Kursverantwortliche dürfen innerhalb des zugewiesenen Bereichs Entwürfe erstellen/bearbeiten und selbst veröffentlichen; Archivierung bleibt Admin/Colonel vorbehalten.
+- **In `main` umgesetzt:** Kategorie-/Dokumenttyp-Zuordnungen werden gemeinsam mit Materialentwürfen aktualisiert. Veröffentlichte Versionen erhalten eigene unveränderliche Zuordnungsreferenzen. Dadurch schützt der Referenzcheck sowohl aktuelle Materialien als auch historische Fassungen vor vorzeitiger Taxonomie-Löschung.
+- **In `main` umgesetzt:** Kursveröffentlichung prüft serverseitig, ob jede exakte Materialversion existiert, zum Material gehört, veröffentlicht und nicht archiviert ist.
+- **In PR #62 in Umsetzung:** Teilnehmer-Reader mit serverseitiger Prüfung der Kursteilnahme, exakter Kurs-/Materialversionsbindung, rollenabhängigem Zugriff, sicherer Markdown-Darstellung und Codeanzeige ohne Ausführung.
+- **In PR #62 in Umsetzung:** Materialauswahl im Kurseditor. Kapitel wählen veröffentlichte Fassungen und speichern die konkrete Versions-ID unveränderlich.
 - **Weiter offen für den Folgeabschnitt:** Notizen/Lesezeichen im Reader mit automatischer Speicherung, versionsgebundenen Textankern und sichtbarem Speicherstatus sowie geräteübergreifende Wiederaufnahme der letzten Leseposition.
 - **Weiter offen:** Suche und Filter für die neue Materialstruktur sowie belastbare Anzeige-/Sortiermetadaten.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung und konkrete Auswirkungen einer neuen Fassung auf laufende Kursentwürfe abschließen.

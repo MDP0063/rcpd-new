@@ -2,17 +2,17 @@
 
 **Stand:** 06.11.2026 – nach Priorisierung der ersten Materialausbaustufe auf Text/Markdown und Code; PDF-Infrastruktur ist zurückgestellt
 
-**Basisstand von main:** PR #62 ist mit Merge-Commit `b27dc7faa7a732c76ec392e4416ac33807531a9b` gemergt.  
-**Aktueller Bugfix-Branch:** `fix/academy-material-review` – Bugfix-PR #63 wird vorbereitet; kein Merge und kein Deployment.
+**Basisstand von main:** PR #60 wurde mit Merge-Commit `4a67e4874333477f14935118e976b18ad6fa1fe9` gemergt.  
+**Aktueller Umsetzungsbranch:** `feature/academy-versioned-text-code-materials` – Draft-PR #61, CI-Prüfung läuft.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
 - PDF-Funktionen sind bis zu einer späteren Ausbaustufe zurückgestellt. Keine neue PDF-Ablage, kein privates Zusatz-Repository, kein Parser-/Malware-Scan, keine externe Speicherverknüpfung und keine zusätzlichen laufenden Kosten in dieser Phase.
 - Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe, sofern sie nicht separat beschlossen und sicherheitstechnisch geprüft wird.
 - Kategorieverwaltung wurde mit PR #59, Dokumenttypverwaltung mit PR #60 gemergt. Beide Listen starten ohne voreingestellte Taxonomiewerte.
-- Die versionierte Materialverwaltung ist mit PR #61 in `main` enthalten: Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Fassungen für Markdown und gespeicherten Quelltext; automatische Kennungen und getrennte Veröffentlichungsaktion.
+- Die neue versionierte Materialverwaltung entsteht im Branch `feature/academy-versioned-text-code-materials`: Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Fassungen für Markdown und gespeicherten Quelltext; automatische Kennungen und getrennte Veröffentlichungsaktion.
 - Kursveröffentlichungen prüfen serverseitig, dass jede Materialreferenz auf eine tatsächlich vorhandene, veröffentlichte und nicht archivierte konkrete Materialversion zeigt. Bestehende Legacy-Lehrmaterialien bleiben unangetastet und werden nicht automatisch migriert.
-- PR #62 ergänzt Teilnehmer-Reader und Materialauswahl direkt im Kurseditor; der aktuelle Bugfix-Review konsolidiert Fehlerbehandlung und Darstellung.
+- Die aktuelle Ausbaustufe ergänzt zunächst die Admin-/Colonel-/Kursverantwortlichen-Verwaltung. Teilnehmer-Reader und Materialauswahl direkt im Kurseditor bleiben die anschließende Integration.
 
 ## 0.1 Umsetzungsstand der versionierten Text-/Code-Materialverwaltung
 
@@ -204,11 +204,11 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 **Status-/Branchhinweis:** Diese Aktualisierung liegt auf `docs/academy-library-upload-workflow` in Draft-PR #46 gegen `main`. PR #46 ist laut letzter Prüfung offen, nicht gemergt und weiterhin Draft. Die vorhandene Progress-Datei enthält ältere Verweise auf `docs/deep-redesign-reconstruction`; diese sind historischer Kontext und dürfen nicht als aktueller Branchstatus gelesen werden. Keine Änderung an `main`, kein Merge, kein Deployment.
 
-## 06.11.2026 – Lernbibliothek: Reader und Kursintegration (PR #62, gemergt)
+## 06.11.2026 – Lernbibliothek: Reader und Kursintegration (PR #62)
 
-- PR #61 ist gemergt (Merge-Commit `4a67e4874333477f14935118e976b18ad6fa1fe9`).
-- PR #62 ist ebenfalls gemergt (Merge-Commit `b27dc7faa7a732c76ec392e4416ac33807531a9b`).
+- PR #61 ist gemergt (Merge-Commit `9c48dc28a156220adfb8add3a1d55c4f911804e7`).
 - PR #62 ergänzt die Kurseditor-Auswahl konkreter veröffentlichter Materialversionen und einen Teilnehmer-Reader innerhalb einer bestehenden Kursteilnahme.
 - Der Reader lädt Inhalte ausschließlich über eine serverseitig geprüfte Route, die die exakte Materialversion in der gepinnten Kursversion verifiziert. Rollenbeschränkungen werden serverseitig geprüft.
 - Markdown wird mit `react-markdown`, `remark-gfm` und `rehype-sanitize` ohne Raw-HTML-Durchleitung dargestellt. Code bleibt Quelltext und wird nicht ausgeführt.
+- PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler; die CI-Prüfung läuft auf diesem separaten Bugfix-Branch.
 - Notizen/Lesezeichen, Autosave und geräteübergreifende Leseposition bleiben ein eigener Folgeabschnitt.
