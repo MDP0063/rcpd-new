@@ -50,12 +50,12 @@ export class AcademyRepository {
       const category = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', categoryId);
       if (!category) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
       assertValid(validateMaterialCategory(category));
-      if (category.status !== 'active') throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE');
       const existing = await tx.get<AcademyMaterialCategoryAssignmentDoc>(
         'academy_material_category_assignments', materialId
       );
       if (existing) assertValid(validateMaterialCategoryAssignment(existing));
       if (existing?.categoryId === categoryId) return existing;
+      if (category.status !== 'active') throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE');
       const next: AcademyMaterialCategoryAssignmentDoc = {
         id: materialId,
         materialId,
