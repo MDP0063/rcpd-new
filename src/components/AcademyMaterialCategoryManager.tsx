@@ -18,6 +18,8 @@ function errorMessage(code?: string): string {
       return 'Die Kategorie wurde zwischenzeitlich geändert. Lade die Liste neu und öffne sie erneut.';
     case 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND':
       return 'Diese Kategorie ist nicht mehr vorhanden. Lade die Liste neu.';
+    case 'ACADEMY_MATERIAL_CATEGORY_IN_USE':
+      return 'Diese Kategorie wird noch von mindestens einem Material verwendet. Archiviere sie stattdessen, damit bestehende Zuordnungen erhalten bleiben.';
     case 'ACADEMY_MATERIAL_CATEGORY_INVALID':
       return 'Der Kategoriename ist ungültig. Er darf 1 bis 80 Zeichen enthalten.';
     default:
@@ -148,6 +150,35 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     onStatusToast(archive ? `Kategorie „${category.name}“ archiviert.` : `Kategorie „${category.name}“ wieder aktiviert.`);
   };
 
+  const deleteCategory = async (category: AcademyMaterialCategoryDoc) => {
+    const typedName = window.prompt(
+      `Kategorie „${category.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf sie verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
+    );
+    if (typedName === null) return;
+    if (typedName.trim() !== category.name) {
+      onStatusToast('Der Kategoriename stimmt nicht überein. Es wurde nichts gelöscht.');
+      return;
+    }
+    setBusy(true);
+    const response = await apiFetch(
+      API_ENDPOINTS.ACADEMY_MATERIAL_CATEGORY(category.id),
+      {
+        method: 'DELETE',
+        body: JSON.stringify({ expectedRevision: category.revision })
+      }
+    );
+    if (!response.ok) {
+      onStatusToast(errorMessage(response.error));
+      setBusy(false);
+      await load();
+      return;
+    }
+    if (editing?.id === category.id) beginCreate();
+    await load();
+    setBusy(false);
+    onStatusToast(`Kategorie „${category.name}“ endgültig gelöscht.`);
+  };
+
   const visibleCategories = categories.filter(category =>
     `${category.name} ${category.description || ''}`.toLocaleLowerCase('de-DE').includes(search.trim().toLocaleLowerCase('de-DE'))
   );
@@ -157,7 +188,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       <header className="space-y-1">
         <h2 id="academy-category-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Kategorien verwalten</h2>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Kategorien können hier erstellt, umbenannt, archiviert und wieder aktiviert werden. Die Kennung bleibt bei einer Umbenennung stabil.
+          Kategorien können hier erstellt, umbenannt, archiviert, reaktiviert und – solange kein Material darauf verweist – endgültig gelöscht werden. Die Kennung bleibt bei einer Umbenennung stabil.
         </p>
       </header>
 
@@ -260,6 +291,9 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(category)} disabled={busy}>
                         {category.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
                       </button>
+                      <button type="button" className={secondaryButton} onClick={() => void deleteCategory(category)} disabled={busy}>
+                        Endgültig löschen
+                      </button>
                     </div>
                   </div>
                 </li>
@@ -270,7 +304,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Kategorien werden nicht endgültig gelöscht. Archivierte Kategorien bleiben für bestehende Verweise nachvollziehbar und können nicht neuen Materialien zugewiesen werden.
+        Archivierte Kategorien bleiben für bestehende Verweise nachvollziehbar und können nicht neuen Materialien zugewiesen werden. Endgültiges Löschen ist nur ohne bestehende Materialzuordnungen möglich; der Server prüft das unmittelbar beim Löschversuch.
       </p>
     </section>
   );
