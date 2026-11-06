@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
-  Code2,
   ExternalLink,
   CheckCircle2,
   Lock,
   Plus,
-  Trash2,
   Award,
   FileText,
   Clock,
   Upload,
-  FileUp,
   Terminal
 } from 'lucide-react';
 import {
