@@ -415,7 +415,7 @@ export function createAcademyApiRouter(
       const correctedStatus = req.body.correctedStatus;
       if (!['in_progress', 'completed'].includes(String(expectedStatus)) ||
           !['in_progress', 'completed'].includes(String(correctedStatus))) {
-        res.status(400).json({ error: 'ACADEMY_COMPLECTION_CORRECTION_STATUS_INVALID' }); return;
+        res.status(400).json({ error: 'ACADEMY_COMPLETION_CORRECTION_STATUS_INVALID' }); return;
       }
       const participation = await repository.getCourseParticipation(req.params.participationId);
       if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
