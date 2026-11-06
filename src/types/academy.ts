@@ -68,6 +68,31 @@ export interface AcademyCourseMasterDoc {
   archiveReason?: string;
 }
 
+export interface AcademyCourseDraftDoc {
+  id: string;
+  courseId: string;
+  title: string;
+  summary: string;
+  learningObjectives: AcademyLearningObjective[];
+  chapters: AcademyCourseChapter[];
+  completionRequirements: AcademyCourseCompletionRequirement[];
+  workingRevision: number;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
+export interface AcademyProgramDraftDoc {
+  id: string;
+  programId: string;
+  title: string;
+  summary: string;
+  learningObjectives: AcademyLearningObjective[];
+  courseReferences: AcademyProgramCourseReference[];
+  workingRevision: number;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
 export interface AcademyCourseVersionDoc {
   id: string;
   courseId: string;
