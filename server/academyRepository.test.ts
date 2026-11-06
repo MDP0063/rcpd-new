@@ -206,6 +206,32 @@ test('course draft can be revised repeatedly with a monotonically increasing rev
 }));
 
 
+test('program participation atomically pins required course versions and reuses matching course participation', async () => withRepository(async repository => {
+  const requiredCourseVersion = {
+    ...version,
+    completionRequirements: [{ id: 'required-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true }]
+  };
+  const requiredCourseDraft = { ...courseDraft, completionRequirements: requiredCourseVersion.completionRequirements };
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, requiredCourseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, requiredCourseVersion, publishedMaster, 2, 'owner-1');
+  await repository.create('academy_programs', programMaster.id, programMaster);
+  await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
+  await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgramMaster, 2, 'owner-1');
+
+  const programParticipation = await repository.startProgramParticipation('learner-1', programMaster.id, now);
+  assert.equal(programParticipation.programVersionId, programVersion.id);
+  assert.deepEqual(programParticipation.requiredCoursePins, [{
+    courseId: master.id,
+    courseVersionId: requiredCourseVersion.id,
+    courseParticipationId: `participation_learner-1_${master.id}`
+  }]);
+  const linkedCourseParticipation = await repository.getCourseParticipation(programParticipation.requiredCoursePins[0].courseParticipationId);
+  assert.equal(linkedCourseParticipation?.courseVersionId, requiredCourseVersion.id);
+  assert.equal(linkedCourseParticipation?.status, 'in_progress');
+  await assert.rejects(repository.startProgramParticipation('learner-1', programMaster.id, now), /ACADEMY_PROGRAM_PARTICIPATION_ALREADY_EXISTS/);
+}));
+
 test('course participation pins the published version and completes only after every required evidence is recorded', async () => withRepository(async repository => {
   const requirements = [
     { id: 'req-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true },
