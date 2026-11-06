@@ -195,3 +195,12 @@ test('JSON adapter upgrades legacy schema v1 without losing existing collections
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('course draft can be revised repeatedly with a monotonically increasing revision', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  const revised = { ...courseDraft, summary: 'Überarbeiteter Entwurf', workingRevision: 3 };
+  await repository.saveCourseDraft(master.id, revised, 2, 'owner-1');
+  assert.deepEqual(await repository.getCourseDraft(master.id), revised);
+  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.workingRevision, 3);
+}));
