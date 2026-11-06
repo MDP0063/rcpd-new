@@ -16,7 +16,7 @@
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
 
 ### Lernbibliothek und Materialien
-- Rollen und Berechtigungen: Wer darf Entwürfe anlegen/bearbeiten, veröffentlichen, zurückziehen und archivieren? Darf der Ersteller selbst veröffentlichen oder ist eine zweite Person erforderlich?
+- Rollen und Berechtigungen: Welche bestehenden Rollen dürfen Entwürfe anlegen/bearbeiten, zurückziehen und archivieren? (Selbstveröffentlichung durch dieselbe berechtigte Person ist mit Option A beschlossen; kein Vier-Augen-Prinzip.)
 - Pflicht-/Optional-Metadaten und Materialcode-Regeln.
 - Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
 - Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
@@ -199,7 +199,7 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 
 ### Academy
 - **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
-- Offen bleiben die Rollen-/Freigaberegeln, die Frage eines möglichen Vier-Augen-Prinzips, Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
+- Offen bleiben die Rollen-/Freigaberegeln,  Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
 - Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
 - Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
 - Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
