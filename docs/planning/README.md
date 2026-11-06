@@ -46,3 +46,8 @@ Diese Dokumentation hält den fachlichen Planungsstand fest. Sie ersetzt nicht:
 - den tatsächlich implementierten Code oder dessen Tests.
 
 Bei Konflikten gelten die verbindlichen Repository-Regeln und die ausdrücklich bestätigten Entscheidungen des Projektinhabers. Technische Spezifikationen beschreiben ihren jeweils ausgewiesenen Geltungs- und Freigabestatus. Die Rekonstruktionsgrenzen sind in `RECONSTRUCTION-NOTES.md` offengelegt.
+
+
+## Ergänzung: verbindliches Entwicklungsmodell
+
+Das ab 06.11.2026 beschlossene endproduktorientierte iterative Vorgehen ist in [DEVELOPMENT-MODEL.md](./DEVELOPMENT-MODEL.md) festgehalten. Dieses Dokument ist zusammen mit Masterplan und Detailplanung zu lesen. Es präzisiert, wie Gesamtplanung und vollständige Entwicklungsabschnitte ineinandergreifen, ohne Qualitäts- oder Funktionsumfang zu reduzieren.
