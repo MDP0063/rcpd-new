@@ -249,3 +249,35 @@ In einer vorläufigen Repository-/UX-Bestandsaufnahme wurden notiert:
 - einige große Module und uneinheitliche Navigationsmuster.
 
 Diese Notizen sind Ausgangspunkte für erneute Prüfung, keine aktuelle vollständige technische Analyse und keine Beschlüsse. Jede Beobachtung muss vor einer Implementierung mit aktuellem Code und konkreten Dateipfaden verifiziert werden.
+
+
+## 18. Ausführliche Spezifikationen und verbindliche Abgrenzungen
+
+Das Inventar ist eine Landkarte des gesamten Portals, keine Kurzfassung aller Detailregeln. Für die weitere Arbeit sind die folgenden Dokumente gemeinsam zu verwenden:
+
+- Gesamtportal, UX-Grundsätze, Rollen-/Aufgabenorientierung, Auditmethodik und Kommentare zu allen übrigen Modulen: `PORTAL-REDESIGN-DETAILS.md`.
+- Academy einschließlich Programme, Kurse, Bibliothek, Reader, Notizen, Prüfungen, Examiner, Freigaben und Historie: `ACADEMY-DETAILED-SPECIFICATION.md`.
+- verbindliche Optionsentscheidungen und zentrale Begriffsabgrenzungen: `DECISIONS.md`.
+- offene Entscheidungen und technische Prüffelder: `OPEN-QUESTIONS.md`.
+
+### 18.1 Was das Inventar nicht behauptet
+
+Ein Modul gilt nicht als vollständig konzipiert, nur weil es hier einen Eintrag hat. Für Dashboard, Kommunikation, Anträge, Kalender, Personal, Berichte/Audit, Whitelist, Betrieb, Login und Einstellungen fehlen im verfügbaren Gesprächskontext noch detaillierte, vom Projektinhaber bestätigte Ablaufentscheidungen. Diese Bereiche müssen aus dem aktuellen Code und den weiteren Planungsentscheidungen ausgearbeitet werden.
+
+### 18.2 Für jedes Modul zu erhaltende Kontextinformationen
+
+Bei der weiteren Planung sind nicht nur Menüpunkte und Komponenten zu erfassen. Zu sichern sind auch:
+- Nutzerkommentare, Korrekturen und Gründe;
+- tatsächlich gewählte Optionen;
+- bewusste Nicht-Entscheidungen;
+- alternative Vorschläge, die nicht angenommen wurden;
+- Rollen- und Sichtbarkeitsgrenzen;
+- fachliche Statusunterschiede;
+- Nebenwirkungen auf andere Module;
+- Fehler- und Grenzfälle;
+- technische Abhängigkeiten;
+- Auswirkungen auf Desktop und Mobile.
+
+### 18.3 Academy-Status
+
+Die Academy ist fachlich detailliert spezifiziert, jedoch nicht vollständig umsetzungsreif. Insbesondere Upload-/Freigabeworkflow, Empfehlungslebenszyklus-Randfälle, technische Umsetzung der Materialversionierung und die Ergebnisfreigabe-Defaultfrage bleiben offen. Der kontextbezogene Meldebutton ist eine spätere Integrationsanforderung; das vollständige Meldesystem ist nicht Teil der aktuellen Academy-Konzeption.
