@@ -217,6 +217,143 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const documentTypeCatalogAfterDelete = await request('/api/academy/materials/document-types', admin);
     assert.equal(documentTypeCatalogAfterDelete.body!.documentTypes.some((item: { id: string }) => item.id === documentTypeId), false);
 
+    assert.equal((await request('/api/academy/materials')).status, 401);
+    assert.equal((await request('/api/academy/materials', officer)).status, 200);
+    assert.equal((await request('/api/academy/materials', officer, {
+      method: 'POST', ...json({ title: 'Unauthorized material' })
+    })).status, 403);
+
+    const materialCategory = await request('/api/academy/materials/categories', admin, {
+      method: 'POST', ...json({ name: 'Operations – Materialtest' })
+    });
+    assert.equal(materialCategory.status, 201, JSON.stringify(materialCategory.body));
+    const materialCategoryId = materialCategory.body!.category.id as string;
+    const materialDocumentType = await request('/api/academy/materials/document-types', admin, {
+      method: 'POST', ...json({ name: 'Handbuch – Materialtest' })
+    });
+    assert.equal(materialDocumentType.status, 201, JSON.stringify(materialDocumentType.body));
+    const materialDocumentTypeId = materialDocumentType.body!.documentType.id as string;
+
+    const materialCreated = await request('/api/academy/materials', admin, {
+      method: 'POST',
+      ...json({
+        title: 'Operations Handbook',
+        description: 'Erste veröffentlichbare Materialfassung.',
+        categoryId: materialCategoryId,
+        documentTypeId: materialDocumentTypeId,
+        contentFormat: 'markdown',
+        content: '# Operations\n\nErste Fassung.'
+      })
+    });
+    assert.equal(materialCreated.status, 201, JSON.stringify(materialCreated.body));
+    const materialId = materialCreated.body!.master.id as string;
+    const materialCode = materialCreated.body!.master.code as string;
+    assert.match(materialCode, /^MAT-2026-[A-F0-9]{12}$/);
+    assert.equal(materialCreated.body!.master.publicationStatus, 'draft');
+    assert.equal(materialCreated.body!.draft.createdByUid, 'academy-admin');
+
+    const materialList = await request('/api/academy/materials', admin);
+    assert.equal(materialList.body!.materials.length, 1);
+    assert.equal(materialList.body!.materials[0].draft.title, 'Operations Handbook');
+    assert.equal(materialList.body!.materials[0].currentVersion, null);
+
+    const materialPublishedV1 = await request('/api/academy/materials/' + materialId + '/publish', admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(materialPublishedV1.status, 201, JSON.stringify(materialPublishedV1.body));
+    const materialVersion1Id = materialPublishedV1.body!.version.id as string;
+    assert.equal(materialVersion1Id, materialId + '__v1');
+    assert.equal(materialPublishedV1.body!.master.publicationStatus, 'published');
+
+    const materialDraftUpdated = await request('/api/academy/materials/' + materialId + '/draft', admin, {
+      method: 'PUT',
+      ...json({
+        expectedRevision: 1,
+        draft: {
+          title: 'Operations Handbook – Revised',
+          description: 'Zweite Entwurfsfassung.',
+          categoryId: materialCategoryId,
+          documentTypeId: materialDocumentTypeId,
+          contentFormat: 'markdown',
+          content: '# Operations\n\nZweite Fassung.'
+        }
+      })
+    });
+    assert.equal(materialDraftUpdated.status, 200, JSON.stringify(materialDraftUpdated.body));
+    assert.equal(materialDraftUpdated.body!.draft.workingRevision, 2);
+    const materialAfterDraft = await request('/api/academy/materials/' + materialId, admin);
+    assert.equal(materialAfterDraft.body!.master.currentPublishedVersionId, materialVersion1Id,
+      'saving a draft must not change the current published version');
+    assert.equal(materialAfterDraft.body!.currentVersion.content, '# Operations\n\nErste Fassung.');
+
+    const materialPublishedV2 = await request('/api/academy/materials/' + materialId + '/publish', admin, {
+      method: 'POST', ...json({ expectedRevision: 2 })
+    });
+    assert.equal(materialPublishedV2.status, 201, JSON.stringify(materialPublishedV2.body));
+    assert.equal(materialPublishedV2.body!.version.id, materialId + '__v2');
+    const materialHistory = await request('/api/academy/materials/' + materialId, admin);
+    assert.equal(materialHistory.body!.versions.length, 2);
+    assert.equal(materialHistory.body!.currentVersion.content, '# Operations\n\nZweite Fassung.');
+
+    const courseWithMaterial = await request('/api/academy/courses', admin, {
+      method: 'POST',
+      ...json({
+        code: 'MAT-HTTP-01',
+        title: 'Material reference course',
+        summary: '',
+        learningObjectives: [{ id: 'goal-material-1', description: 'Use a fixed material version.' }],
+        chapters: [{
+          id: 'chapter-material-1',
+          title: 'Operations material',
+          materialReferences: [{ materialId, materialVersionId: materialVersion1Id, required: true, order: 0 }],
+          required: true,
+          order: 0
+        }],
+        completionRequirements: []
+      })
+    });
+    assert.equal(courseWithMaterial.status, 201, JSON.stringify(courseWithMaterial.body));
+    const courseWithMaterialId = courseWithMaterial.body!.master.id as string;
+    const courseMaterialPublished = await request('/api/academy/courses/' + courseWithMaterialId + '/publish', admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(courseMaterialPublished.status, 201, JSON.stringify(courseMaterialPublished.body));
+    assert.equal(courseMaterialPublished.body!.version.chapters[0].materialReferences[0].materialVersionId, materialVersion1Id);
+
+    const courseWithInvalidMaterial = await request('/api/academy/courses', admin, {
+      method: 'POST',
+      ...json({
+        code: 'MAT-HTTP-02',
+        title: 'Invalid material reference course',
+        summary: '',
+        learningObjectives: [{ id: 'goal-material-2', description: 'Must reject unknown version.' }],
+        chapters: [{
+          id: 'chapter-material-2',
+          title: 'Unknown material version',
+          materialReferences: [{ materialId, materialVersionId: materialId + '__v999', required: true, order: 0 }],
+          required: true,
+          order: 0
+        }],
+        completionRequirements: []
+      })
+    });
+    assert.equal(courseWithInvalidMaterial.status, 201, JSON.stringify(courseWithInvalidMaterial.body));
+    const invalidCoursePublish = await request('/api/academy/courses/' + courseWithInvalidMaterial.body!.master.id + '/publish', admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(invalidCoursePublish.status, 409);
+
+    const unauthorizedMaterialArchive = await request('/api/academy/materials/' + materialId + '/archive', officer, {
+      method: 'POST', ...json({ expectedRevision: 2, reason: 'Unauthorized archive attempt.' })
+    });
+    assert.equal(unauthorizedMaterialArchive.status, 403);
+    const archivedMaterial = await request('/api/academy/materials/' + materialId + '/archive', admin, {
+      method: 'POST', ...json({ expectedRevision: 2, reason: 'Material is replaced by a newer policy.' })
+    });
+    assert.equal(archivedMaterial.status, 200);
+    assert.equal(archivedMaterial.body!.master.publicationStatus, 'archived');
+    assert.equal((await request('/api/academy/materials/' + materialId, admin)).body!.versions.length, 2);
+
     // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
     const spoofedModuleCreate = await request('/api/academy/modules', officer, {
       method: 'POST',
