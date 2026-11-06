@@ -354,3 +354,12 @@ Der Masterplan ist bewusst eine Übersicht und kein Ersatz für die ausführlich
 Bei UX-Empfehlungen bleibt die verbindliche Rechercheanforderung bestehen: aktuelle etablierte Muster und maßgebliche Accessibility-Standards prüfen, geeignete Quellen nennen und die Empfehlung anhand konkreter RCPD-Aufgaben begründen.
 
 Die aktuell verfügbaren Erinnerungen erlauben eine detaillierte Rekonstruktion zahlreicher Academy-Regeln und übergreifender Projektvorgaben. Sie enthalten aber nicht die vollständigen Wortprotokolle aller älteren Chats. Die Dokumentation kennzeichnet deshalb fehlende oder unsichere Informationen offen und ergänzt sie nicht durch erfundene Entscheidungen.
+
+
+## 10. Verbindliche Aktualisierung: endproduktorientiertes iteratives Entwicklungsmodell (06.11.2026)
+
+Die bisherige lineare Phasenbeschreibung wird durch das ergänzende, verbindliche Entwicklungsmodell in [`DEVELOPMENT-MODEL.md`](./DEVELOPMENT-MODEL.md) präzisiert. Das Ziel und der Qualitätsanspruch bleiben unverändert. Gesamtplanung und Abschnittsplanung werden miteinander verbunden: Jeder fachlich zusammenhängende Abschnitt wird recherchiert, vollständig konzipiert, mit dem Gesamtsystem abgeglichen, prototypisch überprüft, technisch bewertet, implementiert und qualitätsgesichert. Die Aufteilung ist organisatorisch und darf niemals zu Funktionskürzungen, geringerer Recherche, Accessibility-Abstrichen oder unnötigen Zwischenlösungen führen.
+
+Die Gesamtarchitektur, globale Navigation, Rollen-/Aufgabenbezüge, gemeinsame Muster und technischen Abhängigkeiten werden früh genug geklärt, damit einzelne Abschnitte bereits zum endgültigen Produkt passen. Nicht jedes Detail aller Module muss vor der ersten Implementierung feststehen. Erkenntnisse aus Prototypen und Tests fließen zurück in die Planung. Die Academy wird gezielt fachlich abgeschlossen, aber nicht bis in jede erst bei Umsetzung sinnvolle technische Einzelheit vorweggenommen. Globale Grundlagen und die übrigen Module werden parallel in ihrer Abhängigkeit berücksichtigt.
+
+Diese Aktualisierung präzisiert die Arbeitsreihenfolge der Abschnitte 4–7; sie hebt weder das Gesamtziel noch bestehende Qualitäts-, Recherche-, Sicherheits- oder Freigabeanforderungen auf.
