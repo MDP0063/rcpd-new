@@ -3,7 +3,7 @@
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`.
 
 **Stand:** 06.11.2026  
-**Dokumentationsstatus:** Erweiterte Gesamtre-design-Baseline. Fachliche Entscheidungen sind von Vorschlägen und technischen Prüfhypothesen getrennt. Nicht alle Module sind bereits konzipiert; offene Bereiche sind ausdrücklich markiert.
+**Dokumentationsstatus:** Erweiterte Gesamt-Redesign-Baseline. Fachliche Entscheidungen sind von Vorschlägen und technischen Prüfhypothesen getrennt. Nicht alle Module sind bereits konzipiert; offene Bereiche sind ausdrücklich markiert.
 
 ## Verbindliche Lesereihenfolge
 
