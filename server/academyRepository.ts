@@ -13,12 +13,14 @@ function assertValid(result: { ok: boolean; code?: string }): void {
 export class AcademyRepository {
   constructor(private readonly adapter: AcademyStorageAdapter) {}
   get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
+    if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocumentId(id); return this.adapter.get<T>(collection, id);
   }
   list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
+    if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyQuery(collection, query); return this.adapter.list<T>(collection, query);
   }
-  runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
+  private runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.adapter.runTransaction(operation);
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
@@ -71,10 +73,10 @@ export class AcademyRepository {
   }
   async listOwnPrivateNotes(ownerUid: string): Promise<AcademyPrivateNoteDoc[]> {
     if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
-    return this.list<AcademyPrivateNoteDoc>('academy_private_notes', { where: [{ field: 'ownerUid', value: ownerUid }], limit: 1000 });
+    return this.adapter.list<AcademyPrivateNoteDoc>('academy_private_notes', { where: [{ field: 'ownerUid', value: ownerUid }], limit: 1000 });
   }
   async getOwnPrivateNote(ownerUid: string, noteId: string): Promise<AcademyPrivateNoteDoc | null> {
-    const note = await this.get<AcademyPrivateNoteDoc>('academy_private_notes', noteId);
+    const note = await this.adapter.get<AcademyPrivateNoteDoc>('academy_private_notes', noteId);
     return note?.ownerUid === ownerUid ? note : null;
   }
   async saveOwnPrivateNote(ownerUid: string, note: AcademyPrivateNoteDoc): Promise<void> {
