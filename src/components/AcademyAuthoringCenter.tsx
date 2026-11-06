@@ -10,7 +10,8 @@ import type {
   AcademyProgramCourseReference,
   AcademyProgramDraftDoc,
   AcademyProgramMasterDoc,
-  AcademyProgramVersionDoc
+  AcademyProgramVersionDoc,
+  AcademyMaterialListItem
 } from '../types/academy';
 
 interface CourseEntry {
@@ -89,6 +90,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const [mode, setMode] = useState<EditorMode>('list');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
+  const [materials, setMaterials] = useState<AcademyMaterialListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -115,17 +117,15 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
-    const [courseResponse, programResponse] = await Promise.all([
+    const [courseResponse, programResponse, materialResponse] = await Promise.all([
       apiFetch<{ courses: CourseEntry[] }>(API_ENDPOINTS.ACADEMY_COURSES),
-      apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS)
+      apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
+      apiFetch<{ materials: AcademyMaterialListItem[] }>(API_ENDPOINTS.ACADEMY_MATERIALS)
     ]);
-    if (!courseResponse.ok || !courseResponse.data || !programResponse.ok || !programResponse.data) {
-      setLoadError(apiErrorMessage(courseResponse.error || programResponse.error));
-      setLoading(false);
-      return;
+    if (!courseResponse.ok || !courseResponse.data || !programResponse.ok || !programResponse.data || !materialResponse.ok || !materialResponse.data) {
+      setLoadError(apiErrorMessage(courseResponse.error || programResponse.error || materialResponse.error)); setLoading(false); return;
     }
-    setCourses(courseResponse.data.courses);
-    setPrograms(programResponse.data.programs);
+    setCourses(courseResponse.data.courses); setPrograms(programResponse.data.programs); setMaterials(materialResponse.data.materials);
     setLoading(false);
   }, []);
 
@@ -282,6 +282,19 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setCourseChapters(items => [...items, { id: newId('chapter'), title: '', description: '', materialReferences: [], required: false, order: items.length }]);
     setCourseDirty(true);
   };
+  const addChapterMaterial = (chapterId: string, materialId: string) => {
+    const material = materials.find(item => item.master.id === materialId);
+    if (!material?.currentVersion || material.master.publicationStatus !== 'published') return;
+    setCourseChapters(items => items.map(chapter => chapter.id !== chapterId || chapter.materialReferences.some(reference => reference.materialId === materialId)
+      ? chapter : { ...chapter, materialReferences: [...chapter.materialReferences, { materialId, materialVersionId: material.currentVersion!.id, required: true, order: chapter.materialReferences.length }] }));
+    setCourseDirty(true);
+  };
+  const removeChapterMaterial = (chapterId: string, materialId: string) => {
+    setCourseChapters(items => items.map(chapter => chapter.id !== chapterId ? chapter : {
+      ...chapter, materialReferences: chapter.materialReferences.filter(reference => reference.materialId !== materialId).map((reference,index)=>({...reference,order:index}))
+    }));
+    setCourseDirty(true);
+  };
   const addProgramObjective = () => { if (programObjectives.length < 6) setProgramObjectives(items => [...items, { id: newId('objective'), description: '' }]); setProgramDirty(true); };
   const addProgramCourse = () => {
     if (!programCourseToAdd || programReferences.some(item => item.courseId === programCourseToAdd)) return;
@@ -396,15 +409,33 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               {courseChapters.map((item, index) => {
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
                 return <div key={item.id} className="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} disabled={item.materialReferences.length > 0} title={item.materialReferences.length > 0 ? 'Kapitel mit bestehenden Materialreferenzen können erst nach der Materialverwaltung geändert werden.' : undefined} onClick={() => { setCourseChapters(items => items.filter(chapter => chapter.id !== item.id).map((chapter, order) => ({ ...chapter, order }))); setCourseRequirements(items => items.filter(requirement => !(requirement.type === 'required_chapter' && requirement.targetId === item.id))); setCourseDirty(true); }}>Kapitel entfernen</button></div>
+                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => { setCourseChapters(items => items.filter(chapter => chapter.id !== item.id).map((chapter, order) => ({ ...chapter, order }))); setCourseRequirements(items => items.filter(requirement => !(requirement.type === 'required_chapter' && requirement.targetId === item.id))); setCourseDirty(true); }}>Kapitel entfernen</button></div>
                   <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, title: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={item.required} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, required: event.target.checked } : chapter)); setCourseDirty(true); }} className="mt-1" />Kapitel ist als Pflichtinhalt gekennzeichnet</label>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={completionRequired} onChange={event => setChapterCompletionRequired(item.id, event.target.checked)} className="mt-1" />Für dieses Kapitel ist ein eigener Abschlussnachweis erforderlich</label>
-                  {item.materialReferences.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{item.materialReferences.length} bestehende Materialreferenz(en) werden unverändert beibehalten. Dieses Kapitel kann erst entfernt werden, wenn die Versionierung der Lernbibliothek eine sichere Änderung der Zuordnung ermöglicht.</p>}
+                  <div className="space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                    <label htmlFor={'academy-chapter-material-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Veröffentlichtes Material hinzufügen</label>
+                    <select id={'academy-chapter-material-' + item.id} className={field} value="" onChange={event => { if (event.target.value) addChapterMaterial(item.id, event.target.value); }}>
+                      <option value="">Material auswählen …</option>
+                      {materials.filter(m => m.master.publicationStatus === 'published' && m.currentVersion && !item.materialReferences.some(r => r.materialId === m.master.id))
+                        .sort((a,b)=>(a.currentVersion?.title||'').localeCompare(b.currentVersion?.title||'','de-DE'))
+                        .map(m=><option key={m.master.id} value={m.master.id}>{m.currentVersion!.title} · {m.master.code} · v{m.currentVersion!.versionNumber}</option>)}
+                    </select>
+                    {item.materialReferences.length===0?<p className="text-xs text-slate-500 dark:text-slate-400">Noch keine Materialfassung zugeordnet.</p>:<ul className="divide-y divide-slate-200 dark:divide-slate-800">
+                      {item.materialReferences.map(reference=>{const m=materials.find(candidate=>candidate.master.id===reference.materialId);const current=m?.currentVersion?.id===reference.materialVersionId?m.currentVersion:null;
+                        return <li key={reference.materialId} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||m?.draft?.title||'Historische Materialreferenz'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?'Version '+current.versionNumber:reference.materialVersionId}</p></div>
+                          <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={reference.required} onChange={event=>{setCourseChapters(items=>items.map(ch=>ch.id!==item.id?ch:{...ch,materialReferences:ch.materialReferences.map(v=>v.materialId===reference.materialId?{...v,required:event.target.checked}:v)}));setCourseDirty(true);}}/>Erforderlich</label>
+                            <button type="button" className={danger} onClick={()=>removeChapterMaterial(item.id,reference.materialId)}>Entfernen</button></div>
+                        </li>;
+                      })}
+                    </ul>}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Die gewählte Materialkennung und Versions-ID werden exakt in diesem Kursentwurf gespeichert. Eine spätere Materialveröffentlichung ändert diese Referenz nicht automatisch.</p>
+                  </div>
                 </div>;
               })}
-              <p className="text-xs text-slate-500 dark:text-slate-400">Die Zuordnung konkreter Dokumentversionen folgt mit der versionierten Lernbibliothek. Bereits vorhandene Referenzen bleiben beim Speichern erhalten.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Jede Auswahl bindet eine konkrete veröffentlichte Materialversion. Bereits veröffentlichte Kursversionen bleiben davon unberührt.</p>
             </section>
             {!courseRequirements.some(item => item.required) && <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Für diesen Kurs ist noch keine erforderliche Abschlussbedingung hinterlegt. Solange das so bleibt, kann eine Kursteilnahme nicht automatisch als abgeschlossen gewertet werden.</p>}
             {courseRequirements.some(item => item.type !== 'required_chapter') && <section className={panel}><h3 className="font-semibold text-slate-900 dark:text-white">Weitere Abschlussbedingungen</h3><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{courseRequirements.filter(item => item.type !== 'required_chapter').length} weitere Abschlussbedingung(en) bleiben bei Änderungen erhalten. Ihre Bearbeitung folgt mit der Prüfungs- und Materialintegration.</p></section>}

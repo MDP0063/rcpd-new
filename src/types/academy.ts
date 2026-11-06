@@ -180,6 +180,13 @@ export interface AcademyCourseChapter {
   order: number;
 }
 
+export interface AcademyCourseMaterialReaderItem {
+  chapterId: string; chapterTitle: string; chapterOrder: number;
+  materialId: string; materialVersionId: string; required: boolean; order: number;
+  accessStatus: 'available' | 'restricted' | 'unavailable';
+  materialCode?: string; title?: string; versionNumber?: number; contentFormat?: AcademyMaterialContentFormat;
+}
+
 export interface AcademyCourseCompletionRequirement {
   id: string;
   type: AcademyCompletionEvidenceType;

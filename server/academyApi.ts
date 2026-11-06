@@ -5,9 +5,10 @@ import type {
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
   AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
-  AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary
+  AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
+import { canReadMaterialRole, courseVersionReferencesMaterial } from './academyMaterialReaderAccess.ts';
 import type { AcademyRepository } from './academyRepository.ts';
 
 export interface AcademyApiActor {
@@ -866,7 +867,47 @@ export function createAcademyApiRouter(
         repository.listParticipationEvidence(participation.id),
         repository.listParticipationCorrections(participation.id)
       ]);
-      res.json({ participation, version, evidence, corrections });
+      if (!version) { res.status(404).json({ error: 'ACADEMY_PINNED_VERSION_MISSING' }); return; }
+      const references = version.chapters.flatMap(chapter => chapter.materialReferences.map(reference => ({ ...reference, chapterId: chapter.id, chapterTitle: chapter.title, chapterOrder: chapter.order })));
+      const materials: AcademyCourseMaterialReaderItem[] = await Promise.all(references.map(async reference => {
+        const [master, materialVersion] = await Promise.all([
+          repository.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId),
+          repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId)
+        ]);
+        const baseItem = { chapterId: reference.chapterId, chapterTitle: reference.chapterTitle, chapterOrder: reference.chapterOrder,
+          materialId: reference.materialId, materialVersionId: reference.materialVersionId, required: reference.required, order: reference.order };
+        if (!master || !materialVersion || materialVersion.id !== reference.materialVersionId || materialVersion.materialId !== reference.materialId ||
+            !materialVersion.publishedIso || !materialVersion.publishedByUid) return { ...baseItem, accessStatus: 'unavailable' as const };
+        if (!canReadMaterialRole(actor.role, materialVersion.requiredRole)) return { ...baseItem, accessStatus: 'restricted' as const };
+        return { ...baseItem, accessStatus: 'available' as const, materialCode: master.code, title: materialVersion.title,
+          versionNumber: materialVersion.versionNumber, contentFormat: materialVersion.contentFormat };
+      }));
+      res.json({ participation, version, evidence, corrections, materials });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/participations/:participationId/materials/:materialId/versions/:materialVersionId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const courseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+      const isOwner = participation.userUid === actor.uid;
+      const isManager = Boolean(courseMaster && canManage(actor, courseMaster.ownerUid));
+      if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const courseVersion = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
+      if (!courseVersion || !courseVersionReferencesMaterial(courseVersion, req.params.materialId, req.params.materialVersionId)) {
+        res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_IN_PINNED_COURSE_VERSION' }); return;
+      }
+      const [master, materialVersion] = await Promise.all([
+        repository.get<AcademyMaterialMasterDoc>('academy_materials', req.params.materialId),
+        repository.get<AcademyMaterialVersionDoc>('academy_material_versions', req.params.materialVersionId)
+      ]);
+      if (!master || !materialVersion || materialVersion.materialId !== master.id || materialVersion.id !== req.params.materialVersionId ||
+          !materialVersion.publishedIso || !materialVersion.publishedByUid) { res.status(404).json({ error: 'ACADEMY_MATERIAL_VERSION_NOT_FOUND' }); return; }
+      if (!canReadMaterialRole(actor.role, materialVersion.requiredRole)) { res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return; }
+      res.json({ material: materialVersion });
     } catch (error) { fail(res, error, next); }
   });
 

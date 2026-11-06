@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { AcademyMaterialReader } from './AcademyMaterialReader';
 import type {
   AcademyCourseMasterDoc,
   AcademyCourseVersionDoc,
@@ -11,7 +12,8 @@ import type {
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
-  AcademyPrivateNoteDoc
+  AcademyPrivateNoteDoc,
+  AcademyCourseMaterialReaderItem
 } from '../types/academy';
 import type { UserPublicProfile } from '../types/portal';
 
@@ -36,6 +38,7 @@ interface CourseParticipationDetail {
   version: AcademyCourseVersionDoc;
   evidence: AcademyProgressEvidenceDoc[];
   corrections: AcademyCompletionCorrectionDoc[];
+  materials: AcademyCourseMaterialReaderItem[];
 }
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
@@ -421,6 +424,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <p className={muted}>{courseDetail?.version.summary || selectedCourse.version?.summary}</p>
               </header>
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
+                <>
                 <div className={`${panel} p-4 space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-sm font-semibold">{statusLabel(courseDetail.participation.status)}</span>
@@ -461,6 +465,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   )}
                   <p className="text-xs text-slate-500 dark:text-slate-400">Ein Kursabschluss wird nur angezeigt, wenn der Server die erforderlichen Nachweise als vollständig bewertet hat.</p>
                 </div>
+                <AcademyMaterialReader participationId={courseDetail.participation.id} materials={courseDetail.materials || []} />
+                </>
               ) : ownCourseParticipationByCourse.has(selectedCourse.master.id) ? (
                 <div className={`${panel} p-4 space-y-3`}>
                   <p className={muted}>Eine bestehende Kursteilnahme ist vorhanden, ihre Details konnten aber noch nicht geladen werden.</p>
