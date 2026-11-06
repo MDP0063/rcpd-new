@@ -17,11 +17,11 @@
 
 ### Lernbibliothek und Materialien
 - Rollen und Berechtigungen: Welche bestehenden Rollen dürfen Entwürfe anlegen/bearbeiten, zurückziehen und archivieren? (Selbstveröffentlichung durch dieselbe berechtigte Person ist mit Option A beschlossen; kein Vier-Augen-Prinzip.)
-- Pflicht-/Optional-Metadaten und Materialcode-Regeln.
+- Konkrete Werte und ggf. Hierarchie der kontrollierten Kategorien und Dokumenttypen; automatische Materialcode-/Versionskennung technisch spezifizieren.
 - Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
 - Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
-- Verlässliche Materialcodes, Kategorien, Tags und Datumsfelder.
+- Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen; kontrollierte Kategorie-/Dokumenttypwerte konkretisieren.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
 - Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
