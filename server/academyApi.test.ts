@@ -159,6 +159,13 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(restoredCategory.body!.category.status, 'active');
     assert.equal(restoredCategory.body!.category.id, categoryId);
 
+    const deletedCategory = await request(`/api/academy/materials/categories/${categoryId}`, admin, {
+      method: 'DELETE', ...json({ expectedRevision: 4 })
+    });
+    assert.equal(deletedCategory.status, 204);
+    const categoryCatalogAfterDelete = await request('/api/academy/materials/categories', admin);
+    assert.equal(categoryCatalogAfterDelete.body!.categories.some((item: { id: string }) => item.id === categoryId), false);
+
     // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
     const spoofedModuleCreate = await request('/api/academy/modules', officer, {
       method: 'POST',
