@@ -550,15 +550,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   Als Admin oder Colonel kannst du PDF-Lehrbücher, externe Dokumente oder Code-Module jederzeit über die Schaltfläche hinzufügen.
                 </p>
               </div>
-              {canEditAcademy && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('upload_textbook')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer"
-                >
-                  <FileUp className="w-4 h-4" /> Jetzt erstes Lehrbuch / PDF hochladen
-                </button>
-              )}
             </div>
           ) : (
             <div className={`grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
