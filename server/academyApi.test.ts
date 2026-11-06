@@ -224,7 +224,11 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(forbiddenCorrection.status, 403);
     const corrected = await request(`/api/academy/participations/${participationId}/correction`, admin, {
-      method: 'POST', ...json({ expectedStatus: 'completed', correctedStatus: 'in_progress', reason: 'The completion was recorded in error.' })
+      method: 'POST', ...json({
+        expectedStatus: 'completed', correctedStatus: 'in_progress',
+        reason: 'The completion was recorded in error.',
+        invalidatedEvidenceIds: [instructorEvidence.body!.evidence.id]
+      })
     });
     assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
     assert.equal(corrected.body!.participation.status, 'in_progress');
@@ -233,14 +237,16 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ expectedStatus: 'completed', correctedStatus: 'in_progress', reason: 'A stale correction request.' })
     });
     assert.equal(correctedAgain.status, 409);
-    const restored = await request(`/api/academy/participations/${participationId}/correction`, admin, {
-      method: 'POST', ...json({ expectedStatus: 'in_progress', correctedStatus: 'completed', reason: 'The evidence was rechecked and confirmed.' })
+    const replacementEvidence = await request(`/api/academy/participations/${participationId}/evidence`, admin, {
+      method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Practical task rechecked.' })
     });
-    assert.equal(restored.status, 200);
-    assert.equal(restored.body!.participation.status, 'completed');
+    assert.equal(replacementEvidence.status, 201, JSON.stringify(replacementEvidence.body));
+    assert.notEqual(replacementEvidence.body!.evidence.id, instructorEvidence.body!.evidence.id);
+    assert.equal(replacementEvidence.body!.participation.status, 'completed');
     const detail = await request(`/api/academy/participations/${participationId}`, officer);
     assert.equal(detail.status, 200);
-    assert.equal(detail.body!.evidence.length, 2);
+    assert.equal(detail.body!.evidence.length, 3);
+    assert.equal(detail.body!.corrections.length, 1);
 
     const createdProgram = await request('/api/academy/programs', admin, {
       method: 'POST',
