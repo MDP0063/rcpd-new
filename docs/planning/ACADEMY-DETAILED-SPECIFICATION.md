@@ -418,6 +418,20 @@ Die Bibliothek ist ein vollständiger, unabhängig nutzbarer Wissensbestand. All
 
 Kurse referenzieren kanonische Bibliotheksmaterialien. Inhalte sollen nicht durch getrennte Kopien auseinanderlaufen. Eine Kurszuordnung darf die eigenständige Bibliotheksauffindbarkeit nicht aufheben.
 
+### 10.1.1 Bibliotheksstartseite und Kategorien
+
+Die Bibliotheksstartseite soll einen schnellen Einstieg in den gesamten zugänglichen Wissensbestand ermöglichen. Als Struktur wurden besprochen:
+- Empfehlungen und zuletzt geöffnete bzw. zuletzt verwendete Materialien als hilfreiche Einstiege;
+- Kategorien als visuell erkennbare Einstiegsbereiche;
+- Kurs- und Levelbezug als mögliche Orientierung bzw. Filter, sofern die entsprechenden Metadaten tatsächlich gepflegt sind;
+- gut sichtbare globale Suche;
+- wenige kompakte Schnellfilter;
+- weitergehende Filter zunächst eingeklappt bzw. auf Abruf.
+
+Kategorien können als Kacheln oder vergleichbare klare Einstiege erscheinen. Die einzelnen Dokumente werden dagegen in einer kompakten Liste dargestellt; Dokumenteinträge sollen nicht unnötig große Karten werden.
+
+Die genaue visuelle Ausgestaltung bleibt offen. Empfehlungen und zuletzt geöffnete Dokumente dürfen nur auf tatsächlichen Nutzungs-/Empfehlungsdaten beruhen und müssen Zugriffsrechte respektieren. Das Vorhandensein dieser Einstiege darf keine neue fachliche Pflicht oder künstliche Priorität erzeugen.
+
 ### 10.2 Materialversionierung – Option B beschlossen
 
 Die Bibliothek zeigt im regulären aktuellen Bestand die aktuell veröffentlichte Materialfassung.
