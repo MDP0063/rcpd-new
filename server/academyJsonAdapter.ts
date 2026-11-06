@@ -5,6 +5,7 @@ import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
 type State = { version: 2; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
+type ParsedState = { version: 1 | 2; collections: Partial<Record<AcademyCollection, Record<string, AcademyDocument>>> };
 const queues = new Map<string, Promise<void>>();
 const keyOf = (id: string) => `doc:${encodeURIComponent(id)}`;
 const clone = <T,>(value: T): T => structuredClone(value);
@@ -46,7 +47,7 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return empty(); throw error;
     }
     let parsed: unknown; try { parsed = JSON.parse(raw); } catch { throw new Error('ACADEMY_JSON_STORE_INVALID'); }
-    if (!parsed || typeof parsed !== 'object' || ![1, 2].includes((parsed as State).version) || !(parsed as State).collections) throw new Error('ACADEMY_JSON_STORE_INVALID');
+    if (!parsed || typeof parsed !== 'object' || ![1, 2].includes((parsed as ParsedState).version) || !(parsed as ParsedState).collections) throw new Error('ACADEMY_JSON_STORE_INVALID');
     const state = empty();
     for (const collection of ACADEMY_COLLECTIONS) {
       const docs = (parsed as State).collections[collection];
