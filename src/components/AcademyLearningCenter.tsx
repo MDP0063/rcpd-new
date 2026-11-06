@@ -186,7 +186,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   }, [notes, noteSearch]);
 
   const openCourse = async (entry: CourseEntry) => {
-    setSelectedCourse(entry);
+    const pins = programPinByCourse.get(entry.master.id) || [];
+    const pinnedVersionIds = [...new Set(pins.map(item => item.pin.courseVersionId))];
+    const effectiveEntry = pinnedVersionIds.length === 1
+      ? { ...entry, version: pins[0].version }
+      : entry;
+    setSelectedCourse(effectiveEntry);
     setCourseDetail(null);
     setScreen('course');
     const participation = ownCourseParticipationByCourse.get(entry.master.id);
@@ -448,7 +453,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   <div className={`${panel} p-4 space-y-3`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
                     {selectedCourse.version?.learningObjectives.length ? (
-                      <ul className="list-disc pl-5 space-y-1 ${muted}">
+                      <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
                         {selectedCourse.version.learningObjectives.map(objective => <li key={objective.id}>{objective.description}</li>)}
                       </ul>
                     ) : <p className={muted}>Für diesen Kurs wurden noch keine veröffentlichten Lernziele bereitgestellt.</p>}
@@ -467,10 +472,18 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   ) : null}
                   <div className={`${panel} p-4 space-y-2`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme</h3>
-                    <p className={muted}>Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.</p>
-                    <button type="button" className={primary} disabled={saving || !selectedCourse.version} onClick={() => void startCourse()}>
-                      {saving ? 'Wird gestartet …' : 'Kurs starten'}
-                    </button>
+                    {programPinByCourse.get(selectedCourse.master.id)?.length &&
+                      new Set(programPinByCourse.get(selectedCourse.master.id)!.map(item => item.pin.courseVersionId)).size > 1 ? (
+                        <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Programmversions-Pins. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
+                      ) : (
+                        <>
+                          <p className={muted}>Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.</p>
+                          {programPinByCourse.get(selectedCourse.master.id)?.[0] && <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Kurs ist in einem begonnenen Programm an Version {programPinByCourse.get(selectedCourse.master.id)![0].version.versionNumber} gebunden.</p>}
+                          <button type="button" className={primary} disabled={saving || !selectedCourse.version} onClick={() => void startCourse()}>
+                            {saving ? 'Wird gestartet …' : 'Kurs starten'}
+                          </button>
+                        </>
+                      )}
                   </div>
                 </>
               )}
