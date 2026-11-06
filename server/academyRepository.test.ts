@@ -250,7 +250,7 @@ test('course participation pins the published version and completes only after e
   const reopened = await repository.correctCourseParticipation(participation.id, correction, 'completed');
   assert.equal(reopened.status, 'in_progress');
   assert.equal(reopened.completedIso, undefined);
-  assert.deepEqual((await repository.get('academy_completion_corrections', correction.id))?.invalidatedEvidenceIds, [completed.evidence.id]);
+  assert.deepEqual((await repository.get<{ id: string; invalidatedEvidenceIds?: string[] }>('academy_completion_corrections', correction.id))?.invalidatedEvidenceIds, [completed.evidence.id]);
   const replacementEvidence = await repository.recordProgressEvidence(participation.id, instructorEvidence, 'owner-1', true);
   assert.equal(replacementEvidence.participation.status, 'completed');
   assert.notEqual(replacementEvidence.evidence.id, completed.evidence.id);
