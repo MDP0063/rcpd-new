@@ -34,7 +34,10 @@ class JsonTransaction implements AcademyTransaction {
     this.state.collections[collection][key] = clone(document); this.hasWrites = true;
   }
   async delete(collection: AcademyCollection, id: string): Promise<void> {
-    assertAcademyCanDelete(collection); assertAcademyDocumentId(id); if (delete this.state.collections[collection][keyOf(id)]) this.hasWrites = true;
+    assertAcademyCanDelete(collection); assertAcademyDocumentId(id);
+    const key = keyOf(id);
+    if (!this.state.collections[collection][key]) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+    delete this.state.collections[collection][key]; this.hasWrites = true;
   }
 }
 
