@@ -9,7 +9,9 @@ import type {
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
   AcademyProgramParticipationDoc,
-  AcademyPrivateNoteDoc
+  AcademyPrivateNoteDoc,
+  AcademyMaterialCategoryDoc,
+  AcademyMaterialCategoryAssignmentDoc
 } from '../src/types/academy.ts';
 
 export type AcademyValidationResult =
@@ -30,6 +32,42 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function hasUniqueIds(values: Array<{ id: string }>): boolean {
   return new Set(values.map(value => value.id)).size === values.length;
+}
+
+export function validateMaterialCategoryAssignment(
+  assignment: AcademyMaterialCategoryAssignmentDoc
+): AcademyValidationResult {
+  if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
+      !isNonEmpty(assignment.materialId) || assignment.id !== assignment.materialId ||
+      !isNonEmpty(assignment.categoryId) ||
+      !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
+      !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
+      !isNonEmpty(assignment.updatedIso) || !isNonEmpty(assignment.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_ASSIGNMENT_INVALID', 'Material-Kategorie-Zuordnung und Änderungsmetadaten müssen gültig sein.');
+  }
+  return { ok: true };
+}
+
+export function validateMaterialCategory(category: AcademyMaterialCategoryDoc): AcademyValidationResult {
+  if (!isRecord(category) || !isNonEmpty(category.id) || !isNonEmpty(category.name) ||
+      category.name.trim().length > 80 || !['active', 'archived'].includes(category.status) ||
+      !Number.isSafeInteger(category.revision) || category.revision < 1 ||
+      !isNonEmpty(category.createdIso) || !isNonEmpty(category.createdByUid) ||
+      !isNonEmpty(category.updatedIso) || !isNonEmpty(category.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_INVALID', 'Kategorie, Name, Status, Revision und Änderungsmetadaten müssen gültig sein.');
+  }
+  if (category.description !== undefined &&
+      (typeof category.description !== 'string' || category.description.length > 300)) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_DESCRIPTION_INVALID', 'Die Kategorienbeschreibung darf höchstens 300 Zeichen enthalten.');
+  }
+  if (category.status === 'archived' &&
+      (!isNonEmpty(category.archivedIso) || !isNonEmpty(category.archivedByUid))) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_ARCHIVE_AUDIT_MISSING', 'Eine archivierte Kategorie benötigt Zeitpunkt und verantwortliche Person.');
+  }
+  if (category.status === 'active' && (category.archivedIso !== undefined || category.archivedByUid !== undefined)) {
+    return invalid('ACADEMY_MATERIAL_CATEGORY_ARCHIVE_STATE_INVALID', 'Eine aktive Kategorie darf keine Archivierungsmetadaten enthalten.');
+  }
+  return { ok: true };
 }
 
 export function validateCourseVersion(

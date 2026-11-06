@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -33,6 +33,159 @@ export class AcademyRepository {
   async list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query: AcademyQuery = {}): Promise<T[]> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyQuery(collection, query); return this.adapter.list<T>(collection, query);
+  }
+  async listMaterialCategories(): Promise<AcademyMaterialCategoryDoc[]> {
+    return this.adapter.list<AcademyMaterialCategoryDoc>('academy_material_categories', { limit: 1000 });
+  }
+  async setMaterialCategoryAssignment(
+    materialId: string,
+    categoryId: string,
+    actorUid: string,
+    now: string
+  ): Promise<AcademyMaterialCategoryAssignmentDoc> {
+    if (!materialId.trim() || !categoryId.trim() || !actorUid.trim()) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_ASSIGNMENT_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const category = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', categoryId);
+      if (!category) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(category));
+      const existing = await tx.get<AcademyMaterialCategoryAssignmentDoc>(
+        'academy_material_category_assignments', materialId
+      );
+      if (existing) assertValid(validateMaterialCategoryAssignment(existing));
+      if (existing?.categoryId === categoryId) return existing;
+      if (category.status !== 'active') throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE');
+      const next: AcademyMaterialCategoryAssignmentDoc = {
+        id: materialId,
+        materialId,
+        categoryId,
+        revision: (existing?.revision ?? 0) + 1,
+        createdIso: existing?.createdIso ?? now,
+        createdByUid: existing?.createdByUid ?? actorUid,
+        updatedIso: now,
+        updatedByUid: actorUid
+      };
+      assertValid(validateMaterialCategoryAssignment(next));
+      if (existing) await tx.update('academy_material_category_assignments', materialId, next);
+      else await tx.create('academy_material_category_assignments', materialId, next);
+      return next;
+    });
+  }
+  async clearMaterialCategoryAssignment(materialId: string): Promise<void> {
+    if (!materialId.trim()) throw new Error('ACADEMY_MATERIAL_REQUIRED');
+    return this.runTransaction(async tx => {
+      const existing = await tx.get<AcademyMaterialCategoryAssignmentDoc>(
+        'academy_material_category_assignments', materialId
+      );
+      if (existing) {
+        assertValid(validateMaterialCategoryAssignment(existing));
+        await tx.delete('academy_material_category_assignments', materialId);
+      }
+    });
+  }
+  async deleteMaterialCategory(
+    categoryId: string,
+    expectedRevision: number,
+    actorUid: string
+  ): Promise<AcademyMaterialCategoryDoc> {
+    if (!actorUid.trim()) throw new Error('ACADEMY_ACTOR_REQUIRED');
+    if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', categoryId);
+      if (!current) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(current));
+      if (current.revision !== expectedRevision) throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+      const references = await tx.list<AcademyMaterialCategoryAssignmentDoc>(
+        'academy_material_category_assignments',
+        { where: [{ field: 'categoryId', value: categoryId }], limit: 1 }
+      );
+      if (references.length > 0) throw new Error('ACADEMY_MATERIAL_CATEGORY_IN_USE');
+      await tx.delete('academy_material_categories', categoryId);
+      return current;
+    });
+  }
+  async createMaterialCategory(category: AcademyMaterialCategoryDoc): Promise<void> {
+    assertValid(validateMaterialCategory(category));
+    if (category.revision !== 1 || category.status !== 'active' ||
+        category.archivedIso !== undefined || category.archivedByUid !== undefined) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_INITIAL_STATE_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const existing = await tx.list<AcademyMaterialCategoryDoc>('academy_material_categories');
+      const normalizedName = category.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE');
+      if (existing.some(item => item.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE') === normalizedName)) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_NAME_ALREADY_EXISTS');
+      }
+      await tx.create('academy_material_categories', category.id, category);
+    });
+  }
+  async updateMaterialCategory(
+    category: AcademyMaterialCategoryDoc,
+    expectedRevision: number,
+    actorUid: string
+  ): Promise<void> {
+    if (!actorUid.trim() || category.updatedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
+    assertValid(validateMaterialCategory(category));
+    if (!Number.isSafeInteger(expectedRevision) || category.revision !== expectedRevision + 1) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', category.id);
+      if (!current) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(current));
+      if (current.revision !== expectedRevision ||
+          category.createdIso !== current.createdIso || category.createdByUid !== current.createdByUid ||
+          category.status !== current.status || category.archivedIso !== current.archivedIso ||
+          category.archivedByUid !== current.archivedByUid) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+      }
+      const categories = await tx.list<AcademyMaterialCategoryDoc>('academy_material_categories');
+      const normalizedName = category.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE');
+      if (categories.some(item => item.id !== category.id &&
+          item.name.normalize('NFKC').trim().toLocaleLowerCase('de-DE') === normalizedName)) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_NAME_ALREADY_EXISTS');
+      }
+      await tx.update('academy_material_categories', category.id, category);
+    });
+  }
+  async setMaterialCategoryArchived(
+    categoryId: string,
+    archived: boolean,
+    expectedRevision: number,
+    actorUid: string,
+    now: string
+  ): Promise<AcademyMaterialCategoryDoc> {
+    if (!actorUid.trim()) throw new Error('ACADEMY_ACTOR_REQUIRED');
+    if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
+      throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', categoryId);
+      if (!current) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      assertValid(validateMaterialCategory(current));
+      if (current.revision !== expectedRevision) throw new Error('ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT');
+      if ((current.status === 'archived') === archived) throw new Error('ACADEMY_MATERIAL_CATEGORY_STATE_UNCHANGED');
+      const next: AcademyMaterialCategoryDoc = {
+        ...current,
+        status: archived ? 'archived' : 'active',
+        revision: current.revision + 1,
+        updatedIso: now,
+        updatedByUid: actorUid,
+        ...(archived
+          ? { archivedIso: now, archivedByUid: actorUid }
+          : {})
+      };
+      if (!archived) {
+        delete next.archivedIso;
+        delete next.archivedByUid;
+      }
+      assertValid(validateMaterialCategory(next));
+      await tx.update('academy_material_categories', categoryId, next);
+      return next;
+    });
   }
   private runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.adapter.runTransaction(operation);

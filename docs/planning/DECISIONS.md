@@ -180,6 +180,13 @@ Die folgenden Themen wurden als Audit-/Konzeptfelder oder Vorschläge angesproch
 
 ## G. Lernbibliothek, Dokumente, Reader, Notizen
 
+### Kategorienverwaltung
+- **BESCHLOSSEN:** Bibliothekskategorien werden nicht als feste Code-Liste vorgegeben. Berechtigte Administratoren und Colonels können Kategorien direkt in der Website erstellen, umbenennen, archivieren und reaktivieren; die Berechtigung folgt dem bestehenden Academy-Verwaltungszugriff.
+- **BESCHLOSSEN:** Kategorien besitzen stabile interne IDs. Eine Umbenennung ändert keine Materialreferenz; Änderungen werden mit Revision und verantwortlicher Person nachvollziehbar gespeichert.
+- **BESCHLOSSEN:** Kategorien können archiviert und reaktiviert werden. Zusätzlich ist endgültiges Löschen vorgesehen, aber nur solange keine Materialzuordnung auf die Kategorie verweist. Die Löschprüfung erfolgt serverseitig und transaktional; bei bestehenden Verweisen wird das Löschen abgelehnt und Archivierung bleibt möglich. Historische/aktive Referenzen werden niemals durch Löschen einer Kategorie gebrochen.
+- **BESCHLOSSEN:** Material-Kategorie-Zuordnungen werden über stabile Kategorie-IDs gespeichert. Materialverwaltung muss die Zuordnungsreferenz atomar beim Erstellen/Ändern eines Materials pflegen; die Löschsperre prüft diese Referenzen serverseitig.
+- **KLARSTELLUNG:** Kategorie und Dokumenttyp sind getrennte Metadaten. Die dynamische Kategorienverwaltung legt keine Dokumenttyp-Liste fest und ersetzt sie nicht.
+
 ### Dokumentversionierung und Upload
 - **BESCHLOSSEN – Dokumentversionierung Option B:** veröffentlichte Kursversionen verweisen auf konkrete Dokumentversionen; neue Bibliotheksfassung ändert ältere Kursreferenz nicht automatisch. Admin entscheidet bewusst über Umstellung; wesentliche Änderungen können neue Kursversion erfordern.
 - **BESCHLOSSEN:** Bibliothek zeigt regulär die aktuell veröffentlichte Materialfassung; ältere Fassungen bleiben für historische Kursverweise einsehbar, soweit Zugriffsrechte dies erlauben.

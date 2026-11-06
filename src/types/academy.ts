@@ -15,6 +15,34 @@ export type AcademyParticipationStatus =
   | 'voluntarily_ended'
   | 'administratively_ended';
 export type AcademyProgramCourseRequirement = 'required' | 'recommended';
+export type AcademyMaterialCategoryStatus = 'active' | 'archived';
+
+export interface AcademyMaterialCategoryDoc {
+  id: string;
+  name: string;
+  description?: string;
+  status: AcademyMaterialCategoryStatus;
+  revision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+  archivedIso?: string;
+  archivedByUid?: string;
+}
+
+/** Stable material-to-category link; id is the material master ID. */
+export interface AcademyMaterialCategoryAssignmentDoc {
+  id: string;
+  materialId: string;
+  categoryId: string;
+  revision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
 export type AcademyCompletionEvidenceType =
   | 'required_chapter'
   | 'required_material'

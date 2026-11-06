@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc
+  AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
+  AcademyMaterialCategoryDoc
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import type { AcademyRepository } from './academyRepository.ts';
@@ -22,6 +23,12 @@ const canManage = (actor: AcademyApiActor, ownerUid: string) =>
 function text(value: unknown, max: number): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
+function boundedText(value: unknown, max: number, allowEmpty = false): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (normalized.length > max || (!allowEmpty && normalized.length === 0)) return null;
+  return normalized;
+}
 function id(prefix: string): string {
   return `${prefix}_${randomUUID().replaceAll('-', '')}`;
 }
@@ -33,7 +40,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
@@ -103,6 +110,122 @@ export function createAcademyApiRouter(
   router.use((_req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     next();
+  });
+
+  router.get('/materials/categories', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const categories = await repository.listMaterialCategories();
+      categories.sort((a, b) => {
+        if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
+        return a.name.localeCompare(b.name, 'de-DE');
+      });
+      res.json({ categories });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/categories', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_BODY_INVALID' }); return; }
+      const name = boundedText(req.body.name, 80);
+      const description = req.body.description === undefined ? undefined : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_INVALID' }); return;
+      }
+      const now = new Date().toISOString();
+      const category: AcademyMaterialCategoryDoc = {
+        id: id('material_category'),
+        name,
+        ...(description == null ? {} : { description }),
+        status: 'active',
+        revision: 1,
+        createdIso: now,
+        createdByUid: actor.uid,
+        updatedIso: now,
+        updatedByUid: actor.uid
+      };
+      await repository.createMaterialCategory(category);
+      await recordAudit(actor.uid, 'Academy-Materialkategorie erstellt', category.name,
+        `Kategorie ${category.id} angelegt.`);
+      res.status(201).json({ category });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.put('/materials/categories/:categoryId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_BODY_INVALID' }); return; }
+      const existing = await repository.get<AcademyMaterialCategoryDoc>('academy_material_categories', req.params.categoryId);
+      if (!existing) { res.status(404).json({ error: 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND' }); return; }
+      const expectedRevision = revision(req.body.expectedRevision);
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const name = req.body.name === undefined ? existing.name : boundedText(req.body.name, 80);
+      const description = req.body.description === undefined
+        ? existing.description
+        : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_INVALID' }); return;
+      }
+      const category: AcademyMaterialCategoryDoc = {
+        ...existing,
+        name,
+        ...(description == null ? {} : { description }),
+        revision: expectedRevision + 1,
+        updatedIso: new Date().toISOString(),
+        updatedByUid: actor.uid
+      };
+      await repository.updateMaterialCategory(category, expectedRevision, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Materialkategorie geändert', category.name,
+        `Kategorie ${category.id}; Revision ${category.revision}.`);
+      res.json({ category });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/categories/:categoryId/archive', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const category = await repository.setMaterialCategoryArchived(
+        req.params.categoryId, true, expectedRevision, actor.uid, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Materialkategorie archiviert', category.name,
+        `Kategorie ${category.id} archiviert; bestehende Referenzen bleiben erhalten.`);
+      res.json({ category });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/categories/:categoryId/restore', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const category = await repository.setMaterialCategoryArchived(
+        req.params.categoryId, false, expectedRevision, actor.uid, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Materialkategorie reaktiviert', category.name,
+        `Kategorie ${category.id} reaktiviert.`);
+      res.json({ category });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.delete('/materials/categories/:categoryId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_CATEGORY_REVISION_INVALID' }); return; }
+      const deleted = await repository.deleteMaterialCategory(req.params.categoryId, expectedRevision, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Materialkategorie endgültig gelöscht', deleted.name,
+        `Kategorie ${deleted.id} endgültig gelöscht; zum Löschzeitpunkt waren keine Materialzuordnungen vorhanden.`);
+      res.status(204).end();
+    } catch (error) { fail(res, error, next); }
   });
 
   router.get('/courses', async (req, res, next) => {

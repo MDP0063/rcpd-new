@@ -115,6 +115,57 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal((await request('/api/academy/courses', officer)).status, 200);
     assert.equal((await request('/api/academy/courses', officer, { method: 'POST', ...json({ code: 'NOPE', title: 'Nope' }) })).status, 403);
 
+    assert.equal((await request('/api/academy/materials/categories')).status, 401);
+    assert.equal((await request('/api/academy/materials/categories', officer)).status, 200);
+    assert.equal((await request('/api/academy/materials/categories', officer, {
+      method: 'POST', ...json({ name: 'Unauthorized category' })
+    })).status, 403);
+
+    const createdCategory = await request('/api/academy/materials/categories', admin, {
+      method: 'POST', ...json({ name: 'SOP & Richtlinien', description: 'Verbindliche Vorgaben.' })
+    });
+    assert.equal(createdCategory.status, 201, JSON.stringify(createdCategory.body));
+    const categoryId = createdCategory.body!.category.id as string;
+    assert.equal(createdCategory.body!.category.createdByUid, 'academy-admin');
+
+    const duplicateCategory = await request('/api/academy/materials/categories', colonel, {
+      method: 'POST', ...json({ name: 'sop & RICHTLINIEN' })
+    });
+    assert.equal(duplicateCategory.status, 409);
+
+    const renamedCategory = await request(`/api/academy/materials/categories/${categoryId}`, colonel, {
+      method: 'PUT', ...json({ expectedRevision: 1, name: 'Dienstvorschriften', description: 'Aktualisierte Beschreibung.' })
+    });
+    assert.equal(renamedCategory.status, 200, JSON.stringify(renamedCategory.body));
+    assert.equal(renamedCategory.body!.category.id, categoryId);
+    assert.equal(renamedCategory.body!.category.revision, 2);
+
+    const staleCategoryEdit = await request(`/api/academy/materials/categories/${categoryId}`, admin, {
+      method: 'PUT', ...json({ expectedRevision: 1, name: 'Veraltete Änderung' })
+    });
+    assert.equal(staleCategoryEdit.status, 409);
+
+    const archivedCategory = await request(`/api/academy/materials/categories/${categoryId}/archive`, admin, {
+      method: 'POST', ...json({ expectedRevision: 2 })
+    });
+    assert.equal(archivedCategory.status, 200);
+    assert.equal(archivedCategory.body!.category.status, 'archived');
+    assert.equal(archivedCategory.body!.category.archivedByUid, 'academy-admin');
+
+    const restoredCategory = await request(`/api/academy/materials/categories/${categoryId}/restore`, colonel, {
+      method: 'POST', ...json({ expectedRevision: 3 })
+    });
+    assert.equal(restoredCategory.status, 200);
+    assert.equal(restoredCategory.body!.category.status, 'active');
+    assert.equal(restoredCategory.body!.category.id, categoryId);
+
+    const deletedCategory = await request(`/api/academy/materials/categories/${categoryId}`, admin, {
+      method: 'DELETE', ...json({ expectedRevision: 4 })
+    });
+    assert.equal(deletedCategory.status, 204);
+    const categoryCatalogAfterDelete = await request('/api/academy/materials/categories', admin);
+    assert.equal(categoryCatalogAfterDelete.body!.categories.some((item: { id: string }) => item.id === categoryId), false);
+
     // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
     const spoofedModuleCreate = await request('/api/academy/modules', officer, {
       method: 'POST',
