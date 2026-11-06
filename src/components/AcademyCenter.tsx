@@ -59,8 +59,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [activeTab, setActiveTab] = useState<
-    'modules' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
-  >('modules');
+    'overview' | 'modules' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+  >('overview');
 
   // Granular Instructor Grading Form State
   const [gradeTargetUserUid, setGradeTargetUserUid] = useState<string>('');
@@ -481,168 +481,57 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Top Header & Direct Action Buttons for Admin / Colonel */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
-        <div className="space-y-2 max-w-3xl">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Ausbildungsbereich · Lehrbücher, Übungstests &amp; Abschlussprüfungen
+      <header className="space-y-1">
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Ausbildungsbereich</div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Academy</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildungsinhalte, Lernmaterialien und Prüfungen.</p>
+      </header>
+      <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
+        <button type="button" onClick={() => setActiveTab('overview')} aria-current={activeTab === 'overview' ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${activeTab === 'overview' ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Übersicht</button>
+        <button type="button" onClick={() => setActiveTab('modules')} aria-current={activeTab === 'modules' ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${activeTab === 'modules' ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Lernbibliothek</button>
+        <button type="button" onClick={() => { setActiveTab('exam_center'); setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({}); }} aria-current={['exam_center', 'tests', 'final_exams'].includes(activeTab) ? 'page' : undefined} className={`px-3 py-2 text-sm border-b-2 ${['exam_center', 'tests', 'final_exams'].includes(activeTab) ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 dark:text-slate-300'}`}>Prüfungen</button>
+      </nav>
+      {['exam_center', 'tests', 'final_exams'].includes(activeTab) && (
+        <nav aria-label="Prüfungsbereiche" className="flex flex-wrap gap-2">
+          {[
+            { id: 'exam_center' as const, label: 'Prüfungszentrum' },
+            { id: 'tests' as const, label: `Übungstests (${practiceTests.length})` },
+            ...(canAccessFinalExams ? [{ id: 'final_exams' as const, label: `Abschlussprüfungen (${finalExams.length})` }] : [])
+          ].map(item => (
+            <button key={item.id} type="button" onClick={() => {
+              setActiveTab(item.id);
+              if (item.id === 'tests') setActiveExamId(practiceTests[0]?.id || null);
+              if (item.id === 'final_exams') setActiveExamId(finalExams[0]?.id || null);
+              setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
+            }} aria-current={activeTab === item.id ? 'page' : undefined} className={`px-3 py-1.5 text-xs rounded-md border ${activeTab === item.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300'}`}>{item.label}</button>
+          ))}
+        </nav>
+      )}
+      {activeTab === 'overview' && (
+        <section aria-labelledby="academy-overview-heading" className="space-y-5">
+          <div>
+            <h2 id="academy-overview-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Deine Academy</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Direkteinstieg in die derzeit verfügbaren Lernmaterialien und Prüfungen.</p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Lehrmaterialien, Handbücher &amp; Prüfungen
-          </h1>
-          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
-            Dein aktueller System-Rang:{' '}
-            <strong className="uppercase font-mono text-slate-900 dark:text-white">
-              {currentUser.role}
-            </strong>
-            . Alle Handbücher und POST Learning Domains sind mit klaren Überschriften und
-            strukturierten Absätzen gegliedert, um das Selbststudium und die Prüfungsvorbereitung
-            optimal zu unterstützen.
-          </p>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            {currentUser.role === 'trainee'
-              ? 'Hinweis zur Freigabe: Als Trainee hast du vollen Zugriff auf alle Lehrmaterialien und Übungstests. Die Abschlussprüfungen werden ab dem Rang Rookie freigeschaltet.'
-              : 'Freigabestatus: Du hast vollen Zugriff auf sämtliche Lehrmaterialien, Übungstests sowie die offizielle Abschlussarbeit / Abschlussprüfung.'}
-          </p>
-        </div>
-
-        {/* PROMINENT DIRECT BUTTONS FOR ADMIN & COLONEL */}
-        {canEditAcademy && (
-          <div className="flex flex-wrap items-center gap-2.5 self-start">
-            <button
-              type="button"
-              onClick={() => setActiveTab('upload_textbook')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
-            >
-              <FileUp className="w-4 h-4 text-sky-400" />
-              + Lehrbuch / PDF hochladen
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" onClick={() => setActiveTab('modules')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Lernbibliothek</span>
+              <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{modules.length}</span>
+              <span className="block text-xs text-slate-600 dark:text-slate-400">Verfügbare Materialien</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('add_code_test')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
-            >
-              <Code2 className="w-4 h-4" />
-              + Test / Prüfung als Code hinzufügen
+            <button type="button" onClick={() => setActiveTab('exam_center')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Prüfungen</span>
+              <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{practiceTests.length + (canAccessFinalExams ? finalExams.length : 0)}</span>
+              <span className="block text-xs text-slate-600 dark:text-slate-400">Für deinen Rang zugängliche Prüfungen</span>
             </button>
           </div>
-        )}
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab('exam_center')}
-          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-            activeTab === 'exam_center'
-              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
-              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Prüfungszentrum
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('modules')}
-          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-            activeTab === 'modules'
-              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
-              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Lehrbücher &amp; Lehrmaterialien ({modules.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('tests');
-            setActiveExamId(practiceTests[0]?.id || null);
-            setExamSubmittedResult(null);
-            setExamAnswers({});
-            setExamExplanations({});
-          }}
-          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-            activeTab === 'tests'
-              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
-              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Übungstests ({practiceTests.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('final_exams');
-            setActiveExamId(finalExams[0]?.id || null);
-            setExamSubmittedResult(null);
-            setExamAnswers({});
-            setExamExplanations({});
-          }}
-          className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'final_exams'
-              ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white font-semibold shadow-xs'
-              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          {!canAccessFinalExams && <Lock className="w-3.5 h-3.5 text-rose-500" />}
-          Abschlussarbeit / Prüfungen ({finalExams.length})
-        </button>
-
-        {(currentUser.role === 'admin' || currentUser.role === 'colonel') && (
-          <button type="button" onClick={() => setActiveTab('exam_corrections')} className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${activeTab === 'exam_corrections' ? 'bg-amber-700 text-white' : 'text-amber-800 dark:text-amber-400'}`}>
-            Bewertungen korrigieren
-          </button>
-        )}
-        {canEditAcademy && (
-          <>
-            <button
-              type="button"
-              onClick={() => setActiveTab('exam_reviews')}
-              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${activeTab === 'exam_reviews' ? 'bg-amber-600 text-white font-semibold' : 'text-amber-800 dark:text-amber-400 hover:text-amber-950'}`}
-            >
-              Freitext bewerten
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('instructor_grading')}
-              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'instructor_grading'
-                  ? 'bg-emerald-700 text-white font-semibold'
-                  : 'text-emerald-800 dark:text-emerald-400 hover:text-emerald-950'
-              }`}
-            >
-              Ausbilder-Notenvergabe
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('upload_textbook')}
-              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'upload_textbook'
-                  ? 'bg-slate-900 text-white font-semibold'
-                  : 'text-sky-700 dark:text-sky-400 hover:text-sky-900'
-              }`}
-            >
-              Lehrbuch-Upload
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('add_code_test')}
-              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'add_code_test'
-                  ? 'bg-sky-600 text-white font-semibold'
-                  : 'text-sky-700 dark:text-sky-400 hover:text-sky-900'
-              }`}
-            >
-              Code-Prüfung einbinden
-            </button>
-          </>
-        )}
-      </div>
-
+          <section className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dein dokumentierter Lernstand</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{myProgress.filter(item => (item.targetType === 'test' || item.targetType === 'final_exam') && item.status === 'passed').length} bestandene Prüfungen sind deinem Konto zugeordnet.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Das Öffnen eines Materials wird nicht als Kursabschluss oder Nachweis gewertet.</p>
+          </section>
+        </section>
+      )}
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
         <div>
