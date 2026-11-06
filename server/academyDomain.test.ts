@@ -142,3 +142,42 @@ test('domain validators return validation errors for malformed runtime values', 
   assert.equal(validateCourseMaster(null as never).ok, false);
   assert.equal(validatePrivateNote(null as never).ok, false);
 });
+
+
+test('course completion requirements must target content actually pinned in the course version', () => {
+  const chapterRequirement = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_chapter', type: 'required_chapter' as const,
+      targetId: 'chapter_1', required: true
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', chapterRequirement).ok, true);
+
+  const materialRequirement = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_material', type: 'required_material' as const,
+      targetId: 'material_1', required: true
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', materialRequirement).ok, true);
+
+  const missingChapter = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_chapter', type: 'required_chapter' as const,
+      targetId: 'not-in-course', required: true
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', missingChapter).ok, false);
+
+  const missingMaterial = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_material', type: 'required_material' as const,
+      targetId: 'not-in-course', required: true
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', missingMaterial).ok, false);
+});
