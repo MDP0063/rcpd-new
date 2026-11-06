@@ -110,9 +110,9 @@ export class AcademyRepository {
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MASTER_ARCHIVED');
       assertValid(validateCourseMaster(current));
+      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyCourseDraftDoc>('academy_course_drafts', courseId);
       if (!draft || draft.workingRevision !== expectedRevision || !courseDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
-      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${courseId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
@@ -135,9 +135,9 @@ export class AcademyRepository {
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MASTER_ARCHIVED');
       assertValid(validateProgramMaster(current));
+      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyProgramDraftDoc>('academy_program_drafts', programId);
       if (!draft || draft.workingRevision !== expectedRevision || !programDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
-      if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${programId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
