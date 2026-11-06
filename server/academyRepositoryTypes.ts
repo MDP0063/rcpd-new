@@ -12,7 +12,7 @@ export const ACADEMY_COLLECTIONS = [
   'academy_private_notes'
 ] as const;
 export type AcademyCollection = typeof ACADEMY_COLLECTIONS[number];
-export interface AcademyDocument { id: string; [key: string]: unknown }
+export interface AcademyDocument { id: string }
 export interface AcademyFilter { field: string; value: string | number | boolean | null }
 export interface AcademyQuery { where?: readonly AcademyFilter[]; limit?: number }
 export interface AcademyTransaction {
