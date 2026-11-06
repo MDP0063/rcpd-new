@@ -139,6 +139,9 @@ function validateMaterialContentFields(material: {
   if (!isNonEmpty(material.categoryId) || !isNonEmpty(material.documentTypeId)) {
     return invalid('ACADEMY_MATERIAL_METADATA_REQUIRED', 'Kategorie und Dokumenttyp sind Pflichtangaben.');
   }
+  if (material.categoryId.length > 150 || material.documentTypeId.length > 150) {
+    return invalid('ACADEMY_MATERIAL_METADATA_INVALID', 'Die Kategorien- und Dokumenttypkennung ist ungültig.');
+  }
   if (material.requiredRole !== undefined && !materialRoles.has(material.requiredRole)) {
     return invalid('ACADEMY_MATERIAL_REQUIRED_ROLE_INVALID', 'Der erforderliche Rang ist ungültig.');
   }
