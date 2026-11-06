@@ -350,7 +350,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       officer
     );
     assert.equal(pinnedMaterialContent.status, 200, JSON.stringify(pinnedMaterialContent.body));
-    assert.equal(pinnedMaterialContent.body!.material.content, '# Operations\\n\\nErste Fassung.');
+    assert.equal(pinnedMaterialContent.body!.material.content, '# Operations\n\nErste Fassung.');
     const unpinnedMaterialContent = await request(
       '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialId + '__v2',
       officer
