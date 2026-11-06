@@ -1162,7 +1162,7 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 
 **BESCHLOSSEN:** Maximale Rohdateigröße pro PDF: **15 MB**. Die Grenze bezieht sich auf die ursprüngliche Datei vor Base64-Kodierung. Sie ist clientseitig frühzeitig anzuzeigen und serverseitig verbindlich anhand der tatsächlichen Bytes zu prüfen. Die technische Request-Grenze muss Base64- und JSON-Overhead berücksichtigen und darf nicht einfach mit 15 MB gleichgesetzt werden. Hosting-, Parser- und Speichergrenzen sind vor Implementierung zu verifizieren.
 
-**Empfohlene Sicherheitsanforderungen – Vorschlag zur Bestätigung, noch kein eigenständiger Beschluss:**
+**BESCHLOSSEN am 06.11.2026 – PDF-Sicherheitsprüfung Option A:**
 - PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
 - Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
 - Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
@@ -1171,7 +1171,16 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 - Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
 - Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
 
-**Vorgeschlagene nutzerverständliche Fehlerzustände:**
+**Vorgeschlagene nutzerverständliche Fehlerzustände – UX-Details noch zu bestätigen:**
+- PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
+- Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
+- Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
+- Malwareprüfung muss vor Veröffentlichung erfolgreich abgeschlossen sein. Während der Prüfung bleibt die Datei im privaten, nicht für Teilnehmer sichtbaren Prüf-/Quarantänestatus. Ist der Scanner nicht verfügbar oder schlägt die Prüfung technisch fehl, bleibt die Datei unveröffentlicht; der Upload kann später erneut geprüft werden.
+- Parser und Scanner benötigen Ressourcenlimits (Zeit, Speicher, Seiten-/Objektkomplexität) und eine isolierte Verarbeitung. Die konkrete Scan-/CDR-Lösung und Hosting-Kompatibilität sind noch technische Prüfpunkte.
+- Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
+- Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
+
+**Vorgeschlagene nutzerverständliche Fehlerzustände – UX-Details noch zu bestätigen:**
 1. Datei fehlt: „Bitte wähle eine PDF-Datei aus.“
 2. Falscher Dateityp bzw. keine echte PDF: „Die ausgewählte Datei ist keine gültige PDF-Datei.“
 3. Datei leer: „Die ausgewählte Datei ist leer.“
@@ -1182,6 +1191,41 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 8. Scan-/Prüfdienst nicht verfügbar: „Die Sicherheitsprüfung ist derzeit nicht verfügbar. Die Datei wurde nicht veröffentlicht. Bitte versuche es später erneut.“
 9. Netzwerk-/Serverfehler: Uploadstatus klar als fehlgeschlagen kennzeichnen und erneuten Versuch ermöglichen; keine falsche Erfolgsbestätigung.
 
-Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken. Diese UX-/Fehlerregeln sind Teil des Vorschlags und werden erst nach Nutzerbestätigung verbindlich.
+Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken. Die technischen Sicherheitsanforderungen sind beschlossen; die genaue Formulierung und Darstellung der Fehlermeldungen bleibt eine UX-Ausarbeitung und ist noch nicht einzeln beschlossen.
 
-**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die obigen Sicherheits- und Fehlerregeln sind Empfehlungen zur Entscheidung und keine bereits bestätigten Detailbeschlüsse oder Implementierungsfreigabe.
+**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die Sicherheitsanforderungen sind fachlich beschlossen, stellen aber keine Implementierungsfreigabe dar. Die konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technische Prüfarbeit.
+
+
+## Lernbibliothek – Kategorien und Dokumenttypen: nächster Vorschlag (06.11.2026)
+
+**Bereits beschlossen:** getrennte kontrollierte Listen; pro Material genau eine Hauptkategorie (fachliches Thema) und ein Dokumenttyp (Art/Funktion des Dokuments). Freie Eingaben und Mehrfach-Tags sind damit nicht automatisch freigegeben.
+
+**Belegte Materialbeispiele aus der bisherigen Academy-Planung:** „Funkcodes der RCPD“, „Kommunikationsrichtlinien“, „Verhaltensrichtlinien“, „Grundlagen des Polizeidienstes“, „Dienstvorschriften“ und „Einsatzgrundlagen“. Zusätzlich wurden als Kurs-/Themenfelder Funkcodes, Kommunikation, Dienstvorschriften und taktische Grundlagen genannt. Das sind Planungsbeispiele, kein nachgewiesener vollständiger Bestand bereits hochgeladener Dokumente.
+
+**Empfohlener Startsatz Kategorien (fachliches Thema):**
+1. Kommunikation und Funk – z. B. Funkcodes der RCPD, Kommunikationsrichtlinien.
+2. Dienstvorschriften und Verhalten – z. B. Verhaltensrichtlinien, allgemeine Dienstvorschriften.
+3. Einsatzlehre und Taktik – z. B. Einsatzgrundlagen und taktische Grundlagen.
+4. Recht und Gesetzgebung – z. B. California Penal Code, sofern dazu tatsächlich Materialien geführt werden.
+5. Ausbildung und Training – z. B. FTO-/Ausbildungsinhalte, sofern diese als eigenständige Bibliotheksmaterialien statt nur als Kursstruktur geführt werden.
+
+**Empfohlener Startsatz Dokumenttypen (Art/Funktion):**
+1. Standard Operating Procedure (SOP) / Standardverfahren.
+2. Richtlinie / Policy.
+3. Dienstanweisung / Directive.
+4. Nachschlagewerk / Referenzliste – z. B. Funkcodeliste.
+5. Schulungsunterlage / Lernmaterial – z. B. Grundlagen des Polizeidienstes oder Einsatzgrundlagen, wenn sie Lerninhalte vermitteln.
+
+**Zuordnung der bekannten Beispiele als Arbeitshypothese:**
+- „Funkcodes der RCPD“ → Kommunikation und Funk + Nachschlagewerk / Referenzliste.
+- „Kommunikationsrichtlinien“ → Kommunikation und Funk + Richtlinie / Policy.
+- „Verhaltensrichtlinien“ → Dienstvorschriften und Verhalten + Richtlinie / Policy.
+- „Grundlagen des Polizeidienstes“ → Ausbildung und Training + Schulungsunterlage / Lernmaterial.
+- „Dienstvorschriften“ → Dienstvorschriften und Verhalten + Dokumenttyp muss anhand des tatsächlichen Inhalts unterschieden werden (SOP, Richtlinie oder Dienstanweisung).
+- „Einsatzgrundlagen“ → Einsatzlehre und Taktik + Schulungsunterlage / Lernmaterial, sofern es sich um eine Lehrunterlage handelt.
+
+**UX-/Taxonomiebegründung:** Kategorien beschreiben das Thema, nicht Format, Zielgruppe oder organisatorische Zuständigkeit. Dokumenttypen beschreiben dagegen die Art/Funktion. PDF ist ein Dateiformat und kein Dokumenttyp. Die Listen sollen nur tatsächlich vorhandene bzw. absehbar zu veröffentlichende Inhalte abbilden, verständlich benannt und bei wachsendem Bestand überprüft werden. Nicht jede denkbare Polizeifachdomäne wird vorsorglich als Kategorie angelegt.
+
+**Offene Validierung vor endgültiger Festlegung:** tatsächliche Materialtitel/Dateien vollständig sichten; prüfen, ob „Dienstvorschriften und Verhalten“ zwei trennbare Themen sind; klären, ob „Ausbildung und Training“ als Bibliothekskategorie nötig ist oder ob es nur Kurs-/Programmstruktur bleibt; prüfen, ob SOP, Richtlinie und Dienstanweisung in den vorhandenen Materialien wirklich unterscheidbare Dokumenttypen sind. Die Vorschlagslisten sind noch nicht beschlossen.
+
+**Recherchegrundlage:** [GOV.UK Taxonomy Principles](https://www.gov.uk/government/publications/govuk-topic-taxonomy-principles/govuk-taxonomy-principles) (Themen statt Formate/Zielgruppen; nur vorhandene Inhalte klassifizieren; klare, unterscheidbare Bezeichnungen); [Office for National Statistics – Taxonomy Best Practice Framework](https://www.ons.gov.uk/methodology/classificationsandstandards/taxonomybestpracticeframework) (Zweck, Nutzerbedarf, geringe unnötige Komplexität, klare Governance und gepflegte Begriffe); [Nielsen Norman Group – Tree Testing](https://www.nngroup.com/articles/tree-testing/) (Auffindbarkeit und Verständlichkeit einer Kategorienhierarchie anhand konkreter Suchaufgaben prüfen).
