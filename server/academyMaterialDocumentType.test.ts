@@ -19,7 +19,7 @@ function documentType(id: string, name: string, overrides: Partial<AcademyMateri
 }
 
 test('material documentType validation requires stable identity, bounded metadata and archive audit', () => {
-  assert.deepEqual(validateMaterialDocumentType(documentType('documentType-1', 'SOP & Richtlinien')), { ok: true });
+  assert.deepEqual(validateMaterialDocumentType(documentType('documentType-1', 'Testdokumenttyp')), { ok: true });
   assert.equal(validateMaterialDocumentType(documentType('documentType-1', '  ')).ok, false);
   assert.equal(validateMaterialDocumentType(documentType('documentType-1', 'x'.repeat(81))).ok, false);
   assert.equal(validateMaterialDocumentType(documentType('documentType-1', 'Valid', {
@@ -37,12 +37,12 @@ test('documentType create, rename, archive and restore are revisioned and retain
   const directory = await mkdtemp(path.join(tmpdir(), 'rcpd-academy-documentTypes-'));
   try {
     const repository = createJsonAcademyRepository(directory);
-    const first = documentType('documentType-1', 'SOP & Richtlinien');
+    const first = documentType('documentType-1', 'Testdokumenttyp');
     await repository.createMaterialDocumentType(first);
     assert.deepEqual(await repository.listMaterialDocumentTypes(), [first]);
 
     await assert.rejects(
-      repository.createMaterialDocumentType(documentType('documentType-2', 'sop & RICHTLINIEN')),
+      repository.createMaterialDocumentType(documentType('documentType-2', 'TESTDOKUMENTTYP')),
       /ACADEMY_MATERIAL_DOCUMENT_TYPE_NAME_ALREADY_EXISTS/
     );
 
@@ -74,7 +74,7 @@ test('documentType deletion is permitted only when no current material assignmen
   const directory = await mkdtemp(path.join(tmpdir(), 'rcpd-academy-documentType-delete-'));
   try {
     const repository = createJsonAcademyRepository(directory);
-    const first = documentType('documentType-delete', 'Temporäre Kategorie');
+    const first = documentType('documentType-delete', 'Temporärer Dokumenttyp');
     await repository.createMaterialDocumentType(first);
 
     const assignment = await repository.setMaterialDocumentTypeAssignment(
@@ -115,7 +115,7 @@ test('documentType deletion is permitted only when no current material assignmen
   }
 });
 
-test('version-3 JSON Academy stores without documentType assignments remain readable', async () => {
+test('version-4 JSON Academy stores without documentType assignments remain readable', async () => {
   const directory = await mkdtemp(path.join(tmpdir(), 'rcpd-academy-json-migration-'));
   try {
     const collections = Object.fromEntries(
