@@ -14,7 +14,9 @@ import type {
   AcademyCourseMasterDoc,
   AcademyCourseVersionDoc,
   AcademyMaterialCategoryDoc,
+  AcademyMaterialCategoryAssignmentDoc,
   AcademyMaterialDocumentTypeDoc,
+  AcademyMaterialDocumentTypeAssignmentDoc,
   AcademyMaterialDraftDoc,
   AcademyMaterialMasterDoc,
   AcademyMaterialVersionDoc
@@ -90,8 +92,8 @@ test('material creation stores master, first draft and metadata references atomi
 
   assert.deepEqual(await repository.get<AcademyMaterialMasterDoc>('academy_materials', master.id), master);
   assert.deepEqual(await repository.getMaterialDraft(master.id), draft);
-  assert.equal((await repository.get('academy_material_category_assignments', master.id) as { categoryId: string }).categoryId, category.id);
-  assert.equal((await repository.get('academy_material_document_type_assignments', master.id) as { documentTypeId: string }).documentTypeId, documentType.id);
+  assert.equal((await repository.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', master.id)).categoryId, category.id);
+  assert.equal((await repository.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', master.id)).documentTypeId, documentType.id);
 
   const duplicateCodeMaster = { ...master, id: 'material-2' };
   const duplicateCodeDraft = { ...draft, id: 'material-2', materialId: 'material-2' };
@@ -144,8 +146,8 @@ test('publishing creates immutable snapshots and a changed draft requires a new 
   assert.equal((await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', firstVersion.id))?.content, draft.content);
   assert.equal((await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', secondVersion.id))?.content, savedDraft.content);
   assert.equal((await repository.get<AcademyMaterialMasterDoc>('academy_materials', master.id))?.currentPublishedVersionId, secondVersion.id);
-  assert.equal((await repository.get('academy_material_category_assignments', secondVersion.id) as { materialVersionId: string }).materialVersionId, secondVersion.id);
-  assert.equal((await repository.get('academy_material_document_type_assignments', secondVersion.id) as { materialVersionId: string }).materialVersionId, secondVersion.id);
+  assert.equal((await repository.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', secondVersion.id)).materialVersionId, secondVersion.id);
+  assert.equal((await repository.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', secondVersion.id)).materialVersionId, secondVersion.id);
 }));
 
 test('material metadata references protect both master and published snapshots from taxonomy deletion', async () => withRepository(async repository => {
