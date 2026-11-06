@@ -35,6 +35,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
+  const [formErrorField, setFormErrorField] = useState<'name' | 'description' | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,6 +57,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setName('');
     setDescription('');
     setFormError('');
+    setFormErrorField(null);
   };
 
   const beginEdit = (category: AcademyMaterialCategoryDoc) => {
@@ -63,6 +65,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setName(category.name);
     setDescription(category.description || '');
     setFormError('');
+    setFormErrorField(null);
   };
 
   const cancelEdit = () => {
@@ -74,17 +77,21 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     const normalizedName = name.trim();
     if (!normalizedName) {
       setFormError('Gib einen Kategorienamen ein.');
+      setFormErrorField('name');
       return;
     }
     if (normalizedName.length > 80) {
       setFormError('Der Kategoriename darf höchstens 80 Zeichen enthalten.');
+      setFormErrorField('name');
       return;
     }
     if (description.length > 300) {
       setFormError('Die Beschreibung darf höchstens 300 Zeichen enthalten.');
+      setFormErrorField('description');
       return;
     }
     setFormError('');
+    setFormErrorField(null);
     setBusy(true);
     const response = editing
       ? await apiFetch<{ category: AcademyMaterialCategoryDoc }>(
@@ -172,8 +179,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
               onChange={event => setName(event.target.value)}
               maxLength={80}
               required
-              aria-invalid={Boolean(formError)}
-              aria-describedby="academy-category-name-hint"
+              aria-invalid={formErrorField === 'name'}
+              aria-describedby={formErrorField === 'name' ? 'academy-category-name-hint academy-category-form-error' : 'academy-category-name-hint'}
               disabled={busy}
             />
             <p id="academy-category-name-hint" className="text-xs text-slate-500 dark:text-slate-400">1 bis 80 Zeichen</p>
@@ -189,12 +196,13 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
               maxLength={300}
               rows={3}
               disabled={busy}
-              aria-describedby="academy-category-description-hint"
+              aria-invalid={formErrorField === 'description'}
+              aria-describedby={formErrorField === 'description' ? 'academy-category-description-hint academy-category-form-error' : 'academy-category-description-hint'}
             />
             <p id="academy-category-description-hint" className="text-xs text-slate-500 dark:text-slate-400">Bis zu 300 Zeichen</p>
           </div>
 
-          {formError && <p role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
+          {formError && <p id="academy-category-form-error" role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
 
           <div className="flex flex-wrap gap-2">
             <button type="submit" className={primaryButton} disabled={busy}>
