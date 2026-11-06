@@ -89,3 +89,13 @@ test('publication rejects master identity changes and unpublished version metada
   await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 1), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
+
+test('generic repository writes cannot bypass typed lifecycle operations', async () => withRepository(async repository => {
+  await assert.rejects(
+    repository.create('academy_course_versions', 'course-1__v1', version),
+    /ACADEMY_TYPED_CREATE_REQUIRED/
+  );
+  await repository.create('academy_courses', master.id, master);
+  await assert.rejects(repository.update('academy_courses', master.id, master), /ACADEMY_MASTER_UPDATE_METHOD_REQUIRED/);
+  await assert.rejects(repository.delete('academy_courses', master.id), /ACADEMY_MASTER_ARCHIVE_METHOD_REQUIRED/);
+}));
