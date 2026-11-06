@@ -235,6 +235,10 @@ test('course participation pins the published version and completes only after e
     evidenceType: 'instructor_confirmation' as const, sourceId: 'practical-1',
     recordedByUid: 'owner-1', recordedIso: now
   };
+  await assert.rejects(
+    repository.recordProgressEvidence(participation.id, { ...instructorEvidence, recordedByUid: 'learner-1' }, 'learner-1', true),
+    /ACADEMY_EVIDENCE_INSTRUCTOR_REQUIRED/
+  );
   const completed = await repository.recordProgressEvidence(participation.id, instructorEvidence, 'owner-1', true);
   assert.equal(completed.participation.status, 'completed');
   assert.equal((await repository.listParticipationEvidence(participation.id)).length, 2);
