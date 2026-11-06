@@ -1162,7 +1162,7 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 
 **BESCHLOSSEN:** Maximale Rohdateigröße pro PDF: **15 MB**. Die Grenze bezieht sich auf die ursprüngliche Datei vor Base64-Kodierung. Sie ist clientseitig frühzeitig anzuzeigen und serverseitig verbindlich anhand der tatsächlichen Bytes zu prüfen. Die technische Request-Grenze muss Base64- und JSON-Overhead berücksichtigen und darf nicht einfach mit 15 MB gleichgesetzt werden. Hosting-, Parser- und Speichergrenzen sind vor Implementierung zu verifizieren.
 
-**Fachliche Sicherheitsanforderungen – als Planungsgrundlage, konkrete technische Umsetzung noch zu prüfen:**
+**Empfohlene Sicherheitsanforderungen – Vorschlag zur Bestätigung, noch kein eigenständiger Beschluss:**
 - PDF ist der einzige hier vorgesehene Uploadtyp; Dateiendung und vom Browser gelieferter MIME-Type gelten nicht als Nachweis.
 - Serverseitig tatsächliche PDF-Signatur prüfen und die Datei mit einem gepflegten PDF-Parser auf strukturelle Lesbarkeit prüfen.
 - Leere, abgeschnittene, beschädigte, nicht lesbare und passwortgeschützte/verschlüsselte PDFs werden abgelehnt. Es gibt keinen stillen Fallback auf ungeprüfte Veröffentlichung.
@@ -1171,7 +1171,7 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 - Speicherung und Abruf erfolgen über serverseitige Dokumentidentitäten; Teilnehmerzugriff wird bei jedem Abruf serverseitig anhand der Veröffentlichung und Berechtigung geprüft.
 - Upload, technische Validierung, Malwareprüfung und Veröffentlichung sind getrennte Zustände. Ein erfolgreicher Upload oder bestandener Formatcheck bedeutet noch keine Veröffentlichung.
 
-**Vorgesehene nutzerverständliche Fehlerzustände:**
+**Vorgeschlagene nutzerverständliche Fehlerzustände:**
 1. Datei fehlt: „Bitte wähle eine PDF-Datei aus.“
 2. Falscher Dateityp bzw. keine echte PDF: „Die ausgewählte Datei ist keine gültige PDF-Datei.“
 3. Datei leer: „Die ausgewählte Datei ist leer.“
@@ -1182,6 +1182,6 @@ Die folgenden Punkte sind trotz der umfangreichen Beschlüsse offen und müssen 
 8. Scan-/Prüfdienst nicht verfügbar: „Die Sicherheitsprüfung ist derzeit nicht verfügbar. Die Datei wurde nicht veröffentlicht. Bitte versuche es später erneut.“
 9. Netzwerk-/Serverfehler: Uploadstatus klar als fehlgeschlagen kennzeichnen und erneuten Versuch ermöglichen; keine falsche Erfolgsbestätigung.
 
-Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken.
+Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereits ausgefüllte Metadaten sollen bei behebbaren Fehlern erhalten bleiben. Die Datei darf nur dann als gespeichert angezeigt werden, wenn sie tatsächlich serverseitig gespeichert wurde. Der Status „wird geprüft“ muss sichtbar sein und darf nicht wie ein eingefrorener Upload wirken. Diese UX-/Fehlerregeln sind Teil des Vorschlags und werden erst nach Nutzerbestätigung verbindlich.
 
-**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die obigen Sicherheitsanforderungen sind Planungsanforderungen und keine Implementierungsfreigabe.
+**Offene technische Punkte:** konkrete Scanner-/Quarantänearchitektur, PDF-Parser-Auswahl, sichere Behandlung aktiver PDF-Inhalte/Anhänge, Hosting- und Speichergrenzen, Retention/Löschung temporärer Dateien sowie OCR/Volltextindexierung. Die obigen Sicherheits- und Fehlerregeln sind Empfehlungen zur Entscheidung und keine bereits bestätigten Detailbeschlüsse oder Implementierungsfreigabe.
