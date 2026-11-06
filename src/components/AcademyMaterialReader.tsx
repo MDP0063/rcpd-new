@@ -7,6 +7,9 @@ import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } fr
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
 import { extractHeadings } from '../lib/academyMaterialOutline';
+const panel='rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
+const muted='text-sm text-slate-600 dark:text-slate-300';
+const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
  const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
