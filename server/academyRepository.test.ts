@@ -257,18 +257,15 @@ test('program enrollment pins required course versions without prematurely start
   };
   const conflictingProgramVersion = {
     ...programVersion, id: 'program-2__v1', programId: 'program-2',
-    courseReferences: [{ courseId: master.id, requirement: 'required' as const, order: 0 }]
+    courseReferences: [{ courseId: master.id, requirement: 'required' as const, order: 0 }], workingRevision: 1
   };
   const conflictingProgramPublishedMaster = {
     ...conflictingProgramMaster, publicationStatus: 'published' as const,
     currentPublishedVersionId: conflictingProgramVersion.id, latestVersionNumber: 1,
-    workingRevision: 2, updatedIso: now
+    workingRevision: 1, updatedIso: now
   };
   await repository.createProgramWithDraft(conflictingProgramMaster, { ...conflictingProgramDraft, workingRevision: 1 });
-  await repository.publishProgramVersion('program-2', conflictingProgramVersion, conflictingProgramPublishedMaster, 1, 'owner-1').catch(async error => {
-    // Rebuild with the first saved revision because createProgramWithDraft starts at revision 1.
-    throw error;
-  });
+  await repository.publishProgramVersion('program-2', conflictingProgramVersion, conflictingProgramPublishedMaster, 1, 'owner-1');
   await assert.rejects(repository.startProgramParticipation('learner-1', 'program-2', now), /ACADEMY_PROGRAM_COURSE_VERSION_CONFLICT/);
 }));
 
