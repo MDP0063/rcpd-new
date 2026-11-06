@@ -119,7 +119,9 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 ## 10. Kategorien und Dokumenttypen – Option A
 
-**BESCHLOSSEN am 06.11.2026:** Zwei getrennte, kontrollierte Listen. Kategorie beschreibt das fachliche Thema; Dokumenttyp die Art/Funktion des Dokuments. Pro Material eine Hauptkategorie und ein Dokumenttyp. Keine automatische Freigabe von Mehrfach-Tags oder freien Eingaben. Die konkreten Werte bleiben anhand des realen Materialbestands zu definieren. Die sechs bisherigen Codewerte sind gemischt und dürfen nicht ungeprüft als Ziel-Taxonomie gelten.
+**BESCHLOSSEN am 06.11.2026:** Zwei getrennte, kontrollierte Listen. Kategorie beschreibt das fachliche Thema; Dokumenttyp die Art/Funktion des Dokuments. Pro Material eine Hauptkategorie und ein Dokumenttyp. Keine automatische Freigabe von Mehrfach-Tags oder freien Eingaben. Die konkreten Werte bleiben anhand des realen Materialbestands zu definieren.
+
+**Nächster Arbeitsstand:** Ein begründeter Startvorschlag mit fünf möglichen Themenkategorien und fünf Dokumenttypen ist in der Academy-Spezifikation ausgearbeitet. Die Liste ist ausdrücklich noch nicht beschlossen, weil bislang nur Beispiele aus früheren Planungsdiskussionen, aber kein vollständiges Inventar realer hochgeladener Bibliotheksdokumente vorliegt. Die sechs bisherigen Codewerte sind gemischt und dürfen nicht ungeprüft als Ziel-Taxonomie gelten.
 
 
 ### Technischer Rollenbefund für die nächste Entscheidung (main, 06.11.2026)
@@ -145,3 +147,15 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 **BESCHLOSSEN am 06.11.2026:** maximal 15 MB Rohdateigröße pro PDF. Base64-/JSON-Overhead muss bei Requestgrenzen berücksichtigt werden; technische Hostinggrenzen sind vor Implementierung zu verifizieren.
 
 **Nächster Punkt ausgearbeitet:** fachliche Validierungs- und Fehlerzustände für PDFs stehen in `ACADEMY-DETAILED-SPECIFICATION.md`. Beschädigte, abgeschnittene, leere, nicht lesbare und passwortgeschützte PDFs werden abgelehnt. Signatur- und Parserprüfung sowie erfolgreiche Malwareprüfung sind vor Veröffentlichung erforderlich. Bei Scanner-Ausfall bleibt das Material unveröffentlicht. Die konkrete Parser-/Scanner-/Quarantänearchitektur ist noch offen.
+
+
+## 11. PDF-Sicherheitsprüfung – Option A beschlossen (06.11.2026)
+
+- Echte PDF-Signatur und strukturelle Lesbarkeit mit Parser serverseitig prüfen.
+- Leere, beschädigte, abgeschnittene, unlesbare sowie passwortgeschützte/verschlüsselte PDFs ablehnen.
+- Malwareprüfung muss vor Veröffentlichung erfolgreich sein; bis dahin bleibt die Datei privat.
+- Bei negativem Scan oder nicht verfügbarem/fehlerhaftem Prüfdienst bleibt das Material unveröffentlicht (Fail-closed).
+- Parser und Scanner benötigen isolierte Verarbeitung und Ressourcenlimits. Konkrete Produkt-/Hostingarchitektur ist nicht entschieden und bleibt technische Prüfarbeit.
+- Konkrete nutzerseitige Fehlermeldungstexte und Darstellung werden noch im UX-Detail abgeschlossen.
+
+**Nächster fachlicher Punkt:** Kategorien und Dokumenttypen. Ein auf belegten Beispielen beruhender Vorschlag steht in der Academy-Spezifikation; mangels vollständigem Materialinventar ist er noch nicht als verbindliche Liste zu übernehmen.
