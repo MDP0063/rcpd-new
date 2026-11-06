@@ -16,7 +16,11 @@
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
 
 ### Lernbibliothek und Materialien
-- Verwaltungsworkflow für Upload, Metadaten, Entwurf, Freigabe und Versionserstellung.
+- Rollen und Berechtigungen: Wer darf Entwürfe anlegen/bearbeiten, veröffentlichen, zurückziehen und archivieren? Darf der Ersteller selbst veröffentlichen oder ist eine zweite Person erforderlich?
+- Pflicht-/Optional-Metadaten und Materialcode-Regeln.
+- Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
+- Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
+- Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
 - Verlässliche Materialcodes, Kategorien, Tags und Datumsfelder.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
 - Behandlung defekter, nicht lesbarer, passwortgeschützter oder nicht unterstützter Dateien.
@@ -194,7 +198,8 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - UX-/Accessibility-Empfehlungen benötigen vor ihrer Vorstellung aktuelle Recherche und Quellen mit konkreter RCPD-Begründung.
 
 ### Academy
-- Der exakte Upload-/Metadaten-/Entwurfs-/Prüf-/Freigabeprozess ist offen; ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
+- **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
+- Offen bleiben die Rollen-/Freigaberegeln, die Frage eines möglichen Vier-Augen-Prinzips, Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
 - Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
 - Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
 - Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
