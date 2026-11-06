@@ -6,6 +6,8 @@ import type {
   AcademyProgramDraftDoc,
   AcademyProgramVersionDoc,
   AcademyCourseParticipationDoc,
+  AcademyProgressEvidenceDoc,
+  AcademyCompletionCorrectionDoc,
   AcademyProgramParticipationDoc,
   AcademyPrivateNoteDoc
 } from '../src/types/academy.ts';
@@ -221,6 +223,32 @@ export function validateCourseParticipation(
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
       (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endReason))) {
     return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt Zeitpunkt und Begründung.');
+  }
+  return { ok: true };
+}
+
+export function validateProgressEvidence(evidence: AcademyProgressEvidenceDoc): AcademyValidationResult {
+  if (!isRecord(evidence) || !isNonEmpty(evidence.id) ||
+      !isNonEmpty(evidence.participationId) || !isNonEmpty(evidence.requirementId) ||
+      !isNonEmpty(evidence.sourceId) || !isNonEmpty(evidence.recordedByUid) ||
+      !isNonEmpty(evidence.recordedIso) ||
+      !['required_chapter', 'required_material', 'required_assessment', 'practical_task', 'instructor_confirmation', 'accepted_self_confirmation'].includes(evidence.evidenceType)) {
+    return invalid('ACADEMY_PROGRESS_EVIDENCE_INVALID', 'Der Fortschrittsnachweis enthält ungültige Referenzen oder Metadaten.');
+  }
+  if (evidence.details !== undefined && (typeof evidence.details !== 'string' || evidence.details.length > 2000)) {
+    return invalid('ACADEMY_PROGRESS_EVIDENCE_DETAILS_INVALID', 'Die Nachweisdetails dürfen höchstens 2000 Zeichen enthalten.');
+  }
+  return { ok: true };
+}
+
+export function validateCompletionCorrection(correction: AcademyCompletionCorrectionDoc): AcademyValidationResult {
+  if (!isRecord(correction) || !isNonEmpty(correction.id) || !isNonEmpty(correction.participationId) ||
+      !isNonEmpty(correction.reason) || correction.reason.trim().length < 10 ||
+      correction.reason.length > 1000 || !isNonEmpty(correction.actorUid) || !isNonEmpty(correction.correctedIso) ||
+      !['in_progress', 'completed'].includes(correction.previousStatus) ||
+      !['in_progress', 'completed'].includes(correction.correctedStatus) ||
+      correction.previousStatus === correction.correctedStatus) {
+    return invalid('ACADEMY_COMPLETION_CORRECTION_INVALID', 'Eine Abschlusskorrektur benötigt einen gültigen Statuswechsel, eine Begründung und einen verantwortlichen Administrator.');
   }
   return { ok: true };
 }
