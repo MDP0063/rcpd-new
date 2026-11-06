@@ -62,7 +62,7 @@ function messageFor(error?: string): string {
   }
 }
 
-function statusLabel(master: AcademyMaterialMasterDoc, draft: AcademyMaterialDraftDoc | null): string {
+function statusLabel(master: AcademyMaterialMasterDoc, draft: Pick<AcademyMaterialDraftDoc, 'workingRevision'> | null): string {
   if (master.publicationStatus === 'archived') return 'Archiviert';
   if (master.publicationStatus === 'draft') return 'Entwurf';
   if (draft && draft.workingRevision > (master.lastPublishedWorkingRevision ?? 0)) return 'Veröffentlicht · neuer Entwurf';
@@ -408,7 +408,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                       {item.draft?.title || item.currentVersion?.title || 'Ohne Titel'}
                     </span>
                     <span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">
-                      {statusLabel(item.master, item.draft ? { ...item.draft, id: item.master.id, materialId: item.master.id, createdIso: '', createdByUid: '', updatedByUid: '' } as AcademyMaterialDraftDoc : null)}
+                      {statusLabel(item.master, item.draft)}
                       {item.currentVersion ? ' · Version ' + item.currentVersion.versionNumber : ''}
                     </span>
                     {item.master.responsibleCourseCode && (
@@ -510,7 +510,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 {errors.documentTypeId && <p id="academy-material-document-type-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.documentTypeId}</p>}
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="academy-material-role" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Erforderlicher Rang (optional)</label>
+                <label htmlFor="academy-material-role" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Erforderliche Portalrolle (optional)</label>
                 <select id="academy-material-role" className={field} value={requiredRole}
                   onChange={event => { setRequiredRole(event.target.value as '' | OfficerRole); setFormDirty(true); }}
                   disabled={busy || editingMaster?.publicationStatus === 'archived'}>
@@ -556,7 +556,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 </p>
                 {errors.content && <p id="academy-material-content-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.content}</p>}
               </div>
-              {errors.general && <p className="md:col-span-2 text-sm text-rose-700 dark:text-rose-300" role="alert">{errors.general}</p>}
+              {errors.general && <p id="academy-material-general" className="md:col-span-2 text-sm text-rose-700 dark:text-rose-300" role="alert">{errors.general}</p>}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
