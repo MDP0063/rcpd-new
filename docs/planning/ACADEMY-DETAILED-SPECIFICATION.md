@@ -474,7 +474,7 @@ Der fachliche Mindestablauf ist damit:
 
 Die Oberfläche muss die Zustände klar unterscheiden: Datei lokal ausgewählt, Upload läuft, Entwurf gespeichert, Prüfung fehlgeschlagen, Veröffentlichung läuft und veröffentlicht. Ein Uploadfehler darf keinen scheinbar gespeicherten Entwurf erzeugen; ein Veröffentlichungsfehler darf den bereits gespeicherten Entwurf nicht als veröffentlicht anzeigen.
 
-Noch nicht beschlossen sind ein gesonderter fachlicher Prüfstatus, ein zweites Freigabe-/Vier-Augen-Verfahren oder eine zwingende Trennung zwischen Ersteller und veröffentlichender Person. Die bewusste Veröffentlichung ist beschlossen; zusätzliche Freigabestufen sind es nicht.
+**BESCHLOSSEN am 06.11.2026 – Veröffentlichungsberechtigung Option A:** Dieselbe Person, die einen Entwurf mit entsprechender bestehender Berechtigung angelegt oder bearbeitet hat, darf ihn auch selbst bewusst veröffentlichen. Es ist keine zweite Person und kein Vier-Augen-Prinzip vorgeschrieben. Die Veröffentlichung bleibt eine separate, ausdrücklich ausgelöste Aktion. Admin und Colonel behalten ihre bestehende übergreifende Verwaltungsbefugnis; weitere Rollen dürfen nur innerhalb ihrer bereits zugewiesenen Kurs-/Verwaltungsberechtigungen handeln. Eine Veröffentlichung darf niemals allein aus der Uploadberechtigung oder einem automatischen Speichervorgang folgen. Die genaue technische Abbildung und Prüfung der Rechte bleibt Implementierungsarbeit.
 
 ### 10.3.1 Dateiauswahl, Prüfung und Upload-Rückmeldung
 
@@ -513,7 +513,7 @@ Eine separate fachliche Review-Queue, zweite Person als Pflichtfreigeber oder zu
 ### 10.3.4 Offene Upload- und Veröffentlichungsentscheidungen
 
 Noch zu definieren sind insbesondere:
-- Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, veröffentlichen, zurückziehen und archivieren?
+- Welche bestehenden Rollen dürfen Entwürfe anlegen, bearbeiten, zurückziehen und archivieren? (Für Veröffentlichung ist Option A beschlossen: dieselbe berechtigte Person darf ihren Entwurf selbst veröffentlichen.)
 - Darf dieselbe berechtigte Person ihren eigenen Entwurf veröffentlichen oder ist eine zweite Person erforderlich?
 - Welche Metadaten sind verpflichtend, welche optional und welche werden automatisch erzeugt?
 - Wie werden Materialcodes vergeben, auf Eindeutigkeit geprüft und bei Versionsfolgen verwendet?
