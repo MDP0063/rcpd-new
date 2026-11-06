@@ -3,7 +3,7 @@
 **Stand:** 06.11.2026 – nach Priorisierung der ersten Materialausbaustufe auf Text/Markdown und Code; PDF-Infrastruktur ist zurückgestellt
 
 **Basisstand von main:** PR #60 wurde mit Merge-Commit `4a67e4874333477f14935118e976b18ad6fa1fe9` gemergt.  
-**Aktueller Umsetzungsbranch:** `feature/academy-versioned-text-code-materials` (PR noch nicht eröffnet).
+**Aktueller Umsetzungsbranch:** `feature/academy-versioned-text-code-materials` – Draft-PR #61, CI-Prüfung läuft.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
