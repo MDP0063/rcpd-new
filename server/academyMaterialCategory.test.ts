@@ -92,6 +92,10 @@ test('category deletion is permitted only when no current material assignment re
     const archived = await repository.setMaterialCategoryArchived(
       first.id, true, 1, 'admin-1', '2026-11-06T12:02:00.000Z'
     );
+    const retained = await repository.setMaterialCategoryAssignment(
+      'material-1', first.id, 'admin-1', '2026-11-06T12:02:30.000Z'
+    );
+    assert.equal(retained.revision, 1, 'an unchanged historical assignment remains valid after archive');
     await assert.rejects(
       repository.deleteMaterialCategory(first.id, archived.revision, 'admin-1'),
       /ACADEMY_MATERIAL_CATEGORY_IN_USE/
