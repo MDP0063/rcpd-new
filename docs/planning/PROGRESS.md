@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
 **Stand:** 06.11.2026  
-**Basis-Commit von main:** `33ca7697b908de78c92cfd4576f22b4dde5cc89d`.  
-**Dokumentationsbranch:** `docs/complete-redesign-plan`.
+**Basisstand von main:** Merge-Commit von PR #44: `8f8f3a4f17a05f10fcff6b770461a643a718eeb8`.  
+**Aktueller Dokumentationsbranch:** `docs/deep-redesign-reconstruction`.
 
 ## 1. Gesamtstatus
 
@@ -10,45 +10,25 @@
 - Designrichtung B „Modernes Einsatz- und Verwaltungsportal“ ist beschlossen.
 - Funktionale Planung, Bestandsaufnahme und Informationsarchitektur gehen dem finalen visuellen Design voraus.
 - Bestehende technische Architektur, Datenmodelle, Geschäftslogik und Berechtigungen bleiben grundsätzlich unverändert.
-- Die Academy ist bereits sehr detailliert konzipiert, aber noch nicht vollständig abgeschlossen.
-- Weitere Portalmodule sind in `MODULE-INVENTORY.md` erfasst; für diese liegen noch nicht überall vollständige Konzepte vor.
-- Diese Dokumentation konsolidiert verfügbares Projektgedächtnis und die jüngsten Gespräche. Sie ist eine umfangreiche Arbeitsgrundlage, aber kein Anspruch, bereits jedes einzelne Detail jedes Originalgesprächs wörtlich rekonstruiert zu haben.
+- Die vorherige Gesamt-Redesign-Erweiterung wurde in PR #44 in `main` gemergt. Sie war eine breite Baseline, aber noch zu stark zusammengefasst.
+- Die aktuelle Revision ergänzt deshalb eigenständige ausführliche Spezifikationen für das Gesamtportal und die Academy und dokumentiert offen, welche Details aus den verfügbaren Erinnerungen stammen bzw. nicht wortgetreu rekonstruierbar sind.
+- Die Academy ist in `ACADEMY-DETAILED-SPECIFICATION.md` deutlich ausführlicher beschrieben, aber fachlich noch nicht vollständig abgeschlossen und nicht automatisch umsetzungsreif.
+- Die übrigen Module sind im Inventar erfasst und in `PORTAL-REDESIGN-DETAILS.md` detailliert mit Grundsätzen und Audit-Aufträgen beschrieben; konkrete Modulkonzepte fehlen weiterhin dort, wo sie im verfügbaren Kontext noch nicht entschieden wurden.
 
-## 2. Beschlossene übergreifende Leitlinien
+## 2. Dokumentationsstruktur
 
-- Rollen- und Aufgabenorientierung.
-- Fachliche Vollständigkeit ohne visuelle Überladung.
-- Kontextbezogene Informationen; Admin-Komplexität nicht unnötig in Teilnehmeransichten.
-- Keine redundanten/unklaren Controls oder Statusanzeigen.
-- Mobile UX eigenständig betrachten.
-- UX-Empfehlungen aktuell recherchieren und anhand des RCPD-Ablaufs begründen.
-- Claude als spätere kritische Review-Instanz; alle Beschlüsse in den Review-Kontext aufnehmen.
-- Keine Änderungen an Architektur/Datenmodell/Geschäftslogik/Berechtigungen im bloßen UI-Redesign.
-- Separate Branches; kein main-Merge/Deployment ohne ausdrückliche Freigabe.
+- `MASTERPLAN.md`: Zielbild, Arbeitsrahmen und Planungsphasen.
+- `PORTAL-REDESIGN-DETAILS.md`: ausführliche Gesamtportal-Leitlinien, UX-Arbeitsweise, Modulkommentare, Cross-Module-Abhängigkeiten und Auditmethodik.
+- `ACADEMY-DETAILED-SPECIFICATION.md`: detaillierte Regeln zu Programmen, Kursen, Bibliothek, Reader, Notizen, Prüfungen, Examiner und Ergebnisfreigaben.
+- `DECISIONS.md`: Entscheidungsregister mit gewählten Optionen und verbindlichen Abgrenzungen.
+- `MODULE-INVENTORY.md`: alle identifizierten Module und ihr Auditstatus.
+- `OPEN-QUESTIONS.md`: nicht entschiedene Fragen und technische Prüffelder.
+- `RECONSTRUCTION-NOTES.md`: Herkunft und Grenzen der verfügbaren Erinnerung sowie Regeln für zukünftige Dokumentation.
+- `README.md` und `CHANGELOG.md`: Einstieg und Verlauf.
 
-## 3. Vollständiges Modul-Inventar
+## 3. Academy – bisher beschlossene Teilbereiche
 
-Siehe `MODULE-INVENTORY.md`. Inventarisiert sind:
-- globale App-Shell, Navigation und Suche;
-- Dashboard;
-- Ankündigungen;
-- Nachrichten;
-- Benachrichtigungen;
-- Anträge;
-- Kalender;
-- Personalverwaltung;
-- Berichte;
-- Audit-/Aktivitätsverlauf;
-- Whitelist/Zugangsverwaltung;
-- Deployment/Betrieb;
-- Login/Kontozugang/Einstellungen;
-- Academy;
-- Prüfungswerkstatt/Examiner.
-
-Die Module außerhalb der Academy sind zunächst Inventar-/Auditbereiche, keine vollständig beschlossenen neuen Konzepte.
-
-## 4. Academy – bisher beschlossene Teilbereiche
-
+Die verfügbaren Erinnerungen enthalten:
 - Academy-Grundkonzept und fünf Hauptbereiche (Option A).
 - Programme, Kurse, Status, Versionierung, Teilnahme und Wiederqualifizierung (38 Beschlüsse).
 - Teilnehmerprüfungen und Examiner-Prozess.
@@ -57,10 +37,20 @@ Die Module außerhalb der Academy sind zunächst Inventar-/Auditbereiche, keine 
 - Kursmeldungs-Lesestatus C.
 - Lernbibliothek: Dokumentversionierung B; Archivierung/Löschung A; globale Suche A; Sortierung A; Filterdarstellung A.
 - Reader: Navigation eingeklappt A; kontinuierliches vertikales Scrollen.
-- Notizen/Lesezeichen: Versionsbindung A; Synchronisierung A; Erhalt bei Berechtigungsverlust A; Erhalt bei Quelldokumententfernung A (vorbehaltlich rechtlicher Löschpflichten).
+- Notizen/Lesezeichen: Versionsbindung A; Synchronisierung A; Erhalt bei Berechtigungsverlust A; Erhalt bei Quelldokumententfernung A, vorbehaltlich rechtlicher Löschpflichten.
 - Kontextbezogener Meldebutton als spätere Integrationsanforderung; vollständiges Meldesystem wird später separat geplant.
 
-Vollständige Details stehen in `DECISIONS.md`.
+Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICATION.md` beschrieben. `DECISIONS.md` enthält weiterhin den Überblick über verbindliche Optionen.
+
+## 4. Gesamtportal – aktuelle Planungsbasis
+
+- Rollen- und Aufgabenorientierung ist verbindlich; konkrete Rechte bleiben aus dem bestehenden System abzuleiten.
+- Mobile UX ist eigenständiger Audit-/Designgegenstand.
+- Redundante UI darf nur entfernt werden, wenn ihre fachliche Funktion erhalten bleibt.
+- Keine unbestätigten Widgets, KPIs, Freigabestufen, Attribute oder Automationen hinzufügen.
+- Vor jeder UX-/Layout-/Navigations-/Interaktionsempfehlung aktuelle etablierte Muster und relevante Accessibility-Standards recherchieren, Quellen nennen und die RCPD-spezifische Begründung dokumentieren.
+- Claude-Review darf Entscheidungen kritisch hinterfragen, sie aber nicht eigenmächtig ersetzen.
+- Weitere Module sind noch nicht vollständig fachlich konzipiert; die offenen Auditbereiche sind transparent markiert.
 
 ## 5. Noch offene Hauptarbeiten
 
@@ -75,12 +65,15 @@ Vollständige Details stehen in `DECISIONS.md`.
 
 ## 6. Nächster konkreter Schritt
 
-Weiter mit der Lernbibliothek und dem Abgleich ihrer bereits beschlossenen Regeln. Danach systematisch die weiteren Module auditieren, ohne bereits beschlossene Fragen erneut aufzurollen oder offene Vorschläge als Entscheidungen zu behandeln.
+Die Dokumentationsrevision in diesem Branch vollständig prüfen und als separaten Draft-PR zur Review vorlegen. Danach weiter mit den offenen Punkten der Lernbibliothek und anschließend Modul für Modul das restliche Portal auditieren. Vor jeder Rückfrage zuerst die neuen Detail-Spezifikationen und das Entscheidungsregister abgleichen.
 
-## 7. Technische Ausführung und Tests dieser Dokumentationsrevision
+## 7. Technische Ausführung und Tests
 
-- Es wurden ausschließlich Markdown-Planungsdokumente auf einem separaten Branch geändert/ergänzt.
-- Keine Anwendungscode-, Datenmodell-, API-, Berechtigungs- oder Deployment-Dateien geändert.
-- Kein Merge nach main und kein Deployment durch diese Revision.
-- Geänderte Dateien werden nach dem Schreiben erneut aus GitHub abgerufen und inhaltlich auf Vorhandensein/Gliederung kontrolliert.
-- Lint, Build, Tests und Browserprüfung wurden nicht ausgeführt; es handelt sich um reine Dokumentation.
+- Diese Revision ändert ausschließlich Markdown-Planungsdokumente.
+- Neue Dateien: `PORTAL-REDESIGN-DETAILS.md`, `ACADEMY-DETAILED-SPECIFICATION.md`, `RECONSTRUCTION-NOTES.md`.
+- Aktualisiert: Masterplan, Entscheidungsregister, Modul-Inventar, offene Fragen, Fortschritt, README und Changelog.
+- Keine Anwendungslogik-, Backend-, API-, Datenmodell-, Berechtigungs- oder Deployment-Dateien geändert.
+- Branch basiert auf dem aktuellen `main`-Stand nach Merge von PR #44; keine direkte Änderung an `main`.
+- Kein Merge und kein Deployment durch diese Revision.
+- Lint, Build, Tests, Browserprüfung und Markdown-Linkcheck wurden nicht ausgeführt.
+- Nach dem Schreiben müssen alle geänderten Dateien aus GitHub erneut abgerufen und auf Inhalt, Gliederung, Links und Widersprüche geprüft werden.
