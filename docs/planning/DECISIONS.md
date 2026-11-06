@@ -298,3 +298,6 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN am 06.11.2026 – Kategorien/Dokumenttypen Option A:** Zwei getrennte, kontrollierte Auswahllisten. Kategorie = fachliches Thema; Dokumenttyp = Art/Funktion des Dokuments. Beide werden unabhängig gespeichert und für Suche/Filter verwendet. Je Material eine Hauptkategorie und ein Dokumenttyp; Mehrfach-Tags sind dadurch nicht mitbeschlossen. Konkrete Werte werden anhand des tatsächlichen Materials festgelegt. Bestehende Werte im Code sind gemischte Bestandswerte und keine ungeprüft übernehmbare Ziel-Taxonomie.
 
 - **BESCHLOSSEN am 06.11.2026 – Lernbibliothek-Berechtigungen Option B:** Kursverantwortliche mit bestehender passender Zuständigkeit dürfen Entwürfe anlegen/bearbeiten und selbst ausdrücklich veröffentlichen. Zurückziehen und Archivieren veröffentlichter Materialien bleiben Admin und Colonel vorbehalten. Die Kurszuständigkeit muss unabhängig vom automatisch generierten Materialcode geprüft werden. Server-seitige Durchsetzung und Auditierung sind erforderlich.
+
+
+- **BESCHLOSSEN am 06.11.2026 – PDF-Uploadgrenze:** maximal 15 MB pro ursprünglicher PDF-Datei (Rohdatei, vor Base64-Kodierung). Serverseitige Prüfung ist verbindlich; Request-Limit und Hosting müssen Base64-/JSON-Overhead berücksichtigen.
