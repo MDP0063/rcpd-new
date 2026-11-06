@@ -139,7 +139,7 @@ export function createAcademyApiRouter(
       const category: AcademyMaterialCategoryDoc = {
         id: id('material_category'),
         name,
-        ...(description === undefined ? {} : { description }),
+        ...(description == null ? {} : { description }),
         status: 'active',
         revision: 1,
         createdIso: now,
@@ -173,7 +173,7 @@ export function createAcademyApiRouter(
       const category: AcademyMaterialCategoryDoc = {
         ...existing,
         name,
-        description,
+        ...(description == null ? {} : { description }),
         revision: expectedRevision + 1,
         updatedIso: new Date().toISOString(),
         updatedByUid: actor.uid
