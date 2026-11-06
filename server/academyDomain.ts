@@ -99,6 +99,14 @@ export function validateCourseVersion(
   )) {
     return invalid('ACADEMY_COURSE_COMPLETION_REQUIREMENT_INVALID', 'Abschlussbedingungen benötigen einen gültigen Typ, ein Ziel und einen Pflichtstatus.');
   }
+  if (version.completionRequirements.some(requirement =>
+    (requirement.type === 'required_chapter' && !version.chapters.some(chapter => chapter.id === requirement.targetId)) ||
+    (requirement.type === 'required_material' && !version.chapters.some(chapter =>
+      chapter.materialReferences.some(reference => reference.materialId === requirement.targetId)
+    ))
+  )) {
+    return invalid('ACADEMY_COURSE_COMPLETION_TARGET_MISSING', 'Kapitel- und Material-Abschlussbedingungen müssen auf tatsächlich enthaltene Kursinhalte verweisen.');
+  }
   return { ok: true };
 }
 
