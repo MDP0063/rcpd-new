@@ -43,6 +43,34 @@ export interface AcademyMaterialCategoryAssignmentDoc {
   updatedByUid: string;
 }
 
+export type AcademyMaterialDocumentTypeStatus = 'active' | 'archived';
+
+export interface AcademyMaterialDocumentTypeDoc {
+  id: string;
+  name: string;
+  description?: string;
+  status: AcademyMaterialDocumentTypeStatus;
+  revision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+  archivedIso?: string;
+  archivedByUid?: string;
+}
+
+/** Stable material-to-document-type link; id is the material master ID. */
+export interface AcademyMaterialDocumentTypeAssignmentDoc {
+  id: string;
+  materialId: string;
+  documentTypeId: string;
+  revision: number;
+  createdIso: string;
+  createdByUid: string;
+  updatedIso: string;
+  updatedByUid: string;
+}
+
 export type AcademyCompletionEvidenceType =
   | 'required_chapter'
   | 'required_material'

@@ -4,7 +4,7 @@ import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
   AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
-  AcademyMaterialCategoryDoc
+  AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import type { AcademyRepository } from './academyRepository.ts';
@@ -40,7 +40,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
@@ -224,6 +224,112 @@ export function createAcademyApiRouter(
       const deleted = await repository.deleteMaterialCategory(req.params.categoryId, expectedRevision, actor.uid);
       await recordAudit(actor.uid, 'Academy-Materialkategorie endgültig gelöscht', deleted.name,
         `Kategorie ${deleted.id} endgültig gelöscht; zum Löschzeitpunkt waren keine Materialzuordnungen vorhanden.`);
+      res.status(204).end();
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/materials/document-types', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const documentTypes = await repository.listMaterialDocumentTypes();
+      documentTypes.sort((a, b) => {
+        if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
+        return a.name.localeCompare(b.name, 'de-DE');
+      });
+      res.json({ documentTypes });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/document-types', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_BODY_INVALID' }); return; }
+      const name = boundedText(req.body.name, 80);
+      const description = req.body.description === undefined ? undefined : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_INVALID' }); return;
+      }
+      const now = new Date().toISOString();
+      const documentType: AcademyMaterialDocumentTypeDoc = {
+        id: id('material_document_type'), name,
+        ...(description == null ? {} : { description }),
+        status: 'active', revision: 1,
+        createdIso: now, createdByUid: actor.uid, updatedIso: now, updatedByUid: actor.uid
+      };
+      await repository.createMaterialDocumentType(documentType);
+      await recordAudit(actor.uid, 'Academy-Dokumenttyp erstellt', documentType.name,
+        `Dokumenttyp ${documentType.id} angelegt.`);
+      res.status(201).json({ documentType });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.put('/materials/document-types/:documentTypeId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_BODY_INVALID' }); return; }
+      const existing = await repository.get<AcademyMaterialDocumentTypeDoc>('academy_material_document_types', req.params.documentTypeId);
+      if (!existing) { res.status(404).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND' }); return; }
+      const expectedRevision = revision(req.body.expectedRevision);
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_INVALID' }); return; }
+      const name = req.body.name === undefined ? existing.name : boundedText(req.body.name, 80);
+      const description = req.body.description === undefined ? existing.description : boundedText(req.body.description, 300, true);
+      if (name === null || (req.body.description !== undefined && description === null)) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_INVALID' }); return;
+      }
+      const documentType: AcademyMaterialDocumentTypeDoc = {
+        ...existing, name,
+        ...(description == null ? {} : { description }),
+        revision: expectedRevision + 1, updatedIso: new Date().toISOString(), updatedByUid: actor.uid
+      };
+      await repository.updateMaterialDocumentType(documentType, expectedRevision, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Dokumenttyp geändert', documentType.name,
+        `Dokumenttyp ${documentType.id}; Revision ${documentType.revision}.`);
+      res.json({ documentType });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/document-types/:documentTypeId/archive', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_INVALID' }); return; }
+      const documentType = await repository.setMaterialDocumentTypeArchived(
+        req.params.documentTypeId, true, expectedRevision, actor.uid, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Dokumenttyp archiviert', documentType.name,
+        `Dokumenttyp ${documentType.id} archiviert; bestehende Referenzen bleiben erhalten.`);
+      res.json({ documentType });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/materials/document-types/:documentTypeId/restore', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_INVALID' }); return; }
+      const documentType = await repository.setMaterialDocumentTypeArchived(
+        req.params.documentTypeId, false, expectedRevision, actor.uid, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Dokumenttyp reaktiviert', documentType.name,
+        `Dokumenttyp ${documentType.id} reaktiviert.`);
+      res.json({ documentType });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.delete('/materials/document-types/:documentTypeId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!requireEditor(actor, res)) return;
+      const expectedRevision = isObject(req.body) ? revision(req.body.expectedRevision) : null;
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_INVALID' }); return; }
+      const deleted = await repository.deleteMaterialDocumentType(req.params.documentTypeId, expectedRevision, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Dokumenttyp endgültig gelöscht', deleted.name,
+        `Dokumenttyp ${deleted.id} endgültig gelöscht; zum Löschzeitpunkt waren keine Materialzuordnungen vorhanden.`);
       res.status(204).end();
     } catch (error) { fail(res, error, next); }
   });

@@ -166,6 +166,57 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const categoryCatalogAfterDelete = await request('/api/academy/materials/categories', admin);
     assert.equal(categoryCatalogAfterDelete.body!.categories.some((item: { id: string }) => item.id === categoryId), false);
 
+    assert.equal((await request('/api/academy/materials/document-types')).status, 401);
+    assert.equal((await request('/api/academy/materials/document-types', officer)).status, 200);
+    assert.equal((await request('/api/academy/materials/document-types', officer, {
+      method: 'POST', ...json({ name: 'Unauthorized document type' })
+    })).status, 403);
+
+    const createdDocumentType = await request('/api/academy/materials/document-types', admin, {
+      method: 'POST', ...json({ name: 'SOP / Standardverfahren', description: 'Verbindlicher Dokumenttyp.' })
+    });
+    assert.equal(createdDocumentType.status, 201, JSON.stringify(createdDocumentType.body));
+    const documentTypeId = createdDocumentType.body!.documentType.id as string;
+    assert.equal(createdDocumentType.body!.documentType.createdByUid, 'academy-admin');
+
+    const duplicateDocumentType = await request('/api/academy/materials/document-types', colonel, {
+      method: 'POST', ...json({ name: 'sop / STANDARDVERFAHREN' })
+    });
+    assert.equal(duplicateDocumentType.status, 409);
+
+    const renamedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId, colonel, {
+      method: 'PUT', ...json({ expectedRevision: 1, name: 'Dienstanweisung', description: 'Aktualisierte Beschreibung.' })
+    });
+    assert.equal(renamedDocumentType.status, 200, JSON.stringify(renamedDocumentType.body));
+    assert.equal(renamedDocumentType.body!.documentType.id, documentTypeId);
+    assert.equal(renamedDocumentType.body!.documentType.revision, 2);
+
+    const staleDocumentTypeEdit = await request('/api/academy/materials/document-types/' + documentTypeId, admin, {
+      method: 'PUT', ...json({ expectedRevision: 1, name: 'Veraltete Änderung' })
+    });
+    assert.equal(staleDocumentTypeEdit.status, 409);
+
+    const archivedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '/archive', admin, {
+      method: 'POST', ...json({ expectedRevision: 2 })
+    });
+    assert.equal(archivedDocumentType.status, 200);
+    assert.equal(archivedDocumentType.body!.documentType.status, 'archived');
+    assert.equal(archivedDocumentType.body!.documentType.archivedByUid, 'academy-admin');
+
+    const restoredDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId + '/restore', colonel, {
+      method: 'POST', ...json({ expectedRevision: 3 })
+    });
+    assert.equal(restoredDocumentType.status, 200);
+    assert.equal(restoredDocumentType.body!.documentType.status, 'active');
+    assert.equal(restoredDocumentType.body!.documentType.id, documentTypeId);
+
+    const deletedDocumentType = await request('/api/academy/materials/document-types/' + documentTypeId, admin, {
+      method: 'DELETE', ...json({ expectedRevision: 4 })
+    });
+    assert.equal(deletedDocumentType.status, 204);
+    const documentTypeCatalogAfterDelete = await request('/api/academy/materials/document-types', admin);
+    assert.equal(documentTypeCatalogAfterDelete.body!.documentTypes.some((item: { id: string }) => item.id === documentTypeId), false);
+
     // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
     const spoofedModuleCreate = await request('/api/academy/modules', officer, {
       method: 'POST',

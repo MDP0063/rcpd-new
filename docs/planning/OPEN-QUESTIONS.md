@@ -17,15 +17,21 @@
 
 ### Lernbibliothek und Materialien
 - Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
-- **Kategorienwerte:** keine feste Vorab-Liste mehr erforderlich; Kategorien werden durch die berechtigte Academy-Verwaltung in der Website gepflegt. Endgültige Löschung ist nur ohne Materialreferenzen zulässig und wird serverseitig/transaktional geprüft. Das Materialmodell muss die Zuordnungsreferenz atomar pflegen. **Dokumenttyp-Werte** bleiben eine getrennte, noch zu klärende kontrollierte Liste. Automatische Materialcode-/Versionskennung technisch spezifizieren.
-- **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
-- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur- und Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; erfolgreiche Malwareprüfung vor Veröffentlichung; bei negativem Ergebnis oder Scanner-/Prüfausfall unveröffentlicht bleiben. Konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technisch offen. Die genaue UX-Darstellung der Fehlermeldungen wird noch ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
+- Kategorien werden zentral durch die berechtigte Academy-Verwaltung gepflegt. Die technische CRUD-Verwaltung ist vorhanden; die Zuordnungsreferenz muss beim späteren Materialschreiben atomar mitgeführt werden.
+- Dokumenttypen bleiben eine getrennte kontrollierte Liste. Die zentrale CRUD-Verwaltung für Admin/Colonel wird im aktuellen Feature-Branch ergänzt. Konkrete Werte werden anhand des realen Materialbestands festgelegt; es werden keine Standardwerte vorweggenommen.
+- Automatische Materialcode-/Versionskennung technisch spezifizieren und mit der ersten Text-/Code-Materialverwaltung integrieren.
+- Die erste Materialausbaustufe umfasst Text-/Markdown-Inhalte und Code als gespeicherten Quelltext. Codeausführung im Portal ist nicht Teil dieser Stufe und braucht eine gesonderte fachliche und technische Freigabe.
+- Technische serverseitige Durchsetzung der bestehenden Kurszuständigkeit für Entwurfsanlage/-bearbeitung/-veröffentlichung verifizieren und umsetzen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
-- Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
-- Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
-- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die fachlichen Sicherheitsanforderungen sind beschlossen, konkrete technische Auswahl bleibt offen.
-- Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
-- **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
+- Metadatenänderungen definieren, die eine neue Materialversion erfordern, gegenüber rein redaktionellen Änderungen ohne neue Version.
+
+**Zurückgestellt – PDF und dateibasierte Materialien (nicht Teil der aktuellen Ausbaustufe):**
+- Separate dauerhafte Dateiablage, privates Speicher-Repository, PDF-Upload/-Abruf und externe Speicherverknüpfungen.
+- PDF-Signatur-/Parserprüfung, Malware-/CDR-Scan, Quarantäne, Ressourcenlimits und PDF-spezifische Fehlerzustände.
+- OCR und PDF-Volltextindexierung.
+- Die bereits beschlossenen PDF-Anforderungen (max. 15 MB Rohdatei, echte strukturelle Prüfung, Malwareprüfung vor Veröffentlichung und Fail-closed) bleiben für die spätere Wiederaufnahme dokumentiert, sind jetzt aber keine Umsetzungsvoraussetzung.
+
+- **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Das Datenmodell enthält bereits die Referenzfelder `materialId` und `materialVersionId`; die vollständige Materialverwaltung muss die referenzierten Versionen serverseitig auf Existenz, Veröffentlichung und Berechtigung prüfen.
 
 ### Reader, Notizen und Lesezeichen
 - Konkrete Toolbar- und Werkzeuganordnung erst in der Designphase.

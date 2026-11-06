@@ -11,7 +11,9 @@ import type {
   AcademyProgramParticipationDoc,
   AcademyPrivateNoteDoc,
   AcademyMaterialCategoryDoc,
-  AcademyMaterialCategoryAssignmentDoc
+  AcademyMaterialCategoryAssignmentDoc,
+  AcademyMaterialDocumentTypeDoc,
+  AcademyMaterialDocumentTypeAssignmentDoc
 } from '../src/types/academy.ts';
 
 export type AcademyValidationResult =
@@ -66,6 +68,42 @@ export function validateMaterialCategory(category: AcademyMaterialCategoryDoc): 
   }
   if (category.status === 'active' && (category.archivedIso !== undefined || category.archivedByUid !== undefined)) {
     return invalid('ACADEMY_MATERIAL_CATEGORY_ARCHIVE_STATE_INVALID', 'Eine aktive Kategorie darf keine Archivierungsmetadaten enthalten.');
+  }
+  return { ok: true };
+}
+
+export function validateMaterialDocumentTypeAssignment(
+  assignment: AcademyMaterialDocumentTypeAssignmentDoc
+): AcademyValidationResult {
+  if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
+      !isNonEmpty(assignment.materialId) || assignment.id !== assignment.materialId ||
+      !isNonEmpty(assignment.documentTypeId) ||
+      !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
+      !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
+      !isNonEmpty(assignment.updatedIso) || !isNonEmpty(assignment.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_ASSIGNMENT_INVALID', 'Material-Dokumenttyp-Zuordnung und Änderungsmetadaten müssen gültig sein.');
+  }
+  return { ok: true };
+}
+
+export function validateMaterialDocumentType(documentType: AcademyMaterialDocumentTypeDoc): AcademyValidationResult {
+  if (!isRecord(documentType) || !isNonEmpty(documentType.id) || !isNonEmpty(documentType.name) ||
+      documentType.name.trim().length > 80 || !['active', 'archived'].includes(documentType.status) ||
+      !Number.isSafeInteger(documentType.revision) || documentType.revision < 1 ||
+      !isNonEmpty(documentType.createdIso) || !isNonEmpty(documentType.createdByUid) ||
+      !isNonEmpty(documentType.updatedIso) || !isNonEmpty(documentType.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_INVALID', 'Dokumenttyp, Name, Status, Revision und Änderungsmetadaten müssen gültig sein.');
+  }
+  if (documentType.description !== undefined &&
+      (typeof documentType.description !== 'string' || documentType.description.length > 300)) {
+    return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_DESCRIPTION_INVALID', 'Die Dokumenttypbeschreibung darf höchstens 300 Zeichen enthalten.');
+  }
+  if (documentType.status === 'archived' &&
+      (!isNonEmpty(documentType.archivedIso) || !isNonEmpty(documentType.archivedByUid))) {
+    return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_ARCHIVE_AUDIT_MISSING', 'Ein archivierter Dokumenttyp benötigt Zeitpunkt und verantwortliche Person.');
+  }
+  if (documentType.status === 'active' && (documentType.archivedIso !== undefined || documentType.archivedByUid !== undefined)) {
+    return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_ARCHIVE_STATE_INVALID', 'Ein aktiver Dokumenttyp darf keine Archivierungsmetadaten enthalten.');
   }
   return { ok: true };
 }

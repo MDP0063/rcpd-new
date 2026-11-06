@@ -1,8 +1,16 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 06.11.2026 – nach Beschluss Upload Option B, Selbstveröffentlichung Option A, Pflichtmetadaten Option A, getrennte Kategorien-/Dokumenttyp-Listen Option A, Berechtigungen Option B und PDF-Grenze 15 MB  
-**Basisstand von main:** Merge-Commit von PR #44: `8f8f3a4f17a05f10fcff6b770461a643a718eeb8`.  
-**Aktueller Dokumentationsbranch:** `docs/deep-redesign-reconstruction`.
+**Stand:** 06.11.2026 – nach Priorisierung der ersten Materialausbaustufe auf Text/Markdown und Code; PDF-Infrastruktur ist zurückgestellt
+
+**Basisstand von main:** Merge-Commit von PR #59: `bffc09e3cfa9ffcff1a2f43659e6e931caff2e27`.  
+**Aktueller Umsetzungsbranch:** `feature/academy-managed-document-types` (noch nicht gemergt).
+
+## 0. Aktuelle Ausbaustufe der Lernbibliothek
+
+- PDF-Funktionen sind bis zu einer späteren Ausbaustufe zurückgestellt. Keine neue PDF-Ablage, kein privates Zusatz-Repository, kein Parser-/Malware-Scan, keine externe Speicherverknüpfung und keine zusätzlichen laufenden Kosten in dieser Phase.
+- Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe, sofern sie nicht separat beschlossen und sicherheitstechnisch geprüft wird.
+- Kategorieverwaltung wurde in PR #59 gemergt. Die zentrale Dokumenttypverwaltung entsteht im Branch `feature/academy-managed-document-types`, ohne voreingestellte Taxonomiewerte.
+- Danach folgt die neue versionierte Materialverwaltung mit Draft-/Publish-Trennung, Pflichtmetadaten und exakten Kursreferenzen auf `materialId` + `materialVersionId`. Bestehende Legacy-Lehrmaterialien bleiben dabei zunächst unangetastet.
 
 ## 1. Gesamtstatus
 
@@ -63,9 +71,15 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 7. Designsystem und grafische Detailgestaltung erst anschließend beginnen.
 8. Unabhängige kritische Review des Gesamtplans vorbereiten.
 
-## 6. Nächster konkreter Schritt
+## 6. Nächste konkrete Schritte
 
-Die Dokumentationsrevision in diesem Branch vollständig prüfen und als separaten Draft-PR zur Review vorlegen. Danach weiter mit den offenen Punkten der Lernbibliothek und anschließend Modul für Modul das restliche Portal auditieren. Vor jeder Rückfrage zuerst die neuen Detail-Spezifikationen und das Entscheidungsregister abgleichen.
+1. Zentrale Dokumenttyp-Verwaltung fertigstellen und als separaten PR prüfen lassen.
+2. Versionierte Materialverwaltung für Text/Markdown und Code implementieren: Materialstamm, konkrete unveränderliche Fassungen, Entwurfs-/Veröffentlichungsworkflow, Pflichtmetadaten und Audit.
+3. Kursreferenzen gegen konkrete veröffentlichte Materialversionen serverseitig validieren und den Reader an die neuen Inhalte anbinden.
+4. Bestehende Legacy-Materialien erst nach einem gesonderten Migrations-/Kompatibilitätsplan berücksichtigen.
+5. PDF-Unterstützung erst in einer späteren Ausbaustufe erneut aufnehmen.
+
+Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen.
 
 ## 7. Technische Ausführung und Tests
 

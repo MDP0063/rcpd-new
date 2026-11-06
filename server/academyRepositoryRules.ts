@@ -13,7 +13,7 @@ export function assertAcademyDocument(collection: AcademyCollection, id: string,
 export function assertAcademyQuery(collection: AcademyCollection, query: AcademyQuery = {}): void {
   assertAcademyCollection(collection);
   if (!query || typeof query !== 'object' || Array.isArray(query) || (query.where !== undefined && !Array.isArray(query.where))) throw new Error('ACADEMY_QUERY_INVALID');
-  if (collection !== 'academy_courses' && collection !== 'academy_programs' && collection !== 'academy_material_categories' && (!query.where || query.where.length === 0)) throw new Error('ACADEMY_QUERY_FILTER_REQUIRED');
+  if (collection !== 'academy_courses' && collection !== 'academy_programs' && collection !== 'academy_material_categories' && collection !== 'academy_material_document_types' && (!query.where || query.where.length === 0)) throw new Error('ACADEMY_QUERY_FILTER_REQUIRED');
   if (query.limit !== undefined && (!Number.isSafeInteger(query.limit) || query.limit < 1 || query.limit > 1000)) throw new Error('ACADEMY_QUERY_LIMIT_INVALID');
   for (const filter of query.where ?? []) {
     if (!filter || typeof filter.field !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/.test(filter.field)) throw new Error('ACADEMY_QUERY_FIELD_INVALID');
