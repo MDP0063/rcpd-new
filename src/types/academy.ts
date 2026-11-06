@@ -171,6 +171,7 @@ export interface AcademyCourseMaterialReference {
   materialVersionId: string;
   /** Immutable display snapshot of the pinned published version title. */
   title?: string;
+  versionNumber?: number;
   required: boolean;
   order: number;
 }

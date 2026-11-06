@@ -287,7 +287,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     const material = materials.find(item => item.master.id === materialId);
     if (!material?.currentVersion || material.master.publicationStatus !== 'published') return;
     setCourseChapters(items => items.map(chapter => chapter.id !== chapterId || chapter.materialReferences.some(reference => reference.materialId === materialId)
-      ? chapter : { ...chapter, materialReferences: [...chapter.materialReferences, { materialId, materialVersionId: material.currentVersion!.id, title: material.currentVersion!.title, required: true, order: chapter.materialReferences.length }] }));
+      ? chapter : { ...chapter, materialReferences: [...chapter.materialReferences, { materialId, materialVersionId: material.currentVersion!.id, title: material.currentVersion!.title, versionNumber: material.currentVersion!.versionNumber, required: true, order: chapter.materialReferences.length }] }));
     setCourseDirty(true);
   };
   const removeChapterMaterial = (chapterId: string, materialId: string) => {
@@ -428,7 +428,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                     {item.materialReferences.length===0?<p className="text-xs text-slate-500 dark:text-slate-400">Noch keine Materialfassung zugeordnet.</p>:<ul className="divide-y divide-slate-200 dark:divide-slate-800">
                       {item.materialReferences.map(reference=>{const m=materials.find(candidate=>candidate.master.id===reference.materialId);const current=m?.currentVersion?.id===reference.materialVersionId?m.currentVersion:null;
                         return <li key={reference.materialId} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||reference.title||'Historische Materialfassung'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?'Version '+current.versionNumber:reference.materialVersionId}</p></div>
+                          <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||reference.title||'Historische Materialfassung'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?.versionNumber||reference.versionNumber?'Version '+(current?.versionNumber||reference.versionNumber):reference.materialVersionId}</p></div>
                           <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={reference.required} onChange={event=>{setCourseChapters(items=>items.map(ch=>ch.id!==item.id?ch:{...ch,materialReferences:ch.materialReferences.map(v=>v.materialId===reference.materialId?{...v,required:event.target.checked}:v)}));setCourseDirty(true);}}/>Erforderlich</label>
                             <button type="button" className={danger} onClick={()=>removeChapterMaterial(item.id,reference.materialId)}>Entfernen</button></div>
                         </li>;

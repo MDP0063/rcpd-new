@@ -557,13 +557,25 @@ export function createAcademyApiRouter(
         (master.publicationStatus === 'published' && master.availability === 'available') ||
         canManage(actor, master.ownerUid)
       );
-      const courses = await Promise.all(visible.map(async master => ({
-        master,
-        version: master.currentPublishedVersionId
-          ? await repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId)
-          : null,
-        draft: canManage(actor, master.ownerUid) ? await repository.getCourseDraft(master.id) : null
-      })));
+      const courses = await Promise.all(visible.map(async master => {
+        const [version, storedDraft] = await Promise.all([
+          master.currentPublishedVersionId ? repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId) : Promise.resolve(null),
+          canManage(actor, master.ownerUid) ? repository.getCourseDraft(master.id) : Promise.resolve(null)
+        ]);
+        const draft = storedDraft ? {
+          ...storedDraft,
+          chapters: await Promise.all(storedDraft.chapters.map(async chapter => ({
+            ...chapter,
+            materialReferences: await Promise.all(chapter.materialReferences.map(async reference => {
+              if (reference.title && reference.versionNumber) return reference;
+              const pinnedVersion = await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
+              if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) return reference;
+              return { ...reference, title: reference.title || pinnedVersion.title, versionNumber: reference.versionNumber || pinnedVersion.versionNumber };
+            }))
+          })))
+        } : null;
+        return { master, version, draft };
+      }));
       res.json({ courses });
     } catch (error) { fail(res, error, next); }
   });
