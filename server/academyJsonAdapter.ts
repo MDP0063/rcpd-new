@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, unlink, open } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
-import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
+import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
 type State = { version: 1; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
 const queues = new Map<string, Promise<void>>();
@@ -23,7 +23,7 @@ class JsonTransaction implements AcademyTransaction {
     return clone(Object.values(this.state.collections[collection]).filter(doc => matches(doc, query)).slice(0, query.limit ?? 1000)) as T[];
   }
   async create<T extends AcademyDocument>(collection: AcademyCollection, id: string, document: T): Promise<void> {
-    assertAcademyDocument(collection, id, document); const key = keyOf(id);
+    assertAcademyCanUpdate(collection); assertAcademyDocument(collection, id, document); const key = keyOf(id);
     if (this.state.collections[collection][key]) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
     this.state.collections[collection][key] = clone(document); this.hasWrites = true;
   }
@@ -33,7 +33,7 @@ class JsonTransaction implements AcademyTransaction {
     this.state.collections[collection][key] = clone(document); this.hasWrites = true;
   }
   async delete(collection: AcademyCollection, id: string): Promise<void> {
-    assertAcademyDocumentId(id); if (delete this.state.collections[collection][keyOf(id)]) this.hasWrites = true;
+    assertAcademyCanDelete(collection); assertAcademyDocumentId(id); if (delete this.state.collections[collection][keyOf(id)]) this.hasWrites = true;
   }
 }
 
