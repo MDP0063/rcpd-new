@@ -25,7 +25,7 @@ function extractHeadings(markdown:string):HeadingItem[]{
 }
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
- const [currentVersion,setCurrentVersion]=useState<AcademyMaterialVersionDoc|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
+ const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
  const selected=useMemo(()=>materials.find(x=>x.chapterId+'::'+x.materialId+'::'+x.materialVersionId===selectedKey)||null,[materials,selectedKey]);
  useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');
   if(!selected||selected.accessStatus!=='available'){setLoading(false);return()=>{active=false;};}
