@@ -60,9 +60,9 @@ Vor Abschluss der Academy und vor späterer Modulimplementierung validieren:
 - Examiner ↔ Personalverwaltung: Verantwortlichkeiten und Berechtigungen.
 - Academy ↔ Dashboard: gleiche zugrunde liegende Daten, angemessene unterschiedliche Informationstiefe.
 
-## 3. Weitere Module – noch zu inventarisieren
+## 3. Weitere Module – Inventar vorhanden, Detailaudit offen
 
-Die Gesamtplanung umfasst weitere Portalbereiche. Für diese Baseline liegen keine ausreichend vollständigen fachlichen Spezifikationen vor. Vor jeder Ausarbeitung zunächst vorhandene Projektfunktionen, Dokumente und Originalentscheidungen inventarisieren. Keine Features aus Modulnamen ableiten.
+Die Portalbereiche sind im ergänzenden `MODULE-INVENTORY.md` systematisch erfasst. Das Inventar ersetzt noch kein vollständiges UX-/Funktionsaudit. Vor jeder Ausarbeitung sind vorhandene Funktionen, Daten, Rollen, Abläufe und Originalentscheidungen konkret zu prüfen. Keine Features aus Modulnamen ableiten.
 
 ## 4. Technische Prüffelder (nicht als aktuelle Befunde missverstehen)
 
@@ -97,3 +97,85 @@ Zum Stand 06.11.2026 wird die Lernbibliothek weiter konsolidiert. Die zuletzt be
 - kontinuierliches vertikales Scrollen als Standard.
 
 Vor der nächsten Frage ist der vollständige Beschlussstand abzugleichen, damit keine bereits beantwortete Grundsatzfrage erneut gestellt wird.
+
+## 7. Gesamtes Portal – offene Redesign-Fragen
+
+Diese Punkte gelten zusätzlich zu den Academy-Fragen oben. Sie sind Prüfaufträge, keine bereits beschlossenen Funktionen.
+
+### Globaler Rahmen
+- vollständige Rollen-/Aufgabenmatrix aus den tatsächlichen Bestandsrechten ableiten;
+- globale Hauptnavigation, Sidebar/Header/Tabs und mobile Navigation festlegen;
+- Such-/Schnellzugriffskonzept prüfen; Command Palette/Ctrl+K bleibt Vorschlag;
+- Breadcrumbs, Zurückwege und Erhalt von Kontext (Filter, Suche, Scrollposition);
+- Light-/Dark-Mode und bestehende Theme-Implementierung prüfen;
+- globale Lade-, Fehler-, Leer- und Berechtigungszustände konsistent definieren;
+- Designsystem erst nach Informationsarchitektur und Machbarkeitsprüfung.
+
+### Dashboard
+- konkrete rollenabhängige Inhalte und Reihenfolge;
+- Dashboard-Aufgaben vs. Kennzahlen;
+- Fortschrittsredundanz mit Academy/Professional Development und Festlegung einer autoritativen Quelle;
+- nur tatsächlich vorhandene Fristen, Prioritäten und Daten verwenden;
+- Widgets und Personalisierung sind nicht beschlossen.
+
+### Kommunikation
+- Ankündigungen, persönliche Nachrichten und Systembenachrichtigungen klar abgrenzen;
+- tatsächliche Read-States und Notification-Ereignisse verifizieren;
+- ungelesene Zähler, Deduplizierung und direkte Links ohne doppelte Anzeigen;
+- Zielgruppen, Archivierung, Suche und mobile Bedienung anhand vorhandener Funktionen prüfen.
+
+### Anträge und Kalender
+- vorhandene Antragstypen, Statusübergänge, Bearbeiter und Genehmigungsschritte erfassen;
+- Einreichung, Rückfrage, Bearbeitung, Entscheidung und Historie als durchgängigen Ablauf;
+- Kalendertermine, Fristen, Zeitzonen, Wiederholungen und Datenquellen prüfen;
+- keine neuen Antragstypen, Freigabestufen oder Erinnerungen ohne Beschluss.
+
+### Personalverwaltung
+- vorhandene Stammdaten, Rang-/Dienstinformationen und Statusfelder;
+- Sicht- und Änderungsrechte je Rolle;
+- Kontoverwaltung, Zuordnung, Statusänderungen und Historie;
+- Abgrenzung von Personalstatus, Kontostatus und Whitelist;
+- keine neuen Attribute, Hierarchien oder Bewertungen ohne Beschluss.
+
+### Berichte und Audit
+- verfügbare Datenquellen und fachliche Definition jeder Kennzahl;
+- Berichte als Auswertung und Audit-Log als Nachweis konkreter relevanter Ereignisse trennen;
+- Filter, Zeiträume, Rollenrechte, Datenschutz und Aufbewahrung;
+- neue Exporte und Kennzahlen sind nicht beschlossen.
+
+### Whitelist, Deployment, Login und Einstellungen
+- Whitelist-Zweck, Status und Freigabeabläufe sowie Abgrenzung zu Konto/Personal;
+- tatsächliche Betriebsaktionen und deren Rechte; keine zusätzlichen produktiven Eingriffe durch das Redesign;
+- Login-/Session-/Fehler-/Wiederherstellungszustände und Sicherheitslogik;
+- persönliche vs. administrative Einstellungen und Theme-/Dark-Mode-Bestand.
+
+## 8. Cross-Module-Abhängigkeiten – gesamtes Portal
+
+- Dashboard ↔ Academy/Professional Development: eine autoritative Fortschrittsquelle.
+- Navigation ↔ Rollen/Berechtigungen: Sichtbarkeit ist keine Autorisierung.
+- Ankündigungen ↔ Nachrichten ↔ Benachrichtigungen: Zwecktrennung und konsistente Read-States.
+- Anträge ↔ Personalverwaltung: Zuständigkeit, Freigabe und Historie.
+- Kalender ↔ Anträge/Ausbildung: Fristen nur aus verlässlichen Quelldaten.
+- Programme ↔ Kurse ↔ Bibliothek: Kursversionen, konkrete Materialversionen, Zugriffsrechte.
+- Kurse ↔ Prüfungen ↔ Ergebnisse: Voraussetzungen, Abschluss, interner und veröffentlichter Bewertungsstand.
+- Ergebnisse ↔ Empfehlungen ↔ Benachrichtigungen: keine Folgeempfehlung vor Ergebnisfreigabe; Deduplizierung und Lesestatus.
+- Examiner ↔ Personalverwaltung: Prüferrollen und Verantwortlichkeit.
+- Berichte ↔ Audit: Auswertung vs. Ereignisnachweis.
+- Whitelist ↔ Personal/Konto: fachlich unterschiedliche Status nicht vermischen.
+- Login/Einstellungen ↔ gesamtes Portal: Session, Darstellung und Rollen.
+
+## 9. Audit-Dokumentation pro Modul
+
+Vor einer Empfehlung ist für jeden Bereich zu dokumentieren:
+1. tatsächlicher Zweck und Nutzeraufgabe;
+2. vorhandene Rollen und Rechte;
+3. aktuelle Einstiege, Screens und Abläufe;
+4. vorhandene Aktionen und Zustände;
+5. Datenquellen und verfügbare Felder;
+6. Desktop- und Mobile-Verhalten;
+7. Accessibility und Fehlerzustände;
+8. Redundanzen und Inkonsistenzen;
+9. Abhängigkeiten zu anderen Modulen;
+10. Problem, Evidenz, Auswirkung, Empfehlung und Status.
+
+Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS sind vorläufig und am aktuellen Code erneut zu verifizieren.

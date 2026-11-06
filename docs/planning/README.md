@@ -3,15 +3,16 @@
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`.
 
 **Stand:** 06.11.2026  
-**Dokumentationsstatus:** Erste konsolidierte Baseline; noch nicht vollständig gegen sämtliche Originalgespräche und den gesamten Repository-Code validiert.
+**Dokumentationsstatus:** Erweiterte Gesamt-Redesign-Baseline. Fachliche Entscheidungen sind von Vorschlägen und technischen Prüfhypothesen getrennt. Nicht alle Module sind bereits konzipiert; offene Bereiche sind ausdrücklich markiert.
 
 ## Verbindliche Lesereihenfolge
 
 1. [MASTERPLAN.md](./MASTERPLAN.md) – Projektziele, Leitlinien und Modulkonzept.
 2. [DECISIONS.md](./DECISIONS.md) – verbindliche fachliche Entscheidungen.
-3. [OPEN-QUESTIONS.md](./OPEN-QUESTIONS.md) – tatsächlich offene Punkte und Prüffelder.
-4. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand und nächster Schritt.
-5. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an dieser Dokumentation.
+3. [MODULE-INVENTORY.md](./MODULE-INVENTORY.md) – alle Portalmodule und Auditstatus.
+4. [OPEN-QUESTIONS.md](./OPEN-QUESTIONS.md) – tatsächlich offene Punkte und Prüffelder.
+5. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand und nächster Schritt.
+6. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an dieser Dokumentation.
 
 ## Statuskennzeichnungen
 

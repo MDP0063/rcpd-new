@@ -1,120 +1,338 @@
-# RCPD – Masterplan
+# RCPD – Gesamt-Masterplan des Portal-Redesigns
 
 **Stand:** 06.11.2026  
-**Status:** Konsolidierte Planungsbaseline; einzelne Bereiche und Abhängigkeiten müssen im weiteren Verlauf noch gegen Originalentscheidungen validiert werden.
+**Planungsstatus:** Fortlaufende fachliche und UX-Konzeption. Die Academy ist detailliert, aber noch nicht vollständig abgeschlossen. Die übrigen Portalmodule sind inventarisiert, jedoch noch nicht jeweils vollständig konzipiert.  
+**Wichtige Abgrenzung:** Dieses Dokument beschreibt Zielbild, Arbeitsrahmen und Planungsstand. Es behauptet nicht, dass alle beschriebenen Zielzustände bereits implementiert sind.
 
-## 1. Projektziel und Rahmen
+## 1. Projektziel und Geltungsbereich
 
-RCPD ist ein fiktives Polizei-Intranet- und Ausbildungsportal für eine Roleplay-Community. Ziel ist ein professionelles, zuverlässiges Portal für Ausbildung, interne Arbeitsabläufe und administrative Aufgaben. Es werden keine Live-Daten realer Polizeibehörden vorausgesetzt oder eingebunden.
+RCPD ist ein fiktives Polizei-Intranet- und Ausbildungsportal für eine Roleplay-Community. Das Redesign umfasst **das gesamte Portal**, nicht nur die Academy. Es soll ein professionelles, konsistentes, gut bedienbares Einsatz-, Ausbildungs- und Verwaltungsportal entstehen.
 
-Die Anwendung befindet sich laut Repository-Dokumentation in früher Alpha. Der tatsächliche Code ist nicht automatisch identisch mit dem hier beschriebenen Zielkonzept.
+Das Projekt umfasst unter anderem:
+- Anmeldung und Kontozugang;
+- globale Navigation und Portalrahmen;
+- Dashboard/Startseite;
+- Ankündigungen, Nachrichten und Benachrichtigungen;
+- Anträge und administrative Vorgänge;
+- Kalender und Termine;
+- Personal-/Mitgliederverwaltung;
+- Academy mit Kursen, Lernbibliothek und Prüfungen;
+- Prüfungswerkstatt/Examiner;
+- Berichte und Audit-/Aktivitätsverläufe;
+- Whitelist bzw. Zugangs-/Freigabeverwaltung;
+- Deployment-/Betriebsbereich und Einstellungen.
 
-## 2. Verbindliche Arbeits- und Qualitätsleitlinien
+Diese Aufzählung ist ein Inventar der vorhandenen bzw. in den Gesprächen identifizierten Portalbereiche, keine Behauptung, dass jedes Modul bereits vollständig geprüft oder fachlich neu spezifiziert wurde. Siehe `MODULE-INVENTORY.md`.
 
-- Sicherheit, Datenintegrität, Zuverlässigkeit und Erweiterbarkeit haben Vorrang.
-- Bestehende Funktionen und Beschlüsse erhalten; kein unnötiges Redesign ohne konkreten Grund.
-- Keine Scope-Erweiterung ohne vorherige fachliche Zustimmung.
-- Technische Bugs und notwendige Qualitätskorrekturen dürfen im freigegebenen Aufgabenrahmen behoben werden.
-- Technische Befunde, Vermutungen und fachliche Beschlüsse strikt unterscheiden.
-- Keine Tests, Builds, Browser- oder E2E-Prüfungen als erfolgreich darstellen, wenn sie nicht ausgeführt wurden.
-- Repository-Arbeit auf eigenem Branch; niemals direkt auf `main`; kein Merge und kein Deployment ohne ausdrückliche Zustimmung.
-- Vor jedem Repository-Eingriff die Regeln in `AGENTS.md`, `CONTRIBUTOR_ROLES.md` und `DEVELOPMENT_PHILOSOPHY.md` vollständig lesen.
-- Vor UX-, Layout-, Navigations- und Interaktionsempfehlungen aktuelle etablierte Muster und maßgebliche Accessibility-Standards recherchieren; Quellen und RCPD-spezifische Begründung nennen.
+## 2. Verbindliche Architektur- und Änderungsgrenzen
 
-## 3. Designrichtung und UX-Grundsätze
+### 2.1 Redesign ohne ungeplante Systemumbauten
 
-**Beschlossen: Designrichtung B.** Modernes operatives und administratives Portal: professionell, ruhig, institutionell und technisch. Keine spielerische, neonartige oder dekorativ überladene Gestaltung.
+Für das Redesign wurde als Ausgangsrahmen ausdrücklich festgelegt:
+- Fokus auf UI, UX, Informationsarchitektur, Navigation, Layout und Bedienlogik;
+- bestehende technische Architektur, Datenmodelle/Datenbankstruktur, Geschäftslogik und Berechtigungen grundsätzlich unverändert lassen;
+- vorhandene Funktionen und fachliche Regeln nicht versehentlich verändern;
+- unnötige, doppelte, widersprüchliche oder unklare Bedienelemente identifizieren und begründet verbessern;
+- technische Erweiterungen nur dann vorschlagen, wenn ein nachgewiesener fachlicher Bedarf besteht; Auswirkungen separat erklären und vorab abstimmen.
 
-Übergreifende Grundsätze:
-- fachlich vollständig, aber visuell nicht überladen;
-- Teilnehmeroberflächen nicht mit administrativen Möglichkeiten belasten;
-- Informationen kontextbezogen und rollen-/situationsgerecht anzeigen;
-- unnötige Menüpunkte, Statusanzeigen, Warnungen und Interaktionen vermeiden;
-- responsive, verständliche und zugängliche Bedienung;
-- Tastaturbedienbarkeit, sichtbarer Fokus, sinnvolle Fokusreihenfolge, Kontrast und Screenreader-Unterstützung berücksichtigen;
-- technische Funktionen müssen nicht zwangsläufig einen eigenen sichtbaren Bereich erhalten.
+Die aktuelle Repository-Architektur ist in `AGENTS.md` beschrieben: React 19 + Vite + Tailwind im Frontend (`src/`), Express-Server in `server.ts` als einziger Schreiber und zentrale Stelle für Rechteprüfungen, JSON-Datei oder Firestore als Storage-Backend, Browserkommunikation über `/api/`. Render deployt automatisch bei Push/Merge nach `main`. Diese technische Beschreibung ist vom Redesign-Zielbild zu unterscheiden.
 
-## 4. Planungs- und Umsetzungsphasen
+### 2.2 Sicherheit und Datenintegrität
 
-1. Vollständiges Modul-Inventar und UX-Audit.
-2. Modulkonzepte und Informationsarchitektur.
-3. Cross-Module-Abgleich und Abhängigkeiten.
-4. Technische Machbarkeit und Architekturprüfung.
-5. Designsystem und globale Navigation.
-6. Modulweise visuelle Ausarbeitung und Umsetzung.
-7. Qualitätssicherung, Optimierung und Konsistenzprüfung.
+- Serverseitige Berechtigungsprüfung bleibt maßgeblich; UI-Ausblendung ersetzt keine Autorisierung.
+- Keine sensiblen oder internen Informationen durch neue UI-Projektionen offenlegen.
+- Historische Daten, Abschlüsse, Ergebnisse und Audit-Ereignisse nicht still überschreiben oder verlieren.
+- Fehlerzustände dürfen nicht als leere Datenzustände erscheinen.
+- Nebenläufigkeit, Idempotenz, Validierung, Datenschutz und Löschpflichten bei fachlich betroffenen Flows berücksichtigen.
+- Keine Daten oder Fortschritte erfinden, nur weil eine Oberfläche einen Status anzeigen möchte.
 
-Zunächst werden die Modulkonzepte vollständig geplant. Danach folgen Cross-Module-Alignment, technische Machbarkeit, Designsystem und globales Layout. Examiner ist nur ein Teilbereich der Academy; die Academy-Gesamtplanung ist nicht abgeschlossen.
+## 3. Designrichtung und Produktprinzipien
 
-## 5. Module und fachliche Zielbilder
+**BESCHLOSSEN: Designrichtung B – „Modernes Einsatz- und Verwaltungsportal“.**
 
-### 5.1 Academy
+Ziel ist eine moderne, ruhige, professionelle, institutionelle und operative Gestaltung. Sie soll nicht wie ein überladenes Command-Center, Spiel-Dashboard oder Neon-Admin-Template wirken.
 
-Die Academy ist sowohl operativer Ausbildungsarbeitsbereich als auch frei nutzbare Wissensbibliothek. Empfehlungen und Lernpfade unterstützen, sind aber keine pauschalen Zugangsvoraussetzungen.
+Verbindliche Leitlinien:
+1. Fachlich vollständig, aber visuell ruhig und nicht überladen.
+2. Komplexität nach Rolle, Berechtigung, Situation und konkreter Aufgabe dosieren.
+3. Teilnehmer- und normale Mitarbeiteransichten nicht mit administrativen Möglichkeiten belasten.
+4. Informationen dort zeigen, wo sie für die aktuelle Aufgabe gebraucht werden.
+5. Unnötige Menüpunkte, Statusanzeigen, Warnungen, Buttons und Interaktionen vermeiden.
+6. Bestehende Funktionen nicht nur aus Designgründen entfernen; Redundanzen und unklare Abläufe aber gezielt auflösen.
+7. Jede wichtige UX-Entscheidung mit konkretem Nutzerablauf, Nutzen, Nachteilen und technischer Machbarkeit begründen.
+8. Mobile Nutzung als eigenständigen Nutzungskontext behandeln, nicht als bloß verkleinerte Desktopansicht.
+9. Accessibility von Anfang an berücksichtigen: Tastaturbedienung, sichtbarer Fokus, sinnvolle Fokusreihenfolge, Kontrast, verständliche Labels, Screenreader und responsive Reflow.
+10. Technische Funktionen benötigen nicht automatisch einen sichtbaren Menüpunkt oder eigenen Bereich; manches gehört in Hintergrundlogik oder kontextbezogene Aktionen.
 
-Hauptbereiche (Option A, beschlossen):
+Die Designrichtung ist beschlossen, nicht jedoch jedes konkrete Layout, jede Farbe, jedes Icon, jede Sidebar- oder Header-Anordnung. Diese Ausarbeitung folgt erst nach Audit und Informationsarchitektur.
+
+## 4. Verbindlicher Planungsablauf
+
+Das Redesign wird nicht sofort visuell umgesetzt. Der funktionale und konzeptionelle Plan wird zuerst vollständig erarbeitet.
+
+### Phase 1 – Bestandsaufnahme und UX-Audit
+- gesamtes Repository und vorhandene Dokumentation lesen;
+- jedes Modul, jede Rolle, Berechtigung, Kernaufgabe und relevante Zustands-/Fehlerlage inventarisieren;
+- bestehende Screens, Navigation, Aktionen und Abhängigkeiten erfassen;
+- Desktop- und Mobile-Verhalten getrennt betrachten;
+- tatsächliche Datenquellen und verfügbare Informationen identifizieren;
+- Bestand, Problem, Ursache, Auswirkung und mögliche Verbesserung dokumentieren.
+
+### Phase 2 – Funktionales Konzept und Informationsarchitektur
+- Aufgaben und Informationshierarchie pro Rolle festlegen;
+- Module, Unterbereiche und Übergänge planen;
+- doppelte Daten-/Statusanzeigen und widersprüchliche Wege auflösen;
+- Zustände, Berechtigungsgrenzen und Rückkehr-/Kontextverhalten berücksichtigen;
+- jede fachliche Entscheidung explizit als beschlossen, offen, Vorschlag oder verworfen kennzeichnen.
+
+### Phase 3 – Cross-Module-Abgleich
+- gemeinsame Identitäten, Status, Benachrichtigungen, Such-/Filtermuster und Auditinformationen prüfen;
+- Modulübergänge und Datenverantwortung klären;
+- Doppelpflege und widersprüchliche Datenquellen verhindern;
+- rollenübergreifende Prozesse durchgängig betrachten.
+
+### Phase 4 – Technische Machbarkeit
+- bestehende APIs, Datenmodelle, Komponenten und Rechteprüfungen gegen das Konzept prüfen;
+- feststellen, was rein visuell umgesetzt werden kann;
+- notwendige Backend-/Datenmodell-/API-Änderungen separat ausweisen;
+- keine Architekturänderung stillschweigend in ein UI-Redesign aufnehmen.
+
+### Phase 5 – Designsystem und globaler Portalrahmen
+- erst nach ausreichender konzeptioneller Klarheit visuelle Sprache, Typografie, Abstände, Farben, Zustände, Komponenten und Interaktionsmuster definieren;
+- globale Navigation, Header, Sidebar, mobile Navigation und rollenabhängige Einstiege konsistent gestalten;
+- Light-/Dark-Mode und responsive Verhalten als zusammenhängendes System prüfen.
+
+### Phase 6 – Modulweise Gestaltung und Umsetzung
+- Module auf Basis der bestätigten Konzepte ausarbeiten;
+- gemeinsame Komponenten und Muster wiederverwenden;
+- keine neuen fachlichen Funktionen ohne Zustimmung ergänzen;
+- in klar abgegrenzten Branches/PRs arbeiten.
+
+### Phase 7 – Qualitätssicherung und unabhängige Reviews
+- funktionale Regressionen, Berechtigungen, Datenintegrität, Accessibility, responsive Verhalten und Konsistenz prüfen;
+- tatsächliche Tests dokumentieren;
+- Claude kann als unabhängige kritische Review-Instanz eingesetzt werden; der Review-Prompt muss alle relevanten Beschlüsse enthalten und darf jede Entscheidung sachlich hinterfragen;
+- Projektinhaber behält die endgültige Entscheidung und Merge-Freigabe.
+
+## 5. Rollen- und Aufgabenorientierung
+
+Die Oberfläche soll nicht primär die interne technische Modulstruktur abbilden, sondern Nutzern die für ihre Rolle relevanten Aufgaben zugänglich machen.
+
+Zu prüfen und je Modul zu konkretisieren:
+- Teilnehmer/Mitarbeiter: eigene Aufgaben, persönliche Informationen, relevante Meldungen und nächste Schritte;
+- Ausbilder/Prüfer: zugewiesene oder beanspruchte Ausbildungs-/Prüfvorgänge, Bewertung und Rückmeldungen;
+- Vorgesetzte: Übersicht und fachlich notwendige Steuerungs-/Freigabevorgänge;
+- Administratoren: Konten, Berechtigungen, Konfiguration, Korrekturen und administrative Vorgänge;
+- rollenübergreifende Sichtbarkeit: nur notwendige Status-/Verantwortlichkeitsinformationen; vertrauliche Inhalte und Notizen bleiben geschützt.
+
+Diese Rollenübersicht ist eine Planungsorientierung, keine neue Berechtigungsmatrix. Die tatsächlichen Rollen und Rechte sind aus dem bestehenden System zu übernehmen und dürfen nicht durch UI-Konzeption neu erfunden werden.
+
+## 6. Globaler Portalrahmen und Navigation
+
+Das Portal braucht eine nachvollziehbare, konsistente Navigation, die über alle Module hinweg funktioniert. Das konkrete Modell ist **noch offen**.
+
+Im Audit zu untersuchen:
+- heutige Sidebar-/Header-/Tab-Struktur und doppelte Einstiege;
+- welche Bereiche globale Hauptnavigation und welche kontextbezogene Unterbereiche sein sollten;
+- rollenabhängige Sichtbarkeit ohne Informationslecks;
+- mobile Navigation als eigenständiges Muster;
+- einheitliche Breadcrumbs, Zurückwege und Erhalt des Arbeitskontexts;
+- Such- und Schnellzugriffsmöglichkeiten;
+- konsistente Lade-, Fehler-, Leer- und Berechtigungszustände.
+
+Eine Command Palette (z. B. Ctrl/Cmd+K) wurde als mögliches bestehendes/zu prüfendes Muster angesprochen, ist aber **nicht als neue Funktion beschlossen**. Sie muss auf Nutzen, Zugänglichkeit, Rollenfilterung, Auffindbarkeit und Redundanz geprüft werden, bevor sie empfohlen wird.
+
+## 7. Dashboard und Startseite
+
+Das Dashboard soll rollen- und aufgabenorientiert sein, nicht bloß eine Sammlung aller Datenmodule. Die genaue Anordnung und die jeweiligen Widgets sind offen.
+
+Prüfpunkte:
+- relevante Aufgaben und Handlungsbedarf priorisieren;
+- wichtige persönliche Informationen und Meldungen angemessen darstellen;
+- keine redundanten Fortschrittsanzeigen aus Dashboard und Professional-Development-/Academy-Bereichen;
+- eine autoritative Datenquelle für Fortschritt bestimmen;
+- keine künstlichen Dringlichkeiten, Fristen oder Statuswerte anzeigen;
+- Rolle und Berechtigung bestimmen Sichtbarkeit;
+- Informationen nur in der notwendigen Tiefe zeigen; Details im zuständigen Modul.
+
+## 8. Kommunikations- und Aufgabenbereiche
+
+### Ankündigungen
+- bestehende Funktion und tatsächliche Zielgruppe/Lesestatus erfassen;
+- Abgrenzung zu individuellen Nachrichten und Benachrichtigungen prüfen;
+- Sichtbarkeit, Aktualität und ungelesene Inhalte kontextgerecht behandeln;
+- keine zusätzlichen Lesebestätigungen oder Statusanzeigen ohne fachlichen Bedarf.
+
+### Nachrichten
+- bestehende Konversationen, Empfänger, Rollen und Berechtigungen untersuchen;
+- Trennung zwischen persönlicher Kommunikation, offiziellen Ankündigungen und systemischen Benachrichtigungen klar halten;
+- Lesestatus, ungelesene Zähler, Kontextwechsel und mobile Bedienung prüfen;
+- Vertraulichkeit und serverseitige Rechte unverändert gewährleisten.
+
+### Benachrichtigungen
+- vorhandene Benachrichtigungslogik und per-user Read-State berücksichtigen;
+- Benachrichtigungen nicht mit Ankündigungen oder Nachrichten vermischen;
+- nur sinnvolle Ereignisse melden, keine Notification für jede triviale Änderung;
+- direkte Verknüpfung zum relevanten Vorgang, soweit verfügbar;
+- Lesestatus nicht durch bloßes Öffnen eines übergeordneten Bereichs fälschlich pauschal setzen;
+- Benachrichtigungszähler und Dashboard-Hinweise auf Redundanz prüfen.
+
+### Anträge und administrative Vorgänge
+- vorhandene Antragstypen, Status, Bearbeiter und Freigabeschritte inventarisieren;
+- Status und nächste erforderliche Handlung verständlich darstellen;
+- Einreichung, Rückfrage, Bearbeitung, Entscheidung und Historie als nachvollziehbaren Ablauf abbilden;
+- keine neuen Genehmigungsstufen oder Rollen erfinden;
+- vertrauliche Antragsinhalte nur autorisierten Personen zeigen.
+
+### Kalender
+- tatsächliche Termine, Fristen und Verantwortlichkeiten unterscheiden;
+- keine Frist aus bloßen Zeitstempeln ableiten;
+- persönliche und organisationsweite Termine kontextgerecht darstellen;
+- Kalenderzugriff und Änderungen anhand bestehender Rechte prüfen.
+
+## 9. Personalverwaltung und Organisationsdaten
+
+Das Personalmodul ist ein zentraler administrativer Bereich. Die Bestandsaufnahme muss klären:
+- welche Stammdaten, Dienst-/Ranginformationen und Status tatsächlich gespeichert sind;
+- welche Rollen diese Informationen lesen oder bearbeiten dürfen;
+- welche Aktionen (Profiländerung, Statusänderung, Kontoverwaltung, Zuordnung) existieren;
+- wie historische Änderungen und Verantwortlichkeiten nachvollziehbar bleiben;
+- wie Suche, Filter, Detailansicht und administrative Aktionen organisiert sind;
+- welche Informationen für normale Nutzer sichtbar sein dürfen.
+
+Es werden keine zusätzlichen Personalattribute, Hierarchien, Rechte oder automatischen Bewertungen allein aus UX-Erwägungen eingeführt.
+
+## 10. Berichte, Audit und Nachvollziehbarkeit
+
+Berichte und Audit-/Aktivitätsverläufe sind fachlich zu unterscheiden:
+- Berichte dienen der Auswertung und Übersicht anhand vorhandener, verlässlicher Daten.
+- Audit-Verläufe dokumentieren relevante Aktionen und Änderungen nachvollziehbar.
+- Ein Audit-Log ist kein Ersatz für fachliche Berichte und darf nicht unnötige personenbezogene Klickdaten sammeln.
+- Korrekturen sollen ursprüngliche Entscheidung, verantwortliche Person, Zeitpunkt, Änderung und Begründung nachvollziehbar halten, soweit fachlich/technisch vorhanden.
+- Berechtigung und Datenminimierung sind zwingend zu beachten.
+
+Konkrete Berichtstypen, Kennzahlen, Filter und Exportmöglichkeiten sind noch nicht abschließend beschlossen.
+
+## 11. Whitelist, Deployment und Einstellungen
+
+### Whitelist / Zugangsverwaltung
+- vorhandenen Zweck, Statuswerte, Prüf-/Freigabeschritte und Rechte inventarisieren;
+- nur tatsächliche Zustände und nächste Aktionen anzeigen;
+- keine Vermischung mit allgemeinen Personalstatus, sofern das fachlich unterschiedliche Vorgänge sind;
+- keine neue automatische Freigabe- oder Bewertungslogik ohne Beschluss.
+
+### Deployment / Betrieb
+- vorhandene Admin-/Betriebsfunktionen und deren Zugriff untersuchen;
+- sensible Betriebsinformationen nur für berechtigte Rollen;
+- operative Statusanzeigen nicht mit allgemeinen Portalbenachrichtigungen vermischen;
+- keine zusätzlichen produktiven Eingriffsmöglichkeiten allein durch Redesign schaffen.
+
+### Login und Einstellungen
+- Login, Session, Fehler- und Wiederherstellungszustände verständlich und sicher gestalten;
+- Einstellungen nach persönlicher und administrativer Zuständigkeit trennen;
+- keine Sicherheitsregeln oder Session-Logik durch UI-Änderungen abschwächen;
+- Dark Mode und persönliche Darstellungseinstellungen in das spätere Designsystem integrieren, sofern im Bestand vorhanden bzw. beschlossen.
+
+## 12. Academy – Zielbild und verbindliche Teilkonzepte
+
+Die Academy ist zugleich operativer Ausbildungsarbeitsbereich und freie Wissensbibliothek. Empfehlungen und Lernpfade unterstützen, sind aber keine pauschalen Zugangsvoraussetzungen.
+
+### 12.1 Hauptnavigation – Option A beschlossen
 1. Übersicht
 2. Kurse
 3. Lernbibliothek
 4. Prüfungen
 5. Meine Notizen
 
-Der Examiner-Arbeitsbereich ist rollen- und berechtigungsabhängig integriert und kein sechster allgemeiner Hauptmenüpunkt.
+Examiner ist rollen-/berechtigungsabhängig integriert, kein sechster allgemeiner Hauptmenüpunkt. Die grafische Navigation wird später festgelegt.
 
-Programme, Kurse und Materialien sind getrennte, verknüpfte Konzepte:
-- Programme haben ein Lernziel und erforderliche sowie empfohlene Kurse.
+### 12.2 Kurse und Programme
+- Programme haben Lernziele und erforderliche sowie empfohlene Kurse.
 - Kurse sind eigenständige Fachmodule, können mehreren Programmen zugeordnet und standalone genutzt werden.
-- Kursreihenfolgen dienen der Orientierung; keine pauschalen Sperren.
-- Kapitel, Materialien und freiwillige Wissenstests sind optional je Kurs konfigurierbar.
-- Abschlussbedingungen müssen ausdrücklich definiert und durch aussagekräftige Nachweise erfüllt werden.
-- Öffnen oder Durchblättern ist kein Nachweis für Lesen, Verstehen oder Abschluss.
-- Freiwillige Wissenstests verhindern keinen Kursabschluss, sofern sie nicht ausdrücklich als Pflichtprüfung festgelegt wurden.
+- Reihenfolge ist Orientierung, keine pauschale Sperre.
+- Kapitel, Materialien und freiwillige Wissenschecks sind optional.
+- Abschlussbedingungen und Nachweise müssen ausdrücklich definiert sein.
+- Freiwillige Tests sind keine Abschlussbedingung.
+- Kurs-/Programmversionierung, Teilnahme, Abbruch, Wiederaufnahme, Archivierung, Korrektur und Wiederqualifizierung sind detailliert in `DECISIONS.md` geregelt (38 Beschlüsse).
 
-### 5.2 Lernbibliothek und Reader
+### 12.3 Lernbibliothek und Dokumente
+- vollständige unabhängige Wissenssammlung; Kurse referenzieren kanonisches Material statt Kopien;
+- Dokumentversionierung Option B: veröffentlichte Kursversionen referenzieren konkrete Dokumentversionen; Bibliotheksaktualisierung verändert alte Kursreferenzen nicht still;
+- regulär archivieren oder fachlich zurückziehen, endgültige Löschung nur als Ausnahme unter Beachtung von Datenschutz/Aufbewahrung;
+- externe Dokumenterstellung (z. B. PDF) und Upload; keine verbindliche PDF-Vorlage beschlossen;
+- globale Suche Option A; Relevanz als Standardsortierung Option A; kompakte eingeklappte Filter Option A;
+- Reader mit großzügiger Lesefläche, eingeklappter Navigation, optionalem Inhaltsverzeichnis, Seitenminiaturen und direktem Seitensprung;
+- kontinuierliches vertikales Scrollen als Standard;
+- Notizen/Lesezeichen privat, versionsgebunden, serverseitig synchronisiert; Details in `DECISIONS.md`.
 
-Die Lernbibliothek ist eine vollständige, eigenständige Wissenssammlung. Kurse referenzieren kanonisches Material statt es zu duplizieren.
+### 12.4 Prüfungen und Examiner
+- nur Prüfungstypen `test` und `final_exam`;
+- Berechtigungen und Voraussetzungen serverseitig prüfen; interne Clearance-/Berechtigungsdetails schützen;
+- informierte Startbestätigung und nachvollziehbare Regeln;
+- Fragenstatus nur nach bestätigter Speicherung; Server-Timer, Autosave, Resume und Abgabezustand korrekt darstellen;
+- Abgabe, Bewertung und Ergebnisfreigabe getrennt;
+- geschützte finale Fragen/Antworten/Lösungen nur nach Freigabe;
+- Examiner mit gemeinsamer Aufgabenliste, persistentem Claim, nachvollziehbarem Transfer/Release, Draft-Konzept C und Revision-/Korrekturhistorie;
+- Tastaturbedienung Option C mit sichtbarem Fokus und gezielten Fokusverbesserungen;
+- Ergebnisfreigabe je Prüfung konfigurierbar; spätere Korrektur immer erneut manuell freigeben; Default bei fehlender Konfiguration noch offen.
+- Vollständige fachliche Details siehe `DECISIONS.md` und technische Spezifikation `docs/EXAM_WORKSHOP_ARCHITECTURE_V3.8.md` (separater Status).
 
-Geplantes Zielbild:
-- thematische Kategorien, vollständiges Archiv, Suche und Filter;
-- zentrale globale Suche über alle zugänglichen Dokumente;
-- Reader mit großzügiger Lesefläche;
-- Dokumentversionierung und nachvollziehbare historische Fassungen;
-- persönliche Lesezeichen und private Notizen;
-- letzte Leseposition, Zoom, direkte Seitennavigation und – sofern auslesbar – Inhaltsverzeichnis;
-- Volltextsuche und OCR nur, soweit technisch zuverlässig;
-- responsive Bedienung und mobile Reader-Prüfung.
+### 12.5 Academy-Empfehlungen und Meldungen
+- manuelle und automatische Empfehlungen mit nachvollziehbarem Grund;
+- Deduplizierung, Priorisierung, Lebenszyklus und Ausblenden gemäß `DECISIONS.md`;
+- Kursmeldungen einzeln ungelesen; erst Öffnen des jeweiligen Inhalts markiert gelesen;
+- kontextbezogener Meldebutton an geeigneten Inhalten ist als spätere Integrationsanforderung beschlossen;
+- vollständige Melde-, Prüf-, Bearbeitungs- und Administrationsmechanik wird später als eigener Bereich konzipiert und jetzt nicht vorgezogen.
 
-Dokumente werden extern erstellt (z. B. als PDF) und über eine Verwaltungsoberfläche hochgeladen. Eine verbindliche PDF-Designvorlage wurde nicht beschlossen. Metadaten, Entwurfs-/Freigabestatus und Dokumentverwaltung sind Teil der späteren Ausarbeitung.
+## 13. Cross-Module-Abhängigkeiten
 
-### 5.3 Prüfungen und Examiner
+Vor Abschluss des Gesamtkonzepts sind insbesondere folgende Verbindungen zu validieren:
+- Dashboard ↔ Academy/Professional Development: eine autoritative Fortschrittsquelle, keine doppelten Statusmodelle.
+- Navigation ↔ Rollen/Berechtigungen: UI-Sichtbarkeit und Serverautorisierung getrennt.
+- Ankündigungen ↔ Nachrichten ↔ Benachrichtigungen: klare Zwecktrennung und korrekte Read-States.
+- Anträge ↔ Personalverwaltung: Zuständigkeit, Freigabe und Historie.
+- Kalender ↔ Anträge/Ausbildung: Fristen nur aus verlässlichen Quelldaten.
+- Academy Programme ↔ Kurse: Kursversionen, Abschlussregeln und Mehrfachzuordnung.
+- Kurse ↔ Bibliothek: konkrete Materialversionen und Zugriffsrechte.
+- Bibliothek ↔ Notizen: Versionen, Seitenreferenzen, Löschung und private Daten.
+- Kurse ↔ Prüfungen: Voraussetzungen, Freischaltung und Abschlussbedingungen.
+- Prüfungen ↔ Ergebnisse: interner Bewertungsstand und veröffentlichter Stand.
+- Ergebnisse ↔ Empfehlungen: interne Korrektur vor Freigabe löst keine Teilnehmerempfehlung aus.
+- Empfehlungen ↔ Benachrichtigungen: Deduplizierung, Lesestatus, Ausblenden.
+- Examiner ↔ Personalverwaltung: Prüferrollen, Verantwortlichkeit und Berechtigungen.
+- Berichte ↔ Audit: Auswertung vs. Ereignisnachweis.
+- Whitelist ↔ Personal/Konto: fachlich unterschiedliche Status nicht vermischen.
+- Login/Einstellungen ↔ gesamtes Portal: Session, Darstellung und Rollen.
 
-Teilnehmerprüfungen und Examiner folgen den verbindlichen Detailentscheidungen in `DECISIONS.md`. Kerngrundsätze:
-- Prüfungszugriff und Voraussetzungen serverseitig prüfen;
-- nur für Teilnehmer vorgesehene Prüfungen anzeigen; interne Berechtigungsdetails schützen;
-- tatsächliche Prüfungsregeln vor dem Start transparent machen;
-- Server-Timer, Autosave, Wiederaufnahme und gespeicherte Zustände korrekt darstellen;
-- Abgabe, Bewertung und Ergebnisfreigabe als getrennte Vorgänge behandeln;
-- geschützte Fragen, Lösungen und interne Bewertungen nicht vorzeitig offenlegen;
-- Examiner-Aufgaben einzeln, nachvollziehbar und mit persistentem Claim bearbeiten;
-- Korrekturen und Revisionen historisieren.
+## 14. Offene und bewusst nicht festgelegte Punkte
 
-Eine bestehende technische Spezifikation für die Admin-Prüfungswerkstatt liegt separat unter `docs/EXAM_WORKSHOP_ARCHITECTURE_V3.8.md`. Sie hat ihren eigenen Freigabestatus und darf nicht pauschal als implementiert behandelt werden.
+Nicht als beschlossen behandeln:
+- endgültige globale Navigation, Sidebar/Header, mobile Navigation und Untermenüs;
+- Command Palette als neue Funktion;
+- konkrete Dashboard-Widgets und Reihenfolge;
+- visuelle Farbpalette, Typografie, Icons und Komponenten-Details;
+- endgültige Modulreihenfolge nach vollständigem Audit;
+- konkrete Berichte/Kennzahlen/Exports;
+- neue Felder oder Rollen in der Personalverwaltung;
+- zusätzliche Genehmigungsstufen in Anträgen;
+- konkrete Kalender- und Whitelist-Detailabläufe, soweit noch nicht aus dem Bestand geklärt;
+- vollständige Mechanik des späteren Meldesystems;
+- technische Erweiterungen an Datenmodell, Backend, APIs und Berechtigungen;
+- fehlender Default der erstmaligen Ergebnisfreigabe.
 
-### 5.4 Weitere Module
+Die offenen Fragen werden in `OPEN-QUESTIONS.md` geführt. Vorschläge werden erst nach ausdrücklicher Annahme zu Beschlüssen.
 
-Das Gesamtportal umfasst neben der Academy weitere administrative und operative Bereiche (u. a. Bewerbungen, interne Kommunikation und administrative Anfragen). Deren vollständige Zielkonzepte sind in dieser Baseline noch nicht ausgearbeitet. Keine Details hinzuerfinden; in späteren Planungsabschnitten ergänzen.
+## 15. Dokumentations- und Review-Regeln
 
-## 6. Übergreifende Daten- und Statusprinzipien
+- `README.md` ist der Einstieg.
+- `MASTERPLAN.md` beschreibt Gesamtziel und Planungsablauf.
+- `DECISIONS.md` enthält verbindliche fachliche Beschlüsse.
+- `MODULE-INVENTORY.md` hält Module, Bestandswissen und Auditstatus getrennt fest.
+- `OPEN-QUESTIONS.md` führt offene Punkte.
+- `PROGRESS.md` beschreibt den aktuellen Stand.
+- `CHANGELOG.md` protokolliert Änderungen.
 
-- Veröffentlichung, Verfügbarkeit/Zugriffsberechtigung und persönlicher Fortschritt sind getrennte Ebenen.
-- Historische Abschlüsse und Nachweise dürfen durch Archivierung, neue Versionen oder Berechtigungsänderungen nicht stillschweigend verschwinden.
-- Kurs- und Programmversionen sind nachvollziehbar; laufende Teilnahmen wechseln nicht automatisch auf neue Versionen.
-- Kursabschlüsse und Prüfungsergebnisse sind getrennte Sachverhalte.
-- Interne Bewertungsstände und veröffentlichte Ergebnisse sind getrennt.
-- Historische Ereignisse und Korrekturen werden nachvollziehbar protokolliert; keine stillen Überschreibungen.
-- Berechtigungen werden serverseitig geprüft; private Notizen bleiben privat.
-- Datenaufbewahrung und Löschung müssen Datenschutz und legitime Nachweispflichten berücksichtigen.
+Jede Entscheidung erhält Status, Datum/Zeitraum, Option (falls relevant), Begründung und Abhängigkeiten. Assistant-Vorschläge oder vorläufige Codebeobachtungen dürfen nicht als Nutzerbeschlüsse ausgegeben werden.
 
-## 7. Dokumentationsgrenzen
+Vor jeder UX-Empfehlung: aktuelle etablierte Plattformmuster und maßgebliche Accessibility-Standards recherchieren, Quellen nennen und die Empfehlung anhand des konkreten RCPD-Ablaufs begründen. Der Nutzer möchte Claude später als kritische unabhängige Review-Instanz einsetzen; dafür müssen sämtliche relevanten Entscheidungen und offenen Fragen vollständig übergeben werden.
 
-Dieser Masterplan ist eine fachliche Zusammenfassung. Er ist weder ein vollständiges Datenmodell noch eine technische Implementierungsanweisung. Für konkrete Implementierungen sind aktuelle Repository-Regeln, Code, Tests, freigegebene technische Spezifikationen und die noch offenen Entscheidungen heranzuziehen.
