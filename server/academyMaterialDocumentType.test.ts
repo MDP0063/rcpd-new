@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
-import { validateMaterialDocumentType } from './academyDomain.ts';
+import { validateMaterialDocumentType, validateMaterialDocumentTypeAssignment } from './academyDomain.ts';
 import { createJsonAcademyRepository } from './academyRepository.ts';
 import { ACADEMY_COLLECTIONS } from './academyRepositoryTypes.ts';
 import type { AcademyMaterialDocumentTypeDoc } from '../src/types/academy.ts';
@@ -31,6 +31,23 @@ test('material documentType validation requires stable identity, bounded metadat
   assert.equal(validateMaterialDocumentType(documentType('documentType-1', 'Valid', {
     description: 'x'.repeat(301)
   })).ok, false);
+});
+
+test('document type assignment validation requires one stable material link and audit metadata', () => {
+  const assignment = {
+    id: 'material-1',
+    materialId: 'material-1',
+    documentTypeId: 'type-1',
+    revision: 1,
+    createdIso: now,
+    createdByUid: 'admin-1',
+    updatedIso: now,
+    updatedByUid: 'admin-1'
+  };
+  assert.deepEqual(validateMaterialDocumentTypeAssignment(assignment), { ok: true });
+  assert.equal(validateMaterialDocumentTypeAssignment({ ...assignment, id: 'other-material' }).ok, false);
+  assert.equal(validateMaterialDocumentTypeAssignment({ ...assignment, documentTypeId: '' }).ok, false);
+  assert.equal(validateMaterialDocumentTypeAssignment({ ...assignment, revision: 0 }).ok, false);
 });
 
 test('documentType create, rename, archive and restore are revisioned and retain stable IDs', async () => {
