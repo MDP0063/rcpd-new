@@ -9,7 +9,7 @@ const queues = new Map<string, Promise<void>>();
 const keyOf = (id: string) => `doc:${encodeURIComponent(id)}`;
 const clone = <T,>(value: T): T => structuredClone(value);
 const empty = (): State => ({ version: 1, collections: Object.fromEntries(ACADEMY_COLLECTIONS.map(name => [name, {}])) as State['collections'] });
-const matches = (doc: AcademyDocument, query: AcademyQuery) => (query.where ?? []).every(filter => Object.is(doc[filter.field], filter.value));
+const matches = (doc: AcademyDocument, query: AcademyQuery) => (query.where ?? []).every(filter => Object.is((doc as Record<string, unknown>)[filter.field], filter.value));
 
 class JsonTransaction implements AcademyTransaction {
   hasWrites = false;
