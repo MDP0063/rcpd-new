@@ -120,7 +120,7 @@ test('version-3 JSON Academy stores without category assignments remain readable
   try {
     const collections = Object.fromEntries(
       ACADEMY_COLLECTIONS
-        .filter(collection => collection !== 'academy_material_category_assignments' && collection !== 'academy_material_document_types' && collection !== 'academy_material_document_type_assignments')
+        .filter(collection => !['academy_material_category_assignments', 'academy_material_document_types', 'academy_material_document_type_assignments', 'academy_materials', 'academy_material_drafts', 'academy_material_versions'].includes(collection))
         .map(collection => [collection, {}])
     );
     await writeFile(path.join(directory, 'academy-db.json'), JSON.stringify({ version: 3, collections }));
