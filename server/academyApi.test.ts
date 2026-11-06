@@ -59,7 +59,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     accounts: [
       makeAccount('academy-admin', 'AcademyAdmin', 'admin'),
       makeAccount('academy-colonel', 'AcademyColonel', 'colonel'),
-      makeAccount('academy-officer', 'AcademyOfficer', 'officer')
+      makeAccount('academy-officer', 'AcademyOfficer', 'officer'),
+      makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer')
     ],
     applications: [], modules: [], exams: [], progress: [], announcements: [], messages: [],
     requests: [], events: [], auditLogs: [], notifications: []
@@ -100,6 +101,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const admin = await login(baseUrl, 'AcademyAdmin');
     const colonel = await login(baseUrl, 'AcademyColonel');
     const officer = await login(baseUrl, 'AcademyOfficer');
+    const officer2 = await login(baseUrl, 'AcademyOfficerTwo');
     const request = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -290,6 +292,23 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(programDetail.body!.progress.status, 'completed');
     assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
     assert.equal((await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' })).status, 409);
+
+    const secondParticipantProgram = await request(`/api/academy/programs/${programId}/participations`, officer2, { method: 'POST' });
+    assert.equal(secondParticipantProgram.status, 201, JSON.stringify(secondParticipantProgram.body));
+    const secondParticipantProgramDetail = await request(`/api/academy/program-participations/${secondParticipantProgram.body!.participation.id}`, officer2);
+    assert.equal(secondParticipantProgramDetail.status, 200, JSON.stringify(secondParticipantProgramDetail.body));
+    assert.equal(secondParticipantProgramDetail.body!.progress.requiredCourseCount, 1);
+    assert.equal(secondParticipantProgramDetail.body!.progress.startedRequiredCourseCount, 0);
+    assert.equal(secondParticipantProgramDetail.body!.progress.completedRequiredCourseCount, 0);
+    assert.equal(secondParticipantProgramDetail.body!.progress.completionPercentage, 0);
+    assert.equal(secondParticipantProgramDetail.body!.progress.status, 'not_started');
+
+    const secondParticipantCourseStart = await request(`/api/academy/courses/${courseId}/participations`, officer2, { method: 'POST' });
+    assert.equal(secondParticipantCourseStart.status, 201, JSON.stringify(secondParticipantCourseStart.body));
+    assert.equal(secondParticipantCourseStart.body!.participation.id, secondParticipantProgram.body!.participation.requiredCoursePins[0].courseParticipationId);
+    const secondParticipantAfterCourseStart = await request(`/api/academy/program-participations/${secondParticipantProgram.body!.participation.id}`, officer2);
+    assert.equal(secondParticipantAfterCourseStart.body!.progress.startedRequiredCourseCount, 1);
+    assert.equal(secondParticipantAfterCourseStart.body!.progress.status, 'in_progress');
 
     const adminNote = await request('/api/academy/notes', admin, {
       method: 'POST',

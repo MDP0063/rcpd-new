@@ -33,7 +33,8 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT')) return 409;
+  if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
   if (code.startsWith('ACADEMY_')) return 400;
@@ -354,19 +355,21 @@ export function createAcademyApiRouter(
           repository.get<AcademyCourseVersionDoc>('academy_course_versions', pin.courseVersionId),
           repository.getCourseParticipation(pin.courseParticipationId)
         ]);
-        if (!courseVersion || courseVersion.courseId !== pin.courseId || !courseParticipation ||
-            courseParticipation.userUid !== actor.uid || courseParticipation.courseId !== pin.courseId ||
-            courseParticipation.courseVersionId !== pin.courseVersionId) {
+        if (!courseVersion || courseVersion.courseId !== pin.courseId ||
+            (courseParticipation && (courseParticipation.userUid !== actor.uid ||
+             courseParticipation.courseId !== pin.courseId || courseParticipation.courseVersionId !== pin.courseVersionId))) {
           throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
         }
         return { pin, version: courseVersion, participation: courseParticipation };
       }));
-      const completedCount = requiredCourses.filter(item => item.participation.status === 'completed').length;
+      const completedCount = requiredCourses.filter(item => item.participation?.status === 'completed').length;
+      const startedCount = requiredCourses.filter(item => Boolean(item.participation)).length;
       const progress = {
         requiredCourseCount: requiredCourses.length,
+        startedRequiredCourseCount: startedCount,
         completedRequiredCourseCount: completedCount,
         completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
-        status: completedCount === requiredCourses.length ? 'completed' : 'in_progress'
+        status: completedCount === requiredCourses.length ? 'completed' : startedCount === 0 ? 'not_started' : 'in_progress'
       };
       res.json({ participation, version, requiredCourses, progress });
     } catch (error) { fail(res, error, next); }
