@@ -182,6 +182,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     const response = await apiFetch<MaterialDetailResponse>(API_ENDPOINTS.ACADEMY_MATERIAL(materialId));
     if (!response.ok || !response.data) {
       versionHistoryMaterialIdRef.current = editingMaster?.id ?? null;
+      setLoadingMoreVersions(false);
       onStatusToast(messageFor(response.error));
       setBusy(false);
       return;
@@ -465,9 +466,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               {versions.length > 0 && (
                 <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Versionshistorie</p>
-                  <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                  <ul className="mt-2 grid max-h-48 grid-cols-1 gap-1 overflow-y-auto text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2">
                     {versions.map(version => (
-                      <li key={version.id}>v{version.versionNumber} · {version.title} · {formatDate(version.publishedIso)}</li>
+                      <li key={version.id} className="min-w-0 break-words">v{version.versionNumber} · {version.title} · {formatDate(version.publishedIso)}</li>
                     ))}
                   </ul>
                   {hasMoreVersions && <button type="button" className={secondary + ' mt-3'} onClick={loadMoreVersions} disabled={loadingMoreVersions}>{loadingMoreVersions ? 'Weitere Versionen werden geladen …' : 'Ältere Versionen laden'}</button>}
