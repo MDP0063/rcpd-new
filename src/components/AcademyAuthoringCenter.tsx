@@ -183,7 +183,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     const draftPayload = {
       title: courseTitle.trim(), summary: courseSummary.trim(),
       learningObjectives: courseObjectives.map(item => ({ ...item, description: item.description.trim() })),
-      chapters: courseChapters.map((item, index) => ({ ...item, title: item.title.trim(), description: item.description.trim(), order: index })),
+      chapters: courseChapters.map((item, index) => ({ ...item, title: item.title.trim(), description: (item.description || '').trim(), order: index })),
       completionRequirements: courseRequirements
     };
     if (!courseMaster) {
