@@ -29,9 +29,11 @@ function statusFor(error: unknown): number {
   const code = error instanceof Error ? error.message : '';
   if (code.includes('NOT_FOUND')) return 404;
   if (code.includes('ACCESS_DENIED') || code.includes('OWNER_MISMATCH') || code.includes('ACTOR_MISMATCH')) return 403;
-  if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') || code.includes('ALREADY_EXISTS')) return 409;
-  if (code.includes('INVALID') || code.includes('REQUIRED') || code.includes('SEQUENCE') || code.includes('STRUCTURE')) return 400;
-  if (code.includes('ARCHIVED') || code.includes('APPEND_ONLY')) return 409;
+  if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') ||
+      code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY')) return 409;
+  if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
+      code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
+  if (code.startsWith('ACADEMY_')) return 400;
   return 500;
 }
 function fail(res: Response, error: unknown, next: NextFunction): void {
@@ -68,7 +70,11 @@ function makeProgramDraft(programId: string, body: Record<string, unknown>, work
   };
 }
 
-export function createAcademyApiRouter(repository: AcademyRepository, resolveActor: ActorResolver) {
+export function createAcademyApiRouter(
+  repository: AcademyRepository,
+  resolveActor: ActorResolver,
+  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string) => Promise<void>
+) {
   const router = Router();
 
   function getActor(req: Request, res: Response): AcademyApiActor | null {
@@ -132,6 +138,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       };
       const draft = makeCourseDraft(courseId, req.body, 1, actor.uid, now);
       await repository.createCourseWithDraft(master, draft);
+      await recordAudit(actor.uid, 'Academy-Kursentwurf erstellt', code, `Kurs ${code} angelegt; Arbeitsrevision 1.`);
       res.status(201).json({ master, draft });
     } catch (error) { fail(res, error, next); }
   });
@@ -166,6 +173,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
       const draft = makeCourseDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString());
       await repository.saveCourseDraft(master.id, draft, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Kursentwurf geändert', master.code, `Arbeitsrevision ${draft.workingRevision} gespeichert.`);
       res.json({ draft });
     } catch (error) { fail(res, error, next); }
   });
@@ -195,6 +203,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
         latestVersionNumber: versionNumber, updatedIso: now
       };
       await repository.publishCourseVersion(master.id, version, nextMaster, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Kursversion veröffentlicht', master.code, `Version ${version.versionNumber} veröffentlicht.`);
       res.status(201).json({ master: nextMaster, version });
     } catch (error) { fail(res, error, next); }
   });
@@ -236,6 +245,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       };
       const draft = makeProgramDraft(programId, req.body, 1, actor.uid, now);
       await repository.createProgramWithDraft(master, draft);
+      await recordAudit(actor.uid, 'Academy-Programm-Entwurf erstellt', code, `Programm ${code} angelegt; Arbeitsrevision 1.`);
       res.status(201).json({ master, draft });
     } catch (error) { fail(res, error, next); }
   });
@@ -270,6 +280,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
       if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
       const draft = makeProgramDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString());
       await repository.saveProgramDraft(master.id, draft, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Programm-Entwurf geändert', master.code, `Arbeitsrevision ${draft.workingRevision} gespeichert.`);
       res.json({ draft });
     } catch (error) { fail(res, error, next); }
   });
@@ -298,6 +309,7 @@ export function createAcademyApiRouter(repository: AcademyRepository, resolveAct
         latestVersionNumber: versionNumber, updatedIso: now
       };
       await repository.publishProgramVersion(master.id, version, nextMaster, expected, actor.uid);
+      await recordAudit(actor.uid, 'Academy-Programmversion veröffentlicht', master.code, `Version ${version.versionNumber} veröffentlicht.`);
       res.status(201).json({ master: nextMaster, version });
     } catch (error) { fail(res, error, next); }
   });
