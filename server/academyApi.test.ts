@@ -327,7 +327,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
         chapters: [{
           id: 'chapter-material-1',
           title: 'Operations material',
-          materialReferences: [{ materialId, materialVersionId: materialVersion1Id, title: 'Operations Handbook', required: true, order: 0 }],
+          materialReferences: [{ materialId, materialVersionId: materialVersion1Id, title: 'Falscher Clienttitel', versionNumber: 99, required: true, order: 0 }],
           required: true,
           order: 0
         }],
@@ -336,6 +336,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(courseWithMaterial.status, 201, JSON.stringify(courseWithMaterial.body));
     const courseWithMaterialId = courseWithMaterial.body!.master.id as string;
+    assert.equal(courseWithMaterial.body!.draft.chapters[0].materialReferences[0].title, 'Operations Handbook');
+    assert.equal(courseWithMaterial.body!.draft.chapters[0].materialReferences[0].versionNumber, 1);
     const courseMaterialPublished = await request('/api/academy/courses/' + courseWithMaterialId + '/publish', admin, {
       method: 'POST', ...json({ expectedRevision: 1 })
     });
