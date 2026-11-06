@@ -31,6 +31,7 @@ import { AcademyLearningCenter } from './AcademyLearningCenter';
 import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
 import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager';
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
+import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -63,8 +64,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
-  const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes'>('materials');
+  const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
+  const canManageVersionedMaterials = canAuthorCourses || hasScopedCourseRights;
 
   // Granular Instructor Grading Form State
   const [gradeTargetUserUid, setGradeTargetUserUid] = useState<string>('');
@@ -594,17 +596,24 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
         <div className="space-y-5">
-          {canAuthorCourses && (
+          {canManageVersionedMaterials && (
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800" role="group" aria-label="Bibliotheksverwaltung">
               <button type="button" aria-pressed={libraryAreaMode === 'materials'} onClick={() => setLibraryAreaMode('materials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'materials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Materialien</button>
-              <button type="button" aria-pressed={libraryAreaMode === 'categories'} onClick={() => setLibraryAreaMode('categories')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'categories' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kategorien verwalten</button>
-              <button type="button" aria-pressed={libraryAreaMode === 'documentTypes'} onClick={() => setLibraryAreaMode('documentTypes')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'documentTypes' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Dokumenttypen verwalten</button>
+              {canAuthorCourses && (
+                <>
+                  <button type="button" aria-pressed={libraryAreaMode === 'categories'} onClick={() => setLibraryAreaMode('categories')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'categories' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kategorien verwalten</button>
+                  <button type="button" aria-pressed={libraryAreaMode === 'documentTypes'} onClick={() => setLibraryAreaMode('documentTypes')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'documentTypes' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Dokumenttypen verwalten</button>
+                </>
+              )}
+              <button type="button" aria-pressed={libraryAreaMode === 'versionedMaterials'} onClick={() => setLibraryAreaMode('versionedMaterials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'versionedMaterials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Versionierte Materialien</button>
             </div>
           )}
           {libraryAreaMode === 'categories' && canAuthorCourses ? (
             <AcademyMaterialCategoryManager onStatusToast={onStatusToast} />
           ) : libraryAreaMode === 'documentTypes' && canAuthorCourses ? (
             <AcademyMaterialDocumentTypeManager onStatusToast={onStatusToast} />
+          ) : libraryAreaMode === 'versionedMaterials' && canManageVersionedMaterials ? (
+            <AcademyMaterialManagementCenter currentUser={currentUser} onStatusToast={onStatusToast} />
           ) : (
           <div>
           {modules.length === 0 ? (

@@ -120,7 +120,7 @@ test('version-3 JSON Academy stores without category assignments remain readable
   try {
     const collections = Object.fromEntries(
       ACADEMY_COLLECTIONS
-        .filter(collection => collection !== 'academy_material_category_assignments' && collection !== 'academy_material_document_types' && collection !== 'academy_material_document_type_assignments')
+        .filter(collection => !['academy_material_category_assignments', 'academy_material_document_types', 'academy_material_document_type_assignments', 'academy_materials', 'academy_material_drafts', 'academy_material_versions'].includes(collection))
         .map(collection => [collection, {}])
     );
     await writeFile(path.join(directory, 'academy-db.json'), JSON.stringify({ version: 3, collections }));
@@ -129,13 +129,16 @@ test('version-3 JSON Academy stores without category assignments remain readable
     await repository.createMaterialCategory(category('category-migrated', 'Nach der Migration'));
     const saved = JSON.parse(await readFile(path.join(directory, 'academy-db.json'), 'utf8')) as {
       version: number;
-      collections: { academy_material_categories?: Record<string, AcademyMaterialCategoryDoc>; academy_material_category_assignments?: Record<string, unknown>; academy_material_document_types?: Record<string, unknown>; academy_material_document_type_assignments?: Record<string, unknown> };
+      collections: { academy_material_categories?: Record<string, AcademyMaterialCategoryDoc>; academy_material_category_assignments?: Record<string, unknown>; academy_material_document_types?: Record<string, unknown>; academy_material_document_type_assignments?: Record<string, unknown>; academy_materials?: Record<string, unknown>; academy_material_drafts?: Record<string, unknown>; academy_material_versions?: Record<string, unknown> };
     };
-    assert.equal(saved.version, 5);
+    assert.equal(saved.version, 6);
     assert.equal(Object.values(saved.collections.academy_material_categories || {})[0]?.id, 'category-migrated');
     assert.deepEqual(saved.collections.academy_material_category_assignments, {});
     assert.deepEqual(saved.collections.academy_material_document_types, {});
     assert.deepEqual(saved.collections.academy_material_document_type_assignments, {});
+    assert.deepEqual(saved.collections.academy_materials, {});
+    assert.deepEqual(saved.collections.academy_material_drafts, {});
+    assert.deepEqual(saved.collections.academy_material_versions, {});
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

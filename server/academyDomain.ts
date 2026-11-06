@@ -13,7 +13,10 @@ import type {
   AcademyMaterialCategoryDoc,
   AcademyMaterialCategoryAssignmentDoc,
   AcademyMaterialDocumentTypeDoc,
-  AcademyMaterialDocumentTypeAssignmentDoc
+  AcademyMaterialDocumentTypeAssignmentDoc,
+  AcademyMaterialMasterDoc,
+  AcademyMaterialDraftDoc,
+  AcademyMaterialVersionDoc
 } from '../src/types/academy.ts';
 
 export type AcademyValidationResult =
@@ -40,8 +43,10 @@ export function validateMaterialCategoryAssignment(
   assignment: AcademyMaterialCategoryAssignmentDoc
 ): AcademyValidationResult {
   if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
-      !isNonEmpty(assignment.materialId) || assignment.id !== assignment.materialId ||
-      !isNonEmpty(assignment.categoryId) ||
+      !isNonEmpty(assignment.materialId) || !isNonEmpty(assignment.categoryId) ||
+      (assignment.materialVersionId !== undefined
+        ? (!isNonEmpty(assignment.materialVersionId) || assignment.id !== assignment.materialVersionId || !assignment.materialVersionId.startsWith(assignment.materialId + '__'))
+        : assignment.id !== assignment.materialId) ||
       !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
       !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
       !isNonEmpty(assignment.updatedIso) || !isNonEmpty(assignment.updatedByUid)) {
@@ -76,8 +81,10 @@ export function validateMaterialDocumentTypeAssignment(
   assignment: AcademyMaterialDocumentTypeAssignmentDoc
 ): AcademyValidationResult {
   if (!isRecord(assignment) || !isNonEmpty(assignment.id) ||
-      !isNonEmpty(assignment.materialId) || assignment.id !== assignment.materialId ||
-      !isNonEmpty(assignment.documentTypeId) ||
+      !isNonEmpty(assignment.materialId) || !isNonEmpty(assignment.documentTypeId) ||
+      (assignment.materialVersionId !== undefined
+        ? (!isNonEmpty(assignment.materialVersionId) || assignment.id !== assignment.materialVersionId || !assignment.materialVersionId.startsWith(assignment.materialId + '__'))
+        : assignment.id !== assignment.materialId) ||
       !Number.isSafeInteger(assignment.revision) || assignment.revision < 1 ||
       !isNonEmpty(assignment.createdIso) || !isNonEmpty(assignment.createdByUid) ||
       !isNonEmpty(assignment.updatedIso) || !isNonEmpty(assignment.updatedByUid)) {
@@ -106,6 +113,106 @@ export function validateMaterialDocumentType(documentType: AcademyMaterialDocume
     return invalid('ACADEMY_MATERIAL_DOCUMENT_TYPE_ARCHIVE_STATE_INVALID', 'Ein aktiver Dokumenttyp darf keine Archivierungsmetadaten enthalten.');
   }
   return { ok: true };
+}
+
+
+const materialRoles = new Set(['admin', 'colonel', 'officer', 'rookie', 'trainee']);
+const materialContentMaxLength = 200_000;
+
+function validateMaterialContentFields(material: {
+  title: string;
+  description?: string;
+  categoryId: string;
+  documentTypeId: string;
+  requiredRole?: string;
+  contentFormat: string;
+  content: string;
+  codeLanguage?: string;
+}): AcademyValidationResult {
+  if (!isNonEmpty(material.title) || material.title.trim().length > 200) {
+    return invalid('ACADEMY_MATERIAL_TITLE_INVALID', 'Der Materialtitel muss zwischen 1 und 200 Zeichen enthalten.');
+  }
+  if (material.description !== undefined &&
+      (typeof material.description !== 'string' || material.description.length > 2000)) {
+    return invalid('ACADEMY_MATERIAL_DESCRIPTION_INVALID', 'Die optionale Beschreibung darf höchstens 2.000 Zeichen enthalten.');
+  }
+  if (!isNonEmpty(material.categoryId) || !isNonEmpty(material.documentTypeId)) {
+    return invalid('ACADEMY_MATERIAL_METADATA_REQUIRED', 'Kategorie und Dokumenttyp sind Pflichtangaben.');
+  }
+  if (material.categoryId.length > 150 || material.documentTypeId.length > 150) {
+    return invalid('ACADEMY_MATERIAL_METADATA_INVALID', 'Die Kategorien- und Dokumenttypkennung ist ungültig.');
+  }
+  if (material.requiredRole !== undefined && !materialRoles.has(material.requiredRole)) {
+    return invalid('ACADEMY_MATERIAL_REQUIRED_ROLE_INVALID', 'Der erforderliche Rang ist ungültig.');
+  }
+  if (!['markdown', 'code'].includes(material.contentFormat)) {
+    return invalid('ACADEMY_MATERIAL_FORMAT_INVALID', 'Das Inhaltsformat muss Markdown oder Code sein.');
+  }
+  if (typeof material.content !== 'string' || !material.content.trim() || material.content.length > materialContentMaxLength) {
+    return invalid('ACADEMY_MATERIAL_CONTENT_INVALID', 'Der Inhalt muss Text enthalten und darf höchstens 200.000 Zeichen umfassen.');
+  }
+  if (material.codeLanguage !== undefined &&
+      (material.contentFormat !== 'code' || typeof material.codeLanguage !== 'string' ||
+       material.codeLanguage.length > 40 || !/^[A-Za-z0-9_+#.-]{1,40}$/.test(material.codeLanguage))) {
+    return invalid('ACADEMY_MATERIAL_CODE_LANGUAGE_INVALID', 'Die optionale Sprachkennung ist ungültig.');
+  }
+  return { ok: true };
+}
+
+export function validateMaterialMaster(master: AcademyMaterialMasterDoc): AcademyValidationResult {
+  if (!isRecord(master) || !isNonEmpty(master.id) || !isNonEmpty(master.code) ||
+      !/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(master.code) || !isNonEmpty(master.ownerUid) ||
+      !['draft', 'published', 'archived'].includes(master.publicationStatus) ||
+      !Number.isSafeInteger(master.latestVersionNumber) || master.latestVersionNumber < 0 ||
+      !Number.isSafeInteger(master.workingRevision) || master.workingRevision < 1 ||
+      !isNonEmpty(master.createdIso) || !isNonEmpty(master.updatedIso)) {
+    return invalid('ACADEMY_MATERIAL_MASTER_INVALID', 'Materialstamm, Kennung, Status, Revision und Änderungsmetadaten müssen gültig sein.');
+  }
+  if (master.responsibleCourseCode !== undefined &&
+      (typeof master.responsibleCourseCode !== 'string' || !/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(master.responsibleCourseCode))) {
+    return invalid('ACADEMY_MATERIAL_COURSE_SCOPE_INVALID', 'Die Kurszuständigkeit muss eine gültige Kurskennung sein.');
+  }
+  if (master.publicationStatus === 'published' &&
+      (!isNonEmpty(master.currentPublishedVersionId) || master.latestVersionNumber < 1)) {
+    return invalid('ACADEMY_MATERIAL_PUBLISHED_VERSION_MISSING', 'Ein veröffentlichtes Material benötigt eine konkrete veröffentlichte Version.');
+  }
+  if (master.lastPublishedWorkingRevision !== undefined &&
+      (!Number.isSafeInteger(master.lastPublishedWorkingRevision) || master.lastPublishedWorkingRevision < 1 ||
+       master.lastPublishedWorkingRevision > master.workingRevision || master.latestVersionNumber < 1)) {
+    return invalid('ACADEMY_MATERIAL_PUBLISHED_REVISION_INVALID', 'Die zuletzt veröffentlichte Arbeitsrevision ist ungültig.');
+  }
+  if (master.publicationStatus === 'archived' &&
+      (!isNonEmpty(master.archivedIso) || !isNonEmpty(master.archivedByUid) ||
+       !isNonEmpty(master.archiveReason) || master.archiveReason.length > 1000)) {
+    return invalid('ACADEMY_MATERIAL_ARCHIVE_AUDIT_MISSING', 'Ein archiviertes Material benötigt Zeitpunkt, verantwortliche Person und Begründung.');
+  }
+  if (master.publicationStatus !== 'archived' &&
+      (master.archivedIso !== undefined || master.archivedByUid !== undefined || master.archiveReason !== undefined)) {
+    return invalid('ACADEMY_MATERIAL_ARCHIVE_STATE_INVALID', 'Nur archivierte Materialien dürfen Archivierungsmetadaten enthalten.');
+  }
+  return { ok: true };
+}
+
+export function validateMaterialDraft(materialId: string, draft: AcademyMaterialDraftDoc): AcademyValidationResult {
+  if (!isRecord(draft) || !isNonEmpty(materialId) || draft.id !== materialId || draft.materialId !== materialId ||
+      !Number.isSafeInteger(draft.workingRevision) || draft.workingRevision < 1 ||
+      !isNonEmpty(draft.createdIso) || !isNonEmpty(draft.createdByUid) ||
+      !isNonEmpty(draft.updatedIso) || !isNonEmpty(draft.updatedByUid)) {
+    return invalid('ACADEMY_MATERIAL_DRAFT_INVALID', 'Materialentwurf, Revision und Änderungsmetadaten müssen gültig sein.');
+  }
+  return validateMaterialContentFields(draft);
+}
+
+export function validateMaterialVersion(materialId: string, version: AcademyMaterialVersionDoc): AcademyValidationResult {
+  if (!isRecord(version) || !isNonEmpty(materialId) || version.materialId !== materialId ||
+      !isNonEmpty(version.id) || !Number.isSafeInteger(version.versionNumber) || version.versionNumber < 1 ||
+      !Number.isSafeInteger(version.workingRevision) || version.workingRevision < 1 ||
+      !isNonEmpty(version.publishedIso) || !isNonEmpty(version.publishedByUid) ||
+      !isNonEmpty(version.createdIso) || !isNonEmpty(version.createdByUid) ||
+      version.id !== materialId + '__v' + version.versionNumber) {
+    return invalid('ACADEMY_MATERIAL_VERSION_INVALID', 'Materialversion, Versionskennung und Veröffentlichungsmetadaten müssen gültig sein.');
+  }
+  return validateMaterialContentFields(version);
 }
 
 export function validateCourseVersion(

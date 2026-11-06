@@ -7,6 +7,9 @@ test('Academy repository Firestore collections are isolated from legacy portal s
   assert.equal(academyFirestoreCollectionName('academy_material_category_assignments'), 'academy_repo_material_category_assignments');
   assert.equal(academyFirestoreCollectionName('academy_material_document_types'), 'academy_repo_material_document_types');
   assert.equal(academyFirestoreCollectionName('academy_material_document_type_assignments'), 'academy_repo_material_document_type_assignments');
+  assert.equal(academyFirestoreCollectionName('academy_materials'), 'academy_repo_materials');
+  assert.equal(academyFirestoreCollectionName('academy_material_drafts'), 'academy_repo_material_drafts');
+  assert.equal(academyFirestoreCollectionName('academy_material_versions'), 'academy_repo_material_versions');
   assert.equal(academyFirestoreCollectionName('academy_courses'), 'academy_repo_courses');
   assert.equal(academyFirestoreCollectionName('academy_course_versions'), 'academy_repo_course_versions');
   assert.equal(academyFirestoreCollectionName('academy_private_notes'), 'academy_repo_private_notes');

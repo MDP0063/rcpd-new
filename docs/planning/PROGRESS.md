@@ -2,15 +2,28 @@
 
 **Stand:** 06.11.2026 – nach Priorisierung der ersten Materialausbaustufe auf Text/Markdown und Code; PDF-Infrastruktur ist zurückgestellt
 
-**Basisstand von main:** Merge-Commit von PR #59: `bffc09e3cfa9ffcff1a2f43659e6e931caff2e27`.  
-**Aktueller Umsetzungsbranch:** `feature/academy-managed-document-types` (noch nicht gemergt).
+**Basisstand von main:** PR #60 wurde mit Merge-Commit `4a67e4874333477f14935118e976b18ad6fa1fe9` gemergt.  
+**Aktueller Umsetzungsbranch:** `feature/academy-versioned-text-code-materials` – Draft-PR #61, CI-Prüfung läuft.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
 - PDF-Funktionen sind bis zu einer späteren Ausbaustufe zurückgestellt. Keine neue PDF-Ablage, kein privates Zusatz-Repository, kein Parser-/Malware-Scan, keine externe Speicherverknüpfung und keine zusätzlichen laufenden Kosten in dieser Phase.
 - Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe, sofern sie nicht separat beschlossen und sicherheitstechnisch geprüft wird.
-- Kategorieverwaltung wurde in PR #59 gemergt. Die zentrale Dokumenttypverwaltung entsteht im Branch `feature/academy-managed-document-types`, ohne voreingestellte Taxonomiewerte.
-- Danach folgt die neue versionierte Materialverwaltung mit Draft-/Publish-Trennung, Pflichtmetadaten und exakten Kursreferenzen auf `materialId` + `materialVersionId`. Bestehende Legacy-Lehrmaterialien bleiben dabei zunächst unangetastet.
+- Kategorieverwaltung wurde mit PR #59, Dokumenttypverwaltung mit PR #60 gemergt. Beide Listen starten ohne voreingestellte Taxonomiewerte.
+- Die neue versionierte Materialverwaltung entsteht im Branch `feature/academy-versioned-text-code-materials`: Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Fassungen für Markdown und gespeicherten Quelltext; automatische Kennungen und getrennte Veröffentlichungsaktion.
+- Kursveröffentlichungen prüfen serverseitig, dass jede Materialreferenz auf eine tatsächlich vorhandene, veröffentlichte und nicht archivierte konkrete Materialversion zeigt. Bestehende Legacy-Lehrmaterialien bleiben unangetastet und werden nicht automatisch migriert.
+- Die aktuelle Ausbaustufe ergänzt zunächst die Admin-/Colonel-/Kursverantwortlichen-Verwaltung. Teilnehmer-Reader und Materialauswahl direkt im Kurseditor bleiben die anschließende Integration.
+
+## 0.1 Umsetzungsstand der versionierten Text-/Code-Materialverwaltung
+
+- Neues Datenmodell mit getrenntem Materialstamm, bearbeitbarem Entwurf und append-only Materialversionen.
+- Materialkennung wird systemseitig im Format `MAT-YYYY-XXXXXXXXXXXX` erzeugt; konkrete Fassungen erhalten `materialId__vN`.
+- Pflichtmetadaten Kategorie und Dokumenttyp werden als IDs gespeichert. Die Zuordnungen des Materialstamms werden zusammen mit dem Entwurf transaktional gehalten; jede veröffentlichte Fassung erhält zusätzlich unveränderliche Metadatenreferenzen. Dadurch bleiben alte Fassungen nachvollziehbar und verwendete Kategorien/Dokumenttypen vor endgültiger Löschung geschützt.
+- Speichern eines Entwurfs verändert niemals den aktuellen Veröffentlichungszeiger. Veröffentlichung erzeugt einen unveränderlichen Snapshot und aktualisiert den Zeiger atomar. Eine geänderte Arbeitsrevision benötigt eine ausdrückliche neue Veröffentlichung.
+- Kurszuständigkeit ist ein separates Feld, unabhängig von der generierten Materialkennung. Admin/Colonel verwalten global; Kursverantwortliche handeln innerhalb bestehender `canGradeAssignedCourses`-/`assignedCourseCodes`-Berechtigungen. Archivierung bleibt Admin/Colonel vorbehalten.
+- Bei Veröffentlichung einer Kursversion werden alle `materialId`-/`materialVersionId`-Paare auf Existenz, Eigentümerzuordnung und Veröffentlichungsstatus geprüft.
+- JSON-Speicherschema wurde auf Version 6 erweitert; bestehende v1-v5-Stores bleiben rückwärtskompatibel lesbar. Firestore nutzt eigene Repository-Collections.
+- Diese Implementierung führt keine neue Dateiablage, keine externen Dienste und keine zusätzlichen Infrastrukturkosten ein. PDF bleibt zurückgestellt.
 
 ## 1. Gesamtstatus
 
@@ -73,11 +86,12 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 6. Nächste konkrete Schritte
 
-1. Zentrale Dokumenttyp-Verwaltung fertigstellen und als separaten PR prüfen lassen.
-2. Versionierte Materialverwaltung für Text/Markdown und Code implementieren: Materialstamm, konkrete unveränderliche Fassungen, Entwurfs-/Veröffentlichungsworkflow, Pflichtmetadaten und Audit.
-3. Kursreferenzen gegen konkrete veröffentlichte Materialversionen serverseitig validieren und den Reader an die neuen Inhalte anbinden.
-4. Bestehende Legacy-Materialien erst nach einem gesonderten Migrations-/Kompatibilitätsplan berücksichtigen.
-5. PDF-Unterstützung erst in einer späteren Ausbaustufe erneut aufnehmen.
+1. PR der versionierten Text-/Code-Materialverwaltung fachlich und technisch prüfen; nach Merge den Stand auf `main` verifizieren.
+2. Teilnehmer-Lernbibliothek und Reader an die neuen veröffentlichten Materialversionen anbinden; Zugriffsfilter und sichere Markdown-Darstellung prüfen.
+3. Kurseditor um eine gezielte Materialauswahl ergänzen, die nur veröffentlichte Fassungen auswählbar macht und konkrete Versionskennungen speichert.
+4. Suche/Filter über Materialcode, Titel, Kategorie und Dokumenttyp sowie erforderliche Metadaten-/Readerzustände integrieren, sobald die Daten zuverlässig verfügbar sind.
+5. Benachrichtigung betroffener Kursverantwortlicher bei neuen Fassungen und weitere offene Rücknahme-/Archivierungsfälle klären.
+6. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen; PDF-Unterstützung bleibt spätere Ausbaustufe.
 
 Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen.
 
