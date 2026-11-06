@@ -259,6 +259,7 @@ export function validateCourseVersion(
     if (refs.some(ref =>
       !isNonEmpty(ref.materialId) ||
       !isNonEmpty(ref.materialVersionId) ||
+      (ref.title !== undefined && (!isNonEmpty(ref.title) || ref.title.length > 200)) ||
       typeof ref.required !== 'boolean' ||
       !Number.isSafeInteger(ref.order) || ref.order < 0
     )) {

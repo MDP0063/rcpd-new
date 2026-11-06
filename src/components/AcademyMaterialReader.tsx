@@ -12,15 +12,9 @@ const muted='text-sm text-slate-600 dark:text-slate-300';
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 function slugify(value:string):string{return value.toLocaleLowerCase('de-DE').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'abschnitt';}
 function extractHeadings(markdown:string):HeadingItem[]{
- const counts=new Map<string,number>();const result:HeadingItem[]=[];const lines=markdown.split(/\r?\n/);let fence='';
- for(let index=0;index<lines.length;index++){
-  const line=lines[index];const fenceMatch=line.match(/^\s*(`{3,}|~{3,})/);
-  if(fenceMatch){const marker=fenceMatch[1][0];if(!fence)fence=marker;else if(fence===marker)fence='';continue;}
-  if(fence)continue;
-  const m=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);if(!m)continue;
-  const title=m[2].replace(/\[(.*?)\]\([^)]*\)/g,'$1').replace(/[*_`~]/g,'').trim();const base=slugify(title);const count=counts.get(base)||0;counts.set(base,count+1);
-  result.push({id:count?base+'-'+count:base,level:m[1].length,title,line:index+1});
- }
+ const counts=new Map<string,number>();const result:HeadingItem[]=[];const lines=markdown.split(/\r?\n/);let fence:{char:string;length:number}|null=null;
+ const add=(titleText:string,level:number,line:number)=>{const title=titleText.replace(/\[(.*?)\]\([^)]*\)/g,'$1').replace(/[*_~]/g,'').replace(/\x60/g,'').trim();if(!title)return;const base=slugify(title);const count=counts.get(base)||0;counts.set(base,count+1);result.push({id:count?base+'-'+count:base,level,title,line});};
+ for(let index=0;index<lines.length;index++){const line=lines[index];if(fence){const close=line.match(/^ {0,3}(\x60{3,}|~{3,})[ \t]*$/);if(close&&close[1][0]===fence.char&&close[1].length>=fence.length)fence=null;continue;}const opening=line.match(/^ {0,3}(\x60{3,}|~{3,})(.*)$/);if(opening){fence={char:opening[1][0],length:opening[1].length};continue;}const atx=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);if(atx){add(atx[2],atx[1].length,index+1);continue;}if(line.trim()&&index+1<lines.length){const setext=lines[index+1].match(/^ {0,3}(=+|-+)\s*$/);if(setext){add(line.trim(),setext[1][0]==='='?1:2,index+1);index++;}}}
  return result;
 }
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
@@ -56,7 +50,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    a:({children,href,node:_node,...props}:any)=><a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
    table:({children,node:_node,...props}:any)=><div className="my-4 overflow-x-auto"><table {...props} className="min-w-full border-collapse text-sm">{children}</table></div>,
    th:({children,node:_node,...props}:any)=><th {...props} className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
-   td:({children,node:_node,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>
+   td:({children,node:_node,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>,
+   img:({alt}:any)=><span role="note" className="inline-block rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Bild nicht geladen: externe Bildquellen sind in Lernmaterialien deaktiviert{alt ? ' ('+alt+')' : ''}.</span>
   } satisfies Components;
  },[headings]);
  return <section className={panel+' space-y-4 p-4 sm:p-5'} aria-labelledby="academy-course-materials-heading">
@@ -73,7 +68,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
      {headings.length>0&&<button type="button" className={secondary} onClick={()=>setNavigationOpen(v=>!v)} aria-expanded={navigationOpen} aria-controls="academy-material-outline">Inhaltsübersicht {navigationOpen?'schließen':'öffnen'}</button>}
      <button type="button" className={secondary} onClick={()=>{setSelectedKey('');setCurrentVersion(null);}}>Zur Materialliste</button></div></div>
      <div className="flex flex-col gap-4 lg:flex-row">
-      {navigationOpen&&headings.length>0&&<nav id="academy-material-outline" className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
+      {headings.length>0&&<nav id="academy-material-outline" hidden={!navigationOpen} className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
       <div className="min-w-0 flex-1">
        {loading?<p className={muted} role="status">Material wird geladen …</p>:loadError?<div role="alert" className="rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">{loadError}</div>
         :currentVersion?.contentFormat==='markdown'?<article className="max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
