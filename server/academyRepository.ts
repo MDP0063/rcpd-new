@@ -301,13 +301,12 @@ export class AcademyRepository {
         throw new Error('ACADEMY_COMPLETION_CORRECTION_CONFLICT');
       }
       if (correction.correctedStatus === current.status) throw new Error('ACADEMY_COMPLETION_CORRECTION_NOOP');
+      const { completedIso: _previousCompletedIso, ...withoutCompletion } = current;
       const next: AcademyCourseParticipationDoc = {
-        ...current,
+        ...withoutCompletion,
         status: correction.correctedStatus,
         updatedIso: correction.correctedIso,
-        ...(correction.correctedStatus === 'completed'
-          ? { completedIso: correction.correctedIso }
-          : { completedIso: undefined })
+        ...(correction.correctedStatus === 'completed' ? { completedIso: correction.correctedIso } : {})
       };
       assertValid(validateCourseParticipation(next));
       await tx.create('academy_completion_corrections', correction.id, correction);
