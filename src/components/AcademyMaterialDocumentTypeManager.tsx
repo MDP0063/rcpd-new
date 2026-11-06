@@ -19,7 +19,7 @@ function errorMessage(code?: string): string {
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND':
       return 'Dieser Dokumenttyp ist nicht mehr vorhanden. Lade die Liste neu.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_IN_USE':
-      return 'Dieser Dokumenttyp wird noch von mindestens einem Material verwendet. Archiviere sie stattdessen, damit bestehende Zuordnungen erhalten bleiben.';
+      return 'Dieser Dokumenttyp wird noch von mindestens einem Material verwendet. Archiviere ihn stattdessen, damit bestehende Zuordnungen erhalten bleiben.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_INVALID':
       return 'Der Dokumenttypname ist ungültig. Er darf 1 bis 80 Zeichen enthalten.';
     default:
@@ -202,7 +202,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="academy-documentType-name" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypname</label>
+            <label htmlFor="academy-document-type-name" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypname</label>
             <input
               id="academy-documentType-name"
               className={inputClass}
@@ -211,14 +211,14 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
               maxLength={80}
               required
               aria-invalid={formErrorField === 'name'}
-              aria-describedby={formErrorField === 'name' ? 'academy-documentType-name-hint academy-documentType-form-error' : 'academy-documentType-name-hint'}
+              aria-describedby={formErrorField === 'name' ? 'academy-documentType-name-hint academy-document-type-form-error' : 'academy-documentType-name-hint'}
               disabled={busy}
             />
             <p id="academy-documentType-name-hint" className="text-xs text-slate-500 dark:text-slate-400">1 bis 80 Zeichen</p>
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="academy-documentType-description" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung (optional)</label>
+            <label htmlFor="academy-document-type-description" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung (optional)</label>
             <textarea
               id="academy-documentType-description"
               className={inputClass}
@@ -255,7 +255,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="academy-documentType-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypen durchsuchen</label>
+            <label htmlFor="academy-document-type-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypen durchsuchen</label>
             <input id="academy-documentType-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
           </div>
 
