@@ -9,6 +9,7 @@ import type {
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import { canReadMaterialRole, courseVersionReferencesMaterial } from './academyMaterialReaderAccess.ts';
+import { isAcademyEntryVisible } from './academyVisibility.ts';
 import type { AcademyRepository } from './academyRepository.ts';
 
 export interface AcademyApiActor {
