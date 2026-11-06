@@ -57,8 +57,8 @@ test('Academy repository creates, reads and filters documents', async () => with
 
 test('course publication atomically stores immutable version and advances master pointer', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1);
-  await repository.publishCourseVersion(master.id, version, publishedMaster, 2);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
   assert.deepEqual(await repository.get('academy_course_versions', version.id), version);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.currentPublishedVersionId, version.id);
   await assert.rejects(repository.update('academy_course_versions', version.id, version), /ACADEMY_DOCUMENT_APPEND_ONLY/);
@@ -66,10 +66,10 @@ test('course publication atomically stores immutable version and advances master
 
 test('concurrent publication of the same version permits exactly one writer', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
   const results = await Promise.allSettled([
-    repository.publishCourseVersion(master.id, version, publishedMaster, 2),
-    repository.publishCourseVersion(master.id, version, publishedMaster, 2)
+    repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1'),
+    repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1')
   ]);
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
   assert.equal(results.filter(result => result.status === 'rejected').length, 1);
@@ -78,8 +78,8 @@ test('concurrent publication of the same version permits exactly one writer', as
 
 test('stale course revision cannot publish', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1);
-  await assert.rejects(repository.publishCourseVersion(master.id, version, publishedMaster, 3), /ACADEMY_WORKING_REVISION_CONFLICT/);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await assert.rejects(repository.publishCourseVersion(master.id, version, publishedMaster, 3, 'owner-1'), /ACADEMY_WORKING_REVISION_CONFLICT/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
@@ -104,11 +104,11 @@ test('private note repository methods enforce owner isolation', async () => with
 
 test('publication rejects master identity changes and unpublished version metadata', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
   const changedOwner = { ...publishedMaster, ownerUid: 'attacker-1' };
   await assert.rejects(repository.publishCourseVersion(master.id, version, changedOwner, 2), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   const unpublished = { ...version, publishedIso: undefined, publishedByUid: undefined };
-  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2), /ACADEMY_VERSION_SEQUENCE_INVALID/);
+  await assert.rejects(repository.publishCourseVersion(master.id, unpublished, publishedMaster, 2, 'owner-1'), /ACADEMY_VERSION_SEQUENCE_INVALID/);
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
@@ -124,15 +124,15 @@ test('generic repository writes cannot bypass typed lifecycle operations', async
 
 test('course draft saves persist content and reject stale concurrent revisions', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
   assert.deepEqual(await repository.getCourseDraft(master.id), courseDraft);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.workingRevision, 2);
-  await assert.rejects(repository.saveCourseDraft(master.id, courseDraft, 1), /ACADEMY_WORKING_REVISION_CONFLICT/);
+  await assert.rejects(repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1'), /ACADEMY_WORKING_REVISION_CONFLICT/);
 }));
 
 test('program drafts are persisted with optimistic revision checks', async () => withRepository(async repository => {
   await repository.create('academy_programs', programMaster.id, programMaster);
-  await repository.saveProgramDraft(programMaster.id, programDraft, 1);
+  await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
   assert.deepEqual(await repository.getProgramDraft(programMaster.id), programDraft);
   assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.workingRevision, 2);
 }));
