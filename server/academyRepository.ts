@@ -361,10 +361,10 @@ export class AcademyRepository {
       throw new Error('ACADEMY_MATERIAL_INITIAL_STATE_INVALID');
     }
     return this.runTransaction(async tx => {
-      const existingMaterials = await tx.list<AcademyMaterialMasterDoc>('academy_materials');
-      if (existingMaterials.some(item => item.code.toUpperCase() === master.code.toUpperCase())) {
-        throw new Error('ACADEMY_MATERIAL_CODE_ALREADY_EXISTS');
-      }
+      const existingMaterials = await tx.list<AcademyMaterialMasterDoc>('academy_materials', {
+        where: [{ field: 'code', value: master.code }], limit: 1
+      });
+      if (existingMaterials.length > 0) throw new Error('ACADEMY_MATERIAL_CODE_ALREADY_EXISTS');
       if (master.responsibleCourseCode) {
         const courses = await tx.list<AcademyCourseMasterDoc>('academy_courses');
         const responsibleCourse = courses.find(item => item.code.toUpperCase() === master.responsibleCourseCode!.toUpperCase());
