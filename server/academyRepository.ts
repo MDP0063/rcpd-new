@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -22,6 +22,17 @@ function programDraftMatchesVersion(draft: AcademyProgramDraftDoc, version: Acad
     draft.summary === version.summary &&
     JSON.stringify(draft.learningObjectives) === JSON.stringify(version.learningObjectives) &&
     JSON.stringify(draft.courseReferences) === JSON.stringify(version.courseReferences);
+
+function materialDraftMatchesVersion(draft: AcademyMaterialDraftDoc, version: AcademyMaterialVersionDoc): boolean {
+  return draft.title === version.title &&
+    draft.description === version.description &&
+    draft.categoryId === version.categoryId &&
+    draft.documentTypeId === version.documentTypeId &&
+    draft.requiredRole === version.requiredRole &&
+    draft.contentFormat === version.contentFormat &&
+    draft.content === version.content &&
+    draft.codeLanguage === version.codeLanguage;
+}
 }
 export class AcademyRepository {
   private readonly adapter: AcademyStorageAdapter;
@@ -335,6 +346,245 @@ export class AcademyRepository {
       return next;
     });
   }
+
+  async getMaterialDraft(materialId: string): Promise<AcademyMaterialDraftDoc | null> {
+    return this.adapter.get<AcademyMaterialDraftDoc>('academy_material_drafts', materialId);
+  }
+  async createMaterialWithDraft(master: AcademyMaterialMasterDoc, draft: AcademyMaterialDraftDoc): Promise<void> {
+    assertValid(validateMaterialMaster(master));
+    assertValid(validateMaterialDraft(master.id, draft));
+    if (master.publicationStatus !== 'draft' || master.latestVersionNumber !== 0 ||
+        master.currentPublishedVersionId || master.lastPublishedWorkingRevision !== undefined ||
+        master.workingRevision !== 1 || draft.workingRevision !== 1 ||
+        master.ownerUid !== draft.createdByUid || draft.createdByUid !== draft.updatedByUid ||
+        draft.createdIso !== draft.updatedIso) {
+      throw new Error('ACADEMY_MATERIAL_INITIAL_STATE_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const existingMaterials = await tx.list<AcademyMaterialMasterDoc>('academy_materials');
+      if (existingMaterials.some(item => item.code.toUpperCase() === master.code.toUpperCase())) {
+        throw new Error('ACADEMY_MATERIAL_CODE_ALREADY_EXISTS');
+      }
+      if (master.responsibleCourseCode) {
+        const courses = await tx.list<AcademyCourseMasterDoc>('academy_courses');
+        const responsibleCourse = courses.find(item => item.code.toUpperCase() === master.responsibleCourseCode!.toUpperCase());
+        if (!responsibleCourse || responsibleCourse.publicationStatus === 'archived') {
+          throw new Error('ACADEMY_MATERIAL_COURSE_NOT_FOUND');
+        }
+      }
+      const category = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', draft.categoryId);
+      const documentType = await tx.get<AcademyMaterialDocumentTypeDoc>('academy_material_document_types', draft.documentTypeId);
+      if (!category) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      if (!documentType) throw new Error('ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND');
+      assertValid(validateMaterialCategory(category));
+      assertValid(validateMaterialDocumentType(documentType));
+      if (category.status !== 'active') throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE');
+      if (documentType.status !== 'active') throw new Error('ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE');
+      const [existingMaster, existingDraft, existingCategoryAssignment, existingDocumentTypeAssignment] = await Promise.all([
+        tx.get<AcademyMaterialMasterDoc>('academy_materials', master.id),
+        tx.get<AcademyMaterialDraftDoc>('academy_material_drafts', master.id),
+        tx.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', master.id),
+        tx.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', master.id)
+      ]);
+      if (existingMaster || existingDraft || existingCategoryAssignment || existingDocumentTypeAssignment) {
+        throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
+      }
+      const categoryAssignment: AcademyMaterialCategoryAssignmentDoc = {
+        id: master.id, materialId: master.id, categoryId: draft.categoryId, revision: 1,
+        createdIso: draft.createdIso, createdByUid: draft.createdByUid,
+        updatedIso: draft.updatedIso, updatedByUid: draft.updatedByUid
+      };
+      const documentTypeAssignment: AcademyMaterialDocumentTypeAssignmentDoc = {
+        id: master.id, materialId: master.id, documentTypeId: draft.documentTypeId, revision: 1,
+        createdIso: draft.createdIso, createdByUid: draft.createdByUid,
+        updatedIso: draft.updatedIso, updatedByUid: draft.updatedByUid
+      };
+      assertValid(validateMaterialCategoryAssignment(categoryAssignment));
+      assertValid(validateMaterialDocumentTypeAssignment(documentTypeAssignment));
+      await tx.create('academy_materials', master.id, master);
+      await tx.create('academy_material_drafts', master.id, draft);
+      await tx.create('academy_material_category_assignments', master.id, categoryAssignment);
+      await tx.create('academy_material_document_type_assignments', master.id, documentTypeAssignment);
+    });
+  }
+  async saveMaterialDraft(
+    materialId: string,
+    draft: AcademyMaterialDraftDoc,
+    expectedRevision: number,
+    actorUid: string
+  ): Promise<void> {
+    if (!actorUid.trim() || draft.updatedByUid !== actorUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
+    assertValid(validateMaterialDraft(materialId, draft));
+    if (!Number.isSafeInteger(expectedRevision) || draft.workingRevision !== expectedRevision + 1) {
+      throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+    }
+    return this.runTransaction(async tx => {
+      const master = await tx.get<AcademyMaterialMasterDoc>('academy_materials', materialId);
+      const existing = await tx.get<AcademyMaterialDraftDoc>('academy_material_drafts', materialId);
+      if (!master || !existing) throw new Error('ACADEMY_MATERIAL_NOT_FOUND');
+      assertValid(validateMaterialMaster(master));
+      assertValid(validateMaterialDraft(materialId, existing));
+      if (master.publicationStatus === 'archived') throw new Error('ACADEMY_MATERIAL_ARCHIVED');
+      if (master.workingRevision !== expectedRevision || existing.workingRevision !== expectedRevision) {
+        throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      }
+      if (draft.createdIso !== existing.createdIso || draft.createdByUid !== existing.createdByUid) {
+        throw new Error('ACADEMY_MATERIAL_DRAFT_AUDIT_MISMATCH');
+      }
+      const category = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', draft.categoryId);
+      const documentType = await tx.get<AcademyMaterialDocumentTypeDoc>('academy_material_document_types', draft.documentTypeId);
+      if (!category) throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_FOUND');
+      if (!documentType) throw new Error('ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND');
+      assertValid(validateMaterialCategory(category));
+      assertValid(validateMaterialDocumentType(documentType));
+      const categoryAssignment = await tx.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', materialId);
+      const documentTypeAssignment = await tx.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', materialId);
+      if (categoryAssignment) assertValid(validateMaterialCategoryAssignment(categoryAssignment));
+      if (documentTypeAssignment) assertValid(validateMaterialDocumentTypeAssignment(documentTypeAssignment));
+      if (category.status !== 'active' && categoryAssignment?.categoryId !== draft.categoryId) {
+        throw new Error('ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE');
+      }
+      if (documentType.status !== 'active' && documentTypeAssignment?.documentTypeId !== draft.documentTypeId) {
+        throw new Error('ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE');
+      }
+      const nextCategoryAssignment: AcademyMaterialCategoryAssignmentDoc = {
+        id: materialId, materialId, categoryId: draft.categoryId,
+        revision: (categoryAssignment?.revision ?? 0) + (categoryAssignment?.categoryId === draft.categoryId ? 0 : 1),
+        createdIso: categoryAssignment?.createdIso ?? draft.createdIso,
+        createdByUid: categoryAssignment?.createdByUid ?? draft.createdByUid,
+        updatedIso: draft.updatedIso, updatedByUid: actorUid
+      };
+      const nextDocumentTypeAssignment: AcademyMaterialDocumentTypeAssignmentDoc = {
+        id: materialId, materialId, documentTypeId: draft.documentTypeId,
+        revision: (documentTypeAssignment?.revision ?? 0) + (documentTypeAssignment?.documentTypeId === draft.documentTypeId ? 0 : 1),
+        createdIso: documentTypeAssignment?.createdIso ?? draft.createdIso,
+        createdByUid: documentTypeAssignment?.createdByUid ?? draft.createdByUid,
+        updatedIso: draft.updatedIso, updatedByUid: actorUid
+      };
+      assertValid(validateMaterialCategoryAssignment(nextCategoryAssignment));
+      assertValid(validateMaterialDocumentTypeAssignment(nextDocumentTypeAssignment));
+      await tx.update('academy_material_drafts', materialId, draft);
+      await tx.update('academy_materials', materialId, {
+        ...master, workingRevision: draft.workingRevision, updatedIso: draft.updatedIso
+      });
+      if (categoryAssignment) {
+        if (categoryAssignment.categoryId !== draft.categoryId) await tx.update('academy_material_category_assignments', materialId, nextCategoryAssignment);
+      } else {
+        await tx.create('academy_material_category_assignments', materialId, nextCategoryAssignment);
+      }
+      if (documentTypeAssignment) {
+        if (documentTypeAssignment.documentTypeId !== draft.documentTypeId) await tx.update('academy_material_document_type_assignments', materialId, nextDocumentTypeAssignment);
+      } else {
+        await tx.create('academy_material_document_type_assignments', materialId, nextDocumentTypeAssignment);
+      }
+    });
+  }
+  async publishMaterialVersion(
+    materialId: string,
+    version: AcademyMaterialVersionDoc,
+    nextMaster: AcademyMaterialMasterDoc,
+    expectedRevision: number,
+    publisherUid: string
+  ): Promise<void> {
+    if (!publisherUid.trim() || version.publishedByUid !== publisherUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
+    assertValid(validateMaterialVersion(materialId, version));
+    assertValid(validateMaterialMaster(nextMaster));
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialMasterDoc>('academy_materials', materialId);
+      if (!current) throw new Error('ACADEMY_MATERIAL_NOT_FOUND');
+      assertValid(validateMaterialMaster(current));
+      if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MATERIAL_ARCHIVED');
+      if (current.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision ||
+          current.lastPublishedWorkingRevision === expectedRevision) {
+        throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      }
+      const draft = await tx.get<AcademyMaterialDraftDoc>('academy_material_drafts', materialId);
+      if (!draft || draft.workingRevision !== expectedRevision || !materialDraftMatchesVersion(draft, version)) {
+        throw new Error('ACADEMY_MATERIAL_DRAFT_VERSION_MISMATCH');
+      }
+      const nextNumber = current.latestVersionNumber + 1;
+      const versionId = materialId + '__v' + nextNumber;
+      if (version.id !== versionId || version.versionNumber !== nextNumber ||
+          nextMaster.id !== current.id || nextMaster.code !== current.code ||
+          nextMaster.ownerUid !== current.ownerUid ||
+          nextMaster.responsibleCourseCode !== current.responsibleCourseCode ||
+          nextMaster.createdIso !== current.createdIso ||
+          nextMaster.workingRevision !== current.workingRevision ||
+          nextMaster.latestVersionNumber !== nextNumber ||
+          nextMaster.currentPublishedVersionId !== versionId ||
+          nextMaster.lastPublishedWorkingRevision !== expectedRevision ||
+          nextMaster.publicationStatus !== 'published' ||
+          !version.publishedIso || !version.publishedByUid) {
+        throw new Error('ACADEMY_MATERIAL_VERSION_SEQUENCE_INVALID');
+      }
+      const category = await tx.get<AcademyMaterialCategoryDoc>('academy_material_categories', draft.categoryId);
+      const documentType = await tx.get<AcademyMaterialDocumentTypeDoc>('academy_material_document_types', draft.documentTypeId);
+      const categoryAssignment = await tx.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', materialId);
+      const documentTypeAssignment = await tx.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', materialId);
+      if (!category || !documentType || !categoryAssignment || !documentTypeAssignment) {
+        throw new Error('ACADEMY_MATERIAL_METADATA_REFERENCE_MISSING');
+      }
+      assertValid(validateMaterialCategory(category));
+      assertValid(validateMaterialDocumentType(documentType));
+      assertValid(validateMaterialCategoryAssignment(categoryAssignment));
+      assertValid(validateMaterialDocumentTypeAssignment(documentTypeAssignment));
+      if (categoryAssignment.categoryId !== draft.categoryId || documentTypeAssignment.documentTypeId !== draft.documentTypeId) {
+        throw new Error('ACADEMY_MATERIAL_METADATA_REFERENCE_MISSING');
+      }
+      const versionCategoryAssignment = {
+        id: versionId, materialId, materialVersionId: versionId, categoryId: draft.categoryId,
+        revision: 1, createdIso: version.createdIso, createdByUid: publisherUid,
+        updatedIso: version.createdIso, updatedByUid: publisherUid
+      };
+      const versionDocumentTypeAssignment = {
+        id: versionId, materialId, materialVersionId: versionId, documentTypeId: draft.documentTypeId,
+        revision: 1, createdIso: version.createdIso, createdByUid: publisherUid,
+        updatedIso: version.createdIso, updatedByUid: publisherUid
+      };
+      assertValid(validateMaterialCategoryAssignment(versionCategoryAssignment));
+      assertValid(validateMaterialDocumentTypeAssignment(versionDocumentTypeAssignment));
+      const [existingVersion, existingVersionCategoryAssignment, existingVersionDocumentTypeAssignment] = await Promise.all([
+        tx.get<AcademyMaterialVersionDoc>('academy_material_versions', versionId),
+        tx.get<AcademyMaterialCategoryAssignmentDoc>('academy_material_category_assignments', versionId),
+        tx.get<AcademyMaterialDocumentTypeAssignmentDoc>('academy_material_document_type_assignments', versionId)
+      ]);
+      if (existingVersion || existingVersionCategoryAssignment || existingVersionDocumentTypeAssignment) {
+        throw new Error('ACADEMY_MATERIAL_VERSION_ALREADY_EXISTS');
+      }
+      await tx.create('academy_material_versions', versionId, version);
+      await tx.create('academy_material_category_assignments', versionId, versionCategoryAssignment);
+      await tx.create('academy_material_document_type_assignments', versionId, versionDocumentTypeAssignment);
+      await tx.update('academy_materials', materialId, nextMaster);
+    });
+  }
+  async archiveMaterial(
+    materialId: string,
+    expectedRevision: number,
+    actorUid: string,
+    reason: string,
+    now: string
+  ): Promise<AcademyMaterialMasterDoc> {
+    if (!actorUid.trim()) throw new Error('ACADEMY_ACTOR_REQUIRED');
+    if (typeof reason !== 'string' || reason.trim().length < 10 || reason.trim().length > 1000) {
+      throw new Error('ACADEMY_MATERIAL_ARCHIVE_REASON_INVALID');
+    }
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyMaterialMasterDoc>('academy_materials', materialId);
+      if (!current) throw new Error('ACADEMY_MATERIAL_NOT_FOUND');
+      assertValid(validateMaterialMaster(current));
+      if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MATERIAL_ARCHIVED');
+      if (current.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      const next: AcademyMaterialMasterDoc = {
+        ...current, publicationStatus: 'archived',
+        archivedIso: now, archivedByUid: actorUid, archiveReason: reason.trim(),
+        updatedIso: now
+      };
+      assertValid(validateMaterialMaster(next));
+      await tx.update('academy_materials', materialId, next);
+      return next;
+    });
+  }
+
   private runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.adapter.runTransaction(operation);
   }
@@ -452,6 +702,19 @@ export class AcademyRepository {
       if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyCourseDraftDoc>('academy_course_drafts', courseId);
       if (!draft || draft.workingRevision !== expectedRevision || !courseDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
+      const materialReferences = draft.chapters.flatMap(chapter => chapter.materialReferences);
+      const uniqueReferences = new Map(materialReferences.map(reference => [reference.materialId + '|' + reference.materialVersionId, reference]));
+      for (const reference of uniqueReferences.values()) {
+        const materialMaster = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
+        const materialVersion = await tx.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
+        if (!materialMaster || materialMaster.publicationStatus === 'archived' ||
+            !materialVersion || materialVersion.materialId !== reference.materialId ||
+            materialVersion.id !== reference.materialVersionId || !materialVersion.publishedIso) {
+          throw new Error('ACADEMY_COURSE_MATERIAL_VERSION_NOT_PUBLISHED');
+        }
+        assertValid(validateMaterialMaster(materialMaster));
+        assertValid(validateMaterialVersion(reference.materialId, materialVersion));
+      }
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${courseId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
