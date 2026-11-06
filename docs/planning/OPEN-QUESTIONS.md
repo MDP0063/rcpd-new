@@ -60,9 +60,9 @@ Vor Abschluss der Academy und vor späterer Modulimplementierung validieren:
 - Examiner ↔ Personalverwaltung: Verantwortlichkeiten und Berechtigungen.
 - Academy ↔ Dashboard: gleiche zugrunde liegende Daten, angemessene unterschiedliche Informationstiefe.
 
-## 3. Weitere Module – noch zu inventarisieren
+## 3. Weitere Module – Inventar vorhanden, Detailaudit offen
 
-Die Gesamtplanung umfasst weitere Portalbereiche. Für diese Baseline liegen keine ausreichend vollständigen fachlichen Spezifikationen vor. Vor jeder Ausarbeitung zunächst vorhandene Projektfunktionen, Dokumente und Originalentscheidungen inventarisieren. Keine Features aus Modulnamen ableiten.
+Die Portalbereiche sind im ergänzenden `MODULE-INVENTORY.md` systematisch erfasst. Das Inventar ersetzt noch kein vollständiges UX-/Funktionsaudit. Vor jeder Ausarbeitung sind vorhandene Funktionen, Daten, Rollen, Abläufe und Originalentscheidungen konkret zu prüfen. Keine Features aus Modulnamen ableiten.
 
 ## 4. Technische Prüffelder (nicht als aktuelle Befunde missverstehen)
 
