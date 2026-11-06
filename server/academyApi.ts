@@ -641,7 +641,8 @@ export function createAcademyApiRouter(
       const version = master.currentPublishedVersionId
         ? await repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId)
         : null;
-      const draft = editor ? await repository.getCourseDraft(master.id) : null;
+      const storedDraft = editor ? await repository.getCourseDraft(master.id) : null;
+      const draft = storedDraft ? await withPinnedMaterialLabels(storedDraft) : null;
       res.json({ master, version, draft });
     } catch (error) { fail(res, error, next); }
   });
