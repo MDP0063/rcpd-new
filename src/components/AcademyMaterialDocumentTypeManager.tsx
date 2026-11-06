@@ -13,22 +13,22 @@ const secondaryButton = 'inline-flex items-center justify-center rounded-md bord
 function errorMessage(code?: string): string {
   switch (code) {
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NAME_ALREADY_EXISTS':
-      return 'Eine Dokumenttyp mit diesem Namen ist bereits vorhanden.';
+      return 'Ein Dokumenttyp mit diesem Namen ist bereits vorhanden.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_CONFLICT':
-      return 'Die Dokumenttyp wurde zwischenzeitlich geändert. Lade die Liste neu und öffne sie erneut.';
+      return 'Der Dokumenttyp wurde zwischenzeitlich geändert. Lade die Liste neu und öffne sie erneut.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND':
-      return 'Diese Dokumenttyp ist nicht mehr vorhanden. Lade die Liste neu.';
+      return 'Dieser Dokumenttyp ist nicht mehr vorhanden. Lade die Liste neu.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_IN_USE':
-      return 'Diese Dokumenttyp wird noch von mindestens einem Material verwendet. Archiviere sie stattdessen, damit bestehende Zuordnungen erhalten bleiben.';
+      return 'Dieser Dokumenttyp wird noch von mindestens einem Material verwendet. Archiviere sie stattdessen, damit bestehende Zuordnungen erhalten bleiben.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_INVALID':
       return 'Der Dokumenttypname ist ungültig. Er darf 1 bis 80 Zeichen enthalten.';
     default:
-      return code || 'Die Dokumenttyp konnte nicht gespeichert werden.';
+      return code || 'Der Dokumenttyp konnte nicht gespeichert werden.';
   }
 }
 
 export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusToast }) => {
-  const [categories, setCategories] = useState<AcademyMaterialDocumentTypeDoc[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -42,13 +42,13 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
-    const response = await apiFetch<{ categories: AcademyMaterialDocumentTypeDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES);
+    const response = await apiFetch<{ documentTypes: AcademyMaterialDocumentTypeDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES);
     if (!response.ok || !response.data) {
       setLoadError(errorMessage(response.error));
       setLoading(false);
       return;
     }
-    setCategories(response.data.categories);
+    setDocumentTypes(response.data.documentTypes);
     setLoading(false);
   }, []);
 
@@ -130,7 +130,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     const archive = documentType.status === 'active';
     const confirmed = window.confirm(
       archive
-        ? `Dokumenttyp „${documentType.name}“ archivieren? Bestehende Dokumentverweise bleiben erhalten; die Dokumenttyp kann anschließend nicht mehr für neue Materialien ausgewählt werden.`
+        ? `Dokumenttyp „${documentType.name}“ archivieren? Bestehende Dokumentverweise bleiben erhalten; der Dokumenttyp kann anschließend nicht mehr für neue Materialien ausgewählt werden.`
         : `Dokumenttyp „${documentType.name}“ wieder aktivieren?`
     );
     if (!confirmed) return;
@@ -152,7 +152,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
   const deleteDocumentType = async (documentType: AcademyMaterialDocumentTypeDoc) => {
     const typedName = window.prompt(
-      `Dokumenttyp „${documentType.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf sie verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
+      `Dokumenttyp „${documentType.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf ihn verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
     );
     if (typedName === null) return;
     if (typedName.trim() !== documentType.name) {
@@ -179,7 +179,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     onStatusToast(`Dokumenttyp „${documentType.name}“ endgültig gelöscht.`);
   };
 
-  const visibleCategories = categories.filter(documentType =>
+  const visibleDocumentTypes = documentTypes.filter(documentType =>
     `${documentType.name} ${documentType.description || ''}`.toLocaleLowerCase('de-DE').includes(search.trim().toLocaleLowerCase('de-DE'))
   );
 
@@ -248,10 +248,10 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Vorhandene Dokumenttypen</h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {categories.filter(item => item.status === 'active').length} aktiv · {categories.filter(item => item.status === 'archived').length} archiviert
+                {documentTypes.filter(item => item.status === 'active').length} aktiv · {documentTypes.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={secondaryButton} onClick={beginCreate} disabled={busy}>Neue Dokumenttyp</button>
+            <button type="button" className={secondaryButton} onClick={beginCreate} disabled={busy}>Neuer Dokumenttyp</button>
           </div>
 
           <div className="space-y-1.5">
@@ -266,13 +266,13 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
               <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
               <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button>
             </div>
-          ) : visibleCategories.length === 0 ? (
+          ) : visibleDocumentTypes.length === 0 ? (
             <p role="status" className="rounded-md border border-dashed border-slate-300 p-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
-              {categories.length === 0 ? 'Noch keine Dokumenttypen angelegt.' : 'Keine Dokumenttyp entspricht deiner Suche.'}
+              {documentTypes.length === 0 ? 'Noch keine Dokumenttypenen angelegt.' : 'Kein Dokumenttyp entspricht deiner Suche.'}
             </p>
           ) : (
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-              {visibleCategories.map(documentType => (
+              {visibleDocumentTypes.map(documentType => (
                 <li key={documentType.id} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
