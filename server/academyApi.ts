@@ -552,11 +552,15 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
-      const masters = await repository.list<AcademyCourseMasterDoc>('academy_courses');
-      const visible = masters.filter(master =>
-        (master.publicationStatus === 'published' && master.availability === 'available') ||
-        canManage(actor, master.ownerUid)
-      );
+      const [masters, ownParticipations] = await Promise.all([
+        repository.list<AcademyCourseMasterDoc>('academy_courses'),
+        repository.listOwnCourseParticipations(actor.uid)
+      ]);
+      const participatedCourseIds = new Set(ownParticipations.map(item => item.courseId));
+      const visible = masters.filter(master => isAcademyEntryVisible({
+        publicationStatus: master.publicationStatus, availability: master.availability,
+        isManager: canManage(actor, master.ownerUid), hasParticipation: participatedCourseIds.has(master.id)
+      }));
       const courses = await Promise.all(visible.map(async master => {
         const [version, storedDraft] = await Promise.all([
           master.currentPublishedVersionId ? repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId) : Promise.resolve(null),
@@ -609,7 +613,8 @@ export function createAcademyApiRouter(
       const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const editor = canManage(actor, master.ownerUid);
-      if (!editor && (master.publicationStatus !== 'published' || master.availability !== 'available')) {
+      const hasParticipation = !editor && (await repository.listOwnCourseParticipations(actor.uid)).some(item => item.courseId === master.id);
+      if (!isAcademyEntryVisible({ publicationStatus: master.publicationStatus, availability: master.availability, isManager: editor, hasParticipation })) {
         res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return;
       }
       const version = master.currentPublishedVersionId
@@ -671,11 +676,15 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
-      const masters = await repository.list<AcademyProgramMasterDoc>('academy_programs');
-      const visible = masters.filter(master =>
-        (master.publicationStatus === 'published' && master.availability === 'available') ||
-        canManage(actor, master.ownerUid)
-      );
+      const [masters, ownParticipations] = await Promise.all([
+        repository.list<AcademyProgramMasterDoc>('academy_programs'),
+        repository.listOwnProgramParticipations(actor.uid)
+      ]);
+      const participatedProgramIds = new Set(ownParticipations.map(item => item.programId));
+      const visible = masters.filter(master => isAcademyEntryVisible({
+        publicationStatus: master.publicationStatus, availability: master.availability,
+        isManager: canManage(actor, master.ownerUid), hasParticipation: participatedProgramIds.has(master.id)
+      }));
       const programs = await Promise.all(visible.map(async master => ({
         master,
         version: master.currentPublishedVersionId
@@ -716,7 +725,8 @@ export function createAcademyApiRouter(
       const master = await repository.get<AcademyProgramMasterDoc>('academy_programs', req.params.programId);
       if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const editor = canManage(actor, master.ownerUid);
-      if (!editor && (master.publicationStatus !== 'published' || master.availability !== 'available')) {
+      const hasParticipation = !editor && (await repository.listOwnProgramParticipations(actor.uid)).some(item => item.programId === master.id);
+      if (!isAcademyEntryVisible({ publicationStatus: master.publicationStatus, availability: master.availability, isManager: editor, hasParticipation })) {
         res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return;
       }
       const version = master.currentPublishedVersionId
