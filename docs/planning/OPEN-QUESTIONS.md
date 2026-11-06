@@ -17,7 +17,7 @@
 
 ### Lernbibliothek und Materialien
 - Rollen und Berechtigungen: Welche bestehenden Rollen dürfen Entwürfe anlegen/bearbeiten, zurückziehen und archivieren? (Selbstveröffentlichung durch dieselbe berechtigte Person ist mit Option A beschlossen; kein Vier-Augen-Prinzip.)
-- Konkrete Werte und ggf. Hierarchie der kontrollierten Kategorien und Dokumenttypen; automatische Materialcode-/Versionskennung technisch spezifizieren.
+- Konkrete Werte und ggf. Untergliederungen der getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen anhand des tatsächlichen Materialbestands festlegen; automatische Materialcode-/Versionskennung technisch spezifizieren.
 - Uploadgrenzen und konkrete PDF-Sicherheits-/Validierungsmaßnahmen.
 - Fehler-/Verarbeitungszustände einschließlich Passwortschutz, beschädigter Dateien und OCR.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
