@@ -260,14 +260,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const response = await apiFetch<{ participation: AcademyProgramParticipationDoc }>(
       API_ENDPOINTS.ACADEMY_PROGRAM_START(selectedProgram.master.id), { method: 'POST' }
     );
-    setSaving(false);
     if (!response.ok || !response.data) {
+      setSaving(false);
       onStatusToast(response.error || 'Das Programm konnte nicht begonnen werden.');
       return;
     }
+    setDetailLoading(true);
     const detail = await apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(response.data.participation.id));
     if (detail.ok && detail.data) setProgramDetail(detail.data);
     setDetailLoading(false);
+    setSaving(false);
     await loadLearningData();
     onStatusToast('Programmteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
   };
@@ -418,7 +420,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
                 <p className={muted}>{courseDetail?.version.summary || selectedCourse.version?.summary}</p>
               </header>
-              {courseDetail ? (
+              {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <div className={`${panel} p-4 space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-sm font-semibold">{statusLabel(courseDetail.participation.status)}</span>
@@ -458,6 +460,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     </div>
                   )}
                   <p className="text-xs text-slate-500 dark:text-slate-400">Ein Kursabschluss wird nur angezeigt, wenn der Server die erforderlichen Nachweise als vollständig bewertet hat.</p>
+                </div>
+              ) : ownCourseParticipationByCourse.has(selectedCourse.master.id) ? (
+                <div className={`${panel} p-4 space-y-3`}>
+                  <p className={muted}>Eine bestehende Kursteilnahme ist vorhanden, ihre Details konnten aber noch nicht geladen werden.</p>
+                  <button type="button" className={secondary} onClick={() => void openCourse(selectedCourse)}>Teilnahme erneut laden</button>
                 </div>
               ) : (
                 <>
@@ -560,7 +567,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         })}
                       </div>
                     )}
-                    {!programDetail && (
+                    {detailLoading && !programDetail && <p className={muted} role="status">Deine Programmteilnahme wird geladen …</p>}
+                    {!programDetail && !detailLoading && programParticipations.some(item => item.programId === selectedProgram.master.id) && (
+                      <div className={`${panel} p-4 space-y-2`}>
+                        <p className={muted}>Eine bestehende Programmteilnahme ist vorhanden, ihr Fortschritt konnte aber noch nicht geladen werden.</p>
+                        <button type="button" className={secondary} onClick={() => void openProgram(selectedProgram)}>Fortschritt erneut laden</button>
+                      </div>
+                    )}
+                    {!programDetail && !detailLoading && !programParticipations.some(item => item.programId === selectedProgram.master.id) && (
                       <div className={`${panel} p-4 space-y-2`}>
                         <p className={muted}>Beim Programmstart werden die konkreten Versionen aller Pflichtkurse festgehalten. Die einzelnen Kurse beginnen erst, wenn du sie selbst startest.</p>
                         <button type="button" className={primary} disabled={saving || selectedProgram.master.publicationStatus !== 'published' || selectedProgram.master.availability !== 'available'} onClick={() => void startProgram()}>
