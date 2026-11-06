@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
@@ -164,3 +164,34 @@ test('program publication uses the saved draft and atomically advances its versi
   assert.deepEqual(await repository.get('academy_program_versions', programVersion.id), programVersion);
   assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.currentPublishedVersionId, programVersion.id);
 }));
+
+test('JSON adapter upgrades legacy schema v1 without losing existing collections', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'academy-migration-'));
+  try {
+    const legacy = {
+      version: 1,
+      collections: {
+        academy_courses: { 'doc:legacy-course': { id: 'legacy-course' } },
+        academy_course_versions: {},
+        academy_programs: {},
+        academy_program_versions: {},
+        academy_course_participations: {},
+        academy_program_participations: {},
+        academy_progress_evidence: {},
+        academy_completion_corrections: {},
+        academy_private_notes: {}
+      }
+    };
+    await writeFile(join(directory, 'academy-db.json'), JSON.stringify(legacy), 'utf8');
+    const repository = createJsonAcademyRepository(directory);
+    assert.deepEqual(await repository.get('academy_courses', 'legacy-course'), { id: 'legacy-course' });
+    await repository.create('academy_courses', master.id, master);
+    const upgraded = JSON.parse(await readFile(join(directory, 'academy-db.json'), 'utf8'));
+    assert.equal(upgraded.version, 2);
+    assert.deepEqual(upgraded.collections.academy_course_drafts, {});
+    assert.deepEqual(upgraded.collections.academy_program_drafts, {});
+    assert.ok(upgraded.collections.academy_courses['doc:legacy-course']);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
