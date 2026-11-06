@@ -38,7 +38,13 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  },[participationId,selected]);
  const headings=useMemo(()=>currentVersion?.contentFormat==='markdown'?extractHeadings(currentVersion.content):[],[currentVersion]);
  const components=useMemo(()=>{
-  const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6')=>({children,node,...props}:any=>{const line=node?.position?.start?.line;const item=headings.find(h=>h.line===line);return React.createElement(tag,{...props,id:item?.id,className:'scroll-mt-6 mt-7 mb-3 font-semibold text-slate-900 dark:text-white'},children);});
+   const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6') => {
+    return ({ children, node, ...props }: any) => {
+     const line=node?.position?.start?.line;
+     const item=headings.find(h=>h.line===line);
+     return React.createElement(tag,{...props,id:item?.id,className:'scroll-mt-6 mt-7 mb-3 font-semibold text-slate-900 dark:text-white'},children);
+    };
+   };
   return {
    h1:heading('h1'),h2:heading('h2'),h3:heading('h3'),h4:heading('h4'),h5:heading('h5'),h6:heading('h6'),
    p:({children,...props}:any)=><p {...props} className="my-3 leading-7 text-slate-800 dark:text-slate-200">{children}</p>,
