@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { hashPassword } from './auth.ts';
+import { getDefaultGranularPermissions } from './rolePermissions.ts';
 
 const PASSWORD = 'Academy-http-test-password-123';
 
@@ -22,6 +23,21 @@ function makeAccount(uid: string, username: string, role: 'admin' | 'colonel' | 
       whitelistStatus: 'whitelisted', isOnline: false, lastSeenIso: now, updatedIso: now
     },
     privateProfile: { uid, email: `${username}@example.test`, discordTag: '', steamHex: '', supervisorNotes: '' }
+  };
+}
+
+function makeScopedAccount(uid: string, username: string, assignedCourseCodes: string[]) {
+  const base = makeAccount(uid, username, 'officer');
+  return {
+    ...base,
+    publicProfile: {
+      ...base.publicProfile,
+      granularPermissions: {
+        ...getDefaultGranularPermissions('officer'),
+        assignedCourseCodes,
+        canGradeAssignedCourses: true
+      }
+    }
   };
 }
 
@@ -60,7 +76,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeAccount('academy-admin', 'AcademyAdmin', 'admin'),
       makeAccount('academy-colonel', 'AcademyColonel', 'colonel'),
       makeAccount('academy-officer', 'AcademyOfficer', 'officer'),
-      makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer')
+      makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer'),
+      makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01'])
     ],
     applications: [], modules: [], exams: [], progress: [], announcements: [], messages: [],
     requests: [], events: [], auditLogs: [], notifications: []
@@ -102,6 +119,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const colonel = await login(baseUrl, 'AcademyColonel');
     const officer = await login(baseUrl, 'AcademyOfficer');
     const officer2 = await login(baseUrl, 'AcademyOfficerTwo');
+    const scopedOfficer = await login(baseUrl, 'AcademyScopedOfficer');
     const request = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -353,6 +371,65 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(archivedMaterial.status, 200);
     assert.equal(archivedMaterial.body!.master.publicationStatus, 'archived');
     assert.equal((await request('/api/academy/materials/' + materialId, admin)).body!.versions.length, 2);
+
+    const scopeCourse = await request('/api/academy/courses', admin, {
+      method: 'POST',
+      ...json({
+        code: 'SCOPE-OPS-01',
+        title: 'Scoped operations course',
+        summary: '',
+        learningObjectives: [{ id: 'goal-scope-1', description: 'Work within assigned scope.' }],
+        chapters: [],
+        completionRequirements: []
+      })
+    });
+    assert.equal(scopeCourse.status, 201, JSON.stringify(scopeCourse.body));
+
+    const scopedMaterial = await request('/api/academy/materials', scopedOfficer, {
+      method: 'POST',
+      ...json({
+        title: 'Scoped instructor material',
+        categoryId: materialCategoryId,
+        documentTypeId: materialDocumentTypeId,
+        responsibleCourseCode: 'SCOPE-OPS-01',
+        contentFormat: 'code',
+        codeLanguage: 'typescript',
+        content: 'const materialIsStoredOnly = true;'
+      })
+    });
+    assert.equal(scopedMaterial.status, 201, JSON.stringify(scopedMaterial.body));
+    assert.equal(scopedMaterial.body!.master.ownerUid, 'academy-scoped-officer');
+    assert.equal(scopedMaterial.body!.master.responsibleCourseCode, 'SCOPE-OPS-01');
+    assert.equal(scopedMaterial.body!.draft.createdByUid, 'academy-scoped-officer');
+
+    const scopedMaterialList = await request('/api/academy/materials', scopedOfficer);
+    assert.equal(scopedMaterialList.status, 200);
+    assert.equal(scopedMaterialList.body!.materials.length, 1);
+    assert.equal(scopedMaterialList.body!.materials[0].master.id, scopedMaterial.body!.master.id);
+
+    const outOfScopeMaterial = await request('/api/academy/materials', scopedOfficer, {
+      method: 'POST',
+      ...json({
+        title: 'Out of scope material',
+        categoryId: materialCategoryId,
+        documentTypeId: materialDocumentTypeId,
+        responsibleCourseCode: 'OTHER-COURSE',
+        contentFormat: 'markdown',
+        content: 'Should be rejected.'
+      })
+    });
+    assert.equal(outOfScopeMaterial.status, 403);
+
+    const scopedMaterialPublished = await request('/api/academy/materials/' + scopedMaterial.body!.master.id + '/publish', scopedOfficer, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(scopedMaterialPublished.status, 201, JSON.stringify(scopedMaterialPublished.body));
+    assert.equal(scopedMaterialPublished.body!.version.publishedByUid, 'academy-scoped-officer');
+
+    const scopedArchiveForbidden = await request('/api/academy/materials/' + scopedMaterial.body!.master.id + '/archive', scopedOfficer, {
+      method: 'POST', ...json({ expectedRevision: 1, reason: 'Should not be allowed to archive.' })
+    });
+    assert.equal(scopedArchiveForbidden.status, 403);
 
     // Legacy library write routes must use the authenticated session, never a caller-supplied actorUid.
     const spoofedModuleCreate = await request('/api/academy/modules', officer, {
