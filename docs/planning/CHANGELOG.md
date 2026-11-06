@@ -39,3 +39,5 @@
 - Technischer Ist-Stand in `PROGRESS.md` festgehalten: heutiger Direktveröffentlichungsweg, Bearbeiten durch Überschreiben, Löschen aus dem Array, bestehende Kurscode-Berechtigung, PDF-Validierung und 25-MB-Request-Parser.
 - UX-/Security-Recherche mit GOV.UK, DWP Design System und OWASP verlinkt.
 - Nur Planungsdokumentation geändert; keine Anwendungscodeänderung, kein Merge und kein Deployment.
+
+- **BESCHLOSSEN am 06.11.2026:** Veröffentlichungsberechtigung Option A – dieselbe berechtigte Person darf den eigenen Entwurf selbst bewusst veröffentlichen; kein Vier-Augen-Prinzip.
