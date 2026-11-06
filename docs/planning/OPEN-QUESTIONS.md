@@ -17,13 +17,13 @@
 
 ### Lernbibliothek und Materialien
 - Die fachliche Berechtigungstrennung ist Option B beschlossen; technische serverseitige Durchsetzung und Kurszuständigkeitszuordnung verifizieren.
-- Konkrete Werte und ggf. Untergliederungen der getrennten, kontrollierten Kategorien- und Dokumenttyp-Listen anhand des tatsächlichen Materialbestands festlegen; automatische Materialcode-/Versionskennung technisch spezifizieren.
+- Konkrete Werte der Kategorien-/Dokumenttyp-Listen anhand des vollständigen tatsächlichen Materialbestands validieren. Ein begründeter Startvorschlag steht in der Academy-Spezifikation, ist aber noch nicht beschlossen; automatische Materialcode-/Versionskennung technisch spezifizieren.
 - **Beschlossen:** maximal 15 MB Rohdateigröße pro PDF. Vor Implementierung Hosting-/Speicher-/Requestgrenzen unter Einbeziehung der Base64-/JSON-Vergrößerung verifizieren. Konkrete PDF-Parser-, Signatur-, Malware-/CDR- und Ressourcenbegrenzungsmaßnahmen technisch auswählen.
-- **Empfehlung, noch nicht beschlossen:** PDF-Signatur plus Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; Malwareprüfung vor Veröffentlichung; bei nicht verfügbarem Scanner unveröffentlicht bleiben. Die konkreten Fehlerzustände sind als Vorschlag in der Academy-Spezifikation ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
+- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur- und Parserprüfung; leere, beschädigte, abgeschnittene, unlesbare und passwortgeschützte Dateien ablehnen; erfolgreiche Malwareprüfung vor Veröffentlichung; bei negativem Ergebnis oder Scanner-/Prüfausfall unveröffentlicht bleiben. Konkrete Parser-/Scanner-/Quarantänearchitektur bleibt technisch offen. Die genaue UX-Darstellung der Fehlermeldungen wird noch ausgearbeitet. OCR/Volltextindexierung bleibt gesondert offen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung.
 - Einheitliche optionale Tags und relevante Datumsfelder nur bei nachgewiesenem Nutzen.
 - Volltextindexierung und OCR-Fähigkeit für gescannte PDFs; Qualität und Grenzen prüfen.
-- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die vorgeschlagenen Ablehnungs- und Fehlerzustände sind in der Academy-Spezifikation ausgearbeitet und müssen noch bestätigt werden.
+- Technische Parser-/Scanner-/Quarantänelösung, aktive PDF-Inhalte/Anhänge und Ressourcenlimits auswählen; die fachlichen Sicherheitsanforderungen sind beschlossen, konkrete technische Auswahl bleibt offen.
 - Konkrete Regeln für Rücknahme/Zurückziehen, Benachrichtigung und betroffene Kursreferenzen nur soweit erforderlich.
 - **Fachlich beschlossen:** Jede veröffentlichte Kursversion referenziert eine konkrete Dokumentversion (Option B). Eine bloß dynamische Referenz auf „neueste freigegebene Fassung“ wäre nicht ausreichend. Offen ist nur noch, wie diese feste Versionsbindung technisch im vorhandenen Datenmodell/Referenzsystem umgesetzt und migrationssicher geprüft wird.
 
@@ -200,6 +200,7 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 ### Academy
 - **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
 - **Beschlossen:** maximale PDF-Rohdateigröße 15 MB; serverseitige Validierung und erfolgreiche Sicherheitsprüfung sind vor Veröffentlichung erforderlich.
+- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur-/Parserprüfung, Ablehnung beschädigter und passwortgeschützter Dateien, Malwareprüfung vor Veröffentlichung und Fail-closed bei Prüf-/Scanner-Ausfall.
 - Offen bleiben die Rollen-/Freigaberegeln,  Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
 - Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
 - Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
