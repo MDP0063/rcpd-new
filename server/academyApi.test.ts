@@ -107,7 +107,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       const body = response.status === 204 ? null : await response.json();
       return { status: response.status, body: body as Record<string, any> | null };
     };
-    const json = (body: unknown) => ({ 'Content-Type': 'application/json', body: JSON.stringify(body) });
+    const json = (body: unknown) => ({ headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
     assert.equal((await request('/api/academy/courses')).status, 401);
     assert.equal((await request('/api/academy/courses', officer)).status, 200);
