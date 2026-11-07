@@ -236,6 +236,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(documentTypeCatalogAfterDelete.body!.documentTypes.some((item: { id: string }) => item.id === documentTypeId), false);
 
     assert.equal((await request('/api/academy/materials')).status, 401);
+    assert.equal((await request('/api/academy/materials/catalog')).status, 401);
+    assert.equal((await request('/api/academy/materials/catalog/unknown-material')).status, 401);
     assert.equal((await request('/api/academy/materials', officer)).status, 200);
     assert.equal((await request('/api/academy/materials', officer, {
       method: 'POST', ...json({ title: 'Unauthorized material' })
@@ -274,6 +276,9 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(materialList.body!.materials.length, 1);
     assert.equal(materialList.body!.materials[0].draft.title, 'Operations Handbook');
     assert.equal(materialList.body!.materials[0].currentVersion, null);
+    const unpublishedCatalog = await request('/api/academy/materials/catalog', officer);
+    assert.equal(unpublishedCatalog.status, 200);
+    assert.equal(unpublishedCatalog.body!.materials.length, 0, 'draft materials must never appear in the public catalog');
 
     const materialPublishedV1 = await request('/api/academy/materials/' + materialId + '/publish', admin, {
       method: 'POST', ...json({ expectedRevision: 1 })
@@ -282,6 +287,19 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const materialVersion1Id = materialPublishedV1.body!.version.id as string;
     assert.equal(materialVersion1Id, materialId + '__v1');
     assert.equal(materialPublishedV1.body!.master.publicationStatus, 'published');
+    const publicCatalogV1 = await request('/api/academy/materials/catalog', officer);
+    assert.equal(publicCatalogV1.status, 200);
+    assert.equal(publicCatalogV1.body!.materials.length, 1);
+    assert.equal(publicCatalogV1.body!.materials[0].id, materialId);
+    assert.equal(publicCatalogV1.body!.materials[0].title, 'Operations Handbook');
+    assert.equal(publicCatalogV1.body!.materials[0].categoryName, 'Operations – Materialtest');
+    assert.equal(publicCatalogV1.body!.materials[0].documentTypeName, 'Handbuch – Materialtest');
+    assert.equal(publicCatalogV1.body!.materials[0].versionId, materialVersion1Id);
+    const publicReaderV1 = await request('/api/academy/materials/catalog/' + materialId, officer);
+    assert.equal(publicReaderV1.status, 200, JSON.stringify(publicReaderV1.body));
+    assert.equal(publicReaderV1.body!.material.content, '# Operations\n\nErste Fassung.');
+    assert.equal(publicReaderV1.body!.material.versionId, materialVersion1Id);
+    assert.equal('publishedByUid' in publicReaderV1.body!.material, false, 'public reader must not expose audit UIDs');
 
     const materialDraftUpdated = await request('/api/academy/materials/' + materialId + '/draft', admin, {
       method: 'PUT',
@@ -292,6 +310,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
           description: 'Zweite Entwurfsfassung.',
           categoryId: materialCategoryId,
           documentTypeId: materialDocumentTypeId,
+          requiredRole: 'admin',
           contentFormat: 'markdown',
           content: '# Operations\n\nZweite Fassung.'
         }
@@ -303,6 +322,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(materialAfterDraft.body!.master.currentPublishedVersionId, materialVersion1Id,
       'saving a draft must not change the current published version');
     assert.equal(materialAfterDraft.body!.currentVersion.content, '# Operations\n\nErste Fassung.');
+
+    const readerWhileDraftChanged = await request('/api/academy/materials/catalog/' + materialId, officer);
+    assert.equal(readerWhileDraftChanged.status, 200);
+    assert.equal(readerWhileDraftChanged.body!.material.versionId, materialVersion1Id);
+    assert.equal(readerWhileDraftChanged.body!.material.content, '# Operations\n\nErste Fassung.',
+      'reader must continue to serve the last published version while a new draft is edited');
 
     const materialPublishedV2 = await request('/api/academy/materials/' + materialId + '/publish', admin, {
       method: 'POST', ...json({ expectedRevision: 2 })
@@ -316,6 +341,20 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.deepEqual(materialHistoryOffset.body!.versions.map((item: { versionNumber: number }) => item.versionNumber), [1]);
     assert.equal((await request('/api/academy/materials/' + materialId + '?offset=-1', admin)).status, 400);
     assert.equal(materialHistory.body!.currentVersion.content, '# Operations\n\nZweite Fassung.');
+
+    const restrictedCatalog = await request('/api/academy/materials/catalog', officer);
+    assert.equal(restrictedCatalog.status, 200);
+    assert.equal(restrictedCatalog.body!.materials.length, 0, 'rank-restricted material must be hidden from lower roles');
+    const permittedCatalog = await request('/api/academy/materials/catalog', admin);
+    assert.equal(permittedCatalog.body!.materials.length, 1);
+    assert.equal(permittedCatalog.body!.materials[0].versionNumber, 2);
+    assert.equal(permittedCatalog.body!.materials[0].title, 'Operations Handbook – Revised');
+    const forbiddenPublicReader = await request('/api/academy/materials/catalog/' + materialId, officer);
+    assert.equal(forbiddenPublicReader.status, 404);
+    const publicReaderV2 = await request('/api/academy/materials/catalog/' + materialId, admin);
+    assert.equal(publicReaderV2.status, 200);
+    assert.equal(publicReaderV2.body!.material.content, '# Operations\n\nZweite Fassung.');
+    assert.equal(publicReaderV2.body!.material.versionId, materialId + '__v2');
 
     const courseWithMaterial = await request('/api/academy/courses', admin, {
       method: 'POST',
