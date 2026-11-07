@@ -548,7 +548,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                     <div className={`${panel} p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
-                      <ul className="list-disc pl-5 space-y-1 ${muted}">
+                      <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
                         {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
                       </ul>
                     </div>
