@@ -9,6 +9,7 @@ import type {
 } from '../src/types/academy.ts';
 import type { OfficerRole } from '../src/types/portal.ts';
 import { canReadMaterialRole, courseVersionReferencesMaterial } from './academyMaterialReaderAccess.ts';
+import { isAcademyEntryVisible } from './academyVisibility.ts';
 import type { AcademyRepository } from './academyRepository.ts';
 
 export interface AcademyApiActor {
@@ -140,6 +141,23 @@ export function createAcademyApiRouter(
   recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>
 ) {
   const router = Router();
+
+  async function withPinnedMaterialLabels(draft: AcademyCourseDraftDoc): Promise<AcademyCourseDraftDoc> {
+    const chapters = await Promise.all(draft.chapters.map(async chapter => {
+      if (!Array.isArray(chapter.materialReferences)) return chapter;
+      const materialReferences = await Promise.all(chapter.materialReferences.map(async reference => {
+        if (typeof reference.materialId !== 'string' || typeof reference.materialVersionId !== 'string') return reference;
+        const pinnedVersion = await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
+        if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) {
+          const { title: _title, versionNumber: _versionNumber, ...withoutSnapshot } = reference;
+          return withoutSnapshot;
+        }
+        return { ...reference, title: pinnedVersion.title, versionNumber: pinnedVersion.versionNumber };
+      }));
+      return { ...chapter, materialReferences };
+    }));
+    return { ...draft, chapters };
+  }
 
   function getActor(req: Request, res: Response): AcademyApiActor | null {
     const uid = res.locals.sessionUid as string | undefined;
@@ -454,22 +472,19 @@ export function createAcademyApiRouter(
       if (!canManageMaterialCourse(actor, master.responsibleCourseCode)) {
         res.status(403).json({ error: 'ACADEMY_MATERIAL_SCOPE_FORBIDDEN' }); return;
       }
+      const rawOffset = req.query.offset;
+      const offset = rawOffset === undefined ? 0 : Number(rawOffset);
+      if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) { res.status(400).json({ error: 'ACADEMY_MATERIAL_HISTORY_OFFSET_INVALID' }); return; }
+      const pageSize = 50;
       const [draft, versions] = await Promise.all([
         repository.getMaterialDraft(master.id),
-        repository.list<AcademyMaterialVersionDoc>('academy_material_versions', {
-          where: [{ field: 'materialId', value: master.id }], limit: 100
-        })
+        repository.list<AcademyMaterialVersionDoc>('academy_material_versions', { where: [{ field: 'materialId', value: master.id }], orderBy: 'versionNumber', orderDirection: 'desc', offset, limit: pageSize + 1 })
       ]);
-      versions.sort((a, b) => b.versionNumber - a.versionNumber);
-      const currentVersion = master.currentPublishedVersionId
-        ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId)
-        : null;
-      const versionSummaries: AcademyMaterialVersionSummary[] = versions.map(version => ({
-        id: version.id, materialId: version.materialId, versionNumber: version.versionNumber,
-        title: version.title, contentFormat: version.contentFormat,
-        publishedIso: version.publishedIso, publishedByUid: version.publishedByUid
-      }));
-      res.json({ master, draft, currentVersion, versions: versionSummaries });
+      const hasMoreVersions = versions.length > pageSize;
+      const page = versions.slice(0, pageSize);
+      const currentVersion = master.currentPublishedVersionId ? await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', master.currentPublishedVersionId) : null;
+      const versionSummaries: AcademyMaterialVersionSummary[] = page.map(version => ({ id: version.id, materialId: version.materialId, versionNumber: version.versionNumber, title: version.title, contentFormat: version.contentFormat, publishedIso: version.publishedIso, publishedByUid: version.publishedByUid }));
+      res.json({ master, draft, currentVersion, versions: versionSummaries, hasMoreVersions, nextVersionOffset: hasMoreVersions ? offset + pageSize : null });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -555,18 +570,37 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
-      const masters = await repository.list<AcademyCourseMasterDoc>('academy_courses');
-      const visible = masters.filter(master =>
-        (master.publicationStatus === 'published' && master.availability === 'available') ||
-        canManage(actor, master.ownerUid)
-      );
-      const courses = await Promise.all(visible.map(async master => ({
-        master,
-        version: master.currentPublishedVersionId
-          ? await repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId)
-          : null,
-        draft: canManage(actor, master.ownerUid) ? await repository.getCourseDraft(master.id) : null
-      })));
+      const [masters, ownParticipations] = await Promise.all([
+        repository.list<AcademyCourseMasterDoc>('academy_courses'),
+        repository.listOwnCourseParticipations(actor.uid)
+      ]);
+      const participatedCourseIds = new Set(ownParticipations.map(item => item.courseId));
+      const visible = masters.filter(master => isAcademyEntryVisible({
+        publicationStatus: master.publicationStatus, availability: master.availability,
+        isManager: canManage(actor, master.ownerUid), hasParticipation: participatedCourseIds.has(master.id)
+      }));
+      const courses = await Promise.all(visible.map(async master => {
+        const [version, storedDraft] = await Promise.all([
+          master.currentPublishedVersionId ? repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId) : Promise.resolve(null),
+          canManage(actor, master.ownerUid) ? repository.getCourseDraft(master.id) : Promise.resolve(null)
+        ]);
+        const draft = storedDraft ? {
+          ...storedDraft,
+          chapters: await Promise.all(storedDraft.chapters.map(async chapter => ({
+            ...chapter,
+            materialReferences: await Promise.all(chapter.materialReferences.map(async reference => {
+              if (typeof reference.materialId !== 'string' || typeof reference.materialVersionId !== 'string') return reference;
+              const pinnedVersion = await repository.get<AcademyMaterialVersionDoc>('academy_material_versions', reference.materialVersionId);
+              if (!pinnedVersion || pinnedVersion.materialId !== reference.materialId) {
+                const { title: _title, versionNumber: _versionNumber, ...withoutSnapshot } = reference;
+                return withoutSnapshot;
+              }
+              return { ...reference, title: pinnedVersion.title, versionNumber: pinnedVersion.versionNumber };
+            }))
+          })))
+        } : null;
+        return { master, version, draft };
+      }));
       res.json({ courses });
     } catch (error) { fail(res, error, next); }
   });
@@ -586,7 +620,7 @@ export function createAcademyApiRouter(
         id: courseId, code, ownerUid: actor.uid, publicationStatus: 'draft', availability: 'available',
         latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
       };
-      const draft = makeCourseDraft(courseId, req.body, 1, actor.uid, now);
+      const draft = await withPinnedMaterialLabels(makeCourseDraft(courseId, req.body, 1, actor.uid, now));
       await repository.createCourseWithDraft(master, draft);
       await recordAudit(actor.uid, 'Academy-Kursentwurf erstellt', code, `Kurs ${code} angelegt; Arbeitsrevision 1.`);
       res.status(201).json({ master, draft });
@@ -600,13 +634,15 @@ export function createAcademyApiRouter(
       const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const editor = canManage(actor, master.ownerUid);
-      if (!editor && (master.publicationStatus !== 'published' || master.availability !== 'available')) {
+      const hasParticipation = !editor && (await repository.listOwnCourseParticipations(actor.uid)).some(item => item.courseId === master.id);
+      if (!isAcademyEntryVisible({ publicationStatus: master.publicationStatus, availability: master.availability, isManager: editor, hasParticipation })) {
         res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return;
       }
       const version = master.currentPublishedVersionId
         ? await repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId)
         : null;
-      const draft = editor ? await repository.getCourseDraft(master.id) : null;
+      const storedDraft = editor ? await repository.getCourseDraft(master.id) : null;
+      const draft = storedDraft ? await withPinnedMaterialLabels(storedDraft) : null;
       res.json({ master, version, draft });
     } catch (error) { fail(res, error, next); }
   });
@@ -621,7 +657,7 @@ export function createAcademyApiRouter(
       if (!isObject(req.body) || !isObject(req.body.draft)) { res.status(400).json({ error: 'ACADEMY_DRAFT_BODY_INVALID' }); return; }
       const expected = revision(req.body.expectedRevision);
       if (expected === null) { res.status(400).json({ error: 'ACADEMY_REVISION_INVALID' }); return; }
-      const draft = makeCourseDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString());
+      const draft = await withPinnedMaterialLabels(makeCourseDraft(master.id, req.body.draft, expected + 1, actor.uid, new Date().toISOString()));
       await repository.saveCourseDraft(master.id, draft, expected, actor.uid);
       await recordAudit(actor.uid, 'Academy-Kursentwurf geändert', master.code, `Arbeitsrevision ${draft.workingRevision} gespeichert.`);
       res.json({ draft });
@@ -662,11 +698,15 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
-      const masters = await repository.list<AcademyProgramMasterDoc>('academy_programs');
-      const visible = masters.filter(master =>
-        (master.publicationStatus === 'published' && master.availability === 'available') ||
-        canManage(actor, master.ownerUid)
-      );
+      const [masters, ownParticipations] = await Promise.all([
+        repository.list<AcademyProgramMasterDoc>('academy_programs'),
+        repository.listOwnProgramParticipations(actor.uid)
+      ]);
+      const participatedProgramIds = new Set(ownParticipations.map(item => item.programId));
+      const visible = masters.filter(master => isAcademyEntryVisible({
+        publicationStatus: master.publicationStatus, availability: master.availability,
+        isManager: canManage(actor, master.ownerUid), hasParticipation: participatedProgramIds.has(master.id)
+      }));
       const programs = await Promise.all(visible.map(async master => ({
         master,
         version: master.currentPublishedVersionId
@@ -707,7 +747,8 @@ export function createAcademyApiRouter(
       const master = await repository.get<AcademyProgramMasterDoc>('academy_programs', req.params.programId);
       if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const editor = canManage(actor, master.ownerUid);
-      if (!editor && (master.publicationStatus !== 'published' || master.availability !== 'available')) {
+      const hasParticipation = !editor && (await repository.listOwnProgramParticipations(actor.uid)).some(item => item.programId === master.id);
+      if (!isAcademyEntryVisible({ publicationStatus: master.publicationStatus, availability: master.availability, isManager: editor, hasParticipation })) {
         res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return;
       }
       const version = master.currentPublishedVersionId

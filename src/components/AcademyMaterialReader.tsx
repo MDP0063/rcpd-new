@@ -6,23 +6,10 @@ import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } from '../types/academy';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
-interface HeadingItem { id: string; level: number; title: string; line: number; }
+import { extractHeadings } from '../lib/academyMaterialOutline';
 const panel='rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted='text-sm text-slate-600 dark:text-slate-300';
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
-function slugify(value:string):string{return value.toLocaleLowerCase('de-DE').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'abschnitt';}
-function extractHeadings(markdown:string):HeadingItem[]{
- const counts=new Map<string,number>();const result:HeadingItem[]=[];const lines=markdown.split(/\r?\n/);let fence='';
- for(let index=0;index<lines.length;index++){
-  const line=lines[index];const fenceMatch=line.match(/^\s*(`{3,}|~{3,})/);
-  if(fenceMatch){const marker=fenceMatch[1][0];if(!fence)fence=marker;else if(fence===marker)fence='';continue;}
-  if(fence)continue;
-  const m=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);if(!m)continue;
-  const title=m[2].replace(/\[(.*?)\]\([^)]*\)/g,'$1').replace(/[*_`~]/g,'').trim();const base=slugify(title);const count=counts.get(base)||0;counts.set(base,count+1);
-  result.push({id:count?base+'-'+count:base,level:m[1].length,title,line:index+1});
- }
- return result;
-}
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
  const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
@@ -42,7 +29,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
     return ({ children, node, ...props }: any) => {
      const line=node?.position?.start?.line;
      const item=headings.find(h=>h.line===line);
-     return React.createElement(tag,{...props,id:item?.id,className:'scroll-mt-6 mt-7 mb-3 font-semibold text-slate-900 dark:text-white'},children);
+     const headingStyles:Record<typeof tag,string>={h1:'scroll-mt-6 mt-8 mb-4 text-3xl font-bold text-slate-900 dark:text-white',h2:'scroll-mt-6 mt-7 mb-3 text-2xl font-semibold text-slate-900 dark:text-white',h3:'scroll-mt-6 mt-6 mb-3 text-xl font-semibold text-slate-900 dark:text-white',h4:'scroll-mt-6 mt-5 mb-2 text-lg font-semibold text-slate-900 dark:text-white',h5:'scroll-mt-6 mt-4 mb-2 text-base font-semibold text-slate-900 dark:text-white',h6:'scroll-mt-6 mt-4 mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300'};
+     return React.createElement(tag,{...props,id:item?.id,className:headingStyles[tag]},children);
     };
    };
   return {
@@ -56,7 +44,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    a:({children,href,node:_node,...props}:any)=><a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
    table:({children,node:_node,...props}:any)=><div className="my-4 overflow-x-auto"><table {...props} className="min-w-full border-collapse text-sm">{children}</table></div>,
    th:({children,node:_node,...props}:any)=><th {...props} className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
-   td:({children,node:_node,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>
+   td:({children,node:_node,...props}:any)=><td {...props} className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>,
+   img:({alt}:any)=><span role="note" className="inline-block rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Bild nicht geladen: externe Bildquellen sind in Lernmaterialien deaktiviert{alt ? ' ('+alt+')' : ''}.</span>
   } satisfies Components;
  },[headings]);
  return <section className={panel+' space-y-4 p-4 sm:p-5'} aria-labelledby="academy-course-materials-heading">
@@ -65,15 +54,15 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">{materials.slice().sort((a,b)=>a.chapterOrder-b.chapterOrder||a.order-b.order).map(item=>{
     const key=item.chapterId+'::'+item.materialId+'::'+item.materialVersionId;
     return <div key={key} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="text-xs text-slate-500 dark:text-slate-400">{item.chapterTitle} · {item.required?'Erforderlich':'Optional'}</p><p className="font-medium text-slate-900 dark:text-white">{item.title||(item.accessStatus==='restricted'?'Materialzugriff eingeschränkt':item.materialCode||'Material nicht verfügbar')}</p><p className="text-xs text-slate-500 dark:text-slate-400">{item.materialCode||item.materialId} · {item.versionNumber?'Version '+item.versionNumber:item.materialVersionId}</p></div>
-     {item.accessStatus==='available'?<button type="button" className={secondary} onClick={()=>{setSelectedKey(key);setNavigationOpen(false);}}>{selectedKey===key?'Geöffnet':'Material öffnen'}</button>:<span className="text-xs text-amber-700 dark:text-amber-300">{item.accessStatus==='restricted'?'Deine aktuelle Rolle reicht nicht aus.':'Diese Materialfassung ist nicht verfügbar.'}</span>}
+     {item.accessStatus==='available'?<button type="button" className={secondary} onClick={()=>{setSelectedKey(key);setCurrentVersion(null);setLoadError('');setLoading(true);setNavigationOpen(false);}} disabled={selectedKey===key}>{selectedKey===key?'Geöffnet':'Material öffnen'}</button>:<span className="text-xs text-amber-700 dark:text-amber-300">{item.accessStatus==='restricted'?'Deine aktuelle Rolle reicht nicht aus.':'Diese Materialfassung ist nicht verfügbar.'}</span>}
     </div>;
    })}</div>
    {selected&&<div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selected.materialCode} · Version {selected.versionNumber}</p><h4 className="text-xl font-semibold text-slate-900 dark:text-white">{currentVersion?.title||selected.title}</h4><p className={muted}>{currentVersion?.description}</p></div><div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selected.materialCode} · Version {selected.versionNumber}</p><h4 className="break-words text-xl font-semibold text-slate-900 dark:text-white">{currentVersion?.title||selected.title}</h4><p className={muted}>{currentVersion?.description}</p></div><div className="flex flex-wrap gap-2">
      {headings.length>0&&<button type="button" className={secondary} onClick={()=>setNavigationOpen(v=>!v)} aria-expanded={navigationOpen} aria-controls="academy-material-outline">Inhaltsübersicht {navigationOpen?'schließen':'öffnen'}</button>}
-     <button type="button" className={secondary} onClick={()=>{setSelectedKey('');setCurrentVersion(null);}}>Zur Materialliste</button></div></div>
+     <button type="button" className={secondary} onClick={()=>{setSelectedKey('');setCurrentVersion(null);setLoadError('');setLoading(false);setNavigationOpen(false);}}>Zur Materialliste</button></div></div>
      <div className="flex flex-col gap-4 lg:flex-row">
-      {navigationOpen&&headings.length>0&&<nav id="academy-material-outline" className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
+      {headings.length>0&&<nav id="academy-material-outline" hidden={!navigationOpen} className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="block break-words text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
       <div className="min-w-0 flex-1">
        {loading?<p className={muted} role="status">Material wird geladen …</p>:loadError?<div role="alert" className="rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">{loadError}</div>
         :currentVersion?.contentFormat==='markdown'?<article className="max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>

@@ -97,6 +97,17 @@ test('stale course revision cannot publish', async () => withRepository(async re
   assert.equal(await repository.get('academy_course_versions', version.id), null);
 }));
 
+test('repository orders and offsets collection queries consistently', async () => withRepository(async repository => {
+  for (const number of [1, 3, 2]) {
+    const item: AcademyCourseMasterDoc = { ...master, id: `course-${number}`, code: `BASIC-0${number}`, workingRevision: number };
+    await repository.create('academy_courses', item.id, item);
+  }
+  const page = await repository.list<AcademyCourseMasterDoc>('academy_courses', {
+    orderBy: 'workingRevision', orderDirection: 'desc', offset: 1, limit: 1
+  });
+  assert.deepEqual(page.map(item => item.workingRevision), [2]);
+}));
+
 test('private note repository methods enforce owner isolation', async () => withRepository(async repository => {
   const note: AcademyPrivateNoteDoc = {
     id: 'note-1', ownerUid: 'owner-1', materialId: 'material-1',

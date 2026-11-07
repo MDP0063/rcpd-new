@@ -311,6 +311,10 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(materialPublishedV2.body!.version.id, materialId + '__v2');
     const materialHistory = await request('/api/academy/materials/' + materialId, admin);
     assert.equal(materialHistory.body!.versions.length, 2);
+    const materialHistoryOffset = await request('/api/academy/materials/' + materialId + '?offset=1', admin);
+    assert.equal(materialHistoryOffset.status, 200);
+    assert.deepEqual(materialHistoryOffset.body!.versions.map((item: { versionNumber: number }) => item.versionNumber), [1]);
+    assert.equal((await request('/api/academy/materials/' + materialId + '?offset=-1', admin)).status, 400);
     assert.equal(materialHistory.body!.currentVersion.content, '# Operations\n\nZweite Fassung.');
 
     const courseWithMaterial = await request('/api/academy/courses', admin, {
@@ -323,7 +327,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
         chapters: [{
           id: 'chapter-material-1',
           title: 'Operations material',
-          materialReferences: [{ materialId, materialVersionId: materialVersion1Id, required: true, order: 0 }],
+          materialReferences: [{ materialId, materialVersionId: materialVersion1Id, title: 'Falscher Clienttitel', versionNumber: 99, required: true, order: 0 }],
           required: true,
           order: 0
         }],
@@ -332,11 +336,18 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(courseWithMaterial.status, 201, JSON.stringify(courseWithMaterial.body));
     const courseWithMaterialId = courseWithMaterial.body!.master.id as string;
+    assert.equal(courseWithMaterial.body!.draft.chapters[0].materialReferences[0].title, 'Operations Handbook');
+    assert.equal(courseWithMaterial.body!.draft.chapters[0].materialReferences[0].versionNumber, 1);
     const courseMaterialPublished = await request('/api/academy/courses/' + courseWithMaterialId + '/publish', admin, {
       method: 'POST', ...json({ expectedRevision: 1 })
     });
     assert.equal(courseMaterialPublished.status, 201, JSON.stringify(courseMaterialPublished.body));
     assert.equal(courseMaterialPublished.body!.version.chapters[0].materialReferences[0].materialVersionId, materialVersion1Id);
+    assert.equal(courseMaterialPublished.body!.version.chapters[0].materialReferences[0].title, 'Operations Handbook');
+    const enrichedCourseList = await request('/api/academy/courses', admin);
+    const enrichedCourse = enrichedCourseList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseWithMaterialId);
+    assert.equal(enrichedCourse.draft.chapters[0].materialReferences[0].title, 'Operations Handbook');
+    assert.equal(enrichedCourse.draft.chapters[0].materialReferences[0].versionNumber, 1);
 
     const readerParticipation = await request('/api/academy/courses/' + courseWithMaterialId + '/participations', officer, { method: 'POST' });
     assert.equal(readerParticipation.status, 201, JSON.stringify(readerParticipation.body));

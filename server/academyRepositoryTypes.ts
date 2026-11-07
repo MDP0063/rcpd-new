@@ -23,7 +23,7 @@ export const ACADEMY_COLLECTIONS = [
 export type AcademyCollection = typeof ACADEMY_COLLECTIONS[number];
 export interface AcademyDocument { id: string }
 export interface AcademyFilter { field: string; value: string | number | boolean | null }
-export interface AcademyQuery { where?: readonly AcademyFilter[]; limit?: number }
+export interface AcademyQuery { where?: readonly AcademyFilter[]; limit?: number; offset?: number; orderBy?: string; orderDirection?: 'asc' | 'desc' }
 export interface AcademyTransaction {
   get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null>;
   list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query?: AcademyQuery): Promise<T[]>;

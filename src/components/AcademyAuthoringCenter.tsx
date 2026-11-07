@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { removeChapterMaterialReference, removeCourseChapter } from '../lib/academyCourseEditor';
 import type {
   AcademyCourseChapter,
   AcademyCourseCompletionRequirement,
@@ -60,7 +61,7 @@ function apiErrorMessage(value?: string): string {
     case 'ACADEMY_COURSE_TITLE_INVALID': return 'Gib einen Kurstitel mit höchstens 200 Zeichen ein.';
     case 'ACADEMY_PROGRAM_TITLE_INVALID': return 'Gib einen Programmtitel mit höchstens 200 Zeichen ein.';
     case 'ACADEMY_COURSE_CHAPTER_INVALID': return 'Prüfe für jedes Kapitel Titel, Reihenfolge und Pflichtstatus.';
-    case 'ACADEMY_COURSE_COMPLETION_TARGET_MISSING': return 'Eine Kapitel-Abschlussbedingung verweist auf ein Kapitel, das nicht mehr vorhanden ist.';
+    case 'ACADEMY_COURSE_COMPLETION_TARGET_MISSING': return 'Eine Abschlussbedingung verweist auf ein Kapitel oder Material, das nicht mehr im Kurs enthalten ist.';
     default: return value || 'Die Änderung konnte nicht gespeichert werden. Prüfe deine Eingaben und versuche es erneut.';
   }
 }
@@ -286,14 +287,16 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     const material = materials.find(item => item.master.id === materialId);
     if (!material?.currentVersion || material.master.publicationStatus !== 'published') return;
     setCourseChapters(items => items.map(chapter => chapter.id !== chapterId || chapter.materialReferences.some(reference => reference.materialId === materialId)
-      ? chapter : { ...chapter, materialReferences: [...chapter.materialReferences, { materialId, materialVersionId: material.currentVersion!.id, required: true, order: chapter.materialReferences.length }] }));
+      ? chapter : { ...chapter, materialReferences: [...chapter.materialReferences, { materialId, materialVersionId: material.currentVersion!.id, title: material.currentVersion!.title, versionNumber: material.currentVersion!.versionNumber, required: true, order: chapter.materialReferences.length }] }));
     setCourseDirty(true);
   };
   const removeChapterMaterial = (chapterId: string, materialId: string) => {
-    setCourseChapters(items => items.map(chapter => chapter.id !== chapterId ? chapter : {
-      ...chapter, materialReferences: chapter.materialReferences.filter(reference => reference.materialId !== materialId).map((reference,index)=>({...reference,order:index}))
-    }));
-    setCourseDirty(true);
+    const result = removeChapterMaterialReference(courseChapters, courseRequirements, chapterId, materialId);
+    setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
+  };
+  const removeCourseChapterById = (chapterId: string) => {
+    const result = removeCourseChapter(courseChapters, courseRequirements, chapterId);
+    setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
   };
   const addProgramObjective = () => { if (programObjectives.length < 6) setProgramObjectives(items => [...items, { id: newId('objective'), description: '' }]); setProgramDirty(true); };
   const addProgramCourse = () => {
@@ -409,7 +412,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               {courseChapters.map((item, index) => {
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
                 return <div key={item.id} className="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => { setCourseChapters(items => items.filter(chapter => chapter.id !== item.id).map((chapter, order) => ({ ...chapter, order }))); setCourseRequirements(items => items.filter(requirement => !(requirement.type === 'required_chapter' && requirement.targetId === item.id))); setCourseDirty(true); }}>Kapitel entfernen</button></div>
+                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => removeCourseChapterById(item.id)}>Kapitel entfernen</button></div>
                   <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, title: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={item.required} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, required: event.target.checked } : chapter)); setCourseDirty(true); }} className="mt-1" />Kapitel ist als Pflichtinhalt gekennzeichnet</label>
@@ -425,7 +428,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                     {item.materialReferences.length===0?<p className="text-xs text-slate-500 dark:text-slate-400">Noch keine Materialfassung zugeordnet.</p>:<ul className="divide-y divide-slate-200 dark:divide-slate-800">
                       {item.materialReferences.map(reference=>{const m=materials.find(candidate=>candidate.master.id===reference.materialId);const current=m?.currentVersion?.id===reference.materialVersionId?m.currentVersion:null;
                         return <li key={reference.materialId} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||m?.draft?.title||'Historische Materialreferenz'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?'Version '+current.versionNumber:reference.materialVersionId}</p></div>
+                          <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||reference.title||'Historische Materialfassung'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?.versionNumber||reference.versionNumber?'Version '+(current?.versionNumber||reference.versionNumber):reference.materialVersionId}</p></div>
                           <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={reference.required} onChange={event=>{setCourseChapters(items=>items.map(ch=>ch.id!==item.id?ch:{...ch,materialReferences:ch.materialReferences.map(v=>v.materialId===reference.materialId?{...v,required:event.target.checked}:v)}));setCourseDirty(true);}}/>Erforderlich</label>
                             <button type="button" className={danger} onClick={()=>removeChapterMaterial(item.id,reference.materialId)}>Entfernen</button></div>
                         </li>;

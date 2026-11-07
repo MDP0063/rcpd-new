@@ -17,6 +17,8 @@ function fromSnapshot<T extends AcademyDocument>(collection: AcademyCollection, 
 function buildQuery(database: Firestore, collection: AcademyCollection, query: AcademyQuery = {}): Query {
   assertAcademyQuery(collection, query); let result: Query = database.collection(academyFirestoreCollectionName(collection));
   for (const filter of query.where ?? []) result = result.where(filter.field, '==', filter.value);
+  if (query.orderBy) result = result.orderBy(query.orderBy, query.orderDirection ?? 'asc');
+  if (query.offset !== undefined && query.offset > 0) result = result.offset(query.offset);
   return result.limit(query.limit ?? 1000);
 }
 class FirestoreTransaction implements AcademyTransaction {

@@ -169,6 +169,9 @@ export interface AcademyLearningObjective {
 export interface AcademyCourseMaterialReference {
   materialId: string;
   materialVersionId: string;
+  /** Immutable display snapshot of the pinned published version title. */
+  title?: string;
+  versionNumber?: number;
   required: boolean;
   order: number;
 }
