@@ -169,6 +169,8 @@ export const API_ENDPOINTS = {
   ACADEMY_MATERIAL_DOCUMENT_TYPE: (id: string) => `/api/academy/materials/document-types/${encodeURIComponent(id)}`,
   ACADEMY_MATERIAL_DOCUMENT_TYPE_STATE: (id: string, action: 'archive' | 'restore') => `/api/academy/materials/document-types/${encodeURIComponent(id)}/${action}`,
   ACADEMY_MATERIALS: '/api/academy/materials',
+  ACADEMY_MATERIAL_CATALOG: '/api/academy/materials/catalog',
+  ACADEMY_MATERIAL_CATALOG_ITEM: (id: string) => `/api/academy/materials/catalog/${encodeURIComponent(id)}`,
   ACADEMY_MATERIAL: (id: string) => `/api/academy/materials/${encodeURIComponent(id)}`,
   ACADEMY_MATERIAL_DRAFT: (id: string) => `/api/academy/materials/${encodeURIComponent(id)}/draft`,
   ACADEMY_MATERIAL_PUBLISH: (id: string) => `/api/academy/materials/${encodeURIComponent(id)}/publish`,
