@@ -450,6 +450,13 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     );
     assert.equal(archivedPinnedMaterialContent.status, 200, 'archiving a material must not break an existing pinned course version');
     assert.equal(archivedMaterial.body!.master.publicationStatus, 'archived');
+    const catalogAfterArchive = await request('/api/academy/materials/catalog', admin);
+    assert.equal(catalogAfterArchive.status, 200);
+    assert.equal(catalogAfterArchive.body!.materials.some((item: { id: string }) => item.id === materialId), false,
+      'archived materials must disappear from the public catalog');
+    const publicReaderAfterArchive = await request('/api/academy/materials/catalog/' + materialId, admin);
+    assert.equal(publicReaderAfterArchive.status, 404,
+      'archived materials must not remain accessible through the public reader');
     assert.equal((await request('/api/academy/materials/' + materialId, admin)).body!.versions.length, 2);
 
     const scopeCourse = await request('/api/academy/courses', admin, {
