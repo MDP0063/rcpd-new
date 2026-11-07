@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import {
   BookOpen,
   ExternalLink,
@@ -32,6 +35,7 @@ import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
 import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager';
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
+import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -85,6 +89,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [moduleSortOrder, setModuleSortOrder] = useState<'alphabetical' | 'updated'>('alphabetical');
   const [isLibraryNavigationOpen, setIsLibraryNavigationOpen] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+  const [versionedMaterials, setVersionedMaterials] = useState<AcademyPublicMaterialCatalogItem[]>([]);
+  const [versionedMaterialsLoading, setVersionedMaterialsLoading] = useState(false);
+  const [versionedMaterialsError, setVersionedMaterialsError] = useState('');
+  const [activeVersionedMaterialId, setActiveVersionedMaterialId] = useState<string | null>(null);
+  const [currentVersionedMaterial, setCurrentVersionedMaterial] = useState<AcademyPublicMaterialDetail | null>(null);
+  const [versionedMaterialLoading, setVersionedMaterialLoading] = useState(false);
+  const [versionedMaterialError, setVersionedMaterialError] = useState('');
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   // Interactive Test/Exam Runner State
@@ -138,6 +149,61 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   );
   const [examQuestionsJson, setExamQuestionsJson] = useState('[]');
 
+  useEffect(() => {
+    if (activeTab !== 'modules' || libraryAreaMode !== 'materials') return;
+    let cancelled = false;
+    setVersionedMaterialsLoading(true);
+    setVersionedMaterialsError('');
+    setVersionedMaterials([]);
+    void apiFetch<{ materials: AcademyPublicMaterialCatalogItem[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATALOG)
+      .then(response => {
+        if (cancelled) return;
+        if (!response.ok || !response.data) {
+          setVersionedMaterialsError(response.error || 'Neue Materialien konnten nicht geladen werden.');
+          return;
+        }
+        setVersionedMaterials(Array.isArray(response.data.materials) ? response.data.materials : []);
+      })
+      .catch(() => {
+        if (!cancelled) setVersionedMaterialsError('Neue Materialien konnten nicht geladen werden.');
+      })
+      .finally(() => {
+        if (!cancelled) setVersionedMaterialsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, libraryAreaMode, currentUser.uid, currentUser.role]);
+
+  useEffect(() => {
+    if (!activeVersionedMaterialId) {
+      setCurrentVersionedMaterial(null);
+      setVersionedMaterialLoading(false);
+      setVersionedMaterialError('');
+      return;
+    }
+    let cancelled = false;
+    setCurrentVersionedMaterial(null);
+    setVersionedMaterialLoading(true);
+    setVersionedMaterialError('');
+    void apiFetch<{ material: AcademyPublicMaterialDetail }>(
+      API_ENDPOINTS.ACADEMY_MATERIAL_CATALOG_ITEM(activeVersionedMaterialId)
+    )
+      .then(response => {
+        if (cancelled) return;
+        if (!response.ok || !response.data) {
+          setVersionedMaterialError(response.error || 'Dieses Material ist nicht mehr verfügbar.');
+          return;
+        }
+        setCurrentVersionedMaterial(response.data.material);
+      })
+      .catch(() => {
+        if (!cancelled) setVersionedMaterialError('Dieses Material konnte nicht geladen werden.');
+      })
+      .finally(() => {
+        if (!cancelled) setVersionedMaterialLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeVersionedMaterialId, currentUser.uid, currentUser.role]);
+
   const myProgress = userProgress.filter(p => p.userId === currentUser.uid);
 
   const getModuleProgress = (modId: string) =>
@@ -149,13 +215,37 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const practiceTests = exams.filter(e => e.assessmentStage !== 'final_exam');
   const finalExams = exams.filter(e => e.assessmentStage === 'final_exam');
 
+  const libraryEntries = [
+    ...modules.map(module => ({
+      kind: 'legacy' as const,
+      id: module.id,
+      title: module.title,
+      code: module.code,
+      category: module.category,
+      description: '',
+      documentTypeName: module.pdfFileName || '',
+      updatedIso: module.updatedIso || '',
+      module
+    })),
+    ...versionedMaterials.map(material => ({
+      kind: 'versioned' as const,
+      id: material.id,
+      title: material.title,
+      code: material.code,
+      category: material.categoryName,
+      description: material.description || '',
+      documentTypeName: material.documentTypeName,
+      updatedIso: material.publishedIso,
+      material
+    }))
+  ];
   const normalizedModuleSearch = moduleSearchQuery.trim().toLocaleLowerCase('de-DE');
-  const filteredModules = modules.filter(module => {
+  const filteredLibraryEntries = libraryEntries.filter(entry => {
     if (!normalizedModuleSearch) return true;
-    return [module.title, module.code, module.category, module.pdfFileName || '']
+    return [entry.title, entry.code, entry.category, entry.documentTypeName, entry.description]
       .some(value => value.toLocaleLowerCase('de-DE').includes(normalizedModuleSearch));
   });
-  const sortedModules = [...filteredModules].sort((a, b) => {
+  const sortedLibraryEntries = [...filteredLibraryEntries].sort((a, b) => {
     if (moduleSortOrder === 'updated') {
       const dateA = a.updatedIso ? Date.parse(a.updatedIso) : Number.NaN;
       const dateB = b.updatedIso ? Date.parse(b.updatedIso) : Number.NaN;
@@ -497,6 +587,35 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     );
   };
 
+  const renderVersionedMaterialMarkdown = (markdown: string) => (
+    <div className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSanitize]}
+        components={{
+          h1: ({ children }) => <h1 className="pt-3 pb-2 border-b border-slate-200 dark:border-slate-800 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{children}</h1>,
+          h2: ({ children }) => <h2 className="pt-3 pb-1 border-b border-slate-100 dark:border-slate-800 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h2>,
+          h3: ({ children }) => <h3 className="pt-3 pb-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h3>,
+          h4: ({ children }) => <h4 className="pt-2 text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{children}</h4>,
+          p: ({ children }) => <p className="my-3 leading-7">{children}</p>,
+          ul: ({ children }) => <ul className="my-3 list-disc space-y-1 pl-6">{children}</ul>,
+          ol: ({ children }) => <ol className="my-3 list-decimal space-y-1 pl-6">{children}</ol>,
+          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+          blockquote: ({ children }) => <blockquote className="my-4 border-l-4 border-slate-300 pl-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
+          a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
+          pre: ({ children }) => <pre className="my-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">{children}</pre>,
+          code: ({ children, className }) => <code className={className || 'rounded bg-slate-100 px-1 py-0.5 text-sm dark:bg-slate-800'}>{children}</code>,
+          table: ({ children }) => <div className="my-4 overflow-x-auto"><table className="min-w-full border-collapse text-sm">{children}</table></div>,
+          th: ({ children }) => <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
+          td: ({ children }) => <td className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>,
+          img: ({ alt }) => <span role="note" className="inline-block rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Externes Bild nicht geladen{alt ? ' (' + alt + ')' : ''}.</span>
+        }}
+      >
+        {markdown}
+      </ReactMarkdown>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       <header className="space-y-1">
@@ -616,7 +735,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <AcademyMaterialManagementCenter currentUser={currentUser} onStatusToast={onStatusToast} />
           ) : (
           <div>
-          {modules.length === 0 ? (
+          {modules.length === 0 && versionedMaterials.length === 0 && !versionedMaterialsLoading && !versionedMaterialsError ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center space-y-4 shadow-xs">
               <BookOpen className="w-10 h-10 text-sky-600 mx-auto" />
               <div className="space-y-1.5">
@@ -628,15 +747,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 </p>
               </div>
             </div>
-          ) : !currentModule ? (
+          ) : !currentModule && !activeVersionedMaterialId ? (
             <section aria-labelledby="academy-library-heading" className="space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div>
                   <h2 id="academy-library-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Lernbibliothek</h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Alle für dich zugänglichen veröffentlichten Materialien an einem Ort.</p>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{filteredModules.length} von {modules.length} Materialien</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} von {libraryEntries.length} Materialien</p>
               </div>
+              {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
+              {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
               <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
                 <div>
                   <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
@@ -650,17 +771,28 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   </select>
                 </div>
               </div>
-              {sortedModules.length === 0 ? (
-                <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
+              {sortedLibraryEntries.length === 0 ? (
+                versionedMaterialsLoading ? null : (
+                  <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
+                )
               ) : (
                 <div className="border-y border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800" aria-label="Bibliotheksmaterialien">
-                  {sortedModules.map(module => (
-                    <button key={module.id} type="button" onClick={() => { setActiveModuleId(module.id); setIsLibraryNavigationOpen(false); }} className="w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
+                  {sortedLibraryEntries.map(entry => (
+                    <button key={entry.kind + ':' + entry.id} type="button" onClick={() => {
+                      if (entry.kind === 'legacy') {
+                        setActiveVersionedMaterialId(null);
+                        setActiveModuleId(entry.id);
+                      } else {
+                        setActiveModuleId(null);
+                        setActiveVersionedMaterialId(entry.id);
+                      }
+                      setIsLibraryNavigationOpen(false);
+                    }} className="w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
                       <span className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <span className="font-medium text-sm text-slate-900 dark:text-white">{module.title}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{module.code}</span>
+                        <span className="font-medium text-sm text-slate-900 dark:text-white">{entry.title}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{entry.code}</span>
                       </span>
-                      <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">{module.category}{module.pdfFileName ? ` · ${module.pdfFileName}` : ''}</span>
+                      <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">{entry.category}{entry.documentTypeName ? ` · ${entry.documentTypeName}` : ''}</span>
                     </button>
                   ))}
                 </div>
@@ -673,14 +805,24 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
                   <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
-                  {filteredModules.length === 0 ? <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p> : (
+                  {filteredLibraryEntries.length === 0 ? <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p> : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {filteredModules.map(mod => {
-                        const isSelected = currentModule?.id === mod.id;
-                        return <button key={mod.id} type="button" onClick={() => setActiveModuleId(mod.id)} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
-                          <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{mod.code}</span>
-                          <span className="block mt-1 text-sm font-semibold text-slate-900 dark:text-white">{mod.title}</span>
-                          <span className="block mt-0.5 text-xs text-slate-600 dark:text-slate-400">{mod.category}</span>
+                      {filteredLibraryEntries.map(entry => {
+                        const isSelected = entry.kind === 'legacy'
+                          ? currentModule?.id === entry.id
+                          : activeVersionedMaterialId === entry.id;
+                        return <button key={entry.kind + ':' + entry.id} type="button" onClick={() => {
+                          if (entry.kind === 'legacy') {
+                            setActiveVersionedMaterialId(null);
+                            setActiveModuleId(entry.id);
+                          } else {
+                            setActiveModuleId(null);
+                            setActiveVersionedMaterialId(entry.id);
+                          }
+                        }} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
+                          <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{entry.code}</span>
+                          <span className="block mt-1 text-sm font-semibold text-slate-900 dark:text-white">{entry.title}</span>
+                          <span className="block mt-0.5 text-xs text-slate-600 dark:text-slate-400">{entry.category}{entry.documentTypeName ? ` · ${entry.documentTypeName}` : ''}</span>
                         </button>;
                       })}
                     </div>
@@ -689,7 +831,48 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               )}
               {/* Right 8 Cols: Viewer */}
               <div className={isLibraryNavigationOpen ? 'lg:col-span-8' : 'w-full'}>
-                {currentModule && (
+                {activeVersionedMaterialId ? (
+                  versionedMaterialLoading ? (
+                    <p role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300">Material wird geladen …</p>
+                  ) : currentVersionedMaterial ? (
+                    <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
+                            <span>{currentVersionedMaterial.code}</span>
+                            <span>·</span>
+                            <span>{currentVersionedMaterial.categoryName}</span>
+                            <span>·</span>
+                            <span>{currentVersionedMaterial.documentTypeName}</span>
+                          </div>
+                          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{currentVersionedMaterial.title}</h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {currentVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {currentVersionedMaterial.versionNumber}</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
+                          <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
+                            {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
+                          </button>
+                        </div>
+                      </div>
+                      {currentVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{currentVersionedMaterial.description}</p>}
+                      {currentVersionedMaterial.contentFormat === 'markdown'
+                        ? renderVersionedMaterialMarkdown(currentVersionedMaterial.content)
+                        : (
+                          <div className="space-y-2">
+                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">QUELLCODE · WIRD NICHT AUSGEFÜHRT</p>
+                            <pre className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
+                          </div>
+                        )}
+                      <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
+                    </article>
+                  ) : (
+                    <div role="alert" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
+                      <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
+                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
+                    </div>
+                  )
+                ) : currentModule && (
                   ROLE_HIERARCHY[currentUser.role].rankOrder >
                   ROLE_HIERARCHY[currentModule.requiredRole].rankOrder ? (
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 space-y-3 shadow-xs">
