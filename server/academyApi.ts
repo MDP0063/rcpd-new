@@ -405,6 +405,94 @@ export function createAcademyApiRouter(
     } catch (error) { fail(res, error, next); }
   });
 
+  // Öffentlicher Lernbibliothekskatalog: ausschließlich freigegebene aktuelle Versionen.
+  // Diese Routen bleiben bewusst getrennt von der administrativen Materialverwaltung.
+  router.get('/materials/catalog', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const [masters, categories, documentTypes] = await Promise.all([
+        repository.list<AcademyMaterialMasterDoc>('academy_materials'),
+        repository.list<AcademyMaterialCategoryDoc>('academy_material_categories'),
+        repository.list<AcademyMaterialDocumentTypeDoc>('academy_material_document_types')
+      ]);
+      const categoriesById = new Map(categories.map(category => [category.id, category]));
+      const documentTypesById = new Map(documentTypes.map(documentType => [documentType.id, documentType]));
+      const publishedMasters = masters.filter(master =>
+        master.publicationStatus === 'published' && Boolean(master.currentPublishedVersionId)
+      );
+      const rows = await Promise.all(publishedMasters.map(async master => {
+        const version = await repository.get<AcademyMaterialVersionDoc>(
+          'academy_material_versions', master.currentPublishedVersionId!
+        );
+        if (!version || version.materialId !== master.id ||
+            !canReadMaterialRole(actor.role, version.requiredRole)) return null;
+        const category = categoriesById.get(version.categoryId);
+        const documentType = documentTypesById.get(version.documentTypeId);
+        const item: AcademyPublicMaterialCatalogItem = {
+          id: master.id,
+          code: master.code,
+          title: version.title,
+          ...(version.description === undefined ? {} : { description: version.description }),
+          categoryId: version.categoryId,
+          categoryName: category?.name || 'Kategorie nicht verfügbar',
+          documentTypeId: version.documentTypeId,
+          documentTypeName: documentType?.name || 'Dokumenttyp nicht verfügbar',
+          ...(version.requiredRole === undefined ? {} : { requiredRole: version.requiredRole }),
+          contentFormat: version.contentFormat,
+          versionId: version.id,
+          versionNumber: version.versionNumber,
+          publishedIso: version.publishedIso
+        };
+        return item;
+      }));
+      const materials = rows.filter((item): item is AcademyPublicMaterialCatalogItem => item !== null);
+      materials.sort((a, b) => a.title.localeCompare(b.title, 'de-DE'));
+      res.json({ materials });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  // Der Reader lädt ausschließlich die vom Materialstammsatz referenzierte veröffentlichte Version.
+  router.get('/materials/catalog/:materialId', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyMaterialMasterDoc>('academy_materials', req.params.materialId);
+      if (!master || master.publicationStatus !== 'published' || !master.currentPublishedVersionId) {
+        res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return;
+      }
+      const version = await repository.get<AcademyMaterialVersionDoc>(
+        'academy_material_versions', master.currentPublishedVersionId
+      );
+      if (!version || version.materialId !== master.id ||
+          !canReadMaterialRole(actor.role, version.requiredRole)) {
+        res.status(404).json({ error: 'ACADEMY_MATERIAL_NOT_FOUND' }); return;
+      }
+      const [category, documentType] = await Promise.all([
+        repository.get<AcademyMaterialCategoryDoc>('academy_material_categories', version.categoryId),
+        repository.get<AcademyMaterialDocumentTypeDoc>('academy_material_document_types', version.documentTypeId)
+      ]);
+      const material: AcademyPublicMaterialDetail = {
+        id: master.id,
+        code: master.code,
+        title: version.title,
+        ...(version.description === undefined ? {} : { description: version.description }),
+        categoryId: version.categoryId,
+        categoryName: category?.name || 'Kategorie nicht verfügbar',
+        documentTypeId: version.documentTypeId,
+        documentTypeName: documentType?.name || 'Dokumenttyp nicht verfügbar',
+        ...(version.requiredRole === undefined ? {} : { requiredRole: version.requiredRole }),
+        contentFormat: version.contentFormat,
+        versionId: version.id,
+        versionNumber: version.versionNumber,
+        publishedIso: version.publishedIso,
+        content: version.content,
+        ...(version.codeLanguage === undefined ? {} : { codeLanguage: version.codeLanguage })
+      };
+      res.json({ material });
+    } catch (error) { fail(res, error, next); }
+  });
+
   router.get('/materials', async (req, res, next) => {
     try {
       const actor = getActor(req, res);
