@@ -147,7 +147,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [examQuestionsJson, setExamQuestionsJson] = useState('[]');
 
   useEffect(() => {
-    if (activeTab !== 'modules') return;
+    if (activeTab !== 'modules' || libraryAreaMode !== 'materials') return;
     let cancelled = false;
     setVersionedMaterialsLoading(true);
     setVersionedMaterialsError('');
@@ -168,7 +168,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         if (!cancelled) setVersionedMaterialsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [activeTab, currentUser.uid, currentUser.role]);
+  }, [activeTab, libraryAreaMode, currentUser.uid, currentUser.role]);
 
   useEffect(() => {
     if (!activeVersionedMaterialId) {
