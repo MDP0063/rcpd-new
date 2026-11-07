@@ -153,6 +153,29 @@ export interface AcademyMaterialListItem {
   currentVersion: AcademyMaterialVersionSummary | null;
 }
 
+/** Public catalog projection. Contains only metadata from the current published version. */
+export interface AcademyPublicMaterialCatalogItem {
+  id: string;
+  code: string;
+  title: string;
+  description?: string;
+  categoryId: string;
+  categoryName: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  requiredRole?: OfficerRole;
+  contentFormat: AcademyMaterialContentFormat;
+  versionId: string;
+  versionNumber: number;
+  publishedIso: string;
+}
+
+/** Reader projection for the exact current published version; drafts and audit UIDs are never exposed. */
+export interface AcademyPublicMaterialDetail extends AcademyPublicMaterialCatalogItem {
+  content: string;
+  codeLanguage?: string;
+}
+
 export type AcademyCompletionEvidenceType =
   | 'required_chapter'
   | 'required_material'
