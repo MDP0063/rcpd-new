@@ -42,11 +42,14 @@ type ParticipantCorrectionView = Pick<
   AcademyCompletionCorrectionDoc,
   'id' | 'participationId' | 'previousStatus' | 'correctedStatus' | 'correctedIso' | 'invalidatedEvidenceIds'
 >;
+type ParticipantEvidenceView = Omit<AcademyProgressEvidenceDoc, 'recordedByUid'> & {
+  recordedByParticipant: boolean;
+};
 
 interface CourseParticipationDetail {
   participation: AcademyCourseParticipationDoc;
   version: ParticipantCourseVersion;
-  evidence: AcademyProgressEvidenceDoc[];
+  evidence: ParticipantEvidenceView[];
   corrections: ParticipantCorrectionView[];
   materials: AcademyCourseMaterialReaderItem[];
 }
@@ -466,7 +469,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               </div>
                               <span className="text-xs font-semibold">{matching.length ? 'Nachweis vorhanden' : 'Offen'}</span>
                             </div>
-                            {matching.map(item => <p key={item.id} className="text-xs text-slate-500 dark:text-slate-400">Erfasst am {dateLabel(item.recordedIso)} · {item.evidenceType === 'accepted_self_confirmation' ? 'Selbstbestätigung' : item.recordedByUid === currentUser.uid ? 'Dein Nachweis' : 'Ausbildernachweis'}</p>)}
+                            {matching.map(item => <p key={item.id} className="text-xs text-slate-500 dark:text-slate-400">Erfasst am {dateLabel(item.recordedIso)} · {item.evidenceType === 'accepted_self_confirmation' ? 'Selbstbestätigung' : item.recordedByParticipant ? 'Dein Nachweis' : 'Ausbildernachweis'}</p>)}
                             {!matching.length && selfConfirmable && requirement.required && (
                               <button type="button" className={secondary} disabled={saving} onClick={() => void recordEvidence(requirement.id, requirement.description || requirement.targetId)}>
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
