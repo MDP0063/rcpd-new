@@ -233,3 +233,15 @@ test('Backup bewahrt nicht startbare interaktive Legacy-Versionen ohne Fragen', 
   snapshot.collections.exam_attempts = [];
   assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
 });
+
+test('Backup bewahrt nicht startbare strukturierte Legacy-Versionen mit ungültigem Altinhalt', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].startable = false;
+  snapshot.collections.exam_versions[0].startable = false;
+  snapshot.collections.exam_versions[0].questionsSnapshot = [{
+    id: 'question-1', type: 'true_false', question: 'Ungültige Altdaten',
+    pointsMilli: 1000
+  }];
+  snapshot.collections.exam_attempts = [];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
