@@ -127,25 +127,6 @@ export default function App() {
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initialLoadCompleteRef = useRef<boolean>(false);
 
-  const invalidateSession = useCallback((uid: string, generation: number, error?: string) => {
-    if (activeSessionUidRef.current !== uid || sessionGenerationRef.current !== generation) return;
-
-    activeSessionUidRef.current = null;
-    sessionGenerationRef.current += 1;
-    portalStateRequestControllerRef.current?.abort();
-    portalStateRequestControllerRef.current = null;
-    initialLoadCompleteRef.current = false;
-    seenNotificationIdsRef.current.clear();
-
-    setAuthToken(null);
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-    setSessionUid(null);
-    setCurrentUserProfile(null);
-    setIsAdmin(false);
-    clearPortalData();
-    if (error) setAuthError(error);
-  }, [clearPortalData]);
-
   // Login State
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -214,6 +195,25 @@ export default function App() {
     setSettingsDivision('');
     setSettingsBio('');
   }, []);
+
+  const invalidateSession = useCallback((uid: string, generation: number, error?: string) => {
+    if (activeSessionUidRef.current !== uid || sessionGenerationRef.current !== generation) return;
+
+    activeSessionUidRef.current = null;
+    sessionGenerationRef.current += 1;
+    portalStateRequestControllerRef.current?.abort();
+    portalStateRequestControllerRef.current = null;
+    initialLoadCompleteRef.current = false;
+    seenNotificationIdsRef.current.clear();
+
+    setAuthToken(null);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setSessionUid(null);
+    setCurrentUserProfile(null);
+    setIsAdmin(false);
+    clearPortalData();
+    if (error) setAuthError(error);
+  }, [clearPortalData]);
 
   const toastTimerRef = useRef<number | null>(null);
   const triggerToast = useCallback((msg: string) => {
