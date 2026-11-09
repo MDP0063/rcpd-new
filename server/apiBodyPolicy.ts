@@ -5,16 +5,19 @@ export type AuthenticatedApiBodyPolicy = 'standard' | 'large' | 'exam-autosave' 
  * request to allocate a 25 MB JSON body buffer.
  */
 export function getAuthenticatedApiBodyPolicy(method: string, path: string): AuthenticatedApiBodyPolicy {
-  if (method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(path)) {
+  const normalizedMethod = method.toUpperCase();
+  const normalizedPath = (path.length > 1 ? path.replace(/\\/+$/, '') : path).toLowerCase();
+
+  if (normalizedMethod === 'PUT' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/autosave$/.test(normalizedPath)) {
     return 'exam-autosave';
   }
-  if (method === 'POST' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(path)) {
+  if (normalizedMethod === 'POST' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(normalizedPath)) {
     return 'exam-submit';
   }
   if (
-    (method === 'POST' && path === '/academy/modules') ||
-    (method === 'PUT' && /^\/academy\/modules\/[^/]+$/.test(path)) ||
-    (method === 'POST' && path === '/admin/restore')
+    (normalizedMethod === 'POST' && normalizedPath === '/academy/modules') ||
+    (normalizedMethod === 'PUT' && /^\\/academy\\/modules\\/[^/]+$/.test(normalizedPath)) ||
+    (normalizedMethod === 'POST' && normalizedPath === '/admin/restore')
   ) {
     return 'large';
   }
