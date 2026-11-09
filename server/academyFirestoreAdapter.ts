@@ -84,11 +84,11 @@ export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
       const collections = {} as AcademyRepositoryBackupSnapshot['collections'];
       for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
         const snapshot = await transaction.get(this.database.collection(academyFirestoreCollectionName(collection)));
-        collections[collection] = snapshot.docs.map(document => {
+        (collections as unknown as Record<string, unknown>)[collection] = snapshot.docs.map(document => {
           const data = fromSnapshot(collection, document);
           if (!data) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID');
           return data;
-        }) as typeof collections[typeof collection];
+        });
       }
       return { formatVersion: 1, collections };
     });
