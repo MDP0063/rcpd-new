@@ -910,6 +910,21 @@ async function saveDatabaseAndWait(state: PortalDatabaseState): Promise<void> {
   if (store) await store.flushStrict();
 }
 
+/**
+ * After a PDF write is durably stored, reload the small metadata-only state so the large
+ * base64 payload is not retained in the long-lived Firestore-backed server memory.
+ */
+async function saveDatabaseAndReleasePdfPayload(state: PortalDatabaseState): Promise<void> {
+  if (!store) {
+    saveDatabase(state);
+    return;
+  }
+  await saveDatabaseAndWait(state);
+  const reloaded = await store.loadAll();
+  if (!reloaded) throw new Error('FIRESTORE_STATE_RELOAD_FAILED');
+  memoryState = reloaded as unknown as PortalDatabaseState;
+}
+
 /** Prüft die Felder eines Lehrmaterials. Gibt eine Fehlermeldung zurück oder null. */
 function validateModuleFields(
   fields: { title?: unknown; externalUrl?: unknown; pdfDataUrl?: unknown; requiredRole?: unknown },
@@ -3035,7 +3050,7 @@ async function startServer() {
   });
 
   // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
-  app.post('/api/academy/modules', (req, res) => {
+  app.post('/api/academy/modules', async (req, res) => {
     const {
       title,
       code,
@@ -3098,11 +3113,21 @@ async function startServer() {
       `${newMod.code} — ${newMod.title}`,
       `Format: ${newMod.embedType} · Mindest-Rang: ${newMod.requiredRole.toUpperCase()}`
     );
-    saveDatabase(dbState);
-    res.json({ module: newMod });
+    if (store && newMod.pdfDataUrl) {
+      try {
+        await saveDatabaseAndReleasePdfPayload(dbState);
+      } catch (error) {
+        console.error('[Firestore] PDF-Dokument konnte nicht dauerhaft gespeichert werden:', error);
+        res.status(503).json({ error: 'Das Dokument konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
+        return;
+      }
+    } else {
+      saveDatabase(dbState);
+    }
+    res.json({ module: toClientModule(newMod) });
   });
 
-  app.put('/api/academy/modules/:modId', (req, res) => {
+  app.put('/api/academy/modules/:modId', async (req, res) => {
     const { modId } = req.params;
     const {
       title,
@@ -3186,8 +3211,18 @@ async function startServer() {
       `${dbState.modules[idx].code} — ${dbState.modules[idx].title}`,
       `Aktualisiert durch ${caller.publicProfile.displayName}`
     );
-    saveDatabase(dbState);
-    res.json({ module: toClientModule(dbState.modules[idx]) });
+    if (store && updatedModule.pdfDataUrl) {
+      try {
+        await saveDatabaseAndReleasePdfPayload(dbState);
+      } catch (error) {
+        console.error('[Firestore] PDF-Dokument konnte nicht dauerhaft gespeichert werden:', error);
+        res.status(503).json({ error: 'Das Dokument konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
+        return;
+      }
+    } else {
+      saveDatabase(dbState);
+    }
+    res.json({ module: toClientModule(updatedModule) });
   });
 
   app.get('/api/academy/modules/:modId/pdf', async (req, res) => {
