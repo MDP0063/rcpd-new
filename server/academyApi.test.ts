@@ -394,6 +394,19 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const enrichedCourseList = await request('/api/academy/courses', admin);
     const enrichedCourse = enrichedCourseList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseWithMaterialId);
     assert.equal(enrichedCourse.draft.chapters[0].materialReferences[0].title, 'Operations Handbook');
+    assert.equal(typeof enrichedCourse.master.ownerUid, 'string');
+    assert.equal(typeof enrichedCourse.version.publishedByUid, 'string');
+    const participantCourseList = await request('/api/academy/courses', officer);
+    const participantCourse = participantCourseList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseWithMaterialId);
+    assert.equal('ownerUid' in participantCourse.master, false);
+    assert.equal('archivedByUid' in participantCourse.master, false);
+    assert.equal('archiveReason' in participantCourse.master, false);
+    assert.equal('createdByUid' in participantCourse.version, false);
+    assert.equal('publishedByUid' in participantCourse.version, false);
+    const participantCourseDetail = await request('/api/academy/courses/' + courseWithMaterialId, officer);
+    assert.equal(participantCourseDetail.status, 200);
+    assert.equal('ownerUid' in participantCourseDetail.body!.master, false);
+    assert.equal('publishedByUid' in participantCourseDetail.body!.version, false);
     assert.equal(enrichedCourse.draft.chapters[0].materialReferences[0].versionNumber, 1);
 
     const readerParticipation = await request('/api/academy/courses/' + courseWithMaterialId + '/participations', officer, { method: 'POST' });
@@ -403,6 +416,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(readerDetail.status, 200, JSON.stringify(readerDetail.body));
     assert.equal(readerDetail.body!.materials[0].accessStatus, 'available');
     assert.equal(readerDetail.body!.materials[0].materialVersionId, materialVersion1Id);
+    assert.equal('publishedByUid' in readerDetail.body!.version, false);
+    assert.equal('createdByUid' in readerDetail.body!.version, false);
     const pinnedMaterialContent = await request(
       '/api/academy/participations/' + readerParticipationId + '/materials/' + materialId + '/versions/' + materialVersion1Id,
       officer
@@ -776,6 +791,20 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ expectedRevision: 1 })
     });
     assert.equal(publishedProgram.status, 201, JSON.stringify(publishedProgram.body));
+    const managerProgramList = await request('/api/academy/programs', admin);
+    const managerProgram = managerProgramList.body!.programs.find((item: { master: { id: string } }) => item.master.id === programId);
+    assert.equal(typeof managerProgram.master.ownerUid, 'string');
+    assert.equal(typeof managerProgram.version.publishedByUid, 'string');
+    const participantProgramList = await request('/api/academy/programs', officer);
+    const participantProgram = participantProgramList.body!.programs.find((item: { master: { id: string } }) => item.master.id === programId);
+    assert.equal('ownerUid' in participantProgram.master, false);
+    assert.equal('archivedByUid' in participantProgram.master, false);
+    assert.equal('archiveReason' in participantProgram.master, false);
+    assert.equal('publishedByUid' in participantProgram.version, false);
+    const participantProgramDetail = await request('/api/academy/programs/' + programId, officer);
+    assert.equal(participantProgramDetail.status, 200);
+    assert.equal('ownerUid' in participantProgramDetail.body!.master, false);
+    assert.equal('publishedByUid' in participantProgramDetail.body!.version, false);
 
     const programStarted = await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' });
     assert.equal(programStarted.status, 201, JSON.stringify(programStarted.body));
@@ -791,6 +820,9 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(programDetail.body!.progress.completedRequiredCourseCount, 1);
     assert.equal(programDetail.body!.progress.completionPercentage, 100);
     assert.equal(programDetail.body!.progress.status, 'completed');
+    assert.equal('publishedByUid' in programDetail.body!.version, false);
+    assert.equal('createdByUid' in programDetail.body!.version, false);
+    assert.equal('publishedByUid' in programDetail.body!.requiredCourses[0].version, false);
     assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
     assert.equal((await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' })).status, 409);
 
