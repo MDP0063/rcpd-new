@@ -181,7 +181,11 @@ const firestoreProgramDraft: AcademyProgramDraftDoc = {
   programId: firestoreProgramMaster.id,
   title: 'Firestore Testlehrgang',
   summary: '',
-  learningObjectives: [{ id: 'goal-1', description: 'Testziel' }],
+  learningObjectives: [
+    { id: 'goal-1', description: 'Testziel eins' },
+    { id: 'goal-2', description: 'Testziel zwei' },
+    { id: 'goal-3', description: 'Testziel drei' }
+  ],
   courseReferences: [{ courseId: 'course-1', requirement: 'required', order: 0 }],
   workingRevision: 1,
   updatedIso: transactionTestIso,
