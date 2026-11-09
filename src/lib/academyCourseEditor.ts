@@ -17,3 +17,30 @@ export function removeCourseChapter(chapters: AcademyCourseChapter[], requiremen
     return true;
   }) };
 }
+
+
+export function updateCourseChapterTitle(
+  chapters: AcademyCourseChapter[],
+  requirements: AcademyCourseCompletionRequirement[],
+  chapterId: string,
+  title: string
+) {
+  const current = chapters.find(chapter => chapter.id === chapterId);
+  if (!current) return { chapters, requirements };
+  const previousLabels = new Set([
+    'Kapitel abgeschlossen',
+    'Kapitel abgeschlossen: ' + current.title,
+    'Kapitel abgeschlossen: ' + current.title.trim()
+  ]);
+  const nextLabel = title.trim() ? 'Kapitel abgeschlossen: ' + title.trim() : 'Kapitel abgeschlossen';
+  return {
+    chapters: chapters.map(chapter => chapter.id === chapterId ? { ...chapter, title } : chapter),
+    requirements: requirements.map(requirement =>
+      requirement.type === 'required_chapter' &&
+      requirement.targetId === chapterId &&
+      previousLabels.has(requirement.description || '')
+        ? { ...requirement, description: nextLabel }
+        : requirement
+    )
+  };
+}
