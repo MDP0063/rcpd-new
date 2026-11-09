@@ -6,17 +6,29 @@ export type AuthenticatedApiBodyPolicy = 'standard' | 'large' | 'exam-autosave' 
  */
 export function getAuthenticatedApiBodyPolicy(method: string, path: string): AuthenticatedApiBodyPolicy {
   const normalizedMethod = method.toUpperCase();
-  const normalizedPath = (path.length > 1 ? path.replace(/\\/+$/, '') : path).toLowerCase();
+  const normalizedPath = (path.length > 1 ? path.replace(/\/+$/, '') : path).toLowerCase();
+  const segments = normalizedPath.split('/').filter(Boolean);
+  const isExamAttemptRoute =
+    segments.length === 6 &&
+    segments[0] === 'academy' &&
+    segments[1] === 'exams' &&
+    Boolean(segments[2]) &&
+    segments[3] === 'attempts' &&
+    Boolean(segments[4]);
 
-  if (normalizedMethod === 'PUT' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/autosave$/.test(normalizedPath)) {
+  if (normalizedMethod === 'PUT' && isExamAttemptRoute && segments[5] === 'autosave') {
     return 'exam-autosave';
   }
-  if (normalizedMethod === 'POST' && /^\\/academy\\/exams\\/[^/]+\\/attempts\\/[^/]+\\/submit$/.test(normalizedPath)) {
+  if (normalizedMethod === 'POST' && isExamAttemptRoute && segments[5] === 'submit') {
     return 'exam-submit';
   }
   if (
     (normalizedMethod === 'POST' && normalizedPath === '/academy/modules') ||
-    (normalizedMethod === 'PUT' && /^\\/academy\\/modules\\/[^/]+$/.test(normalizedPath)) ||
+    (normalizedMethod === 'PUT' &&
+      segments.length === 3 &&
+      segments[0] === 'academy' &&
+      segments[1] === 'modules' &&
+      Boolean(segments[2])) ||
     (normalizedMethod === 'POST' && normalizedPath === '/admin/restore')
   ) {
     return 'large';
