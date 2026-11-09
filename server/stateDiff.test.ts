@@ -160,6 +160,23 @@ test('große PDF-Felder werden zerlegt, wieder zusammengesetzt und beim Löschen
   assert.equal(gone.ops.filter(o => o.kind === 'delete' && o.path.startsWith('blobs/')).length, 2);
 });
 
+test('Firestore-Startup kann PDF-Blob-Chunks während der Rekonstruktion freigeben', () => {
+  const index: PersistIndex = new Map();
+  const state = baseState();
+  const pdf = 'x'.repeat(CHUNK_SIZE * 2 + 5);
+  state.modules = [{ id: 'mod_lazy', title: 'Legacy-Handbuch', pdfDataUrl: pdf }];
+  const store = new Map<string, Doc>();
+  const plan = planWrites(index, state, 0);
+  const raw = applyToFake(plan.ops, store);
+  plan.commit();
+
+  assert.ok(raw.blobs.size > 0);
+  const loaded = assembleState(raw, 1, { consumeBlobs: true });
+  assert.ok(loaded);
+  assert.equal((loaded.state.modules as Doc[])[0].pdfDataUrl, pdf);
+  assert.equal(raw.blobs.size, 0);
+});
+
 test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalten', () => {
   const index: PersistIndex = new Map();
   const state = baseState();
