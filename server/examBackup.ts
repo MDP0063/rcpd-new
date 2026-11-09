@@ -3,7 +3,7 @@ import { legacyVerificationId, validateLegacyVerification } from './examLegacy.t
 import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
 import type { ExamCollection, ExamDocument, ExamRepositorySnapshot } from './examRepositoryTypes.ts';
 import type { LegacyVerificationDoc } from './examTypes.ts';
-import { normalizeCourseCode } from './examValidate.ts';
+import { normalizeCourseCode, validateExamForPublication } from './examValidate.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -73,6 +73,20 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (version.assessmentStage !== 'test' && version.assessmentStage !== 'final_exam') {
       return fail('EXAM_BACKUP_VERSION_ASSESSMENT_STAGE_INVALID');
     }
+    if (!Number.isSafeInteger(version.minClearance) || Number(version.minClearance) < 0) {
+      return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
+    }
+    const versionValidation = validateExamForPublication({
+      title: version.title,
+      assessmentStage: version.assessmentStage,
+      timeLimitMinutes: version.timeLimitMinutes,
+      passingScoreBasisPoints: version.passingScoreBasisPoints,
+      maxAttempts: version.maxAttempts,
+      prerequisites: version.prerequisites ?? [],
+      assignedCourseCodes: version.historicalAssignedCourseCodes,
+      questions: version.questionsSnapshot
+    });
+    if (!versionValidation.ok) return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
     const history = versionsByExamId.get(version.examId) ?? [];
     history.push(version);
     versionsByExamId.set(version.examId, history);
