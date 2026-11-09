@@ -968,6 +968,17 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(officerNote.status, 201, JSON.stringify(officerNote.body));
     const officerNoteId = officerNote.body!.note.id as string;
+    assert.equal(officerNote.body!.note.revision, 1);
+    const firstNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({ expectedRevision: 1, content: 'Aktualisierte private Notiz' })
+    });
+    assert.equal(firstNoteEdit.status, 200, JSON.stringify(firstNoteEdit.body));
+    assert.equal(firstNoteEdit.body!.note.revision, 2);
+    const staleNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({ expectedRevision: 1, content: 'Veralteter Schreibversuch' })
+    });
+    assert.equal(staleNoteEdit.status, 409);
+    assert.equal((await request('/api/academy/notes', officer)).body!.notes[0].content, 'Aktualisierte private Notiz');
 
     const adminNotes = await request('/api/academy/notes', admin);
     assert.deepEqual(adminNotes.body!.notes.map((note: { ownerUid: string }) => note.ownerUid), ['academy-admin']);
