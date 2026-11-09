@@ -295,6 +295,22 @@ export function validateCourseVersion(
   return { ok: true };
 }
 
+
+export function validateCourseVersionForPublication(
+  courseId: string,
+  version: AcademyCourseVersionDoc
+): AcademyValidationResult {
+  const result = validateCourseVersion(courseId, version);
+  if (!result.ok) return result;
+  if (!version.completionRequirements.some(requirement => requirement.required)) {
+    return invalid(
+      'ACADEMY_COURSE_COMPLETION_REQUIREMENT_REQUIRED',
+      'Eine Kursversion benötigt mindestens eine ausdrücklich erforderliche Abschlussbedingung.'
+    );
+  }
+  return { ok: true };
+}
+
 export function validateCourseDraft(courseId: string, draft: AcademyCourseDraftDoc): AcademyValidationResult {
   if (!isRecord(draft)) return invalid('ACADEMY_COURSE_DRAFT_INVALID', 'Der Kursentwurf ist ungültig.');
   if (!isNonEmpty(courseId) || draft.id !== courseId || draft.courseId !== courseId ||
