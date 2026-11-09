@@ -144,9 +144,11 @@ test('große PDF-Felder werden zerlegt, wieder zusammengesetzt und beim Löschen
 
   const raw = applyToFake(plan.ops, store);
   plan.commit();
+  const blobCountBeforeLoad = raw.blobs.size;
   const loaded = assembleState(raw, 1)!;
   assert.ok(loaded);
   assert.equal((loaded.state.modules as Doc[])[0].pdfDataUrl, pdf);
+  assert.equal(raw.blobs.size, blobCountBeforeLoad, 'default assembly must preserve the caller-owned blob map');
   assert.equal(planWrites(loaded.index, loaded.state, 2).ops.length, 0);
 
   // PDF verkleinern: überzählige Teilstücke werden gelöscht
