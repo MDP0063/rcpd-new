@@ -21,7 +21,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
-import { canReadModule, shouldRefreshPresence } from './server/access.ts';
+import { canReadModule, refreshAccountPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import {
   createFirestoreExamRepository,
@@ -1107,7 +1107,7 @@ async function startServer() {
     const isExamWrite =
       (req.method === 'POST' && req.path === '/requests' && req.body?.category === 'exam_workshop_access') ||
       (req.method === 'PUT' && /^\/requests\/[^/]+\/review$/.test(req.path) &&
-        (loadDatabase().requests || []).some(item => item.id === req.path.split('/')[2] && item.category === 'exam_workshop_access')) ||
+        (peekDatabase().requests || []).some(item => item.id === req.path.split('/')[2] && item.category === 'exam_workshop_access')) ||
       (req.method === 'POST' && (
         [
           '/academy/exams',
@@ -1154,7 +1154,7 @@ async function startServer() {
   app.use('/api/academy', createAcademyApiRouter(
     academyRepository,
     uid => {
-      const account = loadDatabase().accounts.find(item => item.uid === uid);
+      const account = peekDatabase().accounts.find(item => item.uid === uid);
       return account ? {
         uid: account.uid,
         role: account.publicProfile.role,
@@ -1178,7 +1178,7 @@ async function startServer() {
   function getExamWorkshopAccount(res: express.Response): StoredAccountRecord | null {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
-    return loadDatabase().accounts.find(account => account.uid === sessionUid) || null;
+    return peekDatabase().accounts.find(account => account.uid === sessionUid) || null;
   }
 
   function getExamWorkshopActor(res: express.Response) {
@@ -1189,7 +1189,7 @@ async function startServer() {
   function getExamWorkshopAdmin(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
-    const dbState = loadDatabase();
+    const dbState = peekDatabase();
     const caller = dbState.accounts.find(account => account.uid === sessionUid);
     return caller?.publicProfile.role === 'admin' ? caller : null;
   }
@@ -1766,7 +1766,7 @@ async function startServer() {
   function getExamParticipant(res: express.Response) {
     const sessionUid = res.locals.sessionUid as string | undefined;
     if (!sessionUid) return null;
-    const account = loadDatabase().accounts.find(record => record.uid === sessionUid);
+    const account = peekDatabase().accounts.find(record => record.uid === sessionUid);
     if (!account) return null;
     return {
       uid: account.uid,
@@ -1835,7 +1835,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
       const canReviewAnyCourse = Boolean(caller && (
         caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
@@ -1856,7 +1856,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id) {
         res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
@@ -1883,7 +1883,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
         res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
         return;
@@ -1897,7 +1897,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
         res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
         return;
@@ -2360,6 +2360,24 @@ async function startServer() {
     }
   });
 
+  // Lightweight keep-alive used while Firestore real-time sync is connected.
+  app.post('/api/portal/heartbeat', (req, res) => {
+    const sessionUid = res.locals.sessionUid as string;
+    const dbState = peekDatabase();
+    const caller = dbState.accounts.find(account => account.uid === sessionUid);
+    if (!caller) {
+      res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
+      return;
+    }
+
+    const now = Date.now();
+    if (refreshAccountPresence(caller, now)) saveDatabase(dbState);
+    res.json({
+      ok: true,
+      lastSeenIso: caller.lastSeenIso || new Date(now).toISOString()
+    });
+  });
+
   // 4. Heartbeat & Real-Time State Sync
   app.get('/api/portal/state', (req, res) => {
     const callerUid = String(req.query.uid || '');
@@ -2384,16 +2402,10 @@ async function startServer() {
       return;
     }
 
-    // Update caller heartbeat
-    const nowIso = new Date().toISOString();
-    // Nur schreiben, wenn der letzte Eintrag älter als 15 s ist (Online-Schwelle: 45 s).
-    if (shouldRefreshPresence(caller.isOnline, caller.lastSeenIso, Date.now())) {
-      caller.isOnline = true;
-      caller.lastSeenIso = nowIso;
-      caller.publicProfile.isOnline = true;
-      caller.publicProfile.lastSeenIso = nowIso;
-      saveDatabase(dbState);
-    }
+    // Update caller heartbeat (writes are throttled to avoid changing memory/Firestore on every poll).
+    const now = Date.now();
+    if (refreshAccountPresence(caller, now)) saveDatabase(dbState);
+    const nowIso = caller.lastSeenIso || new Date(now).toISOString();
 
     const isAdmin = caller.publicProfile.role === 'admin';
     const isTrainee = caller.publicProfile.role === 'trainee';
@@ -3549,7 +3561,7 @@ async function startServer() {
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
   app.get(['/api/v1/whitelist/verify', '/api/whitelist/verify'], (req, res) => {
     const { badge, username } = req.query;
-    const dbState = loadDatabase();
+    const dbState = peekDatabase();
     const found = dbState.accounts.find(
       a =>
         (badge && a.publicProfile.badgeNumber.toLowerCase() === String(badge).toLowerCase()) ||
@@ -3811,7 +3823,7 @@ jobs:
   // ADMIN ONLY: Idempotently migrate legacy exams and progress into ExamRepository.
   app.post('/api/admin/exams/migrate-legacy', async (_req, res, next) => {
     const sessionUid = res.locals.sessionUid as string;
-    const initialState = loadDatabase();
+    const initialState = peekDatabase();
     const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
     if (!initialCaller || initialCaller.publicProfile.role !== 'admin') {
       res.status(403).json({ error: 'Nur der Administrator kann die historische Prüfungs-Migration starten.' });
@@ -3879,7 +3891,7 @@ jobs:
   // ADMIN ONLY: Complete portal + ExamRepository backup.
   app.get('/api/admin/backup', async (_req, res, next) => {
     const sessionUid = res.locals.sessionUid as string;
-    const initialState = loadDatabase();
+    const initialState = peekDatabase();
     const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
     if (!initialCaller || initialCaller.publicProfile.role !== 'admin') {
       res.status(403).json({

@@ -15,3 +15,27 @@ export function shouldRefreshPresence(
   const last = new Date(lastSeenIso).getTime();
   return Number.isNaN(last) || now - last > maxAgeMs;
 }
+
+
+export interface PresenceAccount {
+  isOnline?: boolean;
+  lastSeenIso?: string;
+  publicProfile: {
+    isOnline?: boolean;
+    lastSeenIso?: string;
+  };
+}
+
+/** Aktualisiert beide Presence-Felder eines Kontos nur dann, wenn der Heartbeat fällig ist. */
+export function refreshAccountPresence(account: PresenceAccount, now: number): boolean {
+  const presenceFieldsDiffer =
+    account.publicProfile.isOnline !== account.isOnline ||
+    account.publicProfile.lastSeenIso !== account.lastSeenIso;
+  if (!presenceFieldsDiffer && !shouldRefreshPresence(account.isOnline, account.lastSeenIso, now)) return false;
+  const nowIso = new Date(now).toISOString();
+  account.isOnline = true;
+  account.lastSeenIso = nowIso;
+  account.publicProfile.isOnline = true;
+  account.publicProfile.lastSeenIso = nowIso;
+  return true;
+}

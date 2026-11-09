@@ -77,6 +77,7 @@ import { ProfessionalDevelopmentModule } from './components/ProfessionalDevelopm
 import { LoginScreen } from './components/LoginScreen';
 import { API_ENDPOINTS, apiFetch, setAuthToken } from './lib/api';
 import { isLiveSyncConfigured, startLiveSync } from './lib/liveSync';
+import { CoalescedRequestRunner } from './lib/coalescedRequest';
 
 type ActiveSection = CommandTargetSection;
 
@@ -92,6 +93,15 @@ export default function App() {
   const [sessionUid, setSessionUid] = useState<string | null>(() =>
     localStorage.getItem(SESSION_STORAGE_KEY)
   );
+  // Prevent overlapping full-state requests and discard responses from previous sessions.
+  const activeSessionUidRef = useRef<string | null>(sessionUid);
+  const sessionGenerationRef = useRef(0);
+  const portalStateRequestControllerRef = useRef<AbortController | null>(null);
+  const portalStateRequestRunnerRef = useRef<CoalescedRequestRunner | null>(null);
+  if (!portalStateRequestRunnerRef.current) {
+    portalStateRequestRunnerRef.current = new CoalescedRequestRunner();
+  }
+  const heartbeatInFlightRef = useRef(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserPublicProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
@@ -165,6 +175,46 @@ export default function App() {
   const [settingsBio, setSettingsBio] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
 
+  const clearPortalData = useCallback(() => {
+    setRoster([]);
+    setAdminAccounts([]);
+    setApplications([]);
+    setModules([]);
+    setExams([]);
+    setUserProgress([]);
+    setAnnouncements([]);
+    setMessages([]);
+    setRequests([]);
+    setEvents([]);
+    setNotifications([]);
+    setRecentPublicActivity([]);
+    setAuditLogs([]);
+    setDeploymentConfig(undefined);
+    setDbStats(undefined);
+    setSettingsCallsign('');
+    setSettingsDivision('');
+    setSettingsBio('');
+  }, []);
+
+  const invalidateSession = useCallback((uid: string, generation: number, error?: string) => {
+    if (activeSessionUidRef.current !== uid || sessionGenerationRef.current !== generation) return;
+
+    activeSessionUidRef.current = null;
+    sessionGenerationRef.current += 1;
+    portalStateRequestControllerRef.current?.abort();
+    portalStateRequestControllerRef.current = null;
+    initialLoadCompleteRef.current = false;
+    seenNotificationIdsRef.current.clear();
+
+    setAuthToken(null);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setSessionUid(null);
+    setCurrentUserProfile(null);
+    setIsAdmin(false);
+    clearPortalData();
+    if (error) setAuthError(error);
+  }, [clearPortalData]);
+
   const toastTimerRef = useRef<number | null>(null);
   const triggerToast = useCallback((msg: string) => {
     setStatusToast(msg);
@@ -192,80 +242,136 @@ export default function App() {
   const fetchPortalState = useCallback(
     async (uidToLoad?: string | null) => {
       const targetUid = uidToLoad ?? sessionUid;
-      if (!targetUid) return;
+      if (!targetUid || activeSessionUidRef.current !== targetUid) return;
+      const requestGeneration = sessionGenerationRef.current;
 
-      const res = await apiFetch<{
-        currentUser: UserPublicProfile;
-        isAdmin: boolean;
-        roster: UserPublicProfile[];
-        adminAccounts: AdminAccountView[];
-        applications: WhitelistApplicationDoc[];
-        modules: TrainingModuleDoc[];
-        exams: AcademyExamDoc[];
-        progress: UserProgressDoc[];
-        announcements: AnnouncementDoc[];
-        messages: DirectMessageDoc[];
-        requests: PortalRequestDoc[];
-        events: CalendarEventDoc[];
-        notifications: PortalNotificationDoc[];
-        recentPublicActivity: PublicActivityDoc[];
-        auditLogs: AuditLogDoc[];
-        deploymentConfig?: PortalDeploymentConfig;
-        dbStats?: PortalDbStats;
-      }>(`${API_ENDPOINTS.PORTAL_STATE}?uid=${encodeURIComponent(targetUid)}`);
+      await portalStateRequestRunnerRef.current!.run(async () => {
+        if (
+          activeSessionUidRef.current !== targetUid ||
+          sessionGenerationRef.current !== requestGeneration
+        ) return;
 
-      if (!res.ok || !res.data) {
-        if (res.status === 401 || res.status === 403) {
-          setAuthToken(null);
-          localStorage.removeItem(SESSION_STORAGE_KEY);
-          setSessionUid(null);
-          setCurrentUserProfile(null);
-          setIsAdmin(false);
-          if (res.error) {
-            setAuthError(res.error);
+        const controller = new AbortController();
+        portalStateRequestControllerRef.current = controller;
+        const requestTimeout = window.setTimeout(() => controller.abort(), 30_000);
+        try {
+          const res = await apiFetch<{
+            currentUser: UserPublicProfile;
+            isAdmin: boolean;
+            roster: UserPublicProfile[];
+            adminAccounts: AdminAccountView[];
+            applications: WhitelistApplicationDoc[];
+            modules: TrainingModuleDoc[];
+            exams: AcademyExamDoc[];
+            progress: UserProgressDoc[];
+            announcements: AnnouncementDoc[];
+            messages: DirectMessageDoc[];
+            requests: PortalRequestDoc[];
+            events: CalendarEventDoc[];
+            notifications: PortalNotificationDoc[];
+            recentPublicActivity: PublicActivityDoc[];
+            auditLogs: AuditLogDoc[];
+            deploymentConfig?: PortalDeploymentConfig;
+            dbStats?: PortalDbStats;
+          }>(`${API_ENDPOINTS.PORTAL_STATE}?uid=${encodeURIComponent(targetUid)}`, {
+            signal: controller.signal
+          });
+
+          // A late response must never overwrite state after logout or a different login.
+          if (
+            controller.signal.aborted ||
+            activeSessionUidRef.current !== targetUid ||
+            sessionGenerationRef.current !== requestGeneration
+          ) return;
+
+          if (!res.ok || !res.data) {
+            if (res.status === 401 || res.status === 403) {
+              invalidateSession(targetUid, requestGeneration, res.error);
+            }
+            return;
           }
+
+          const data = res.data;
+
+          // Detect brand-new live notifications without page reload
+          const incomingNotifs = data.notifications || [];
+          if (!initialLoadCompleteRef.current) {
+            incomingNotifs.forEach(n => seenNotificationIdsRef.current.add(n.id));
+            initialLoadCompleteRef.current = true;
+          } else {
+            for (const n of incomingNotifs) {
+              if (!seenNotificationIdsRef.current.has(n.id)) {
+                seenNotificationIdsRef.current.add(n.id);
+                if (!n.readByUids.includes(targetUid)) {
+                  triggerToast(`Neue Mitteilung: ${n.title} — ${n.message}`);
+                }
+              }
+            }
+          }
+
+          setCurrentUserProfile(data.currentUser);
+          setIsAdmin(Boolean(data.isAdmin));
+          setRoster(data.roster || []);
+          setAdminAccounts(data.adminAccounts || []);
+          setApplications(data.applications || []);
+          setModules(data.modules || []);
+          setExams(data.exams || []);
+          setUserProgress(data.progress || []);
+          setAnnouncements(data.announcements || []);
+          setMessages(data.messages || []);
+          setRequests(data.requests || []);
+          setEvents(data.events || []);
+          setNotifications(incomingNotifs);
+          setRecentPublicActivity(data.recentPublicActivity || []);
+          setAuditLogs(data.auditLogs || []);
+          setDeploymentConfig(data.deploymentConfig);
+          setDbStats(data.dbStats);
+        } finally {
+          window.clearTimeout(requestTimeout);
+          if (portalStateRequestControllerRef.current === controller) {
+            portalStateRequestControllerRef.current = null;
+          }
+        }
+      });
+    },
+    [sessionUid, triggerToast, invalidateSession]
+  );
+
+  const refreshPortalHeartbeat = useCallback(async (uid: string) => {
+    if (activeSessionUidRef.current !== uid || heartbeatInFlightRef.current) return;
+    const requestGeneration = sessionGenerationRef.current;
+    heartbeatInFlightRef.current = true;
+    const controller = new AbortController();
+    const requestTimeout = window.setTimeout(() => controller.abort(), 30_000);
+    try {
+      const res = await apiFetch<{ ok: boolean; lastSeenIso?: string }>(
+        API_ENDPOINTS.PORTAL_HEARTBEAT,
+        { method: 'POST', signal: controller.signal }
+      );
+      if (
+        activeSessionUidRef.current !== uid ||
+        sessionGenerationRef.current !== requestGeneration
+      ) return;
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          invalidateSession(uid, requestGeneration, res.error);
         }
         return;
       }
 
-      const data = res.data;
-
-      // Detect brand-new live notifications without page reload
-      const incomingNotifs = data.notifications || [];
-      if (!initialLoadCompleteRef.current) {
-        incomingNotifs.forEach(n => seenNotificationIdsRef.current.add(n.id));
-        initialLoadCompleteRef.current = true;
-      } else {
-        for (const n of incomingNotifs) {
-          if (!seenNotificationIdsRef.current.has(n.id)) {
-            seenNotificationIdsRef.current.add(n.id);
-            if (!n.readByUids.includes(targetUid)) {
-              triggerToast(`Neue Mitteilung: ${n.title} — ${n.message}`);
-            }
-          }
-        }
+      if (res.data?.lastSeenIso) {
+        setCurrentUserProfile(previous =>
+          previous?.uid === uid
+            ? { ...previous, isOnline: true, lastSeenIso: res.data!.lastSeenIso! }
+            : previous
+        );
       }
-
-      setCurrentUserProfile(data.currentUser);
-      setIsAdmin(Boolean(data.isAdmin));
-      setRoster(data.roster || []);
-      setAdminAccounts(data.adminAccounts || []);
-      setApplications(data.applications || []);
-      setModules(data.modules || []);
-      setExams(data.exams || []);
-      setUserProgress(data.progress || []);
-      setAnnouncements(data.announcements || []);
-      setMessages(data.messages || []);
-      setRequests(data.requests || []);
-      setEvents(data.events || []);
-      setNotifications(incomingNotifs);
-      setRecentPublicActivity(data.recentPublicActivity || []);
-      setAuditLogs(data.auditLogs || []);
-      setDeploymentConfig(data.deploymentConfig);
-      setDbStats(data.dbStats);
-    },
-    [sessionUid, triggerToast]
-  );
+    } finally {
+      window.clearTimeout(requestTimeout);
+      heartbeatInFlightRef.current = false;
+    }
+  }, [invalidateSession]);
 
   // Sync settings form when currentUserProfile loads
   useEffect(() => {
@@ -320,19 +426,22 @@ export default function App() {
     };
   }, [sessionUid]);
 
-  // Initial load + Polling. Mit Echtzeit-Signal reicht ein langsamer Takt, der nur noch den
-  // Online-Status auffrischt (der Server wertet 45 Sekunden ohne Lebenszeichen als offline).
+  // Fetch the full state once per session. A change in live-sync connectivity must not
+  // trigger another full-state download; it only changes the next periodic polling strategy.
   useEffect(() => {
     if (!sessionUid) return;
-    fetchPortalState(sessionUid);
-    const interval = setInterval(
-      () => {
-        fetchPortalState(sessionUid);
-      },
-      liveConnected ? 20000 : 5000
-    );
-    return () => clearInterval(interval);
-  }, [sessionUid, fetchPortalState, liveConnected]);
+    void fetchPortalState(sessionUid);
+  }, [sessionUid, fetchPortalState]);
+
+  useEffect(() => {
+    if (!sessionUid) return;
+    const poll = () => {
+      if (liveConnected) void refreshPortalHeartbeat(sessionUid);
+      else void fetchPortalState(sessionUid);
+    };
+    const interval = window.setInterval(poll, liveConnected ? 20000 : 5000);
+    return () => window.clearInterval(interval);
+  }, [sessionUid, fetchPortalState, refreshPortalHeartbeat, liveConnected]);
 
   const handleLogin = async (username: string, password: string) => {
     setAuthError(null);
@@ -360,8 +469,12 @@ export default function App() {
     }
 
     const loggedInUser = res.data.user;
+    portalStateRequestControllerRef.current?.abort();
+    sessionGenerationRef.current += 1;
+    activeSessionUidRef.current = loggedInUser.uid;
     initialLoadCompleteRef.current = false;
     seenNotificationIdsRef.current.clear();
+    clearPortalData();
     setAuthToken(res.data.token);
     localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
     setSessionUid(loggedInUser.uid);
@@ -369,7 +482,6 @@ export default function App() {
     setIsAdmin(Boolean(res.data.isAdmin));
     setInactivitySecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
     setActiveSection('dashboard');
-    await fetchPortalState(loggedInUser.uid);
     triggerToast(
       `Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`
     );
@@ -377,10 +489,15 @@ export default function App() {
 
   const handleSignOut = useCallback(
     async (isAutoTimeout?: boolean) => {
-      if (sessionUid) {
+      const uidToSignOut = sessionUid;
+      activeSessionUidRef.current = null;
+      sessionGenerationRef.current += 1;
+      portalStateRequestControllerRef.current?.abort();
+      portalStateRequestControllerRef.current = null;
+      if (uidToSignOut) {
         await apiFetch(API_ENDPOINTS.AUTH_LOGOUT, {
           method: 'POST',
-          body: JSON.stringify({ uid: sessionUid })
+          body: JSON.stringify({ uid: uidToSignOut })
         });
       }
       setAuthToken(null);
@@ -388,6 +505,9 @@ export default function App() {
       setSessionUid(null);
       setCurrentUserProfile(null);
       setIsAdmin(false);
+      clearPortalData();
+      initialLoadCompleteRef.current = false;
+      seenNotificationIdsRef.current.clear();
       setActiveSection('dashboard');
       if (isAutoTimeout) {
         setAuthError(
