@@ -76,7 +76,6 @@ import type {
 import { describeError } from './server/errors.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
-import { createServer as createViteServer } from 'vite';
 import {
   AcademyExamDoc,
   AnnouncementCategory,
@@ -5123,11 +5122,18 @@ jobs:
   });
 
   const distPath = path.join(__dirname, 'dist');
-  const isProd =
-    (process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER)) &&
-    fs.existsSync(distPath);
+  const indexHtmlPath = path.join(distPath, 'index.html');
+  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER);
+
+  if (isProd && !fs.existsSync(indexHtmlPath)) {
+    throw new Error(
+      `[Startup] Production build is missing: ${indexHtmlPath}. Run the frontend build before starting the server.`
+    );
+  }
 
   if (!isProd) {
+    // Keep Vite and its development tooling out of the production process.
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
@@ -5139,7 +5145,7 @@ jobs:
   } else {
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(indexHtmlPath);
     });
   }
 

@@ -6,8 +6,8 @@ services:
     region: frankfurt
     branch: main
     autoDeploy: true
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
