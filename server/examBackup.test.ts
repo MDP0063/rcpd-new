@@ -341,3 +341,64 @@ test('Backup lehnt abgeschlossene Versuche ohne Ergebnisdaten ab', () => {
   snapshot.collections.exam_attempts[0].status = 'passed';
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_RESULT_MISSING/);
 });
+
+
+test('Backup akzeptiert vollständig manuell bewertete Freitextfragen', () => {
+  const snapshot = validSnapshot();
+  const version = snapshot.collections.exam_versions[0];
+  version.questionsSnapshot = [
+    ...(version.questionsSnapshot as Array<Record<string, unknown>>),
+    {
+      id: 'question-2',
+      type: 'free_text',
+      question: 'Nenne einen wichtigen Prüfschritt.',
+      pointsMilli: 1000,
+      gradingRubric: 'Der Prüfschritt muss fachlich korrekt benannt werden.'
+    }
+  ];
+  const attempt = snapshot.collections.exam_attempts[0];
+  attempt.status = 'passed';
+  attempt.answers = { 'question-1': true, 'question-2': 'Sicherheitsprüfung' };
+  attempt.submittedAtIso = '2026-11-09T20:05:00.000Z';
+  attempt.submissionReason = 'submitted';
+  attempt.totalPossiblePointsMilli = 2000;
+  attempt.automaticallyEarnedPointsMilli = 1000;
+  attempt.manuallyEarnedPointsMilli = 1000;
+  attempt.preliminaryScoreBasisPoints = 5000;
+  attempt.finalScoreBasisPoints = 10000;
+  attempt.questionGrades = [
+    { questionId: 'question-1', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false, correct: true },
+    { questionId: 'question-2', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false }
+  ];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
+
+test('Backup akzeptiert offene Freitextbewertung mit ausstehender manueller Prüfung', () => {
+  const snapshot = validSnapshot();
+  const version = snapshot.collections.exam_versions[0];
+  version.questionsSnapshot = [
+    ...(version.questionsSnapshot as Array<Record<string, unknown>>),
+    {
+      id: 'question-2',
+      type: 'free_text',
+      question: 'Nenne einen wichtigen Prüfschritt.',
+      pointsMilli: 1000,
+      gradingRubric: 'Der Prüfschritt muss fachlich korrekt benannt werden.'
+    }
+  ];
+  const attempt = snapshot.collections.exam_attempts[0];
+  attempt.status = 'pending_review';
+  attempt.answers = { 'question-1': true, 'question-2': 'Sicherheitsprüfung' };
+  attempt.submittedAtIso = '2026-11-09T20:05:00.000Z';
+  attempt.submissionReason = 'submitted';
+  attempt.totalPossiblePointsMilli = 2000;
+  attempt.automaticallyEarnedPointsMilli = 1000;
+  attempt.manuallyEarnedPointsMilli = 0;
+  attempt.preliminaryScoreBasisPoints = 5000;
+  attempt.finalScoreBasisPoints = null;
+  attempt.questionGrades = [
+    { questionId: 'question-1', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false, correct: true },
+    { questionId: 'question-2', pointsEarnedMilli: 0, maxPointsMilli: 1000, requiresManualReview: true }
+  ];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
