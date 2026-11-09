@@ -55,6 +55,7 @@ function apiErrorMessage(value?: string): string {
     case 'ACADEMY_CODE_ALREADY_EXISTS': return 'Diese Kennung wird bereits verwendet. Wähle eine andere Kennung.';
     case 'ACADEMY_WORKING_REVISION_CONFLICT': return 'Dieser Entwurf wurde zwischenzeitlich geändert. Lade die Liste neu und öffne den Entwurf erneut, bevor du weiterarbeitest.';
     case 'ACADEMY_DRAFT_VERSION_MISMATCH': return 'Der gespeicherte Entwurf entspricht nicht mehr der aktuellen Revision. Öffne ihn erneut und prüfe deine Änderungen.';
+    case 'ACADEMY_DRAFT_ALREADY_PUBLISHED': return 'Dieser unveränderte Entwurf wurde bereits veröffentlicht. Speichere zuerst eine tatsächliche Änderung, bevor du eine neue Version veröffentlichst.';
     case 'ACADEMY_PROGRAM_OBJECTIVES_COUNT': return 'Ein Programm benötigt mindestens drei und höchstens sechs Lernziele.';
     case 'ACADEMY_PROGRAM_DUPLICATE_COURSE': return 'Ein Kurs darf einem Programm nur einmal zugeordnet sein.';
     case 'ACADEMY_PROGRAM_COURSE_REFERENCE_INVALID': return 'Prüfe die Kurszuordnungen und ihre Reihenfolge.';
@@ -98,6 +99,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const [formError, setFormError] = useState<string[]>([]);
   const [courseMaster, setCourseMaster] = useState<AcademyCourseMasterDoc | null>(null);
   const [courseDraft, setCourseDraft] = useState<AcademyCourseDraftDoc | null>(null);
+  const [currentCourseVersion, setCurrentCourseVersion] = useState<AcademyCourseVersionDoc | null>(null);
   const [courseCode, setCourseCode] = useState('');
   const [courseTitle, setCourseTitle] = useState('');
   const [courseSummary, setCourseSummary] = useState('');
@@ -107,6 +109,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const [courseDirty, setCourseDirty] = useState(false);
   const [programMaster, setProgramMaster] = useState<AcademyProgramMasterDoc | null>(null);
   const [programDraft, setProgramDraft] = useState<AcademyProgramDraftDoc | null>(null);
+  const [currentProgramVersion, setCurrentProgramVersion] = useState<AcademyProgramVersionDoc | null>(null);
   const [programCode, setProgramCode] = useState('');
   const [programTitle, setProgramTitle] = useState('');
   const [programSummary, setProgramSummary] = useState('');
@@ -141,9 +144,9 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const listedPrograms = useMemo(() => [...programs].sort((a, b) => a.master.code.localeCompare(b.master.code, 'de-DE')), [programs]);
 
   const resetEditor = () => {
-    setCourseMaster(null); setCourseDraft(null); setCourseCode(''); setCourseTitle(''); setCourseSummary('');
+    setCourseMaster(null); setCourseDraft(null); setCurrentCourseVersion(null); setCourseCode(''); setCourseTitle(''); setCourseSummary('');
     setCourseObjectives([]); setCourseChapters([]); setCourseRequirements([]); setCourseDirty(false);
-    setProgramMaster(null); setProgramDraft(null); setProgramCode(''); setProgramTitle(''); setProgramSummary('');
+    setProgramMaster(null); setProgramDraft(null); setCurrentProgramVersion(null); setProgramCode(''); setProgramTitle(''); setProgramSummary('');
     setProgramObjectives([]); setProgramReferences([]); setProgramDirty(false); setFormError([]);
   };
 
@@ -158,7 +161,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const openCourse = (entry: CourseEntry) => {
     if (!entry.draft || entry.master.publicationStatus === 'archived') return;
     resetEditor();
-    setCourseMaster(entry.master); setCourseDraft(entry.draft); setCourseCode(entry.master.code);
+    setCourseMaster(entry.master); setCourseDraft(entry.draft); setCurrentCourseVersion(entry.version); setCourseCode(entry.master.code);
     setCourseTitle(entry.draft.title); setCourseSummary(entry.draft.summary);
     setCourseObjectives(entry.draft.learningObjectives.map(item => ({ ...item })));
     setCourseChapters(entry.draft.chapters.map(item => ({ ...item, materialReferences: item.materialReferences.map(reference => ({ ...reference })) })));
@@ -168,7 +171,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const openProgram = (entry: ProgramEntry) => {
     if (!entry.draft || entry.master.publicationStatus === 'archived') return;
     resetEditor();
-    setProgramMaster(entry.master); setProgramDraft(entry.draft); setProgramCode(entry.master.code);
+    setProgramMaster(entry.master); setProgramDraft(entry.draft); setCurrentProgramVersion(entry.version); setProgramCode(entry.master.code);
     setProgramTitle(entry.draft.title); setProgramSummary(entry.draft.summary);
     setProgramObjectives(entry.draft.learningObjectives.map(item => ({ ...item })));
     setProgramReferences(entry.draft.courseReferences.map(item => ({ ...item })));
@@ -211,7 +214,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   const publishCourse = async () => {
-    if (!courseMaster || !courseDraft || courseDirty || busy) return;
+    if (!courseMaster || !courseDraft || courseDirty || busy || !courseHasUnpublishedChanges) return;
     const errors = courseValidation(courseCode, courseTitle, courseObjectives, courseChapters);
     if (errors.length) { setFormError(errors); return; }
     if (!window.confirm('Möchtest du den gespeicherten Kursentwurf jetzt als neue veröffentlichte Kursversion bereitstellen? Teilnehmende, die bereits begonnen haben, behalten ihre fest zugeordnete Version.')) return;
@@ -262,7 +265,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   const publishProgram = async () => {
-    if (!programMaster || !programDraft || programDirty || busy) return;
+    if (!programMaster || !programDraft || programDirty || busy || !programHasUnpublishedChanges) return;
     const errors = programValidation(programCode, programTitle, programObjectives, programReferences);
     if (errors.length) { setFormError(errors); return; }
     if (!window.confirm('Möchtest du den gespeicherten Programmentwurf jetzt als neue Programmversion veröffentlichen? Bei einer Teilnahme werden die Pflichtkursversionen zu diesem Zeitpunkt fest zugeordnet.')) return;
@@ -314,6 +317,17 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setCourseDirty(true);
   };
 
+  const courseHasUnpublishedChanges = Boolean(courseDraft && (!currentCourseVersion ||
+    courseDraft.title !== currentCourseVersion.title ||
+    courseDraft.summary !== currentCourseVersion.summary ||
+    JSON.stringify(courseDraft.learningObjectives) !== JSON.stringify(currentCourseVersion.learningObjectives) ||
+    JSON.stringify(courseDraft.chapters) !== JSON.stringify(currentCourseVersion.chapters) ||
+    JSON.stringify(courseDraft.completionRequirements) !== JSON.stringify(currentCourseVersion.completionRequirements)));
+  const programHasUnpublishedChanges = Boolean(programDraft && (!currentProgramVersion ||
+    programDraft.title !== currentProgramVersion.title ||
+    programDraft.summary !== currentProgramVersion.summary ||
+    JSON.stringify(programDraft.learningObjectives) !== JSON.stringify(currentProgramVersion.learningObjectives) ||
+    JSON.stringify(programDraft.courseReferences) !== JSON.stringify(currentProgramVersion.courseReferences)));
   const isCourseEditor = mode === 'new-course' || mode === 'course';
   const isProgramEditor = mode === 'new-program' || mode === 'program';
   const leaveEditor = () => {
@@ -442,7 +456,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             </section>
             {!courseRequirements.some(item => item.required) && <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Für diesen Kurs ist noch keine erforderliche Abschlussbedingung hinterlegt. Solange das so bleibt, kann eine Kursteilnahme nicht automatisch als abgeschlossen gewertet werden.</p>}
             {courseRequirements.some(item => item.type !== 'required_chapter') && <section className={panel}><h3 className="font-semibold text-slate-900 dark:text-white">Weitere Abschlussbedingungen</h3><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{courseRequirements.filter(item => item.type !== 'required_chapter').length} weitere Abschlussbedingung(en) bleiben bei Änderungen erhalten. Ihre Bearbeitung folgt mit der Prüfungs- und Materialintegration.</p></section>}
-            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : courseMaster ? 'Entwurf speichern' : 'Kursentwurf anlegen'}</button>{courseMaster && <button type="button" className={secondary} onClick={() => void publishCourse()} disabled={busy || courseDirty || !courseDraft}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
+            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : courseMaster ? 'Entwurf speichern' : 'Kursentwurf anlegen'}</button>{courseMaster && <button type="button" className={secondary} onClick={() => void publishCourse()} disabled={busy || courseDirty || !courseDraft || !courseHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
             {courseDirty && courseMaster && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">Es gibt ungespeicherte Änderungen. Speichere den Entwurf, bevor du eine neue Version veröffentlichst.</p>}
             {courseMaster && <p className="text-xs text-slate-500 dark:text-slate-400">Veröffentlichungsstatus: {statusName(courseMaster.publicationStatus)}. Das Speichern ändert keine bereits veröffentlichte Version und startet keine Kursteilnahmen.</p>}
           </form>
@@ -478,7 +492,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               })}</ul>}
               {selectableCourses.length === 0 && <p className="text-sm text-amber-700 dark:text-amber-300">Es gibt noch keine veröffentlichten und verfügbaren Kurse, die zugeordnet werden können.</p>}
             </section>
-            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Programmentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
+            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Programmentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft || !programHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
             {programDirty && programMaster && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">Es gibt ungespeicherte Änderungen. Speichere den Entwurf, bevor du eine neue Version veröffentlichst.</p>}
             {programMaster && <p className="text-xs text-slate-500 dark:text-slate-400">Veröffentlichungsstatus: {statusName(programMaster.publicationStatus)}. Erforderliche Kurse bestimmen den Programmabschluss; empfohlene Kurse sind kein Abschlusskriterium.</p>}
           </form>
