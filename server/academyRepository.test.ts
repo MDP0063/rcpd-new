@@ -22,7 +22,7 @@ const version: AcademyCourseVersionDoc = {
   title: 'Grundlagen', summary: '',
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
-  completionRequirements: [], publishedIso: now, publishedByUid: 'owner-1',
+  completionRequirements: [{ id: 'req_chapter', type: 'required_chapter', targetId: 'chapter-1', required: true }], publishedIso: now, publishedByUid: 'owner-1',
   createdIso: now, createdByUid: 'owner-1', workingRevision: 2
 };
 const publishedMaster: AcademyCourseMasterDoc = {
@@ -34,7 +34,7 @@ const courseDraft: AcademyCourseDraftDoc = {
   id: 'course-1', courseId: 'course-1', title: 'Grundlagen', summary: '',
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
-  completionRequirements: [], workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
+  completionRequirements: [{ id: 'req_chapter', type: 'required_chapter', targetId: 'chapter-1', required: true }], workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
 };
 const programMaster: AcademyProgramMasterDoc = {
   id: 'program-1', code: 'BASIC-PROGRAM', ownerUid: 'owner-1',
@@ -76,6 +76,22 @@ test('course publication atomically stores immutable version and advances master
   assert.deepEqual(await repository.get('academy_course_versions', version.id), version);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.currentPublishedVersionId, version.id);
   await assert.rejects(repository.update('academy_course_versions', version.id, version), /ACADEMY_DOCUMENT_APPEND_ONLY/);
+}));
+
+
+test('course publication rejects a version without required completion conditions and leaves existing data untouched', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  const incompleteDraft = { ...courseDraft, completionRequirements: [] };
+  await repository.saveCourseDraft(master.id, incompleteDraft, 1, 'owner-1');
+  const incompleteVersion = { ...version, completionRequirements: [] };
+
+  await assert.rejects(
+    repository.publishCourseVersion(master.id, incompleteVersion, publishedMaster, 2, 'owner-1'),
+    /ACADEMY_COURSE_COMPLETION_REQUIREMENT_REQUIRED/
+  );
+  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.publicationStatus, 'draft');
+  assert.equal(await repository.get('academy_course_versions', incompleteVersion.id), null);
+  assert.deepEqual(await repository.getCourseDraft(master.id), incompleteDraft);
 }));
 
 test('concurrent publication of the same version permits exactly one writer', async () => withRepository(async repository => {

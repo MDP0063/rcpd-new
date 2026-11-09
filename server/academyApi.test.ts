@@ -378,7 +378,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
           required: true,
           order: 0
         }],
-        completionRequirements: []
+        completionRequirements: [{
+          id: 'req-material-course-chapter',
+          type: 'required_chapter',
+          targetId: 'chapter-material-1',
+          required: true
+        }]
       })
     });
     assert.equal(courseWithMaterial.status, 201, JSON.stringify(courseWithMaterial.body));
@@ -435,7 +440,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
           required: true,
           order: 0
         }],
-        completionRequirements: []
+        completionRequirements: [{
+          id: 'req-invalid-material-chapter',
+          type: 'required_chapter',
+          targetId: 'chapter-material-2',
+          required: true
+        }]
       })
     });
     assert.equal(courseWithInvalidMaterial.status, 201, JSON.stringify(courseWithInvalidMaterial.body));
