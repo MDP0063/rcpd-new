@@ -118,6 +118,14 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
       if (version.versionNumber !== latestVersionNumber) {
         return fail('EXAM_BACKUP_MASTER_VERSION_SEQUENCE_MISMATCH');
       }
+      if (
+        master.assessmentStage !== version.assessmentStage ||
+        master.examFormat !== version.examFormat ||
+        master.isLegacyFormat !== version.isLegacyFormat ||
+        master.startable !== version.startable
+      ) {
+        return fail('EXAM_BACKUP_MASTER_VERSION_METADATA_MISMATCH');
+      }
     } else if (Number(latestVersionNumber) !== 0) {
       return fail('EXAM_BACKUP_MASTER_VERSION_POINTER_MISSING');
     }

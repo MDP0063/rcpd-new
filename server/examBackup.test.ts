@@ -28,7 +28,11 @@ function validSnapshot(): ExamRepositorySnapshot {
     id: 'exam-1',
     status: 'published',
     currentPublishedVersionId: 'exam-1__v1',
-    latestVersionNumber: 1
+    latestVersionNumber: 1,
+    assessmentStage: 'test',
+    examFormat: 'structured_quiz',
+    isLegacyFormat: false,
+    startable: true
   });
   snapshot.collections.exam_versions.push({
     id: 'exam-1__v1',
@@ -244,4 +248,20 @@ test('Backup bewahrt nicht startbare strukturierte Legacy-Versionen mit ungülti
   }];
   snapshot.collections.exam_attempts = [];
   assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
+
+
+test('Backup lehnt einen startbaren Master mit nicht startbarer aktueller Version ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_versions[0].startable = false;
+  snapshot.collections.exam_versions[0].questionsSnapshot = [];
+  snapshot.collections.exam_attempts = [];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_METADATA_MISMATCH/);
+});
+
+test('Backup lehnt abweichende Prüfungsstufen zwischen Master und aktueller Version ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_versions[0].assessmentStage = 'final_exam';
+  snapshot.collections.exam_attempts = [];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_METADATA_MISMATCH/);
 });
