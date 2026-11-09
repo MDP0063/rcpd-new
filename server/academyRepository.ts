@@ -168,7 +168,11 @@ function validateAcademyBackupReferences(
     requireReference(programs.has(version.programId), 'ACADEMY_BACKUP_PROGRAM_VERSION_ORPHAN');
     requireReference(Boolean(version.publishedIso) && Boolean(version.publishedByUid), 'ACADEMY_BACKUP_PROGRAM_VERSION_PUBLICATION_METADATA_MISSING');
     for (const reference of version.courseReferences) {
-      requireReference(courses.has(reference.courseId), 'ACADEMY_BACKUP_PROGRAM_COURSE_REFERENCE_INVALID');
+      const course = courses.get(reference.courseId);
+      requireReference(
+        Boolean(course) && course!.latestVersionNumber > 0 && Boolean(course!.currentPublishedVersionId),
+        'ACADEMY_BACKUP_PROGRAM_COURSE_REFERENCE_INVALID'
+      );
     }
   }
 
