@@ -9,7 +9,9 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   assembleState,
+  BLOB_FIELDS,
   COLLECTIONS,
+  safeId,
   type Doc,
   type PersistIndex,
   planWrites,
@@ -20,8 +22,10 @@ import {
 export interface FirestoreStore {
   /** Dieselbe konfigurierte Datenbank für gezielte ExamRepository-Operationen. */
   getDatabase(): Firestore;
-  /** Liest alles aus Firestore. Gibt null zurück, wenn noch nichts gespeichert wurde. */
+  /** Liest alle normalen Dokumente, aber keine großen PDF-Blob-Inhalte. */
   loadAll(): Promise<StateLike | null>;
+  /** Liest die Teilstücke eines einzelnen PDFs erst beim tatsächlichen Abruf. */
+  loadBlobChunks(collection: string, id: string, field: string, count: number): Promise<string>;
   /** Merkt den Zustand zum Speichern vor. Aufeinanderfolgende Aufrufe werden gebündelt. */
   scheduleSave(state: StateLike): void;
   /** Wartet, bis alles geschrieben ist (z. B. vor dem Beenden). */
@@ -149,21 +153,37 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
         order: orderSnap.exists ? (orderSnap.data() as Record<string, string[]>) : null,
         meta: metaSnap.data() as Doc
       };
-      await Promise.all([
-        ...COLLECTIONS.map(async spec => {
+      await Promise.all(
+        COLLECTIONS.map(async spec => {
           const snap = await db.collection(spec.name).get();
           raw.collections[spec.name] = snap.docs.map(d => d.data() as Doc);
-        }),
-        (async () => {
-          const snap = await db.collection('blobs').get();
-          for (const d of snap.docs) raw.blobs.set(`blobs/${d.id}`, String(d.get('data')));
-        })()
-      ]);
+        })
+      );
 
-      const assembled = assembleState(raw, Date.now(), { consumeBlobs: true });
+      // Large PDF chunks are deliberately not loaded into server memory during startup.
+      const assembled = assembleState(raw, Date.now(), { lazyBlobs: true });
       if (!assembled) return null;
       index = assembled.index;
       return assembled.state;
+    },
+    async loadBlobChunks(collection, id, field, count) {
+      if (!BLOB_FIELDS[collection]?.includes(field)) {
+        throw new Error('FIRESTORE_BLOB_FIELD_INVALID');
+      }
+      if (!Number.isSafeInteger(count) || count < 1 || count > 512) {
+        throw new Error('FIRESTORE_BLOB_CHUNK_COUNT_INVALID');
+      }
+      const refs = Array.from({ length: count }, (_, part) =>
+        db.doc(`blobs/${collection}__${safeId(id)}__${field}__${part}`)
+      );
+      const snapshots = await db.getAll(...refs);
+      const parts = snapshots.map((snapshot, part) => {
+        if (!snapshot.exists || typeof snapshot.get('data') !== 'string') {
+          throw new Error(`FIRESTORE_BLOB_CHUNK_MISSING:${part}`);
+        }
+        return snapshot.get('data') as string;
+      });
+      return parts.join('');
     },
 
     scheduleSave(state) {
