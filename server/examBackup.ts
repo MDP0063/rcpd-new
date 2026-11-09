@@ -7,9 +7,11 @@ import { normalizeCourseCode, validateExamForPublication } from './examValidate.
 import {
   createMatchingPairOrders,
   createMatchingPresentationIds,
+  evaluateExamAnswers,
   parseAttemptAnswers,
   projectQuestionsForAttempt
 } from './examRunner.ts';
+import { meetsPassingScore, scoreBasisPoints } from './examMath.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -116,35 +118,71 @@ function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): vo
     ) {
       fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
     }
+    const automaticGrade = evaluateExamAnswers(
+      questions as never,
+      parsedAnswers as never,
+      Number(version.passingScoreBasisPoints)
+    );
+    if (
+      automaticGrade.totalPossiblePointsMilli !== totalPossiblePointsMilli ||
+      automaticGrade.automaticallyEarnedPointsMilli !== attempt.automaticallyEarnedPointsMilli ||
+      automaticGrade.preliminaryScoreBasisPoints !== attempt.preliminaryScoreBasisPoints
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
     const questionById = new Map(questions.map(question => [String(question.id), question]));
+    const automaticGrades = new Map(automaticGrade.questionGrades.map(grade => [grade.questionId, grade]));
     const seenGrades = new Set<string>();
     let gradedPoints = 0;
+    let automaticPoints = 0;
+    let manualPoints = 0;
+    let pendingManualReviewCount = 0;
     if (attempt.questionGrades.length !== questions.length) fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
     for (const rawGrade of attempt.questionGrades) {
       if (!isRecord(rawGrade) || typeof rawGrade.questionId !== 'string' || seenGrades.has(rawGrade.questionId)) {
         fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
       }
       const question = questionById.get(rawGrade.questionId);
+      const automatic = automaticGrades.get(rawGrade.questionId);
+      const expectedManualReview = attempt.status === 'pending_review' &&
+        question?.type === 'free_text' &&
+        typeof parsedAnswers[rawGrade.questionId] === 'string' &&
+        String(parsedAnswers[rawGrade.questionId]).trim().length > 0;
       if (
-        !question ||
+        !question || !automatic ||
         !Number.isSafeInteger(rawGrade.pointsEarnedMilli) ||
         Number(rawGrade.pointsEarnedMilli) < 0 ||
         Number(rawGrade.pointsEarnedMilli) > Number(question.pointsMilli) ||
         rawGrade.maxPointsMilli !== question.pointsMilli ||
-        rawGrade.requiresManualReview !== (
-          attempt.status === 'pending_review' &&
-          question.type === 'free_text' &&
-          typeof parsedAnswers[rawGrade.questionId] === 'string' &&
-          String(parsedAnswers[rawGrade.questionId]).trim().length > 0
-        ) ||
-        (rawGrade.correct !== undefined && typeof rawGrade.correct !== 'boolean')
+        rawGrade.requiresManualReview !== expectedManualReview ||
+        (rawGrade.correct !== undefined && typeof rawGrade.correct !== 'boolean') ||
+        (question.type !== 'free_text' &&
+          (rawGrade.pointsEarnedMilli !== automatic.pointsEarnedMilli ||
+           rawGrade.correct !== automatic.correct))
       ) {
         fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
       }
       seenGrades.add(rawGrade.questionId);
       gradedPoints += Number(rawGrade.pointsEarnedMilli);
+      if (question.type === 'free_text') manualPoints += Number(rawGrade.pointsEarnedMilli);
+      else automaticPoints += Number(rawGrade.pointsEarnedMilli);
+      if (rawGrade.requiresManualReview === true) pendingManualReviewCount += 1;
     }
-    if (gradedPoints !== Number(attempt.automaticallyEarnedPointsMilli) + Number(attempt.manuallyEarnedPointsMilli)) {
+    if (
+      gradedPoints !== Number(attempt.automaticallyEarnedPointsMilli) + Number(attempt.manuallyEarnedPointsMilli) ||
+      automaticPoints !== Number(attempt.automaticallyEarnedPointsMilli) ||
+      manualPoints !== Number(attempt.manuallyEarnedPointsMilli) ||
+      ((attempt.status === 'pending_review') !== (pendingManualReviewCount > 0)) ||
+      (attempt.status === 'pending_review' && Number(attempt.manuallyEarnedPointsMilli) !== 0)
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+    const finalScoreExpected = scoreBasisPoints(gradedPoints, totalPossiblePointsMilli);
+    if (
+      attempt.status !== 'pending_review' &&
+      (attempt.finalScoreBasisPoints !== finalScoreExpected ||
+       (attempt.status === 'passed') !== meetsPassingScore(gradedPoints, totalPossiblePointsMilli, Number(version.passingScoreBasisPoints)))
+    ) {
       fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
     }
     if (attempt.submissionReason !== 'submitted' && attempt.submissionReason !== 'time_expired') {
