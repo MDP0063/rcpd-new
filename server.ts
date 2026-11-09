@@ -34,6 +34,7 @@ import { createAcademyApiRouter } from './server/academyApi.ts';
 import {
   createFirestoreAcademyRepository,
   createJsonAcademyRepository,
+  validateAcademyRepositoryBackupSnapshot,
   type AcademyRepository
 } from './server/academyRepository.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
@@ -980,6 +981,10 @@ export function getExamRepository(): ExamRepository {
   if (!examRepository) throw new Error('EXAM_REPOSITORY_NOT_INITIALIZED');
   return examRepository;
 }
+function getAcademyRepository(): AcademyRepository {
+  if (!academyRepository) throw new Error('ACADEMY_REPOSITORY_NOT_INITIALIZED');
+  return academyRepository;
+}
 
 async function startServer() {
   if (process.env.STORAGE_BACKEND === 'firestore') {
@@ -1179,7 +1184,17 @@ async function startServer() {
   });
 
   if (!academyRepository) throw new Error('ACADEMY_REPOSITORY_NOT_INITIALIZED');
-  app.use('/api/academy', createAcademyApiRouter(
+  app.use('/api/academy', async (_req, res, next) => {
+    try {
+      if (examMaintenanceActive || await getExamRepository().isMaintenanceMode()) {
+        res.status(503).json({ error: 'Die Academy ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }, createAcademyApiRouter(
     academyRepository,
     uid => {
       const account = peekDatabase().accounts.find(item => item.uid === uid);
@@ -3965,13 +3980,15 @@ jobs:
     }
 
     const repository = getExamRepository();
+    const academy = getAcademyRepository();
     let maintenanceStarted = false;
     try {
-      // Das persistente Flag pausiert auch Legacy-Prüfungsschreibwege und bleibt bei Server-Neustarts sichtbar.
+      // Das persistente Flag pausiert Prüfungs- und Academy-Schreibwege während des gemeinsamen Snapshots.
       examMaintenanceActive = true;
       examMaintenanceOperation = 'backup';
       await repository.setMaintenanceMode(true);
       maintenanceStarted = true;
+      await academy.setMaintenanceMode(true);
 
       const dbState = loadDatabase();
       const caller = dbState.accounts.find(account => account.uid === sessionUid);
@@ -3980,7 +3997,11 @@ jobs:
       }
 
       const examSnapshot = await repository.exportSnapshot();
+      const academySnapshot = await academy.exportSnapshot();
       validateLegacyVerificationSources(examSnapshot, dbState.exams, dbState.progress);
+      const academyRepositoryCounts = Object.fromEntries(
+        Object.entries(academySnapshot.collections).map(([collection, documents]) => [collection, documents.length])
+      ) as PortalBackupSnapshot['summary']['academyRepositoryCounts'];
       const examSummary = {
         exam_masters: examSnapshot.collections.exam_masters.length,
         exam_versions: examSnapshot.collections.exam_versions.length,
@@ -3999,9 +4020,9 @@ jobs:
         dbState,
         caller,
         'SYSTEM_BACKUP',
-        'Portal- und Prüfungsdatenexport (ohne private Notizen)',
-        'CA_POST_PORTAL_BACKUP_V4',
-        `${dbState.accounts.length} Konten, ${dbState.exams.length} Legacy-Prüfungen und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
+        'Portal-, Academy- und Prüfungsdatenexport (ohne private Notizen)',
+        'CA_POST_PORTAL_BACKUP_V5',
+        `${dbState.accounts.length} Konten, ${Object.values(academyRepositoryCounts).reduce((sum, count) => sum + count, 0)} gemeinsame Academy-Datensätze und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
       );
       await saveDatabaseAndWait(dbState);
 
@@ -4021,7 +4042,7 @@ jobs:
       }
 
       const snapshot: PortalBackupSnapshot = {
-        snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4',
+        snapshotFormat: 'CA_POST_PORTAL_BACKUP_V5',
         exportedAtIso: nowIso,
         exportedByUsername: caller.username,
         summary: {
@@ -4038,6 +4059,7 @@ jobs:
           academyProgramParticipationsCount: (dbState.academy_program_participations || []).length,
           academyProgressEvidenceCount: (dbState.academy_progress_evidence || []).length,
           academyCompletionCorrectionsCount: (dbState.academy_completion_corrections || []).length,
+          academyRepositoryCounts,
           announcementsCount: (dbState.announcements || []).length,
           messagesCount: (dbState.messages || []).length,
           requestsCount: (dbState.requests || []).length,
@@ -4055,6 +4077,7 @@ jobs:
           ...examSnapshot,
           summary: examSummary
         },
+        academyRepository: academySnapshot,
         database: {
           version: dbState.version || 3,
           accounts: dbState.accounts,
@@ -4080,6 +4103,9 @@ jobs:
         }
       };
 
+      // Release the Academy adapter lock as well as the shared Exam lock.
+      // Keep the global maintenance flag active until both stores are writable again.
+      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
@@ -4088,6 +4114,7 @@ jobs:
     } catch (error) {
       if (maintenanceStarted) {
         try {
+          await academy.setMaintenanceMode(false);
           await repository.setMaintenanceMode(false);
           examMaintenanceActive = false;
           examMaintenanceOperation = null;
@@ -4118,11 +4145,11 @@ jobs:
       return;
     }
 
-    const snapshot = req.body?.snapshot as Partial<PortalBackupSnapshot> | undefined;
+    const snapshot = req.body?.snapshot as (Omit<Partial<PortalBackupSnapshot>, 'snapshotFormat'> & { snapshotFormat?: string }) | undefined;
     if (
       !snapshot ||
       typeof snapshot !== 'object' ||
-      snapshot.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+      (snapshot.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' && snapshot.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V5') ||
       typeof snapshot.exportedAtIso !== 'string' ||
       Number.isNaN(Date.parse(snapshot.exportedAtIso)) ||
       typeof snapshot.exportedByUsername !== 'string' ||
@@ -4132,7 +4159,7 @@ jobs:
       typeof snapshot.examRepository !== 'object'
     ) {
       res.status(400).json({
-        error: 'Ungültiges oder unvollständiges Backup. Bitte erstelle ein neues vollständiges V4-Backup.'
+        error: 'Ungültiges oder unvollständiges Backup. Unterstützt werden vollständige V4- und V5-Backups.'
       });
       return;
     }
@@ -4162,9 +4189,25 @@ jobs:
     }
 
     let examSnapshot;
+    let academySnapshot: ReturnType<typeof validateAcademyRepositoryBackupSnapshot> | null = null;
     try {
       examSnapshot = validateExamRepositorySnapshot(snapshot.examRepository);
       validateLegacyVerificationSources(examSnapshot, rawDb.exams, rawDb.progress);
+      if (snapshot.snapshotFormat === 'CA_POST_PORTAL_BACKUP_V5') {
+        academySnapshot = validateAcademyRepositoryBackupSnapshot(snapshot.academyRepository);
+        const expectedAcademyCounts = Object.fromEntries(
+          Object.entries(academySnapshot.collections).map(([collection, documents]) => [collection, documents.length])
+        );
+        const actualAcademyCounts = snapshot.summary?.academyRepositoryCounts;
+        if (
+          !actualAcademyCounts ||
+          Object.entries(expectedAcademyCounts).some(([collection, count]) =>
+            actualAcademyCounts[collection as keyof typeof actualAcademyCounts] !== count
+          )
+        ) {
+          throw new Error('ACADEMY_BACKUP_SUMMARY_MISMATCH');
+        }
+      }
 
       const examCounts = snapshot.examRepository.summary;
       const expectedExamCounts = {
@@ -4235,6 +4278,7 @@ jobs:
     }
 
     const repository = getExamRepository();
+    const academy = getAcademyRepository();
     if (examRestoreInProgress || (examMaintenanceActive && examMaintenanceOperation !== 'restore')) {
       res.status(503).json({
         error: 'Eine Datensicherung oder Wiederherstellung läuft bereits. Bitte warte, bis sie abgeschlossen ist.'
@@ -4247,6 +4291,7 @@ jobs:
       examMaintenanceActive = true;
       examMaintenanceOperation = 'restore';
       await repository.setMaintenanceMode(true, true);
+      await academy.setMaintenanceMode(true);
 
       const nowIso = new Date().toISOString();
       const restoredAccounts: StoredAccountRecord[] = rawDb.accounts!.map(acc => ({
@@ -4317,13 +4362,15 @@ jobs:
         caller,
         'SYSTEM_BACKUP',
         'Portal- und Prüfungsdaten wiederhergestellt (private Notizen unverändert)',
-        'CA_POST_PORTAL_BACKUP_V4',
-        `${nextState.accounts.length} Konten, ${nextState.exams.length} Legacy-Prüfungen und ${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.`
+        snapshot.snapshotFormat,
+        `${nextState.accounts.length} Konten, ${academySnapshot ? Object.values(academySnapshot.collections).reduce((sum, documents) => sum + documents.length, 0) : 0} gemeinsame Academy-Datensätze und ${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.`
       );
 
-      // Beide Speichergrenzen bleiben gesperrt, bis beide Schreibvorgänge bestätigt wurden.
+      // Alle drei Speichergrenzen bleiben gesperrt, bis sämtliche Wiederherstellungen bestätigt wurden.
       await saveDatabaseAndWait(nextState);
       await repository.restoreSnapshot(examSnapshot);
+      if (academySnapshot) await academy.restoreSnapshot(academySnapshot);
+      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       examMaintenanceActive = false;
       examMaintenanceOperation = null;
@@ -4342,7 +4389,10 @@ jobs:
           examProgressCount: examSnapshot.collections.exam_progress.length,
           examLegacyVerificationsCount: examSnapshot.collections.exam_legacy_verifications.length,
           examCommentsCount: examSnapshot.collections.exam_comments.length,
-          examPublicationRequestsCount: examSnapshot.collections.exam_publication_requests.length
+          examPublicationRequestsCount: examSnapshot.collections.exam_publication_requests.length,
+          academyRepositoryCounts: academySnapshot
+            ? Object.fromEntries(Object.entries(academySnapshot.collections).map(([collection, documents]) => [collection, documents.length]))
+            : null
         }
       });
     } catch (error) {

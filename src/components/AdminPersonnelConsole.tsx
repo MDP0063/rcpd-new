@@ -387,8 +387,9 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     await onRefreshState();
+    const academyCount = Object.values(res.data.summary.academyRepositoryCounts).reduce((sum, count) => sum + count, 0);
     onStatusToast(
-      `Vollständiges V4-Backup heruntergeladen: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche.`
+      `Vollständiges V5-Backup heruntergeladen: ${res.data.summary.accountsCount} Konten, ${academyCount} gemeinsame Academy-Datensätze, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche. Private Notizen sind ausgeschlossen.`
     );
   };
 
@@ -406,12 +407,39 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           'exam_progress',
           'exam_legacy_verifications'
         ];
+        const isV4 = parsed.snapshotFormat === 'CA_POST_PORTAL_BACKUP_V4';
+        const isV5 = parsed.snapshotFormat === 'CA_POST_PORTAL_BACKUP_V5';
+        const requiredAcademyCollections = [
+          'academy_material_categories',
+          'academy_material_category_assignments',
+          'academy_material_document_types',
+          'academy_material_document_type_assignments',
+          'academy_materials',
+          'academy_material_drafts',
+          'academy_material_versions',
+          'academy_courses',
+          'academy_course_drafts',
+          'academy_course_versions',
+          'academy_programs',
+          'academy_program_drafts',
+          'academy_program_versions',
+          'academy_course_participations',
+          'academy_program_participations',
+          'academy_progress_evidence',
+          'academy_completion_corrections'
+        ];
         if (
-          parsed.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+          (!isV4 && !isV5) ||
           !parsed.examRepository?.collections ||
-          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name]))
+          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name])) ||
+          (isV5 && (
+            parsed.academyRepository?.formatVersion !== 1 ||
+            !parsed.academyRepository?.collections ||
+            requiredAcademyCollections.some(name => !Array.isArray(parsed.academyRepository.collections[name])) ||
+            Object.prototype.hasOwnProperty.call(parsed.academyRepository.collections, 'academy_private_notes')
+          ))
         ) {
-          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein neues vollständiges V4-Backup.');
+          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein vollständiges V5-Backup.');
           return;
         }
         const res = await apiFetch<{
@@ -425,6 +453,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
             examAttemptsCount: number;
             examProgressCount: number;
             examLegacyVerificationsCount: number;
+            academyRepositoryCounts?: Record<string, number> | null;
           };
         }>(API_ENDPOINTS.ADMIN_RESTORE, {
           method: 'POST',
@@ -438,8 +467,12 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           return;
         }
         await onRefreshState();
+        const academyCount = Object.values(res.data.summary.academyRepositoryCounts || {}).reduce((sum, count) => sum + count, 0);
+        const academyText = res.data.summary.academyRepositoryCounts
+          ? `${academyCount} gemeinsame Academy-Datensätze`
+          : 'Academy-Daten unverändert (V4-Backup)';
         onStatusToast(
-          `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche.`
+          `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${academyText}, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen und ${res.data.summary.examAttemptsCount} Versuche.`
         );
       } catch {
         onStatusToast('Ungültige JSON-Backup-Datei.');

@@ -401,3 +401,31 @@ export interface AcademyPrivateNoteDoc {
   createdIso: string;
   updatedIso: string;
 }
+
+
+/**
+ * Administrator backup of the shared Academy domain data.
+ * Owner-private notes are deliberately excluded and must remain untouched on restore.
+ */
+export interface AcademyRepositoryBackupSnapshot {
+  formatVersion: 1;
+  collections: {
+    academy_material_categories: AcademyMaterialCategoryDoc[];
+    academy_material_category_assignments: AcademyMaterialCategoryAssignmentDoc[];
+    academy_material_document_types: AcademyMaterialDocumentTypeDoc[];
+    academy_material_document_type_assignments: AcademyMaterialDocumentTypeAssignmentDoc[];
+    academy_materials: AcademyMaterialMasterDoc[];
+    academy_material_drafts: AcademyMaterialDraftDoc[];
+    academy_material_versions: AcademyMaterialVersionDoc[];
+    academy_courses: AcademyCourseMasterDoc[];
+    academy_course_drafts: AcademyCourseDraftDoc[];
+    academy_course_versions: AcademyCourseVersionDoc[];
+    academy_programs: AcademyProgramMasterDoc[];
+    academy_program_drafts: AcademyProgramDraftDoc[];
+    academy_program_versions: AcademyProgramVersionDoc[];
+    academy_course_participations: AcademyCourseParticipationDoc[];
+    academy_program_participations: AcademyProgramParticipationDoc[];
+    academy_progress_evidence: AcademyProgressEvidenceDoc[];
+    academy_completion_corrections: AcademyCompletionCorrectionDoc[];
+  };
+}

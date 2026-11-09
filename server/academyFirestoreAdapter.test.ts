@@ -65,6 +65,18 @@ class FakeQuery {
   limit(maxResults: number) {
     return new FakeQuery(this.database, this.collectionName, this.filters, maxResults);
   }
+  async get() {
+    const docs = this.database.list(this.collectionName)
+      .filter(document => this.filters.every(filter => (document.data as Record<string, unknown>)[filter.field] === filter.value))
+      .slice(0, this.maxResults)
+      .map(document => ({
+        id: document.id,
+        exists: true,
+        data: () => document.data,
+        ref: new FakeDocumentReference(this.database, this.collectionName, document.id)
+      }));
+    return { docs };
+  }
 }
 
 class FakeCollectionReference extends FakeQuery {
@@ -82,7 +94,12 @@ class FakeTransaction {
     if (this.hasWrites) throw new Error('FAKE_FIRESTORE_READ_AFTER_WRITE');
     if (target instanceof FakeDocumentReference) {
       const data = this.database.read(target.collectionName, target.id);
-      return { id: target.id, exists: data !== null, data: () => data ?? undefined };
+      return {
+        id: target.id,
+        exists: data !== null,
+        data: () => data ?? undefined,
+        get: (field: string) => data && typeof data === 'object' ? (data as Record<string, unknown>)[field] : undefined
+      };
     }
     const docs = this.database.list(target.collectionName)
       .filter(document => target.filters.every(filter => (document.data as Record<string, unknown>)[filter.field] === filter.value))
@@ -108,9 +125,37 @@ class FakeTransaction {
   }
 }
 
+class FakeBulkWriter {
+  private readonly writes: FakeWrite[] = [];
+  private readonly database: FakeFirestore;
+  constructor(database: FakeFirestore) { this.database = database; }
+  set(reference: FakeDocumentReference, data: unknown) {
+    this.writes.push({ kind: 'set', collection: reference.collectionName, id: reference.id, data });
+    return Promise.resolve();
+  }
+  delete(reference: FakeDocumentReference) {
+    this.writes.push({ kind: 'delete', collection: reference.collectionName, id: reference.id });
+    return Promise.resolve();
+  }
+  async close() {
+    for (const write of this.writes) this.database.apply(write);
+  }
+}
+
 class FakeFirestore {
   private readonly documents = new Map<string, Map<string, unknown>>();
   collection(name: string) { return new FakeCollectionReference(this, name); }
+  doc(path: string) {
+    const [collectionName, id] = path.split('/');
+    return new FakeDocumentReference(this, collectionName, id);
+  }
+  bulkWriter() { return new FakeBulkWriter(this); }
+  apply(write: FakeWrite) {
+    let collection = this.documents.get(write.collection);
+    if (!collection) { collection = new Map(); this.documents.set(write.collection, collection); }
+    if (write.kind === 'delete') collection.delete(write.id);
+    else collection.set(write.id, write.data);
+  }
   seed(collection: string, id: string, data: unknown) {
     let documents = this.documents.get(collection);
     if (!documents) { documents = new Map(); this.documents.set(collection, documents); }
@@ -228,4 +273,67 @@ test('Firestore course creation rejects an existing draft before writing the mas
     /ACADEMY_DOCUMENT_ALREADY_EXISTS/
   );
   assert.equal(await repository.get('academy_courses', firestoreCourseMaster.id), null);
+});
+
+
+test('Firestore Academy backup exports shared collections and excludes private notes', async () => {
+  const database = new FakeFirestore();
+  const category = {
+    id: 'backup-category',
+    name: 'Backup-Kategorie',
+    status: 'active',
+    revision: 1,
+    createdIso: transactionTestIso,
+    createdByUid: 'admin-1',
+    updatedIso: transactionTestIso,
+    updatedByUid: 'admin-1'
+  };
+  database.seed('academy_repo_material_categories', category.id, category);
+  database.seed('academy_repo_private_notes', 'private-note-1', {
+    id: 'private-note-1',
+    ownerUid: 'user-1'
+  });
+  const repository = new AcademyRepository(
+    new FirestoreAcademyStorageAdapter(database as unknown as Firestore)
+  );
+  await repository.setMaintenanceMode(true);
+
+  const snapshot = await repository.exportSnapshot();
+
+  assert.deepEqual(snapshot.collections.academy_material_categories, [category]);
+  assert.equal('academy_private_notes' in snapshot.collections, false);
+});
+
+
+test('Firestore Academy restore replaces shared collections and preserves private notes', async () => {
+  const database = new FakeFirestore();
+  const oldCategory = {
+    id: 'old-category', name: 'Alt', status: 'active', revision: 1,
+    createdIso: transactionTestIso, createdByUid: 'admin-1',
+    updatedIso: transactionTestIso, updatedByUid: 'admin-1'
+  };
+  const newCategory = {
+    id: 'new-category', name: 'Neu', status: 'active', revision: 1,
+    createdIso: transactionTestIso, createdByUid: 'admin-1',
+    updatedIso: transactionTestIso, updatedByUid: 'admin-1'
+  };
+  const privateNote = { id: 'private-note-1', ownerUid: 'user-1' };
+  database.seed('academy_repo_material_categories', oldCategory.id, oldCategory);
+  database.seed('academy_repo_private_notes', privateNote.id, privateNote);
+  const repository = new AcademyRepository(
+    new FirestoreAcademyStorageAdapter(database as unknown as Firestore)
+  );
+  await repository.setMaintenanceMode(true);
+  const snapshot = await repository.exportSnapshot();
+
+  await repository.restoreSnapshot({
+    ...snapshot,
+    collections: {
+      ...snapshot.collections,
+      academy_material_categories: [newCategory]
+    }
+  });
+
+  assert.deepEqual(await repository.listMaterialCategories(), [newCategory]);
+  assert.deepEqual(database.list('academy_repo_private_notes').map(item => item.data), [privateNote]);
 });

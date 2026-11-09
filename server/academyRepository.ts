@@ -1,7 +1,8 @@
 import { join } from 'node:path';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
 import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
-import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
+import { ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
+import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
 import { FirestoreAcademyStorageAdapter } from './academyFirestoreAdapter.ts';
@@ -9,6 +10,81 @@ import type { Firestore } from 'firebase-admin/firestore';
 
 function assertValid(result: { ok: boolean; code?: string }): void {
   if (!result.ok) throw new Error(result.code || 'ACADEMY_DOCUMENT_INVALID');
+}
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+function validateAcademyBackupDocument(collection: typeof ACADEMY_BACKUP_COLLECTIONS[number], document: AcademyDocument): void {
+  switch (collection) {
+    case 'academy_material_categories': assertValid(validateMaterialCategory(document as AcademyMaterialCategoryDoc)); break;
+    case 'academy_material_category_assignments': assertValid(validateMaterialCategoryAssignment(document as AcademyMaterialCategoryAssignmentDoc)); break;
+    case 'academy_material_document_types': assertValid(validateMaterialDocumentType(document as AcademyMaterialDocumentTypeDoc)); break;
+    case 'academy_material_document_type_assignments': assertValid(validateMaterialDocumentTypeAssignment(document as AcademyMaterialDocumentTypeAssignmentDoc)); break;
+    case 'academy_materials': assertValid(validateMaterialMaster(document as AcademyMaterialMasterDoc)); break;
+    case 'academy_material_drafts': {
+      const item = document as AcademyMaterialDraftDoc;
+      assertValid(validateMaterialDraft(item.materialId, item));
+      break;
+    }
+    case 'academy_material_versions': {
+      const item = document as AcademyMaterialVersionDoc;
+      assertValid(validateMaterialVersion(item.materialId, item));
+      break;
+    }
+    case 'academy_courses': assertValid(validateCourseMaster(document as AcademyCourseMasterDoc)); break;
+    case 'academy_course_drafts': {
+      const item = document as AcademyCourseDraftDoc;
+      assertValid(validateCourseDraft(item.courseId, item));
+      break;
+    }
+    case 'academy_course_versions': {
+      const item = document as AcademyCourseVersionDoc;
+      assertValid(validateCourseVersion(item.courseId, item));
+      break;
+    }
+    case 'academy_programs': assertValid(validateProgramMaster(document as AcademyProgramMasterDoc)); break;
+    case 'academy_program_drafts': {
+      const item = document as AcademyProgramDraftDoc;
+      assertValid(validateProgramDraft(item.programId, item));
+      break;
+    }
+    case 'academy_program_versions': {
+      const item = document as AcademyProgramVersionDoc;
+      assertValid(validateProgramVersion(item.programId, item));
+      break;
+    }
+    case 'academy_course_participations': assertValid(validateCourseParticipation(document as AcademyCourseParticipationDoc)); break;
+    case 'academy_program_participations': assertValid(validateProgramParticipation(document as AcademyProgramParticipationDoc)); break;
+    case 'academy_progress_evidence': assertValid(validateProgressEvidence(document as AcademyProgressEvidenceDoc)); break;
+    case 'academy_completion_corrections': assertValid(validateCompletionCorrection(document as AcademyCompletionCorrectionDoc)); break;
+  }
+}
+export function validateAcademyRepositoryBackupSnapshot(value: unknown): AcademyRepositoryBackupSnapshot {
+  if (!isRecord(value) || value.formatVersion !== 1 || !isRecord(value.collections)) {
+    throw new Error('ACADEMY_BACKUP_INVALID');
+  }
+  if (Object.prototype.hasOwnProperty.call(value.collections, 'academy_private_notes')) {
+    throw new Error('ACADEMY_BACKUP_PRIVATE_NOTES_FORBIDDEN');
+  }
+  const collections = {} as AcademyRepositoryBackupSnapshot['collections'];
+  for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
+    const documents = value.collections[collection];
+    if (!Array.isArray(documents)) throw new Error('ACADEMY_BACKUP_COLLECTION_MISSING');
+    const seen = new Set<string>();
+    for (const rawDocument of documents) {
+      if (!isRecord(rawDocument) || typeof rawDocument.id !== 'string') {
+        throw new Error('ACADEMY_BACKUP_DOCUMENT_INVALID');
+      }
+      const id = rawDocument.id;
+      if (seen.has(id)) throw new Error('ACADEMY_BACKUP_DOCUMENT_DUPLICATE');
+      seen.add(id);
+      assertAcademyDocumentId(id);
+      assertAcademyDocument(collection, id, rawDocument as unknown as AcademyDocument);
+      validateAcademyBackupDocument(collection, rawDocument as unknown as AcademyDocument);
+    }
+    (collections as Record<string, AcademyDocument[]>)[collection] = documents as AcademyDocument[];
+  }
+  return { formatVersion: 1, collections };
 }
 function courseDraftMatchesVersion(draft: AcademyCourseDraftDoc, version: AcademyCourseVersionDoc): boolean {
   return draft.title === version.title &&
@@ -37,6 +113,15 @@ function materialDraftMatchesVersion(draft: AcademyMaterialDraftDoc, version: Ac
 export class AcademyRepository {
   private readonly adapter: AcademyStorageAdapter;
   constructor(adapter: AcademyStorageAdapter) { this.adapter = adapter; }
+  async exportSnapshot(): Promise<AcademyRepositoryBackupSnapshot> {
+    return validateAcademyRepositoryBackupSnapshot(await this.adapter.exportSnapshot());
+  }
+  async restoreSnapshot(snapshot: unknown): Promise<void> {
+    await this.adapter.replaceSnapshot(validateAcademyRepositoryBackupSnapshot(snapshot));
+  }
+  async setMaintenanceMode(enabled: boolean): Promise<void> {
+    await this.adapter.setMaintenanceMode(enabled);
+  }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     if (collection === 'academy_private_notes') throw new Error('ACADEMY_NOTE_OWNER_METHOD_REQUIRED');
     assertAcademyDocumentId(id); return this.adapter.get<T>(collection, id);

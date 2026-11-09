@@ -1,4 +1,4 @@
-import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyPrivateNoteDoc, AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 
 export const ACADEMY_COLLECTIONS = [
   'academy_material_categories',
@@ -21,6 +21,27 @@ export const ACADEMY_COLLECTIONS = [
   'academy_private_notes'
 ] as const;
 export type AcademyCollection = typeof ACADEMY_COLLECTIONS[number];
+export const ACADEMY_BACKUP_COLLECTIONS = [
+  'academy_material_categories',
+  'academy_material_category_assignments',
+  'academy_material_document_types',
+  'academy_material_document_type_assignments',
+  'academy_materials',
+  'academy_material_drafts',
+  'academy_material_versions',
+  'academy_courses',
+  'academy_course_drafts',
+  'academy_course_versions',
+  'academy_programs',
+  'academy_program_drafts',
+  'academy_program_versions',
+  'academy_course_participations',
+  'academy_program_participations',
+  'academy_progress_evidence',
+  'academy_completion_corrections'
+] as const;
+export type AcademyBackupCollection = typeof ACADEMY_BACKUP_COLLECTIONS[number];
+export type { AcademyRepositoryBackupSnapshot };
 export interface AcademyDocument { id: string }
 export interface AcademyFilter { field: string; value: string | number | boolean | null }
 export interface AcademyQuery { where?: readonly AcademyFilter[]; limit?: number; offset?: number; orderBy?: string; orderDirection?: 'asc' | 'desc' }
@@ -35,6 +56,9 @@ export interface AcademyStorageAdapter {
   get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null>;
   list<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, query?: AcademyQuery): Promise<T[]>;
   runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T>;
+  exportSnapshot(): Promise<AcademyRepositoryBackupSnapshot>;
+  replaceSnapshot(snapshot: AcademyRepositoryBackupSnapshot): Promise<void>;
+  setMaintenanceMode(enabled: boolean): Promise<void>;
 }
 export interface AcademyDocumentMap {
   academy_material_categories: AcademyMaterialCategoryDoc;

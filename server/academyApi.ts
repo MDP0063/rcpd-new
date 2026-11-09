@@ -57,6 +57,7 @@ function id(prefix: string): string {
 }
 function statusFor(error: unknown): number {
   const code = error instanceof Error ? error.message : '';
+  if (code === 'ACADEMY_MAINTENANCE_ACTIVE' || code === 'ACADEMY_MAINTENANCE_REQUIRED') return 503;
   if (code.includes('NOT_FOUND')) return 404;
   if (code.includes('ACCESS_DENIED') || code.includes('OWNER_MISMATCH') || code.includes('ACTOR_MISMATCH') || code.includes('EVIDENCE_ACTOR_FORBIDDEN') || code.includes('INSTRUCTOR_REQUIRED')) return 403;
   if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') ||

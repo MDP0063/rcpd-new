@@ -47,6 +47,8 @@ interface ParsedBackupPreview {
   modulesCount: number;
   examsCount: number;
   applicationsCount: number;
+  academyRepositoryCount: number;
+  includesAcademyRepository: boolean;
   rawPayload: unknown;
 }
 
@@ -266,8 +268,9 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
     URL.revokeObjectURL(url);
 
     await onRefreshState();
+    const academyRepositoryCount = Object.values(data.summary.academyRepositoryCounts).reduce((sum, count) => sum + count, 0);
     onStatusToast(
-      `Vollständiges V4-Backup heruntergeladen: ${data.summary.accountsCount} Konten, ${data.summary.examsCount} Legacy-Prüfungen, ${data.summary.examMastersCount} Prüfungs-Master, ${data.summary.examVersionsCount} Versionen, ${data.summary.examAttemptsCount} Versuche und ${data.summary.examLegacyVerificationsCount} Legacy-Verifikationen.`
+      `Vollständiges V5-Backup heruntergeladen: ${data.summary.accountsCount} Konten, ${academyRepositoryCount} gemeinsame Academy-Datensätze, ${data.summary.examsCount} Legacy-Prüfungen, ${data.summary.examMastersCount} Prüfungs-Master, ${data.summary.examVersionsCount} Versionen, ${data.summary.examAttemptsCount} Versuche und ${data.summary.examLegacyVerificationsCount} Legacy-Verifikationen. Private Notizen sind ausgeschlossen.`
     );
   };
 
@@ -287,12 +290,39 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
           'exam_progress',
           'exam_legacy_verifications'
         ];
+        const isV4 = parsed.snapshotFormat === 'CA_POST_PORTAL_BACKUP_V4';
+        const isV5 = parsed.snapshotFormat === 'CA_POST_PORTAL_BACKUP_V5';
+        const requiredAcademyCollections = [
+          'academy_material_categories',
+          'academy_material_category_assignments',
+          'academy_material_document_types',
+          'academy_material_document_type_assignments',
+          'academy_materials',
+          'academy_material_drafts',
+          'academy_material_versions',
+          'academy_courses',
+          'academy_course_drafts',
+          'academy_course_versions',
+          'academy_programs',
+          'academy_program_drafts',
+          'academy_program_versions',
+          'academy_course_participations',
+          'academy_program_participations',
+          'academy_progress_evidence',
+          'academy_completion_corrections'
+        ];
         if (
-          parsed.snapshotFormat !== 'CA_POST_PORTAL_BACKUP_V4' ||
+          (!isV4 && !isV5) ||
           !parsed.examRepository?.collections ||
-          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name]))
+          requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name])) ||
+          (isV5 && (
+            parsed.academyRepository?.formatVersion !== 1 ||
+            !parsed.academyRepository?.collections ||
+            requiredAcademyCollections.some(name => !Array.isArray(parsed.academyRepository.collections[name])) ||
+            Object.prototype.hasOwnProperty.call(parsed.academyRepository.collections, 'academy_private_notes')
+          ))
         ) {
-          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein neues vollständiges V4-Backup.');
+          onStatusToast('Dieses Backup ist veraltet oder unvollständig. Bitte erstelle zuerst ein vollständiges V5-Backup.');
           setBackupPreview(null);
           return;
         }
@@ -309,6 +339,10 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
           modulesCount: Array.isArray(dbObj.modules) ? dbObj.modules.length : 0,
           examsCount: Array.isArray(dbObj.exams) ? dbObj.exams.length : 0,
           applicationsCount: Array.isArray(dbObj.applications) ? dbObj.applications.length : 0,
+          academyRepositoryCount: isV5
+            ? Object.values(parsed.academyRepository.collections).reduce((sum: number, documents: unknown) => sum + (Array.isArray(documents) ? documents.length : 0), 0)
+            : 0,
+          includesAcademyRepository: isV5,
           rawPayload: parsed
         });
       } catch {
@@ -335,6 +369,7 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
         examAttemptsCount: number;
         examProgressCount: number;
         examLegacyVerificationsCount: number;
+        academyRepositoryCounts?: Record<string, number> | null;
       };
     }>(API_ENDPOINTS.ADMIN_RESTORE, {
       method: 'POST',
@@ -356,8 +391,12 @@ export const DeploymentPipelineHub: React.FC<DeploymentPipelineHubProps> = ({
       fileInputRef.current.value = '';
     }
     await Promise.all([onRefreshState(), loadDeploymentManifests()]);
+    const restoredAcademyCount = Object.values(res.data.summary.academyRepositoryCounts || {}).reduce((sum, count) => sum + count, 0);
+    const academyRestoreText = res.data.summary.academyRepositoryCounts
+      ? `${restoredAcademyCount} gemeinsame Academy-Datensätze`
+      : 'Academy-Daten unverändert (V4-Backup)';
     onStatusToast(
-      `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen, ${res.data.summary.examAttemptsCount} Versuche und ${res.data.summary.examLegacyVerificationsCount} Legacy-Verifikationen.`
+      `Vollständiges Backup wiederhergestellt: ${res.data.summary.accountsCount} Konten, ${academyRestoreText}, ${res.data.summary.examsCount} Legacy-Prüfungen, ${res.data.summary.examMastersCount} Prüfungs-Master, ${res.data.summary.examVersionsCount} Versionen, ${res.data.summary.examAttemptsCount} Versuche und ${res.data.summary.examLegacyVerificationsCount} Legacy-Verifikationen.`
     );
   };
 
@@ -623,7 +662,10 @@ git push origin ${cleanBranch}`;
                   Enthält: <strong>{backupPreview.accountsCount}</strong> Konten ·{' '}
                   <strong>{backupPreview.modulesCount}</strong> Lehrbücher (PDFs) ·{' '}
                   <strong>{backupPreview.examsCount}</strong> Prüfungen ·{' '}
-                  <strong>{backupPreview.applicationsCount}</strong> Bewerbungen
+                  <strong>{backupPreview.applicationsCount}</strong> Bewerbungen ·{' '}
+                  {backupPreview.includesAcademyRepository
+                    ? <><strong>{backupPreview.academyRepositoryCount}</strong> Academy-Datensätze</>
+                    : 'Academy-Daten nicht enthalten (bleiben bei V4-Restore erhalten)'}
                 </div>
                 <div className="flex items-center justify-end gap-2">
                   <button
