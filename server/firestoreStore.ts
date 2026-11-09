@@ -45,6 +45,8 @@ export interface FirestoreStoreOptions {
 
 const SAVE_DELAY_MS = 300;
 const RETRY_DELAY_MS = 5000;
+// The documented 15 MB raw PDF limit needs about 30 chunks at the current 700 kB chunk size.
+const MAX_PDF_BLOB_CHUNKS = 64;
 
 export function parseServiceAccount(raw: string): Record<string, unknown> {
   const text = raw.trim();
@@ -170,7 +172,7 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
       if (!BLOB_FIELDS[collection]?.includes(field)) {
         throw new Error('FIRESTORE_BLOB_FIELD_INVALID');
       }
-      if (!Number.isSafeInteger(count) || count < 1 || count > 512) {
+      if (!Number.isSafeInteger(count) || count < 1 || count > MAX_PDF_BLOB_CHUNKS) {
         throw new Error('FIRESTORE_BLOB_CHUNK_COUNT_INVALID');
       }
       const refs = Array.from({ length: count }, (_, part) =>
