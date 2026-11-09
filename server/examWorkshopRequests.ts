@@ -1,7 +1,7 @@
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { newId } from './ids.ts';
-import { getExamWorkshopDefinitionHash } from './examWorkshop.ts';
+import { getExamWorkshopDefinitionHash, getExamVersionDefinitionHash } from './examWorkshop.ts';
 
 export interface ExamCommentDocument extends ExamDocument {
   examId: string;
@@ -90,6 +90,13 @@ export async function submitExamPublicationRequest(
     const revision = currentRevision(master);
     if (expectedRevision !== undefined && expectedRevision !== revision) {
       throw new Error('EXAM_WORKING_REVISION_CONFLICT');
+    }
+    if (master.currentPublishedVersionId) {
+      const publishedVersion = await transaction.get('exam_versions', master.currentPublishedVersionId);
+      if (!publishedVersion || publishedVersion.examId !== examId) throw new Error('EXAM_PUBLISHED_VERSION_MISSING');
+      if (getExamWorkshopDefinitionHash(master) === getExamVersionDefinitionHash(publishedVersion)) {
+        throw new Error('EXAM_NO_UNPUBLISHED_CHANGES');
+      }
     }
     const pending = await transaction.list<ExamPublicationRequestDocument>('exam_publication_requests', {
       where: [
