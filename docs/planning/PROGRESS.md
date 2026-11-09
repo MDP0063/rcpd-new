@@ -14,6 +14,15 @@
 - Kursveröffentlichungen prüfen serverseitig, dass jede Materialreferenz auf eine tatsächlich vorhandene, veröffentlichte und nicht archivierte konkrete Materialversion zeigt. Bestehende Legacy-Lehrmaterialien bleiben unangetastet und werden nicht automatisch migriert.
 - Die aktuelle Ausbaustufe ergänzt zunächst die Admin-/Colonel-/Kursverantwortlichen-Verwaltung. Teilnehmer-Reader und Materialauswahl direkt im Kurseditor bleiben die anschließende Integration.
 
+### Legacy-PDFs – technische Bestandsbehandlung (09.11.2026)
+
+- Vorhandene Firestore-PDF-Blob-Dokumente werden nicht gelöscht, verschoben oder in ein anderes Speichersystem migriert.
+- Der Firestore-Serverstart lädt nur noch Modulmetadaten und überspringt große PDF-Blob-Inhalte. Die Blob-Teilstücke werden erst beim berechtigten Abruf eines konkreten Handbuchs gelesen.
+- Bei einer Änderung an einem Modul ohne PDF-Änderung bleiben nicht geladene Blob-Referenzen erhalten; dadurch werden bestehende PDFs nicht versehentlich gelöscht.
+- Neue bzw. ausdrücklich bearbeitete PDF-Inhalte werden weiterhin in Firestore-Blob-Dokumente zerlegt. Nach dem Upload verbleibt der hochgeladene Inhalt bis zur Freigabe durch den normalen Speicher-/Garbage-Collection-Zyklus im laufenden Prozess; der Start lädt ihn anschließend nicht mehr pauschal.
+- Die Browser-PDF-Zwischenspeicherung ist auf das aktuell ausgewählte Dokument begrenzt.
+- Das ist ausschließlich eine Bestands-/Performanceoptimierung und keine Wiederaufnahme der geplanten PDF-Sicherheitsinfrastruktur. Die beschlossene Signatur-/Parser-/Malwareprüfung vor Veröffentlichung ist weiterhin offen; die bestehende einfache Data-URL-Prüfung ersetzt sie nicht.
+
 ## 0.1 Umsetzungsstand der versionierten Text-/Code-Materialverwaltung
 
 - Neues Datenmodell mit getrenntem Materialstamm, bearbeitbarem Entwurf und append-only Materialversionen.
