@@ -97,7 +97,10 @@ export default function App() {
   const activeSessionUidRef = useRef<string | null>(sessionUid);
   const sessionGenerationRef = useRef(0);
   const portalStateRequestControllerRef = useRef<AbortController | null>(null);
-  const portalStateRequestRunnerRef = useRef(new CoalescedRequestRunner());
+  const portalStateRequestRunnerRef = useRef<CoalescedRequestRunner | null>(null);
+  if (!portalStateRequestRunnerRef.current) {
+    portalStateRequestRunnerRef.current = new CoalescedRequestRunner();
+  }
   const heartbeatInFlightRef = useRef(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserPublicProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -220,7 +223,7 @@ export default function App() {
       if (!targetUid || activeSessionUidRef.current !== targetUid) return;
       const requestGeneration = sessionGenerationRef.current;
 
-      await portalStateRequestRunnerRef.current.run(async () => {
+      await portalStateRequestRunnerRef.current!.run(async () => {
         if (
           activeSessionUidRef.current !== targetUid ||
           sessionGenerationRef.current !== requestGeneration
