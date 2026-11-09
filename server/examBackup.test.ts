@@ -262,7 +262,6 @@ test('Backup lehnt einen startbaren Master mit nicht startbarer aktueller Versio
 test('Backup lehnt abweichende Prüfungsstufen zwischen Master und aktueller Version ab', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_versions[0].assessmentStage = 'final_exam';
-  snapshot.collections.exam_masters[0].assessmentStage = 'final_exam';
   snapshot.collections.exam_attempts = [];
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_METADATA_MISMATCH/);
 });
