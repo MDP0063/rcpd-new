@@ -85,6 +85,113 @@ const SESSION_STORAGE_KEY = 'ca_post_officer_session_uid_v3';
 const THEME_STORAGE_KEY = 'ca_post_theme_mode_v1';
 const INACTIVITY_TIMEOUT_SECONDS = 15 * 60; // 15 Minuten Inaktivitäts-Timeout
 
+function SessionTimeoutTimer({
+  sessionUid,
+  onTimeout,
+  deadlineRef,
+  showDisplay
+}: {
+  sessionUid: string | null;
+  onTimeout: () => void;
+  deadlineRef: React.MutableRefObject<number | null>;
+  showDisplay: boolean;
+}) {
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const deadline = deadlineRef.current;
+    return deadline === null
+      ? INACTIVITY_TIMEOUT_SECONDS
+      : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  });
+  const timeoutTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (!sessionUid) {
+      timeoutTriggeredRef.current = false;
+      deadlineRef.current = null;
+      setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+      return;
+    }
+    timeoutTriggeredRef.current = false;
+    if (deadlineRef.current === null) {
+      deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+    }
+
+    const updateCountdown = () => {
+      if (timeoutTriggeredRef.current || deadlineRef.current === null) return;
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      if (remaining <= 0) {
+        timeoutTriggeredRef.current = true;
+        setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+        onTimeout();
+        return;
+      }
+      setSecondsLeft(remaining);
+    };
+    const resetInactivityTimer = () => {
+      if (timeoutTriggeredRef.current || deadlineRef.current === null) return;
+      deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+      setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+    };
+
+    updateCountdown();
+    const eventsToWatch = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    eventsToWatch.forEach(evt =>
+      window.addEventListener(evt, resetInactivityTimer, { passive: true })
+    );
+    const countdownInterval = window.setInterval(updateCountdown, 1000);
+
+    return () => {
+      eventsToWatch.forEach(evt => window.removeEventListener(evt, resetInactivityTimer));
+      window.clearInterval(countdownInterval);
+    };
+  }, [sessionUid, onTimeout, deadlineRef]);
+
+  if (!sessionUid || !showDisplay) return null;
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  return (
+    <>
+      <span
+        title="Automatischer Sicherheits-Logout nach 15 Minuten Inaktivität"
+        className="font-mono text-slate-400"
+      >
+        Sitzung: {formatted}
+      </span>
+      {secondsLeft <= 90 && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-amber-950 text-amber-100 border border-amber-600 rounded-lg p-4 shadow-lg space-y-3">
+          <div className="flex items-start gap-2.5">
+            <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <div className="font-semibold text-amber-200">
+                Automatische Abmeldung in {secondsLeft} Sekunden
+              </div>
+              <p className="text-amber-100/90 leading-relaxed">
+                Wegen Inaktivität wirst du zum Schutz des Dienstportals in Kürze automatisch
+                abgemeldet.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+                setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+              }}
+              className="px-3.5 py-1.5 text-xs font-semibold bg-amber-500 text-slate-950 rounded-md hover:bg-amber-400 transition-colors cursor-pointer"
+            >
+              Sitzung aktiv halten
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function App() {
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
@@ -92,6 +199,10 @@ export default function App() {
   });
   const [sessionUid, setSessionUid] = useState<string | null>(() =>
     localStorage.getItem(SESSION_STORAGE_KEY)
+  );
+  // Preserve the same inactivity deadline while the login/loading view and portal view swap.
+  const inactivityDeadlineRef = useRef<number | null>(
+    sessionUid ? Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000 : null
   );
   // Prevent overlapping full-state requests and discard responses from previous sessions.
   const activeSessionUidRef = useRef<string | null>(sessionUid);
@@ -132,10 +243,6 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Session-Timeout & Auto-Logout State
-  const [inactivitySecondsLeft, setInactivitySecondsLeft] = useState<number>(
-    INACTIVITY_TIMEOUT_SECONDS
-  );
-
   // Central Admin Quick-Actions Modal States on Dashboard
   const [showQuickAnnouncementModal, setShowQuickAnnouncementModal] = useState(false);
   const [quickAnnTitle, setQuickAnnTitle] = useState('');
@@ -295,10 +402,14 @@ export default function App() {
 
           // Detect brand-new live notifications without page reload
           const incomingNotifs = data.notifications || [];
+          const incomingNotificationIds = new Set(incomingNotifs.map(notification => notification.id));
           if (!initialLoadCompleteRef.current) {
-            incomingNotifs.forEach(n => seenNotificationIdsRef.current.add(n.id));
+            seenNotificationIdsRef.current = incomingNotificationIds;
             initialLoadCompleteRef.current = true;
           } else {
+            for (const seenId of seenNotificationIdsRef.current) {
+              if (!incomingNotificationIds.has(seenId)) seenNotificationIdsRef.current.delete(seenId);
+            }
             for (const n of incomingNotifs) {
               if (!seenNotificationIdsRef.current.has(n.id)) {
                 seenNotificationIdsRef.current.add(n.id);
@@ -469,6 +580,7 @@ export default function App() {
     }
 
     const loggedInUser = res.data.user;
+    inactivityDeadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
     portalStateRequestControllerRef.current?.abort();
     sessionGenerationRef.current += 1;
     activeSessionUidRef.current = loggedInUser.uid;
@@ -480,7 +592,6 @@ export default function App() {
     setSessionUid(loggedInUser.uid);
     setCurrentUserProfile(loggedInUser);
     setIsAdmin(Boolean(res.data.isAdmin));
-    setInactivitySecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
     setActiveSection('dashboard');
     triggerToast(
       `Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`
@@ -490,6 +601,7 @@ export default function App() {
   const handleSignOut = useCallback(
     async (isAutoTimeout?: boolean) => {
       const uidToSignOut = sessionUid;
+      inactivityDeadlineRef.current = null;
       activeSessionUidRef.current = null;
       sessionGenerationRef.current += 1;
       portalStateRequestControllerRef.current?.abort();
@@ -520,34 +632,9 @@ export default function App() {
     [sessionUid, triggerToast]
   );
 
-  // Session-Timeout & Auto-Logout Activity Tracker (Resets on Mouse, Keyboard, Click, Scroll)
-  useEffect(() => {
-    if (!sessionUid) return;
-
-    const resetInactivityTimer = () => {
-      setInactivitySecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
-    };
-
-    const eventsToWatch = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
-    eventsToWatch.forEach(evt =>
-      window.addEventListener(evt, resetInactivityTimer, { passive: true })
-    );
-
-    const countdownInterval = window.setInterval(() => {
-      setInactivitySecondsLeft(prev => {
-        if (prev <= 1) {
-          handleSignOut(true);
-          return INACTIVITY_TIMEOUT_SECONDS;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      eventsToWatch.forEach(evt => window.removeEventListener(evt, resetInactivityTimer));
-      window.clearInterval(countdownInterval);
-    };
-  }, [sessionUid, handleSignOut]);
+  const handleInactivityTimeout = useCallback(() => {
+    void handleSignOut(true);
+  }, [handleSignOut]);
 
   // Admin Quick-Action 1: 1-Click Request Approval / Rejection from Dashboard
   const handleAdminQuickDecision = async (
@@ -680,7 +767,14 @@ export default function App() {
   // ============================================================================
   if (!sessionUid || !currentUserProfile) {
     return (
-      <LoginScreen
+      <>
+        <SessionTimeoutTimer
+          sessionUid={sessionUid}
+          onTimeout={handleInactivityTimeout}
+          deadlineRef={inactivityDeadlineRef}
+          showDisplay={false}
+        />
+        <LoginScreen
         themeMode={themeMode}
         onToggleThemeMode={toggleThemeMode}
         statusToast={statusToast}
@@ -689,6 +783,7 @@ export default function App() {
         authLoading={authLoading}
         onLogin={handleLogin}
       />
+      </>
     );
   }
 
@@ -763,12 +858,6 @@ export default function App() {
         m.subject.includes('[SUPPORT') ||
         m.subject.includes('[FEHLER'))
   );
-
-  const sessionMinutes = Math.floor(inactivitySecondsLeft / 60);
-  const sessionSeconds = inactivitySecondsLeft % 60;
-  const formattedSessionTimer = `${String(sessionMinutes).padStart(2, '0')}:${String(
-    sessionSeconds
-  ).padStart(2, '0')}`;
 
   const isErrorToast =
     statusToast &&
@@ -895,33 +984,6 @@ export default function App() {
           >
             <X className="w-4 h-4" />
           </button>
-        </div>
-      )}
-
-      {/* SESSION-TIMEOUT WARNING OVERLAY (When < 90s of inactivity remain) */}
-      {inactivitySecondsLeft <= 90 && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-amber-950 text-amber-100 border border-amber-600 rounded-lg p-4 shadow-lg space-y-3">
-          <div className="flex items-start gap-2.5">
-            <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-            <div className="text-xs space-y-1">
-              <div className="font-semibold text-amber-200">
-                Automatische Abmeldung in {inactivitySecondsLeft} Sekunden
-              </div>
-              <p className="text-amber-100/90 leading-relaxed">
-                Wegen Inaktivität wirst du zum Schutz des Dienstportals in Kürze automatisch
-                abgemeldet.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setInactivitySecondsLeft(INACTIVITY_TIMEOUT_SECONDS)}
-              className="px-3.5 py-1.5 text-xs font-semibold bg-amber-500 text-slate-950 rounded-md hover:bg-amber-400 transition-colors cursor-pointer"
-            >
-              Sitzung aktiv halten
-            </button>
-          </div>
         </div>
       )}
 
@@ -1142,12 +1204,12 @@ export default function App() {
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>{roster.filter(r => r.isOnline).length} im Dienst</span>
             <span className="text-slate-600">·</span>
-            <span
-              title="Automatischer Sicherheits-Logout nach 15 Minuten Inaktivität"
-              className="font-mono text-slate-400"
-            >
-              Sitzung: {formattedSessionTimer}
-            </span>
+            <SessionTimeoutTimer
+              sessionUid={sessionUid}
+              onTimeout={handleInactivityTimeout}
+              deadlineRef={inactivityDeadlineRef}
+              showDisplay
+            />
           </div>
         </div>
 

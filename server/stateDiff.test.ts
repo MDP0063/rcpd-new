@@ -6,6 +6,7 @@ import {
   type Doc,
   type PersistIndex,
   planWrites,
+  stableDigest,
   type RawStore,
   type StateLike
 } from './stateDiff.ts';
@@ -238,4 +239,47 @@ test('Academy collections, including private notes, round-trip through Firestore
   assert.deepEqual(loaded.state.academy_progress_evidence, state.academy_progress_evidence);
   assert.deepEqual(loaded.state.academy_completion_corrections, state.academy_completion_corrections);
   assert.deepEqual(loaded.state.academy_private_notes, state.academy_private_notes);
+});
+
+
+test('streaming digest is stable across object key insertion order and JSON-compatible omissions', () => {
+  const first = {
+    z: 1,
+    nested: { b: true, a: 'value' },
+    omitted: undefined,
+    values: [1, undefined, 'three']
+  };
+  const second = {
+    values: [1, null, 'three'],
+    nested: { a: 'value', b: true },
+    z: 1
+  };
+  delete (second as { omitted?: undefined }).omitted;
+  assert.equal(stableDigest(first), stableDigest(second));
+  assert.equal(stableDigest(new Date('2026-01-02T03:04:05.000Z')), stableDigest('2026-01-02T03:04:05.000Z'));
+});
+
+test('streaming digest reads large strings deterministically without whole-value serialization', () => {
+  const largeValue = 'pdf-data-'.repeat(400_000);
+  const first = { modules: [{ id: 'legacy-pdf', pdfDataUrl: largeValue }] };
+  const second = structuredClone(first);
+  assert.equal(stableDigest(first), stableDigest(second));
+  second.modules[0].pdfDataUrl = `${largeValue.slice(0, -1)}x`;
+  assert.notEqual(stableDigest(first), stableDigest(second));
+});
+
+test('streaming digest rejects values JSON serialization cannot represent', () => {
+  const circular: Record<string, unknown> = {};
+  circular.self = circular;
+  assert.throws(() => stableDigest(circular), /circular/i);
+  assert.throws(() => stableDigest({ value: 1n }), /BigInt/);
+});
+
+test('streaming digest keeps UTF-16 surrogate pairs intact at chunk boundaries', () => {
+  const prefix = 'a'.repeat(16_383);
+  assert.notEqual(stableDigest(`${prefix}😀`), stableDigest(`${prefix}\uFFFD\uFFFD`));
+});
+
+test('streaming digest distinguishes different lone UTF-16 surrogates', () => {
+  assert.notEqual(stableDigest('\uD800'), stableDigest('\uDFFF'));
 });
