@@ -180,6 +180,59 @@ test('Firestore-Startup kann PDF-Blob-Chunks während der Rekonstruktion freigeb
   assert.equal(raw.blobs.size, 0);
 });
 
+test('lazy PDF assembly does not load blob payloads and preserves them during unrelated edits', () => {
+  const index: PersistIndex = new Map();
+  const state = baseState();
+  const pdf = 'x'.repeat(CHUNK_SIZE * 2 + 5);
+  state.modules = [{ id: 'mod_lazy', title: 'Legacy-Handbuch', pdfDataUrl: pdf }];
+  const store = new Map<string, Doc>();
+  const plan = planWrites(index, state, 0);
+  const raw = applyToFake(plan.ops, store);
+  plan.commit();
+
+  const chunkCount = raw.blobs.size;
+  const loaded = assembleState(raw, 1, { lazyBlobs: true });
+  assert.ok(loaded);
+  assert.equal(raw.blobs.size, chunkCount, 'lazy assembly must not read or consume blob contents');
+  const module = (loaded.state.modules as Doc[])[0];
+  assert.equal(module.pdfDataUrl, undefined);
+  assert.deepEqual(module.__lazyBlobChunks, { pdfDataUrl: 3 });
+  assert.equal(planWrites(loaded.index, loaded.state, 2).ops.length, 0);
+
+  module.title = 'Aktualisiertes Handbuch';
+  const unrelatedEdit = planWrites(loaded.index, loaded.state, 3);
+  const moduleWrite = unrelatedEdit.ops.find(op => op.kind === 'set' && op.path === 'modules/mod_lazy');
+  assert.ok(moduleWrite && moduleWrite.kind === 'set');
+  assert.deepEqual(moduleWrite.data.__chunks, { pdfDataUrl: 3 });
+  assert.equal(unrelatedEdit.ops.filter(op => op.path.startsWith('blobs/')).length, 0);
+  unrelatedEdit.commit();
+  assert.equal(planWrites(loaded.index, loaded.state, 4).ops.length, 0);
+
+  // A deliberate PDF replacement writes new chunks and removes surplus old chunks.
+  module.pdfDataUrl = 'y'.repeat(CHUNK_SIZE + 1);
+  delete module.__lazyBlobChunks;
+  const replacement = planWrites(loaded.index, loaded.state, 5);
+  assert.equal(replacement.ops.filter(op => op.kind === 'set' && op.path.startsWith('blobs/')).length, 2);
+  assert.equal(replacement.ops.filter(op => op.kind === 'delete' && op.path.startsWith('blobs/')).length, 1);
+  replacement.commit();
+
+  loaded.state.modules = [];
+  const deletion = planWrites(loaded.index, loaded.state, 6);
+  assert.equal(deletion.ops.filter(op => op.kind === 'delete' && op.path.startsWith('blobs/')).length, 2);
+});
+
+test('lazy PDF assembly keeps small inline PDFs readable without loading blob documents', () => {
+  const state = baseState();
+  const inlinePdf = 'data:application/pdf;base64,JVBERi0xLjQK';
+  state.modules = [{ id: 'mod_inline', title: 'Kleines Handbuch', pdfDataUrl: inlinePdf }];
+  const store = new Map<string, Doc>();
+  const plan = planWrites(new Map(), state, 0);
+  const raw = applyToFake(plan.ops, store);
+  const loaded = assembleState(raw, 1, { lazyBlobs: true });
+  assert.ok(loaded);
+  assert.equal((loaded.state.modules as Doc[])[0].pdfDataUrl, inlinePdf);
+});
+
 test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalten', () => {
   const index: PersistIndex = new Map();
   const state = baseState();
