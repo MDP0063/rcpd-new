@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { parseManualReviewGrades } from '../lib/examReviewGrades';
 
 interface ReviewQuestion { questionId: string; question: string; answer: string; pointsMilli: number; gradingRubric: string }
 interface ReviewItem { id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string; submittedAtIso: string; questions: ReviewQuestion[] }
