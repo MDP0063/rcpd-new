@@ -70,6 +70,9 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (typeof version.examId !== 'string' || !masters.has(version.examId)) {
       return fail('EXAM_BACKUP_VERSION_MASTER_MISSING');
     }
+    if (version.assessmentStage !== 'test' && version.assessmentStage !== 'final_exam') {
+      return fail('EXAM_BACKUP_VERSION_ASSESSMENT_STAGE_INVALID');
+    }
     const history = versionsByExamId.get(version.examId) ?? [];
     history.push(version);
     versionsByExamId.set(version.examId, history);
@@ -116,6 +119,9 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     }
     if (!Number.isSafeInteger(attempt.versionNumber) || attempt.versionNumber !== version.versionNumber) {
       return fail('EXAM_BACKUP_ATTEMPT_VERSION_MISMATCH');
+    }
+    if (attempt.assessmentStage !== version.assessmentStage) {
+      return fail('EXAM_BACKUP_ATTEMPT_STAGE_MISMATCH');
     }
   }
 
