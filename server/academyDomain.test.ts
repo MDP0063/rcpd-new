@@ -115,6 +115,13 @@ test('private notes require owner and exact material version; bookmark cannot co
   assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: 'text' }).ok, false);
 });
 
+test('private notes reject malformed optional title and content values', () => {
+  assert.equal(validatePrivateNote({ ...note, title: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, content: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, title: 'x'.repeat(201) }).ok, false);
+});
+
 test('course versions reject duplicate objectives and malformed chapter ordering', () => {
   const duplicateObjectives = {
     ...courseVersion,
