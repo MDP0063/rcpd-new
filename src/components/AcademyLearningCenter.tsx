@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { mapWithConcurrency } from '../lib/async';
 import { AcademyMaterialReader } from './AcademyMaterialReader';
 import type {
   AcademyCourseMasterDoc,
@@ -111,6 +112,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const contentLoadRequestIdRef = useRef(0);
   const [loadError, setLoadError] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<CourseEntry | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseParticipationDetail | null>(null);
@@ -140,6 +142,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   }, [programDetails]);
 
   const loadLearningData = useCallback(async () => {
+    const requestId = ++contentLoadRequestIdRef.current;
     setLoading(true);
     setLoadError('');
     try {
@@ -149,15 +152,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
         apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
         apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS)
       ]);
+      if (requestId !== contentLoadRequestIdRef.current) return;
       const failed = [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse].find(item => !item.ok || !item.data);
       if (failed) throw new Error(failed.error || 'Academy-Daten konnten nicht geladen werden.');
       const nextCourses = courseResponse.data!.courses;
       const nextPrograms = programResponse.data!.programs;
       const nextCourseParticipations = courseParticipationResponse.data!.participations;
       const nextProgramParticipations = programParticipationResponse.data!.participations;
-      const detailsResponse = await Promise.all(nextProgramParticipations.map(item =>
+
+      // Keep all program progress available for pinned course versions, but avoid
+      // creating hundreds of simultaneous HTTP requests for long participation histories.
+      const detailsResponse = await mapWithConcurrency(nextProgramParticipations, 6, item =>
         apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(item.id))
-      ));
+      );
+      if (requestId !== contentLoadRequestIdRef.current) return;
       const failedDetail = detailsResponse.find(item => !item.ok || !item.data);
       if (failedDetail) throw new Error(failedDetail.error || 'Programmfortschritt konnte nicht geladen werden.');
       setCourses(nextCourses);
@@ -166,28 +174,45 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       setProgramParticipations(nextProgramParticipations);
       setProgramDetails(detailsResponse.map(item => item.data!));
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Academy-Daten konnten nicht geladen werden.');
+      if (requestId === contentLoadRequestIdRef.current) {
+        setLoadError(error instanceof Error ? error.message : 'Academy-Daten konnten nicht geladen werden.');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === contentLoadRequestIdRef.current) setLoading(false);
     }
   }, []);
 
   const loadNotes = useCallback(async () => {
+    const requestId = ++contentLoadRequestIdRef.current;
     setLoading(true);
     setLoadError('');
-    const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
-    if (!response.ok || !response.data) {
-      setLoadError(response.error || 'Deine privaten Notizen konnten nicht geladen werden.');
-      setLoading(false);
-      return;
+    try {
+      const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+      if (requestId !== contentLoadRequestIdRef.current) return;
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Deine privaten Notizen konnten nicht geladen werden.');
+        return;
+      }
+      setNotes(response.data.notes);
+    } catch (error) {
+      if (requestId === contentLoadRequestIdRef.current) {
+        setLoadError(error instanceof Error ? error.message : 'Deine privaten Notizen konnten nicht geladen werden.');
+      }
+    } finally {
+      if (requestId === contentLoadRequestIdRef.current) setLoading(false);
     }
-    setNotes(response.data.notes);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
+    // A section change or unmount invalidates any detail/list response still in flight.
+    detailRequestIdRef.current += 1;
+    setDetailLoading(false);
     if (area === 'courses') void loadLearningData();
     else void loadNotes();
+    return () => {
+      contentLoadRequestIdRef.current += 1;
+      detailRequestIdRef.current += 1;
+    };
   }, [area, loadLearningData, loadNotes]);
 
   const filteredCourses = useMemo(() => {
