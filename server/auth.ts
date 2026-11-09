@@ -224,26 +224,44 @@ export function findIdentityMismatch(
 // Begrenzung von Anmeldeversuchen
 // ---------------------------------------------------------------------------
 
+const DEFAULT_MAX_TRACKED_ATTEMPT_KEYS = 10_000;
+const ATTEMPT_LIMITER_CLEANUP_INTERVAL = 64;
+
 export class AttemptLimiter {
   private readonly hits = new Map<string, number[]>();
   private readonly maxAttempts: number;
   private readonly windowMs: number;
+  private readonly maxTrackedKeys: number;
+  private operationsSinceCleanup = 0;
 
-  constructor(maxAttempts: number, windowMs: number) {
+  constructor(maxAttempts: number, windowMs: number, maxTrackedKeys: number = DEFAULT_MAX_TRACKED_ATTEMPT_KEYS) {
+    if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1 ||
+        !Number.isFinite(windowMs) || windowMs <= 0 ||
+        !Number.isSafeInteger(maxTrackedKeys) || maxTrackedKeys < 1) {
+      throw new RangeError('AttemptLimiter-Konfiguration ist ungültig.');
+    }
     this.maxAttempts = maxAttempts;
     this.windowMs = windowMs;
+    this.maxTrackedKeys = maxTrackedKeys;
   }
 
   /** Wie viele Millisekunden bis zum nächsten erlaubten Versuch, 0 wenn erlaubt. */
   retryAfterMs(key: string, now: number = Date.now()): number {
+    this.cleanupExpiredPeriodically(now);
     const recent = this.prune(key, now);
     if (recent.length < this.maxAttempts) return 0;
     return Math.max(0, recent[0] + this.windowMs - now);
   }
 
   recordFailure(key: string, now: number = Date.now()): void {
+    this.cleanupExpiredPeriodically(now);
     const recent = this.prune(key, now);
     recent.push(now);
+    if (!this.hits.has(key) && this.hits.size >= this.maxTrackedKeys) {
+      // LRU-Eviction: Bei Schlüssel-Flut bleibt der Speicher begrenzt.
+      const oldestKey = this.hits.keys().next().value;
+      if (oldestKey !== undefined) this.hits.delete(oldestKey);
+    }
     this.hits.set(key, recent);
   }
 
@@ -251,10 +269,26 @@ export class AttemptLimiter {
     this.hits.delete(key);
   }
 
+  private cleanupExpiredPeriodically(now: number): void {
+    this.operationsSinceCleanup += 1;
+    if (this.operationsSinceCleanup < ATTEMPT_LIMITER_CLEANUP_INTERVAL) return;
+    this.operationsSinceCleanup = 0;
+
+    for (const [key, attempts] of this.hits) {
+      const recent = attempts.filter(timestamp => now - timestamp < this.windowMs);
+      if (recent.length === 0) this.hits.delete(key);
+      else if (recent.length !== attempts.length) this.hits.set(key, recent);
+    }
+  }
+
   private prune(key: string, now: number): number[] {
     const recent = (this.hits.get(key) || []).filter(t => now - t < this.windowMs);
     if (recent.length === 0) this.hits.delete(key);
-    else this.hits.set(key, recent);
+    else {
+      // Zugriff aktualisiert die LRU-Reihenfolge.
+      this.hits.delete(key);
+      this.hits.set(key, recent);
+    }
     return recent;
   }
 }
