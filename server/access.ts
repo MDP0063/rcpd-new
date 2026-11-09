@@ -28,7 +28,10 @@ export interface PresenceAccount {
 
 /** Aktualisiert beide Presence-Felder eines Kontos nur dann, wenn der Heartbeat fällig ist. */
 export function refreshAccountPresence(account: PresenceAccount, now: number): boolean {
-  if (!shouldRefreshPresence(account.isOnline, account.lastSeenIso, now)) return false;
+  const presenceFieldsDiffer =
+    account.publicProfile.isOnline !== account.isOnline ||
+    account.publicProfile.lastSeenIso !== account.lastSeenIso;
+  if (!presenceFieldsDiffer && !shouldRefreshPresence(account.isOnline, account.lastSeenIso, now)) return false;
   const nowIso = new Date(now).toISOString();
   account.isOnline = true;
   account.lastSeenIso = nowIso;
