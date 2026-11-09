@@ -65,6 +65,18 @@ class FakeQuery {
   limit(maxResults: number) {
     return new FakeQuery(this.database, this.collectionName, this.filters, maxResults);
   }
+  async get() {
+    const docs = this.database.list(this.collectionName)
+      .filter(document => this.filters.every(filter => (document.data as Record<string, unknown>)[filter.field] === filter.value))
+      .slice(0, this.maxResults)
+      .map(document => ({
+        id: document.id,
+        exists: true,
+        data: () => document.data,
+        ref: new FakeDocumentReference(this.database, this.collectionName, document.id)
+      }));
+    return { docs };
+  }
 }
 
 class FakeCollectionReference extends FakeQuery {
@@ -113,12 +125,36 @@ class FakeTransaction {
   }
 }
 
+class FakeBulkWriter {
+  private readonly writes: FakeWrite[] = [];
+  private readonly database: FakeFirestore;
+  constructor(database: FakeFirestore) { this.database = database; }
+  set(reference: FakeDocumentReference, data: unknown) {
+    this.writes.push({ kind: 'set', collection: reference.collectionName, id: reference.id, data });
+    return Promise.resolve();
+  }
+  delete(reference: FakeDocumentReference) {
+    this.writes.push({ kind: 'delete', collection: reference.collectionName, id: reference.id });
+    return Promise.resolve();
+  }
+  async close() {
+    for (const write of this.writes) this.database.apply(write);
+  }
+}
+
 class FakeFirestore {
   private readonly documents = new Map<string, Map<string, unknown>>();
   collection(name: string) { return new FakeCollectionReference(this, name); }
   doc(path: string) {
     const [collectionName, id] = path.split('/');
     return new FakeDocumentReference(this, collectionName, id);
+  }
+  bulkWriter() { return new FakeBulkWriter(this); }
+  apply(write: FakeWrite) {
+    let collection = this.documents.get(write.collection);
+    if (!collection) { collection = new Map(); this.documents.set(write.collection, collection); }
+    if (write.kind === 'delete') collection.delete(write.id);
+    else collection.set(write.id, write.data);
   }
   seed(collection: string, id: string, data: unknown) {
     let documents = this.documents.get(collection);
