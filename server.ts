@@ -3934,9 +3934,6 @@ jobs:
         `Prüfungen: ${summary.exams.imported} neu, ${summary.exams.updated} aktualisiert, ${summary.exams.alreadyMigrated} bereits vorhanden, ${summary.exams.skipped} übersprungen. Fortschritt: ${summary.progress.imported} neu, ${summary.progress.updated} aktualisiert, ${summary.progress.alreadyMigrated} bereits vorhanden, ${summary.progress.skipped} übersprungen.`
       );
       await saveDatabaseAndWait(dbState);
-      // Release the Academy adapter lock as well as the shared Exam lock.
-      // Keep the global maintenance flag active until both stores are writable again.
-      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
@@ -4106,6 +4103,9 @@ jobs:
         }
       };
 
+      // Release the Academy adapter lock as well as the shared Exam lock.
+      // Keep the global maintenance flag active until both stores are writable again.
+      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
