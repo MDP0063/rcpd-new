@@ -104,10 +104,16 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (!Number.isSafeInteger(latestVersionNumber) || Number(latestVersionNumber) < 0) {
       return fail('EXAM_BACKUP_MASTER_VERSION_SEQUENCE_INVALID');
     }
-    if ((versionsByExamId.get(master.id) ?? []).some(version =>
+    const history = versionsByExamId.get(master.id) ?? [];
+    if (history.some(version =>
       !Number.isSafeInteger(version.versionNumber) || Number(version.versionNumber) > Number(latestVersionNumber)
     )) {
       return fail('EXAM_BACKUP_VERSION_SEQUENCE_INVALID');
+    }
+    // Versions are append-only and numbered from 1 without gaps. A backup that omits an
+    // intermediate version would silently erase immutable history on restore.
+    if (history.length !== Number(latestVersionNumber)) {
+      return fail('EXAM_BACKUP_VERSION_HISTORY_INCOMPLETE');
     }
 
     const currentVersionId = master.currentPublishedVersionId;
