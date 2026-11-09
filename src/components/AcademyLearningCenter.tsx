@@ -33,11 +33,16 @@ interface ProgramEntry {
   version: AcademyProgramVersionDoc | null;
   draft?: AcademyProgramDraftDoc | null;
 }
+type ParticipantCorrectionView = Pick<
+  AcademyCompletionCorrectionDoc,
+  'id' | 'participationId' | 'previousStatus' | 'correctedStatus' | 'correctedIso' | 'invalidatedEvidenceIds'
+>;
+
 interface CourseParticipationDetail {
   participation: AcademyCourseParticipationDoc;
   version: AcademyCourseVersionDoc;
   evidence: AcademyProgressEvidenceDoc[];
-  corrections: AcademyCompletionCorrectionDoc[];
+  corrections: ParticipantCorrectionView[];
   materials: AcademyCourseMaterialReaderItem[];
 }
 interface ProgramCourseProgress {
