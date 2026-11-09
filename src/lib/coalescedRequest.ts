@@ -28,14 +28,16 @@ export class CoalescedRequestRunner {
     let failed = false;
 
     while (task) {
-      this.queuedTask = null;
       try {
         await task();
       } catch (error) {
         if (!failed) firstError = error;
         failed = true;
       }
+      // Take the latest queued refresh only after the current task finishes.
+      // Clearing it before the first task would discard calls queued before its microtask starts.
       task = this.queuedTask;
+      this.queuedTask = null;
     }
 
     if (failed) throw firstError;
