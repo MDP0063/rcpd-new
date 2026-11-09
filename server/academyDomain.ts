@@ -490,14 +490,17 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
   if (note.revision !== undefined && (!Number.isSafeInteger(note.revision) || note.revision < 1)) {
     return invalid('ACADEMY_NOTE_REVISION_INVALID', 'Die Notizrevision muss eine positive ganze Zahl sein.');
   }
-  if (note.kind === 'bookmark' && (note.content || '').trim().length > 0) {
+  if (note.title !== undefined && (typeof note.title !== 'string' || note.title.length > 200)) {
+    return invalid('ACADEMY_NOTE_TITLE_INVALID', 'Der optionale Notiztitel ist ungültig oder zu lang.');
+  }
+  if (note.content !== undefined && (typeof note.content !== 'string' || note.content.length > 20_000)) {
+    return invalid('ACADEMY_NOTE_CONTENT_INVALID', 'Der Notiztext ist ungültig oder überschreitet die zulässige Länge.');
+  }
+  if (note.kind === 'bookmark' && typeof note.content === 'string' && note.content.trim().length > 0) {
     return invalid('ACADEMY_BOOKMARK_CONTENT_NOT_ALLOWED', 'Ein Lesezeichen darf keinen Notiztext enthalten.');
   }
   if (!Array.isArray(note.tags) || note.tags.some(tag => !isNonEmpty(tag) || tag.length > 40)) {
     return invalid('ACADEMY_NOTE_TAGS_INVALID', 'Notiz-Tags müssen gültige kurze Texte sein.');
-  }
-  if ((note.content || '').length > 20_000) {
-    return invalid('ACADEMY_NOTE_CONTENT_TOO_LONG', 'Der Notiztext überschreitet die zulässige Länge.');
   }
   return { ok: true };
 }
