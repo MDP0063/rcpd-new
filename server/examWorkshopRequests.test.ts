@@ -205,3 +205,18 @@ test('all publication request statuses are listed newest-first with a global lim
     ));
   });
 });
+
+
+test('published exam definition cannot be submitted again without actual changes', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam_no_changes', 'author_1', definition);
+    await publishExamDraft(repository, 'exam_no_changes', 'admin_1');
+    await assert.rejects(
+      submitExamPublicationRequest(repository, 'exam_no_changes', {
+        uid: 'author_1', displayName: 'Officer One'
+      }),
+      /EXAM_NO_UNPUBLISHED_CHANGES/
+    );
+    assert.equal((await listPendingExamPublicationRequests(repository)).length, 0);
+  });
+});
