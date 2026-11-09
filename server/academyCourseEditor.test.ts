@@ -11,7 +11,10 @@ test('removing a chapter removes its own requirement and only material requireme
 test('renaming a chapter keeps its generated completion label in sync', () => {
   const source = [chapter('chapter-a', [])];
   source[0].title = 'Einführung';
-  const result = updateCourseChapterTitle(source, requirements, 'chapter-a', 'Grundlagen');
+  const generated = requirements.map(item => item.id === 'chapter-req'
+    ? { ...item, description: 'Kapitel abgeschlossen: Einführung' }
+    : item);
+  const result = updateCourseChapterTitle(source, generated, 'chapter-a', 'Grundlagen');
   assert.equal(result.chapters[0].title, 'Grundlagen');
   assert.equal(result.requirements.find(item => item.id === 'chapter-req')?.description, 'Kapitel abgeschlossen: Grundlagen');
 });
