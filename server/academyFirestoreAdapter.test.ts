@@ -82,7 +82,12 @@ class FakeTransaction {
     if (this.hasWrites) throw new Error('FAKE_FIRESTORE_READ_AFTER_WRITE');
     if (target instanceof FakeDocumentReference) {
       const data = this.database.read(target.collectionName, target.id);
-      return { id: target.id, exists: data !== null, data: () => data ?? undefined };
+      return {
+        id: target.id,
+        exists: data !== null,
+        data: () => data ?? undefined,
+        get: (field: string) => data && typeof data === 'object' ? (data as Record<string, unknown>)[field] : undefined
+      };
     }
     const docs = this.database.list(target.collectionName)
       .filter(document => target.filters.every(filter => (document.data as Record<string, unknown>)[filter.field] === filter.value))
@@ -111,6 +116,10 @@ class FakeTransaction {
 class FakeFirestore {
   private readonly documents = new Map<string, Map<string, unknown>>();
   collection(name: string) { return new FakeCollectionReference(this, name); }
+  doc(path: string) {
+    const [collectionName, id] = path.split('/');
+    return new FakeDocumentReference(this, collectionName, id);
+  }
   seed(collection: string, id: string, data: unknown) {
     let documents = this.documents.get(collection);
     if (!documents) { documents = new Map(); this.documents.set(collection, documents); }
