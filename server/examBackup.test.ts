@@ -39,6 +39,7 @@ function validSnapshot(): ExamRepositorySnapshot {
     id: 'attempt-1',
     examId: 'exam-1',
     examVersionId: 'exam-1__v1',
+    versionNumber: 1,
     userId: 'user-1',
     attemptCourseCode: 'SOP-01',
     status: 'in_progress'
