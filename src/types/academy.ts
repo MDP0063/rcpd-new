@@ -389,6 +389,8 @@ export interface AcademyProgramParticipationDoc {
 export interface AcademyPrivateNoteDoc {
   id: string;
   ownerUid: string;
+  /** Optional for backwards compatibility; legacy notes are treated as revision 1. */
+  revision?: number;
   materialId: string;
   materialVersionId: string;
   kind: 'note' | 'bookmark';
