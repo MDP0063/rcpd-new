@@ -63,7 +63,6 @@ function validateAcademyBackupReferences(
   collections: AcademyRepositoryBackupSnapshot['collections']
 ): void {
   const materialMasters = new Map(collections.academy_materials.map(item => [item.id, item]));
-  const materialDrafts = new Map(collections.academy_material_drafts.map(item => [item.id, item]));
   const materialVersions = new Map(collections.academy_material_versions.map(item => [item.id, item]));
   const categories = new Map(collections.academy_material_categories.map(item => [item.id, item]));
   const documentTypes = new Map(collections.academy_material_document_types.map(item => [item.id, item]));
@@ -72,7 +71,6 @@ function validateAcademyBackupReferences(
   const programs = new Map(collections.academy_programs.map(item => [item.id, item]));
   const programVersions = new Map(collections.academy_program_versions.map(item => [item.id, item]));
   const courseParticipations = new Map(collections.academy_course_participations.map(item => [item.id, item]));
-  const programParticipations = new Map(collections.academy_program_participations.map(item => [item.id, item]));
   const evidence = new Map(collections.academy_progress_evidence.map(item => [item.id, item]));
 
   const requireReference = (valid: boolean, code: string) => {
@@ -111,7 +109,9 @@ function validateAcademyBackupReferences(
         requireReference(master.currentPublishedVersionId === undefined, code + '_CURRENT_POINTER_INVALID');
       } else {
         const latest = owned[owned.length - 1];
-        requireReference(Boolean(latest) && master.currentPublishedVersionId === latest.id, code + '_CURRENT_POINTER_INVALID');
+        if (!latest || master.currentPublishedVersionId !== latest.id) {
+          throw new Error(code + '_CURRENT_POINTER_INVALID');
+        }
       }
     }
   };
