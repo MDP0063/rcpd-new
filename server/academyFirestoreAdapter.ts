@@ -1,5 +1,6 @@
 import type { Firestore, Transaction, DocumentSnapshot, Query } from 'firebase-admin/firestore';
-import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
+import { ACADEMY_COLLECTIONS, ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
+import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
 // Keep the repository's collections separate from legacy PortalDatabaseState collections.
@@ -62,6 +63,7 @@ class FirestoreTransaction implements AcademyTransaction {
 }
 export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
   private readonly database: Firestore;
+  private maintenanceMode = false;
   constructor(database: Firestore) { this.database = database; }
   async get<T extends AcademyDocument = AcademyDocument>(collection: AcademyCollection, id: string): Promise<T | null> {
     assertAcademyDocumentId(id); return fromSnapshot<T>(collection, await this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(id)).get(), id);
@@ -70,7 +72,66 @@ export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
     const snap = await buildQuery(this.database, collection, query).get();
     return snap.docs.map(item => { const doc = fromSnapshot<T>(collection, item); if (!doc) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID'); return doc; });
   }
+  async setMaintenanceMode(enabled: boolean): Promise<void> {
+    this.maintenanceMode = enabled;
+  }
+  async exportSnapshot(): Promise<AcademyRepositoryBackupSnapshot> {
+    return this.database.runTransaction(async transaction => {
+      const control = await transaction.get(this.database.doc('exam_system_control/state'));
+      if (!this.maintenanceMode && control.get('enabled') !== true) {
+        throw new Error('ACADEMY_MAINTENANCE_REQUIRED');
+      }
+      const collections = {} as AcademyRepositoryBackupSnapshot['collections'];
+      for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
+        const snapshot = await transaction.get(this.database.collection(academyFirestoreCollectionName(collection)));
+        collections[collection] = snapshot.docs.map(document => {
+          const data = fromSnapshot(collection, document);
+          if (!data) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID');
+          return data;
+        }) as typeof collections[typeof collection];
+      }
+      return { formatVersion: 1, collections };
+    });
+  }
+  async replaceSnapshot(snapshot: AcademyRepositoryBackupSnapshot): Promise<void> {
+    const control = await this.database.doc('exam_system_control/state').get();
+    if (!this.maintenanceMode && control.get('enabled') !== true) {
+      throw new Error('ACADEMY_MAINTENANCE_REQUIRED');
+    }
+
+    const writer = this.database.bulkWriter();
+    const writes: Promise<unknown>[] = [];
+    for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
+      const existing = await this.database.collection(academyFirestoreCollectionName(collection)).get();
+      const incomingIds = new Set(snapshot.collections[collection].map(document => storageId(document.id)));
+      for (const document of existing.docs) {
+        if (!incomingIds.has(document.id)) writes.push(writer.delete(document.ref));
+      }
+      for (const document of snapshot.collections[collection]) {
+        writes.push(writer.set(
+          this.database.collection(academyFirestoreCollectionName(collection)).doc(storageId(document.id)),
+          clone(document)
+        ));
+      }
+    }
+    let closeError: unknown;
+    try {
+      await writer.close();
+    } catch (error) {
+      closeError = error;
+    }
+    const settled = await Promise.allSettled(writes);
+    const failed = settled.find(result => result.status === 'rejected') as PromiseRejectedResult | undefined;
+    if (closeError) throw closeError;
+    if (failed) throw failed.reason;
+  }
   runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
-    return this.database.runTransaction(transaction => operation(new FirestoreTransaction(this.database, transaction)));
+    return this.database.runTransaction(async transaction => {
+      const control = await transaction.get(this.database.doc('exam_system_control/state'));
+      if (this.maintenanceMode || control.get('enabled') === true) {
+        throw new Error('ACADEMY_MAINTENANCE_ACTIVE');
+      }
+      return operation(new FirestoreTransaction(this.database, transaction));
+    });
   }
 }
