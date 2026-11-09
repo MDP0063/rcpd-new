@@ -33,13 +33,29 @@ function validSnapshot(): ExamRepositorySnapshot {
   snapshot.collections.exam_versions.push({
     id: 'exam-1__v1',
     examId: 'exam-1',
-    versionNumber: 1
+    versionNumber: 1,
+    title: 'Grundlagenprüfung',
+    assessmentStage: 'test',
+    timeLimitMinutes: 0,
+    passingScoreBasisPoints: 6000,
+    maxAttempts: null,
+    prerequisites: [],
+    historicalAssignedCourseCodes: ['SOP-01'],
+    minClearance: 0,
+    questionsSnapshot: [{
+      id: 'question-1',
+      type: 'true_false',
+      question: 'Ist dies eine gültige Frage?',
+      pointsMilli: 1000,
+      correctBoolean: true
+    }]
   });
   snapshot.collections.exam_attempts.push({
     id: 'attempt-1',
     examId: 'exam-1',
     examVersionId: 'exam-1__v1',
     versionNumber: 1,
+    assessmentStage: 'test',
     userId: 'user-1',
     attemptCourseCode: 'SOP-01',
     status: 'in_progress'
@@ -123,8 +139,8 @@ test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen'
   const snapshot = validSnapshot();
   snapshot.collections.exam_masters[0].latestVersionNumber = 2;
   snapshot.collections.exam_versions.push({
+    ...snapshot.collections.exam_versions[0],
     id: 'exam-1__v2',
-    examId: 'exam-1',
     versionNumber: 2
   });
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_SEQUENCE_MISMATCH/);
@@ -133,8 +149,8 @@ test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen'
 test('Versionshistorie darf nicht über die Master-Versionsnummer hinausgehen', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_versions.push({
+    ...snapshot.collections.exam_versions[0],
     id: 'exam-1__v2',
-    examId: 'exam-1',
     versionNumber: 2
   });
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_SEQUENCE_INVALID/);
@@ -177,4 +193,27 @@ test('Legacy-Verifikation mit fehlender Quelle wird abgelehnt', () => {
     () => validateLegacyVerificationSources(snapshot, [legacyExam], []),
     /EXAM_BACKUP_LEGACY_SOURCE_MISMATCH/
   );
+});
+
+
+test('Prüfungsversuch muss dieselbe Prüfungsstufe wie sein unveränderlicher Snapshot speichern', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].assessmentStage = 'final_exam';
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_STAGE_MISMATCH/);
+});
+
+test('Prüfungsversionen ohne gültige Prüfungsstufe werden abgelehnt', () => {
+  const snapshot = validSnapshot();
+  delete snapshot.collections.exam_versions[0].assessmentStage;
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_ASSESSMENT_STAGE_INVALID/);
+});
+
+
+test('Backup lehnt veröffentlichte Versionen mit ungültigem Fragen-Snapshot ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_versions[0].questionsSnapshot = [{
+    id: 'question-1', type: 'true_false', question: 'Ungültige Frage',
+    pointsMilli: 1000
+  }];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_CONTENT_INVALID/);
 });
