@@ -153,6 +153,32 @@ test('Begrenzung: sperrt nach zu vielen Fehlversuchen und gibt später wieder fr
   assert.equal(limiter.retryAfterMs('k', 1100), 0);
 });
 
+test('AttemptLimiter bereinigt abgelaufene Schlüssel und begrenzt die gespeicherten Schlüssel', () => {
+  const limiter = new AttemptLimiter(1, 10_000, 2);
+  limiter.recordFailure('active', 9_000);
+  limiter.recordFailure('stale', 0);
+
+  // Nach 64 Operationen werden fremde, längst abgelaufene Schlüssel global bereinigt.
+  for (let i = 0; i < 64; i++) limiter.retryAfterMs(`probe-${i}`, 11_000);
+  limiter.recordFailure('new', 11_000);
+
+  assert.equal(limiter.retryAfterMs('active', 11_000), 8_000);
+  assert.equal(limiter.retryAfterMs('new', 11_000), 10_000);
+  assert.equal(limiter.retryAfterMs('stale', 11_000), 0);
+});
+
+test('AttemptLimiter hält bei Schlüssel-Flut die zuletzt verwendeten Limits', () => {
+  const limiter = new AttemptLimiter(1, 10_000, 2);
+  limiter.recordFailure('older', 0);
+  limiter.recordFailure('recent', 0);
+  limiter.retryAfterMs('older', 1); // macht older zum zuletzt verwendeten Schlüssel
+  limiter.recordFailure('new', 2);
+
+  assert.equal(limiter.retryAfterMs('older', 2), 9_998);
+  assert.equal(limiter.retryAfterMs('new', 2), 10_000);
+  assert.equal(limiter.retryAfterMs('recent', 2), 0);
+});
+
 test('safeEqual und Origin-Liste', () => {
   assert.ok(safeEqual('abc', 'abc'));
   assert.ok(!safeEqual('abc', 'abd'));
