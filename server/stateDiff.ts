@@ -80,8 +80,106 @@ export function stableStringify(value: unknown): string {
   });
 }
 
+/**
+ * Creates a deterministic digest without materializing a second, complete JSON string.
+ * Large values (notably legacy PDF data URLs) are fed to the hash in bounded chunks.
+ * Object keys are sorted and JSON's omission/null behavior is retained for unsupported values.
+ */
+export function stableDigest(value: unknown): string {
+  const hash = createHash('sha1');
+  const ancestors = new Set<object>();
+  const CHUNK_CODE_UNITS = 16_384;
+
+  const prepare = (input: unknown, key: string): unknown => {
+    if (input !== null && (typeof input === 'object' || typeof input === 'bigint')) {
+      const toJSON = (input as { toJSON?: (propertyKey: string) => unknown }).toJSON;
+      if (typeof toJSON === 'function') return toJSON.call(input, key);
+    }
+    return input;
+  };
+
+  const writeString = (value: string): void => {
+    hash.update(`S${value.length}:`);
+    for (let offset = 0; offset < value.length; offset += CHUNK_CODE_UNITS) {
+      hash.update(value.slice(offset, offset + CHUNK_CODE_UNITS), 'utf8');
+    }
+    hash.update(';');
+  };
+
+  const writePrepared = (value: unknown, key: string, arrayItem: boolean): boolean => {
+    if (value === null) {
+      hash.update('Z;');
+      return true;
+    }
+
+    switch (typeof value) {
+      case 'string':
+        writeString(value);
+        return true;
+      case 'boolean':
+        hash.update(value ? 'B1;' : 'B0;');
+        return true;
+      case 'number':
+        hash.update(Number.isFinite(value)
+          ? `N${Object.is(value, -0) ? '0' : String(value)};`
+          : 'Z;');
+        return true;
+      case 'undefined':
+      case 'function':
+      case 'symbol':
+        if (arrayItem) hash.update('Z;');
+        return arrayItem;
+      case 'bigint':
+        throw new TypeError('Do not know how to serialize a BigInt');
+      case 'object': {
+        const objectValue = value as object;
+        if (ancestors.has(objectValue)) throw new TypeError('Converting circular structure to JSON');
+        ancestors.add(objectValue);
+        try {
+          if (Array.isArray(value)) {
+            hash.update(`A${value.length}[`);
+            for (let index = 0; index < value.length; index += 1) {
+              const itemKey = String(index);
+              const item = prepare(value[index], itemKey);
+              writePrepared(item, itemKey, true);
+            }
+            hash.update(']');
+            return true;
+          }
+
+          hash.update('O{');
+          const record = value as Record<string, unknown>;
+          const keys = Object.keys(record).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+          for (const propertyKey of keys) {
+            const propertyValue = prepare(record[propertyKey], propertyKey);
+            if (
+              propertyValue === undefined ||
+              typeof propertyValue === 'function' ||
+              typeof propertyValue === 'symbol'
+            ) continue;
+            writeString(propertyKey);
+            writePrepared(propertyValue, propertyKey, false);
+          }
+          hash.update('}');
+          return true;
+        } finally {
+          ancestors.delete(objectValue);
+        }
+      }
+      default:
+        // The switch is exhaustive for JavaScript's primitive and object types.
+        hash.update('Z;');
+        return true;
+    }
+  };
+
+  const prepared = prepare(value, '');
+  writePrepared(prepared, '', false);
+  return hash.digest('hex');
+}
+
 function digest(value: unknown): string {
-  return createHash('sha1').update(stableStringify(value)).digest('hex');
+  return stableDigest(value);
 }
 
 export function safeId(id: string): string {
