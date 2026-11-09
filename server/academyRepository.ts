@@ -745,6 +745,28 @@ export class AcademyRepository {
       if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyProgramDraftDoc>('academy_program_drafts', programId);
       if (!draft || draft.workingRevision !== expectedRevision || !programDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
+
+      // Publishing must not create a program version with dangling or currently unusable
+      // course references. The authoring UI only offers published, available courses;
+      // enforce the same rule transactionally for every required and recommended reference.
+      for (const reference of version.courseReferences) {
+        const course = await tx.get<AcademyCourseMasterDoc>('academy_courses', reference.courseId);
+        if (!course) throw new Error('ACADEMY_PROGRAM_COURSE_REFERENCE_MISSING');
+        assertValid(validateCourseMaster(course));
+        if (course.publicationStatus !== 'published' || course.availability !== 'available' ||
+            !course.currentPublishedVersionId) {
+          throw new Error('ACADEMY_PROGRAM_COURSE_REFERENCE_NOT_STARTABLE');
+        }
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>(
+          'academy_course_versions', course.currentPublishedVersionId
+        );
+        if (!courseVersion || courseVersion.id !== course.currentPublishedVersionId ||
+            courseVersion.courseId !== course.id || !courseVersion.publishedIso || !courseVersion.publishedByUid) {
+          throw new Error('ACADEMY_PROGRAM_COURSE_REFERENCE_VERSION_INVALID');
+        }
+        assertValid(validateCourseVersion(course.id, courseVersion));
+      }
+
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${programId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
