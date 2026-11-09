@@ -185,11 +185,38 @@ test('draft writes reject audit metadata from a different actor', async () => wi
 }));
 
 test('program publication uses the saved draft and atomically advances its version pointer', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
   await repository.create('academy_programs', programMaster.id, programMaster);
   await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
   await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgramMaster, 2, 'owner-1');
   assert.deepEqual(await repository.get('academy_program_versions', programVersion.id), programVersion);
   assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.currentPublishedVersionId, programVersion.id);
+}));
+
+test('program publication rejects dangling course references and preserves the draft', async () => withRepository(async repository => {
+  const missingReference = {
+    ...programDraft,
+    courseReferences: [{ courseId: 'course-does-not-exist', requirement: 'required' as const, order: 0 }]
+  };
+  const missingVersion = {
+    ...programVersion,
+    courseReferences: missingReference.courseReferences
+  };
+  const nextMaster = {
+    ...publishedProgramMaster,
+    currentPublishedVersionId: missingVersion.id
+  };
+  await repository.create('academy_programs', programMaster.id, programMaster);
+  await repository.saveProgramDraft(programMaster.id, missingReference, 1, 'owner-1');
+  await assert.rejects(
+    repository.publishProgramVersion(programMaster.id, missingVersion, nextMaster, 2, 'owner-1'),
+    /ACADEMY_PROGRAM_COURSE_REFERENCE_MISSING/
+  );
+  assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.publicationStatus, 'draft');
+  assert.equal(await repository.get('academy_program_versions', missingVersion.id), null);
+  assert.deepEqual(await repository.getProgramDraft(programMaster.id), missingReference);
 }));
 
 test('JSON adapter upgrades legacy schema v1 without losing existing collections', async () => {
