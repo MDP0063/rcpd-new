@@ -361,6 +361,24 @@ export function getExamWorkshopDefinitionHash(master: ExamDocument): string {
   return createHash('sha256').update(JSON.stringify(definition), 'utf8').digest('hex');
 }
 
+/** Hashes an immutable published version using the same canonical field projection as its mutable master. */
+export function getExamVersionDefinitionHash(version: ExamDocument): string {
+  const definition = {
+    title: version.title,
+    moduleCode: version.moduleCode,
+    assignedCourseCodes: version.historicalAssignedCourseCodes ?? [],
+    assessmentStage: version.assessmentStage,
+    minClearance: version.minClearance,
+    passingScoreBasisPoints: version.passingScoreBasisPoints,
+    timeLimitMinutes: version.timeLimitMinutes,
+    maxAttempts: version.maxAttempts ?? null,
+    prerequisites: version.prerequisites ?? [],
+    questions: version.questionsSnapshot ?? []
+  };
+  return createHash('sha256').update(JSON.stringify(definition), 'utf8').digest('hex');
+}
+
+
 export async function publishExamDraft(
   repository: ExamRepository,
   id: string,
@@ -378,6 +396,16 @@ export async function publishExamDraft(
   }
   if (current.examFormat === 'interactive_code' || current.isLegacyFormat === true) {
     throw new Error('EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE');
+  }
+  if (current.currentPublishedVersionId !== undefined && current.currentPublishedVersionId !== null) {
+    if (typeof current.currentPublishedVersionId !== 'string' || !isValidId(current.currentPublishedVersionId)) {
+      throw new Error('EXAM_PUBLISHED_VERSION_MISSING');
+    }
+    const publishedVersion = await repository.get('exam_versions', current.currentPublishedVersionId);
+    if (!publishedVersion || publishedVersion.examId !== id) throw new Error('EXAM_PUBLISHED_VERSION_MISSING');
+    if (getExamWorkshopDefinitionHash(current) === getExamVersionDefinitionHash(publishedVersion)) {
+      throw new Error('EXAM_NO_UNPUBLISHED_CHANGES');
+    }
   }
 
   let nextPublicationRequest: ExamDocument | undefined;

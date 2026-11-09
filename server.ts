@@ -1590,6 +1590,7 @@ async function startServer() {
       EXAM_ASSESSMENT_STAGE_INVALID: { status: 400, message: 'Die Prüfungsart ist ungültig.' },
       EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE: { status: 409, message: 'Historische interaktive Prüfungen können nicht über die neue Werkstatt veröffentlicht werden.' },
       EXAM_VERSION_SEQUENCE_INVALID: { status: 409, message: 'Die Prüfungsversion konnte wegen eines Versionskonflikts nicht veröffentlicht werden.' },
+      EXAM_NO_UNPUBLISHED_CHANGES: { status: 409, message: 'Seit der letzten Veröffentlichung gibt es keine inhaltlichen Änderungen.' },
       EXAM_DOCUMENT_ALREADY_EXISTS: { status: 409, message: 'Die Prüfungsversion existiert bereits.' }
     };
     const response = responses[code];
