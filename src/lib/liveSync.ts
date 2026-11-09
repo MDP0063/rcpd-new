@@ -71,7 +71,7 @@ export async function startLiveSync(
     : firestore.getFirestore(app);
 
   let disposed = false;
-  let connecting = false;
+  let connectPromise: Promise<void> | null = null;
   let initialized = false;
   let lastValue: unknown;
   let generation = 0;
@@ -90,53 +90,59 @@ export async function startLiveSync(
     }, delay);
   };
 
-  const connect = async (): Promise<void> => {
-    if (disposed || connecting) return;
-    connecting = true;
+  const connect = (): Promise<void> => {
+    if (disposed) return Promise.resolve();
+    if (connectPromise) return connectPromise;
     const currentGeneration = ++generation;
-    try {
-      const token = await fetchToken();
-      if (!token) throw new Error('Kein Firebase-Token erhalten.');
-      await signInWithCustomToken(auth, token);
-      if (disposed || currentGeneration !== generation) return;
+    const execution = (async () => {
+      try {
+        const token = await fetchToken();
+        if (!token) throw new Error('Kein Firebase-Token erhalten.');
+        if (disposed || currentGeneration !== generation) return;
+        await signInWithCustomToken(auth, token);
+        if (disposed || currentGeneration !== generation) return;
 
-      const nextUnsubscribe = firestore.onSnapshot(
-        firestore.doc(db, 'sync', 'state'),
-        snapshot => {
-          if (disposed || currentGeneration !== generation) return;
-          reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS;
-          const value = snapshot.data()?.v;
-          if (!initialized) {
-            initialized = true;
-            lastValue = value;
+        const nextUnsubscribe = firestore.onSnapshot(
+          firestore.doc(db, 'sync', 'state'),
+          snapshot => {
+            if (disposed || currentGeneration !== generation) return;
+            reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS;
+            const value = snapshot.data()?.v;
+            if (!initialized) {
+              initialized = true;
+              lastValue = value;
+              onStatus?.(true);
+              return;
+            }
+            if (value !== lastValue) {
+              lastValue = value;
+              onChange();
+            }
             onStatus?.(true);
-            return;
+          },
+          () => {
+            if (disposed || currentGeneration !== generation) return;
+            generation += 1;
+            unsubscribe?.();
+            unsubscribe = null;
+            scheduleReconnect();
           }
-          if (value !== lastValue) {
-            lastValue = value;
-            onChange();
-          }
-          onStatus?.(true);
-        },
-        () => {
-          if (disposed || currentGeneration !== generation) return;
-          generation += 1;
-          unsubscribe?.();
-          unsubscribe = null;
-          scheduleReconnect();
-        }
-      );
+        );
 
-      if (disposed || currentGeneration !== generation) {
-        nextUnsubscribe();
-      } else {
-        unsubscribe = nextUnsubscribe;
+        if (disposed || currentGeneration !== generation) {
+          nextUnsubscribe();
+        } else {
+          unsubscribe = nextUnsubscribe;
+        }
+      } catch {
+        if (!disposed && currentGeneration === generation) scheduleReconnect();
       }
-    } catch {
-      if (!disposed && currentGeneration === generation) scheduleReconnect();
-    } finally {
-      connecting = false;
-    }
+    })();
+    const tracked = execution.finally(() => {
+      if (connectPromise === tracked) connectPromise = null;
+    });
+    connectPromise = tracked;
+    return tracked;
   };
 
   void connect();
@@ -149,6 +155,13 @@ export async function startLiveSync(
     retryTimer = null;
     unsubscribe?.();
     unsubscribe = null;
+    // Sign out immediately and again after an in-flight custom-token sign-in settles. This
+    // prevents a fast logout from being followed by a late successful Firebase sign-in.
     void signOut(auth).catch(() => undefined);
+    if (connectPromise) {
+      void connectPromise
+        .catch(() => undefined)
+        .then(() => signOut(auth).catch(() => undefined));
+    }
   };
 }
