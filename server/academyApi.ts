@@ -1011,7 +1011,15 @@ export function createAcademyApiRouter(
         return { ...baseItem, accessStatus: 'available' as const, materialCode: master.code, title: materialVersion.title,
           versionNumber: materialVersion.versionNumber, contentFormat: materialVersion.contentFormat };
       }));
-      res.json({ participation, version, evidence, corrections, materials });
+      const visibleCorrections = isManager ? corrections : corrections.map(correction => ({
+        id: correction.id,
+        participationId: correction.participationId,
+        previousStatus: correction.previousStatus,
+        correctedStatus: correction.correctedStatus,
+        correctedIso: correction.correctedIso,
+        ...(correction.invalidatedEvidenceIds ? { invalidatedEvidenceIds: correction.invalidatedEvidenceIds } : {})
+      }));
+      res.json({ participation, version, evidence, corrections: visibleCorrections, materials });
     } catch (error) { fail(res, error, next); }
   });
 
