@@ -820,6 +820,30 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ expectedRevision: 1 })
     });
     assert.equal(publishedProgram.status, 201, JSON.stringify(publishedProgram.body));
+
+    const danglingProgram = await request('/api/academy/programs', admin, {
+      method: 'POST',
+      ...json({
+        code: 'PROGRAM-DANGLING-REF',
+        title: 'Program with missing course reference',
+        summary: '',
+        learningObjectives: [
+          { id: 'dangling-p1', description: 'Objective one' },
+          { id: 'dangling-p2', description: 'Objective two' },
+          { id: 'dangling-p3', description: 'Objective three' }
+        ],
+        courseReferences: [{ courseId: 'course-does-not-exist', requirement: 'required', order: 0 }]
+      })
+    });
+    assert.equal(danglingProgram.status, 201, JSON.stringify(danglingProgram.body));
+    const danglingProgramId = danglingProgram.body!.master.id as string;
+    const danglingPublish = await request(`/api/academy/programs/${danglingProgramId}/publish`, admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(danglingPublish.status, 400);
+    assert.equal(danglingPublish.body!.error, 'ACADEMY_PROGRAM_COURSE_REFERENCE_MISSING');
+    assert.equal((await request(`/api/academy/programs/${danglingProgramId}`, admin)).body!.master.publicationStatus, 'draft');
+
     const managerProgramList = await request('/api/academy/programs', admin);
     const managerProgram = managerProgramList.body!.programs.find((item: { master: { id: string } }) => item.master.id === programId);
     assert.equal(typeof managerProgram.master.ownerUid, 'string');
