@@ -14,6 +14,9 @@ interface LiveSyncConfig {
   databaseId?: string;
 }
 
+const INITIAL_RECONNECT_DELAY_MS = 1_000;
+const MAX_RECONNECT_DELAY_MS = 30_000;
+
 function readConfig(): LiveSyncConfig | null {
   const env = import.meta.env;
   const apiKey = env.VITE_FIREBASE_API_KEY;
@@ -35,7 +38,9 @@ export function isLiveSyncConfigured(): boolean {
 
 /**
  * Startet das Lauschen. Gibt eine Funktion zurück, die es beendet und Firebase abmeldet.
- * onChange wird bei jeder Änderung aufgerufen, nicht beim ersten Lesen.
+ * Bei terminalen Listener-/Tokenfehlern wird die Verbindung mit begrenztem Backoff neu aufgebaut.
+ * Die erste Momentaufnahme dient nur zur Initialisierung; Änderungen während einer Unterbrechung
+ * werden anhand des zuletzt bekannten Versionswerts nach dem Wiederverbinden erkannt.
  */
 export async function startLiveSync(
   fetchToken: () => Promise<string | null>,
@@ -44,9 +49,6 @@ export async function startLiveSync(
 ): Promise<() => void> {
   const config = readConfig();
   if (!config) throw new Error('Echtzeit nicht konfiguriert.');
-
-  const token = await fetchToken();
-  if (!token) throw new Error('Kein Firebase-Token erhalten.');
 
   const [{ getApp, getApps, initializeApp }, { getAuth, signInWithCustomToken, signOut }, firestore] =
     await Promise.all([
@@ -64,34 +66,89 @@ export async function startLiveSync(
         authDomain: config.authDomain
       });
   const auth = getAuth(app);
-  await signInWithCustomToken(auth, token);
-
   const db = config.databaseId
     ? firestore.getFirestore(app, config.databaseId)
     : firestore.getFirestore(app);
 
+  let disposed = false;
+  let connecting = false;
   let initialized = false;
   let lastValue: unknown;
-  const unsubscribe = firestore.onSnapshot(
-    firestore.doc(db, 'sync', 'state'),
-    snapshot => {
-      const value = snapshot.data()?.v;
-      if (!initialized) {
-        initialized = true;
-        lastValue = value;
-        onStatus?.(true);
-        return;
+  let generation = 0;
+  let reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let unsubscribe: (() => void) | null = null;
+
+  const scheduleReconnect = () => {
+    if (disposed || retryTimer) return;
+    onStatus?.(false);
+    const delay = reconnectDelayMs;
+    reconnectDelayMs = Math.min(reconnectDelayMs * 2, MAX_RECONNECT_DELAY_MS);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      void connect();
+    }, delay);
+  };
+
+  const connect = async (): Promise<void> => {
+    if (disposed || connecting) return;
+    connecting = true;
+    const currentGeneration = ++generation;
+    try {
+      const token = await fetchToken();
+      if (!token) throw new Error('Kein Firebase-Token erhalten.');
+      await signInWithCustomToken(auth, token);
+      if (disposed || currentGeneration !== generation) return;
+
+      const nextUnsubscribe = firestore.onSnapshot(
+        firestore.doc(db, 'sync', 'state'),
+        snapshot => {
+          if (disposed || currentGeneration !== generation) return;
+          reconnectDelayMs = INITIAL_RECONNECT_DELAY_MS;
+          const value = snapshot.data()?.v;
+          if (!initialized) {
+            initialized = true;
+            lastValue = value;
+            onStatus?.(true);
+            return;
+          }
+          if (value !== lastValue) {
+            lastValue = value;
+            onChange();
+          }
+          onStatus?.(true);
+        },
+        () => {
+          if (disposed || currentGeneration !== generation) return;
+          generation += 1;
+          unsubscribe?.();
+          unsubscribe = null;
+          scheduleReconnect();
+        }
+      );
+
+      if (disposed || currentGeneration !== generation) {
+        nextUnsubscribe();
+      } else {
+        unsubscribe = nextUnsubscribe;
       }
-      if (value !== lastValue) {
-        lastValue = value;
-        onChange();
-      }
-    },
-    () => onStatus?.(false)
-  );
+    } catch {
+      if (!disposed && currentGeneration === generation) scheduleReconnect();
+    } finally {
+      connecting = false;
+    }
+  };
+
+  void connect();
 
   return () => {
-    unsubscribe();
+    if (disposed) return;
+    disposed = true;
+    generation += 1;
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
+    unsubscribe?.();
+    unsubscribe = null;
     void signOut(auth).catch(() => undefined);
   };
 }
