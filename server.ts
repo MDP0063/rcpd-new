@@ -3062,6 +3062,11 @@ async function startServer() {
       return;
     }
 
+    if (embedType === 'pdf_upload' || (typeof pdfDataUrl === 'string' && pdfDataUrl.length > 0)) {
+      res.status(400).json({ error: 'Neue PDF-Uploads sind vorübergehend deaktiviert. Vorhandene PDFs bleiben weiterhin verfügbar.' });
+      return;
+    }
+
     const moduleError = validateModuleFields(
       { title, externalUrl, pdfDataUrl, requiredRole },
       true
@@ -3079,7 +3084,7 @@ async function startServer() {
       category: category || 'SOP & Policy',
       minClearance: ROLE_HIERARCHY[reqRole]?.defaultClearance || 1,
       requiredRole: reqRole,
-      embedType: embedType || 'pdf_upload',
+      embedType: embedType || 'document',
       contentMarkdown: limitText(contentMarkdown, 200_000),
       externalUrl: String(externalUrl || '').trim(),
       pdfDataUrl: String(pdfDataUrl || ''),
@@ -3135,6 +3140,14 @@ async function startServer() {
       return;
     }
 
+    if (
+      (typeof pdfDataUrl === 'string' && pdfDataUrl.length > 0) ||
+      (embedType === 'pdf_upload' && dbState.modules[idx].embedType !== 'pdf_upload')
+    ) {
+      res.status(400).json({ error: 'Neue PDF-Uploads sind vorübergehend deaktiviert. Vorhandene PDFs bleiben weiterhin verfügbar.' });
+      return;
+    }
+
     const moduleError = validateModuleFields(
       { title, externalUrl, pdfDataUrl, requiredRole },
       false
@@ -3161,12 +3174,10 @@ async function startServer() {
         externalUrl !== undefined
           ? String(externalUrl).trim()
           : dbState.modules[idx].externalUrl,
-      pdfDataUrl:
-        pdfDataUrl !== undefined ? String(pdfDataUrl) : dbState.modules[idx].pdfDataUrl,
-      pdfFileName:
-        pdfFileName !== undefined
-          ? limitText(pdfFileName, 200)
-          : dbState.modules[idx].pdfFileName,
+      // PDF payloads and filenames are immutable through the temporary upload lock.
+      // This preserves existing Firestore blob references during ordinary metadata edits.
+      pdfDataUrl: dbState.modules[idx].pdfDataUrl,
+      pdfFileName: dbState.modules[idx].pdfFileName,
       interactiveCode:
         interactiveCode !== undefined
           ? limitText(interactiveCode, 200_000)
@@ -3174,9 +3185,6 @@ async function startServer() {
       estimatedMinutes: Number(estimatedMinutes) || dbState.modules[idx].estimatedMinutes,
       updatedIso: new Date().toISOString()
     };
-    // An explicit PDF value replaces/removes any lazy legacy reference. An unrelated edit
-    // keeps the reference so the existing Firestore chunks are never deleted accidentally.
-    if (pdfDataUrl !== undefined) delete updatedModule.__lazyBlobChunks;
     dbState.modules[idx] = updatedModule;
 
     appendAuditLog(

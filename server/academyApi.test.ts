@@ -79,7 +79,15 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer'),
       makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01'])
     ],
-    applications: [], modules: [], exams: [], progress: [], announcements: [], messages: [],
+    applications: [],
+    modules: [{
+      id: 'existing-pdf-module', title: 'Existing PDF handbook', code: 'SOP-PDF-01',
+      category: 'SOP & Policy', minClearance: 1, requiredRole: 'trainee', embedType: 'pdf_upload',
+      contentMarkdown: '', externalUrl: '', pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK',
+      pdfFileName: 'legacy-handbook.pdf', interactiveCode: '', estimatedMinutes: 15,
+      authorUid: 'academy-admin', updatedIso: new Date().toISOString()
+    }],
+    exams: [], progress: [], announcements: [], messages: [],
     requests: [], events: [], auditLogs: [], notifications: []
   };
   await writeFile(path.join(dataDirectory, 'portal-db-v3.json'), JSON.stringify(portalState));
@@ -530,11 +538,45 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(spoofedModuleCreate.status, 403);
 
+    const blockedPdfCreate = await request('/api/academy/modules', admin, {
+      method: 'POST',
+      ...json({
+        title: 'Blocked PDF Module', code: 'SOP-PDF-02',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'pdf_upload',
+        contentMarkdown: '', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 15
+      })
+    });
+    assert.equal(blockedPdfCreate.status, 400);
+
+    const blockedPdfPayload = await request('/api/academy/modules', admin, {
+      method: 'POST',
+      ...json({
+        title: 'Blocked PDF Payload', code: 'SOP-PDF-03',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'document',
+        contentMarkdown: '', externalUrl: '', pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK',
+        pdfFileName: 'new.pdf', interactiveCode: '', estimatedMinutes: 15
+      })
+    });
+    assert.equal(blockedPdfPayload.status, 400);
+
+    const existingPdf = await request('/api/academy/modules/existing-pdf-module/pdf', admin);
+    assert.equal(existingPdf.status, 200, JSON.stringify(existingPdf.body));
+    assert.equal(existingPdf.body!.pdfDataUrl, 'data:application/pdf;base64,JVBERi0xLjQK');
+    const existingPdfMetadataEdit = await request('/api/academy/modules/existing-pdf-module', admin, {
+      method: 'PUT',
+      ...json({ title: 'Existing PDF handbook updated', pdfDataUrl: '' })
+    });
+    assert.equal(existingPdfMetadataEdit.status, 200, JSON.stringify(existingPdfMetadataEdit.body));
+    const existingPdfAfterEdit = await request('/api/academy/modules/existing-pdf-module/pdf', admin);
+    assert.equal(existingPdfAfterEdit.status, 200);
+    assert.equal(existingPdfAfterEdit.body!.pdfDataUrl, 'data:application/pdf;base64,JVBERi0xLjQK');
+
     const legacyModule = await request('/api/academy/modules', admin, {
       method: 'POST',
       ...json({
         title: 'Session-bound Module', code: 'SOP-LEGACY-01',
-        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'pdf_upload',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'document',
         contentMarkdown: '', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
         interactiveCode: '', estimatedMinutes: 15
       })
@@ -548,6 +590,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       ...json({ actorUid: 'academy-officer', title: 'Spoofed update' })
     });
     assert.equal(spoofedModuleUpdate.status, 403);
+
+    const blockedPdfUpdate = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
+      method: 'PUT',
+      ...json({ pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK' })
+    });
+    assert.equal(blockedPdfUpdate.status, 400);
 
     const sessionModuleUpdate = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
       method: 'PUT',
