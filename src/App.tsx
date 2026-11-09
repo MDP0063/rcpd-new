@@ -253,6 +253,7 @@ export default function App() {
 
         const controller = new AbortController();
         portalStateRequestControllerRef.current = controller;
+        const requestTimeout = window.setTimeout(() => controller.abort(), 30_000);
         try {
           const res = await apiFetch<{
             currentUser: UserPublicProfile;
@@ -326,6 +327,7 @@ export default function App() {
           setDeploymentConfig(data.deploymentConfig);
           setDbStats(data.dbStats);
         } finally {
+          window.clearTimeout(requestTimeout);
           if (portalStateRequestControllerRef.current === controller) {
             portalStateRequestControllerRef.current = null;
           }
@@ -339,10 +341,12 @@ export default function App() {
     if (activeSessionUidRef.current !== uid || heartbeatInFlightRef.current) return;
     const requestGeneration = sessionGenerationRef.current;
     heartbeatInFlightRef.current = true;
+    const controller = new AbortController();
+    const requestTimeout = window.setTimeout(() => controller.abort(), 30_000);
     try {
       const res = await apiFetch<{ ok: boolean; lastSeenIso?: string }>(
         API_ENDPOINTS.PORTAL_HEARTBEAT,
-        { method: 'POST' }
+        { method: 'POST', signal: controller.signal }
       );
       if (
         activeSessionUidRef.current !== uid ||
@@ -364,6 +368,7 @@ export default function App() {
         );
       }
     } finally {
+      window.clearTimeout(requestTimeout);
       heartbeatInFlightRef.current = false;
     }
   }, [invalidateSession]);
@@ -421,11 +426,15 @@ export default function App() {
     };
   }, [sessionUid]);
 
-  // Initial load always fetches the full state. With live sync connected, the periodic
-  // 20-second tick only sends a small heartbeat instead of downloading the full portal again.
+  // Fetch the full state once per session. A change in live-sync connectivity must not
+  // trigger another full-state download; it only changes the next periodic polling strategy.
   useEffect(() => {
     if (!sessionUid) return;
     void fetchPortalState(sessionUid);
+  }, [sessionUid, fetchPortalState]);
+
+  useEffect(() => {
+    if (!sessionUid) return;
     const poll = () => {
       if (liveConnected) void refreshPortalHeartbeat(sessionUid);
       else void fetchPortalState(sessionUid);
@@ -473,7 +482,6 @@ export default function App() {
     setIsAdmin(Boolean(res.data.isAdmin));
     setInactivitySecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
     setActiveSection('dashboard');
-    await fetchPortalState(loggedInUser.uid);
     triggerToast(
       `Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`
     );
