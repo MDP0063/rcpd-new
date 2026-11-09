@@ -190,7 +190,7 @@ test('program publication uses the saved draft and atomically advances its versi
   await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
   await repository.create('academy_programs', programMaster.id, programMaster);
   await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
-  await repository.publishProgramVersion(master.id, version, publishedMaster, 2, 'owner-1');
+  await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgramMaster, 2, 'owner-1');
   assert.deepEqual(await repository.get('academy_program_versions', programVersion.id), programVersion);
   assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.currentPublishedVersionId, programVersion.id);
 }));
@@ -203,9 +203,6 @@ test('program publication rejects dangling course references and preserves the d
   const missingVersion = {
     ...programVersion,
     courseReferences: missingReference.courseReferences
-  };
-  const missingMaster = {
-    ...programMaster, publicationStatus: 'draft' as const
   };
   const nextMaster = {
     ...publishedProgramMaster,
