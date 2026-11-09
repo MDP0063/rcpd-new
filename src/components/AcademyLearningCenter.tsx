@@ -23,31 +23,36 @@ interface Props {
   onStatusToast: (message: string) => void;
 }
 
+type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
+type ParticipantCourseVersion = Omit<AcademyCourseVersionDoc, 'createdByUid' | 'publishedByUid'>;
+type ParticipantProgramMaster = Omit<AcademyProgramMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
+type ParticipantProgramVersion = Omit<AcademyProgramVersionDoc, 'createdByUid' | 'publishedByUid'>;
+
 interface CourseEntry {
-  master: AcademyCourseMasterDoc;
-  version: AcademyCourseVersionDoc | null;
+  master: ParticipantCourseMaster;
+  version: ParticipantCourseVersion | null;
   draft?: AcademyCourseDraftDoc | null;
 }
 interface ProgramEntry {
-  master: AcademyProgramMasterDoc;
-  version: AcademyProgramVersionDoc | null;
+  master: ParticipantProgramMaster;
+  version: ParticipantProgramVersion | null;
   draft?: AcademyProgramDraftDoc | null;
 }
 interface CourseParticipationDetail {
   participation: AcademyCourseParticipationDoc;
-  version: AcademyCourseVersionDoc;
+  version: ParticipantCourseVersion;
   evidence: AcademyProgressEvidenceDoc[];
   corrections: AcademyCompletionCorrectionDoc[];
   materials: AcademyCourseMaterialReaderItem[];
 }
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
-  version: AcademyCourseVersionDoc;
+  version: ParticipantCourseVersion;
   participation: AcademyCourseParticipationDoc | null;
 }
 interface ProgramParticipationDetail {
   participation: AcademyProgramParticipationDoc;
-  version: AcademyProgramVersionDoc;
+  version: ParticipantProgramVersion;
   requiredCourses: ProgramCourseProgress[];
   progress: {
     requiredCourseCount: number;
