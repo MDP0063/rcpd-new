@@ -274,3 +274,8 @@ test('streaming digest rejects values JSON serialization cannot represent', () =
   assert.throws(() => stableDigest(circular), /circular/i);
   assert.throws(() => stableDigest({ value: 1n }), /BigInt/);
 });
+
+test('streaming digest keeps UTF-16 surrogate pairs intact at chunk boundaries', () => {
+  const prefix = 'a'.repeat(16_383);
+  assert.notEqual(stableDigest(`${prefix}😀`), stableDigest(`${prefix}\uFFFD\uFFFD`));
+});
