@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import { removeChapterMaterialReference, removeCourseChapter } from '../lib/academyCourseEditor';
+import { removeChapterMaterialReference, removeCourseChapter, updateCourseChapterTitle } from '../lib/academyCourseEditor';
 import type {
   AcademyCourseChapter,
   AcademyCourseCompletionRequirement,
@@ -307,12 +307,19 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]);
     setProgramDirty(true);
   };
+  const setChapterTitle = (chapterId: string, title: string) => {
+    const result = updateCourseChapterTitle(courseChapters, courseRequirements, chapterId, title);
+    setCourseChapters(result.chapters);
+    setCourseRequirements(result.requirements);
+    setCourseDirty(true);
+  };
   const setChapterCompletionRequired = (chapterId: string, checked: boolean) => {
     setCourseRequirements(current => {
       const without = current.filter(item => !(item.type === 'required_chapter' && item.targetId === chapterId));
       if (!checked) return without;
       const chapter = courseChapters.find(item => item.id === chapterId);
-      return [...without, { id: newId('requirement'), type: 'required_chapter', targetId: chapterId, required: true, description: chapter ? 'Kapitel abgeschlossen: ' + chapter.title : 'Kapitel abgeschlossen' }];
+      const chapterTitle = chapter?.title.trim();
+      return [...without, { id: newId('requirement'), type: 'required_chapter', targetId: chapterId, required: true, description: chapterTitle ? 'Kapitel abgeschlossen: ' + chapterTitle : 'Kapitel abgeschlossen' }];
     });
     setCourseDirty(true);
   };
@@ -427,7 +434,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
                 return <div key={item.id} className="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
                   <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => removeCourseChapterById(item.id)}>Kapitel entfernen</button></div>
-                  <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, title: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
+                  <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => setChapterTitle(item.id, event.target.value)} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={item.required} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, required: event.target.checked } : chapter)); setCourseDirty(true); }} className="mt-1" />Kapitel ist als Pflichtinhalt gekennzeichnet</label>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={completionRequired} onChange={event => setChapterCompletionRequired(item.id, event.target.checked)} className="mt-1" />Für dieses Kapitel ist ein eigener Abschlussnachweis erforderlich</label>
