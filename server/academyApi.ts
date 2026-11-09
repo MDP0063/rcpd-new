@@ -74,7 +74,26 @@ const canManageMaterialCourse = (actor: AcademyApiActor, courseCode?: string) =>
   const normalized = courseCode.trim().toUpperCase();
   return assigned.includes('*') || assigned.some(code => code.toUpperCase() === normalized);
 };
+
 const canArchiveMaterials = (actor: AcademyApiActor) => actor.role === 'admin' || actor.role === 'colonel';
+
+/** Remove internal ownership and administrative archive metadata from participant-facing views. */
+function participantCourseMasterView(master: AcademyCourseMasterDoc) {
+  const { ownerUid: _ownerUid, archivedByUid: _archivedByUid, archiveReason: _archiveReason, ...visible } = master;
+  return visible;
+}
+function participantCourseVersionView(version: AcademyCourseVersionDoc) {
+  const { createdByUid: _createdByUid, publishedByUid: _publishedByUid, ...visible } = version;
+  return visible;
+}
+function participantProgramMasterView(master: AcademyProgramMasterDoc) {
+  const { ownerUid: _ownerUid, archivedByUid: _archivedByUid, archiveReason: _archiveReason, ...visible } = master;
+  return visible;
+}
+function participantProgramVersionView(version: AcademyProgramVersionDoc) {
+  const { createdByUid: _createdByUid, publishedByUid: _publishedByUid, ...visible } = version;
+  return visible;
+}
 function materialDraftFromBody(
   materialId: string,
   body: Record<string, unknown>,
@@ -672,6 +691,7 @@ export function createAcademyApiRouter(
           master.currentPublishedVersionId ? repository.get<AcademyCourseVersionDoc>('academy_course_versions', master.currentPublishedVersionId) : Promise.resolve(null),
           canManage(actor, master.ownerUid) ? repository.getCourseDraft(master.id) : Promise.resolve(null)
         ]);
+        const manager = canManage(actor, master.ownerUid);
         const draft = storedDraft ? {
           ...storedDraft,
           chapters: await Promise.all(storedDraft.chapters.map(async chapter => ({
@@ -687,7 +707,11 @@ export function createAcademyApiRouter(
             }))
           })))
         } : null;
-        return { master, version, draft };
+        return {
+          master: manager ? master : participantCourseMasterView(master),
+          version: version && !manager ? participantCourseVersionView(version) : version,
+          draft
+        };
       }));
       res.json({ courses });
     } catch (error) { fail(res, error, next); }
@@ -731,7 +755,7 @@ export function createAcademyApiRouter(
         : null;
       const storedDraft = editor ? await repository.getCourseDraft(master.id) : null;
       const draft = storedDraft ? await withPinnedMaterialLabels(storedDraft) : null;
-      res.json({ master, version, draft });
+      res.json({ master: editor ? master : participantCourseMasterView(master), version: version && !editor ? participantCourseVersionView(version) : version, draft });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -795,13 +819,17 @@ export function createAcademyApiRouter(
         publicationStatus: master.publicationStatus, availability: master.availability,
         isManager: canManage(actor, master.ownerUid), hasParticipation: participatedProgramIds.has(master.id)
       }));
-      const programs = await Promise.all(visible.map(async master => ({
-        master,
-        version: master.currentPublishedVersionId
+      const programs = await Promise.all(visible.map(async master => {
+        const manager = canManage(actor, master.ownerUid);
+        const version = master.currentPublishedVersionId
           ? await repository.get<AcademyProgramVersionDoc>('academy_program_versions', master.currentPublishedVersionId)
-          : null,
-        draft: canManage(actor, master.ownerUid) ? await repository.getProgramDraft(master.id) : null
-      })));
+          : null;
+        return {
+          master: manager ? master : participantProgramMasterView(master),
+          version: version && !manager ? participantProgramVersionView(version) : version,
+          draft: manager ? await repository.getProgramDraft(master.id) : null
+        };
+      }));
       res.json({ programs });
     } catch (error) { fail(res, error, next); }
   });
@@ -843,7 +871,7 @@ export function createAcademyApiRouter(
         ? await repository.get<AcademyProgramVersionDoc>('academy_program_versions', master.currentPublishedVersionId)
         : null;
       const draft = editor ? await repository.getProgramDraft(master.id) : null;
-      res.json({ master, version, draft });
+      res.json({ master: editor ? master : participantProgramMasterView(master), version: version && !editor ? participantProgramVersionView(version) : version, draft });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -946,7 +974,12 @@ export function createAcademyApiRouter(
         completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
         status: completedCount === requiredCourses.length ? 'completed' : startedCount === 0 ? 'not_started' : 'in_progress'
       };
-      res.json({ participation, version, requiredCourses, progress });
+      const participantVersion = participantProgramVersionView(version);
+      const participantRequiredCourses = requiredCourses.map(item => ({
+        ...item,
+        version: participantCourseVersionView(item.version)
+      }));
+      res.json({ participation, version: participantVersion, requiredCourses: participantRequiredCourses, progress });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -1011,7 +1044,7 @@ export function createAcademyApiRouter(
         return { ...baseItem, accessStatus: 'available' as const, materialCode: master.code, title: materialVersion.title,
           versionNumber: materialVersion.versionNumber, contentFormat: materialVersion.contentFormat };
       }));
-      res.json({ participation, version, evidence, corrections, materials });
+      res.json({ participation, version: isManager ? version : participantCourseVersionView(version), evidence, corrections, materials });
     } catch (error) { fail(res, error, next); }
   });
 
