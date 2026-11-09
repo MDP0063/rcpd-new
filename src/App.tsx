@@ -117,9 +117,8 @@ function SessionTimeoutTimer({
     }
 
     const updateCountdown = () => {
-      if (timeoutTriggeredRef.current) return;
-      const deadline = deadlineRef.current ?? Date.now();
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      if (timeoutTriggeredRef.current || deadlineRef.current === null) return;
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
       if (remaining <= 0) {
         timeoutTriggeredRef.current = true;
         setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
@@ -129,6 +128,7 @@ function SessionTimeoutTimer({
       setSecondsLeft(remaining);
     };
     const resetInactivityTimer = () => {
+      if (timeoutTriggeredRef.current || deadlineRef.current === null) return;
       deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
       setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
     };
