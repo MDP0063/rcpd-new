@@ -17,8 +17,9 @@ test('manual review accepts explicit zero and valid fractional grades', () => {
   });
 });
 
-test('manual review rejects an empty grade instead of silently treating it as zero', () => {
+test('manual review rejects empty or missing grades instead of silently treating them as zero', () => {
   assert.deepEqual(parseManualReviewGrades(questions, { q1: '', q2: '0.5' }), { ok: false });
+  assert.deepEqual(parseManualReviewGrades(questions, { q2: '0.5' }), { ok: false });
 });
 
 test('manual review rejects missing precision, negative and over-limit grades', () => {
