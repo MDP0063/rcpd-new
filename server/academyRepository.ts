@@ -706,6 +706,11 @@ export class AcademyRepository {
       if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyCourseDraftDoc>('academy_course_drafts', courseId);
       if (!draft || draft.workingRevision !== expectedRevision || !courseDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
+      if (current.currentPublishedVersionId) {
+        const currentPublished = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', current.currentPublishedVersionId);
+        if (!currentPublished) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+        if (courseDraftMatchesVersion(draft, currentPublished)) throw new Error('ACADEMY_DRAFT_ALREADY_PUBLISHED');
+      }
       const materialReferences = draft.chapters.flatMap(chapter => chapter.materialReferences);
       const uniqueReferences = new Map(materialReferences.map(reference => [reference.materialId + '|' + reference.materialVersionId, reference]));
       for (const reference of uniqueReferences.values()) {
@@ -745,6 +750,11 @@ export class AcademyRepository {
       if (current.workingRevision !== expectedRevision || nextMaster.workingRevision !== expectedRevision || version.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
       const draft = await tx.get<AcademyProgramDraftDoc>('academy_program_drafts', programId);
       if (!draft || draft.workingRevision !== expectedRevision || !programDraftMatchesVersion(draft, version)) throw new Error('ACADEMY_DRAFT_VERSION_MISMATCH');
+      if (current.currentPublishedVersionId) {
+        const currentPublished = await tx.get<AcademyProgramVersionDoc>('academy_program_versions', current.currentPublishedVersionId);
+        if (!currentPublished) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+        if (programDraftMatchesVersion(draft, currentPublished)) throw new Error('ACADEMY_DRAFT_ALREADY_PUBLISHED');
+      }
 
       // Publishing must not create a program version with dangling or currently unusable
       // course references. The authoring UI only offers published, available courses;
