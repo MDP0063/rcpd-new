@@ -101,6 +101,11 @@ class FakeTransaction {
 class FakeFirestore {
   private readonly documents = new Map<string, Map<string, unknown>>();
   collection(name: string) { return new FakeCollectionReference(this, name); }
+  seed(collection: string, id: string, data: unknown) {
+    let documents = this.documents.get(collection);
+    if (!documents) { documents = new Map(); this.documents.set(collection, documents); }
+    documents.set(id, data);
+  }
   read(collection: string, id: string): unknown | null {
     return this.documents.get(collection)?.get(id) ?? null;
   }
@@ -195,4 +200,18 @@ test('Firestore program creation completes all reads before creating master and 
 
   assert.deepEqual(await repository.get('academy_programs', firestoreProgramMaster.id), firestoreProgramMaster);
   assert.deepEqual(await repository.getProgramDraft(firestoreProgramMaster.id), firestoreProgramDraft);
+});
+
+test('Firestore course creation rejects an existing draft before writing the master', async () => {
+  const database = new FakeFirestore();
+  database.seed('academy_repo_course_drafts', firestoreCourseMaster.id, firestoreCourseDraft);
+  const repository = new AcademyRepository(
+    new FirestoreAcademyStorageAdapter(database as unknown as Firestore)
+  );
+
+  await assert.rejects(
+    repository.createCourseWithDraft(firestoreCourseMaster, firestoreCourseDraft),
+    /ACADEMY_DOCUMENT_ALREADY_EXISTS/
+  );
+  assert.equal(await repository.get('academy_courses', firestoreCourseMaster.id), null);
 });
