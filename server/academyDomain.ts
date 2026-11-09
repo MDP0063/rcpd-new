@@ -225,6 +225,9 @@ export function validateCourseVersion(
   if (!isNonEmpty(version.title) || version.title.trim().length > 200) {
     return invalid('ACADEMY_COURSE_TITLE_INVALID', 'Der Kurstitel muss zwischen 1 und 200 Zeichen lang sein.');
   }
+  if (typeof version.summary !== 'string' || version.summary.length > 2000) {
+    return invalid('ACADEMY_COURSE_SUMMARY_INVALID', 'Die Kurszusammenfassung ist ungültig oder zu lang.');
+  }
   if (!Number.isSafeInteger(version.versionNumber) || version.versionNumber < 1) {
     return invalid('ACADEMY_COURSE_VERSION_INVALID', 'Die Kursversionsnummer ist ungültig.');
   }
@@ -338,6 +341,9 @@ export function validateProgramVersion(
   }
   if (!isNonEmpty(version.title) || version.title.trim().length > 200) {
     return invalid('ACADEMY_PROGRAM_TITLE_INVALID', 'Der Programmname muss zwischen 1 und 200 Zeichen lang sein.');
+  }
+  if (typeof version.summary !== 'string' || version.summary.length > 2000) {
+    return invalid('ACADEMY_PROGRAM_SUMMARY_INVALID', 'Die Programmzusammenfassung ist ungültig oder zu lang.');
   }
   if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(value => isRecord(value)) || version.learningObjectives.length < 3 || version.learningObjectives.length > 6) {
     return invalid('ACADEMY_PROGRAM_OBJECTIVES_COUNT', 'Ein Programm benötigt drei bis sechs konkrete Lernziele.');
