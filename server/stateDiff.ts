@@ -241,6 +241,10 @@ export interface RawStore {
 }
 
 /** Baut aus den gelesenen Firestore-Dokumenten den Portal-Zustand und den passenden Index. */
+/**
+ * Reconstructs the portal state from stored documents. Set consumeBlobs when the caller
+ * owns the temporary blob map and wants each chunk released as soon as it is assembled.
+ */
 export function assembleState(
   raw: RawStore,
   now: number,
@@ -261,14 +265,14 @@ export function assembleState(
       delete doc.__chunks;
       for (const [field, count] of Object.entries(chunks)) {
         const id = String(doc[spec.idField]);
-        const chunks: string[] = [];
+        const blobParts: string[] = [];
         for (let i = 0; i < count; i++) {
           const path = blobPath(spec.name, id, field, i);
           const chunk = raw.blobs.get(path);
-          if (chunk !== undefined) chunks.push(chunk);
+          if (chunk !== undefined) blobParts.push(chunk);
           if (options.consumeBlobs) raw.blobs.delete(path);
         }
-        doc[field] = chunks.join('');
+        doc[field] = blobParts.join('');
       }
       entries.push({ doc, chunks });
     }
