@@ -252,6 +252,27 @@ test('new small PDFs are stored as lazy-loadable blob chunks too', () => {
   assert.deepEqual(module.__lazyBlobChunks, { pdfDataUrl: 1 });
 });
 
+test('editing a legacy inline PDF migrates it to a lazy blob without changing its content', () => {
+  const pdf = 'data:application/pdf;base64,JVBERi0xLjQK';
+  const raw: RawStore = {
+    collections: { modules: [{ id: 'mod_legacy_inline', title: 'Altes Handbuch', pdfDataUrl: pdf }] },
+    blobs: new Map(),
+    order: null,
+    meta: { version: 3 }
+  };
+  const loaded = assembleState(raw, 1, { lazyBlobs: true });
+  assert.ok(loaded);
+  const module = (loaded.state.modules as Doc[])[0];
+  module.title = 'Aktualisiertes Handbuch';
+
+  const migration = planWrites(loaded.index, loaded.state, 2);
+  const main = migration.ops.find(op => op.kind === 'set' && op.path === 'modules/mod_legacy_inline');
+  assert.ok(main && main.kind === 'set');
+  assert.equal(main.data.pdfDataUrl, null);
+  assert.deepEqual(main.data.__chunks, { pdfDataUrl: 1 });
+  assert.equal(migration.ops.filter(op => op.kind === 'set' && op.path.startsWith('blobs/')).length, 1);
+});
+
 test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalten', () => {
   const index: PersistIndex = new Map();
   const state = baseState();
