@@ -139,8 +139,8 @@ test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen'
   const snapshot = validSnapshot();
   snapshot.collections.exam_masters[0].latestVersionNumber = 2;
   snapshot.collections.exam_versions.push({
+    ...snapshot.collections.exam_versions[0],
     id: 'exam-1__v2',
-    examId: 'exam-1',
     versionNumber: 2
   });
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_SEQUENCE_MISMATCH/);
@@ -149,8 +149,8 @@ test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen'
 test('Versionshistorie darf nicht über die Master-Versionsnummer hinausgehen', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_versions.push({
+    ...snapshot.collections.exam_versions[0],
     id: 'exam-1__v2',
-    examId: 'exam-1',
     versionNumber: 2
   });
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_SEQUENCE_INVALID/);
