@@ -108,6 +108,33 @@ test('Master mit fehlendem veröffentlichten Snapshot wird abgelehnt', () => {
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_MISSING/);
 });
 
+test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].latestVersionNumber = 2;
+  snapshot.collections.exam_versions.push({
+    id: 'exam-1__v2',
+    examId: 'exam-1',
+    versionNumber: 2
+  });
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_SEQUENCE_MISMATCH/);
+});
+
+test('Versionshistorie darf nicht über die Master-Versionsnummer hinausgehen', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_versions.push({
+    id: 'exam-1__v2',
+    examId: 'exam-1',
+    versionNumber: 2
+  });
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_SEQUENCE_INVALID/);
+});
+
+test('Versuch muss dieselbe Versionsnummer wie sein referierter Snapshot speichern', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].versionNumber = 2;
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_VERSION_MISMATCH/);
+});
+
 test('Versuche müssen auf eine Version derselben Prüfung verweisen', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_attempts[0].examVersionId = 'exam-2__v1';
