@@ -97,6 +97,9 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     } else if (Number(latestVersionNumber) !== 0) {
       return fail('EXAM_BACKUP_MASTER_VERSION_POINTER_MISSING');
     }
+    if (master.status === 'published' && (currentVersionId == null || Number(latestVersionNumber) < 1)) {
+      return fail('EXAM_BACKUP_PUBLISHED_MASTER_VERSION_MISSING');
+    }
   }
 
   for (const attempt of collections.exam_attempts) {
