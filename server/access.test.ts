@@ -37,3 +37,17 @@ test('Anwesenheits-Heartbeat aktualisiert Hauptkonto und öffentliches Profil ge
   assert.equal(refreshAccountPresence(account, now + 5_000), false);
   assert.equal(account.lastSeenIso, new Date(now).toISOString());
 });
+
+test('Anwesenheits-Heartbeat gleicht inkonsistente Profilfelder auch bei frischem Zeitstempel ab', () => {
+  const now = Date.parse('2026-01-01T00:01:00.000Z');
+  const account = {
+    isOnline: true,
+    lastSeenIso: new Date(now - 5_000).toISOString(),
+    publicProfile: { isOnline: false, lastSeenIso: new Date(now - 20_000).toISOString() }
+  };
+
+  assert.equal(refreshAccountPresence(account, now), true);
+  assert.equal(account.publicProfile.isOnline, true);
+  assert.equal(account.publicProfile.lastSeenIso, account.lastSeenIso);
+  assert.equal(account.lastSeenIso, new Date(now).toISOString());
+});
