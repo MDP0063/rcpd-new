@@ -1,3 +1,5 @@
+import type { AcademyRepositoryBackupSnapshot } from './academy.ts';
+
 
 export type OfficerRole = 'admin' | 'colonel' | 'officer' | 'rookie' | 'trainee';
 export type WhitelistStatus = 'whitelisted' | 'probation' | 'pending' | 'suspended' | 'revoked';
@@ -456,7 +458,7 @@ export interface ExamRepositoryBackupSnapshot {
 }
 
 export interface PortalBackupSnapshot {
-  snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4';
+  snapshotFormat: 'CA_POST_PORTAL_BACKUP_V5';
   exportedAtIso: string;
   exportedByUsername: string;
   summary: {
@@ -473,6 +475,7 @@ export interface PortalBackupSnapshot {
   academyProgramParticipationsCount?: number;
   academyProgressEvidenceCount?: number;
   academyCompletionCorrectionsCount?: number;
+  academyRepositoryCounts: Record<keyof AcademyRepositoryBackupSnapshot['collections'], number>;
     announcementsCount?: number;
     messagesCount?: number;
     requestsCount?: number;
@@ -487,6 +490,7 @@ export interface PortalBackupSnapshot {
     examPublicationRequestsCount?: number;
   };
   examRepository: ExamRepositoryBackupSnapshot;
+  academyRepository: AcademyRepositoryBackupSnapshot;
   database: {
     version: number;
     accounts: AdminAccountView[];
