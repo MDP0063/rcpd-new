@@ -397,12 +397,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(typeof enrichedCourse.master.ownerUid, 'string');
     assert.equal(typeof enrichedCourse.version.publishedByUid, 'string');
     const participantCourseList = await request('/api/academy/courses', officer);
-    const participantCourse = participantCourseList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseWithMaterialId);
-    assert.equal('ownerUid' in participantCourse.master, false);
-    assert.equal('archivedByUid' in participantCourse.master, false);
-    assert.equal('archiveReason' in participantCourse.master, false);
-    assert.equal('createdByUid' in participantCourse.version, false);
-    assert.equal('publishedByUid' in participantCourse.version, false);
+    const participantCourseListEntry = participantCourseList.body!.courses.find((item: { master: { id: string } }) => item.master.id === courseWithMaterialId);
+    assert.equal('ownerUid' in participantCourseListEntry.master, false);
+    assert.equal('archivedByUid' in participantCourseListEntry.master, false);
+    assert.equal('archiveReason' in participantCourseListEntry.master, false);
+    assert.equal('createdByUid' in participantCourseListEntry.version, false);
+    assert.equal('publishedByUid' in participantCourseListEntry.version, false);
     const participantCourseDetail = await request('/api/academy/courses/' + courseWithMaterialId, officer);
     assert.equal(participantCourseDetail.status, 200);
     assert.equal('ownerUid' in participantCourseDetail.body!.master, false);
