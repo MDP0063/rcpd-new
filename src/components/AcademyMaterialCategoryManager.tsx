@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyMaterialCategoryDoc } from '../types/academy';
+import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryView } from '../types/academy';
 
 interface Props {
   onStatusToast: (message: string) => void;
@@ -28,12 +28,12 @@ function errorMessage(code?: string): string {
 }
 
 export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast }) => {
-  const [categories, setCategories] = useState<AcademyMaterialCategoryDoc[]>([]);
+  const [categories, setCategories] = useState<AcademyMaterialCategoryView[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState<AcademyMaterialCategoryDoc | null>(null);
+  const [editing, setEditing] = useState<AcademyMaterialCategoryView | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -42,7 +42,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
-    const response = await apiFetch<{ categories: AcademyMaterialCategoryDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATEGORIES);
+    const response = await apiFetch<{ categories: AcademyMaterialCategoryView[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATEGORIES);
     if (!response.ok || !response.data) {
       setLoadError(errorMessage(response.error));
       setLoading(false);
@@ -62,7 +62,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setFormErrorField(null);
   };
 
-  const beginEdit = (category: AcademyMaterialCategoryDoc) => {
+  const beginEdit = (category: AcademyMaterialCategoryView) => {
     setEditing(category);
     setName(category.name);
     setDescription(category.description || '');
@@ -126,7 +126,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     onStatusToast(editing ? `Kategorie „${saved.name}“ aktualisiert.` : `Kategorie „${saved.name}“ angelegt.`);
   };
 
-  const changeArchiveState = async (category: AcademyMaterialCategoryDoc) => {
+  const changeArchiveState = async (category: AcademyMaterialCategoryView) => {
     const archive = category.status === 'active';
     const confirmed = window.confirm(
       archive
@@ -150,7 +150,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     onStatusToast(archive ? `Kategorie „${category.name}“ archiviert.` : `Kategorie „${category.name}“ wieder aktiviert.`);
   };
 
-  const deleteCategory = async (category: AcademyMaterialCategoryDoc) => {
+  const deleteCategory = async (category: AcademyMaterialCategoryView) => {
     const typedName = window.prompt(
       `Kategorie „${category.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf sie verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
     );

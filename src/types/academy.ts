@@ -33,6 +33,12 @@ export interface AcademyMaterialCategoryDoc {
   archivedByUid?: string;
 }
 
+/** Non-audit projection used by authenticated material managers and selection lists. */
+export type AcademyMaterialCategoryView = Pick<
+  AcademyMaterialCategoryDoc,
+  'id' | 'name' | 'description' | 'status' | 'revision'
+>;
+
 /** Stable material-to-category link; id is the material master ID. */
 export interface AcademyMaterialCategoryAssignmentDoc {
   id: string;
@@ -62,6 +68,12 @@ export interface AcademyMaterialDocumentTypeDoc {
   archivedIso?: string;
   archivedByUid?: string;
 }
+
+/** Non-audit projection used by authenticated material managers and selection lists. */
+export type AcademyMaterialDocumentTypeView = Pick<
+  AcademyMaterialDocumentTypeDoc,
+  'id' | 'name' | 'description' | 'status' | 'revision'
+>;
 
 /** Stable material-to-document-type link; id is the material master ID. */
 export interface AcademyMaterialDocumentTypeAssignmentDoc {

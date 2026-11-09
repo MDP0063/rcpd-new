@@ -210,7 +210,14 @@ export function createAcademyApiRouter(
         if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
         return a.name.localeCompare(b.name, 'de-DE');
       });
-      res.json({ categories });
+      const visibleCategories = categories.map(category => ({
+        id: category.id,
+        name: category.name,
+        ...(category.description === undefined ? {} : { description: category.description }),
+        status: category.status,
+        revision: category.revision
+      }));
+      res.json({ categories: visibleCategories });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -326,7 +333,14 @@ export function createAcademyApiRouter(
         if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
         return a.name.localeCompare(b.name, 'de-DE');
       });
-      res.json({ documentTypes });
+      const visibleDocumentTypes = documentTypes.map(documentType => ({
+        id: documentType.id,
+        name: documentType.name,
+        ...(documentType.description === undefined ? {} : { description: documentType.description }),
+        status: documentType.status,
+        revision: documentType.revision
+      }));
+      res.json({ documentTypes: visibleDocumentTypes });
     } catch (error) { fail(res, error, next); }
   });
 
