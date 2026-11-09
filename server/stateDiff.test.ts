@@ -221,13 +221,14 @@ test('lazy PDF assembly does not load blob payloads and preserves them during un
   assert.equal(deletion.ops.filter(op => op.kind === 'delete' && op.path.startsWith('blobs/')).length, 2);
 });
 
-test('lazy PDF assembly keeps small inline PDFs readable without loading blob documents', () => {
-  const state = baseState();
+test('lazy PDF assembly keeps legacy small inline PDFs readable without loading blob documents', () => {
   const inlinePdf = 'data:application/pdf;base64,JVBERi0xLjQK';
-  state.modules = [{ id: 'mod_inline', title: 'Kleines Handbuch', pdfDataUrl: inlinePdf }];
-  const store = new Map<string, Doc>();
-  const plan = planWrites(new Map(), state, 0);
-  const raw = applyToFake(plan.ops, store);
+  const raw: RawStore = {
+    collections: { modules: [{ id: 'mod_inline', title: 'Kleines Handbuch', pdfDataUrl: inlinePdf }] },
+    blobs: new Map(),
+    order: null,
+    meta: { version: 3 }
+  };
   const loaded = assembleState(raw, 1, { lazyBlobs: true });
   assert.ok(loaded);
   assert.equal((loaded.state.modules as Doc[])[0].pdfDataUrl, inlinePdf);
