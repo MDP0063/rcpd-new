@@ -115,6 +115,13 @@ test('private notes require owner and exact material version; bookmark cannot co
   assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: 'text' }).ok, false);
 });
 
+test('private notes reject malformed optional title and content values', () => {
+  assert.equal(validatePrivateNote({ ...note, title: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, content: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: { text: 'invalid' } } as never).ok, false);
+  assert.equal(validatePrivateNote({ ...note, title: 'x'.repeat(201) }).ok, false);
+});
+
 test('course versions reject duplicate objectives and malformed chapter ordering', () => {
   const duplicateObjectives = {
     ...courseVersion,
@@ -222,4 +229,20 @@ test('course chapters and completion requirements reject non-string descriptions
     }]
   };
   assert.equal(validateCourseVersion('course_1', malformedRequirement as never).ok, false);
+});
+
+
+test('course and program summaries reject malformed runtime values', () => {
+  assert.equal(validateCourseVersion('course_1', {
+    ...courseVersion, summary: { text: 'invalid' }
+  } as never).ok, false);
+  assert.equal(validateProgramVersion('program_1', {
+    ...programVersion, summary: { text: 'invalid' }
+  } as never).ok, false);
+  assert.equal(validateCourseVersion('course_1', {
+    ...courseVersion, summary: 'x'.repeat(2001)
+  }).ok, false);
+  assert.equal(validateProgramVersion('program_1', {
+    ...programVersion, summary: 'x'.repeat(2001)
+  }).ok, false);
 });

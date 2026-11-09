@@ -225,6 +225,9 @@ export function validateCourseVersion(
   if (!isNonEmpty(version.title) || version.title.trim().length > 200) {
     return invalid('ACADEMY_COURSE_TITLE_INVALID', 'Der Kurstitel muss zwischen 1 und 200 Zeichen lang sein.');
   }
+  if (typeof version.summary !== 'string' || version.summary.length > 2000) {
+    return invalid('ACADEMY_COURSE_SUMMARY_INVALID', 'Die Kurszusammenfassung ist ungültig oder zu lang.');
+  }
   if (!Number.isSafeInteger(version.versionNumber) || version.versionNumber < 1) {
     return invalid('ACADEMY_COURSE_VERSION_INVALID', 'Die Kursversionsnummer ist ungültig.');
   }
@@ -338,6 +341,9 @@ export function validateProgramVersion(
   }
   if (!isNonEmpty(version.title) || version.title.trim().length > 200) {
     return invalid('ACADEMY_PROGRAM_TITLE_INVALID', 'Der Programmname muss zwischen 1 und 200 Zeichen lang sein.');
+  }
+  if (typeof version.summary !== 'string' || version.summary.length > 2000) {
+    return invalid('ACADEMY_PROGRAM_SUMMARY_INVALID', 'Die Programmzusammenfassung ist ungültig oder zu lang.');
   }
   if (!Array.isArray(version.learningObjectives) || !version.learningObjectives.every(value => isRecord(value)) || version.learningObjectives.length < 3 || version.learningObjectives.length > 6) {
     return invalid('ACADEMY_PROGRAM_OBJECTIVES_COUNT', 'Ein Programm benötigt drei bis sechs konkrete Lernziele.');
@@ -490,14 +496,17 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
   if (note.revision !== undefined && (!Number.isSafeInteger(note.revision) || note.revision < 1)) {
     return invalid('ACADEMY_NOTE_REVISION_INVALID', 'Die Notizrevision muss eine positive ganze Zahl sein.');
   }
-  if (note.kind === 'bookmark' && (note.content || '').trim().length > 0) {
+  if (note.title !== undefined && (typeof note.title !== 'string' || note.title.length > 200)) {
+    return invalid('ACADEMY_NOTE_TITLE_INVALID', 'Der optionale Notiztitel ist ungültig oder zu lang.');
+  }
+  if (note.content !== undefined && (typeof note.content !== 'string' || note.content.length > 20_000)) {
+    return invalid('ACADEMY_NOTE_CONTENT_INVALID', 'Der Notiztext ist ungültig oder überschreitet die zulässige Länge.');
+  }
+  if (note.kind === 'bookmark' && typeof note.content === 'string' && note.content.trim().length > 0) {
     return invalid('ACADEMY_BOOKMARK_CONTENT_NOT_ALLOWED', 'Ein Lesezeichen darf keinen Notiztext enthalten.');
   }
   if (!Array.isArray(note.tags) || note.tags.some(tag => !isNonEmpty(tag) || tag.length > 40)) {
     return invalid('ACADEMY_NOTE_TAGS_INVALID', 'Notiz-Tags müssen gültige kurze Texte sein.');
-  }
-  if ((note.content || '').length > 20_000) {
-    return invalid('ACADEMY_NOTE_CONTENT_TOO_LONG', 'Der Notiztext überschreitet die zulässige Länge.');
   }
   return { ok: true };
 }
