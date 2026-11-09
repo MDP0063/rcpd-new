@@ -388,3 +388,30 @@ test('course participation pins the published version and completes only after e
   };
   await assert.rejects(repository.correctCourseParticipation(participation.id, staleCorrection, 'in_progress'), /ACADEMY_COMPLETION_CORRECTION_CONFLICT/);
 }));
+
+
+test('updating a private note never recreates a note deleted after the initial read', async () => withRepository(async repository => {
+  const note: AcademyPrivateNoteDoc = {
+    id: 'note-update-race', ownerUid: 'owner-1', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'Original',
+    tags: [], createdIso: now, updatedIso: now
+  };
+  await repository.saveOwnPrivateNote('owner-1', note);
+  const previouslyRead = { ...note, content: 'Edited', updatedIso: '2026-11-06T12:01:00.000Z' };
+  await repository.deleteOwnPrivateNote('owner-1', note.id);
+  await assert.rejects(repository.updateOwnPrivateNote('owner-1', previouslyRead), /ACADEMY_NOTE_NOT_FOUND/);
+  assert.equal(await repository.getOwnPrivateNote('owner-1', note.id), null);
+}));
+
+test('private note updates preserve ownership and material-version identity', async () => withRepository(async repository => {
+  const note: AcademyPrivateNoteDoc = {
+    id: 'note-update-identity', ownerUid: 'owner-1', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'Original',
+    tags: [], createdIso: now, updatedIso: now
+  };
+  await repository.saveOwnPrivateNote('owner-1', note);
+  await assert.rejects(repository.updateOwnPrivateNote('owner-1', {
+    ...note, materialVersionId: 'material-1__v2', updatedIso: '2026-11-06T12:01:00.000Z'
+  }), /ACADEMY_NOTE_IDENTITY_MISMATCH/);
+  assert.deepEqual(await repository.getOwnPrivateNote('owner-1', note.id), note);
+}));

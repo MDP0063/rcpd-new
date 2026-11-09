@@ -1054,6 +1054,21 @@ export class AcademyRepository {
       else await tx.create('academy_private_notes', note.id, note);
     });
   }
+  async updateOwnPrivateNote(ownerUid: string, note: AcademyPrivateNoteDoc): Promise<void> {
+    if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
+    if (note.ownerUid !== ownerUid) throw new Error('ACADEMY_NOTE_OWNER_MISMATCH');
+    assertValid(validatePrivateNote(note));
+    return this.runTransaction(async tx => {
+      const existing = await tx.get<AcademyPrivateNoteDoc>('academy_private_notes', note.id);
+      if (!existing || existing.ownerUid !== ownerUid) throw new Error('ACADEMY_NOTE_NOT_FOUND');
+      if (existing.createdIso !== note.createdIso ||
+          existing.materialId !== note.materialId ||
+          existing.materialVersionId !== note.materialVersionId) {
+        throw new Error('ACADEMY_NOTE_IDENTITY_MISMATCH');
+      }
+      await tx.update('academy_private_notes', note.id, note);
+    });
+  }
   async deleteOwnPrivateNote(ownerUid: string, noteId: string): Promise<void> {
     if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
     return this.runTransaction(async tx => {
