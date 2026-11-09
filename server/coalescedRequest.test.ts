@@ -38,7 +38,6 @@ test('runs a queued refresh even if the preceding task rejects, then surfaces th
   assert.equal(queuedRan, true);
 });
 
-
 test('waitForIdle waits for the active task and its latest queued follow-up without adding work', async () => {
   const runner = new CoalescedRequestRunner();
   let releaseFirst!: () => void;
@@ -58,4 +57,25 @@ test('waitForIdle waits for the active task and its latest queued follow-up with
 
   assert.deepEqual(calls, ['first', 'latest']);
   assert.equal(await runner.waitForIdle(), undefined);
+});
+
+
+test('a burst of autosave triggers retains only one latest follow-up', async () => {
+  const runner = new CoalescedRequestRunner();
+  let releaseFirst!: () => void;
+  const firstGate = new Promise<void>(resolve => { releaseFirst = resolve; });
+  const calls: number[] = [];
+  const first = runner.run(async () => {
+    calls.push(0);
+    await firstGate;
+  });
+  await Promise.resolve();
+
+  const pending = Array.from({ length: 100 }, (_, index) =>
+    runner.run(async () => { calls.push(index + 1); })
+  );
+  releaseFirst();
+  await Promise.all([first, ...pending]);
+
+  assert.deepEqual(calls, [0, 100]);
 });
