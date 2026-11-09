@@ -21,7 +21,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
-import { canReadModule, refreshAccountPresence, shouldRefreshPresence } from './server/access.ts';
+import { canReadModule, refreshAccountPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import {
   createFirestoreExamRepository,
@@ -1856,7 +1856,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id) {
         res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
@@ -1883,7 +1883,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
         res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
         return;
@@ -1897,7 +1897,7 @@ async function startServer() {
     res.setHeader('Cache-Control', 'no-store');
     try {
       const sessionUid = res.locals.sessionUid as string | undefined;
-      const caller = loadDatabase().accounts.find(account => account.uid === sessionUid);
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
         res.status(403).json({ error: 'Nachträgliche Bewertungskorrekturen sind ausschließlich Admins und Colonels vorbehalten.' });
         return;
@@ -3891,7 +3891,7 @@ jobs:
   // ADMIN ONLY: Complete portal + ExamRepository backup.
   app.get('/api/admin/backup', async (_req, res, next) => {
     const sessionUid = res.locals.sessionUid as string;
-    const initialState = loadDatabase();
+    const initialState = peekDatabase();
     const initialCaller = initialState.accounts.find(account => account.uid === sessionUid);
     if (!initialCaller || initialCaller.publicProfile.role !== 'admin') {
       res.status(403).json({
