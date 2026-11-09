@@ -34,7 +34,21 @@ function validSnapshot(): ExamRepositorySnapshot {
     id: 'exam-1__v1',
     examId: 'exam-1',
     versionNumber: 1,
-    assessmentStage: 'test'
+    title: 'Grundlagenprüfung',
+    assessmentStage: 'test',
+    timeLimitMinutes: 0,
+    passingScoreBasisPoints: 6000,
+    maxAttempts: null,
+    prerequisites: [],
+    historicalAssignedCourseCodes: ['SOP-01'],
+    minClearance: 0,
+    questionsSnapshot: [{
+      id: 'question-1',
+      type: 'true_false',
+      question: 'Ist dies eine gültige Frage?',
+      pointsMilli: 1000,
+      correctBoolean: true
+    }]
   });
   snapshot.collections.exam_attempts.push({
     id: 'attempt-1',
@@ -192,4 +206,14 @@ test('Prüfungsversionen ohne gültige Prüfungsstufe werden abgelehnt', () => {
   const snapshot = validSnapshot();
   delete snapshot.collections.exam_versions[0].assessmentStage;
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_ASSESSMENT_STAGE_INVALID/);
+});
+
+
+test('Backup lehnt veröffentlichte Versionen mit ungültigem Fragen-Snapshot ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_versions[0].questionsSnapshot = [{
+    id: 'question-1', type: 'true_false', question: 'Ungültige Frage',
+    pointsMilli: 1000
+  }];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_CONTENT_INVALID/);
 });
