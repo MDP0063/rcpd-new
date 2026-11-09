@@ -233,6 +233,24 @@ test('lazy PDF assembly keeps small inline PDFs readable without loading blob do
   assert.equal((loaded.state.modules as Doc[])[0].pdfDataUrl, inlinePdf);
 });
 
+test('new small PDFs are stored as lazy-loadable blob chunks too', () => {
+  const state = baseState();
+  const pdf = 'data:application/pdf;base64,JVBERi0xLjQK';
+  state.modules = [{ id: 'mod_small', title: 'Kleines PDF', pdfDataUrl: pdf }];
+  const store = new Map<string, Doc>();
+  const plan = planWrites(new Map(), state, 0);
+  const main = plan.ops.find(op => op.kind === 'set' && op.path === 'modules/mod_small');
+  assert.ok(main && main.kind === 'set');
+  assert.equal(main.data.pdfDataUrl, null);
+  assert.deepEqual(main.data.__chunks, { pdfDataUrl: 1 });
+  const raw = applyToFake(plan.ops, store);
+  const loaded = assembleState(raw, 1, { lazyBlobs: true });
+  assert.ok(loaded);
+  const module = (loaded.state.modules as Doc[])[0];
+  assert.equal(module.pdfDataUrl, undefined);
+  assert.deepEqual(module.__lazyBlobChunks, { pdfDataUrl: 1 });
+});
+
 test('private Admin-Recovery-Metadaten bleiben im Firestore-Meta-Dokument erhalten', () => {
   const index: PersistIndex = new Map();
   const state = baseState();
