@@ -397,7 +397,10 @@ export async function publishExamDraft(
   if (current.examFormat === 'interactive_code' || current.isLegacyFormat === true) {
     throw new Error('EXAM_LEGACY_FORMAT_NOT_PUBLISHABLE');
   }
-  if (current.currentPublishedVersionId) {
+  if (current.currentPublishedVersionId !== undefined && current.currentPublishedVersionId !== null) {
+    if (typeof current.currentPublishedVersionId !== 'string' || !isValidId(current.currentPublishedVersionId)) {
+      throw new Error('EXAM_PUBLISHED_VERSION_MISSING');
+    }
     const publishedVersion = await repository.get('exam_versions', current.currentPublishedVersionId);
     if (!publishedVersion || publishedVersion.examId !== id) throw new Error('EXAM_PUBLISHED_VERSION_MISSING');
     if (getExamWorkshopDefinitionHash(current) === getExamVersionDefinitionHash(publishedVersion)) {
