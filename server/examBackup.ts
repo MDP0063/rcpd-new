@@ -76,17 +76,24 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (!Number.isSafeInteger(version.minClearance) || Number(version.minClearance) < 0) {
       return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
     }
-    const versionValidation = validateExamForPublication({
-      title: version.title,
-      assessmentStage: version.assessmentStage,
-      timeLimitMinutes: version.timeLimitMinutes,
-      passingScoreBasisPoints: version.passingScoreBasisPoints,
-      maxAttempts: version.maxAttempts,
-      prerequisites: version.prerequisites ?? [],
-      assignedCourseCodes: version.historicalAssignedCourseCodes,
-      questions: version.questionsSnapshot
-    });
-    if (!versionValidation.ok) return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
+    // Non-startable legacy versions are retained as historical records. Interactive-code
+    // migrations intentionally have no structured questions; malformed legacy structured exams
+    // may also remain preserved but cannot be started.
+    if (version.startable !== false) {
+      const versionValidation = validateExamForPublication({
+        title: version.title,
+        assessmentStage: version.assessmentStage,
+        timeLimitMinutes: version.timeLimitMinutes,
+        passingScoreBasisPoints: version.passingScoreBasisPoints,
+        maxAttempts: version.maxAttempts,
+        prerequisites: version.prerequisites ?? [],
+        assignedCourseCodes: version.historicalAssignedCourseCodes,
+        questions: version.questionsSnapshot
+      });
+      if (!versionValidation.ok) return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
+    } else if (!Array.isArray(version.questionsSnapshot)) {
+      return fail('EXAM_BACKUP_VERSION_CONTENT_INVALID');
+    }
     const history = versionsByExamId.get(version.examId) ?? [];
     history.push(version);
     versionsByExamId.set(version.examId, history);
