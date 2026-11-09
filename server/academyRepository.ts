@@ -1001,14 +1001,20 @@ export class AcademyRepository {
       if (requestedInvalidations.some(id => !evidenceIds.has(id) || previouslyInvalidated.has(id))) {
         throw new Error('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_CONFLICT');
       }
-      if (correction.correctedStatus === 'in_progress') {
+      if (correction.correctedStatus === 'in_progress' || correction.correctedStatus === 'completed') {
         const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', current.courseVersionId);
         if (!version) throw new Error('ACADEMY_PINNED_VERSION_MISSING');
         const invalidatedAfterCorrection = new Set([...previouslyInvalidated, ...requestedInvalidations]);
         const activeRequirements = new Set(evidence.filter(item => !invalidatedAfterCorrection.has(item.id)).map(item => item.requirementId));
         const required = version.completionRequirements.filter(item => item.required);
-        if (required.length > 0 && required.every(item => activeRequirements.has(item.id))) {
-          throw new Error('ACADEMY_COMPLETION_CORRECTION_REQUIRES_EVIDENCE_INVALIDATION');
+        if (correction.correctedStatus === 'in_progress') {
+          if (required.length > 0 && required.every(item => activeRequirements.has(item.id))) {
+            throw new Error('ACADEMY_COMPLETION_CORRECTION_REQUIRES_EVIDENCE_INVALIDATION');
+          }
+        } else if (required.length === 0 || !required.every(item => activeRequirements.has(item.id))) {
+          // A manual correction may repair a stale status, but it must never bypass the
+          // same explicit evidence requirements that govern automatic course completion.
+          throw new Error('ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INCOMPLETE');
         }
       }
       const { completedIso: _previousCompletedIso, ...withoutCompletion } = current;
