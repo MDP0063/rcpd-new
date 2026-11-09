@@ -160,7 +160,7 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
         })()
       ]);
 
-      const assembled = assembleState(raw, Date.now());
+      const assembled = assembleState(raw, Date.now(), { consumeBlobs: true });
       if (!assembled) return null;
       index = assembled.index;
       return assembled.state;

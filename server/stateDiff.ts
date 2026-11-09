@@ -241,9 +241,14 @@ export interface RawStore {
 }
 
 /** Baut aus den gelesenen Firestore-Dokumenten den Portal-Zustand und den passenden Index. */
+/**
+ * Reconstructs the portal state from stored documents. Set consumeBlobs when the caller
+ * owns the temporary blob map and wants each chunk released as soon as it is assembled.
+ */
 export function assembleState(
   raw: RawStore,
-  now: number
+  now: number,
+  options: { consumeBlobs?: boolean } = {}
 ): { state: StateLike; index: PersistIndex } | null {
   if (!raw.meta) return null;
   const index: PersistIndex = new Map();
@@ -260,9 +265,14 @@ export function assembleState(
       delete doc.__chunks;
       for (const [field, count] of Object.entries(chunks)) {
         const id = String(doc[spec.idField]);
-        let joined = '';
-        for (let i = 0; i < count; i++) joined += raw.blobs.get(blobPath(spec.name, id, field, i)) ?? '';
-        doc[field] = joined;
+        const blobParts: string[] = [];
+        for (let i = 0; i < count; i++) {
+          const path = blobPath(spec.name, id, field, i);
+          const chunk = raw.blobs.get(path);
+          if (chunk !== undefined) blobParts.push(chunk);
+          if (options.consumeBlobs) raw.blobs.delete(path);
+        }
+        doc[field] = blobParts.join('');
       }
       entries.push({ doc, chunks });
     }
@@ -287,6 +297,9 @@ export function assembleState(
     }
     state[spec.name] = entries.map(e => e.doc);
   }
+
+  // loadAll() owns this temporary map; release any orphaned chunks once reconstruction is complete.
+  if (options.consumeBlobs) raw.blobs.clear();
 
   // Signatur des tatsächlich gespeicherten Standes, damit abweichende Dokumente beim nächsten Speichern korrigiert werden.
   index.set('meta/order', { sig: digest(raw.order ?? {}), chunks: {}, persistedAt: now });
