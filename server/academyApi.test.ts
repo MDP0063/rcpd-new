@@ -153,6 +153,14 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(createdCategory.status, 201, JSON.stringify(createdCategory.body));
     const categoryId = createdCategory.body!.category.id as string;
     assert.equal(createdCategory.body!.category.createdByUid, 'academy-admin');
+    const participantCategories = await request('/api/academy/materials/categories', officer);
+    const participantCategory = participantCategories.body!.categories.find((item: { id: string }) => item.id === categoryId);
+    assert.equal(participantCategory.name, 'SOP & Richtlinien');
+    assert.equal(participantCategory.revision, 1);
+    assert.equal('createdByUid' in participantCategory, false);
+    assert.equal('updatedByUid' in participantCategory, false);
+    assert.equal('archivedByUid' in participantCategory, false);
+    assert.equal('createdIso' in participantCategory, false);
 
     const duplicateCategory = await request('/api/academy/materials/categories', colonel, {
       method: 'POST', ...json({ name: 'sop & RICHTLINIEN' })
@@ -204,6 +212,14 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(createdDocumentType.status, 201, JSON.stringify(createdDocumentType.body));
     const documentTypeId = createdDocumentType.body!.documentType.id as string;
     assert.equal(createdDocumentType.body!.documentType.createdByUid, 'academy-admin');
+    const participantDocumentTypes = await request('/api/academy/materials/document-types', officer);
+    const participantDocumentType = participantDocumentTypes.body!.documentTypes.find((item: { id: string }) => item.id === documentTypeId);
+    assert.equal(participantDocumentType.name, 'SOP / Standardverfahren');
+    assert.equal(participantDocumentType.revision, 1);
+    assert.equal('createdByUid' in participantDocumentType, false);
+    assert.equal('updatedByUid' in participantDocumentType, false);
+    assert.equal('archivedByUid' in participantDocumentType, false);
+    assert.equal('createdIso' in participantDocumentType, false);
 
     const duplicateDocumentType = await request('/api/academy/materials/document-types', colonel, {
       method: 'POST', ...json({ name: 'sop / STANDARDVERFAHREN' })
