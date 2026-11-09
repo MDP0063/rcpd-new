@@ -3935,6 +3935,7 @@ jobs:
       );
       await saveDatabaseAndWait(dbState);
       await academy.setMaintenanceMode(false);
+      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
