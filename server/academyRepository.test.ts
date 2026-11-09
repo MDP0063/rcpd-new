@@ -432,3 +432,29 @@ test('concurrent private note edits reject a stale revision instead of overwriti
   assert.equal(saved?.content, 'First edit');
   assert.equal(saved?.revision, 2);
 }));
+
+
+test('a course draft that already matches the current published version cannot be published twice', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
+  const duplicateVersion = { ...version, id: 'course-1__v2', versionNumber: 2 };
+  const duplicateMaster = { ...publishedMaster, currentPublishedVersionId: duplicateVersion.id, latestVersionNumber: 2 };
+  await assert.rejects(repository.publishCourseVersion(master.id, duplicateVersion, duplicateMaster, 2, 'owner-1'), /ACADEMY_DRAFT_ALREADY_PUBLISHED/);
+  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.currentPublishedVersionId, version.id);
+  assert.equal(await repository.get('academy_course_versions', duplicateVersion.id), null);
+}));
+
+test('a program draft that already matches the current published version cannot be published twice', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
+  await repository.create('academy_programs', programMaster.id, programMaster);
+  await repository.saveProgramDraft(programMaster.id, programDraft, 1, 'owner-1');
+  await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgramMaster, 2, 'owner-1');
+  const duplicateVersion = { ...programVersion, id: 'program-1__v2', versionNumber: 2 };
+  const duplicateMaster = { ...publishedProgramMaster, currentPublishedVersionId: duplicateVersion.id, latestVersionNumber: 2 };
+  await assert.rejects(repository.publishProgramVersion(programMaster.id, duplicateVersion, duplicateMaster, 2, 'owner-1'), /ACADEMY_DRAFT_ALREADY_PUBLISHED/);
+  assert.equal((await repository.get<AcademyProgramMasterDoc>('academy_programs', programMaster.id))?.currentPublishedVersionId, programVersion.id);
+  assert.equal(await repository.get('academy_program_versions', duplicateVersion.id), null);
+}));
