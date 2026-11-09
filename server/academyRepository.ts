@@ -79,8 +79,8 @@ export function validateAcademyRepositoryBackupSnapshot(value: unknown): Academy
       if (seen.has(id)) throw new Error('ACADEMY_BACKUP_DOCUMENT_DUPLICATE');
       seen.add(id);
       assertAcademyDocumentId(id);
-      assertAcademyDocument(collection, id, rawDocument as AcademyDocument);
-      validateAcademyBackupDocument(collection, rawDocument as AcademyDocument);
+      assertAcademyDocument(collection, id, rawDocument as unknown as AcademyDocument);
+      validateAcademyBackupDocument(collection, rawDocument as unknown as AcademyDocument);
     }
     (collections as Record<string, AcademyDocument[]>)[collection] = documents as AcademyDocument[];
   }
