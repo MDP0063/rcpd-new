@@ -34,6 +34,7 @@ import { createAcademyApiRouter } from './server/academyApi.ts';
 import {
   createFirestoreAcademyRepository,
   createJsonAcademyRepository,
+  validateAcademyRepositoryBackupSnapshot,
   type AcademyRepository
 } from './server/academyRepository.ts';
 import { hasAccountRecordChanged, shouldNotifyAccountPermissionsUpdated } from './server/accountUpdate.ts';
@@ -980,6 +981,10 @@ export function getExamRepository(): ExamRepository {
   if (!examRepository) throw new Error('EXAM_REPOSITORY_NOT_INITIALIZED');
   return examRepository;
 }
+function getAcademyRepository(): AcademyRepository {
+  if (!academyRepository) throw new Error('ACADEMY_REPOSITORY_NOT_INITIALIZED');
+  return academyRepository;
+}
 
 async function startServer() {
   if (process.env.STORAGE_BACKEND === 'firestore') {
@@ -1179,7 +1184,17 @@ async function startServer() {
   });
 
   if (!academyRepository) throw new Error('ACADEMY_REPOSITORY_NOT_INITIALIZED');
-  app.use('/api/academy', createAcademyApiRouter(
+  app.use('/api/academy', async (_req, res, next) => {
+    try {
+      if (examMaintenanceActive || await getExamRepository().isMaintenanceMode()) {
+        res.status(503).json({ error: 'Die Academy ist wegen einer Datensicherung oder Wiederherstellung vorübergehend pausiert.' });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }, createAcademyApiRouter(
     academyRepository,
     uid => {
       const account = peekDatabase().accounts.find(item => item.uid === uid);
