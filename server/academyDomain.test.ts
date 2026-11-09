@@ -4,6 +4,7 @@ import {
   validateCourseMaster,
   validateCourseParticipation,
   validateCourseVersion,
+  validateCourseVersionForPublication,
   validatePrivateNote,
   validateProgramMaster,
   validateProgramVersion
@@ -64,6 +65,29 @@ test('valid course master and version preserve concrete material version referen
   const missingVersion = structuredClone(courseVersion);
   missingVersion.chapters[0].materialReferences[0].materialVersionId = '';
   assert.equal(validateCourseVersion('course_1', missingVersion).ok, false);
+});
+
+test('published course versions require at least one required completion condition while drafts remain editable', () => {
+  assert.deepEqual(validateCourseVersion('course_1', courseVersion), { ok: true });
+  assert.equal(validateCourseVersionForPublication('course_1', courseVersion).ok, false);
+
+  const optionalOnly = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_optional', type: 'required_chapter' as const,
+      targetId: 'chapter_1', required: false
+    }]
+  };
+  assert.equal(validateCourseVersionForPublication('course_1', optionalOnly).ok, false);
+
+  const publishable = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_chapter', type: 'required_chapter' as const,
+      targetId: 'chapter_1', required: true
+    }]
+  };
+  assert.deepEqual(validateCourseVersionForPublication('course_1', publishable), { ok: true });
 });
 
 test('published course master requires an immutable published version pointer', () => {
