@@ -87,40 +87,61 @@ const INACTIVITY_TIMEOUT_SECONDS = 15 * 60; // 15 Minuten Inaktivitäts-Timeout
 
 function SessionTimeoutTimer({
   sessionUid,
-  onTimeout
+  onTimeout,
+  deadlineRef,
+  showDisplay
 }: {
   sessionUid: string | null;
   onTimeout: () => void;
+  deadlineRef: React.MutableRefObject<number | null>;
+  showDisplay: boolean;
 }) {
-  const [secondsLeft, setSecondsLeft] = useState(INACTIVITY_TIMEOUT_SECONDS);
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const deadline = deadlineRef.current;
+    return deadline === null
+      ? INACTIVITY_TIMEOUT_SECONDS
+      : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  });
 
   useEffect(() => {
-    if (!sessionUid) return;
-    setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+    if (!sessionUid) {
+      deadlineRef.current = null;
+      setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+      return;
+    }
+    if (deadlineRef.current === null) {
+      deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+    }
 
-    const resetInactivityTimer = () => setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+    const updateCountdown = () => {
+      const deadline = deadlineRef.current ?? Date.now();
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+        setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+        onTimeout();
+      }
+    };
+    const resetInactivityTimer = () => {
+      deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+      setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+    };
+
+    updateCountdown();
     const eventsToWatch = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
     eventsToWatch.forEach(evt =>
       window.addEventListener(evt, resetInactivityTimer, { passive: true })
     );
-
-    const countdownInterval = window.setInterval(() => {
-      setSecondsLeft(previous => {
-        if (previous <= 1) {
-          onTimeout();
-          return INACTIVITY_TIMEOUT_SECONDS;
-        }
-        return previous - 1;
-      });
-    }, 1000);
+    const countdownInterval = window.setInterval(updateCountdown, 1000);
 
     return () => {
       eventsToWatch.forEach(evt => window.removeEventListener(evt, resetInactivityTimer));
       window.clearInterval(countdownInterval);
     };
-  }, [sessionUid, onTimeout]);
+  }, [sessionUid, onTimeout, deadlineRef]);
 
-  if (!sessionUid) return null;
+  if (!sessionUid || !showDisplay) return null;
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
@@ -151,7 +172,10 @@ function SessionTimeoutTimer({
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={() => setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS)}
+              onClick={() => {
+                deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+                setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
+              }}
               className="px-3.5 py-1.5 text-xs font-semibold bg-amber-500 text-slate-950 rounded-md hover:bg-amber-400 transition-colors cursor-pointer"
             >
               Sitzung aktiv halten
@@ -170,6 +194,10 @@ export default function App() {
   });
   const [sessionUid, setSessionUid] = useState<string | null>(() =>
     localStorage.getItem(SESSION_STORAGE_KEY)
+  );
+  // Preserve the same inactivity deadline while the login/loading view and portal view swap.
+  const inactivityDeadlineRef = useRef<number | null>(
+    sessionUid ? Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000 : null
   );
   // Prevent overlapping full-state requests and discard responses from previous sessions.
   const activeSessionUidRef = useRef<string | null>(sessionUid);
@@ -547,6 +575,7 @@ export default function App() {
     }
 
     const loggedInUser = res.data.user;
+    inactivityDeadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
     portalStateRequestControllerRef.current?.abort();
     sessionGenerationRef.current += 1;
     activeSessionUidRef.current = loggedInUser.uid;
@@ -567,6 +596,7 @@ export default function App() {
   const handleSignOut = useCallback(
     async (isAutoTimeout?: boolean) => {
       const uidToSignOut = sessionUid;
+      inactivityDeadlineRef.current = null;
       activeSessionUidRef.current = null;
       sessionGenerationRef.current += 1;
       portalStateRequestControllerRef.current?.abort();
@@ -732,7 +762,14 @@ export default function App() {
   // ============================================================================
   if (!sessionUid || !currentUserProfile) {
     return (
-      <LoginScreen
+      <>
+        <SessionTimeoutTimer
+          sessionUid={sessionUid}
+          onTimeout={handleInactivityTimeout}
+          deadlineRef={inactivityDeadlineRef}
+          showDisplay={false}
+        />
+        <LoginScreen
         themeMode={themeMode}
         onToggleThemeMode={toggleThemeMode}
         statusToast={statusToast}
@@ -741,6 +778,7 @@ export default function App() {
         authLoading={authLoading}
         onLogin={handleLogin}
       />
+      </>
     );
   }
 
@@ -1161,7 +1199,12 @@ export default function App() {
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>{roster.filter(r => r.isOnline).length} im Dienst</span>
             <span className="text-slate-600">·</span>
-            <SessionTimeoutTimer sessionUid={sessionUid} onTimeout={handleInactivityTimeout} />
+            <SessionTimeoutTimer
+              sessionUid={sessionUid}
+              onTimeout={handleInactivityTimeout}
+              deadlineRef={inactivityDeadlineRef}
+              showDisplay
+            />
           </div>
         </div>
 
