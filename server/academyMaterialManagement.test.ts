@@ -202,7 +202,7 @@ test('course publication requires an exact existing published material version',
       materialReferences: [{ materialId: master.id, materialVersionId: master.id + '__v1', required: true, order: 0 }],
       required: true, order: 0
     }],
-    completionRequirements: [], workingRevision: 2, updatedIso: later, updatedByUid: 'admin-1'
+    completionRequirements: [{ id: 'req_chapter', type: 'required_chapter', targetId: 'chapter-1', required: true }], workingRevision: 2, updatedIso: later, updatedByUid: 'admin-1'
   };
   await repository.create('academy_courses', courseMaster.id, courseMaster);
   await repository.saveCourseDraft(courseMaster.id, courseDraft, 1, 'admin-1');
