@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyMaterialDocumentTypeDoc } from '../types/academy';
+import type { AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeView } from '../types/academy';
 
 interface Props {
   onStatusToast: (message: string) => void;
@@ -28,12 +28,12 @@ function errorMessage(code?: string): string {
 }
 
 export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusToast }) => {
-  const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeDoc[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeView[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState<AcademyMaterialDocumentTypeDoc | null>(null);
+  const [editing, setEditing] = useState<AcademyMaterialDocumentTypeView | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -42,7 +42,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
-    const response = await apiFetch<{ documentTypes: AcademyMaterialDocumentTypeDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES);
+    const response = await apiFetch<{ documentTypes: AcademyMaterialDocumentTypeView[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES);
     if (!response.ok || !response.data) {
       setLoadError(errorMessage(response.error));
       setLoading(false);
@@ -62,7 +62,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     setFormErrorField(null);
   };
 
-  const beginEdit = (documentType: AcademyMaterialDocumentTypeDoc) => {
+  const beginEdit = (documentType: AcademyMaterialDocumentTypeView) => {
     setEditing(documentType);
     setName(documentType.name);
     setDescription(documentType.description || '');
@@ -126,7 +126,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     onStatusToast(editing ? `Dokumenttyp „${saved.name}“ aktualisiert.` : `Dokumenttyp „${saved.name}“ angelegt.`);
   };
 
-  const changeArchiveState = async (documentType: AcademyMaterialDocumentTypeDoc) => {
+  const changeArchiveState = async (documentType: AcademyMaterialDocumentTypeView) => {
     const archive = documentType.status === 'active';
     const confirmed = window.confirm(
       archive
@@ -150,7 +150,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     onStatusToast(archive ? `Dokumenttyp „${documentType.name}“ archiviert.` : `Dokumenttyp „${documentType.name}“ wieder aktiviert.`);
   };
 
-  const deleteDocumentType = async (documentType: AcademyMaterialDocumentTypeDoc) => {
+  const deleteDocumentType = async (documentType: AcademyMaterialDocumentTypeView) => {
     const typedName = window.prompt(
       `Dokumenttyp „${documentType.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf ihn verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
     );
