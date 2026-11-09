@@ -397,9 +397,9 @@ test('updating a private note never recreates a note deleted after the initial r
     tags: [], createdIso: now, updatedIso: now
   };
   await repository.saveOwnPrivateNote('owner-1', note);
-  const previouslyRead = { ...note, content: 'Edited', updatedIso: '2026-11-06T12:01:00.000Z' };
+  const previouslyRead = { ...note, revision: 2, content: 'Edited', updatedIso: '2026-11-06T12:01:00.000Z' };
   await repository.deleteOwnPrivateNote('owner-1', note.id);
-  await assert.rejects(repository.updateOwnPrivateNote('owner-1', previouslyRead), /ACADEMY_NOTE_NOT_FOUND/);
+  await assert.rejects(repository.updateOwnPrivateNote('owner-1', previouslyRead, 1), /ACADEMY_NOTE_NOT_FOUND/);
   assert.equal(await repository.getOwnPrivateNote('owner-1', note.id), null);
 }));
 
@@ -411,7 +411,24 @@ test('private note updates preserve ownership and material-version identity', as
   };
   await repository.saveOwnPrivateNote('owner-1', note);
   await assert.rejects(repository.updateOwnPrivateNote('owner-1', {
-    ...note, materialVersionId: 'material-1__v2', updatedIso: '2026-11-06T12:01:00.000Z'
-  }), /ACADEMY_NOTE_IDENTITY_MISMATCH/);
+    ...note, revision: 2, materialVersionId: 'material-1__v2', updatedIso: '2026-11-06T12:01:00.000Z'
+  }, 1), /ACADEMY_NOTE_IDENTITY_MISMATCH/);
   assert.deepEqual(await repository.getOwnPrivateNote('owner-1', note.id), note);
+}));
+
+
+test('concurrent private note edits reject a stale revision instead of overwriting newer content', async () => withRepository(async repository => {
+  const note: AcademyPrivateNoteDoc = {
+    id: 'note-revision-conflict', ownerUid: 'owner-1', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'Original',
+    tags: [], createdIso: now, updatedIso: now
+  };
+  await repository.saveOwnPrivateNote('owner-1', note);
+  const firstEdit = { ...note, revision: 2, content: 'First edit', updatedIso: '2026-11-06T12:01:00.000Z' };
+  const staleEdit = { ...note, revision: 2, content: 'Stale edit', updatedIso: '2026-11-06T12:02:00.000Z' };
+  await repository.updateOwnPrivateNote('owner-1', firstEdit, 1);
+  await assert.rejects(repository.updateOwnPrivateNote('owner-1', staleEdit, 1), /ACADEMY_NOTE_REVISION_CONFLICT/);
+  const saved = await repository.getOwnPrivateNote('owner-1', note.id);
+  assert.equal(saved?.content, 'First edit');
+  assert.equal(saved?.revision, 2);
 }));
