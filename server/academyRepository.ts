@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import type { AcademyCollection, AcademyDocument, AcademyQuery, AcademyStorageAdapter, AcademyTransaction } from './academyRepositoryTypes.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
@@ -696,7 +696,7 @@ export class AcademyRepository {
   }
   async publishCourseVersion(courseId: string, version: AcademyCourseVersionDoc, nextMaster: AcademyCourseMasterDoc, expectedRevision: number, publisherUid: string): Promise<void> {
     if (!publisherUid.trim() || version.publishedByUid !== publisherUid) throw new Error('ACADEMY_ACTOR_MISMATCH');
-    assertValid(validateCourseVersion(courseId, version));
+    assertValid(validateCourseVersionForPublication(courseId, version));
     assertValid(validateCourseMaster(nextMaster));
     return this.runTransaction(async tx => {
       const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
