@@ -261,6 +261,13 @@ function pushNotification(
 
 function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDoc[] {
   const candidates: PublicActivityDoc[] = [];
+  // Preserve Array.find()'s first-match behavior while avoiding repeated account scans.
+  const accountDisplayNames = new Map<string, string>();
+  for (const account of state.accounts) {
+    if (!accountDisplayNames.has(account.uid)) {
+      accountDisplayNames.set(account.uid, account.publicProfile.displayName);
+    }
+  }
 
   // 1. Extract public actions from auditLogs (ANNOUNCEMENT, ACADEMY_DOC, CALENDAR_EVENT)
   for (const log of state.auditLogs || []) {
@@ -330,26 +337,26 @@ function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDo
   }
 
   for (const mod of state.modules || []) {
-    const authorAcc = state.accounts.find(a => a.uid === mod.authorUid);
+    const authorName = accountDisplayNames.get(mod.authorUid);
     candidates.push({
       id: `pub_mod_${mod.id}`,
       actionType: 'New Training Module Published',
       actionLabelDe: 'Neues Lehrbuch veröffentlicht',
       title: `${mod.code} — ${mod.title}`,
-      actorName: authorAcc?.publicProfile.displayName || 'Academy Command',
+      actorName: authorName || 'Academy Command',
       targetSection: 'academy',
       createdIso: mod.updatedIso || new Date().toISOString()
     });
   }
 
   for (const ex of state.exams || []) {
-    const authorAcc = state.accounts.find(a => a.uid === ex.authorUid);
+    const authorName = accountDisplayNames.get(ex.authorUid);
     candidates.push({
       id: `pub_ex_${ex.id}`,
       actionType: 'New Exam Published',
       actionLabelDe: 'Neue Prüfung / Test veröffentlicht',
       title: `${ex.moduleCode} — ${ex.title}`,
-      actorName: authorAcc?.publicProfile.displayName || 'Academy Command',
+      actorName: authorName || 'Academy Command',
       targetSection: 'academy',
       createdIso: ex.updatedIso || new Date().toISOString()
     });
@@ -3160,7 +3167,8 @@ async function startServer() {
   });
 
   app.get('/api/academy/modules/:modId/pdf', (req, res) => {
-    const dbState = loadDatabase();
+    // Read-only: avoid cloning the complete portal state, including legacy PDF payloads.
+    const dbState = peekDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const mod = dbState.modules.find(m => m.id === req.params.modId);
     if (!caller || !mod) {
