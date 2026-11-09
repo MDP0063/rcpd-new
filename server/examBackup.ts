@@ -80,8 +80,9 @@ function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): vo
     fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
   }
 
+  let parsedAnswers: Record<string, unknown>;
   try {
-    parseAttemptAnswers(attempt.answers, questions as never);
+    parsedAnswers = parseAttemptAnswers(attempt.answers, questions as never);
     const shuffleOrders = attempt.matchingShuffleOrders === undefined ? {} : attempt.matchingShuffleOrders;
     const presentationIds = attempt.matchingPresentationIds === undefined
       ? createMatchingPresentationIds(questions as never)
@@ -130,7 +131,12 @@ function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): vo
         Number(rawGrade.pointsEarnedMilli) < 0 ||
         Number(rawGrade.pointsEarnedMilli) > Number(question.pointsMilli) ||
         rawGrade.maxPointsMilli !== question.pointsMilli ||
-        rawGrade.requiresManualReview !== (question.type === 'free_text') ||
+        rawGrade.requiresManualReview !== (
+          attempt.status === 'pending_review' &&
+          question.type === 'free_text' &&
+          typeof parsedAnswers[rawGrade.questionId] === 'string' &&
+          String(parsedAnswers[rawGrade.questionId]).trim().length > 0
+        ) ||
         (rawGrade.correct !== undefined && typeof rawGrade.correct !== 'boolean')
       ) {
         fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
