@@ -767,6 +767,14 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(detail.status, 200);
     assert.equal(detail.body!.evidence.length, 3);
     assert.equal(detail.body!.corrections.length, 1);
+    assert.equal('reason' in detail.body!.corrections[0], false, 'participants must not receive internal correction reasons');
+    assert.equal('actorUid' in detail.body!.corrections[0], false, 'participants must not receive correction actor UIDs');
+    assert.deepEqual(detail.body!.corrections[0].invalidatedEvidenceIds, [instructorEvidence.body!.evidence.id]);
+
+    const managerDetail = await request(`/api/academy/participations/${participationId}`, admin);
+    assert.equal(managerDetail.status, 200);
+    assert.equal(managerDetail.body!.corrections[0].reason, 'The completion was recorded in error.');
+    assert.equal(typeof managerDetail.body!.corrections[0].actorUid, 'string');
 
     const createdProgram = await request('/api/academy/programs', admin, {
       method: 'POST',
