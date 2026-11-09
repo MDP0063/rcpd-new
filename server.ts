@@ -74,6 +74,7 @@ import type {
   AcademyPrivateNoteDoc
 } from './src/types/academy.ts';
 import { describeError } from './server/errors.ts';
+import { getAuthenticatedApiBodyPolicy } from './server/apiBodyPolicy.ts';
 import { newId } from './server/ids.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import {
@@ -1015,6 +1016,7 @@ async function startServer() {
   ]);
   const smallJson = express.json({ limit: '16kb' });
   const examAutosaveJson = express.json({ limit: '64kb' });
+  const standardJson = express.json({ limit: '1mb' });
   const largeJson = express.json({ limit: '25mb' });
 
   // Schritt 1: Sitzung prüfen. Ohne gültiges Token gibt es nur die öffentlichen Routen.
@@ -1062,22 +1064,27 @@ async function startServer() {
 
   // Schritt 2: Body lesen. Nur angemeldete Nutzer dürfen große Uploads (PDF-Handbücher) schicken.
   app.use('/api', (req, res, next) => {
-    const isExamAutosave = req.method === 'PUT' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/autosave$/.test(req.path);
-    const isExamSubmit = req.method === 'POST' && /^\/academy\/exams\/[^/]+\/attempts\/[^/]+\/submit$/.test(req.path);
-    if (isExamAutosave || isExamSubmit) res.locals.examRequestReceivedAtMs = Date.now();
+    const bodyPolicy = getAuthenticatedApiBodyPolicy(req.method, req.path);
+    if (bodyPolicy === 'exam-autosave' || bodyPolicy === 'exam-submit') {
+      res.locals.examRequestReceivedAtMs = Date.now();
+    }
     if (PUBLIC_ROUTES.has(`${req.method} /api${req.path}`) || !res.locals.sessionUid) {
       next();
       return;
     }
-    if (isExamAutosave) {
+    if (bodyPolicy === 'exam-autosave') {
       examAutosaveJson(req, res, next);
       return;
     }
-    if (isExamSubmit) {
+    if (bodyPolicy === 'exam-submit') {
       smallJson(req, res, next);
       return;
     }
-    largeJson(req, res, next);
+    if (bodyPolicy === 'large') {
+      largeJson(req, res, next);
+      return;
+    }
+    standardJson(req, res, next);
   });
 
   // Schritt 3: Der Client darf nur sich selbst als Absender angeben.
