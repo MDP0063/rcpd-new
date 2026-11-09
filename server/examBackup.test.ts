@@ -33,13 +33,15 @@ function validSnapshot(): ExamRepositorySnapshot {
   snapshot.collections.exam_versions.push({
     id: 'exam-1__v1',
     examId: 'exam-1',
-    versionNumber: 1
+    versionNumber: 1,
+    assessmentStage: 'test'
   });
   snapshot.collections.exam_attempts.push({
     id: 'attempt-1',
     examId: 'exam-1',
     examVersionId: 'exam-1__v1',
     versionNumber: 1,
+    assessmentStage: 'test',
     userId: 'user-1',
     attemptCourseCode: 'SOP-01',
     status: 'in_progress'
@@ -177,4 +179,17 @@ test('Legacy-Verifikation mit fehlender Quelle wird abgelehnt', () => {
     () => validateLegacyVerificationSources(snapshot, [legacyExam], []),
     /EXAM_BACKUP_LEGACY_SOURCE_MISMATCH/
   );
+});
+
+
+test('Prüfungsversuch muss dieselbe Prüfungsstufe wie sein unveränderlicher Snapshot speichern', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].assessmentStage = 'final_exam';
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_STAGE_MISMATCH/);
+});
+
+test('Prüfungsversionen ohne gültige Prüfungsstufe werden abgelehnt', () => {
+  const snapshot = validSnapshot();
+  delete snapshot.collections.exam_versions[0].assessmentStage;
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_ASSESSMENT_STAGE_INVALID/);
 });
