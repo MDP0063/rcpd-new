@@ -978,8 +978,10 @@ export function createAcademyApiRouter(
         requiredCourseCount: requiredCourses.length,
         startedRequiredCourseCount: startedCount,
         completedRequiredCourseCount: completedCount,
-        completionPercentage: requiredCourses.length === 0 ? 100 : Math.round(completedCount / requiredCourses.length * 100),
-        status: completedCount === requiredCourses.length ? 'completed' : startedCount === 0 ? 'not_started' : 'in_progress'
+        completionPercentage: requiredCourses.length === 0 ? 0 : Math.round(completedCount / requiredCourses.length * 100),
+        status: requiredCourses.length > 0 && completedCount === requiredCourses.length
+          ? 'completed'
+          : startedCount === 0 ? 'not_started' : 'in_progress'
       };
       const participantVersion = participantProgramVersionView(version);
       const participantRequiredCourses = requiredCourses.map(item => ({
@@ -1051,6 +1053,10 @@ export function createAcademyApiRouter(
         return { ...baseItem, accessStatus: 'available' as const, materialCode: master.code, title: materialVersion.title,
           versionNumber: materialVersion.versionNumber, contentFormat: materialVersion.contentFormat };
       }));
+      const visibleEvidence = isManager ? evidence : evidence.map(item => {
+        const { recordedByUid, ...visible } = item;
+        return { ...visible, recordedByParticipant: recordedByUid === actor.uid };
+      });
       const visibleCorrections = isManager ? corrections : corrections.map(correction => ({
         id: correction.id,
         participationId: correction.participationId,
@@ -1062,7 +1068,7 @@ export function createAcademyApiRouter(
       res.json({
         participation,
         version: isManager ? version : participantCourseVersionView(version),
-        evidence,
+        evidence: visibleEvidence,
         corrections: visibleCorrections,
         materials
       });
