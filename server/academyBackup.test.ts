@@ -38,6 +38,11 @@ test('Academy backup exports shared collections but never private notes', async 
     assert.equal(snapshot.formatVersion, 1);
     assert.deepEqual(snapshot.collections.academy_material_categories, [sharedCategory]);
     assert.equal('academy_private_notes' in snapshot.collections, false);
+
+    await repository.setMaintenanceMode(false);
+    const afterBackup = category('category-after-backup', 'Nach Sicherung');
+    await repository.createMaterialCategory(afterBackup);
+    assert.deepEqual(await repository.listMaterialCategories(), [sharedCategory, afterBackup]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
