@@ -794,10 +794,19 @@ function ensureDeploymentConfig(state: PortalDatabaseState): PortalDeploymentCon
   return state.deploymentConfig;
 }
 
-/** Modul ohne das (sehr große) PDF; der Client lädt es erst beim Öffnen über /api/academy/modules/:id/pdf. */
+/** Interne Referenz auf ausgelagerte PDF-Teilstücke; wird niemals an den Browser ausgegeben. */
+type ModuleWithLazyBlobs = TrainingModuleDoc & {
+  __lazyBlobChunks?: Record<string, number>;
+};
+
+/** Modul ohne PDF-Inhalt; der Client lädt es erst beim Öffnen über /api/academy/modules/:id/pdf. */
 function toClientModule(mod: TrainingModuleDoc): TrainingModuleDoc {
-  const { pdfDataUrl, ...rest } = mod;
-  return { ...rest, hasPdf: Boolean(pdfDataUrl) };
+  const internal = mod as ModuleWithLazyBlobs;
+  const { pdfDataUrl, __lazyBlobChunks, ...rest } = internal;
+  return {
+    ...rest,
+    hasPdf: Boolean(mod.hasPdf || pdfDataUrl || __lazyBlobChunks?.pdfDataUrl)
+  };
 }
 
 /**
@@ -3135,7 +3144,7 @@ async function startServer() {
     }
 
     const reqRole: OfficerRole = requiredRole || dbState.modules[idx].requiredRole;
-    dbState.modules[idx] = {
+    const updatedModule: ModuleWithLazyBlobs = {
       ...dbState.modules[idx],
       title: title !== undefined ? String(title).trim() : dbState.modules[idx].title,
       code: targetCode,
@@ -3164,6 +3173,10 @@ async function startServer() {
       estimatedMinutes: Number(estimatedMinutes) || dbState.modules[idx].estimatedMinutes,
       updatedIso: new Date().toISOString()
     };
+    // An explicit PDF value replaces/removes any lazy legacy reference. An unrelated edit
+    // keeps the reference so the existing Firestore chunks are never deleted accidentally.
+    if (pdfDataUrl !== undefined) delete updatedModule.__lazyBlobChunks;
+    dbState.modules[idx] = updatedModule;
 
     appendAuditLog(
       dbState,
@@ -3177,7 +3190,7 @@ async function startServer() {
     res.json({ module: toClientModule(dbState.modules[idx]) });
   });
 
-  app.get('/api/academy/modules/:modId/pdf', (req, res) => {
+  app.get('/api/academy/modules/:modId/pdf', async (req, res) => {
     // Read-only: avoid cloning the complete portal state, including legacy PDF payloads.
     const dbState = peekDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
@@ -3195,7 +3208,23 @@ async function startServer() {
       res.status(403).json({ error: 'Für dieses Handbuch fehlt dir der nötige Rang.' });
       return;
     }
-    res.json({ pdfDataUrl: mod.pdfDataUrl || '' });
+
+    let pdfDataUrl = mod.pdfDataUrl || '';
+    const lazyChunkCount = (mod as ModuleWithLazyBlobs).__lazyBlobChunks?.pdfDataUrl;
+    if (!pdfDataUrl && lazyChunkCount) {
+      if (!store) {
+        res.status(503).json({ error: 'Das Handbuch ist derzeit nicht verfügbar.' });
+        return;
+      }
+      try {
+        pdfDataUrl = await store.loadBlobChunks('modules', mod.id, 'pdfDataUrl', lazyChunkCount);
+      } catch (error) {
+        console.error('[Firestore] PDF-Teilstücke konnten nicht geladen werden:', error);
+        res.status(503).json({ error: 'Das Handbuch konnte nicht geladen werden. Bitte versuche es erneut.' });
+        return;
+      }
+    }
+    res.json({ pdfDataUrl });
   });
 
   app.delete('/api/academy/modules/:modId', (req, res) => {
