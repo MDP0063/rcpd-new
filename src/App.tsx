@@ -102,26 +102,31 @@ function SessionTimeoutTimer({
       ? INACTIVITY_TIMEOUT_SECONDS
       : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
   });
+  const timeoutTriggeredRef = useRef(false);
 
   useEffect(() => {
     if (!sessionUid) {
+      timeoutTriggeredRef.current = false;
       deadlineRef.current = null;
       setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
       return;
     }
+    timeoutTriggeredRef.current = false;
     if (deadlineRef.current === null) {
       deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
     }
 
     const updateCountdown = () => {
+      if (timeoutTriggeredRef.current) return;
       const deadline = deadlineRef.current ?? Date.now();
       const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
-      setSecondsLeft(remaining);
       if (remaining <= 0) {
-        deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
+        timeoutTriggeredRef.current = true;
         setSecondsLeft(INACTIVITY_TIMEOUT_SECONDS);
         onTimeout();
+        return;
       }
+      setSecondsLeft(remaining);
     };
     const resetInactivityTimer = () => {
       deadlineRef.current = Date.now() + INACTIVITY_TIMEOUT_SECONDS * 1000;
