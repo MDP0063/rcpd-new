@@ -32,11 +32,14 @@ type FakeFilter = { field: string; value: unknown };
 type FakeWrite = { kind: 'create' | 'set' | 'delete'; collection: string; id: string; data?: unknown };
 
 class FakeDocumentReference {
-  constructor(
-    readonly database: FakeFirestore,
-    readonly collectionName: string,
-    readonly id: string
-  ) {}
+  readonly database: FakeFirestore;
+  readonly collectionName: string;
+  readonly id: string;
+  constructor(database: FakeFirestore, collectionName: string, id: string) {
+    this.database = database;
+    this.collectionName = collectionName;
+    this.id = id;
+  }
   async get() {
     const data = this.database.read(this.collectionName, this.id);
     return { id: this.id, exists: data !== null, data: () => data ?? undefined };
@@ -44,12 +47,16 @@ class FakeDocumentReference {
 }
 
 class FakeQuery {
-  constructor(
-    readonly database: FakeFirestore,
-    readonly collectionName: string,
-    readonly filters: FakeFilter[] = [],
-    readonly maxResults = 1000
-  ) {}
+  readonly database: FakeFirestore;
+  readonly collectionName: string;
+  readonly filters: FakeFilter[];
+  readonly maxResults: number;
+  constructor(database: FakeFirestore, collectionName: string, filters: FakeFilter[] = [], maxResults = 1000) {
+    this.database = database;
+    this.collectionName = collectionName;
+    this.filters = filters;
+    this.maxResults = maxResults;
+  }
   where(field: string, _operator: string, value: unknown) {
     return new FakeQuery(this.database, this.collectionName, [...this.filters, { field, value }], this.maxResults);
   }
@@ -67,7 +74,10 @@ class FakeCollectionReference extends FakeQuery {
 class FakeTransaction {
   private hasWrites = false;
   readonly writes: FakeWrite[] = [];
-  constructor(private readonly database: FakeFirestore) {}
+  private readonly database: FakeFirestore;
+  constructor(database: FakeFirestore) {
+    this.database = database;
+  }
   async get(target: FakeDocumentReference | FakeQuery) {
     if (this.hasWrites) throw new Error('FAKE_FIRESTORE_READ_AFTER_WRITE');
     if (target instanceof FakeDocumentReference) {
