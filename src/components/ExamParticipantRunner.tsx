@@ -4,6 +4,7 @@ import {
   Cloud, CloudOff, Loader2, LockKeyhole, Send, ShieldCheck
 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import { CoalescedRequestRunner } from '../lib/coalescedRequest';
 
 type AssessmentStage = 'test' | 'final_exam';
 type AnswerValue = string | string[] | boolean | Array<{ pairId: string; targetId: string }> | null;
@@ -130,7 +131,8 @@ export const ExamParticipantRunner: React.FC = () => {
   const revisionRef = useRef(0);
   const answersRef = useRef<AnswerMap>({});
   const attemptRef = useRef<PublicAttempt | null>(null);
-  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveQueueRef = useRef<CoalescedRequestRunner | null>(null);
+  if (!saveQueueRef.current) saveQueueRef.current = new CoalescedRequestRunner();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
   const autoSubmitRef = useRef(false);
@@ -231,6 +233,7 @@ export const ExamParticipantRunner: React.FC = () => {
       }
     );
     if (response.ok && response.data?.attempt) {
+      if (attemptRef.current?.id !== current.id) return false;
       revisionRef.current = Math.max(revisionRef.current, response.data.attempt.currentRevision);
       setSaveState('saved');
       return true;
@@ -245,10 +248,13 @@ export const ExamParticipantRunner: React.FC = () => {
   }, []);
 
   const enqueueSave = useCallback(() => {
-    saveQueueRef.current = saveQueueRef.current
-      .catch(() => undefined)
-      .then(async () => { await saveAnswers(); });
-    return saveQueueRef.current;
+    const targetAttemptId = attemptRef.current?.id;
+    if (!targetAttemptId || submittingRef.current) return Promise.resolve();
+    // One active save plus at most one trailing save of the newest answer snapshot.
+    return saveQueueRef.current!.run(async () => {
+      if (attemptRef.current?.id !== targetAttemptId) return;
+      await saveAnswers();
+    });
   }, [saveAnswers]);
 
   const submitAttempt = useCallback(async (automatic = false) => {
@@ -263,7 +269,7 @@ export const ExamParticipantRunner: React.FC = () => {
     try {
       // Alle bereits ausgelösten Autosaves zuerst abarbeiten. Die Abgabe selbst akzeptiert
       // bewusst keine Antworten; ausgewertet wird ausschließlich der bestätigte Serverstand.
-      await saveQueueRef.current.catch(() => undefined);
+      await saveQueueRef.current!.waitForIdle().catch(() => undefined);
       if (!automatic) {
         const saved = await saveAnswers(true);
         if (!saved) {
@@ -343,7 +349,8 @@ export const ExamParticipantRunner: React.FC = () => {
     if (!attemptRef.current || submittingRef.current) return;
     // Tabs/routes can unmount the runner before the input debounce fires. Drain earlier saves,
     // then send the latest in-memory answer snapshot as a keepalive request.
-    void saveQueueRef.current
+    void saveQueueRef.current!
+      .waitForIdle()
       .catch(() => undefined)
       .then(() => saveAnswers(true, true));
   }, [saveAnswers]);
