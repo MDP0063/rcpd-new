@@ -781,6 +781,12 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const detail = await request(`/api/academy/participations/${participationId}`, officer);
     assert.equal(detail.status, 200);
     assert.equal(detail.body!.evidence.length, 3);
+    const participantSelfEvidence = detail.body!.evidence.find((item: { id: string }) => item.id === selfEvidence.body!.evidence.id);
+    const participantInstructorEvidence = detail.body!.evidence.find((item: { id: string }) => item.id === replacementEvidence.body!.evidence.id);
+    assert.equal('recordedByUid' in participantSelfEvidence, false, 'participants must not receive evidence actor UIDs');
+    assert.equal(participantSelfEvidence.recordedByParticipant, true);
+    assert.equal('recordedByUid' in participantInstructorEvidence, false, 'participants must not receive instructor actor UIDs');
+    assert.equal(participantInstructorEvidence.recordedByParticipant, false);
     assert.equal(detail.body!.corrections.length, 1);
     assert.equal('reason' in detail.body!.corrections[0], false, 'participants must not receive internal correction reasons');
     assert.equal('actorUid' in detail.body!.corrections[0], false, 'participants must not receive correction actor UIDs');
@@ -790,6 +796,11 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(managerDetail.status, 200);
     assert.equal(managerDetail.body!.corrections[0].reason, 'The completion was recorded in error.');
     assert.equal(typeof managerDetail.body!.corrections[0].actorUid, 'string');
+    assert.equal(
+      managerDetail.body!.evidence.find((item: { id: string }) => item.id === replacementEvidence.body!.evidence.id).recordedByUid,
+      'academy-admin',
+      'managers retain the original evidence actor UID for audit'
+    );
 
     const createdProgram = await request('/api/academy/programs', admin, {
       method: 'POST',
@@ -842,6 +853,36 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal('createdByUid' in programDetail.body!.version, false);
     assert.equal('publishedByUid' in programDetail.body!.requiredCourses[0].version, false);
     assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
+
+    const optionalOnlyProgram = await request('/api/academy/programs', admin, {
+      method: 'POST',
+      ...json({
+        code: 'PROGRAM-OPTIONAL-ONLY',
+        title: 'Optional-only Program',
+        summary: '',
+        learningObjectives: [
+          { id: 'optional-p1', description: 'Objective one' },
+          { id: 'optional-p2', description: 'Objective two' },
+          { id: 'optional-p3', description: 'Objective three' }
+        ],
+        courseReferences: [{ courseId, requirement: 'recommended', order: 0 }]
+      })
+    });
+    assert.equal(optionalOnlyProgram.status, 201, JSON.stringify(optionalOnlyProgram.body));
+    const optionalOnlyProgramId = optionalOnlyProgram.body!.master.id as string;
+    const optionalOnlyPublished = await request(`/api/academy/programs/${optionalOnlyProgramId}/publish`, admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(optionalOnlyPublished.status, 201, JSON.stringify(optionalOnlyPublished.body));
+    const optionalOnlyStarted = await request(`/api/academy/programs/${optionalOnlyProgramId}/participations`, officer, { method: 'POST' });
+    assert.equal(optionalOnlyStarted.status, 201, JSON.stringify(optionalOnlyStarted.body));
+    const optionalOnlyDetail = await request(`/api/academy/program-participations/${optionalOnlyStarted.body!.participation.id}`, officer);
+    assert.equal(optionalOnlyDetail.status, 200, JSON.stringify(optionalOnlyDetail.body));
+    assert.equal(optionalOnlyDetail.body!.progress.requiredCourseCount, 0);
+    assert.equal(optionalOnlyDetail.body!.progress.startedRequiredCourseCount, 0);
+    assert.equal(optionalOnlyDetail.body!.progress.completedRequiredCourseCount, 0);
+    assert.equal(optionalOnlyDetail.body!.progress.completionPercentage, 0);
+    assert.equal(optionalOnlyDetail.body!.progress.status, 'not_started');
     assert.equal((await request(`/api/academy/programs/${programId}/participations`, officer, { method: 'POST' })).status, 409);
 
     const secondParticipantProgram = await request(`/api/academy/programs/${programId}/participations`, officer2, { method: 'POST' });
