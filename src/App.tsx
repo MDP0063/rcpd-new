@@ -142,8 +142,9 @@ export default function App() {
     setSessionUid(null);
     setCurrentUserProfile(null);
     setIsAdmin(false);
+    clearPortalData();
     if (error) setAuthError(error);
-  }, []);
+  }, [clearPortalData]);
 
   // Login State
   const [authError, setAuthError] = useState<string | null>(null);
@@ -192,6 +193,27 @@ export default function App() {
   const [settingsDivision, setSettingsDivision] = useState('');
   const [settingsBio, setSettingsBio] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const clearPortalData = useCallback(() => {
+    setRoster([]);
+    setAdminAccounts([]);
+    setApplications([]);
+    setModules([]);
+    setExams([]);
+    setUserProgress([]);
+    setAnnouncements([]);
+    setMessages([]);
+    setRequests([]);
+    setEvents([]);
+    setNotifications([]);
+    setRecentPublicActivity([]);
+    setAuditLogs([]);
+    setDeploymentConfig(undefined);
+    setDbStats(undefined);
+    setSettingsCallsign('');
+    setSettingsDivision('');
+    setSettingsBio('');
+  }, []);
 
   const toastTimerRef = useRef<number | null>(null);
   const triggerToast = useCallback((msg: string) => {
@@ -443,6 +465,7 @@ export default function App() {
     activeSessionUidRef.current = loggedInUser.uid;
     initialLoadCompleteRef.current = false;
     seenNotificationIdsRef.current.clear();
+    clearPortalData();
     setAuthToken(res.data.token);
     localStorage.setItem(SESSION_STORAGE_KEY, loggedInUser.uid);
     setSessionUid(loggedInUser.uid);
@@ -474,6 +497,9 @@ export default function App() {
       setSessionUid(null);
       setCurrentUserProfile(null);
       setIsAdmin(false);
+      clearPortalData();
+      initialLoadCompleteRef.current = false;
+      seenNotificationIdsRef.current.clear();
       setActiveSection('dashboard');
       if (isAutoTimeout) {
         setAuthError(
