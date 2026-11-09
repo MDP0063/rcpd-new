@@ -1,7 +1,8 @@
 import { mkdir, readFile, rename, unlink, open } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { ACADEMY_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
+import { ACADEMY_COLLECTIONS, ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
+import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
 
 type State = { version: 6; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
@@ -47,6 +48,7 @@ class JsonTransaction implements AcademyTransaction {
 export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
   constructor(filePath: string) { this.filePath = path.resolve(filePath); }
   private readonly filePath: string;
+  private maintenanceMode = false;
   private async read(): Promise<State> {
     let raw: string;
     try { raw = await readFile(this.filePath, 'utf8'); } catch (error) {
@@ -96,8 +98,43 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
       const offset=query.offset??0;return clone(values.slice(offset,offset+(query.limit??1000))) as T[];
     });
   }
+  async setMaintenanceMode(enabled: boolean): Promise<void> {
+    return this.exclusive(async () => {
+      this.maintenanceMode = enabled;
+    });
+  }
+  async exportSnapshot(): Promise<AcademyRepositoryBackupSnapshot> {
+    return this.exclusive(async () => {
+      if (!this.maintenanceMode) throw new Error('ACADEMY_MAINTENANCE_REQUIRED');
+      const state = await this.read();
+      const collections = Object.fromEntries(
+        ACADEMY_BACKUP_COLLECTIONS.map(collection => [
+          collection,
+          Object.values(state.collections[collection]).map(document => clone(document))
+        ])
+      ) as AcademyRepositoryBackupSnapshot['collections'];
+      return { formatVersion: 1, collections };
+    });
+  }
+  async replaceSnapshot(snapshot: AcademyRepositoryBackupSnapshot): Promise<void> {
+    return this.exclusive(async () => {
+      if (!this.maintenanceMode) throw new Error('ACADEMY_MAINTENANCE_REQUIRED');
+      const current = await this.read();
+      const next = empty();
+      for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
+        for (const document of snapshot.collections[collection]) {
+          assertAcademyDocument(collection, document.id, document);
+          next.collections[collection][keyOf(document.id)] = clone(document);
+        }
+      }
+      // Private notes are owner-only and never part of an administrator backup.
+      next.collections.academy_private_notes = current.collections.academy_private_notes;
+      await this.write(next);
+    });
+  }
   async runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
     return this.exclusive(async () => {
+      if (this.maintenanceMode) throw new Error('ACADEMY_MAINTENANCE_ACTIVE');
       const state = await this.read(); const working = clone(state); const transaction = new JsonTransaction(working);
       const result = await operation(transaction);
       if (transaction.hasWrites) await this.write(working);
