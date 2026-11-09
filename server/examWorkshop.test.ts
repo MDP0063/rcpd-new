@@ -404,3 +404,16 @@ test('Prüfungswerkstatt: archivierte Prüfungen und Legacy-Interactive-Prüfung
     );
   });
 });
+
+
+test('Prüfungswerkstatt: unveränderte veröffentlichte Definition kann nicht erneut als neue Version veröffentlicht werden', async () => {
+  await withRepository(async repository => {
+    await createExamDraft(repository, 'exam-duplicate-publish', 'admin-1', validDefinition);
+    await publishExamDraft(repository, 'exam-duplicate-publish', 'admin-1', '2026-11-05T10:05:00.000Z');
+    await assert.rejects(
+      publishExamDraft(repository, 'exam-duplicate-publish', 'admin-1', '2026-11-05T10:06:00.000Z'),
+      /EXAM_NO_UNPUBLISHED_CHANGES/
+    );
+    assert.equal(await repository.get('exam_versions', 'exam-duplicate-publish__v2'), null);
+  });
+});
