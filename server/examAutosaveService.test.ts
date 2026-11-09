@@ -145,16 +145,22 @@ test('Parallele Autosaves können keinen älteren Stand über einen neueren schr
   });
 });
 
-test('Identische Antworten lösen trotz höherer Revision keinen unnötigen Schreibvorgang aus', async () => {
+test('Identische Antworten bestätigen die höhere Revision ohne Inhaltsänderung', async () => {
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const unchanged = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 2, { q1: 'b' }, at(2));
     assert.ok(unchanged.attempt);
     assert.equal(unchanged.saved, false);
     assert.equal(unchanged.stale, false);
-    assert.equal(unchanged.attempt.currentRevision, 1);
+    assert.equal(unchanged.attempt.currentRevision, 2);
     const stored = await repository.get('exam_attempts', 'attempt-1');
-    assert.equal(stored?.lastHeartbeatAtIso, new Date(at(1)).toISOString());
+    assert.equal(stored?.currentRevision, 2);
+    assert.equal(stored?.lastHeartbeatAtIso, new Date(at(2)).toISOString());
+
+    const delayed = await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'a' }, at(3));
+    assert.equal(delayed.stale, true);
+    assert.equal(delayed.attempt?.currentRevision, 2);
+    assert.equal(delayed.attempt?.answers.q1, 'b');
   });
 });
 
