@@ -21,6 +21,9 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Report Bun Version
+        run: bun --version
+
       - name: Install Dependencies with Bun
         run: bun install --no-save
 
