@@ -28,4 +28,5 @@ test('all other authenticated API routes use the standard body limit', () => {
   assert.equal(getAuthenticatedApiBodyPolicy('PUT', '/profile/self'), 'standard');
   assert.equal(getAuthenticatedApiBodyPolicy('POST', '/announcements'), 'standard');
   assert.equal(getAuthenticatedApiBodyPolicy('GET', '/portal/state'), 'standard');
+  assert.equal(getAuthenticatedApiBodyPolicy('POST', '/portal/heartbeat'), 'standard');
 });
