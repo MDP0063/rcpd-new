@@ -182,6 +182,22 @@ export async function saveExamAttemptAnswers(
     const answers = parsePublicAttemptAnswers(rawAnswers, version.questionsSnapshot, attempt.matchingPresentationIds);
     const currentAnswers = parseAttemptAnswers(attempt.answers, version.questionsSnapshot);
     if (JSON.stringify(answers) === JSON.stringify(currentAnswers)) {
+      // Even a no-content-change autosave advances the accepted revision. Otherwise an older,
+      // delayed request could still be accepted after this newer no-op request.
+      if (revision > attempt.currentRevision) {
+        const acknowledged: ExamAttemptRecord = {
+          ...attempt,
+          currentRevision: revision,
+          lastHeartbeatAtIso: serverTimeIso
+        };
+        await transaction.update('exam_attempts', attemptId, acknowledged);
+        return {
+          attempt: publicProjection(acknowledged, version, requestReceivedAtMs),
+          saved: false,
+          stale: false,
+          expired: false
+        };
+      }
       return {
         attempt: publicProjection(attempt, version, requestReceivedAtMs),
         saved: false,
