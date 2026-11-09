@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type {
-  AcademyMaterialCategoryDoc,
-  AcademyMaterialDocumentTypeDoc,
+  AcademyMaterialCategoryView,
+  AcademyMaterialDocumentTypeView,
   AcademyMaterialDraftDoc,
   AcademyMaterialListItem,
   AcademyMaterialMasterDoc,
@@ -85,8 +85,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const assignedCourseCodes = currentUser.granularPermissions?.assignedCourseCodes || [];
   const canEditAnyAssignedCourse = Boolean(currentUser.granularPermissions?.canGradeAssignedCourses);
   const [materials, setMaterials] = useState<AcademyMaterialListItem[]>([]);
-  const [categories, setCategories] = useState<AcademyMaterialCategoryDoc[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeDoc[]>([]);
+  const [categories, setCategories] = useState<AcademyMaterialCategoryView[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeView[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -117,8 +117,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setLoadError('');
     const [materialResponse, categoryResponse, typeResponse] = await Promise.all([
       apiFetch<{ materials: AcademyMaterialListItem[] }>(API_ENDPOINTS.ACADEMY_MATERIALS),
-      apiFetch<{ categories: AcademyMaterialCategoryDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATEGORIES),
-      apiFetch<{ documentTypes: AcademyMaterialDocumentTypeDoc[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES)
+      apiFetch<{ categories: AcademyMaterialCategoryView[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATEGORIES),
+      apiFetch<{ documentTypes: AcademyMaterialDocumentTypeView[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_DOCUMENT_TYPES)
     ]);
     if (!materialResponse.ok || !materialResponse.data ||
         !categoryResponse.ok || !categoryResponse.data ||
