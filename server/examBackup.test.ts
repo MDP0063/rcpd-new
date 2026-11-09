@@ -217,3 +217,16 @@ test('Backup lehnt veröffentlichte Versionen mit ungültigem Fragen-Snapshot ab
   }];
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_CONTENT_INVALID/);
 });
+
+test('Backup bewahrt nicht startbare interaktive Legacy-Versionen ohne Fragen', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].examFormat = 'interactive_code';
+  snapshot.collections.exam_masters[0].isLegacyFormat = true;
+  snapshot.collections.exam_masters[0].startable = false;
+  snapshot.collections.exam_versions[0].examFormat = 'interactive_code';
+  snapshot.collections.exam_versions[0].isLegacyFormat = true;
+  snapshot.collections.exam_versions[0].startable = false;
+  snapshot.collections.exam_versions[0].questionsSnapshot = [];
+  snapshot.collections.exam_attempts = [];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
