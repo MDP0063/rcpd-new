@@ -205,3 +205,21 @@ test('course completion requirements must target content actually pinned in the 
   };
   assert.equal(validateCourseVersion('course_1', missingMaterial).ok, false);
 });
+
+
+test('course chapters and completion requirements reject non-string descriptions', () => {
+  const malformedChapter = {
+    ...courseVersion,
+    chapters: [{ ...courseVersion.chapters[0], description: { text: 'invalid runtime value' } }]
+  };
+  assert.equal(validateCourseVersion('course_1', malformedChapter as never).ok, false);
+
+  const malformedRequirement = {
+    ...courseVersion,
+    completionRequirements: [{
+      id: 'req_chapter', type: 'required_chapter' as const,
+      targetId: 'chapter_1', required: true, description: { text: 'invalid runtime value' }
+    }]
+  };
+  assert.equal(validateCourseVersion('course_1', malformedRequirement as never).ok, false);
+});
