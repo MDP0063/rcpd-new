@@ -264,6 +264,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const startCourse = async () => {
     if (!selectedCourse) return;
     const requestId = detailRequestIdRef.current;
+    const contentRequestId = contentLoadRequestIdRef.current;
     setSaving(true);
     const response = await apiFetch<{ participation: AcademyCourseParticipationDoc }>(
       API_ENDPOINTS.ACADEMY_COURSE_START(selectedCourse.master.id), { method: 'POST' }
@@ -274,14 +275,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       return;
     }
     if (detailRequestIdRef.current !== requestId) {
-      await loadLearningData();
-      onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
+      if (contentLoadRequestIdRef.current === contentRequestId) {
+        await loadLearningData();
+        onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
+      }
       return;
     }
     setDetailLoading(true);
     const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(response.data.participation.id));
     if (detailRequestIdRef.current !== requestId) {
-      await loadLearningData();
+      if (contentLoadRequestIdRef.current === contentRequestId) await loadLearningData();
       return;
     }
     if (!detail.ok || !detail.data) {
@@ -292,13 +295,16 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
     setCourseDetail(detail.data);
     setDetailLoading(false);
-    await loadLearningData();
-    onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
+    if (contentLoadRequestIdRef.current === contentRequestId) {
+      await loadLearningData();
+      onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
+    }
   };
 
   const recordEvidence = async (requirementId: string, label: string) => {
     if (!courseDetail) return;
     const requestId = detailRequestIdRef.current;
+    const contentRequestId = contentLoadRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = window.confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`);
     if (!confirmed) return;
@@ -312,15 +318,18 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       onStatusToast(response.error || 'Der Fortschrittsnachweis konnte nicht gespeichert werden.');
       return;
     }
-    const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(participationId));
-    if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setCourseDetail(detail.data);
-    await loadLearningData();
+    if (detailRequestIdRef.current === requestId) {
+      const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(participationId));
+      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setCourseDetail(detail.data);
+    }
+    if (contentLoadRequestIdRef.current === contentRequestId) await loadLearningData();
     if (detailRequestIdRef.current === requestId) onStatusToast('Fortschrittsnachweis wurde gespeichert.');
   };
 
   const startProgram = async () => {
     if (!selectedProgram) return;
     const requestId = detailRequestIdRef.current;
+    const contentRequestId = contentLoadRequestIdRef.current;
     setSaving(true);
     const response = await apiFetch<{ participation: AcademyProgramParticipationDoc }>(
       API_ENDPOINTS.ACADEMY_PROGRAM_START(selectedProgram.master.id), { method: 'POST' }
@@ -330,13 +339,19 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       onStatusToast(response.error || 'Das Programm konnte nicht begonnen werden.');
       return;
     }
-    if (detailRequestIdRef.current === requestId) setDetailLoading(true);
-    const detail = await apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(response.data.participation.id));
-    if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setProgramDetail(detail.data);
-    if (detailRequestIdRef.current === requestId) setDetailLoading(false);
+    if (detailRequestIdRef.current === requestId) {
+      setDetailLoading(true);
+      const detail = await apiFetch<ProgramParticipationDetail>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATION(response.data.participation.id));
+      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setProgramDetail(detail.data);
+      if (detailRequestIdRef.current === requestId) setDetailLoading(false);
+    }
     setSaving(false);
-    await loadLearningData();
-    onStatusToast('Programmteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
+    if (contentLoadRequestIdRef.current === contentRequestId) {
+      await loadLearningData();
+      if (detailRequestIdRef.current === requestId) {
+        onStatusToast('Programmteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
+      }
+    }
   };
 
   const openProgram = async (entry: ProgramEntry) => {
