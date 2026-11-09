@@ -109,6 +109,16 @@ test('Master mit fehlendem veröffentlichten Snapshot wird abgelehnt', () => {
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_MASTER_VERSION_MISSING/);
 });
 
+test('veröffentlichter Master ohne Versionszeiger wird abgelehnt', () => {
+  const snapshot = emptySnapshot();
+  snapshot.collections.exam_masters.push({
+    id: 'exam-1',
+    status: 'published',
+    latestVersionNumber: 0
+  });
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_PUBLISHED_MASTER_VERSION_MISSING/);
+});
+
 test('Master-Zeiger muss auf die neueste veröffentlichte Versionsnummer zeigen', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_masters[0].latestVersionNumber = 2;
