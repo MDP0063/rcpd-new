@@ -64,8 +64,25 @@ function validSnapshot(): ExamRepositorySnapshot {
     versionNumber: 1,
     assessmentStage: 'test',
     userId: 'user-1',
+    userName: 'Test Officer',
     attemptCourseCode: 'SOP-01',
-    status: 'in_progress'
+    assignedCourseCodesAtStart: ['SOP-01'],
+    moduleCode: 'SOP-01',
+    attemptNumber: 1,
+    startedAtIso: '2026-11-09T20:00:00.000Z',
+    deadlineIso: null,
+    lastHeartbeatAtIso: '2026-11-09T20:00:00.000Z',
+    currentRevision: 0,
+    status: 'in_progress',
+    answers: {},
+    matchingShuffleOrders: {},
+    matchingPairOrders: {},
+    matchingPresentationIds: { pairAliases: {}, targetAliases: {} },
+    totalPossiblePointsMilli: 1000,
+    automaticallyEarnedPointsMilli: 0,
+    manuallyEarnedPointsMilli: 0,
+    preliminaryScoreBasisPoints: 0,
+    finalScoreBasisPoints: null
   });
   snapshot.collections.exam_progress.push({
     id: 'progress-1',
@@ -278,4 +295,110 @@ test('Backup lehnt Lücken in der unveränderlichen Versionshistorie ab', () => 
   });
   snapshot.collections.exam_attempts = [];
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_HISTORY_INCOMPLETE/);
+});
+
+
+test('Backup lehnt Prüfungsversuche mit unbekanntem Status ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].status = 'completed';
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_CONTENT_INVALID/);
+});
+
+test('Backup lehnt Antworten auf nicht vorhandene Fragen ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].answers = { 'missing-question': true };
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_ANSWERS_OR_PRESENTATION_INVALID/);
+});
+
+test('Backup lehnt Prüfungsversuche mit inkonsistenter Gesamtpunktzahl ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].totalPossiblePointsMilli = 2000;
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_POINTS_INVALID/);
+});
+
+test('Backup akzeptiert einen vollständig und konsistent gespeicherten Prüfungserfolg', () => {
+  const snapshot = validSnapshot();
+  const attempt = snapshot.collections.exam_attempts[0];
+  attempt.status = 'passed';
+  attempt.answers = { 'question-1': true };
+  attempt.submittedAtIso = '2026-11-09T20:05:00.000Z';
+  attempt.submissionReason = 'submitted';
+  attempt.automaticallyEarnedPointsMilli = 1000;
+  attempt.preliminaryScoreBasisPoints = 10000;
+  attempt.finalScoreBasisPoints = 10000;
+  attempt.questionGrades = [{
+    questionId: 'question-1',
+    pointsEarnedMilli: 1000,
+    maxPointsMilli: 1000,
+    requiresManualReview: false,
+    correct: true
+  }];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
+
+test('Backup lehnt abgeschlossene Versuche ohne Ergebnisdaten ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_attempts[0].status = 'passed';
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_ATTEMPT_RESULT_MISSING/);
+});
+
+
+test('Backup akzeptiert vollständig manuell bewertete Freitextfragen', () => {
+  const snapshot = validSnapshot();
+  const version = snapshot.collections.exam_versions[0];
+  version.questionsSnapshot = [
+    ...(version.questionsSnapshot as Array<Record<string, unknown>>),
+    {
+      id: 'question-2',
+      type: 'free_text',
+      question: 'Nenne einen wichtigen Prüfschritt.',
+      pointsMilli: 1000,
+      gradingRubric: 'Der Prüfschritt muss fachlich korrekt benannt werden.'
+    }
+  ];
+  const attempt = snapshot.collections.exam_attempts[0];
+  attempt.status = 'passed';
+  attempt.answers = { 'question-1': true, 'question-2': 'Sicherheitsprüfung' };
+  attempt.submittedAtIso = '2026-11-09T20:05:00.000Z';
+  attempt.submissionReason = 'submitted';
+  attempt.totalPossiblePointsMilli = 2000;
+  attempt.automaticallyEarnedPointsMilli = 1000;
+  attempt.manuallyEarnedPointsMilli = 1000;
+  attempt.preliminaryScoreBasisPoints = 5000;
+  attempt.finalScoreBasisPoints = 10000;
+  attempt.questionGrades = [
+    { questionId: 'question-1', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false, correct: true },
+    { questionId: 'question-2', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false }
+  ];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
+
+test('Backup akzeptiert offene Freitextbewertung mit ausstehender manueller Prüfung', () => {
+  const snapshot = validSnapshot();
+  const version = snapshot.collections.exam_versions[0];
+  version.questionsSnapshot = [
+    ...(version.questionsSnapshot as Array<Record<string, unknown>>),
+    {
+      id: 'question-2',
+      type: 'free_text',
+      question: 'Nenne einen wichtigen Prüfschritt.',
+      pointsMilli: 1000,
+      gradingRubric: 'Der Prüfschritt muss fachlich korrekt benannt werden.'
+    }
+  ];
+  const attempt = snapshot.collections.exam_attempts[0];
+  attempt.status = 'pending_review';
+  attempt.answers = { 'question-1': true, 'question-2': 'Sicherheitsprüfung' };
+  attempt.submittedAtIso = '2026-11-09T20:05:00.000Z';
+  attempt.submissionReason = 'submitted';
+  attempt.totalPossiblePointsMilli = 2000;
+  attempt.automaticallyEarnedPointsMilli = 1000;
+  attempt.manuallyEarnedPointsMilli = 0;
+  attempt.preliminaryScoreBasisPoints = 5000;
+  attempt.finalScoreBasisPoints = null;
+  attempt.questionGrades = [
+    { questionId: 'question-1', pointsEarnedMilli: 1000, maxPointsMilli: 1000, requiresManualReview: false, correct: true },
+    { questionId: 'question-2', pointsEarnedMilli: 0, maxPointsMilli: 1000, requiresManualReview: true }
+  ];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
 });

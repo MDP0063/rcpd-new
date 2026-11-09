@@ -4,6 +4,14 @@ import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
 import type { ExamCollection, ExamDocument, ExamRepositorySnapshot } from './examRepositoryTypes.ts';
 import type { LegacyVerificationDoc } from './examTypes.ts';
 import { normalizeCourseCode, validateExamForPublication } from './examValidate.ts';
+import {
+  createMatchingPairOrders,
+  createMatchingPresentationIds,
+  evaluateExamAnswers,
+  parseAttemptAnswers,
+  projectQuestionsForAttempt
+} from './examRunner.ts';
+import { meetsPassingScore, scoreBasisPoints } from './examMath.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -17,6 +25,182 @@ function fail(code: string): never {
  * Prüft einen vollständigen Exam-Snapshot vor jeder Änderung am produktiven Datenbestand.
  * Neben den Dokumentregeln werden die stabilen Referenzen zwischen Master, Versionen und Versuchen geprüft.
  */
+function validIsoTimestamp(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && !Number.isNaN(Date.parse(value));
+}
+
+function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): void {
+  const allowedStatuses = new Set([
+    'in_progress', 'pending_review', 'passed', 'failed', 'invalidated_by_admin'
+  ]);
+  const attemptCourseCode = normalizeCourseCode(attempt.attemptCourseCode);
+  if (
+    typeof attempt.userId !== 'string' || !attempt.userId.trim() ||
+    typeof attempt.userName !== 'string' || !attempt.userName.trim() || attempt.userName.length > 200 ||
+    !attemptCourseCode || attemptCourseCode !== attempt.attemptCourseCode ||
+    attempt.moduleCode !== attemptCourseCode ||
+    !Array.isArray(attempt.assignedCourseCodesAtStart) ||
+    !attempt.assignedCourseCodesAtStart.every(code => typeof code === 'string' && normalizeCourseCode(code) === code) ||
+    !attempt.assignedCourseCodesAtStart.includes(attemptCourseCode) ||
+    !Number.isSafeInteger(attempt.attemptNumber) || Number(attempt.attemptNumber) < 1 ||
+    !validIsoTimestamp(attempt.startedAtIso) ||
+    !validIsoTimestamp(attempt.lastHeartbeatAtIso) ||
+    (attempt.deadlineIso !== null && !validIsoTimestamp(attempt.deadlineIso)) ||
+    !Number.isSafeInteger(attempt.currentRevision) || Number(attempt.currentRevision) < 0 ||
+    !allowedStatuses.has(String(attempt.status)) ||
+    attempt.assessmentStage !== version.assessmentStage ||
+    version.startable === false
+  ) {
+    fail('EXAM_BACKUP_ATTEMPT_CONTENT_INVALID');
+  }
+
+  const questions = version.questionsSnapshot as Array<Record<string, unknown>>;
+  let totalPossiblePointsMilli = 0;
+  for (const question of questions) {
+    if (!Number.isSafeInteger(question.pointsMilli) || Number(question.pointsMilli) <= 0) {
+      fail('EXAM_BACKUP_ATTEMPT_CONTENT_INVALID');
+    }
+    totalPossiblePointsMilli += Number(question.pointsMilli);
+    if (!Number.isSafeInteger(totalPossiblePointsMilli)) fail('EXAM_BACKUP_ATTEMPT_CONTENT_INVALID');
+  }
+  if (attempt.totalPossiblePointsMilli !== totalPossiblePointsMilli) {
+    fail('EXAM_BACKUP_ATTEMPT_POINTS_INVALID');
+  }
+
+  for (const field of ['automaticallyEarnedPointsMilli', 'manuallyEarnedPointsMilli'] as const) {
+    if (!Number.isSafeInteger(attempt[field]) || Number(attempt[field]) < 0 || Number(attempt[field]) > totalPossiblePointsMilli) {
+      fail('EXAM_BACKUP_ATTEMPT_POINTS_INVALID');
+    }
+  }
+  if (!Number.isSafeInteger(attempt.preliminaryScoreBasisPoints) ||
+      Number(attempt.preliminaryScoreBasisPoints) < 0 || Number(attempt.preliminaryScoreBasisPoints) > 10_000) {
+    fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
+  }
+  const finalScore = attempt.finalScoreBasisPoints;
+  if (finalScore !== null &&
+      (!Number.isSafeInteger(finalScore) || Number(finalScore) < 0 || Number(finalScore) > 10_000)) {
+    fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
+  }
+
+  let parsedAnswers: Record<string, unknown>;
+  try {
+    parsedAnswers = parseAttemptAnswers(attempt.answers, questions as never);
+    const shuffleOrders = attempt.matchingShuffleOrders === undefined ? {} : attempt.matchingShuffleOrders;
+    const presentationIds = attempt.matchingPresentationIds === undefined
+      ? createMatchingPresentationIds(questions as never)
+      : attempt.matchingPresentationIds;
+    const pairOrders = attempt.matchingPairOrders === undefined
+      ? createMatchingPairOrders(questions as never)
+      : attempt.matchingPairOrders;
+    projectQuestionsForAttempt(
+      questions as never,
+      shuffleOrders as never,
+      presentationIds as never,
+      pairOrders as never
+    );
+  } catch {
+    fail('EXAM_BACKUP_ATTEMPT_ANSWERS_OR_PRESENTATION_INVALID');
+  }
+
+  if (attempt.status === 'in_progress') {
+    if (attempt.submittedAtIso !== undefined || attempt.questionGrades !== undefined ||
+        attempt.finalScoreBasisPoints !== null) {
+      fail('EXAM_BACKUP_ATTEMPT_STATUS_CONTENT_MISMATCH');
+    }
+  } else if (attempt.status === 'passed' || attempt.status === 'failed' || attempt.status === 'pending_review') {
+    if (!validIsoTimestamp(attempt.submittedAtIso) || !Array.isArray(attempt.questionGrades)) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_MISSING');
+    }
+    if (
+      (attempt.status === 'pending_review' && finalScore !== null) ||
+      ((attempt.status === 'passed' || attempt.status === 'failed') &&
+        (!Number.isSafeInteger(finalScore) || finalScore === null))
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+    const automaticGrade = evaluateExamAnswers(
+      questions as never,
+      parsedAnswers as never,
+      Number(version.passingScoreBasisPoints)
+    );
+    if (
+      automaticGrade.totalPossiblePointsMilli !== totalPossiblePointsMilli ||
+      automaticGrade.automaticallyEarnedPointsMilli !== attempt.automaticallyEarnedPointsMilli ||
+      automaticGrade.preliminaryScoreBasisPoints !== attempt.preliminaryScoreBasisPoints
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+    const questionById = new Map(questions.map(question => [String(question.id), question]));
+    const automaticGrades = new Map(automaticGrade.questionGrades.map(grade => [grade.questionId, grade]));
+    const seenGrades = new Set<string>();
+    let gradedPoints = 0;
+    let automaticPoints = 0;
+    let manualPoints = 0;
+    let pendingManualReviewCount = 0;
+    if (attempt.questionGrades.length !== questions.length) fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    for (const rawGrade of attempt.questionGrades) {
+      if (!isRecord(rawGrade) || typeof rawGrade.questionId !== 'string' || seenGrades.has(rawGrade.questionId)) {
+        fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+      }
+      const question = questionById.get(rawGrade.questionId);
+      const automatic = automaticGrades.get(rawGrade.questionId);
+      const expectedManualReview = attempt.status === 'pending_review' &&
+        question?.type === 'free_text' &&
+        typeof parsedAnswers[rawGrade.questionId] === 'string' &&
+        String(parsedAnswers[rawGrade.questionId]).trim().length > 0;
+      if (
+        !question || !automatic ||
+        !Number.isSafeInteger(rawGrade.pointsEarnedMilli) ||
+        Number(rawGrade.pointsEarnedMilli) < 0 ||
+        Number(rawGrade.pointsEarnedMilli) > Number(question.pointsMilli) ||
+        rawGrade.maxPointsMilli !== question.pointsMilli ||
+        rawGrade.requiresManualReview !== expectedManualReview ||
+        (rawGrade.correct !== undefined && typeof rawGrade.correct !== 'boolean') ||
+        (question.type !== 'free_text' &&
+          (rawGrade.pointsEarnedMilli !== automatic.pointsEarnedMilli ||
+           rawGrade.correct !== automatic.correct))
+      ) {
+        fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+      }
+      seenGrades.add(rawGrade.questionId);
+      gradedPoints += Number(rawGrade.pointsEarnedMilli);
+      if (question.type === 'free_text') manualPoints += Number(rawGrade.pointsEarnedMilli);
+      else automaticPoints += Number(rawGrade.pointsEarnedMilli);
+      if (rawGrade.requiresManualReview === true) pendingManualReviewCount += 1;
+    }
+    if (
+      gradedPoints !== Number(attempt.automaticallyEarnedPointsMilli) + Number(attempt.manuallyEarnedPointsMilli) ||
+      automaticPoints !== Number(attempt.automaticallyEarnedPointsMilli) ||
+      manualPoints !== Number(attempt.manuallyEarnedPointsMilli) ||
+      ((attempt.status === 'pending_review') !== (pendingManualReviewCount > 0)) ||
+      (attempt.status === 'pending_review' && Number(attempt.manuallyEarnedPointsMilli) !== 0)
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+    const finalScoreExpected = scoreBasisPoints(gradedPoints, totalPossiblePointsMilli);
+    if (
+      attempt.status !== 'pending_review' &&
+      (attempt.finalScoreBasisPoints !== finalScoreExpected ||
+       (attempt.status === 'passed') !== meetsPassingScore(gradedPoints, totalPossiblePointsMilli, Number(version.passingScoreBasisPoints)))
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+    if (attempt.submissionReason !== 'submitted' && attempt.submissionReason !== 'time_expired') {
+      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
+    }
+  } else if (attempt.status === 'invalidated_by_admin') {
+    if (
+      typeof attempt.invalidatedByUid !== 'string' || !attempt.invalidatedByUid.trim() ||
+      !validIsoTimestamp(attempt.invalidatedAtIso) ||
+      typeof attempt.invalidationReason !== 'string' ||
+      attempt.invalidationReason.trim().length < 1 ||
+      attempt.invalidationReason.length > 1000
+    ) {
+      fail('EXAM_BACKUP_ATTEMPT_INVALIDATION_AUDIT_INVALID');
+    }
+  }
+}
+
 export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySnapshot {
   if (!isRecord(value) || value.formatVersion !== 1 || !isRecord(value.collections)) {
     return fail('EXAM_BACKUP_FORMAT_INVALID');
@@ -158,6 +342,7 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (attempt.assessmentStage !== version.assessmentStage) {
       return fail('EXAM_BACKUP_ATTEMPT_STAGE_MISMATCH');
     }
+    validateBackupAttempt(attempt, version);
   }
 
   for (const progress of collections.exam_progress) {
