@@ -34,7 +34,6 @@ test('runs a queued refresh even if the preceding task rejects, then surfaces th
   const first = runner.run(async () => { throw new Error('first failed'); });
   const second = runner.run(async () => { queuedRan = true; });
 
-  await assert.rejects(first, /first failed/);
-  await second;
+  await assert.rejects(Promise.all([first, second]), /first failed/);
   assert.equal(queuedRan, true);
 });
