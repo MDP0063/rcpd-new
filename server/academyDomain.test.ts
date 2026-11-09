@@ -230,3 +230,19 @@ test('course chapters and completion requirements reject non-string descriptions
   };
   assert.equal(validateCourseVersion('course_1', malformedRequirement as never).ok, false);
 });
+
+
+test('course and program summaries reject malformed runtime values', () => {
+  assert.equal(validateCourseVersion('course_1', {
+    ...courseVersion, summary: { text: 'invalid' }
+  } as never).ok, false);
+  assert.equal(validateProgramVersion('program_1', {
+    ...programVersion, summary: { text: 'invalid' }
+  } as never).ok, false);
+  assert.equal(validateCourseVersion('course_1', {
+    ...courseVersion, summary: 'x'.repeat(2001)
+  }).ok, false);
+  assert.equal(validateProgramVersion('program_1', {
+    ...programVersion, summary: 'x'.repeat(2001)
+  }).ok, false);
+});
