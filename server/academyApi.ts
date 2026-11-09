@@ -1245,7 +1245,7 @@ export function createAcademyApiRouter(
           : existing.tags,
         updatedIso: new Date().toISOString()
       };
-      await repository.saveOwnPrivateNote(actor.uid, note);
+      await repository.updateOwnPrivateNote(actor.uid, note);
       res.json({ note });
     } catch (error) { fail(res, error, next); }
   });
