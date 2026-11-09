@@ -303,3 +303,37 @@ test('Firestore Academy backup exports shared collections and excludes private n
   assert.deepEqual(snapshot.collections.academy_material_categories, [category]);
   assert.equal('academy_private_notes' in snapshot.collections, false);
 });
+
+
+test('Firestore Academy restore replaces shared collections and preserves private notes', async () => {
+  const database = new FakeFirestore();
+  const oldCategory = {
+    id: 'old-category', name: 'Alt', status: 'active', revision: 1,
+    createdIso: transactionTestIso, createdByUid: 'admin-1',
+    updatedIso: transactionTestIso, updatedByUid: 'admin-1'
+  };
+  const newCategory = {
+    id: 'new-category', name: 'Neu', status: 'active', revision: 1,
+    createdIso: transactionTestIso, createdByUid: 'admin-1',
+    updatedIso: transactionTestIso, updatedByUid: 'admin-1'
+  };
+  const privateNote = { id: 'private-note-1', ownerUid: 'user-1' };
+  database.seed('academy_repo_material_categories', oldCategory.id, oldCategory);
+  database.seed('academy_repo_private_notes', privateNote.id, privateNote);
+  const repository = new AcademyRepository(
+    new FirestoreAcademyStorageAdapter(database as unknown as Firestore)
+  );
+  await repository.setMaintenanceMode(true);
+  const snapshot = await repository.exportSnapshot();
+
+  await repository.restoreSnapshot({
+    ...snapshot,
+    collections: {
+      ...snapshot.collections,
+      academy_material_categories: [newCategory]
+    }
+  });
+
+  assert.deepEqual(await repository.listMaterialCategories(), [newCategory]);
+  assert.deepEqual(database.list('academy_repo_private_notes').map(item => item.data), [privateNote]);
+});
