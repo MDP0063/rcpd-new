@@ -238,3 +238,32 @@ test('Firestore course creation rejects an existing draft before writing the mas
   );
   assert.equal(await repository.get('academy_courses', firestoreCourseMaster.id), null);
 });
+
+
+test('Firestore Academy backup exports shared collections and excludes private notes', async () => {
+  const database = new FakeFirestore();
+  const category = {
+    id: 'backup-category',
+    name: 'Backup-Kategorie',
+    status: 'active',
+    revision: 1,
+    createdIso: transactionTestIso,
+    createdByUid: 'admin-1',
+    updatedIso: transactionTestIso,
+    updatedByUid: 'admin-1'
+  };
+  database.seed('academy_repo_material_categories', category.id, category);
+  database.seed('academy_repo_private_notes', 'private-note-1', {
+    id: 'private-note-1',
+    ownerUid: 'user-1'
+  });
+  const repository = new AcademyRepository(
+    new FirestoreAcademyStorageAdapter(database as unknown as Firestore)
+  );
+  await repository.setMaintenanceMode(true);
+
+  const snapshot = await repository.exportSnapshot();
+
+  assert.deepEqual(snapshot.collections.academy_material_categories, [category]);
+  assert.equal('academy_private_notes' in snapshot.collections, false);
+});
