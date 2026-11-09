@@ -215,7 +215,11 @@ function splitBlobs(
 
   for (const field of BLOB_FIELDS[collection] || []) {
     const value = doc[field];
-    if (typeof value === 'string' && value.length > CHUNK_SIZE) {
+    if (
+      typeof value === 'string' &&
+      value.length > 0 &&
+      (value.length > CHUNK_SIZE || (collection === 'modules' && field === 'pdfDataUrl'))
+    ) {
       const count = Math.ceil(value.length / CHUNK_SIZE);
       for (let i = 0; i < count; i++) {
         blobs.push({
