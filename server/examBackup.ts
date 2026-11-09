@@ -70,12 +70,14 @@ function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): vo
       fail('EXAM_BACKUP_ATTEMPT_POINTS_INVALID');
     }
   }
-  for (const field of ['preliminaryScoreBasisPoints', 'finalScoreBasisPoints'] as const) {
-    const score = attempt[field];
-    if (score !== null && score !== undefined &&
-        (!Number.isSafeInteger(score) || Number(score) < 0 || Number(score) > 10_000)) {
-      fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
-    }
+  if (!Number.isSafeInteger(attempt.preliminaryScoreBasisPoints) ||
+      Number(attempt.preliminaryScoreBasisPoints) < 0 || Number(attempt.preliminaryScoreBasisPoints) > 10_000) {
+    fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
+  }
+  const finalScore = attempt.finalScoreBasisPoints;
+  if (finalScore !== null &&
+      (!Number.isSafeInteger(finalScore) || Number(finalScore) < 0 || Number(finalScore) > 10_000)) {
+    fail('EXAM_BACKUP_ATTEMPT_SCORE_INVALID');
   }
 
   try {
@@ -106,10 +108,11 @@ function validateBackupAttempt(attempt: ExamDocument, version: ExamDocument): vo
     if (!validIsoTimestamp(attempt.submittedAtIso) || !Array.isArray(attempt.questionGrades)) {
       fail('EXAM_BACKUP_ATTEMPT_RESULT_MISSING');
     }
-    if ((attempt.status === 'pending_review') !== (attempt.finalScoreBasisPoints === null)) {
-      fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
-    }
-    if (attempt.status !== 'pending_review' && attempt.finalScoreBasisPoints === null) {
+    if (
+      (attempt.status === 'pending_review' && finalScore !== null) ||
+      ((attempt.status === 'passed' || attempt.status === 'failed') &&
+        (!Number.isSafeInteger(finalScore) || finalScore === null))
+    ) {
       fail('EXAM_BACKUP_ATTEMPT_RESULT_INVALID');
     }
     const questionById = new Map(questions.map(question => [String(question.id), question]));
