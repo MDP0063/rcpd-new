@@ -4142,7 +4142,7 @@ jobs:
       return;
     }
 
-    const snapshot = req.body?.snapshot as (Partial<PortalBackupSnapshot> & { snapshotFormat?: string }) | undefined;
+    const snapshot = req.body?.snapshot as (Omit<Partial<PortalBackupSnapshot>, 'snapshotFormat'> & { snapshotFormat?: string }) | undefined;
     if (
       !snapshot ||
       typeof snapshot !== 'object' ||
