@@ -36,6 +36,9 @@ function validSnapshot(): ExamRepositorySnapshot {
     versionNumber: 1,
     title: 'Grundlagenprüfung',
     assessmentStage: 'test',
+    examFormat: 'structured_quiz',
+    isLegacyFormat: false,
+    startable: true,
     timeLimitMinutes: 0,
     passingScoreBasisPoints: 6000,
     maxAttempts: null,
@@ -216,4 +219,29 @@ test('Backup lehnt veröffentlichte Versionen mit ungültigem Fragen-Snapshot ab
     pointsMilli: 1000
   }];
   assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_CONTENT_INVALID/);
+});
+
+test('Backup bewahrt nicht startbare interaktive Legacy-Versionen ohne Fragen', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].examFormat = 'interactive_code';
+  snapshot.collections.exam_masters[0].isLegacyFormat = true;
+  snapshot.collections.exam_masters[0].startable = false;
+  snapshot.collections.exam_versions[0].examFormat = 'interactive_code';
+  snapshot.collections.exam_versions[0].isLegacyFormat = true;
+  snapshot.collections.exam_versions[0].startable = false;
+  snapshot.collections.exam_versions[0].questionsSnapshot = [];
+  snapshot.collections.exam_attempts = [];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
+});
+
+test('Backup bewahrt nicht startbare strukturierte Legacy-Versionen mit ungültigem Altinhalt', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].startable = false;
+  snapshot.collections.exam_versions[0].startable = false;
+  snapshot.collections.exam_versions[0].questionsSnapshot = [{
+    id: 'question-1', type: 'true_false', question: 'Ungültige Altdaten',
+    pointsMilli: 1000
+  }];
+  snapshot.collections.exam_attempts = [];
+  assert.doesNotThrow(() => validateExamRepositorySnapshot(snapshot));
 });
