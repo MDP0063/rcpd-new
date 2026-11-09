@@ -100,8 +100,19 @@ export function stableDigest(value: unknown): string {
 
   const writeString = (value: string): void => {
     hash.update(`S${value.length}:`);
-    for (let offset = 0; offset < value.length; offset += CHUNK_CODE_UNITS) {
-      hash.update(value.slice(offset, offset + CHUNK_CODE_UNITS), 'utf8');
+    for (let offset = 0; offset < value.length;) {
+      let end = Math.min(offset + CHUNK_CODE_UNITS, value.length);
+      // Do not split a UTF-16 surrogate pair across UTF-8 encoding boundaries.
+      const lastCodeUnit = value.charCodeAt(end - 1);
+      if (
+        end < value.length &&
+        lastCodeUnit >= 0xd800 &&
+        lastCodeUnit <= 0xdbff
+      ) {
+        end -= 1;
+      }
+      hash.update(value.slice(offset, end), 'utf8');
+      offset = end;
     }
     hash.update(';');
   };
