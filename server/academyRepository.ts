@@ -625,6 +625,8 @@ export class AcademyRepository {
       throw new Error('ACADEMY_INITIAL_COURSE_STATE_INVALID');
     }
     return this.runTransaction(async tx => {
+      const existingDraft = await tx.get<AcademyCourseDraftDoc>('academy_course_drafts', master.id);
+      if (existingDraft) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
       const existing = await tx.list<AcademyCourseMasterDoc>('academy_courses');
       if (existing.some(item => item.code.toUpperCase() === master.code.toUpperCase())) {
         throw new Error('ACADEMY_CODE_ALREADY_EXISTS');
@@ -642,6 +644,8 @@ export class AcademyRepository {
       throw new Error('ACADEMY_INITIAL_PROGRAM_STATE_INVALID');
     }
     return this.runTransaction(async tx => {
+      const existingDraft = await tx.get<AcademyProgramDraftDoc>('academy_program_drafts', master.id);
+      if (existingDraft) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
       const existing = await tx.list<AcademyProgramMasterDoc>('academy_programs');
       if (existing.some(item => item.code.toUpperCase() === master.code.toUpperCase())) {
         throw new Error('ACADEMY_CODE_ALREADY_EXISTS');
