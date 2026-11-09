@@ -64,19 +64,38 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
 
   const masters = new Map(collections.exam_masters.map(document => [document.id, document]));
   const versions = new Map(collections.exam_versions.map(document => [document.id, document]));
+  const versionsByExamId = new Map<string, ExamDocument[]>();
 
   for (const version of collections.exam_versions) {
     if (typeof version.examId !== 'string' || !masters.has(version.examId)) {
       return fail('EXAM_BACKUP_VERSION_MASTER_MISSING');
     }
+    const history = versionsByExamId.get(version.examId) ?? [];
+    history.push(version);
+    versionsByExamId.set(version.examId, history);
   }
 
   for (const master of collections.exam_masters) {
+    const latestVersionNumber = master.latestVersionNumber ?? 0;
+    if (!Number.isSafeInteger(latestVersionNumber) || Number(latestVersionNumber) < 0) {
+      return fail('EXAM_BACKUP_MASTER_VERSION_SEQUENCE_INVALID');
+    }
+    if ((versionsByExamId.get(master.id) ?? []).some(version =>
+      !Number.isSafeInteger(version.versionNumber) || Number(version.versionNumber) > Number(latestVersionNumber)
+    )) {
+      return fail('EXAM_BACKUP_VERSION_SEQUENCE_INVALID');
+    }
+
     const currentVersionId = master.currentPublishedVersionId;
     if (currentVersionId !== undefined && currentVersionId !== null) {
       if (typeof currentVersionId !== 'string') return fail('EXAM_BACKUP_MASTER_VERSION_INVALID');
       const version = versions.get(currentVersionId);
       if (!version || version.examId !== master.id) return fail('EXAM_BACKUP_MASTER_VERSION_MISSING');
+      if (version.versionNumber !== latestVersionNumber) {
+        return fail('EXAM_BACKUP_MASTER_VERSION_SEQUENCE_MISMATCH');
+      }
+    } else if (Number(latestVersionNumber) !== 0) {
+      return fail('EXAM_BACKUP_MASTER_VERSION_POINTER_MISSING');
     }
   }
 
@@ -91,6 +110,9 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     const version = versions.get(attempt.examVersionId);
     if (!version || version.examId !== attempt.examId) {
       return fail('EXAM_BACKUP_ATTEMPT_VERSION_MISSING');
+    }
+    if (!Number.isSafeInteger(attempt.versionNumber) || attempt.versionNumber !== version.versionNumber) {
+      return fail('EXAM_BACKUP_ATTEMPT_VERSION_MISMATCH');
     }
   }
 
