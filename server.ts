@@ -804,7 +804,16 @@ function toClientModule(mod: TrainingModuleDoc): TrainingModuleDoc {
  * Prüfungsfragen für den Browser: Lösungsschlüssel und Erläuterungen bleiben
  * ausschließlich auf dem Server. Die Antworten werden nach Abgabe serverseitig ausgewertet.
  */
+// Firestore state reads reuse the same immutable exam objects. Cache the sanitized payload
+// per object; WeakMap entries disappear automatically when a saved exam is replaced.
+const clientExamQuestionPayloadCache = new WeakMap<AcademyExamDoc, string>();
+
 function toClientExam(exam: AcademyExamDoc): AcademyExamDoc {
+  const cachedPayload = clientExamQuestionPayloadCache.get(exam);
+  if (cachedPayload !== undefined) {
+    return { ...exam, questionsPayload: cachedPayload };
+  }
+
   let publicQuestions: Array<{ id: string; question: string; options: string[] }> = [];
   try {
     const parsed: unknown = JSON.parse(exam.questionsPayload || '[]');
@@ -830,7 +839,9 @@ function toClientExam(exam: AcademyExamDoc): AcademyExamDoc {
   } catch {
     // Fehlerhafte gespeicherte Frage-Payloads werden geschlossen behandelt.
   }
-  return { ...exam, questionsPayload: JSON.stringify(publicQuestions) };
+  const sanitizedPayload = JSON.stringify(publicQuestions);
+  clientExamQuestionPayloadCache.set(exam, sanitizedPayload);
+  return { ...exam, questionsPayload: sanitizedPayload };
 }
 
 /** Nur lesen, ohne Kopie (für die Sitzungsprüfung bei jedem Request). Ergebnis nie verändern. */
