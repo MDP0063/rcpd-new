@@ -159,6 +159,7 @@ export const API_ENDPOINTS = {
   AUTH_LOGOUT: '/api/auth/logout',
   FIREBASE_TOKEN: '/api/auth/firebase-token',
   PORTAL_STATE: '/api/portal/state',
+  PORTAL_HEARTBEAT: '/api/portal/heartbeat',
   ADMIN_ACCOUNTS: '/api/admin/accounts',
   APPLICATIONS: '/api/applications',
   ADMIN_APPLICATIONS: '/api/admin/applications',
