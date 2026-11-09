@@ -210,9 +210,16 @@ function splitBlobs(
   const main: Doc = { ...doc };
   const blobs: Array<{ path: string; data: string }> = [];
   const chunks: Record<string, number> = {};
+  const lazyChunks = (doc.__lazyBlobChunks || {}) as Record<string, number>;
+  delete main.__lazyBlobChunks;
+
   for (const field of BLOB_FIELDS[collection] || []) {
     const value = doc[field];
-    if (typeof value === 'string' && value.length > CHUNK_SIZE) {
+    if (
+      typeof value === 'string' &&
+      value.length > 0 &&
+      (value.length > CHUNK_SIZE || (collection === 'modules' && field === 'pdfDataUrl'))
+    ) {
       const count = Math.ceil(value.length / CHUNK_SIZE);
       for (let i = 0; i < count; i++) {
         blobs.push({
@@ -222,9 +229,14 @@ function splitBlobs(
       }
       main[field] = null;
       chunks[field] = count;
+    } else if (value === undefined && Number.isSafeInteger(lazyChunks[field]) && lazyChunks[field] > 0) {
+      // The blob was intentionally not loaded. Preserve its existing Firestore chunks unchanged.
+      main[field] = null;
+      chunks[field] = lazyChunks[field];
     }
   }
   if (Object.keys(chunks).length > 0) main.__chunks = chunks;
+  else delete main.__chunks;
   return { main, blobs, chunks };
 }
 
@@ -347,7 +359,7 @@ export interface RawStore {
 export function assembleState(
   raw: RawStore,
   now: number,
-  options: { consumeBlobs?: boolean } = {}
+  options: { consumeBlobs?: boolean; lazyBlobs?: boolean } = {}
 ): { state: StateLike; index: PersistIndex } | null {
   if (!raw.meta) return null;
   const index: PersistIndex = new Map();
@@ -362,7 +374,15 @@ export function assembleState(
       const doc: Doc = { ...stored };
       const chunks = (doc.__chunks || {}) as Record<string, number>;
       delete doc.__chunks;
+      const lazyBlobChunks: Record<string, number> = {};
       for (const [field, count] of Object.entries(chunks)) {
+        if (options.lazyBlobs && spec.name === 'modules' && field === 'pdfDataUrl') {
+          if (Number.isSafeInteger(count) && count > 0) {
+            lazyBlobChunks[field] = count;
+            delete doc[field];
+          }
+          continue;
+        }
         const id = String(doc[spec.idField]);
         const blobParts: string[] = [];
         for (let i = 0; i < count; i++) {
@@ -373,6 +393,7 @@ export function assembleState(
         }
         doc[field] = blobParts.join('');
       }
+      if (Object.keys(lazyBlobChunks).length > 0) doc.__lazyBlobChunks = lazyBlobChunks;
       entries.push({ doc, chunks });
     }
 
