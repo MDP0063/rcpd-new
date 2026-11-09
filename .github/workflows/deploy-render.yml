@@ -18,14 +18,17 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: TypeScript Check & Production Build
-        run: npm run lint && npm run build
+      - name: Install Dependencies with Bun
+        run: bun install --no-save
+
+      - name: TypeScript Check & Production Build with Bun
+        run: bun run lint && bun run build
 
       - name: Tests
-        run: npm test
+        run: bun run test
 
       - name: Optional Render Deploy Hook Trigger
         if: github.ref == 'refs/heads/main'
