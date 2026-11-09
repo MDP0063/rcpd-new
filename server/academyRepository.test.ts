@@ -22,7 +22,7 @@ const version: AcademyCourseVersionDoc = {
   title: 'Grundlagen', summary: '',
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
-  completionRequirements: [], publishedIso: now, publishedByUid: 'owner-1',
+  completionRequirements: [{ id: 'req_chapter', type: 'required_chapter', targetId: 'chapter-1', required: true }], publishedIso: now, publishedByUid: 'owner-1',
   createdIso: now, createdByUid: 'owner-1', workingRevision: 2
 };
 const publishedMaster: AcademyCourseMasterDoc = {
@@ -34,7 +34,7 @@ const courseDraft: AcademyCourseDraftDoc = {
   id: 'course-1', courseId: 'course-1', title: 'Grundlagen', summary: '',
   learningObjectives: [{ id: 'goal-1', description: 'Grundlagen verstehen' }],
   chapters: [{ id: 'chapter-1', title: 'Einführung', materialReferences: [], required: true, order: 0 }],
-  completionRequirements: [], workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
+  completionRequirements: [{ id: 'req_chapter', type: 'required_chapter', targetId: 'chapter-1', required: true }], workingRevision: 2, updatedIso: now, updatedByUid: 'owner-1'
 };
 const programMaster: AcademyProgramMasterDoc = {
   id: 'program-1', code: 'BASIC-PROGRAM', ownerUid: 'owner-1',
