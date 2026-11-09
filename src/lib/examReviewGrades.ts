@@ -19,7 +19,7 @@ export function parseManualReviewGrades(
 ): ManualReviewGradeParseResult {
   const grades: ManualReviewGrade[] = [];
   for (const question of questions) {
-    const raw = values[question.questionId] ?? '0';
+    const raw = values[question.questionId];
     if (typeof raw !== 'string' || raw.trim().length === 0) return { ok: false };
     const numeric = Number(raw);
     const pointsEarnedMilli = Math.round(numeric * 1000);
