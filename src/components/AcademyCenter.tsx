@@ -262,6 +262,16 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const currentModuleId = currentModule ? `${currentModule.id}:${currentModule.updatedIso || ''}` : undefined;
   const currentHasPdf = Boolean(currentModule?.hasPdf || currentModule?.pdfDataUrl);
   const currentPdfLoaded = currentModuleId ? currentModuleId in pdfCache : false;
+
+  // Keep only the currently selected PDF in browser memory; revisiting another document reloads it.
+  useEffect(() => {
+    setPdfCache(previous => {
+      if (!currentModuleId) return {};
+      const currentUrl = previous[currentModuleId];
+      return currentUrl ? { [currentModuleId]: currentUrl } : {};
+    });
+  }, [currentModuleId]);
+
   useEffect(() => {
     if (!currentModuleId || !currentHasPdf || currentPdfLoaded) return;
     let cancelled = false;
