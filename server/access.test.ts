@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { canReadModule, shouldRefreshPresence } from './access.ts';
+import { canReadModule, refreshAccountPresence, shouldRefreshPresence } from './access.ts';
 
 test('Handbuch: gleicher oder höherer Rang darf lesen, niedrigerer nicht', () => {
   assert.ok(canReadModule(1, 3));
@@ -17,4 +17,23 @@ test('Anwesenheit: nur bei veraltetem Eintrag oder Offline schreiben', () => {
   assert.ok(shouldRefreshPresence(false, '2026-01-01T00:00:59Z', now));
   assert.ok(shouldRefreshPresence(true, 'kaputt', now));
   assert.ok(shouldRefreshPresence(undefined, undefined, now));
+});
+
+
+test('Anwesenheits-Heartbeat aktualisiert Hauptkonto und öffentliches Profil gemeinsam', () => {
+  const account = {
+    isOnline: false,
+    lastSeenIso: '2026-01-01T00:00:00.000Z',
+    publicProfile: { isOnline: false, lastSeenIso: '2026-01-01T00:00:00.000Z' }
+  };
+  const now = Date.parse('2026-01-01T00:01:00.000Z');
+
+  assert.equal(refreshAccountPresence(account, now), true);
+  assert.equal(account.isOnline, true);
+  assert.equal(account.lastSeenIso, new Date(now).toISOString());
+  assert.equal(account.publicProfile.isOnline, true);
+  assert.equal(account.publicProfile.lastSeenIso, new Date(now).toISOString());
+
+  assert.equal(refreshAccountPresence(account, now + 5_000), false);
+  assert.equal(account.lastSeenIso, new Date(now).toISOString());
 });
