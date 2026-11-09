@@ -279,3 +279,7 @@ test('streaming digest keeps UTF-16 surrogate pairs intact at chunk boundaries',
   const prefix = 'a'.repeat(16_383);
   assert.notEqual(stableDigest(`${prefix}😀`), stableDigest(`${prefix}\uFFFD\uFFFD`));
 });
+
+test('streaming digest distinguishes different lone UTF-16 surrogates', () => {
+  assert.notEqual(stableDigest('\uD800'), stableDigest('\uDFFF'));
+});
