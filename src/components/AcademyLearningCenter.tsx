@@ -385,6 +385,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES + `/${encodeURIComponent(editingNote.id)}`, {
       method: 'PUT',
       body: JSON.stringify({
+        expectedRevision: editingNote.revision ?? 1,
         title: noteTitle.trim(),
         content: noteContent,
         tags: noteTags.split(',').map(tag => tag.trim()).filter(Boolean)

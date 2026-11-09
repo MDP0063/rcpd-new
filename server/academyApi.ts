@@ -1216,7 +1216,7 @@ export function createAcademyApiRouter(
       if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_NOTE_BODY_INVALID' }); return; }
       const now = new Date().toISOString();
       const note: AcademyPrivateNoteDoc = {
-        id: id('note'), ownerUid: actor.uid,
+        id: id('note'), ownerUid: actor.uid, revision: 1,
         materialId: text(req.body.materialId, 120), materialVersionId: text(req.body.materialVersionId, 160),
         kind: req.body.kind === 'bookmark' ? 'bookmark' : 'note',
         title: text(req.body.title, 200), content: text(req.body.content, 20000),
@@ -1235,8 +1235,11 @@ export function createAcademyApiRouter(
       if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_NOTE_BODY_INVALID' }); return; }
       const existing = await repository.getOwnPrivateNote(actor.uid, req.params.noteId);
       if (!existing) { res.status(404).json({ error: 'ACADEMY_NOTE_NOT_FOUND' }); return; }
+      const expectedRevision = revision(req.body.expectedRevision);
+      if (expectedRevision === null) { res.status(400).json({ error: 'ACADEMY_NOTE_REVISION_INVALID' }); return; }
       const note: AcademyPrivateNoteDoc = {
         ...existing,
+        revision: expectedRevision + 1,
         kind: req.body.kind === 'bookmark' ? 'bookmark' : req.body.kind === 'note' ? 'note' : existing.kind,
         title: req.body.title === undefined ? existing.title : text(req.body.title, 200),
         content: req.body.content === undefined ? existing.content : text(req.body.content, 20000),
@@ -1245,7 +1248,7 @@ export function createAcademyApiRouter(
           : existing.tags,
         updatedIso: new Date().toISOString()
       };
-      await repository.updateOwnPrivateNote(actor.uid, note);
+      await repository.updateOwnPrivateNote(actor.uid, note, expectedRevision);
       res.json({ note });
     } catch (error) { fail(res, error, next); }
   });

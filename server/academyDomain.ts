@@ -485,6 +485,9 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
       !isNonEmpty(note.materialId) || !isNonEmpty(note.materialVersionId)) {
     return invalid('ACADEMY_NOTE_REFERENCE_MISSING', 'Notiz, Eigentümer und konkrete Materialversion müssen referenziert sein.');
   }
+  if (note.revision !== undefined && (!Number.isSafeInteger(note.revision) || note.revision < 1)) {
+    return invalid('ACADEMY_NOTE_REVISION_INVALID', 'Die Notizrevision muss eine positive ganze Zahl sein.');
+  }
   if (note.kind === 'bookmark' && (note.content || '').trim().length > 0) {
     return invalid('ACADEMY_BOOKMARK_CONTENT_NOT_ALLOWED', 'Ein Lesezeichen darf keinen Notiztext enthalten.');
   }
