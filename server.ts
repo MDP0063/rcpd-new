@@ -2356,7 +2356,9 @@ async function startServer() {
   // 4. Heartbeat & Real-Time State Sync
   app.get('/api/portal/state', (req, res) => {
     const callerUid = String(req.query.uid || '');
-    const dbState = loadDatabase();
+    // This endpoint only projects the current state and refreshes the caller heartbeat.
+    // Avoid cloning the complete in-memory database (including legacy PDF payloads) on every poll.
+    const dbState = peekDatabase();
     const caller = dbState.accounts.find(a => a.uid === callerUid);
 
     if (!caller) {
