@@ -59,6 +59,177 @@ function validateAcademyBackupDocument(collection: typeof ACADEMY_BACKUP_COLLECT
     case 'academy_completion_corrections': assertValid(validateCompletionCorrection(document as AcademyCompletionCorrectionDoc)); break;
   }
 }
+function validateAcademyBackupReferences(
+  collections: AcademyRepositoryBackupSnapshot['collections']
+): void {
+  const materialMasters = new Map(collections.academy_materials.map(item => [item.id, item]));
+  const materialVersions = new Map(collections.academy_material_versions.map(item => [item.id, item]));
+  const categories = new Map(collections.academy_material_categories.map(item => [item.id, item]));
+  const documentTypes = new Map(collections.academy_material_document_types.map(item => [item.id, item]));
+  const courses = new Map(collections.academy_courses.map(item => [item.id, item]));
+  const courseVersions = new Map(collections.academy_course_versions.map(item => [item.id, item]));
+  const programs = new Map(collections.academy_programs.map(item => [item.id, item]));
+  const programVersions = new Map(collections.academy_program_versions.map(item => [item.id, item]));
+  const courseParticipations = new Map(collections.academy_course_participations.map(item => [item.id, item]));
+  const evidence = new Map(collections.academy_progress_evidence.map(item => [item.id, item]));
+
+  const requireReference = (valid: boolean, code: string) => {
+    if (!valid) throw new Error(code);
+  };
+
+  const validateHistory = <
+    M extends { id: string; latestVersionNumber: number; currentPublishedVersionId?: string },
+    V extends { id: string; versionNumber: number }
+  >(
+    masters: M[],
+    versions: V[],
+    ownerId: (version: V) => string,
+    code: string
+  ) => {
+    const mastersById = new Map(masters.map(master => [master.id, master]));
+    const versionsByOwner = new Map<string, V[]>();
+    for (const version of versions) {
+      const masterId = ownerId(version);
+      requireReference(mastersById.has(masterId), code + '_ORPHAN_VERSION');
+      const owned = versionsByOwner.get(masterId) ?? [];
+      owned.push(version);
+      versionsByOwner.set(masterId, owned);
+    }
+    for (const master of masters) {
+      const owned = (versionsByOwner.get(master.id) ?? []).sort((left, right) => left.versionNumber - right.versionNumber);
+      requireReference(owned.length === master.latestVersionNumber, code + '_HISTORY_INCOMPLETE');
+      owned.forEach((version, index) => {
+        const expectedNumber = index + 1;
+        requireReference(
+          version.versionNumber === expectedNumber && version.id === master.id + '__v' + expectedNumber,
+          code + '_VERSION_SEQUENCE_INVALID'
+        );
+      });
+      if (master.latestVersionNumber === 0) {
+        requireReference(master.currentPublishedVersionId === undefined, code + '_CURRENT_POINTER_INVALID');
+      } else {
+        const latest = owned[owned.length - 1];
+        if (!latest || master.currentPublishedVersionId !== latest.id) {
+          throw new Error(code + '_CURRENT_POINTER_INVALID');
+        }
+      }
+    }
+  };
+
+  validateHistory(collections.academy_materials, collections.academy_material_versions, version => version.materialId, 'ACADEMY_BACKUP_MATERIAL');
+  validateHistory(collections.academy_courses, collections.academy_course_versions, version => version.courseId, 'ACADEMY_BACKUP_COURSE');
+  validateHistory(collections.academy_programs, collections.academy_program_versions, version => version.programId, 'ACADEMY_BACKUP_PROGRAM');
+
+  for (const draft of collections.academy_material_drafts) {
+    requireReference(materialMasters.has(draft.materialId), 'ACADEMY_BACKUP_MATERIAL_DRAFT_ORPHAN');
+    requireReference(categories.has(draft.categoryId), 'ACADEMY_BACKUP_MATERIAL_CATEGORY_REFERENCE_INVALID');
+    requireReference(documentTypes.has(draft.documentTypeId), 'ACADEMY_BACKUP_MATERIAL_DOCUMENT_TYPE_REFERENCE_INVALID');
+  }
+  for (const version of collections.academy_material_versions) {
+    requireReference(materialMasters.has(version.materialId), 'ACADEMY_BACKUP_MATERIAL_VERSION_ORPHAN');
+    requireReference(categories.has(version.categoryId), 'ACADEMY_BACKUP_MATERIAL_CATEGORY_REFERENCE_INVALID');
+    requireReference(documentTypes.has(version.documentTypeId), 'ACADEMY_BACKUP_MATERIAL_DOCUMENT_TYPE_REFERENCE_INVALID');
+  }
+  for (const assignment of collections.academy_material_category_assignments) {
+    requireReference(categories.has(assignment.categoryId), 'ACADEMY_BACKUP_MATERIAL_CATEGORY_REFERENCE_INVALID');
+    if (assignment.materialVersionId) {
+      const version = materialVersions.get(assignment.materialVersionId);
+      requireReference(Boolean(version) && version!.materialId === assignment.materialId && version!.categoryId === assignment.categoryId,
+        'ACADEMY_BACKUP_MATERIAL_CATEGORY_ASSIGNMENT_REFERENCE_INVALID');
+    } else {
+      requireReference(materialMasters.has(assignment.materialId), 'ACADEMY_BACKUP_MATERIAL_CATEGORY_ASSIGNMENT_REFERENCE_INVALID');
+    }
+  }
+  for (const assignment of collections.academy_material_document_type_assignments) {
+    requireReference(documentTypes.has(assignment.documentTypeId), 'ACADEMY_BACKUP_MATERIAL_DOCUMENT_TYPE_REFERENCE_INVALID');
+    if (assignment.materialVersionId) {
+      const version = materialVersions.get(assignment.materialVersionId);
+      requireReference(Boolean(version) && version!.materialId === assignment.materialId && version!.documentTypeId === assignment.documentTypeId,
+        'ACADEMY_BACKUP_MATERIAL_DOCUMENT_TYPE_ASSIGNMENT_REFERENCE_INVALID');
+    } else {
+      requireReference(materialMasters.has(assignment.materialId), 'ACADEMY_BACKUP_MATERIAL_DOCUMENT_TYPE_ASSIGNMENT_REFERENCE_INVALID');
+    }
+  }
+
+  for (const version of collections.academy_course_versions) {
+    requireReference(courses.has(version.courseId), 'ACADEMY_BACKUP_COURSE_VERSION_ORPHAN');
+    requireReference(Boolean(version.publishedIso) && Boolean(version.publishedByUid), 'ACADEMY_BACKUP_COURSE_VERSION_PUBLICATION_METADATA_MISSING');
+    for (const chapter of version.chapters) {
+      for (const reference of chapter.materialReferences) {
+        const materialVersion = materialVersions.get(reference.materialVersionId);
+        requireReference(
+          Boolean(materialVersion) && materialVersion!.materialId === reference.materialId,
+          'ACADEMY_BACKUP_COURSE_MATERIAL_VERSION_REFERENCE_INVALID'
+        );
+      }
+    }
+  }
+  for (const version of collections.academy_program_versions) {
+    requireReference(programs.has(version.programId), 'ACADEMY_BACKUP_PROGRAM_VERSION_ORPHAN');
+    requireReference(Boolean(version.publishedIso) && Boolean(version.publishedByUid), 'ACADEMY_BACKUP_PROGRAM_VERSION_PUBLICATION_METADATA_MISSING');
+    for (const reference of version.courseReferences) {
+      requireReference(courses.has(reference.courseId), 'ACADEMY_BACKUP_PROGRAM_COURSE_REFERENCE_INVALID');
+    }
+  }
+
+  for (const participation of collections.academy_course_participations) {
+    const version = courseVersions.get(participation.courseVersionId);
+    requireReference(
+      courses.has(participation.courseId) && Boolean(version) && version!.courseId === participation.courseId,
+      'ACADEMY_BACKUP_COURSE_PARTICIPATION_REFERENCE_INVALID'
+    );
+  }
+  for (const participation of collections.academy_program_participations) {
+    const version = programVersions.get(participation.programVersionId);
+    requireReference(
+      programs.has(participation.programId) && Boolean(version) && version!.programId === participation.programId,
+      'ACADEMY_BACKUP_PROGRAM_PARTICIPATION_REFERENCE_INVALID'
+    );
+    const requiredCourseIds = new Set(version!.courseReferences.filter(item => item.requirement === 'required').map(item => item.courseId));
+    const pinnedCourseIds = new Set(participation.requiredCoursePins.map(pin => pin.courseId));
+    requireReference(
+      requiredCourseIds.size === pinnedCourseIds.size && [...requiredCourseIds].every(id => pinnedCourseIds.has(id)),
+      'ACADEMY_BACKUP_PROGRAM_PARTICIPATION_PINS_INVALID'
+    );
+    for (const pin of participation.requiredCoursePins) {
+      const pinnedVersion = courseVersions.get(pin.courseVersionId);
+      requireReference(
+        courses.has(pin.courseId) && Boolean(pinnedVersion) && pinnedVersion!.courseId === pin.courseId &&
+        pin.courseParticipationId === 'participation_' + encodeURIComponent(participation.userUid) + '_' + encodeURIComponent(pin.courseId),
+        'ACADEMY_BACKUP_PROGRAM_COURSE_PIN_INVALID'
+      );
+      const existingParticipation = courseParticipations.get(pin.courseParticipationId);
+      if (existingParticipation) {
+        requireReference(
+          existingParticipation.userUid === participation.userUid &&
+          existingParticipation.courseId === pin.courseId &&
+          existingParticipation.courseVersionId === pin.courseVersionId,
+          'ACADEMY_BACKUP_PROGRAM_COURSE_PARTICIPATION_PIN_MISMATCH'
+        );
+      }
+    }
+  }
+
+  for (const item of collections.academy_progress_evidence) {
+    const participation = courseParticipations.get(item.participationId);
+    const version = participation ? courseVersions.get(participation.courseVersionId) : null;
+    const requirement = version?.completionRequirements.find(entry => entry.id === item.requirementId);
+    requireReference(
+      Boolean(participation) && Boolean(requirement) &&
+      requirement!.type === item.evidenceType && requirement!.targetId === item.sourceId,
+      'ACADEMY_BACKUP_PROGRESS_EVIDENCE_REFERENCE_INVALID'
+    );
+  }
+  for (const correction of collections.academy_completion_corrections) {
+    requireReference(courseParticipations.has(correction.participationId), 'ACADEMY_BACKUP_COMPLETION_CORRECTION_REFERENCE_INVALID');
+    for (const evidenceId of correction.invalidatedEvidenceIds ?? []) {
+      const item = evidence.get(evidenceId);
+      requireReference(Boolean(item) && item!.participationId === correction.participationId,
+        'ACADEMY_BACKUP_COMPLETION_CORRECTION_EVIDENCE_REFERENCE_INVALID');
+    }
+  }
+}
+
 export function validateAcademyRepositoryBackupSnapshot(value: unknown): AcademyRepositoryBackupSnapshot {
   if (!isRecord(value) || value.formatVersion !== 1 || !isRecord(value.collections)) {
     throw new Error('ACADEMY_BACKUP_INVALID');
@@ -84,6 +255,7 @@ export function validateAcademyRepositoryBackupSnapshot(value: unknown): Academy
     }
     (collections as Record<string, AcademyDocument[]>)[collection] = documents as AcademyDocument[];
   }
+  validateAcademyBackupReferences(collections);
   return { formatVersion: 1, collections };
 }
 function courseDraftMatchesVersion(draft: AcademyCourseDraftDoc, version: AcademyCourseVersionDoc): boolean {
