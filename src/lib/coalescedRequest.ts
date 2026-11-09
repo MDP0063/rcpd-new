@@ -22,6 +22,11 @@ export class CoalescedRequestRunner {
     return tracked;
   }
 
+  /** Waits for the active task and its latest coalesced follow-up, without queuing another task. */
+  waitForIdle(): Promise<void> {
+    return this.activePromise ?? Promise.resolve();
+  }
+
   private async drain(firstTask: CoalescedAsyncTask): Promise<void> {
     let task: CoalescedAsyncTask | null = firstTask;
     let firstError: unknown;
