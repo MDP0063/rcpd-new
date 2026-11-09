@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createJsonAcademyRepository } from './academyRepository.ts';
-import type { AcademyCourseMasterDoc, AcademyCourseParticipationDoc, AcademyCourseVersionDoc, AcademyMaterialCategoryDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseParticipationDoc, AcademyCourseVersionDoc, AcademyMaterialCategoryDoc, AcademyPrivateNoteDoc, AcademyProgramMasterDoc, AcademyProgramVersionDoc } from '../src/types/academy.ts';
 
 const now = '2026-11-09T20:00:00.000Z';
 
@@ -175,6 +175,42 @@ test('Academy backup rejects course participations whose pinned version is missi
     snapshot.collections.academy_courses.push(master);
     snapshot.collections.academy_course_participations.push(participation);
     await assert.rejects(repository.restoreSnapshot(snapshot), /ACADEMY_BACKUP_COURSE_PARTICIPATION_REFERENCE_INVALID/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+
+test('Academy backup rejects program versions that reference courses without a published version', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'academy-backup-program-course-pin-'));
+  try {
+    const repository = createJsonAcademyRepository(directory);
+    await repository.setMaintenanceMode(true);
+    const snapshot = await repository.exportSnapshot();
+    const course: AcademyCourseMasterDoc = {
+      id: 'course-1', code: 'SOP-01', ownerUid: 'admin-1',
+      publicationStatus: 'draft', availability: 'available',
+      latestVersionNumber: 0, workingRevision: 1,
+      createdIso: now, updatedIso: now
+    };
+    const program: AcademyProgramMasterDoc = {
+      id: 'program-1', code: 'BASIC-01', ownerUid: 'admin-1',
+      publicationStatus: 'published', availability: 'available',
+      currentPublishedVersionId: 'program-1__v1', latestVersionNumber: 1,
+      workingRevision: 1, createdIso: now, updatedIso: now
+    };
+    const version: AcademyProgramVersionDoc = {
+      id: 'program-1__v1', programId: 'program-1', versionNumber: 1,
+      title: 'Grundausbildung', summary: '',
+      learningObjectives: [1, 2, 3].map(n => ({ id: `goal_${n}`, description: `Lernziel ${n}` })),
+      courseReferences: [{ courseId: 'course-1', requirement: 'required', order: 0 }],
+      createdIso: now, createdByUid: 'admin-1', workingRevision: 1,
+      publishedIso: now, publishedByUid: 'admin-1'
+    };
+    snapshot.collections.academy_courses.push(course);
+    snapshot.collections.academy_programs.push(program);
+    snapshot.collections.academy_program_versions.push(version);
+    await assert.rejects(repository.restoreSnapshot(snapshot), /ACADEMY_BACKUP_PROGRAM_COURSE_REFERENCE_INVALID/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
