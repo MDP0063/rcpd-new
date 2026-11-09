@@ -246,7 +246,8 @@ export function validateCourseVersion(
   for (const chapter of version.chapters) {
     if (!isNonEmpty(chapter.id) || !isNonEmpty(chapter.title) ||
         chapter.title.length > 200 ||
-        (chapter.description !== undefined && chapter.description.length > 1000) ||
+        (chapter.description !== undefined &&
+          (typeof chapter.description !== 'string' || chapter.description.length > 1000)) ||
         !Array.isArray(chapter.materialReferences) || !chapter.materialReferences.every(value => isRecord(value)) ||
         typeof chapter.required !== 'boolean' ||
         !Number.isSafeInteger(chapter.order) || chapter.order < 0) {
@@ -280,7 +281,8 @@ export function validateCourseVersion(
     !isNonEmpty(requirement.targetId) ||
     !allowedEvidenceTypes.has(requirement.type) ||
     typeof requirement.required !== 'boolean' ||
-    (requirement.description !== undefined && requirement.description.length > 1000)
+    (requirement.description !== undefined &&
+      (typeof requirement.description !== 'string' || requirement.description.length > 1000))
   )) {
     return invalid('ACADEMY_COURSE_COMPLETION_REQUIREMENT_INVALID', 'Abschlussbedingungen benötigen einen gültigen Typ, ein Ziel und einen Pflichtstatus.');
   }
