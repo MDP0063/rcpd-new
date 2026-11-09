@@ -4362,7 +4362,7 @@ jobs:
         'SYSTEM_BACKUP',
         'Portal- und Prüfungsdaten wiederhergestellt (private Notizen unverändert)',
         snapshot.snapshotFormat,
-        \`${nextState.accounts.length} Konten, \${academySnapshot ? Object.values(academySnapshot.collections).reduce((sum, documents) => sum + documents.length, 0) : 0} gemeinsame Academy-Datensätze und \${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.\`
+        `${nextState.accounts.length} Konten, ${academySnapshot ? Object.values(academySnapshot.collections).reduce((sum, documents) => sum + documents.length, 0) : 0} gemeinsame Academy-Datensätze und ${Object.values(snapshot.examRepository.summary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze wiederhergestellt.`
       );
 
       // Alle drei Speichergrenzen bleiben gesperrt, bis sämtliche Wiederherstellungen bestätigt wurden.
