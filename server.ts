@@ -3997,6 +3997,21 @@ jobs:
       );
       await saveDatabaseAndWait(dbState);
 
+      // A full admin backup intentionally includes legacy PDFs, but loads them one at a time
+      // rather than keeping every PDF resident in the normal server state.
+      const backupModules: TrainingModuleDoc[] = [];
+      for (const module of dbState.modules) {
+        const internal = module as ModuleWithLazyBlobs;
+        const { __lazyBlobChunks, ...plainModule } = internal;
+        let pdfDataUrl = module.pdfDataUrl || '';
+        const lazyChunkCount = __lazyBlobChunks?.pdfDataUrl;
+        if (!pdfDataUrl && lazyChunkCount) {
+          if (!store) throw new Error('BACKUP_PDF_BLOB_STORE_UNAVAILABLE');
+          pdfDataUrl = await store.loadBlobChunks('modules', module.id, 'pdfDataUrl', lazyChunkCount);
+        }
+        backupModules.push({ ...plainModule, pdfDataUrl });
+      }
+
       const snapshot: PortalBackupSnapshot = {
         snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4',
         exportedAtIso: nowIso,
@@ -4036,7 +4051,7 @@ jobs:
           version: dbState.version || 3,
           accounts: dbState.accounts,
           applications: dbState.applications,
-          modules: dbState.modules,
+          modules: backupModules,
           exams: dbState.exams,
           progress: dbState.progress,
           academy_courses: dbState.academy_courses || [],
