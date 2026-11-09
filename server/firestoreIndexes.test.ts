@@ -12,19 +12,36 @@ const config = JSON.parse(
   await readFile(new URL('../firestore.indexes.json', import.meta.url), 'utf8')
 ) as { indexes: FirestoreIndex[] };
 
-function assertCompositeIndex(collectionGroup: string, fieldPaths: string[]): void {
+function assertCompositeIndex(
+  collectionGroup: string,
+  fields: Array<{ fieldPath: string; order: 'ASCENDING' | 'DESCENDING' }>
+): void {
   const index = config.indexes.find(candidate =>
     candidate.collectionGroup === collectionGroup &&
     candidate.queryScope === 'COLLECTION' &&
-    candidate.fields.length === fieldPaths.length &&
-    fieldPaths.every(field => candidate.fields.some(item => item.fieldPath === field && item.order === 'ASCENDING'))
+    candidate.fields.length === fields.length &&
+    fields.every(expected => candidate.fields.some(item =>
+      item.fieldPath === expected.fieldPath && item.order === expected.order
+    ))
   );
-  assert.ok(index, `Missing Firestore composite index: ${collectionGroup}(${fieldPaths.join(', ')})`);
+  assert.ok(index, `Missing Firestore composite index: ${collectionGroup}(${fields.map(field => field.fieldPath).join(', ')})`);
 }
 
 test('Firestore composite indexes cover every multi-equality repository query', () => {
-  assertCompositeIndex('academy_repo_material_versions', ['materialId', 'versionNumber']);
-  assertCompositeIndex('exam_attempts', ['userId', 'examId']);
-  assertCompositeIndex('exam_progress', ['userId', 'targetId']);
-  assertCompositeIndex('exam_publication_requests', ['examId', 'status']);
+  assertCompositeIndex('academy_repo_material_versions', [
+    { fieldPath: 'materialId', order: 'ASCENDING' },
+    { fieldPath: 'versionNumber', order: 'DESCENDING' }
+  ]);
+  assertCompositeIndex('exam_attempts', [
+    { fieldPath: 'userId', order: 'ASCENDING' },
+    { fieldPath: 'examId', order: 'ASCENDING' }
+  ]);
+  assertCompositeIndex('exam_progress', [
+    { fieldPath: 'userId', order: 'ASCENDING' },
+    { fieldPath: 'targetId', order: 'ASCENDING' }
+  ]);
+  assertCompositeIndex('exam_publication_requests', [
+    { fieldPath: 'examId', order: 'ASCENDING' },
+    { fieldPath: 'status', order: 'ASCENDING' }
+  ]);
 });
