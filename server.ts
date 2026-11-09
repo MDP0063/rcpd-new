@@ -3934,6 +3934,7 @@ jobs:
         `Prüfungen: ${summary.exams.imported} neu, ${summary.exams.updated} aktualisiert, ${summary.exams.alreadyMigrated} bereits vorhanden, ${summary.exams.skipped} übersprungen. Fortschritt: ${summary.progress.imported} neu, ${summary.progress.updated} aktualisiert, ${summary.progress.alreadyMigrated} bereits vorhanden, ${summary.progress.skipped} übersprungen.`
       );
       await saveDatabaseAndWait(dbState);
+      await academy.setMaintenanceMode(false);
       await repository.setMaintenanceMode(false);
       maintenanceStarted = false;
       examMaintenanceActive = false;
@@ -3980,13 +3981,15 @@ jobs:
     }
 
     const repository = getExamRepository();
+    const academy = getAcademyRepository();
     let maintenanceStarted = false;
     try {
-      // Das persistente Flag pausiert auch Legacy-Prüfungsschreibwege und bleibt bei Server-Neustarts sichtbar.
+      // Das persistente Flag pausiert Prüfungs- und Academy-Schreibwege während des gemeinsamen Snapshots.
       examMaintenanceActive = true;
       examMaintenanceOperation = 'backup';
       await repository.setMaintenanceMode(true);
       maintenanceStarted = true;
+      await academy.setMaintenanceMode(true);
 
       const dbState = loadDatabase();
       const caller = dbState.accounts.find(account => account.uid === sessionUid);
@@ -3995,7 +3998,11 @@ jobs:
       }
 
       const examSnapshot = await repository.exportSnapshot();
+      const academySnapshot = await academy.exportSnapshot();
       validateLegacyVerificationSources(examSnapshot, dbState.exams, dbState.progress);
+      const academyRepositoryCounts = Object.fromEntries(
+        Object.entries(academySnapshot.collections).map(([collection, documents]) => [collection, documents.length])
+      ) as PortalBackupSnapshot['summary']['academyRepositoryCounts'];
       const examSummary = {
         exam_masters: examSnapshot.collections.exam_masters.length,
         exam_versions: examSnapshot.collections.exam_versions.length,
@@ -4014,9 +4021,9 @@ jobs:
         dbState,
         caller,
         'SYSTEM_BACKUP',
-        'Portal- und Prüfungsdatenexport (ohne private Notizen)',
-        'CA_POST_PORTAL_BACKUP_V4',
-        `${dbState.accounts.length} Konten, ${dbState.exams.length} Legacy-Prüfungen und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
+        'Portal-, Academy- und Prüfungsdatenexport (ohne private Notizen)',
+        'CA_POST_PORTAL_BACKUP_V5',
+        `${dbState.accounts.length} Konten, ${Object.values(academyRepositoryCounts).reduce((sum, count) => sum + count, 0)} gemeinsame Academy-Datensätze und ${Object.values(examSummary).reduce((sum, count) => sum + count, 0)} neue Prüfungsdatensätze gesichert.`
       );
       await saveDatabaseAndWait(dbState);
 
@@ -4036,7 +4043,7 @@ jobs:
       }
 
       const snapshot: PortalBackupSnapshot = {
-        snapshotFormat: 'CA_POST_PORTAL_BACKUP_V4',
+        snapshotFormat: 'CA_POST_PORTAL_BACKUP_V5',
         exportedAtIso: nowIso,
         exportedByUsername: caller.username,
         summary: {
@@ -4053,6 +4060,7 @@ jobs:
           academyProgramParticipationsCount: (dbState.academy_program_participations || []).length,
           academyProgressEvidenceCount: (dbState.academy_progress_evidence || []).length,
           academyCompletionCorrectionsCount: (dbState.academy_completion_corrections || []).length,
+          academyRepositoryCounts,
           announcementsCount: (dbState.announcements || []).length,
           messagesCount: (dbState.messages || []).length,
           requestsCount: (dbState.requests || []).length,
@@ -4070,6 +4078,7 @@ jobs:
           ...examSnapshot,
           summary: examSummary
         },
+        academyRepository: academySnapshot,
         database: {
           version: dbState.version || 3,
           accounts: dbState.accounts,
@@ -4103,6 +4112,7 @@ jobs:
     } catch (error) {
       if (maintenanceStarted) {
         try {
+          await academy.setMaintenanceMode(false);
           await repository.setMaintenanceMode(false);
           examMaintenanceActive = false;
           examMaintenanceOperation = null;
