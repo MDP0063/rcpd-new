@@ -727,6 +727,19 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal((await request('/api/academy/participations', admin)).body!.participations.length, 0);
     assert.equal((await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' })).status, 409);
 
+    const completionCorrectionWithoutEvidence = await request(`/api/academy/participations/${participationId}/correction`, admin, {
+      method: 'POST', ...json({
+        expectedStatus: 'in_progress',
+        correctedStatus: 'completed',
+        reason: 'Attempt to complete without required evidence.'
+      })
+    });
+    assert.equal(completionCorrectionWithoutEvidence.status, 409);
+    assert.equal(completionCorrectionWithoutEvidence.body!.error, 'ACADEMY_COMPLETION_CORRECTION_EVIDENCE_INCOMPLETE');
+    const unchangedParticipation = await request(`/api/academy/participations/${participationId}`, admin);
+    assert.equal(unchangedParticipation.body!.participation.status, 'in_progress');
+    assert.equal(unchangedParticipation.body!.corrections.length, 0);
+
     const blockedAssessment = await request(`/api/academy/participations/${participationId}/evidence`, officer, {
       method: 'POST', ...json({ requirementId: 'req-assessment' })
     });
