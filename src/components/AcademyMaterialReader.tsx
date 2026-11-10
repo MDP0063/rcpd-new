@@ -3,7 +3,8 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } from '../types/academy';
+import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPrivateNoteTextAnchor } from '../types/academy';
+import { createTextAnchor } from '../lib/academyTextAnchors';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
@@ -66,12 +67,12 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
       {headings.length>0&&<nav id="academy-material-outline" hidden={!navigationOpen} className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="block break-words text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
       <div className="min-w-0 flex-1">
        {loading?<p className={muted} role="status">Material wird geladen …</p>:loadError?<div role="alert" className="rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">{loadError}</div>
-        :currentVersion?.contentFormat==='markdown'?<article className="max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
-        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
+        :currentVersion?.contentFormat==='markdown'?<article className="max-w-none" onMouseUp={event=>captureTextAnchor(event,'markdown')}><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
+        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre onMouseUp={event=>captureTextAnchor(event,'code')} className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
       </div>
      </div>
    </div>}
   </div>}
-  {selected && currentVersion && <AcademyMaterialReaderNotes materialId={selected.materialId} materialVersionId={selected.materialVersionId} />}
+  {selected && currentVersion && <AcademyMaterialReaderNotes materialId={selected.materialId} materialVersionId={selected.materialVersionId} selectedAnchor={selectedAnchor} />}
  </section>;
 };
