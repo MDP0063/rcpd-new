@@ -308,8 +308,12 @@ export async function getReleasedPassingFinalExam(
     const lastRelease = attempt.resultReleaseHistory![attempt.resultReleaseHistory!.length - 1];
     if (lastRelease.status !== 'passed' ||
         lastRelease.finalScoreBasisPoints !== attempt.finalScoreBasisPoints ||
+        typeof lastRelease.releasedByUid !== 'string' || !lastRelease.releasedByUid.trim() ||
         typeof lastRelease.releasedAtIso !== 'string' ||
-        !Number.isFinite(Date.parse(lastRelease.releasedAtIso))) continue;
+        !Number.isFinite(Date.parse(lastRelease.releasedAtIso)) ||
+        !Number.isSafeInteger(version.passingScoreBasisPoints) ||
+        Number(attempt.finalScoreBasisPoints) < version.passingScoreBasisPoints ||
+        Number(attempt.finalScoreBasisPoints) > 10_000) continue;
     proofs.push({
       attemptId: attempt.id,
       releasedAtIso: lastRelease.releasedAtIso,
