@@ -42,6 +42,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const savedDraft = await saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 400, '2026-11-05T12:02:35.000Z');
     assert.equal(savedDraft.revision, 1);
     assert.equal(savedDraft.draftGrades.text, 400);
+    const persistedDraftAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(persistedDraftAttempt?.reviewClaim?.reviewerUid, 'grader', 'saving a draft must preserve the active claim');
     await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'other-grader', 'text', 500), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
     const hiddenQueue = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T12:02:40.000Z');
     assert.equal(hiddenQueue.length, 1);
