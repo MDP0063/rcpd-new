@@ -42,7 +42,7 @@ class FakeDocumentReference {
   }
   async get() {
     const data = this.database.read(this.collectionName, this.id);
-    return { id: this.id, exists: data !== null, data: () => data ?? undefined };
+    return { id: this.id, exists: data !== null, data: () => data ?? undefined, get: (field: string) => data && typeof data === 'object' ? (data as Record<string, unknown>)[field] : undefined };
   }
 }
 
