@@ -84,7 +84,7 @@ import {
   isWhitelistStatus,
   wouldRemoveLastAdministrator
 } from './server/accountValidation.ts';
-import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
+import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parseOptionalPortalDatabaseText, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { canAccessDeploymentManifest, mergeRestoredDeploymentConfig, toBackupDeploymentConfig } from './server/deploymentSecurity.ts';
 import { PORTAL_SECURITY_HEADERS } from './server/securityHeaders.ts';
@@ -962,13 +962,10 @@ async function initFirestoreStorage() {
   let initial = (await store.loadAll()) as unknown as PortalDatabaseState | null;
   if (!initial) {
     // Erster Start mit Firestore: vorhandene JSON-Datei übernehmen, sonst neu anlegen.
-    let fromFile: PortalDatabaseState | null = null;
-    try {
-      fromFile = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) as PortalDatabaseState;
-    } catch {
-      fromFile = null;
-    }
-    initial = fromFile && fromFile.accounts?.length ? fromFile : createInitialDatabase();
+    const fromFile = parseOptionalPortalDatabaseText(
+      fs.existsSync(DB_FILE) ? fs.readFileSync(DB_FILE, 'utf8') : null
+    ) as unknown as PortalDatabaseState | null;
+    initial = fromFile ?? createInitialDatabase();
     console.log(
       `[Firestore] Noch keine Daten vorhanden, ${fromFile ? 'übernehme die JSON-Datei' : 'lege eine neue Datenbank an'}.`
     );
