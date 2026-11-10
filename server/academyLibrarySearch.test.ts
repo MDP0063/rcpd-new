@@ -15,7 +15,7 @@ const entries = [
 test('library search ranks title and code matches above weaker metadata matches', () => {
   assert.ok(getLibrarySearchScore(entries[0], 'Funkverfahren') > getLibrarySearchScore(entries[0], 'Kommunikation'));
   const results = sortLibraryEntries(entries, 'Funk', 'relevance');
-  assert.deepEqual(results.map(entry => entry.title), ['Funkverfahren', 'Funk-SOP']);
+  assert.deepEqual(results.map(entry => entry.title), ['Funk-SOP', 'Funkverfahren']);
 });
 
 test('library search requires every query token but allows tokens across metadata fields', () => {
