@@ -39,7 +39,7 @@ export function createTextAnchor(selection: TextAnchorSelection, sourceText: str
   }
   if (selection.kind === 'code') {
     anchor.startLine = sourceText.slice(0, startOffset).split(/\r?\n/).length;
-    anchor.endLine = anchor.startLine + (selection.text.match(/\n/g)?.length ?? 0);
+    anchor.endLine = anchor.startLine + (quote.match(/\n/g)?.length ?? 0);
   }
   return anchor;
 }
