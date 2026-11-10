@@ -21,7 +21,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
-import { canReadModule, refreshAccountPresence } from './server/access.ts';
+import { canAccessLegacyExam, canReadModule, refreshAccountPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import {
   createFirestoreExamRepository,
@@ -2445,7 +2445,8 @@ async function startServer() {
     const nowIso = caller.lastSeenIso || new Date(now).toISOString();
 
     const isAdmin = caller.publicProfile.role === 'admin';
-    const isTrainee = caller.publicProfile.role === 'trainee';
+    const callerRoleMeta = ROLE_HIERARCHY[caller.publicProfile.role];
+    const callerClearance = caller.publicProfile.clearanceLevel ?? callerRoleMeta.defaultClearance;
     const callerPerms =
       normalizeGranularPermissions(
         caller.publicProfile.role,
@@ -2463,9 +2464,32 @@ async function startServer() {
       lastSeenIso: a.lastSeenIso
     }));
 
-    // Filter out final_exam for trainees on the backend as well
-    const visibleExams = dbState.exams.filter(exam => exam.status !== 'archived' &&
-      (!isTrainee || exam.assessmentStage !== 'final_exam'));
+    // Only active, role- and clearance-accessible exams are exposed to participants.
+    // Admins may still inspect drafts, but drafts and archived exams cannot be submitted.
+    const visibleExams = dbState.exams.filter(exam =>
+      exam.status === 'draft'
+        ? isAdmin
+        : canAccessLegacyExam(
+            exam,
+            callerRoleMeta.canAccessFinalExams,
+            callerClearance
+          )
+    );
+    const visibleModules = dbState.modules.map(module => {
+      const clientModule = toClientModule(module);
+      const hasRankAccess = canReadModule(
+        callerRoleMeta.rankOrder,
+        ROLE_HIERARCHY[module.requiredRole]?.rankOrder
+      );
+      if (hasRankAccess) return clientModule;
+      // Keep catalog metadata for the existing locked view, but never send protected content.
+      return {
+        ...clientModule,
+        contentMarkdown: '',
+        externalUrl: '',
+        interactiveCode: ''
+      };
+    });
 
     const canSeeAllProgress =
       isAdmin ||
@@ -2512,7 +2536,7 @@ async function startServer() {
       applications: isAdmin
         ? dbState.applications
         : dbState.applications.filter(appItem => appItem.applicantUid === caller.uid),
-      modules: dbState.modules.map(toClientModule),
+      modules: visibleModules,
       exams: visibleExams.map(toClientExam),
       progress: canSeeAllProgress
         ? dbState.progress
@@ -3556,6 +3580,13 @@ async function startServer() {
         res.status(404).json({ error: 'Lehrmaterial nicht gefunden.' });
         return;
       }
+      if (!canReadModule(
+        ROLE_HIERARCHY[caller.publicProfile.role].rankOrder,
+        ROLE_HIERARCHY[mod.requiredRole]?.rankOrder
+      )) {
+        res.status(403).json({ error: 'Für dieses Lehrmaterial fehlt dir der erforderliche Rang.' });
+        return;
+      }
       resolvedType = 'module';
       resolvedTitle = mod.title;
       resolvedStatus = 'completed';
@@ -3564,6 +3595,14 @@ async function startServer() {
       const exam = dbState.exams.find(e => e.id === targetId);
       if (!exam) {
         res.status(404).json({ error: 'Prüfung nicht gefunden.' });
+        return;
+      }
+      if (!canAccessLegacyExam(
+        exam,
+        ROLE_HIERARCHY[caller.publicProfile.role].canAccessFinalExams,
+        caller.publicProfile.clearanceLevel ?? ROLE_HIERARCHY[caller.publicProfile.role].defaultClearance
+      )) {
+        res.status(403).json({ error: 'Du hast keine Berechtigung, diese Prüfung aufzurufen oder abzulegen.' });
         return;
       }
       if (exam.assessmentStage !== targetType) {
