@@ -139,7 +139,7 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
       const state = await this.read();
       for (const collection of ACADEMY_COLLECTIONS) {
         for (const [key, document] of Object.entries(state.collections[collection])) {
-          if (collection === 'academy_private_notes' && document.ownerUid === uid) {
+          if (collection === 'academy_private_notes' && (document as Record<string, unknown>).ownerUid === uid) {
             delete state.collections[collection][key];
             continue;
           }
