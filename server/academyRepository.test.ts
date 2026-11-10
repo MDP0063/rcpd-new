@@ -526,7 +526,26 @@ test('required_assessment dynamically completes a course only while a released f
   assert.equal(released.participation.completedIso, proof.releasedAtIso);
   assert.equal(released.assessmentProofs['final-exam-required'].attemptId, 'final-attempt-1');
 
+  const voluntarilyEnded = {
+    ...participation, status: 'voluntarily_ended' as const,
+    endedIso: '2026-11-10T12:30:00.000Z', endReason: 'Teilnahme freiwillig beendet'
+  };
+  const voluntaryResult = await resolveAcademyCourseCompletion(fakeRepository, voluntarilyEnded, resolver);
+  assert.equal(voluntaryResult.participation.status, 'voluntarily_ended');
+  assert.equal(voluntaryResult.participation.endedIso, voluntarilyEnded.endedIso);
+
+  const administrativelyEnded = {
+    ...participation, status: 'administratively_ended' as const,
+    endedIso: '2026-11-10T12:45:00.000Z', endReason: 'Teilnahme administrativ beendet'
+  };
+  const administrativeResult = await resolveAcademyCourseCompletion(fakeRepository, administrativelyEnded, resolver);
+  assert.equal(administrativeResult.participation.status, 'administratively_ended');
+  assert.equal(administrativeResult.participation.endedIso, administrativelyEnded.endedIso);
+
   proof = null;
+  const endedWithoutProof = await resolveAcademyCourseCompletion(fakeRepository, voluntarilyEnded, resolver);
+  assert.equal(endedWithoutProof.participation.status, 'voluntarily_ended');
+
   const corrected = await resolveAcademyCourseCompletion(fakeRepository, released.participation, resolver);
   assert.equal(corrected.participation.status, 'in_progress');
   assert.equal('completedIso' in corrected.participation, false);

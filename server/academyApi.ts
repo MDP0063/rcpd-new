@@ -251,6 +251,11 @@ export async function resolveAcademyCourseCompletion(
       ? Boolean(assessmentProofs[requirement.id])
       : activeEvidence.some(item => item.requirementId === requirement.id)
   );
+  // An explicit end is a terminal participation decision, not missing progress.
+  // A later exam release must never silently convert an ended participation into completion.
+  if (participation.status === 'voluntarily_ended' || participation.status === 'administratively_ended') {
+    return { participation, version, evidence, corrections, assessmentProofs };
+  }
   if (complete) {
     const completionTimes = required.flatMap(requirement => {
       if (requirement.type === 'required_assessment') {
