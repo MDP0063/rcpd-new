@@ -292,7 +292,14 @@ export interface ExamResultReleaseQueueItem {
 }
 
 export async function listPendingExamResultReleases(repository: ExamRepository): Promise<ExamResultReleaseQueueItem[]> {
-  const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', { limit: HISTORY_LIMIT }));
+  const passed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [{ field: 'status', value: 'passed' }], limit: HISTORY_LIMIT
+  }));
+  const failed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [{ field: 'status', value: 'failed' }], limit: HISTORY_LIMIT
+  }));
+  if (passed.length + failed.length >= HISTORY_LIMIT) throw new Error('EXAM_ATTEMPT_HISTORY_LIMIT');
+  const attempts = [...passed, ...failed];
   const results: ExamResultReleaseQueueItem[] = [];
   for (const attempt of attempts) {
     if (attempt.status !== 'passed' && attempt.status !== 'failed') continue;
