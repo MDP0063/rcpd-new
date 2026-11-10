@@ -136,6 +136,7 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
   async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
     if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('ACADEMY_ANONYMIZATION_INPUT_INVALID');
     return this.exclusive(async () => {
+      if (this.maintenanceMode) throw new Error('ACADEMY_MAINTENANCE_ACTIVE');
       const state = await this.read();
       for (const collection of ACADEMY_COLLECTIONS) {
         for (const [key, document] of Object.entries(state.collections[collection])) {
