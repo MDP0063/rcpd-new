@@ -786,15 +786,22 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     </select>
                   </div>
                 </div>
-                {hasActiveLibraryFilters && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {[moduleCategoryFilter, moduleDocumentTypeFilter].filter(Boolean).join(' · ')}
-                    </p>
-                    <button type="button" onClick={clearLibraryFilters} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-300">Filter zurücksetzen</button>
-                  </div>
-                )}
               </details>
+              {hasActiveLibraryFilters && (
+                <div className="flex flex-wrap items-center gap-2" aria-label="Aktive Bibliotheksfilter">
+                  {moduleCategoryFilter && (
+                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
+                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    </button>
+                  )}
+                  {moduleDocumentTypeFilter && (
+                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
+                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    </button>
+                  )}
+                  <button type="button" onClick={clearLibraryFilters} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-300">Alle Filter zurücksetzen</button>
+                </div>
+              )}
               {sortedLibraryEntries.length === 0 ? (
                 versionedMaterialsLoading ? null : (
                   <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
