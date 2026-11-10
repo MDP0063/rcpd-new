@@ -128,6 +128,8 @@ export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
   }
   async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
     if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('ACADEMY_ANONYMIZATION_INPUT_INVALID');
+    const control = await this.database.doc('exam_system_control/state').get();
+    if (this.maintenanceMode || control.get('enabled') === true) throw new Error('ACADEMY_MAINTENANCE_ACTIVE');
     const writer = this.database.bulkWriter();
     const writes: Promise<unknown>[] = [];
     try {
