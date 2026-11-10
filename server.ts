@@ -1913,6 +1913,7 @@ async function startServer() {
       EXAM_REVIEW_CLAIMED: { status: 409, message: 'Dieser Vorgang wird bereits von einem anderen Prüfer bearbeitet.' },
       EXAM_REVIEW_CLAIM_REQUIRED: { status: 409, message: 'Beanspruche diesen Vorgang zuerst, bevor du ihn bearbeitest.' },
       EXAM_REVIEW_CLAIM_NOT_OWNED: { status: 409, message: 'Du bist nicht mehr für diesen Vorgang zuständig. Die Bearbeitung wurde gesperrt.' },
+      EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED: { status: 409, message: 'Nach der Wiederverbindung musst du den Vorgang erneut beanspruchen, bevor du weiterarbeiten kannst.' },
       EXAM_REVIEW_CLAIM_ACTOR_INVALID: { status: 400, message: 'Die Prüferdaten sind ungültig.' },
       EXAM_REVIEW_CLAIM_TIME_INVALID: { status: 400, message: 'Der Claim-Zeitpunkt ist ungültig.' },
       EXAM_REVIEW_CLAIM_HISTORY_LIMIT: { status: 409, message: 'Die Claim-Historie hat ihre zulässige Größe erreicht.' },
