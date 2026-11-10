@@ -817,8 +817,8 @@ export class AcademyRepository {
       const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
       const affectedCourses: AcademyCourseMasterDoc[] = [];
       for (const course of courseMasters) {
-        if (course.publicationStatus !== 'published' || course.availability !== 'available' ||
-            !course.currentPublishedVersionId) continue;
+        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
+            (course.availability !== 'available' && !(course.materialReviewPending?.length))) continue;
         const courseVersion = await tx.get<AcademyCourseVersionDoc>(
           'academy_course_versions', course.currentPublishedVersionId
         );
