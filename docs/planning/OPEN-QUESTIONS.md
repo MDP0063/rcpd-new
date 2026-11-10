@@ -218,7 +218,7 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
 - Empfehlungsregeln für unabhängige neue Empfehlungen, veraltete/entzogene Inhalte, Fristen und Erinnerungen sind offen.
 - Die Draft-Grading-Erweiterung ist fachlich beschlossen, aber backendseitig zu spezifizieren und gegen den aktuellen Code zu prüfen.
-- Der Default der erstmaligen Ergebnisfreigabe bei fehlender Prüfungseinstellung bleibt eine explizite Entscheidung; keine Annahme treffen.
+- Der Default der erstmaligen Ergebnisfreigabe ist beschlossen: Ohne explizite Konfiguration gilt manuelle Erstfreigabe.
 - Der spätere Kontext-Meldebutton ist als Integrationspunkt vorzusehen; der vollständige Meldeprozess ist ein separates Planungsvorhaben.
 
 ### Dokumentationsqualität
@@ -244,7 +244,7 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt; CI-Tests müssen alle Freigabe-, Korrektur-, Datenschutz- und Nachweisfälle abdecken.
 
 
-### Ergebnisfreigabe – nächste Implementierungsstufe
-- PR #144 liefert die manuelle Admin-Erstfreigabe und die erneute Freigabe nach Korrekturen. Die explizite Einstellung für automatische Freigabe ist noch nicht konfigurierbar und darf daher nicht als verfügbar dargestellt werden.
-- Die Integration von `required_assessment` ist noch offen. Exam- und Academy-Daten liegen in getrennten Repository-/Transaktionsgrenzen; eine einmalige Prüfung beim Schreiben eines Fortschrittsnachweises wäre bei späterer Korrektur/Widerruf nicht ausreichend.
-- Vor der Implementierung muss deshalb eine Lösung festgelegt werden, die den aktuellen Freigabestatus bei jeder Abschlussentscheidung zuverlässig berücksichtigt und auch nach Korrekturen keine veralteten Abschlussnachweise gültig lässt. Keine clientseitige Evidenz und kein bloßes `status === 'passed'`.
+### Ergebnisfreigabe und Kursabschlussnachweis – verbleibende Punkte
+- Die manuelle Erstfreigabe ohne explizite Konfiguration ist umgesetzt (PR #144). Eine explizite automatische Freigabekonfiguration ist derzeit im Datenmodell/Workshop nicht vorhanden und bleibt eine spätere offene Erweiterung; bis dahin darf kein automatischer Modus angenommen werden.
+- Die dynamische serverseitige `required_assessment`-Verifikation ist in Umsetzung auf `feature/academy-final-exam-evidence`: nur aktuell freigegebene bestandene `final_exam`-Versuche mit passender Teilnehmer- und Kurskennung zählen. Es wird kein persistentes Academy-Duplikat des Prüfungsnachweises erzeugt.
+- Noch zu prüfen: CI, unabhängiger Diff-Review und die anschließende Produktions-/Browserprüfung. Die manuelle Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt.
