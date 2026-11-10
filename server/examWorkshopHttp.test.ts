@@ -782,6 +782,14 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       method: 'DELETE'
     });
     assert.equal(deleteAccount.status, 200);
+    const academyAfterDeletion = JSON.parse(await readFile(path.join(dataDirectory, 'academy-db.json'), 'utf8'));
+    assert.equal(academyAfterDeletion.collections.academy_courses['doc:http-deleted-course'].ownerUid.startsWith('deleted-'), true);
+    assert.equal(academyAfterDeletion.collections.academy_private_notes['doc:http-deleted-note'], undefined);
+    const examsAfterDeletion = JSON.parse(await readFile(path.join(dataDirectory, 'exam-db-v1.json'), 'utf8'));
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].userId.startsWith('deleted-'), true);
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].userName, 'Gelöschtes Konto');
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].status, 'passed');
+    assert.equal(examsAfterDeletion.collections.exam_progress['doc:http-deleted-progress'].userId.startsWith('deleted-'), true);
     const adminStateAfterDeletion = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
     const anonymizedApplication = adminStateAfterDeletion.body.applications.find((application: Record<string, unknown>) => application.id === 'app-to-anonymize');
     assert.equal(anonymizedApplication.applicantUid, 'deleted-account');
