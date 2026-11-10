@@ -2985,16 +2985,19 @@ async function startServer() {
     dbState.accounts = dbState.accounts.filter(a => a.uid !== targetUid);
     dbState.progress = (dbState.progress || []).filter(p => p.userId !== targetUid);
     for (const application of dbState.applications || []) {
-      if (application.applicantUid !== targetUid) continue;
-      application.applicantUid = 'deleted-account';
-      application.applicantName = 'Gelöschtes Konto';
-      if (application.reviewerUid === targetUid) application.reviewerUid = 'deleted-account';
-      application.reviewerFeedback = anonymizeText(application.reviewerFeedback);
-      application.characterName = 'Gelöschtes Konto';
-      application.dateOfBirth = '';
-      application.discordTag = '';
-      application.priorExperience = '';
-      application.scenarioResponse = '';
+      if (application.applicantUid === targetUid) {
+        application.applicantUid = 'deleted-account';
+        application.applicantName = 'Gelöschtes Konto';
+        application.characterName = 'Gelöschtes Konto';
+        application.dateOfBirth = '';
+        application.discordTag = '';
+        application.priorExperience = '';
+        application.scenarioResponse = '';
+      }
+      if (application.reviewerUid === targetUid) {
+        application.reviewerUid = 'deleted-account';
+        application.reviewerFeedback = anonymizeText(application.reviewerFeedback);
+      }
     }
     for (const request of dbState.requests || []) {
       if (request.requesterUid === targetUid) {
@@ -3015,14 +3018,18 @@ async function startServer() {
     dbState.messages = (dbState.messages || []).filter(message =>
       message.senderUid !== targetUid && message.recipientUid !== targetUid
     );
-    dbState.notifications = (dbState.notifications || []).filter(notification =>
-      notification.recipientUid !== targetUid && !notification.readByUids.includes(targetUid)
-    );
+    dbState.notifications = (dbState.notifications || [])
+      .filter(notification => notification.recipientUid !== targetUid)
+      .map(notification => ({
+        ...notification,
+        readByUids: notification.readByUids.filter(uid => uid !== targetUid)
+      }));
     for (const announcement of dbState.announcements || []) {
       if (announcement.authorUid === targetUid) {
         announcement.authorUid = 'deleted-account';
         announcement.authorName = 'Gelöschtes Konto';
       }
+      announcement.acknowledgedByUids = announcement.acknowledgedByUids.filter(uid => uid !== targetUid);
       announcement.title = anonymizeText(announcement.title);
       announcement.content = anonymizeText(announcement.content);
     }
