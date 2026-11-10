@@ -36,6 +36,7 @@ import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
+import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -86,7 +87,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [submittingGrade, setSubmittingGrade] = useState(false);
 
   const [moduleSearchQuery, setModuleSearchQuery] = useState('');
-  const [moduleSortOrder, setModuleSortOrder] = useState<'alphabetical' | 'updated'>('alphabetical');
+  const [moduleSortOrder, setModuleSortOrder] = useState<'relevance' | 'alphabetical' | 'updated'>('relevance');
+  const [moduleCategoryFilter, setModuleCategoryFilter] = useState('');
+  const [moduleDocumentTypeFilter, setModuleDocumentTypeFilter] = useState('');
   const [isLibraryNavigationOpen, setIsLibraryNavigationOpen] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [versionedMaterials, setVersionedMaterials] = useState<AcademyPublicMaterialCatalogItem[]>([]);
@@ -221,7 +224,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       code: module.code,
       category: module.category,
       description: '',
-      documentTypeName: module.pdfFileName || '',
+      documentTypeName: module.embedType === 'pdf_upload' ? 'PDF-Dokument' : module.embedType === 'interactive_code' ? 'Interaktiver Code' : module.embedType === 'external_url' ? 'Externer Inhalt' : 'Textdokument',
+      searchTerms: module.pdfFileName || '',
       updatedIso: module.updatedIso || '',
       module
     })),
@@ -233,25 +237,26 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       category: material.categoryName,
       description: material.description || '',
       documentTypeName: material.documentTypeName,
+      searchTerms: '',
       updatedIso: material.publishedIso,
       material
     }))
   ];
-  const normalizedModuleSearch = moduleSearchQuery.trim().toLocaleLowerCase('de-DE');
-  const filteredLibraryEntries = libraryEntries.filter(entry => {
-    if (!normalizedModuleSearch) return true;
-    return [entry.title, entry.code, entry.category, entry.documentTypeName, entry.description]
-      .some(value => value.toLocaleLowerCase('de-DE').includes(normalizedModuleSearch));
-  });
-  const sortedLibraryEntries = [...filteredLibraryEntries].sort((a, b) => {
-    if (moduleSortOrder === 'updated') {
-      const dateA = a.updatedIso ? Date.parse(a.updatedIso) : Number.NaN;
-      const dateB = b.updatedIso ? Date.parse(b.updatedIso) : Number.NaN;
-      if (Number.isFinite(dateA) && Number.isFinite(dateB) && dateA !== dateB) return dateB - dateA;
-      if (Number.isFinite(dateA) !== Number.isFinite(dateB)) return Number.isFinite(dateA) ? -1 : 1;
-    }
-    return a.title.localeCompare(b.title, 'de-DE');
-  });
+  const libraryCategories = [...new Set(libraryEntries.map(entry => entry.category).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'de-DE'));
+  const libraryDocumentTypes = [...new Set(libraryEntries.map(entry => entry.documentTypeName).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'de-DE'));
+  const filteredLibraryEntries = libraryEntries.filter(entry =>
+    (!moduleCategoryFilter || entry.category === moduleCategoryFilter) &&
+    (!moduleDocumentTypeFilter || entry.documentTypeName === moduleDocumentTypeFilter) &&
+    matchesLibrarySearch(entry, moduleSearchQuery)
+  );
+  const sortedLibraryEntries = sortLibraryEntries(filteredLibraryEntries, moduleSearchQuery, moduleSortOrder);
+  const hasActiveLibraryFilters = Boolean(moduleCategoryFilter || moduleDocumentTypeFilter);
+  const clearLibraryFilters = () => {
+    setModuleCategoryFilter('');
+    setModuleDocumentTypeFilter('');
+  };
 
   const currentModule = modules.find(module => module.id === activeModuleId) || null;
 
@@ -750,16 +755,53 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
                 <div>
                   <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
-                  <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Dateiname" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                  <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Beschreibung" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
                 </div>
                 <div>
                   <label htmlFor="academy-library-sort" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sortieren</label>
-                  <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                  <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                    <option value="relevance">Relevanz</option>
                     <option value="alphabetical">Alphabetisch</option>
                     <option value="updated">Zuletzt aktualisiert</option>
                   </select>
                 </div>
               </div>
+              <details className="rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
+                <summary className="cursor-pointer select-none text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Filter {hasActiveLibraryFilters ? '· aktiv' : ''}
+                </summary>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+                  <div>
+                    <label htmlFor="academy-library-category-filter" className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Kategorie</label>
+                    <select id="academy-library-category-filter" value={moduleCategoryFilter} onChange={event => setModuleCategoryFilter(event.target.value)} className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <option value="">Alle Kategorien</option>
+                      {libraryCategories.map(category => <option key={category} value={category}>{category}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="academy-library-document-type-filter" className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Dokumenttyp</label>
+                    <select id="academy-library-document-type-filter" value={moduleDocumentTypeFilter} onChange={event => setModuleDocumentTypeFilter(event.target.value)} className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <option value="">Alle Dokumenttypen</option>
+                      {libraryDocumentTypes.map(documentType => <option key={documentType} value={documentType}>{documentType}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </details>
+              {hasActiveLibraryFilters && (
+                <div className="flex flex-wrap items-center gap-2" aria-label="Aktive Bibliotheksfilter">
+                  {moduleCategoryFilter && (
+                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
+                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    </button>
+                  )}
+                  {moduleDocumentTypeFilter && (
+                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
+                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    </button>
+                  )}
+                  <button type="button" onClick={clearLibraryFilters} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-300">Alle Filter zurücksetzen</button>
+                </div>
+              )}
               {sortedLibraryEntries.length === 0 ? (
                 versionedMaterialsLoading ? null : (
                   <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
