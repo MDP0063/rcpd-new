@@ -93,8 +93,10 @@ export async function claimExamReview(
     throw new Error('EXAM_REVIEW_CLAIM_ACTOR_INVALID');
   }
   validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
   return repository.runTransaction(async transaction => {
-    let attempt = await refreshReviewClaim(transaction, attemptId, nowIso);
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
@@ -156,8 +158,10 @@ export async function recordExamReviewActivity(
   nowIso = new Date().toISOString()
 ): Promise<ExamReviewClaim> {
   validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
   return repository.runTransaction(async transaction => {
-    const attempt = await refreshReviewClaim(transaction, attemptId, nowIso);
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (!attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
     if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
@@ -176,6 +180,7 @@ export async function markExamReviewDisconnected(
   nowIso = new Date().toISOString()
 ): Promise<void> {
   validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
   await repository.runTransaction(async transaction => {
     const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
