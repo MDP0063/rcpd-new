@@ -95,7 +95,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
 
     const attemptBeforeSelfReview = await repository.get('exam_attempts', 'review-attempt');
     await assert.rejects(
-      gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', [{ questionId: 'text', pointsEarnedMilli: 1000 }]),
+      gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', [{ questionId: 'text', pointsEarnedMilli: 1000 }], '2026-11-05T13:47:45.000Z'),
       /EXAM_SELF_REVIEW_FORBIDDEN/
     );
     assert.deepEqual(await repository.get('exam_attempts', 'review-attempt'), attemptBeforeSelfReview);
