@@ -1165,11 +1165,8 @@ export class AcademyRepository {
       if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(master));
       const pinnedVersionId = pinnedVersionIds[0];
-      if (master.materialReviewPending?.length || master.materialReviewVersionRequired?.length) {
-        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
-      }
       if (!pinnedVersionId &&
-          (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId)) {
+          (master.publicationStatus !== 'published' || !master.currentPublishedVersionId)) {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
       // A program pin preserves version identity, but does not bypass a precautionary
@@ -1187,6 +1184,12 @@ export class AcademyRepository {
         if (material.publicationStatus === 'archived') {
           throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
         }
+      }
+      if (master.materialReviewPending?.length || master.materialReviewVersionRequired?.length) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
+      if (!pinnedVersionId && master.availability !== 'available') {
+        throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
       const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
       if (existing) {
