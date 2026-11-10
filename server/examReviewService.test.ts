@@ -63,6 +63,11 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(transferredClaim.reviewerUid, 'other-grader');
     const oldOwnerQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:02:43.000Z');
     assert.deepEqual(oldOwnerQueue[0].questions, [], 'the previous owner loses answer access immediately after transfer');
+    await assert.rejects(
+      saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 450, '2026-11-05T12:02:43.000Z'),
+      /EXAM_REVIEW_CLAIM_NOT_OWNED/,
+      'the previous owner immediately loses draft write access after transfer'
+    );
     const newOwnerQueue = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T12:02:43.000Z');
     assert.equal(newOwnerQueue[0].questions[0].answer, 'Meine Antwort');
     assert.equal(newOwnerQueue[0].draftGrades.text, 400, 'saved drafts remain available after transfer');
