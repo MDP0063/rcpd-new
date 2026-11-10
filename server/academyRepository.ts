@@ -819,7 +819,8 @@ export class AcademyRepository {
       for (const course of courseMasters) {
         if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
             (course.availability !== 'available' &&
-              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length))) continue;
+              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length) &&
+              !course.materialReviewAwaitingActivation)) continue;
         const courseVersion = await tx.get<AcademyCourseVersionDoc>(
           'academy_course_versions', course.currentPublishedVersionId
         );
@@ -843,6 +844,8 @@ export class AcademyRepository {
             detectedIso: version.publishedIso
           }]
         };
+        delete affected.materialReviewAwaitingActivation;
+        delete affected.materialReviewAwaitingActivation;
         assertValid(validateCourseMaster(affected));
         affectedCourses.push(affected);
       }
@@ -1084,6 +1087,7 @@ export class AcademyRepository {
       const publishedMaster: AcademyCourseMasterDoc = { ...nextMaster };
       if (current.materialReviewVersionRequired?.length) {
         delete publishedMaster.materialReviewVersionRequired;
+        publishedMaster.materialReviewAwaitingActivation = true;
       }
       assertValid(validateCourseMaster(publishedMaster));
       await tx.update('academy_courses', courseId, publishedMaster);
@@ -1284,6 +1288,7 @@ export class AcademyRepository {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
       }
       const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
+      if (availability === 'available') delete next.materialReviewAwaitingActivation;
       assertValid(validateCourseMaster(next));
       await tx.update('academy_courses', courseId, next);
       return next;
@@ -1348,6 +1353,9 @@ export class AcademyRepository {
       };
       if (remaining.length === 0) delete next.materialReviewPending;
       if (requiredVersions.length === 0) delete next.materialReviewVersionRequired;
+      if (next.availability === 'available' || decision === 'stay_offline') {
+        delete next.materialReviewAwaitingActivation;
+      }
       assertValid(validateCourseMaster(next));
       await tx.update('academy_courses', courseId, next);
       return next;
