@@ -1306,7 +1306,9 @@ export class AcademyRepository {
           : item
       );
       if (nextPending.every((item, index) => item === pending[index])) return;
-      await tx.update('academy_courses', courseId, { ...current, materialReviewPending: nextPending });
+      const updated: AcademyCourseMasterDoc = { ...current, materialReviewPending: nextPending };
+      assertValid(validateCourseMaster(updated));
+      await tx.update('academy_courses', courseId, updated);
     });
   }
   async resolveMaterialReview(
