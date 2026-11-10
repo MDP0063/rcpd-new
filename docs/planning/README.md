@@ -4,6 +4,7 @@
 
 **Stand:** 10.11.2026  
 **Letzter verifizierter `main`-Stand:** `99d7694abaa0be0254ce10f910c103a8d0db3d2b`  
+**Letzte Fortschrittsaktualisierung:** Examiner-Claims und serverseitige Bewertungs-Drafts (PR #149/#150).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
 
 ## Verbindliche Lesereihenfolge
