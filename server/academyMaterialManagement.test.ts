@@ -19,7 +19,10 @@ import type {
   AcademyMaterialDocumentTypeAssignmentDoc,
   AcademyMaterialDraftDoc,
   AcademyMaterialMasterDoc,
-  AcademyMaterialVersionDoc
+  AcademyMaterialVersionDoc,
+  AcademyProgramMasterDoc,
+  AcademyProgramDraftDoc,
+  AcademyProgramVersionDoc
 } from '../src/types/academy.ts';
 
 const now = '2026-11-06T12:00:00.000Z';
@@ -236,6 +239,33 @@ test('course publication requires an exact existing published material version',
   await repository.publishCourseVersion(courseMaster.id, courseVersion, publishedCourse, 2, 'admin-1');
   assert.equal((await repository.get<AcademyCourseVersionDoc>('academy_course_versions', courseVersion.id))?.chapters[0].materialReferences[0].materialVersionId, materialVersion.id);
 
+  const programMaster: AcademyProgramMasterDoc = {
+    id: 'program-1', code: 'OPS-PROGRAM', ownerUid: 'admin-1',
+    publicationStatus: 'draft', availability: 'available',
+    latestVersionNumber: 0, workingRevision: 1, createdIso: now, updatedIso: now
+  };
+  const programDraft: AcademyProgramDraftDoc = {
+    id: programMaster.id, programId: programMaster.id, title: 'Operations program', summary: '',
+    learningObjectives: [1, 2, 3].map(n => ({ id: 'objective-' + n, description: 'Learning objective ' + n })),
+    courseReferences: [{ courseId: courseMaster.id, requirement: 'required', order: 0 }],
+    workingRevision: 1, updatedIso: now, updatedByUid: 'admin-1'
+  };
+  const programVersion: AcademyProgramVersionDoc = {
+    id: programMaster.id + '__v1', programId: programMaster.id, versionNumber: 1,
+    title: programDraft.title, summary: programDraft.summary,
+    learningObjectives: programDraft.learningObjectives, courseReferences: programDraft.courseReferences,
+    publishedIso: later, publishedByUid: 'admin-1', createdIso: later, createdByUid: 'admin-1',
+    workingRevision: 1
+  };
+  const publishedProgram: AcademyProgramMasterDoc = {
+    ...programMaster, publicationStatus: 'published', currentPublishedVersionId: programVersion.id,
+    latestVersionNumber: 1, updatedIso: later
+  };
+  await repository.createProgramWithDraft(programMaster, programDraft);
+  await repository.publishProgramVersion(programMaster.id, programVersion, publishedProgram, 1, 'admin-1');
+  const pinnedProgramParticipation = await repository.startProgramParticipation('learner-pinned', programMaster.id, later);
+  assert.equal(pinnedProgramParticipation.requiredCoursePins[0].courseVersionId, courseVersion.id);
+
   const alreadyStarted = await repository.startCourseParticipation('learner-existing', courseMaster.id, later);
   const changedDraft: AcademyMaterialDraftDoc = {
     ...draft, title: 'Operations Handbook – revised', content: '# Operations\\n\\nRevised guidance.',
@@ -258,6 +288,10 @@ test('course publication requires an exact existing published material version',
   assert.deepEqual(await repository.get('academy_course_participations', alreadyStarted.id), alreadyStarted);
   await assert.rejects(
     repository.startCourseParticipation('learner-new', courseMaster.id, later),
+    /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
+  );
+  await assert.rejects(
+    repository.startCourseParticipation('learner-pinned', courseMaster.id, later),
     /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
   );
 
