@@ -70,3 +70,10 @@
 - CI-Ergebnis für PR #132 ergänzt: TypeScript-Prüfung, Produktionsbuild und 435/435 Tests erfolgreich; Browser-/Live-Firestore-Prüfung bleibt ausstehend.
 
 - Ergänzender Reader-Schutz: nicht gespeicherte Notizänderungen werden beim Wechsel der Materialfassung vor dem Zurücksetzen des alten Reader-Kontexts zum Speichern eingereiht. CI auf Commit `b9cf2268340a2d9b2f44de14e5726322a85f30c3` erfolgreich: Lint, TypeScript/Build und 435/435 Tests; optionaler Render-Deploy übersprungen.
+
+
+## 10.11.2026 – Academy Reader-Notizen und Mehrfachquellen
+
+- PR #132 (`feat(academy): integrate private notes and bookmarks in reader`) wurde nach erfolgreicher GitHub-CI (435/435 Tests, TypeScript und Produktionsbuild) und Codeprüfung gemergt. Der optionale Render-Deploy-Hook war übersprungen; der tatsächliche Render-Deploymentstatus wurde nicht verifiziert. Eine manuelle Browser-/Live-Firestore-Prüfung ist nicht erfolgt.
+- Folgeabschnitt begonnen: mehrere konkrete Materialversionen pro privater Notiz. Legacy-Notizen bleiben über ihre bisherige Einzelreferenz lesbar; neue API-Projektionen normalisieren diese zu einer Quellenliste.
+- Reader erhält Verknüpfen/Lösen zusätzlicher Quellen; die zentrale Notizenansicht zeigt die Quellenliste. Keine Änderung an Freigaberegeln für Quelldokumente, keine PDF-Infrastruktur und keine neuen externen Dienste.
