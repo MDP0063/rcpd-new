@@ -3623,7 +3623,7 @@ async function startServer() {
         return;
       }
 
-      if (exam.examFormat !== 'structured_quiz') {
+      if (!canSelfSubmitLegacyExamResult(exam.examFormat)) {
         res.status(409).json({
           error: 'Diese ältere interaktive Prüfung kann nicht automatisch ausgewertet werden. Selbst gemeldete Ergebnisse werden nicht als bestanden übernommen.'
         });
