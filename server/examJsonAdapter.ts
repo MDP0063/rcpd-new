@@ -316,6 +316,7 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
     if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('EXAM_ANONYMIZATION_INPUT_INVALID');
     return this.runExclusive(async () => {
       const state = await this.readState();
+      if (state.maintenanceMode) throw new Error('EXAM_MAINTENANCE_ACTIVE');
       const working = clone(state);
       for (const collection of EXAM_COLLECTIONS) {
         for (const [key, document] of Object.entries(working.collections[collection])) {
