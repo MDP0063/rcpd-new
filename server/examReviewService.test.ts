@@ -55,6 +55,12 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:02:45.000Z');
     const warningQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:32:45.000Z');
     assert.ok(warningQueue[0].reviewClaim?.warningStartedAtIso, '30 minutes of inactivity starts the warning phase');
+    await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:32:46.000Z');
+    const unchangedWarningClaim = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(unchangedWarningClaim?.reviewClaim?.warningStartedAtIso, '2026-11-05T12:32:45.000Z',
+      'repeating claim must not clear an inactivity warning');
+    assert.equal(unchangedWarningClaim?.reviewClaim?.lastActivityAtIso, '2026-11-05T12:02:45.000Z',
+      'repeating claim must not count as actual work');
     await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:33:00.000Z');
     const resumedClaim = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(resumedClaim?.reviewClaim?.warningStartedAtIso, undefined, 'actual work resets the warning');
