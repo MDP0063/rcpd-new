@@ -2553,9 +2553,8 @@ async function startServer() {
       announcements: dbState.announcements || [],
       messages: (dbState.messages || []).filter(
         m =>
-          m.recipientUid === caller.uid ||
-          m.senderUid === caller.uid ||
-          m.recipientUid === 'ALL'
+          !(m.deletedByUids || []).includes(caller.uid) &&
+          (m.recipientUid === caller.uid || m.senderUid === caller.uid || m.recipientUid === 'ALL')
       ),
       requests: canSeeAllRequests
         ? dbState.requests || []
@@ -2974,21 +2973,93 @@ async function startServer() {
     }
 
     const target = dbState.accounts.find(a => a.uid === targetUid);
+    if (!target) {
+      res.status(404).json({ error: 'Das zu löschende Konto wurde nicht gefunden.' });
+      return;
+    }
+    const identities = [target.uid, target.username, target.publicProfile.displayName, target.publicProfile.badgeNumber]
+      .filter((value): value is string => typeof value === 'string' && value.length > 0);
+    const anonymizeText = (value: string): string =>
+      identities.reduce((result, identity) => result.split(identity).join('Gelöschtes Konto'), value);
+
     dbState.accounts = dbState.accounts.filter(a => a.uid !== targetUid);
     dbState.progress = (dbState.progress || []).filter(p => p.userId !== targetUid);
-    for (const evt of dbState.events || []) {
-      evt.attendees = (evt.attendees || []).filter(a => a.uid !== targetUid);
+    for (const application of dbState.applications || []) {
+      if (application.applicantUid !== targetUid) continue;
+      application.applicantUid = 'deleted-account';
+      application.applicantName = 'Gelöschtes Konto';
+      application.characterName = 'Gelöschtes Konto';
+      application.dateOfBirth = '';
+      application.discordTag = '';
+      application.priorExperience = '';
+      application.scenarioResponse = '';
     }
-    if (target) {
-      appendAuditLog(
-        dbState,
-        caller,
-        'ACCOUNT_ROLE',
-        'Dienstkonto gelöscht',
-        `${target.publicProfile.displayName} (${target.username})`,
-        `Konto mit Dienstnummer ${target.publicProfile.badgeNumber} wurde dauerhaft entfernt.`
-      );
+    for (const request of dbState.requests || []) {
+      if (request.requesterUid === targetUid) {
+        request.requesterUid = 'deleted-account';
+        request.requesterName = 'Gelöschtes Konto';
+        request.requesterBadge = '';
+      }
+      if (request.reviewerUid === targetUid) {
+        request.reviewerUid = 'deleted-account';
+        request.reviewerName = 'Gelöschtes Konto';
+      }
+      request.title = anonymizeText(request.title);
+      request.targetDetail = anonymizeText(request.targetDetail);
+      request.justification = anonymizeText(request.justification);
+      if (request.reviewerComment) request.reviewerComment = anonymizeText(request.reviewerComment);
     }
+    // Remove private conversations involving the deleted account for every participant.
+    dbState.messages = (dbState.messages || []).filter(message =>
+      message.senderUid !== targetUid && message.recipientUid !== targetUid
+    );
+    dbState.notifications = (dbState.notifications || []).filter(notification =>
+      notification.recipientUid !== targetUid && !notification.readByUids.includes(targetUid)
+    );
+    for (const announcement of dbState.announcements || []) {
+      if (announcement.authorUid === targetUid) {
+        announcement.authorUid = 'deleted-account';
+        announcement.authorName = 'Gelöschtes Konto';
+      }
+      announcement.title = anonymizeText(announcement.title);
+      announcement.content = anonymizeText(announcement.content);
+    }
+    for (const event of dbState.events || []) {
+      event.attendees = (event.attendees || []).filter(attendee => attendee.uid !== targetUid);
+      if (event.instructorUid === targetUid) {
+        event.instructorUid = 'deleted-account';
+        event.instructorName = 'Gelöschtes Konto';
+      }
+      event.title = anonymizeText(event.title);
+      event.description = anonymizeText(event.description);
+    }
+    for (const module of dbState.modules || []) {
+      if (module.authorUid === targetUid) module.authorUid = 'deleted-account';
+      module.title = anonymizeText(module.title);
+      module.contentMarkdown = anonymizeText(module.contentMarkdown);
+    }
+    for (const exam of dbState.exams || []) {
+      if (exam.authorUid === targetUid) exam.authorUid = 'deleted-account';
+      exam.title = anonymizeText(exam.title);
+    }
+    for (const log of dbState.auditLogs || []) {
+      if (log.actorUid === targetUid) {
+        log.actorUid = 'deleted-account';
+        log.actorName = 'Gelöschtes Konto';
+        log.actorBadge = '';
+      }
+      log.targetLabel = anonymizeText(log.targetLabel);
+      log.details = anonymizeText(log.details);
+    }
+    for (const event of dbState.events || []) {
+      event.attendees = (event.attendees || []).filter(attendee => attendee.uid !== targetUid);
+    }
+    appendAuditLog(
+      dbState, caller, 'ACCOUNT_ROLE',
+      'Dienstkonto gelöscht und personenbezogene Daten anonymisiert',
+      'Gelöschtes Konto',
+      'Das Konto wurde entfernt. Bewerbungs-, Antrags- und Auditnachweise bleiben anonymisiert erhalten; private Nachrichten und persönliche Fortschrittsdaten wurden entfernt.'
+    );
     saveDatabaseAndWait(dbState).then(() => {
       res.json({ deleted: true });
     }).catch(next);
@@ -4818,16 +4889,12 @@ jobs:
       return;
     }
 
-    if (
-      caller.publicProfile.role !== 'admin' &&
-      msg.senderUid !== caller.uid &&
-      msg.recipientUid !== caller.uid
-    ) {
-      res.status(403).json({ error: 'Keine Berechtigung zum Löschen dieser Nachricht.' });
+    if (msg.senderUid !== caller.uid && msg.recipientUid !== caller.uid && caller.publicProfile.role !== 'admin') {
+      res.status(403).json({ error: 'Keine Berechtigung zum Ausblenden dieser Nachricht.' });
       return;
     }
-
-    dbState.messages = (dbState.messages || []).filter(m => m.id !== id);
+    if (!Array.isArray(msg.deletedByUids)) msg.deletedByUids = [];
+    if (!msg.deletedByUids.includes(caller.uid)) msg.deletedByUids.push(caller.uid);
     persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
     return;
   });
