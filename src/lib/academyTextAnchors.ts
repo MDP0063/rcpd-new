@@ -45,7 +45,9 @@ export function createTextAnchor(selection: TextAnchorSelection, sourceText: str
 }
 
 export function resolveTextAnchor(sourceText: string, anchor: AcademyPrivateNoteTextAnchor): TextAnchorResolution {
-  if (!anchor.quote || anchor.quote.length > MAX_QUOTE_LENGTH) return { status: 'missing' };
+  if (typeof anchor.quote !== 'string' || !anchor.quote || anchor.quote.length > MAX_QUOTE_LENGTH ||
+      typeof anchor.prefix !== 'string' || typeof anchor.suffix !== 'string' ||
+      anchor.prefix.length > CONTEXT_LENGTH || anchor.suffix.length > CONTEXT_LENGTH) return { status: 'missing' };
   const matches: number[] = [];
   let from = 0;
   while (from <= sourceText.length - anchor.quote.length) {
