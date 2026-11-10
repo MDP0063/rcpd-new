@@ -69,8 +69,8 @@ export function validateApplicationSubmission(input: unknown): string | null {
   ) {
     return 'Das Geburtsdatum muss ein gültiges Datum sein.';
   }
-  if (input.penalCodeAck !== true) {
-    return 'Bitte bestätige die Richtigkeit deiner Angaben.';
+  if (typeof input.penalCodeAck !== 'boolean') {
+    return 'Die Bestätigung der Angaben ist ungültig.';
   }
   return null;
 }
