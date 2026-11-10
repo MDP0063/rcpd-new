@@ -232,3 +232,13 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
 - Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
 - Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
+
+
+### Ergebnisfreigabe und Kursabschlussnachweis – Umsetzung nach Beschluss vom 10.11.2026
+- Erstfreigabe: manuell, sofern keine explizite Prüfungskonfiguration einen anderen Modus festlegt.
+- Freigabeoberfläche und Rollenprüfung müssen in die bestehende Admin-/Examiner-Berechtigungsstruktur passen; die Prüfungswerkstatt bleibt Admin-only. Keine neue Rolle oder Berechtigung aus Bequemlichkeit ergänzen.
+- Korrekturen nach Freigabe müssen atomar den Status „erneute Freigabe erforderlich“ setzen und die frühere Freigabe historisch erhalten.
+- Automatische Freigabe darf nur nach vollständig abgeschlossener Bewertung erfolgen und nur bei ausdrücklich konfiguriertem Modus. Der fehlende Konfigurationswert bleibt manuell.
+- Kursabschlussnachweis muss Prüfung, Versuch, Teilnehmer, `final_exam`, Ergebnisstatus, Freigabestatus und Kursversionskontext serverseitig verifizieren. Auswahlregel bei mehreren Versuchen muss deterministisch und gegen veraltete/ungültige Versuche abgesichert sein.
+- Prüfungs- und Academy-Repositories sind getrennte Speichertransaktionen. Die Integrationslösung muss Race Conditions und Teilfehler so behandeln, dass ein nicht freigegebenes oder korrigiertes Ergebnis niemals fälschlich einen Kursabschluss erzeugt.
+- Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt; CI-Tests müssen alle Freigabe-, Korrektur-, Datenschutz- und Nachweisfälle abdecken.
