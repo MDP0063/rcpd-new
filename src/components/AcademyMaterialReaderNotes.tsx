@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
@@ -31,6 +31,19 @@ function serializeDraft(draft: NoteDraft): string {
 function parseTags(value: string): string[] {
   return [...new Set(value.split(',').map(tag => tag.trim()).filter(Boolean))].slice(0, 20).map(tag => tag.slice(0, 40));
 }
+
+const markdownComponents = {
+  h1: ({ children, node: _node, ...props }: any) => <h1 {...props} className="my-4 text-xl font-bold text-slate-900 dark:text-white">{children}</h1>,
+  h2: ({ children, node: _node, ...props }: any) => <h2 {...props} className="my-3 text-lg font-semibold text-slate-900 dark:text-white">{children}</h2>,
+  h3: ({ children, node: _node, ...props }: any) => <h3 {...props} className="my-3 text-base font-semibold text-slate-900 dark:text-white">{children}</h3>,
+  p: ({ children, node: _node, ...props }: any) => <p {...props} className="my-2 leading-6 text-slate-800 dark:text-slate-200">{children}</p>,
+  ul: ({ children, node: _node, ...props }: any) => <ul {...props} className="my-2 list-disc space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ul>,
+  ol: ({ children, node: _node, ...props }: any) => <ol {...props} className="my-2 list-decimal space-y-1 pl-6 text-slate-800 dark:text-slate-200">{children}</ol>,
+  blockquote: ({ children, node: _node, ...props }: any) => <blockquote {...props} className="my-3 border-l-4 border-slate-300 pl-3 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
+  a: ({ children, href, node: _node, ...props }: any) => <a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline dark:text-sky-300">{children}</a>,
+  code: ({ children, node: _node, ...props }: any) => <code {...props} className="rounded bg-slate-200 px-1 py-0.5 text-xs dark:bg-slate-800">{children}</code>,
+  img: ({ alt }: any) => <span className="text-xs text-slate-500 dark:text-slate-400">Externe Bilder sind in privaten Notizen deaktiviert{alt ? ' (' + alt + ')' : ''}.</span>
+} satisfies Components;
 
 export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
@@ -321,7 +334,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   return (
     <details className="rounded-lg border border-slate-200 dark:border-slate-800">
-      <summary className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
+      <summary className="cursor-pointer px-3 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 marker:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
         Persönliche Notizen und Lesezeichen
         <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
           {notes.length} gespeichert · nur für dich sichtbar
@@ -377,8 +390,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                 </button>
               </div>
               {preview ? (
-                <article className="prose prose-sm max-w-none rounded-md border border-slate-200 bg-white p-3 dark:prose-invert dark:border-slate-700 dark:bg-slate-900">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
+                <article className="max-w-none rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>{content}</ReactMarkdown>
                 </article>
               ) : (
                 <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} onChange={event => setContent(event.target.value)} />
