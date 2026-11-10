@@ -3,6 +3,11 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 
 interface CorrectionGrade { questionId: string; pointsEarnedMilli: number }
+interface PendingRelease {
+  id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
+  submittedAtIso: string; assessmentStage: 'test' | 'final_exam'; status: 'passed' | 'failed';
+  finalScoreBasisPoints: number | null; resultReleaseStatus: 'unreleased' | 'pending_rerelease';
+}
 interface CorrectionAudit {
   reviewerUid: string;
   atIso: string;
@@ -46,8 +51,9 @@ const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2
 const formatPoints = (milli: number) => (milli / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
 const formatScore = (basisPoints: number | null) => basisPoints === null ? '–' : `${(basisPoints / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`;
 
-export const ExamCorrectionCenter: React.FC = () => {
+export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = ({ canReleaseResults = false }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [pendingReleases, setPendingReleases] = useState<PendingRelease[]>([]);
   const [grades, setGrades] = useState<Record<string, Record<string, string>>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -72,8 +78,19 @@ export const ExamCorrectionCenter: React.FC = () => {
         return next;
       });
     }
+    if (canReleaseResults) {
+      const releaseResponse = await apiFetch<{ releases: PendingRelease[] }>(API_ENDPOINTS.ADMIN_EXAM_RESULT_RELEASES, { cache: 'no-store' });
+      if (releaseResponse.ok && releaseResponse.data && Array.isArray(releaseResponse.data.releases)) {
+        setPendingReleases(releaseResponse.data.releases);
+      } else {
+        setPendingReleases([]);
+        setError(releaseResponse.error || 'Die ausstehenden Ergebnisfreigaben konnten nicht geladen werden.');
+      }
+    } else {
+      setPendingReleases([]);
+    }
     setLoading(false);
-  }, []);
+  }, [canReleaseResults]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -117,6 +134,23 @@ export const ExamCorrectionCenter: React.FC = () => {
     await load();
   };
 
+  const release = async (item: PendingRelease) => {
+    setSavingId(item.id);
+    setError('');
+    setNotice('');
+    const response = await apiFetch(
+      API_ENDPOINTS.ADMIN_EXAM_RESULT_RELEASE(item.examId, item.id),
+      { method: 'POST', body: JSON.stringify({}) }
+    );
+    setSavingId('');
+    if (!response.ok) {
+      setError(response.error || 'Das Prüfungsergebnis konnte nicht freigegeben werden.');
+      return;
+    }
+    setNotice('Das Prüfungsergebnis wurde offiziell freigegeben.');
+    await load();
+  };
+
   return <section className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -128,6 +162,14 @@ export const ExamCorrectionCenter: React.FC = () => {
 
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
+
+    {canReleaseResults && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div><h3 className="font-bold text-slate-900 dark:text-white">Ausstehende Ergebnisfreigaben</h3><p className="mt-1 text-xs text-slate-500">Nur endgültig bewertete Ergebnisse können hier offiziell für Teilnehmer freigegeben werden. Korrekturen nach einer früheren Freigabe erfordern eine erneute Freigabe.</p></div>
+      {pendingReleases.length === 0 ? <p className="text-sm text-slate-500">Keine ausstehenden Ergebnisfreigaben.</p> : pendingReleases.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
+        <div><p className="font-semibold text-slate-900 dark:text-white">{item.examTitle} · {item.attemptCourseCode}</p><p className="text-xs text-slate-500">{item.userName} · {item.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {new Date(item.submittedAtIso).toLocaleString('de-DE')}</p><p className="text-xs text-slate-500">{item.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {formatScore(item.finalScoreBasisPoints)}{item.resultReleaseStatus === 'pending_rerelease' ? ' · erneute Freigabe nach Korrektur' : ''}</p></div>
+        <button type="button" disabled={Boolean(savingId)} onClick={() => void release(item)} className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingId === item.id ? 'Gibt frei …' : 'Ergebnis freigeben'}</button>
+      </div>)}
+    </section>}
 
     {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div>
       : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine abgeschlossenen manuellen Bewertungen vorhanden.</div>
