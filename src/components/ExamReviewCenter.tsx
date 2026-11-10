@@ -36,6 +36,7 @@ export const ExamReviewCenter: React.FC = () => {
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
   const pendingDrafts = useRef<Record<string, { review: ReviewItem; question: ReviewQuestion; value: string }>>({});
+  const inFlightDraftSaves = useRef<Record<string, { pending: { review: ReviewItem; question: ReviewQuestion; value: string }; promise: Promise<boolean> }>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
 
   const load = useCallback(async () => {
@@ -106,6 +107,12 @@ export const ExamReviewCenter: React.FC = () => {
   const draftKey = (reviewId: string, questionId: string) => `${reviewId}:${questionId}`;
 
   const saveDraftNow = async (key: string): Promise<boolean> => {
+    const inFlight = inFlightDraftSaves.current[key];
+    if (inFlight) {
+      await inFlight.promise;
+      if (pendingDrafts.current[key] && pendingDrafts.current[key] !== inFlight.pending) return saveDraftNow(key);
+      return !pendingDrafts.current[key];
+    }
     const pending = pendingDrafts.current[key];
     if (!pending) return true;
     const trimmed = pending.value.trim();
@@ -116,18 +123,31 @@ export const ExamReviewCenter: React.FC = () => {
       return false;
     }
     setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'saving' }));
-    const response = await apiFetch<{ draftGrades: Record<string, number>; revision: number; updatedAtIso: string | null }>(
-      API_ENDPOINTS.ACADEMY_EXAM_REVIEW_DRAFT(pending.review.examId, pending.review.id),
-      { method: 'PUT', body: JSON.stringify({ questionId: pending.question.questionId, pointsEarnedMilli }) }
-    );
-    if (!response.ok || !response.data) {
-      setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'error' }));
-      setError(response.error || 'Der Bewertungsentwurf konnte nicht gespeichert werden. Prüfe deine Zuständigkeit.');
-      return false;
-    }
-    if (pendingDrafts.current[key] === pending) delete pendingDrafts.current[key];
-    setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'saved' }));
-    return true;
+    const promise = (async (): Promise<boolean> => {
+      try {
+        const response = await apiFetch<{ draftGrades: Record<string, number>; revision: number; updatedAtIso: string | null }>(
+          API_ENDPOINTS.ACADEMY_EXAM_REVIEW_DRAFT(pending.review.examId, pending.review.id),
+          { method: 'PUT', body: JSON.stringify({ questionId: pending.question.questionId, pointsEarnedMilli }) }
+        );
+        if (!response.ok || !response.data) {
+          setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'error' }));
+          setError(response.error || 'Der Bewertungsentwurf konnte nicht gespeichert werden. Prüfe deine Zuständigkeit.');
+          return false;
+        }
+        setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'saved' }));
+        return true;
+      } catch {
+        setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'error' }));
+        setError('Der Bewertungsentwurf konnte wegen eines Verbindungsfehlers nicht gespeichert werden.');
+        return false;
+      }
+    })();
+    inFlightDraftSaves.current[key] = { pending, promise };
+    const saved = await promise;
+    if (inFlightDraftSaves.current[key]?.promise === promise) delete inFlightDraftSaves.current[key];
+    if (saved && pendingDrafts.current[key] === pending) delete pendingDrafts.current[key];
+    if (pendingDrafts.current[key] && pendingDrafts.current[key] !== pending) return saveDraftNow(key);
+    return saved;
   };
 
   const scheduleDraftSave = (review: ReviewItem, question: ReviewQuestion, value: string) => {
