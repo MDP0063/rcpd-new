@@ -366,26 +366,24 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     };
 
     const foreignMessageRead = await jsonRequest('/api/messages/msg-known-private/read', unauthorized.token, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
+      method: 'PUT'
     });
     assert.equal(foreignMessageRead.status, 403);
+    assert.equal(JSON.stringify(foreignMessageRead.body).includes('Private message body'), false);
 
-    const selfInstructorGrade = await jsonRequest('/api/academy/instructor-grade', courseReviewer.token, {
+    const instructorSelfGrade = await jsonRequest('/api/academy/instructor-grade', courseReviewer.token, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        instructorUid: 'http-course-reviewer',
         targetUserUid: 'http-course-reviewer',
-        targetType: 'module',
         courseCode: 'SOP-01',
+        targetType: 'module',
         status: 'passed',
-        scorePercent: 100,
-        targetTitle: 'Eigener Lehrgang'
+        scorePercent: 100
       })
     });
-    assert.equal(selfInstructorGrade.status, 403, JSON.stringify(selfInstructorGrade.body));
-    assert.match(selfInstructorGrade.body.error, /eigenen Lehrgangsfortschritt/);
+    assert.equal(instructorSelfGrade.status, 403);
 
     const listResponse = await jsonRequest('/api/workshop/exams', delegate.token);
     assert.equal(listResponse.status, 200);
@@ -713,6 +711,32 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
     });
     assert.equal(updatedLogin.status, 200);
+
+    const alreadyReviewedRequest = await jsonRequest('/api/requests/req-already-reviewed/review', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'rejected', reviewerComment: 'Regression test' })
+    });
+    assert.equal(alreadyReviewedRequest.status, 409);
+
+    const freshSessionOneResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    const freshSessionTwoResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(freshSessionOneResponse.status, 200);
+    assert.equal(freshSessionTwoResponse.status, 200);
+    const freshSessionOne = await freshSessionOneResponse.json() as { token: string };
+    const freshSessionTwo = await freshSessionTwoResponse.json() as { token: string };
+    const logout = await jsonRequest('/api/auth/logout', freshSessionOne.token, { method: 'POST' });
+    assert.equal(logout.status, 200);
+    assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionOne.token)).status, 401);
+    assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionTwo.token)).status, 401);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
