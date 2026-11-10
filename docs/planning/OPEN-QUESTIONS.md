@@ -37,7 +37,8 @@
 
 ### Reader, Notizen und Lesezeichen
 - Konkrete Toolbar- und Werkzeuganordnung erst in der Designphase.
-- Seiten-/Textstellenreferenzen bei PDF-Layoutänderungen und Warnung bei nicht mehr eindeutig zuordenbaren Positionen.
+- **Für Markdown und Code mit dieser Freigabe umgesetzt:** versionsgebundene Textanker je Quelle, eindeutige Wiederfindung und Warnung bei fehlenden/mehrdeutigen Treffern.
+- PDF-Seiten-/Textstellenreferenzen bei Layoutänderungen bleiben offen und zurückgestellt, bis PDF-Infrastruktur wieder aufgenommen wird.
 - Sync-Konflikte und fehlgeschlagene Speicherung korrekt anzeigen; keine stillen Datenverluste.
 - Auswirkungen von Kontoentfernung und gesetzlichen Löschpflichten auf persönliche Notizen konkret datenschutzrechtlich/technisch prüfen.
 - Geräte-/Browserunterstützung und mobile Reader-Qualität prüfen.
