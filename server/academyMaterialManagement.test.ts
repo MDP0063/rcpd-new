@@ -339,6 +339,14 @@ test('course publication requires an exact existing published material version',
   assert.equal(revisedCourse?.availability, 'unavailable', 'publishing a corrected version does not silently reactivate the course');
   await repository.setCourseAvailability(courseMaster.id, 'available', later);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id))?.availability, 'available');
+
+  await repository.archiveMaterial(master.id, 2, 'admin-1', 'Fachlich nicht mehr aktuell.', later);
+  await assert.rejects(
+    repository.startCourseParticipation('learner-pinned', courseMaster.id, later),
+    /ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE/
+  );
+  assert.deepEqual(await repository.get('academy_course_participations', alreadyStarted.id), alreadyStarted,
+    'archiving a material does not mutate an already-started course participation');
 }));
 
 test('archiving a material requires a reason and retains all published versions', async () => withRepository(async repository => {
