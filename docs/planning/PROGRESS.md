@@ -45,7 +45,7 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 - Mehrere offene Materialprüfungen pro Kurs, ohne bereits offene Einträge zu überschreiben.
 - Idempotente, wiederholbare In-App-Benachrichtigung an den vorhandenen Kursverantwortlichen; deterministische Notification-ID und persistierter Zustellstatus.
 - Serverblock für neue Kursstarts, auch wenn ein bestehender Programmpin eine Kursversion vorgibt; bereits gestartete Teilnahmen bleiben lesbar.
-- Archivierte Materialreferenzen verhindern neue Kursstarts, ohne historische Zugriffe laufender Teilnahmen zu entziehen.
+- Archivierte Materialreferenzen setzen betroffene veröffentlichte Kurse ebenfalls offline und verlangen vor einer Reaktivierung eine neue Kursversion ohne die archivierte Referenz; neue Programmpins werden dadurch verhindert, laufende Teilnahmen behalten ihren Zugriff.
 - Entscheidung „Kurs offline lassen“ setzt eine zusätzliche Versionsanforderung: vor Reaktivierung muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; die neue Kursversion aktiviert den Kurs nicht automatisch.
 - Kursverwaltung erhält explizite Aktionen zur Prüfung, Freigabe und späteren Reaktivierung.
 
