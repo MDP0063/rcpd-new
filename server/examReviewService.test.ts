@@ -149,6 +149,18 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(submission.finalScoreBasisPoints, 7500);
     assert.equal(submission.manuallyEarnedPointsMilli, 500);
     assert.deepEqual((await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewDraft, {}, 'final grading clears the saved draft');
+    const completedAttemptNotification = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+      .find(item => item.event.action === 'auto_released' && item.event.reason === 'inactivity');
+    assert.ok(completedAttemptNotification);
+    await markExamReviewNotificationDelivered(
+      repository, completedAttemptNotification!.attemptId, completedAttemptNotification!.eventIndex,
+      completedAttemptNotification!.recipientUid, '2026-11-05T13:48:01.000Z'
+    );
+    assert.equal(
+      (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+        .some(item => item.event.action === 'auto_released' && item.event.reason === 'inactivity'),
+      false, 'notification delivery markers remain writable after the attempt is graded'
+    );
     assert.equal((await listExamReviews(repository, ['PC-101'], 'grader')).length, 0);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }]), /EXAM_REVIEW_NOT_PENDING/);
     assert.equal((await listOwnExamResults(repository, 'student-1')).length, 1);
