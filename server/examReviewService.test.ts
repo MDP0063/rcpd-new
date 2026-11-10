@@ -81,8 +81,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const afterDisconnect = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T13:06:00.000Z');
     assert.equal(afterDisconnect[0].reviewClaim, null, 'disconnect releases the claim after at most 30 minutes');
     await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T13:06:30.000Z');
-    await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [], '2026-11-05T12:03:00.000Z'), /EXAM_MANUAL_GRADES_INCOMPLETE/);
-    await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 1001 }]), /EXAM_MANUAL_GRADES_INVALID/);
+    await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [], '2026-11-05T13:07:00.000Z'), /EXAM_MANUAL_GRADES_INCOMPLETE/);
+    await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 1001 }], '2026-11-05T13:07:00.000Z'), /EXAM_MANUAL_GRADES_INVALID/);
+    await assert.rejects(
+      gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T13:47:00.000Z'),
+      /EXAM_REVIEW_CLAIM_NOT_OWNED/,
+      'a claim past the inactivity grace period cannot be used to submit a grade'
+    );
+    const expiredClaimAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(expiredClaimAttempt?.reviewClaim, null);
+    assert.equal(expiredClaimAttempt?.reviewClaimHistory?.at(-1)?.action, 'auto_released');
+    await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T13:47:30.000Z');
 
     const attemptBeforeSelfReview = await repository.get('exam_attempts', 'review-attempt');
     await assert.rejects(
@@ -92,7 +101,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(await repository.get('exam_attempts', 'review-attempt'), attemptBeforeSelfReview);
     assert.equal((await repository.get('exam_attempts', 'review-attempt'))?.status, 'pending_review');
 
-    const submission = await gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T13:07:00.000Z');
+    const submission = await gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T13:48:00.000Z');
     assert.equal(submission.status, 'passed');
     assert.equal(submission.finalScoreBasisPoints, 7500);
     assert.equal(submission.manuallyEarnedPointsMilli, 500);
