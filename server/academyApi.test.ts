@@ -1043,8 +1043,10 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       'available', 'restricted', 'unavailable'
     ]);
     assert.equal('content' in sourceStatuses.body!.sources[0], false, 'source status must never return material content');
+    assert.equal((await request(`/api/academy/notes/${sourceStatusNoteId}/source-status`)).status, 401);
     assert.equal((await request(`/api/academy/notes/${sourceStatusNoteId}/source-status`, admin)).status, 404,
       'another account must not inspect a private note source status');
+    assert.equal((await request(`/api/academy/notes/${sourceStatusNoteId}`, officer, { method: 'DELETE' })).status, 204);
 
     const staleNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({ expectedRevision: 1, content: 'Veralteter Schreibversuch' })
