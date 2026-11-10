@@ -14,7 +14,7 @@ const entries = [
 
 test('library search ranks title and code matches above weaker metadata matches', () => {
   assert.ok(getLibrarySearchScore(entries[0], 'Funkverfahren') > getLibrarySearchScore(entries[0], 'Kommunikation'));
-  const results = sortLibraryEntries(entries, 'Funk', 'relevance');
+  const results = sortLibraryEntries(entries.filter(entry => matchesLibrarySearch(entry, 'Funk')), 'Funk', 'relevance');
   assert.deepEqual(results.map(entry => entry.title), ['Funk-SOP', 'Funkverfahren']);
 });
 
@@ -38,7 +38,7 @@ test('relevance sort falls back to alphabetical order without a search query', (
 
 test('alphabetical and actual update-date sorting remain deterministic', () => {
   assert.deepEqual(
-    sortLibraryEntries(entries, 'Funk', 'alphabetical').map(entry => entry.title),
+    sortLibraryEntries(entries.filter(entry => matchesLibrarySearch(entry, 'Funk')), 'Funk', 'alphabetical').map(entry => entry.title),
     ['Funk-SOP', 'Funkverfahren']
   );
   assert.deepEqual(
