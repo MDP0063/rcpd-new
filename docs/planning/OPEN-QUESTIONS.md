@@ -230,5 +230,5 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
 - Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
 - Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
-- Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen sowie abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen).
+- Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
 - Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
