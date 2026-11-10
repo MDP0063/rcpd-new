@@ -608,21 +608,6 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     });
     assert.equal(validApplication.status, 200);
 
-    const passwordUpdate = await jsonRequest('/api/admin/accounts/http-delegate', admin.token, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminUid: 'http-admin', password: 'Updated-Password-For-Test-123' })
-    });
-    assert.equal(passwordUpdate.status, 200);
-    const revokedOldSession = await jsonRequest('/api/portal/heartbeat', delegate.token);
-    assert.equal(revokedOldSession.status, 401);
-    const updatedLogin = await fetch(`${baseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
-    });
-    assert.equal(updatedLogin.status, 200);
-
     const traineeState = await jsonRequest('/api/portal/state?uid=http-trainee', trainee.token);
     assert.equal(traineeState.status, 200);
     const traineeModule = traineeState.body.modules.find((module: Record<string, unknown>) => module.id === 'http-rookie-material');
@@ -691,6 +676,21 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     });
     assert.equal(activeCodeExamProgress.status, 200);
     assert.equal(activeCodeExamProgress.body.passed, true);
+
+    const passwordUpdate = await jsonRequest('/api/admin/accounts/http-delegate', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(passwordUpdate.status, 200);
+    const revokedOldSession = await jsonRequest('/api/portal/heartbeat', delegate.token);
+    assert.equal(revokedOldSession.status, 401);
+    const updatedLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(updatedLogin.status, 200);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
