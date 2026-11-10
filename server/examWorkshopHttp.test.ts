@@ -511,6 +511,11 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       method: 'POST'
     });
     assert.equal(claimResponse.status, 200, JSON.stringify(claimResponse.body));
+    const adminQueueDuringClaim = await jsonRequest('/api/academy/exam-reviews', admin.token);
+    assert.equal(adminQueueDuringClaim.body.reviews.length, 1);
+    assert.deepEqual(adminQueueDuringClaim.body.reviews[0].questions, [], 'claimed answers stay hidden from other reviewers');
+    assert.equal(adminQueueDuringClaim.body.reviews[0].reviewClaim.reviewerName, 'HttpCourseReviewer');
+    assert.equal('reviewerUid' in adminQueueDuringClaim.body.reviews[0].reviewClaim, false);
     assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
 
     const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, courseReviewer.token, {
