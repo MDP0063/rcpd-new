@@ -1032,6 +1032,7 @@ async function startServer() {
   // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'same-origin');
     const origin = req.headers.origin;
     if (origin && allowedOrigins.includes(origin)) {
@@ -4324,7 +4325,8 @@ jobs:
           events: dbState.events || [],
           auditLogs: dbState.auditLogs || [],
           notifications: dbState.notifications || [],
-          deploymentConfig: cfg
+          // Deploy Hook URLs are bearer secrets and must not be included in downloadable backups.
+          deploymentConfig: { ...cfg, renderDeployHookUrl: '' }
         }
       };
 
@@ -4576,6 +4578,8 @@ jobs:
         deploymentConfig: {
           ...currentCfg,
           ...incomingCfg,
+          // A backup never transports the deploy secret; retain the secret configured on this instance.
+          renderDeployHookUrl: currentCfg.renderDeployHookUrl,
           lastBackupRestoreIso: nowIso,
           updatedIso: nowIso
         }
@@ -5431,8 +5435,7 @@ jobs:
         `Kategorie: ${target.category}`
       );
     }
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
   });
 
   // ==========================================================================
