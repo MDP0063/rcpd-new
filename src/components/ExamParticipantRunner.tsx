@@ -513,24 +513,26 @@ export const ExamParticipantRunner: React.FC = () => {
   if (submission) {
     const passed = submission.status === 'passed';
     const pending = submission.status === 'pending_review';
+    const awaitingRelease = submission.status === 'awaiting_release';
     return (
       <div className={cardClass + ' space-y-5 p-5 sm:p-7'}>
         <div className="flex items-start gap-3">
-          <div className={`rounded-xl p-3 ${pending ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}`}>
-            {pending ? <Clock3 className="h-6 w-6" /> : passed ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+          <div className={`rounded-xl p-3 ${pending || awaitingRelease ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}`}>
+            {pending || awaitingRelease ? <Clock3 className="h-6 w-6" /> : passed ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prüfung abgeschlossen · {submission.attemptCourseCode}</div>
             <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{submission.title}</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{pending ? 'Deine Antworten enthalten Freitext und werden von einem Ausbilder bewertet. Das endgültige Ergebnis folgt nach der Korrektur.' : passed ? 'Du hast die erforderliche Bestehensgrenze erreicht.' : 'Die erforderliche Bestehensgrenze wurde nicht erreicht.'}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{awaitingRelease ? 'Deine Abgabe ist eingegangen. Das Bewertungsergebnis wird erst angezeigt, wenn es offiziell freigegeben wurde.' : pending ? 'Deine Antworten enthalten Freitext und werden von einem Ausbilder bewertet. Das endgültige Ergebnis folgt nach der Korrektur und Freigabe.' : passed ? 'Du hast die erforderliche Bestehensgrenze erreicht.' : 'Die erforderliche Bestehensgrenze wurde nicht erreicht.'}</p>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        {!awaitingRelease && <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Ergebnis</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{(resultScore / 100).toLocaleString('de-DE')}%</div></div>
           <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Erreichte Punkte</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{formatPoints(submission.automaticallyEarnedPointsMilli + submission.manuallyEarnedPointsMilli)} / {formatPoints(submission.totalPossiblePointsMilli)}</div></div>
           <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Versuch</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">#{submission.attemptNumber}</div></div>
         </div>
-        {submission.assessmentStage === 'test' && submission.questionResults.length > 0 && (
+        }
+        {!awaitingRelease && submission.assessmentStage === 'test' && submission.questionResults.length > 0 && (
           <div className="space-y-3">
             <h3 className="font-semibold text-slate-900 dark:text-white">Auswertung der Übungsfragen</h3>
             {submission.questionResults.map((result, index) => (
