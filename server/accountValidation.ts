@@ -27,3 +27,23 @@ export function isWhitelistPromotionRole(value: unknown): value is Exclude<Offic
 export function isRankChangeRequestRole(value: unknown): value is 'rookie' | 'officer' | 'colonel' {
   return typeof value === 'string' && rankChangeRequestRoles.has(value);
 }
+
+export interface AdministratorRoleRecord {
+  uid: string;
+  publicProfile: {
+    role: OfficerRole;
+  };
+}
+
+/** Prevents a role change from removing the final administrator account. */
+export function wouldRemoveLastAdministrator(
+  accounts: ReadonlyArray<AdministratorRoleRecord>,
+  targetUid: string,
+  nextRole: OfficerRole
+): boolean {
+  const target = accounts.find(account => account.uid === targetUid);
+  if (!target || target.publicProfile.role !== 'admin' || nextRole === 'admin') {
+    return false;
+  }
+  return accounts.filter(account => account.publicProfile.role === 'admin').length <= 1;
+}
