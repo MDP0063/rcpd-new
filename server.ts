@@ -2956,7 +2956,7 @@ async function startServer() {
   // 7. ADMIN ONLY: Delete Account
   app.delete('/api/admin/accounts/:targetUid', (req, res, next) => {
     const { targetUid } = req.params;
-    const adminUid = String(req.query.adminUid || '');
+    const adminUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
 
@@ -4744,7 +4744,7 @@ jobs:
 
   app.delete('/api/announcements/:id', (req, res, next) => {
     const { id } = req.params;
-    const actorUid = String(req.query.actorUid || '');
+    const actorUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
     const callerPerms =
