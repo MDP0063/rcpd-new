@@ -22,8 +22,9 @@
 - **In `main` umgesetzt:** Kursveröffentlichung prüft serverseitig, ob jede exakte Materialversion existiert, zum Material gehört, veröffentlicht und nicht archiviert ist.
 - **Mit PR #62 in `main` umgesetzt:** Teilnehmer-Reader mit serverseitiger Prüfung der Kursteilnahme, exakter Kurs-/Materialversionsbindung, rollenabhängigem Zugriff, sicherer Markdown-Darstellung und Codeanzeige ohne Ausführung.
 - **Mit PR #62 in `main` umgesetzt:** Materialauswahl im Kurseditor. Kapitel wählen veröffentlichte Fassungen und speichern die konkrete Versions-ID unveränderlich.
-- **Weiter offen für den Folgeabschnitt:** Notizen/Lesezeichen im Reader mit automatischer Speicherung, versionsgebundenen Textankern und sichtbarem Speicherstatus sowie geräteübergreifende Wiederaufnahme der letzten Leseposition.
-- **Weiter offen:** Suche und Filter für die neue Materialstruktur sowie belastbare Anzeige-/Sortiermetadaten.
+- **In `main` umgesetzt:** private Reader-Notizen/Lesezeichen mit Autosave (PR #132), Mehrfachquellen (PR #134) und versionsgebundene Textanker für Markdown/Code (PR #136).
+- **Mit Draft-PR #139 in Umsetzung:** lokale Wiederaufnahme der letzten Leseposition, isoliert nach Teilnahme und exakter Materialversion. Geräte-/browserübergreifende Synchronisierung bleibt ausdrücklich offen.
+- **Mit PR #137 in `main` umgesetzt:** globale Teilnehmer-Suche, Relevanzsortierung sowie Kategorie-/Dokumenttypfilter; zusätzliche Volltext-/OCR-Suche bleibt zurückgestellt/offen.
 - Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung und konkrete Auswirkungen einer neuen Fassung auf laufende Kursentwürfe abschließen.
 - Bestehende Legacy-Materialien bleiben unberührt, bis ein gesonderter Migrations-/Kompatibilitätsplan beschlossen und umgesetzt ist.
 
@@ -37,7 +38,8 @@
 
 ### Reader, Notizen und Lesezeichen
 - Konkrete Toolbar- und Werkzeuganordnung erst in der Designphase.
-- **Für Markdown und Code mit dieser Freigabe umgesetzt:** versionsgebundene Textanker je Quelle, eindeutige Wiederfindung und Warnung bei fehlenden/mehrdeutigen Treffern.
+- **Für Markdown und Code mit PR #136 umgesetzt:** versionsgebundene Textanker je Quelle, eindeutige Wiederfindung und Warnung bei fehlenden/mehrdeutigen Treffern.
+- **Mit Draft-PR #139 in Umsetzung:** lokale Leseposition wird je Teilnahme und exakter Materialversion gespeichert und beim erneuten Öffnen wiederhergestellt; keine serverseitige oder geräteübergreifende Synchronisierung.
 - PDF-Seiten-/Textstellenreferenzen bei Layoutänderungen bleiben offen und zurückgestellt, bis PDF-Infrastruktur wieder aufgenommen wird.
 - Sync-Konflikte und fehlgeschlagene Speicherung korrekt anzeigen; keine stillen Datenverluste.
 - Auswirkungen von Kontoentfernung und gesetzlichen Löschpflichten auf persönliche Notizen konkret datenschutzrechtlich/technisch prüfen.
