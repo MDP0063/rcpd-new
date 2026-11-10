@@ -424,6 +424,36 @@ test('course publication requires an exact existing published material version',
   );
   assert.deepEqual(await repository.get('academy_course_participations', alreadyStarted.id), alreadyStarted,
     'archiving a material does not mutate an already-started course participation');
+
+  const archiveCleanupDraft: AcademyCourseDraftDoc = {
+    ...updatedCourseDraft,
+    chapters: updatedCourseDraft.chapters.map(chapter => ({
+      ...chapter, materialReferences: chapter.materialReferences.filter(reference => reference.materialId !== master.id)
+    })),
+    workingRevision: 5, updatedIso: '2026-11-06T12:14:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveCourseDraft(courseMaster.id, archiveCleanupDraft, 4, 'admin-1');
+  const archiveCleanupVersion: AcademyCourseVersionDoc = {
+    id: courseMaster.id + '__v3', courseId: courseMaster.id, versionNumber: 3,
+    title: archiveCleanupDraft.title, summary: archiveCleanupDraft.summary,
+    learningObjectives: archiveCleanupDraft.learningObjectives, chapters: archiveCleanupDraft.chapters,
+    completionRequirements: archiveCleanupDraft.completionRequirements,
+    publishedIso: '2026-11-06T12:15:00.000Z', publishedByUid: 'admin-1',
+    createdIso: '2026-11-06T12:15:00.000Z', createdByUid: 'admin-1', workingRevision: 5
+  };
+  const archiveCleanupMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  const archiveCleanupNextMaster: AcademyCourseMasterDoc = {
+    ...archiveCleanupMaster!, publicationStatus: 'published',
+    currentPublishedVersionId: archiveCleanupVersion.id, latestVersionNumber: 3,
+    updatedIso: archiveCleanupVersion.publishedIso!
+  };
+  await repository.publishCourseVersion(courseMaster.id, archiveCleanupVersion, archiveCleanupNextMaster, 5, 'admin-1');
+  const awaitingReactivation = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(awaitingReactivation?.materialReviewVersionRequired, undefined);
+  assert.equal(awaitingReactivation?.materialReviewAwaitingActivation, true);
+  await repository.setCourseAvailability(courseMaster.id, 'available', later);
+  const newProgramParticipation = await repository.startProgramParticipation('learner-new-program-after-cleanup', programMaster.id, later);
+  assert.equal(newProgramParticipation.requiredCoursePins[0].courseVersionId, archiveCleanupVersion.id);
 }));
 
 test('archiving a material requires a reason and retains all published versions', async () => withRepository(async repository => {
