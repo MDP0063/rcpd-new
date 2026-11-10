@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 behebt im Draft einen probabilistischen ID-Kollisionstest; PR #139 ergänzt im Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 behebt im Draft einen probabilistischen ID-Kollisionstest; PR #140 ergänzt im Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `c39c44706e73ca6b813c51e334182b186f72b41c` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
-**Aktueller Umsetzungsstand:** PR #138 (`fix/id-random-id-entropy`) ist Draft gegen `main`; PR #139 (`feature/academy-reader-position`) ist Draft gegen `main` und enthält vorübergehend auch den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden, damit dieser Commit nicht doppelt in die Historie gelangt. Kein Merge und kein Deployment durch diese Arbeit.
+**Aktueller Umsetzungsstand:** PR #138 (`fix/id-random-id-entropy`) ist Draft gegen `main`; PR #140 (`feature/academy-reader-position-main`) ist Draft gegen `main` und enthält vorübergehend auch den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden, damit dieser Commit nicht doppelt in die Historie gelangt. Kein Merge und kein Deployment durch diese Arbeit.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -223,7 +223,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Der Reader lädt Inhalte ausschließlich über eine serverseitig geprüfte Route, die die exakte Materialversion in der gepinnten Kursversion verifiziert. Rollenbeschränkungen werden serverseitig geprüft.
 - Markdown wird mit `react-markdown`, `remark-gfm` und `rehype-sanitize` ohne Raw-HTML-Durchleitung dargestellt. Code bleibt Quelltext und wird nicht ausgeführt.
 - PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler. TypeScript-Prüfung, Produktionsbuild und 333 Tests liefen erfolgreich; eine manuelle Browserprüfung wurde nicht durchgeführt.
-- Notizen/Lesezeichen, Autosave, Mehrfachquellen und stabile Textanker sind mit PR #132/#134/#136 umgesetzt. Die lokale Lesepositions-Wiederaufnahme wird mit Draft-PR #139 ergänzt; geräte-/browserübergreifende Synchronisierung bleibt offen.
+- Notizen/Lesezeichen, Autosave, Mehrfachquellen und stabile Textanker sind mit PR #132/#134/#136 umgesetzt. Die lokale Lesepositions-Wiederaufnahme wird mit Draft-PR #140 ergänzt; geräte-/browserübergreifende Synchronisierung bleibt offen.
 
 
 ## Vorübergehende Sperre neuer PDF-Uploads
@@ -333,7 +333,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
 
 
-## 10.11.2026 – Lokale Wiederaufnahme der Academy-Reader-Leseposition (Draft-PR #139)
+## 10.11.2026 – Lokale Wiederaufnahme der Academy-Reader-Leseposition (Draft-PR #140)
 
 - Die beschlossene Speicherung/Wiederaufnahme der letzten Leseposition wird zunächst lokal im selben Browser/Gerät umgesetzt.
 - Speicheridentität umfasst Teilnahme, Materialstamm und die exakte unveränderliche Materialversion. Eine Position wird nicht auf eine andere Teilnahme oder Materialfassung übertragen.
@@ -341,4 +341,4 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Lokaler Speicher wird fail-soft behandelt: nicht verfügbare Browser-Speicherung verhindert nicht das Öffnen/Lesen.
 - Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
 - Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
-- Draft-PR #139 zielt auf `main` und enthält vorübergehend den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden. Kein Merge/Deployment. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus.
+- Draft-PR #140 zielt auf `main` und enthält vorübergehend den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden. Kein Merge/Deployment. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus.
