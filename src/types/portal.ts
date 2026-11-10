@@ -390,9 +390,10 @@ export interface CalendarEventDoc {
 export interface PortalNotificationDoc {
   id: string;
   recipientUid: string; // specific uid or 'ALL'
-  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review' | 'academy_material_review';
+  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review' | 'academy_material_review' | 'exam_review_assignment' | 'exam_review_warning' | 'exam_review_auto_released';
   title: string;
   message: string;
+  linkTarget?: { type: 'exam_review'; examId: string; attemptId: string };
   linkSection:
     | 'dashboard'
     | 'announcements'
