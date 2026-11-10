@@ -163,7 +163,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-other-course', 'HttpOtherCourse', 'officer', otherCoursePermissions),
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
-      makeAccount('http-applicant', 'HttpApplicant', 'officer')
+      makeAccount('http-applicant', 'HttpApplicant', 'officer'),
+      makeAccount('http-trainee', 'HttpTrainee', 'trainee')
     ],
     applications: [{
       id: 'app-already-reviewed',
@@ -180,7 +181,82 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerFeedback: 'Accepted',
       updatedIso: '2026-11-10T08:00:00.000Z'
     }],
-    modules: [], exams: [], progress: [], announcements: [],
+    modules: [{
+      id: 'http-rookie-material',
+      title: 'Rookie-only material',
+      code: 'SOP-LOCK',
+      category: 'SOP & Policy',
+      minClearance: 3,
+      requiredRole: 'rookie',
+      embedType: 'document',
+      contentMarkdown: 'Protected material body',
+      externalUrl: 'https://example.test/protected-material',
+      pdfDataUrl: '',
+      pdfFileName: '',
+      interactiveCode: 'window.protectedMaterial = true;',
+      estimatedMinutes: 10,
+      authorUid: 'http-admin',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }],
+    exams: [
+      {
+        id: 'http-active-test',
+        title: 'Active HTTP code test',
+        moduleCode: 'SOP-01',
+        assessmentStage: 'test',
+        minClearance: 1,
+        passingScore: 75,
+        timeLimitMinutes: 15,
+        examFormat: 'interactive_code',
+        questionsPayload: '[]',
+        interactiveWidgetCode: '',
+        authorUid: 'http-admin',
+        status: 'published'
+      },
+      {
+        id: 'http-rookie-final',
+        title: 'Rookie final exam',
+        moduleCode: 'SOP-01',
+        assessmentStage: 'final_exam',
+        minClearance: 3,
+        passingScore: 75,
+        timeLimitMinutes: 15,
+        examFormat: 'interactive_code',
+        questionsPayload: '[]',
+        interactiveWidgetCode: '',
+        authorUid: 'http-admin',
+        status: 'published'
+      },
+      {
+        id: 'http-draft-test',
+        title: 'Draft HTTP test',
+        moduleCode: 'SOP-01',
+        assessmentStage: 'test',
+        minClearance: 1,
+        passingScore: 75,
+        timeLimitMinutes: 15,
+        examFormat: 'interactive_code',
+        questionsPayload: '[]',
+        interactiveWidgetCode: '',
+        authorUid: 'http-admin',
+        status: 'draft'
+      },
+      {
+        id: 'http-high-clearance-test',
+        title: 'High clearance HTTP test',
+        moduleCode: 'SOP-01',
+        assessmentStage: 'test',
+        minClearance: 8,
+        passingScore: 75,
+        timeLimitMinutes: 15,
+        examFormat: 'interactive_code',
+        questionsPayload: '[]',
+        interactiveWidgetCode: '',
+        authorUid: 'http-admin',
+        status: 'published'
+      }
+    ],
+    progress: [], announcements: [],
     messages: [{
       id: 'msg-known-private',
       senderUid: 'http-admin',
@@ -281,6 +357,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const courseReviewer = await login(baseUrl, 'HttpCourseReviewer');
     const unauthorized = await login(baseUrl, 'HttpUnauthorized');
     const applicant = await login(baseUrl, 'HttpApplicant');
+    const trainee = await login(baseUrl, 'HttpTrainee');
     const jsonRequest = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -545,6 +622,75 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
     });
     assert.equal(updatedLogin.status, 200);
+
+    const traineeState = await jsonRequest('/api/portal/state?uid=http-trainee', trainee.token);
+    assert.equal(traineeState.status, 200);
+    const traineeModule = traineeState.body.modules.find((module: Record<string, unknown>) => module.id === 'http-rookie-material');
+    assert.ok(traineeModule);
+    assert.equal(traineeModule.requiredRole, 'rookie');
+    assert.equal(traineeModule.title, 'Rookie-only material');
+    assert.equal(traineeModule.contentMarkdown, '');
+    assert.equal(traineeModule.externalUrl, '');
+    assert.equal(traineeModule.interactiveCode, '');
+    assert.equal(traineeState.body.exams.some((exam: Record<string, unknown>) =>
+      ['http-rookie-final', 'http-draft-test', 'http-high-clearance-test'].includes(String(exam.id))
+    ), false);
+
+    const delegateState = await jsonRequest('/api/portal/state?uid=http-delegate', delegate.token);
+    assert.equal(delegateState.status, 200);
+    const accessibleModule = delegateState.body.modules.find((module: Record<string, unknown>) => module.id === 'http-rookie-material');
+    assert.equal(accessibleModule.contentMarkdown, 'Protected material body');
+    assert.equal(accessibleModule.externalUrl, 'https://example.test/protected-material');
+    assert.equal(accessibleModule.interactiveCode, 'window.protectedMaterial = true;');
+    assert.equal(delegateState.body.exams.some((exam: Record<string, unknown>) => exam.id === 'http-active-test'), true);
+    assert.equal(delegateState.body.exams.some((exam: Record<string, unknown>) => exam.id === 'http-rookie-final'), true);
+    assert.equal(delegateState.body.exams.some((exam: Record<string, unknown>) =>
+      ['http-draft-test', 'http-high-clearance-test'].includes(String(exam.id))
+    ), false);
+
+    const traineeModuleProgress = await jsonRequest('/api/progress', trainee.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-trainee', targetId: 'http-rookie-material', targetType: 'module', scorePercent: 100 })
+    });
+    assert.equal(traineeModuleProgress.status, 403);
+
+    const officerModuleProgress = await jsonRequest('/api/progress', delegate.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-delegate', targetId: 'http-rookie-material', targetType: 'module', scorePercent: 100 })
+    });
+    assert.equal(officerModuleProgress.status, 200);
+
+    const traineeFinalExamProgress = await jsonRequest('/api/progress', trainee.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-trainee', targetId: 'http-rookie-final', targetType: 'final_exam', scorePercent: 100 })
+    });
+    assert.equal(traineeFinalExamProgress.status, 403);
+
+    const draftExamProgress = await jsonRequest('/api/progress', delegate.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-delegate', targetId: 'http-draft-test', targetType: 'test', scorePercent: 100 })
+    });
+    assert.equal(draftExamProgress.status, 403);
+
+    const highClearanceExamProgress = await jsonRequest('/api/progress', delegate.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-delegate', targetId: 'http-high-clearance-test', targetType: 'test', scorePercent: 100 })
+    });
+    assert.equal(highClearanceExamProgress.status, 403);
+
+    // The existing manual self-assessment remains available for an active, accessible code test.
+    const activeCodeExamProgress = await jsonRequest('/api/progress', delegate.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'http-delegate', targetId: 'http-active-test', targetType: 'test', scorePercent: 100 })
+    });
+    assert.equal(activeCodeExamProgress.status, 200);
+    assert.equal(activeCodeExamProgress.body.passed, true);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
