@@ -108,7 +108,7 @@
 - Browser-Speicherfehler bleiben fail-soft; Positionen werden nicht serverseitig synchronisiert.
 - Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
 - Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
-- Draft-PR #141 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
+- Draft-PR #141 basiert auf dem aktualisierten `main` nach PR #138; der ID-Fix ist nicht Teil dieses PR-Diffs. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
 
 
 ## 2026-11-10 – CI-Korrektur und Status der Reader-Leseposition
