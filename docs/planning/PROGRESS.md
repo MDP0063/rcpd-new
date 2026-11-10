@@ -355,3 +355,13 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
 - Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
 - PR #141 wurde nach erfolgreicher CI (451/451 Tests, TypeScript und Produktionsbuild) per Squash gemergt. Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung wurde nicht durchgeführt.
+
+
+## 10.11.2026 – Ergebnisfreigabe und verpflichtender Prüfungsnachweis: Beschlussstand
+
+- Der Standard für eine Prüfung ohne explizite Ergebnisfreigabe-Konfiguration ist verbindlich **manuelle Erstfreigabe**.
+- Ein Pflichtnachweis `required_assessment` ist ausschließlich durch einen endgültig bewerteten, bestandenen und offiziell freigegebenen Versuch der Prüfungsart `final_exam` erfüllt.
+- Nicht bewertete, manuell unvollständig bewertete, fehlgeschlagene oder nicht freigegebene Versuche zählen nicht.
+- Korrekturen nach einer Freigabe müssen die bisherige Freigabe bis zur erneuten kontrollierten Freigabe unwirksam machen; Audit-Historie bleibt erhalten.
+- Teilnehmer sehen bis zur Freigabe keinen Pass/Fail-Status und keine Ergebnisdetails.
+- Umsetzung ist auf Branch `feature/exam-result-release` begonnen. Noch keine Anwendungscodeänderung, kein PR und kein Deployment. Browser-/Live-Firestore-Tests bleiben bis zum gemeinsamen Academy-Test zurückgestellt.
