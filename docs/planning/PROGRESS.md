@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) und Mehrfachquellen pro privater Notiz (PR #134) gemergt. Als nächster beschlossener Schritt folgt der Status nicht zugänglicher bzw. entfernter Notizquellen. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) und Mehrfachquellen pro privater Notiz (PR #134) gemergt. Aktuelle Umsetzung: bedarfsgesteuerte Statusprüfung versionierter Notizquellen; maßgeblich ist der tatsächliche Zugriff auf die konkrete Fassung, nicht eine frühere Kursteilnahme. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand von `main`:** `24d70684488582a227b69e6321856a5d38826f7a` (Merge PR #134).  
-**Aktueller Umsetzungsbranch:** derzeit keiner; nächster Arbeitsschritt ist die Anzeige des Zugriffs-/Verfügbarkeitsstatus persönlicher Notizquellen.
+**Aktueller Basisstand:** `main` zum Start dieser Umsetzung (Branch `feature/academy-private-note-source-status`).  
+**Aktueller Umsetzungsbranch:** `feature/academy-private-note-source-status`; Statusanzeige und serverseitige Prüfung privater Notizquellen werden umgesetzt.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -306,3 +306,13 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 **Prüfergebnis:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle sowie CI geprüft. PR #134 wurde nach erfolgreicher GitHub-CI (436/436 Tests, TypeScript und Produktionsbuild) und Codeprüfung gemergt. Der optionale Render-Deploy-Schritt wurde übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung wurden nicht verifiziert.
 
 **Noch offen und bereits beschlossen:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Stabile Seiten-/Textstellenanker samt Warnung bei nicht mehr eindeutig zuordenbaren Referenzen bleiben ebenfalls beschlossen, aber abhängig von einer belastbaren Ankerstrategie.
+
+
+## 10.11.2026 – Status privater Notizquellen (in Umsetzung)
+
+- Der Quellenstatus wird bei Bedarf pro einzelner privater Notiz geladen; eine globale Prüfung aller Quellen beim Laden der Notizliste wird vermieden.
+- Serverstatus: `available` bei existierender konkreter veröffentlichter Materialfassung und aktueller Rollenfreigabe; `restricted` bei existierender, aber rollenbedingt nicht zugänglicher Fassung; `unavailable` bei fehlendem Materialstamm oder fehlender/inkonsistenter Versionsreferenz.
+- Archivierte Materialstämme bzw. historische Fassungen gelten nicht allein wegen der Archivierung als entfernt.
+- Die Statusroute ist auf den Eigentümer der privaten Notiz beschränkt und liefert ausschließlich Quell-IDs und Status, niemals Materialinhalte.
+- Frühere/beendete Kursteilnahme ist nicht ausschlaggebend, wenn der Nutzer die konkrete Fassung aktuell direkt lesen darf.
+- Tests und CI-Ergebnisse werden nach Abschluss des PR ergänzt.
