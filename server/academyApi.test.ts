@@ -1000,6 +1000,18 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(duplicateNoteSource.status, 400);
 
+    const removeOriginalSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({
+        expectedRevision: 3,
+        sources: [{ materialId: 'manual-2', materialVersionId: 'manual-2__v3' }]
+      })
+    });
+    assert.equal(removeOriginalSource.status, 200, JSON.stringify(removeOriginalSource.body));
+    assert.deepEqual(removeOriginalSource.body!.note.sources, [
+      { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+    ]);
+    assert.equal(removeOriginalSource.body!.note.materialId, 'manual-1');
+
     const staleNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({ expectedRevision: 1, content: 'Veralteter Schreibversuch' })
     });
