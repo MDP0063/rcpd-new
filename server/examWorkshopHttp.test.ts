@@ -156,6 +156,9 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   const courseReviewerPermissions = getDefaultGranularPermissions('officer');
   courseReviewerPermissions.canGradeAssignedCourses = true;
   courseReviewerPermissions.assignedCourseCodes = ['SOP-01'];
+  const secondReviewerPermissions = getDefaultGranularPermissions('officer');
+  secondReviewerPermissions.canGradeAssignedCourses = true;
+  secondReviewerPermissions.assignedCourseCodes = ['SOP-01'];
   const portalState = {
     version: 3,
     accounts: [
@@ -163,6 +166,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-delegate', 'HttpDelegate', 'officer', delegatePermissions),
       makeAccount('http-other-course', 'HttpOtherCourse', 'officer', otherCoursePermissions),
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
+      makeAccount('http-second-reviewer', 'HttpSecondReviewer', 'officer', secondReviewerPermissions),
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
       makeAccount('http-applicant', 'HttpApplicant', 'officer'),
       makeAccount('http-deleted-account', 'HttpDeletedAccount', 'officer'),
@@ -432,6 +436,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const admin = await login(baseUrl, 'HttpAdmin');
     const otherCourse = await login(baseUrl, 'HttpOtherCourse');
     const courseReviewer = await login(baseUrl, 'HttpCourseReviewer');
+    const secondReviewer = await login(baseUrl, 'HttpSecondReviewer');
     const unauthorized = await login(baseUrl, 'HttpUnauthorized');
     const applicant = await login(baseUrl, 'HttpApplicant');
     const trainee = await login(baseUrl, 'HttpTrainee');
@@ -525,6 +530,52 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(adminQueueDuringClaim.body.reviews[0].reviewClaim.reviewerName, 'HttpCourseReviewer');
     assert.equal('reviewerUid' in adminQueueDuringClaim.body.reviews[0].reviewClaim, false);
     assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
+
+    const invalidTargetTransfer = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/transfer`, courseReviewer.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-other-course', reason: 'Fachliche Übergabe' })
+    });
+    assert.equal(invalidTargetTransfer.status, 400, JSON.stringify(invalidTargetTransfer.body));
+    const transferResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/transfer`, courseReviewer.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-second-reviewer', reason: 'Spezialzuständigkeit' })
+    });
+    assert.equal(transferResponse.status, 200, JSON.stringify(transferResponse.body));
+    const oldOwnerAfterTransfer = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
+    assert.deepEqual(oldOwnerAfterTransfer.body.reviews[0].questions, []);
+    const newOwnerAfterTransfer = await jsonRequest('/api/academy/exam-reviews', secondReviewer.token);
+    assert.equal(newOwnerAfterTransfer.body.reviews[0].questions[0].answer, 'Meine HTTP Antwort');
+    assert.equal(newOwnerAfterTransfer.body.reviews[0].draftGrades['http-free-text'], 2500);
+    const secondReviewerState = await jsonRequest('/api/portal/state?uid=http-second-reviewer', secondReviewer.token);
+    const newOwnerNotification = secondReviewerState.body.notifications.find((item: Record<string, any>) =>
+      item.type === 'exam_review_assignment' && item.linkTarget?.attemptId === 'http-review-attempt'
+    );
+    assert.ok(newOwnerNotification, 'the new reviewer receives an assignment notification');
+    assert.equal(newOwnerNotification.linkTarget.type, 'exam_review');
+    assert.equal(newOwnerNotification.linkTarget.examId, TEST_EXAM_ID);
+    const oldOwnerState = await jsonRequest('/api/portal/state?uid=http-course-reviewer', courseReviewer.token);
+    assert.equal(oldOwnerState.body.notifications.some((item: Record<string, any>) =>
+      item.type === 'exam_review_assignment' && item.linkTarget?.attemptId === 'http-review-attempt'
+    ), true, 'the previous reviewer receives a transfer notification');
+
+    const forbiddenReassignment = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/reassign`, courseReviewer.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-course-reviewer', reason: 'Nicht berechtigt' })
+    });
+    assert.equal(forbiddenReassignment.status, 403);
+    const reassignmentResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/reassign`, admin.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-course-reviewer', reason: 'Administrative Neuverteilung' })
+    });
+    assert.equal(reassignmentResponse.status, 200, JSON.stringify(reassignmentResponse.body));
+    const previousReviewerState = await jsonRequest('/api/portal/state?uid=http-second-reviewer', secondReviewer.token);
+    assert.equal(previousReviewerState.body.notifications.some((item: Record<string, any>) =>
+      item.type === 'exam_review_assignment' && item.message.includes('administrativ')
+    ), true, 'the previous reviewer receives an administrative reassignment notification');
+    const currentReviewerState = await jsonRequest('/api/portal/state?uid=http-course-reviewer', courseReviewer.token);
+    assert.equal(currentReviewerState.body.notifications.some((item: Record<string, any>) =>
+      item.type === 'exam_review_assignment' && item.message.includes('zugewiesen')
+    ), true, 'the new reviewer receives an administrative assignment notification');
 
     const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
