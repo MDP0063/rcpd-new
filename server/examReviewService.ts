@@ -190,6 +190,61 @@ export async function markExamReviewDisconnected(
   });
 }
 
+export async function saveExamReviewDraft(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  questionId: string,
+  pointsEarnedMilli: number | null,
+  nowIso = new Date().toISOString()
+): Promise<{ draftGrades: Record<string, number>; revision: number; updatedAtIso: string | null }> {
+  if (!reviewerUid.trim() || !questionId.trim() || questionId.length > 128 ||
+      (pointsEarnedMilli !== null && (!Number.isSafeInteger(pointsEarnedMilli) || pointsEarnedMilli < 0))) {
+    throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+  }
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
+    if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber) {
+      throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    }
+    const question = pendingFreeTextQuestions(attempt, version).find(item => item.questionId === questionId);
+    if (!question || (pointsEarnedMilli !== null && pointsEarnedMilli > question.pointsMilli)) {
+      throw new Error('EXAM_MANUAL_GRADES_INVALID');
+    }
+    const draftGrades = { ...(attempt.reviewDraft || {}) };
+    if (pointsEarnedMilli === null) delete draftGrades[questionId];
+    else draftGrades[questionId] = pointsEarnedMilli;
+    const draftChanged = JSON.stringify(Object.entries(draftGrades).sort()) !==
+      JSON.stringify(Object.entries(attempt.reviewDraft || {}).sort());
+    const { warningStartedAtIso: _warning, disconnectedAtIso: _disconnected, ...claim } = attempt.reviewClaim;
+    const nextClaim = { ...claim, lastActivityAtIso: nowIso };
+    const revision = Number.isSafeInteger(attempt.reviewDraftRevision) ? Number(attempt.reviewDraftRevision) : 0;
+    const next: ExamAttemptRecord = {
+      ...attempt,
+      reviewClaim: nextClaim,
+      ...(draftChanged ? {
+        reviewDraft: draftGrades,
+        reviewDraftRevision: revision + 1,
+        reviewDraftUpdatedAtIso: nowIso,
+        reviewDraftUpdatedByUid: reviewerUid
+      } : {})
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return {
+      draftGrades,
+      revision: draftChanged ? revision + 1 : revision,
+      updatedAtIso: draftChanged ? nowIso : attempt.reviewDraftUpdatedAtIso ?? null
+    };
+  });
+}
+
 export interface ExamReviewItem {
   id: string;
   examId: string;
@@ -201,6 +256,8 @@ export interface ExamReviewItem {
   questions: ReturnType<typeof pendingFreeTextQuestions>;
   reviewClaim: { reviewerName: string; claimedAtIso: string; warningStartedAtIso?: string } | null;
   isClaimOwner: boolean;
+  draftGrades: Record<string, number>;
+  draftRevision: number;
 }
 
 export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string, nowIso = new Date().toISOString()): Promise<ExamReviewItem[]> {
@@ -229,7 +286,9 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
         claimedAtIso: attempt.reviewClaim.claimedAtIso,
         ...(attempt.reviewClaim.warningStartedAtIso ? { warningStartedAtIso: attempt.reviewClaim.warningStartedAtIso } : {})
       } : null,
-      isClaimOwner
+      isClaimOwner,
+      draftGrades: isClaimOwner ? (attempt.reviewDraft || {}) : {},
+      draftRevision: isClaimOwner && Number.isSafeInteger(attempt.reviewDraftRevision) ? Number(attempt.reviewDraftRevision) : 0
     });
   }
   return results;
@@ -278,6 +337,7 @@ export async function gradeExamAttempt(
     const finalized: ExamAttemptRecord = {
       ...attempt,
       reviewClaim: null,
+      reviewDraft: {},
       status: result.status,
       manuallyEarnedPointsMilli: result.manualEarnedPointsMilli,
       preliminaryScoreBasisPoints: result.preliminaryScoreBasisPoints,
