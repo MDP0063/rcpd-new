@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141 und #142 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149 und #150 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `7780cf2aa26c4b8160965d2f33de29219638823c` (Squash-Merge von PR #142).  
-**Aktueller Umsetzungsstand:** PR #141 und PR #142 wurden nach erfolgreicher GitHub-CI gemergt. PR #142: TypeScript/Produktionsbuild erfolgreich, 451/451 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der Main-Workflow einschließlich Render-Deploy-Hook war ebenfalls erfolgreich. Eine manuelle Browserprüfung und eine unabhängige Live-Runtime-Prüfung wurden nicht durchgeführt.
+**Aktueller Basisstand:** `main` bei `99d7694abaa0be0254ce10f910c103a8d0db3d2b` (Squash-Merge von PR #150).  
+**Aktueller Umsetzungsstand:** PR #149 und PR #150 wurden nach erfolgreicher GitHub-CI gemergt. PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich, 453/453 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde im PR-Lauf übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine manuelle Browserprüfung und eine Live-Firestore-Abnahme stehen weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -389,3 +389,16 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Es wird kein persistentes Academy-Nachweisduplikat erzeugt. Kursstatus und Lehrgangsfortschritt werden bei den relevanten Leseansichten dynamisch projiziert. Nach Korrektur mit `pending_rerelease` oder nach erneut freigegebenem Nichtbestehen fällt ein zuvor dynamisch projizierter Abschluss beim nächsten Lesen auf „in Bearbeitung“ zurück.
 - Bei fehlenden/ungültigen Prüfungsdaten oder Repositoryfehlern wird der Prüfungsnachweis nicht erfüllt (fail-closed).
 - PR #146 wurde per Squash gemergt; Main-Commit: `534b9df2fa6f5a312d27abb7edcc7a82792ceb3b`. CI auf PR-Head erfolgreich: TypeScript-Prüfung, Produktionsbuild und 453/453 Tests; PR-Template-Validierung erfolgreich. Der Main-Push-Workflow einschließlich optionalem Render-Deploy-Hook war ebenfalls erfolgreich; dies ist kein Nachweis der tatsächlichen Laufzeitgesundheit. Keine Browser-/Live-Firestore-Prüfung; diese bleibt für den gemeinsamen Academy-Abnahmetest vorgesehen.
+
+
+## 10.11.2026 – Persistente Examiner-Claims und serverseitige Bewertungs-Drafts (PR #149/#150 abgeschlossen)
+
+- PR #149 `feat(examiner): add persistent review claims` wurde per Squash gemergt; Main-Basis vor PR #150: `81223bbf858bc0ba280379474d5e527536b7cc58`.
+- Examiner-Claims sind serverseitig persistent. Claim, Freigabe und automatische Freigabe werden historisiert; die Bearbeitungsinhalte bleiben anderen Prüfern während eines fremden Claims verborgen.
+- Die festgelegten Inaktivitätsregeln sind serverseitig abgebildet: 30 Minuten bis zur Warnung, weitere 10 Minuten bis zur automatischen Freigabe; bei Disconnect höchstens 30 Minuten Claim-Haltezeit.
+- PR #150 `feat(examiner): persist per-question grading drafts` wurde per Squash gemergt; Main-Commit: `99d7694abaa0be0254ce10f910c103a8d0db3d2b`.
+- Einzelne Freitext-Bewertungsschritte werden als Draft serverseitig gespeichert. Die konkrete unveränderliche Prüfungsversion, offene Freitextfrage, Punkteobergrenze und aktuelle Claim-Zuständigkeit werden vor jedem Speichern geprüft. Draft-Punkte und vertrauliche Antworten werden anderen Prüfern nicht offengelegt; Teilnehmerprojektionen erhalten keine internen Draft-Daten.
+- Beim freiwilligen Freigeben kann der Prüfer gespeicherte Drafts behalten oder noch nicht gespeicherte lokale Eingaben verwerfen. Nach einem Disconnect ist ein ausdrücklicher neuer Claim erforderlich; vorher sind Draft-Speicherung und endgültige Bewertung gesperrt.
+- Wiederholte Claim-Anfragen verlängern die Inaktivitätsfrist nicht. Ablaufprüfungen erfolgen zusätzlich unmittelbar vor Freigabe und endgültiger Bewertung, damit ein veralteter Claim nicht allein deshalb nutzbar bleibt, weil noch keine Queue-Abfrage den Status aktualisiert hat.
+- GitHub-CI für PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
+- Nächste Schritte: verbleibende bereits beschlossene Examiner-Funktionen anhand von `DECISIONS.md` und Abschnitt 14 der Academy-Spezifikation prüfen und umsetzen. Keine neuen Features oder Rechte ableiten. Insbesondere Übergabe, administrative Neuzuweisung und zugehörige Benachrichtigungen bleiben nur dann nächste Umsetzungsschritte, wenn die dafür erforderlichen bestehenden Rollen-/Berechtigungsregeln und die offene technische Ausgestaltung ausreichend geklärt sind.
