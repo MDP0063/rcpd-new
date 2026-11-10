@@ -1274,3 +1274,18 @@ Fehler müssen am Uploadfeld sichtbar und programmatisch zugeordnet sein. Bereit
 **Offene Validierung vor endgültiger Festlegung:** tatsächliche Materialtitel/Dateien vollständig sichten; prüfen, ob „Dienstvorschriften und Verhalten“ zwei trennbare Themen sind; klären, ob „Ausbildung und Training“ als Bibliothekskategorie nötig ist oder ob es nur Kurs-/Programmstruktur bleibt; prüfen, ob SOP, Richtlinie und Dienstanweisung in den vorhandenen Materialien wirklich unterscheidbare Dokumenttypen sind. Die Vorschlagslisten sind noch nicht beschlossen.
 
 **Recherchegrundlage:** [GOV.UK Taxonomy Principles](https://www.gov.uk/government/publications/govuk-topic-taxonomy-principles/govuk-taxonomy-principles) (Themen statt Formate/Zielgruppen; nur vorhandene Inhalte klassifizieren; klare, unterscheidbare Bezeichnungen); [Office for National Statistics – Taxonomy Best Practice Framework](https://www.ons.gov.uk/methodology/classificationsandstandards/taxonomybestpracticeframework) (Zweck, Nutzerbedarf, geringe unnötige Komplexität, klare Governance und gepflegte Begriffe); [Nielsen Norman Group – Tree Testing](https://www.nngroup.com/articles/tree-testing/) (Auffindbarkeit und Verständlichkeit einer Kategorienhierarchie anhand konkreter Suchaufgaben prüfen).
+
+
+## M. Materialaktualisierung: Kursprüfung und vorsorgliche Sperre (10.11.2026)
+
+Eine neue veröffentlichte Materialfassung verändert keine bestehende Kursversion und keine laufende Teilnahme. Da veröffentlichte Kursversionen konkrete Materialversionen referenzieren, muss eine Aktualisierung dennoch eine fachliche Prüfung aller aktuell veröffentlichten Kursversionen auslösen, die den betroffenen Materialstamm verwenden.
+
+Verbindlicher Ablauf:
+1. Bei der Veröffentlichung einer neuen Materialversion werden innerhalb derselben Repository-Transaktion alle betroffenen, aktuell veröffentlichten und bislang verfügbaren Kurse ermittelt.
+2. Diese Kurse werden vorsorglich auf „nicht verfügbar“ gesetzt. Dadurch können während der Prüfung keine neuen Teilnahmen beginnen. Die Materialveröffentlichung und die Sperren müssen gemeinsam atomar gespeichert werden.
+3. Bestehende Teilnahmen bleiben auf ihrer fest gebundenen Kursversion und behalten den Zugriff auf die zugehörigen Materialversionen. Der Reader-Zugriff darf für diese Teilnahmen nicht allein wegen der neuen Materialfassung oder der vorsorglichen Kurssperre entzogen werden.
+4. Die Kursverantwortlichen erhalten eine In-App-Benachrichtigung mit dem betroffenen Kurs, Materialcode, neuer Materialversionskennung und dem Prüfhinweis. Die Zustellung ist idempotent und muss nach vorübergehenden Speicherfehlern erneut versucht werden können.
+5. Nach Prüfung kann eine berechtigte Person die bisherige Kursversion ausdrücklich unverändert wieder verfügbar machen, wenn die Änderung keine Anpassung erfordert. Andernfalls bleibt der Kurs nicht verfügbar, bis eine angepasste Kursversion veröffentlicht wurde. Die neue Kursversion muss die gewünschten konkreten Materialversionen referenzieren.
+6. Archivierung ist ein eigener dauerhafter Lebenszyklusstatus und keine Ersatzbezeichnung für die vorübergehende Sperre. Endgültiges Löschen bleibt ein administrativer Ausnahmefall.
+
+Die automatische Sperre betrifft nur Kurse, deren aktuelle veröffentlichte Kursversion den aktualisierten Materialstamm referenziert und die zum Zeitpunkt der Materialveröffentlichung verfügbar sind. Bereits anderweitig nicht verfügbare oder archivierte Kurse werden nicht stillschweigend umklassifiziert. Die technische Empfängerermittlung und die Wiederholbarkeit der Benachrichtigungszustellung müssen anhand der vorhandenen Eigentümer-/Berechtigungsstruktur umgesetzt werden; es wird keine neue Berechtigungsrolle eingeführt.
