@@ -2034,8 +2034,12 @@ async function startServer() {
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const role = caller.publicProfile.role;
       const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
-      const reviews = await listExamReviews(getExamRepository(), allowed, caller.uid);
-      try { await deliverPendingExamReviewNotifications(reviews.map(review => review.id)); } catch (notificationError) {
+      const notificationAttemptIds: string[] = [];
+      const reviews = await listExamReviews(
+        getExamRepository(), allowed, caller.uid, new Date().toISOString(),
+        attemptId => notificationAttemptIds.push(attemptId)
+      );
+      try { await deliverPendingExamReviewNotifications(notificationAttemptIds); } catch (notificationError) {
         console.error('Exam review notification delivery will be retried:', notificationError);
       }
       res.json({ reviews });
