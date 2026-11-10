@@ -83,11 +83,10 @@
 - Nächster bereits beschlossener Schritt gemäß Academy-Spezifikation Abschnitt 12.4/12.5: erhaltene Notizen kennzeichnen Quellen nach Berechtigungsverlust als „nicht zugänglich“ und nach endgültiger Dokumententfernung als „nicht mehr verfügbar“. Quellenreferenzen dürfen keinen indirekten Zugriff auf Materialien eröffnen.
 
 
-## 2026-11-10 – Status privater Notizquellen (in Umsetzung)
+## 2026-11-10 – Status privater Notizquellen (PR #135)
 
 - Die Academy-Spezifikation und das Entscheidungsregister präzisieren: Der Quellenstatus richtet sich nach dem aktuellen Zugriff auf die konkrete versionierte Materialfassung, nicht nach einer früheren Kursteilnahme.
 - Eine bedarfsgesteuerte, owner-isolierte Statusabfrage pro privater Notiz vermeidet zusätzliche Datenbankabfragen für sämtliche Quellen beim initialen Laden der Notizliste.
 - Quellenstatus liefert keine Materialinhalte und gewährt keine indirekten Leserechte.
-
-
-- PR #135: GitHub-CI erfolgreich – 436/436 Tests, TypeScript-Prüfung und Produktionsbuild bestanden. PR-Vorlagenprüfung nach Ergänzung des Labels `feature` erfolgreich. Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
+- GitHub-CI erfolgreich: 436/436 Tests, TypeScript-Prüfung und Produktionsbuild bestanden; PR-Vorlagenprüfung nach Ergänzung des Labels `feature` erfolgreich.
+- Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
