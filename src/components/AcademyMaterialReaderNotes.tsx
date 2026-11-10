@@ -9,6 +9,7 @@ interface Props {
   materialId: string;
   materialVersionId: string;
   selectedAnchor?: AcademyPrivateNoteTextAnchor | null;
+  onJumpToAnchor?: (anchor: AcademyPrivateNoteTextAnchor) => 'resolved' | 'missing' | 'ambiguous';
 }
 
 type NoteDraft = {
@@ -58,7 +59,7 @@ const markdownComponents = {
   img: ({ alt }: any) => <span className="text-xs text-slate-500 dark:text-slate-400">Externe Bilder sind in privaten Notizen deaktiviert{alt ? ' (' + alt + ')' : ''}.</span>
 } satisfies Components;
 
-export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor }) => {
+export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor, onJumpToAnchor }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -71,6 +72,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [saveError, setSaveError] = useState('');
   const [savingAction, setSavingAction] = useState(false);
   const [linkNoteSearch, setLinkNoteSearch] = useState('');
+  const [anchorNotice, setAnchorNotice] = useState('');
   const revisionByIdRef = useRef(new Map<string, number>());
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
@@ -436,6 +438,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           Notizen und Lesezeichen gehören zu genau dieser Materialfassung. Sie werden automatisch mit deinem Konto synchronisiert und sind für andere Nutzer – auch Administratoren – nicht einsehbar.
         </p>
         {selectedAnchor ? <p className="rounded-md border border-sky-200 bg-sky-50 p-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Ausgewählte Textstelle wird beim nächsten neuen Eintrag als Anker gespeichert: „{selectedAnchor.quote.slice(0, 180)}“</p> : null}
+        {anchorNotice ? <p className="text-xs text-amber-700 dark:text-amber-300" role="status">{anchorNotice}</p> : null}
         <div className="flex flex-wrap gap-2">
           <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {selectedAnchor ? 'Notiz zur Textstelle hinzufügen' : 'Notiz hinzufügen'}
@@ -447,19 +450,31 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
         {loadError ? <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p> : null}
         {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
+        {bookmarks.map(note => {
+          const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
+          return anchor ? <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <span>Lesezeichen · „{anchor.quote.slice(0, 100)}“</span>
+            <button type="button" className={secondary} onClick={() => {
+              const result = onJumpToAnchor?.(anchor) || 'missing';
+              setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
+            }}>Textstelle anzeigen</button>
+          </div> : <p key={note.id} className="text-xs text-slate-500">Lesezeichen ohne Textanker</p>;
+        })}
         {linkedNotes.filter(note => note.kind === 'note').length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Vorhandene Notizen">
-            {linkedNotes.filter(note => note.kind === 'note').map(note => (
-              <button
-                key={note.id}
-                type="button"
-                className={note.id === selectedNoteId ? primary : secondary}
-                onClick={() => selectNote(note)}
-                disabled={hasUnsavedChanges || saveStatus !== 'saved'}
-              >
-                {note.title || 'Notiz ohne Titel'}
-              </button>
-            ))}
+            {linkedNotes.filter(note => note.kind === 'note').map(note => {
+              const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
+              return <div key={note.id} className="flex flex-wrap items-center gap-2">
+                <button type="button" className={note.id === selectedNoteId ? primary : secondary}
+                  onClick={() => selectNote(note)} disabled={hasUnsavedChanges || saveStatus !== 'saved'}>
+                  {note.title || 'Notiz ohne Titel'}
+                </button>
+                {anchor ? <button type="button" className={secondary} onClick={() => {
+                  const result = onJumpToAnchor?.(anchor) || 'missing';
+                  setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
+                }}>Textstelle anzeigen</button> : null}
+              </div>;
+            })}
           </div>
         )}
         {unlinkedNotes.length > 0 ? (
