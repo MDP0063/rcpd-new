@@ -164,6 +164,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
       makeAccount('http-applicant', 'HttpApplicant', 'officer'),
+      makeAccount('http-deleted-account', 'HttpDeletedAccount', 'officer'),
       makeAccount('http-trainee', 'HttpTrainee', 'trainee')
     ],
     applications: [{
@@ -179,6 +180,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       status: 'accepted',
       reviewerUid: 'http-admin',
       reviewerFeedback: 'Accepted',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }, {
+      id: 'app-to-anonymize',
+      applicantUid: 'http-deleted-account',
+      applicantName: 'HttpDeletedAccount',
+      characterName: 'Applicant Character',
+      dateOfBirth: '2001-02-03',
+      discordTag: 'Applicant#1234',
+      priorExperience: 'Personal experience',
+      scenarioResponse: 'Personal scenario details',
+      penalCodeAck: true,
+      status: 'rejected',
+      reviewerUid: 'http-admin',
+      reviewerFeedback: 'Decision retained',
       updatedIso: '2026-11-10T08:00:00.000Z'
     }],
     modules: [{
@@ -268,6 +283,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       recipientBadge: 'http-delegate',
       subject: 'Private route regression test',
       body: 'Private message body',
+      priority: 'routine',
+      readByUids: [],
+      createdIso: '2026-11-10T08:00:00.000Z'
+    }, {
+      id: 'msg-from-applicant',
+      senderUid: 'http-deleted-account',
+      senderName: 'HttpDeletedAccount',
+      senderBadge: 'http-deleted-account',
+      senderRole: 'officer',
+      recipientUid: 'http-delegate',
+      recipientName: 'HttpDelegate',
+      recipientBadge: 'http-delegate',
+      subject: 'Account deletion message',
+      body: 'Private content',
       priority: 'routine',
       readByUids: [],
       createdIso: '2026-11-10T08:00:00.000Z'
@@ -371,6 +400,15 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({})
     });
     assert.equal(foreignMessageRead.status, 403);
+
+    const hideMessage = await jsonRequest('/api/messages/msg-known-private?actorUid=http-delegate', delegate.token, {
+      method: 'DELETE'
+    });
+    assert.equal(hideMessage.status, 200);
+    const delegateInboxAfterHide = await jsonRequest('/api/portal/state?uid=http-delegate', delegate.token);
+    assert.equal(delegateInboxAfterHide.body.messages.some((message: Record<string, unknown>) => message.id === 'msg-known-private'), false);
+    const senderInboxAfterHide = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
+    assert.equal(senderInboxAfterHide.body.messages.some((message: Record<string, unknown>) => message.id === 'msg-known-private'), true);
 
     const selfInstructorGrade = await jsonRequest('/api/academy/instructor-grade', courseReviewer.token, {
       method: 'POST',
@@ -721,6 +759,26 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
     });
     assert.equal(updatedLogin.status, 200);
+
+    const deleteAccount = await jsonRequest('/api/admin/accounts/http-deleted-account?adminUid=http-admin', admin.token, {
+      method: 'DELETE'
+    });
+    assert.equal(deleteAccount.status, 200);
+    const adminStateAfterDeletion = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
+    const anonymizedApplication = adminStateAfterDeletion.body.applications.find((application: Record<string, unknown>) => application.id === 'app-to-anonymize');
+    assert.equal(anonymizedApplication.applicantUid, 'deleted-account');
+    assert.equal(anonymizedApplication.applicantName, 'Gelöschtes Konto');
+    assert.equal(anonymizedApplication.dateOfBirth, '');
+    assert.equal(anonymizedApplication.discordTag, '');
+    assert.equal(anonymizedApplication.scenarioResponse, '');
+    assert.equal(anonymizedApplication.status, 'rejected');
+    assert.equal(adminStateAfterDeletion.body.messages.some((message: Record<string, unknown>) => message.id === 'msg-from-applicant'), false);
+    const deletedAccountLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDeletedAccount', password: TEST_PASSWORD })
+    });
+    assert.equal(deletedAccountLogin.status, 401);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);

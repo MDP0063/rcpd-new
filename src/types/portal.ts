@@ -245,6 +245,8 @@ export interface DirectMessageDoc {
   body: string;
   priority: MessagePriority;
   readByUids: string[];
+  /** Users who have hidden this message from their own inbox. */
+  deletedByUids?: string[];
   createdIso: string;
 }
 
