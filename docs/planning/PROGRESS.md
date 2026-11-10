@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 (ID-Zufallsentropie) ist mit erfolgreicher CI gemergt; PR #141 ergänzt als Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138 und #141 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt. Der nächste Bugfix-Abschnitt zur Materialaktualisierung läuft auf `fix/academy-material-review-lock`.
 
-**Aktueller Basisstand:** `738faab5d3e85b94df02f188c2fdd3236b73674d` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
-**Aktueller Umsetzungsstand:** PR #138 ist mit Squash-Commit `738faab5d3e85b94df02f188c2fdd3236b73674d` gemergt; GitHub-CI für TypeScript/Build und 448/448 Tests war erfolgreich. Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war ebenfalls erfolgreich. PR #141 (`feature/academy-reader-position-clean`) enthält nur die Reader-Lesepositionsfunktion und Planungsdokumentation. Kein Merge/Deployment von PR #141.
+**Aktueller Basisstand:** `main` nach PR #141; PR #138s Squash-Commit war `738faab5d3e85b94df02f188c2fdd3236b73674d`.  
+**Aktueller Umsetzungsstand:** PR #141 (`feature/academy-reader-position-clean`) wurde nach erfolgreicher GitHub-CI (451/451 Tests, TypeScript und Produktionsbuild) gemergt. Der Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich; eine manuelle Browserprüfung und eine unabhängige Live-Runtime-Prüfung wurden nicht durchgeführt. Branch `fix/academy-material-review-lock` enthält die in Umsetzung befindliche Materialprüfsperre einschließlich API, Benachrichtigungs-Outbox und Kursverwaltungsaktionen; CI/Review stehen aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -36,6 +36,20 @@
 - Bei Veröffentlichung einer Kursversion werden alle `materialId`-/`materialVersionId`-Paare auf Existenz, Eigentümerzuordnung und Veröffentlichungsstatus geprüft.
 - JSON-Speicherschema wurde auf Version 6 erweitert; bestehende v1-v5-Stores bleiben rückwärtskompatibel lesbar. Firestore nutzt eigene Repository-Collections.
 - Diese Implementierung führt keine neue Dateiablage, keine externen Dienste und keine zusätzlichen Infrastrukturkosten ein. PDF bleibt zurückgestellt.
+
+## 0.2 Materialaktualisierung und betroffene Kurse – Umsetzung in Arbeit
+
+Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DETAILED-SPECIFICATION.md` festgehalten. Branch `fix/academy-material-review-lock` implementiert derzeit:
+
+- Atomare Sperre veröffentlichter/verfügbarer Kurse, deren aktuelle Kursversion das neu veröffentlichte Material referenziert.
+- Mehrere offene Materialprüfungen pro Kurs, ohne bereits offene Einträge zu überschreiben.
+- Idempotente, wiederholbare In-App-Benachrichtigung an den vorhandenen Kursverantwortlichen; deterministische Notification-ID und persistierter Zustellstatus.
+- Serverblock für neue Kursstarts, auch wenn ein bestehender Programmpin eine Kursversion vorgibt; bereits gestartete Teilnahmen bleiben lesbar.
+- Archivierte Materialreferenzen verhindern neue Kursstarts, ohne historische Zugriffe laufender Teilnahmen zu entziehen.
+- Entscheidung „Kurs offline lassen“ setzt eine zusätzliche Versionsanforderung: vor Reaktivierung muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; die neue Kursversion aktiviert den Kurs nicht automatisch.
+- Kursverwaltung erhält explizite Aktionen zur Prüfung, Freigabe und späteren Reaktivierung.
+
+Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. CI, Tests und abschließende Prüfung stehen noch aus; kein Merge/Deployment.
 
 ## 1. Gesamtstatus
 
@@ -340,4 +354,4 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Lokaler Speicher wird fail-soft behandelt: nicht verfügbare Browser-Speicherung verhindert nicht das Öffnen/Lesen.
 - Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
 - Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
-- Draft-PR #141 basiert sauber auf dem nach PR #138 aktualisierten `main`; der ID-Fix ist nicht Teil dieses PR-Diffs. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus. Kein Merge/Deployment.
+- PR #141 wurde nach erfolgreicher CI (451/451 Tests, TypeScript und Produktionsbuild) per Squash gemergt. Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung wurde nicht durchgeführt.
