@@ -2,6 +2,7 @@ import type { ExamRepository } from './examRepository.ts';
 import type { ExamAttemptRecord, ExamVersionRecord } from './examAttemptService.ts';
 import { scoreExam } from './examScore.ts';
 import { toParticipantSubmission, toPublicSubmission, type PublicExamSubmission } from './examSubmitService.ts';
+import { isValidId } from './examValidate.ts';
 
 const HISTORY_LIMIT = 1000;
 
@@ -304,6 +305,7 @@ export async function listPendingExamResultReleases(repository: ExamRepository):
   for (const attempt of attempts) {
     if (attempt.status !== 'passed' && attempt.status !== 'failed') continue;
     if (attempt.resultReleaseStatus === 'released') continue;
+    if (typeof attempt.examVersionId !== 'string' || !isValidId(attempt.examVersionId)) continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     // Historische oder beschädigte Versuche ohne exakt passende unveränderliche Version
     // dürfen nicht zur Freigabe angeboten werden.
