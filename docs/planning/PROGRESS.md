@@ -1,18 +1,18 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 06.11.2026 – nach Priorisierung der ersten Materialausbaustufe auf Text/Markdown und Code; PDF-Infrastruktur ist zurückgestellt
+**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration für private Notizen/Lesezeichen in Arbeit. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Basisstand von main:** PR #60 wurde mit Merge-Commit `4a67e4874333477f14935118e976b18ad6fa1fe9` gemergt.  
-**Aktueller Umsetzungsbranch:** `feature/academy-versioned-text-code-materials` – Draft-PR #61, CI-Prüfung läuft.
+**Aktueller Basisstand von `main`:** `c92b57c7259d0d129b0c2821502cc2e3cfcb26e3`.  
+**Aktueller Umsetzungsbranch:** `feature/academy-reader-private-notes` – Reader-Notizen/Lesezeichen, noch nicht gemergt; CI-Prüfung steht aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
 - PDF-Funktionen sind bis zu einer späteren Ausbaustufe zurückgestellt. Keine neue PDF-Ablage, kein privates Zusatz-Repository, kein Parser-/Malware-Scan, keine externe Speicherverknüpfung und keine zusätzlichen laufenden Kosten in dieser Phase.
-- Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe, sofern sie nicht separat beschlossen und sicherheitstechnisch geprüft wird.
-- Kategorieverwaltung wurde mit PR #59, Dokumenttypverwaltung mit PR #60 gemergt. Beide Listen starten ohne voreingestellte Taxonomiewerte.
-- Die neue versionierte Materialverwaltung entsteht im Branch `feature/academy-versioned-text-code-materials`: Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Fassungen für Markdown und gespeicherten Quelltext; automatische Kennungen und getrennte Veröffentlichungsaktion.
-- Kursveröffentlichungen prüfen serverseitig, dass jede Materialreferenz auf eine tatsächlich vorhandene, veröffentlichte und nicht archivierte konkrete Materialversion zeigt. Bestehende Legacy-Lehrmaterialien bleiben unangetastet und werden nicht automatisch migriert.
-- Die aktuelle Ausbaustufe ergänzt zunächst die Admin-/Colonel-/Kursverantwortlichen-Verwaltung. Teilnehmer-Reader und Materialauswahl direkt im Kurseditor bleiben die anschließende Integration.
+- Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe.
+- Kategorieverwaltung (PR #59), Dokumenttypverwaltung (PR #60), versionierte Text-/Code-Materialverwaltung (PR #61) sowie Teilnehmer-Reader und konkrete Materialauswahl im Kurseditor (PR #62; Konsolidierung durch PR #63) sind in `main` integriert.
+- Kursversionen referenzieren konkrete veröffentlichte Materialfassungen. Bestehende Legacy-Materialien wurden nicht automatisch migriert.
+- Die vorhandene private Notiz-/Lesezeichen-Domäne, serverseitige CRUD-API und der separate Bereich „Meine Notizen“ sind bereits vorhanden. Die direkte Einbindung in den Material-Reader mit Autosave und sichtbarem Speicherstatus war noch nicht umgesetzt.
+- Aktueller Folgeschritt: private Notizen und Lesezeichen direkt im Reader integrieren. Mehrfachquellen pro Notiz sowie stabile Seiten-/Textstellenanker bleiben getrennt zu prüfende Anforderungen; PDF bleibt zurückgestellt.
 
 ### Legacy-PDFs – technische Bestandsbehandlung (09.11.2026)
 
@@ -255,3 +255,34 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 2. Die Kursabschlussbedingung `required_assessment` ist noch nicht mit dem Prüfungsnachweissystem verbunden; die Oberfläche kennzeichnet dies derzeit ausdrücklich. Keine automatische Abschlusswirkung ohne echte Prüfungsnachweise.
 3. Für PR #86 existiert noch kein dedizierter React-Integrationstest des Navigations-Race-Falls; die vollständige CI deckt TypeScript, vorhandene Tests und Produktionsbuild ab. Ein manueller Browser-/Live-Firestore-Test wurde nicht durchgeführt.
 4. Die verbleibende Prüfung soll weitere bereits implementierte Academy-Bereiche abdecken: Lernbibliothek/Reader und Versionsbindung, private Notizen, Kurs-/Programmfortschritt, Rollen-/Zugriffsgrenzen, Prüfungsablauf/Review sowie Fehler- und Grenzfälle. Nur bestätigte Fehler werden geändert; fachliche Lücken und noch nicht beschlossene Funktionen werden getrennt dokumentiert.
+
+
+## 10.11.2026 – Abschluss des systematischen Academy-Fehlerreviews
+
+- Die systematische Prüfung der tatsächlich implementierten Academy-Funktionen wurde auf dem aktuellen Stand abgeschlossen.
+- Ergebnis laut letzter vollständiger CI-Prüfung: 435 Tests bestanden, 0 fehlgeschlagen; TypeScript-Prüfung und Produktionsbuild erfolgreich. Der optionale Render-Deploy-Schritt wurde nicht ausgeführt. Dies ist kein Nachweis eines manuellen Browser- oder Live-Firestore-Tests.
+- Bestätigte sicherheits- und datenintegritätsrelevante Fehler wurden in den zwischenzeitlich integrierten Korrekturen behoben. Für die verbleibenden Punkte siehe den Gesprächs-/Reviewstand; offene Architektur- und Skalierungsfragen werden nicht als akute Academy-Blocker behandelt.
+- Vor neuen Academy-Funktionen gilt weiterhin: reine bestätigte Bugfixes können nach grüner CI eigenständig gemergt werden; neue fachliche Abläufe und Architekturentscheidungen benötigen weiterhin Freigabe.
+
+## 10.11.2026 – Reader-Integration persönlicher Notizen und Lesezeichen (in Arbeit)
+
+**Technischer Ist-Befund auf `main` (`c92b57c`):**
+- `AcademyPrivateNoteDoc`, die private Repository-Collection, Owner-isolierte CRUD-Methoden und die serverseitigen Endpunkte `GET/POST/PUT/DELETE /api/academy/notes` sind bereits vorhanden.
+- Der separate Bereich „Meine Notizen“ bietet Suche nach Titel/Inhalt/Tags sowie manuelle Bearbeitung und Löschung.
+- `AcademyMaterialReader.tsx` zeigte die gepinnte Materialfassung und die Inhaltsübersicht, hatte aber noch keine direkten Notiz-/Lesezeichenwerkzeuge.
+- Notizen sind bereits an `materialId` und `materialVersionId` gebunden; die Backend-Revision schützt vor konkurrierenden Änderungen.
+
+**Umsetzung auf `feature/academy-reader-private-notes` (noch nicht gemergt):**
+- Einklappbares Reader-Panel für persönliche Notizen und Lesezeichen.
+- Eintragserstellung direkt aus der geöffneten, zugänglichen Materialfassung; Einträge werden nur für die exakte Materialversion geladen.
+- Markdown-Notizinhalt mit sicherer Vorschau, Titel und Tags.
+- Automatisches Speichern mit sichtbarem Status, serialisierten Schreibvorgängen und Behandlung von Revisionskonflikten.
+- Lesezeichen setzen/entfernen; bestehende Notiz- und Lesezeichen-Privatsphäre bleibt über die vorhandene serverseitige Owner-Isolation erhalten.
+- Die vorhandene zentrale Notizenansicht bleibt als Such- und Verwaltungsübersicht bestehen.
+
+**Abgrenzung / noch nicht durch diesen Schritt erfüllt:**
+- Mehrere Quellen innerhalb eines einzelnen Notizobjekts sind im aktuellen Datenmodell noch nicht umgesetzt; derzeit bleibt eine Notiz an eine konkrete Materialfassung gebunden.
+- Seiten-/Textstellenanker und Warnungen bei veralteten Ankern bleiben offen. Das passt zur bestehenden Spezifikationsnotiz, dass stabile Anker erst nach einer tragfähigen Strategie umgesetzt werden.
+- Vollständige Offline-Bearbeitung ist weiterhin nicht zugesagt.
+- PDF-Unterstützung und PDF-Sicherheitsinfrastruktur werden nicht wieder aufgenommen.
+- TypeScript, Build, Tests, Browser- und Live-Firestore-Prüfungen für diesen Branch stehen noch aus; erst nach den tatsächlichen CI-Ergebnissen wird der Status aktualisiert.
