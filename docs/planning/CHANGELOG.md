@@ -113,6 +113,6 @@
 
 ## 2026-11-10 – CI-Korrektur und Status der Reader-Leseposition
 
-- PR #138: GitHub-CI für TypeScript/Build und 448/448 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Per Squash gemergt (Commit `738faab5d3e85b94df02f188c2fdd3236b73674d`); optionaler Render-Deploy-Schritt übersprungen.
+- PR #138: GitHub-CI für TypeScript/Build und 448/448 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Per Squash gemergt (Commit `738faab5d3e85b94df02f188c2fdd3236b73674d`). Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich.
 - PR #141: saubere Draft-Implementierung der lokalen Reader-Leseposition auf dem aktualisierten `main`; kein Build-/Testlauf sichtbar, keine lokale Testausführung und keine manuelle Browserprüfung behauptet.
 - PR #141 enthält den ID-Fix nicht; keine doppelte Commit-Historie.
