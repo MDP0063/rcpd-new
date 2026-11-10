@@ -5,6 +5,7 @@ export interface AcademyLibrarySearchEntry {
   documentTypeName: string;
   description: string;
   updatedIso: string;
+  searchTerms?: string;
 }
 
 function normalizeSearchValue(value: string): string {
@@ -24,7 +25,8 @@ export function getLibrarySearchScore(entry: AcademyLibrarySearchEntry, query: s
     { value: normalizeSearchValue(entry.code), weight: 450 },
     { value: normalizeSearchValue(entry.category), weight: 300 },
     { value: normalizeSearchValue(entry.documentTypeName), weight: 250 },
-    { value: normalizeSearchValue(entry.description), weight: 150 }
+    { value: normalizeSearchValue(entry.description), weight: 150 },
+    { value: normalizeSearchValue(entry.searchTerms || ''), weight: 125 }
   ];
   const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
   let score = 0;
