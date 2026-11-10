@@ -70,6 +70,10 @@ export interface ExamAttemptRecord extends ExamDocument {
   finalScoreBasisPoints: number | null;
   reviewClaim?: ExamReviewClaim | null;
   reviewClaimHistory?: ExamReviewClaimHistoryEntry[];
+  reviewDraft?: Record<string, number>;
+  reviewDraftRevision?: number;
+  reviewDraftUpdatedAtIso?: string;
+  reviewDraftUpdatedByUid?: string;
   resultReleaseStatus?: 'unreleased' | 'released' | 'pending_rerelease';
   resultReleaseHistory?: Array<{
     releasedByUid: string;
