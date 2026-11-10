@@ -1241,6 +1241,14 @@ export class AcademyRepository {
         const courseVersion = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', course.currentPublishedVersionId);
         if (!courseVersion) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
         assertValid(validateCourseVersion(course.id, courseVersion));
+        for (const materialReference of courseVersion.chapters.flatMap(chapter => chapter.materialReferences)) {
+          const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', materialReference.materialId);
+          if (!material) throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_NOT_STARTABLE');
+          assertValid(validateMaterialMaster(material));
+          if (material.publicationStatus === 'archived') {
+            throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_NOT_STARTABLE');
+          }
+        }
         const conflictingProgramPin = otherProgramParticipations.some(item =>
           item.requiredCoursePins.some(pin => pin.courseId === course.id && pin.courseVersionId !== courseVersion.id)
         );
@@ -1291,6 +1299,19 @@ export class AcademyRepository {
       }
       if (availability === 'available' && (current.materialReviewVersionRequired?.length ?? 0) > 0) {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
+      }
+      if (availability === 'available' && current.currentPublishedVersionId) {
+        const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', current.currentPublishedVersionId);
+        if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+        assertValid(validateCourseVersion(courseId, version));
+        for (const reference of version.chapters.flatMap(chapter => chapter.materialReferences)) {
+          const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
+          if (!material) throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+          assertValid(validateMaterialMaster(material));
+          if (material.publicationStatus === 'archived') {
+            throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+          }
+        }
       }
       const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
       if (availability === 'available') delete next.materialReviewAwaitingActivation;
