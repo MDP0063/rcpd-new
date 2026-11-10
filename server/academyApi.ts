@@ -1170,7 +1170,10 @@ export function createAcademyApiRouter(
              courseParticipation.courseId !== pin.courseId || courseParticipation.courseVersionId !== pin.courseVersionId))) {
           throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
         }
-        return { pin, version: courseVersion, participation: courseParticipation };
+        const currentParticipation = courseParticipation
+          ? (await resolveCurrentCompletion(courseParticipation)).participation
+          : null;
+        return { pin, version: courseVersion, participation: currentParticipation };
       }));
       const completedCount = requiredCourses.filter(item => item.participation?.status === 'completed').length;
       const startedCount = requiredCourses.filter(item => Boolean(item.participation)).length;
@@ -1206,7 +1209,10 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
-      const participations = await repository.listOwnCourseParticipations(actor.uid);
+      const storedParticipations = await repository.listOwnCourseParticipations(actor.uid);
+      const participations = await Promise.all(storedParticipations.map(async item =>
+        (await resolveCurrentCompletion(item)).participation
+      ));
       res.json({ participations });
     } catch (error) { fail(res, error, next); }
   });
@@ -1218,7 +1224,10 @@ export function createAcademyApiRouter(
       const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       if (!canManage(actor, master.ownerUid)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
-      const participations = await repository.listCourseParticipations(master.id);
+      const storedParticipations = await repository.listCourseParticipations(master.id);
+      const participations = await Promise.all(storedParticipations.map(async item =>
+        (await resolveCurrentCompletion(item)).participation
+      ));
       res.json({ participations });
     } catch (error) { fail(res, error, next); }
   });
@@ -1233,12 +1242,8 @@ export function createAcademyApiRouter(
       const isOwner = participation.userUid === actor.uid;
       const isManager = Boolean(master && canManage(actor, master.ownerUid));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
-      const [version, evidence, corrections] = await Promise.all([
-        repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId),
-        repository.listParticipationEvidence(participation.id),
-        repository.listParticipationCorrections(participation.id)
-      ]);
-      if (!version) { res.status(404).json({ error: 'ACADEMY_PINNED_VERSION_MISSING' }); return; }
+      const completion = await resolveCurrentCompletion(participation);
+      const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
       const references = version.chapters.flatMap(chapter => chapter.materialReferences.map(reference => ({ ...reference, chapterId: chapter.id, chapterTitle: chapter.title, chapterOrder: chapter.order })));
       const materials: AcademyCourseMaterialReaderItem[] = await Promise.all(references.map(async reference => {
         const [master, materialVersion] = await Promise.all([
@@ -1266,10 +1271,11 @@ export function createAcademyApiRouter(
         ...(correction.invalidatedEvidenceIds ? { invalidatedEvidenceIds: correction.invalidatedEvidenceIds } : {})
       }));
       res.json({
-        participation,
+        participation: currentParticipation,
         version: isManager ? version : participantCourseVersionView(version),
         evidence: visibleEvidence,
         corrections: visibleCorrections,
+        assessmentProofs,
         materials
       });
     } catch (error) { fail(res, error, next); }
