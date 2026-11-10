@@ -3566,7 +3566,7 @@ async function startServer() {
 
   // 10. Self Progress Tracking
   app.post('/api/progress', (req, res, next) => {
-    const { targetId, targetType, scorePercent, answers } = req.body;
+    const { targetId, targetType, answers } = req.body;
     const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === callerUid);
