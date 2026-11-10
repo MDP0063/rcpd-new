@@ -240,7 +240,8 @@ function pushNotification(
   type: PortalNotificationDoc['type'],
   title: string,
   message: string,
-  linkSection: PortalNotificationDoc['linkSection']
+  linkSection: PortalNotificationDoc['linkSection'],
+  notificationId?: string
 ) {
   if (!Array.isArray(state.notifications)) {
     state.notifications = [];
@@ -256,7 +257,7 @@ function pushNotification(
   if (!Array.isArray(state.academy_completion_corrections)) state.academy_completion_corrections = [];
   if (!Array.isArray(state.academy_private_notes)) state.academy_private_notes = [];
   const item: PortalNotificationDoc = {
-    id: newId('notif'),
+    id: notificationId || newId('notif'),
     recipientUid,
     type,
     title,
@@ -1223,6 +1224,17 @@ async function startServer() {
       if (!actor) throw new Error('ACADEMY_AUDIT_ACTOR_MISSING');
       appendAuditLog(state, actor, category, actionTitle, targetLabel, details);
       await saveDatabaseAndWait(state);
+    },
+    async (recipientUid, notificationId, title, message) => {
+      const state = loadDatabase();
+      if (!Array.isArray(state.notifications)) state.notifications = [];
+      // Deterministic IDs make retries safe if the process stops after the portal
+      // notification is persisted but before the Academy outbox marker is updated.
+      if (!state.notifications.some(item => item.id === notificationId) &&
+          state.accounts.some(item => item.uid === recipientUid)) {
+        pushNotification(state, recipientUid, 'academy_material_review', title, message, 'academy', notificationId);
+        await saveDatabaseAndWait(state);
+      }
     }
   ));
 
