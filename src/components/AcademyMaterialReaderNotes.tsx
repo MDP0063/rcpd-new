@@ -3,7 +3,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyPrivateNoteDoc, AcademyPrivateNoteTextAnchor } from '../types/academy';
+import type { AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor } from '../types/academy';
 
 interface Props {
   materialId: string;
@@ -34,7 +34,7 @@ function parseTags(value: string): string[] {
   return [...new Set(value.split(',').map(tag => tag.trim()).filter(Boolean))].slice(0, 20).map(tag => tag.slice(0, 40));
 }
 
-function noteSources(note: AcademyPrivateNoteDoc) {
+function noteSources(note: AcademyPrivateNoteDoc): AcademyPrivateNoteSource[] {
   return note.sources?.length
     ? note.sources
     : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }];
