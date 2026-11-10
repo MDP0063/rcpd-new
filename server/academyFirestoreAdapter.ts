@@ -138,7 +138,7 @@ export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
         for (const item of snapshot.docs) {
           const document = fromSnapshot(collection, item);
           if (!document) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID');
-          if (collection === 'academy_private_notes' && (document as Record<string, unknown>).ownerUid === uid) {
+          if (collection === 'academy_private_notes' && (document as unknown as Record<string, unknown>).ownerUid === uid) {
             writes.push(writer.delete(item.ref));
             continue;
           }
