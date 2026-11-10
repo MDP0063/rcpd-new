@@ -224,7 +224,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       code: module.code,
       category: module.category,
       description: '',
-      documentTypeName: module.pdfFileName || '',
+      documentTypeName: module.embedType === 'pdf_upload' ? 'PDF-Dokument' : module.embedType === 'interactive_code' ? 'Interaktiver Code' : module.embedType === 'external_url' ? 'Externer Inhalt' : 'Textdokument',
+      searchTerms: module.pdfFileName || '',
       updatedIso: module.updatedIso || '',
       module
     })),
@@ -236,6 +237,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       category: material.categoryName,
       description: material.description || '',
       documentTypeName: material.documentTypeName,
+      searchTerms: '',
       updatedIso: material.publishedIso,
       material
     }))
