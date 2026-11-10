@@ -286,6 +286,23 @@ test('course publication requires an exact existing published material version',
   assert.equal(lockedCourse?.materialReviewPending?.length, 1);
   assert.equal(lockedCourse?.materialReviewPending?.[0].materialVersionId, secondVersion.id);
   assert.deepEqual(await repository.get('academy_course_participations', alreadyStarted.id), alreadyStarted);
+
+  const thirdDraft: AcademyMaterialDraftDoc = {
+    ...changedDraft, title: 'Operations Handbook – current', content: '# Operations\\n\\nCurrent guidance.',
+    workingRevision: 3, updatedIso: '2026-11-06T12:10:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveMaterialDraft(master.id, thirdDraft, 2, 'admin-1');
+  const secondCurrentMaterialMaster = await repository.get<AcademyMaterialMasterDoc>('academy_materials', master.id);
+  const thirdVersion = version(3, thirdDraft, 3);
+  const thirdPublishedMaster: AcademyMaterialMasterDoc = {
+    ...secondCurrentMaterialMaster!, publicationStatus: 'published',
+    currentPublishedVersionId: thirdVersion.id, latestVersionNumber: 3,
+    lastPublishedWorkingRevision: 3, updatedIso: '2026-11-06T12:11:00.000Z'
+  };
+  await repository.publishMaterialVersion(master.id, thirdVersion, thirdPublishedMaster, 3, 'admin-1');
+  const multipleReviews = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(multipleReviews?.materialReviewPending?.length, 2,
+    'a later material update adds a review item instead of overwriting the first');
   await assert.rejects(
     repository.startCourseParticipation('learner-new', courseMaster.id, later),
     /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
@@ -296,11 +313,12 @@ test('course publication requires an exact existing published material version',
   );
 
   await repository.resolveMaterialReview(courseMaster.id, master.id, secondVersion.id, 'stay_offline', later);
+  await repository.resolveMaterialReview(courseMaster.id, master.id, thirdVersion.id, 'stay_offline', later);
   const offlineCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   assert.equal(offlineCourse?.availability, 'unavailable');
   assert.equal(offlineCourse?.materialReviewPending, undefined);
   assert.deepEqual(offlineCourse?.materialReviewVersionRequired, [{
-    materialId: master.id, materialVersionId: secondVersion.id, materialVersionNumber: 2
+    materialId: master.id, materialVersionId: thirdVersion.id, materialVersionNumber: 3
   }]);
   await assert.rejects(
     repository.setCourseAvailability(courseMaster.id, 'available', later),
@@ -312,8 +330,8 @@ test('course publication requires an exact existing published material version',
     chapters: courseDraft.chapters.map(chapter => ({
       ...chapter,
       materialReferences: chapter.materialReferences.map(reference => ({
-        ...reference, materialVersionId: secondVersion.id, title: secondVersion.title,
-        versionNumber: secondVersion.versionNumber
+        ...reference, materialVersionId: thirdVersion.id, title: thirdVersion.title,
+        versionNumber: thirdVersion.versionNumber
       }))
     })),
     workingRevision: 3, updatedIso: '2026-11-06T12:08:00.000Z', updatedByUid: 'admin-1'
@@ -340,7 +358,7 @@ test('course publication requires an exact existing published material version',
   await repository.setCourseAvailability(courseMaster.id, 'available', later);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id))?.availability, 'available');
 
-  await repository.archiveMaterial(master.id, 2, 'admin-1', 'Fachlich nicht mehr aktuell.', later);
+  await repository.archiveMaterial(master.id, 3, 'admin-1', 'Fachlich nicht mehr aktuell.', later);
   await assert.rejects(
     repository.startCourseParticipation('learner-pinned', courseMaster.id, later),
     /ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE/
