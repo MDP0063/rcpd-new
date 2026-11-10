@@ -893,6 +893,14 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(backup.status, 200, JSON.stringify(backup.body));
     assert.equal(backup.body.database.deploymentConfig.renderDeployHookUrl, '');
     assert.equal(JSON.stringify(backup.body).includes('test-secret-must-not-be-exported'), false);
+    const restore = await jsonRequest('/api/admin/restore', admin.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snapshot: backup.body })
+    });
+    assert.equal(restore.status, 200, JSON.stringify(restore.body));
+    const stateAfterBackupRestore = JSON.parse(await readFile(path.join(dataDirectory, 'portal-db-v3.json'), 'utf8'));
+    assert.equal(stateAfterBackupRestore.deploymentConfig.renderDeployHookUrl, 'https://api.render.com/deploy/test-secret-must-not-be-exported');
 
     const deleteAccount = await jsonRequest('/api/admin/accounts/http-deleted-account?adminUid=http-admin', admin.token, {
       method: 'DELETE'
