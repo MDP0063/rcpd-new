@@ -77,10 +77,12 @@ import type {
 import { describeError } from './server/errors.ts';
 import { getAuthenticatedApiBodyPolicy } from './server/apiBodyPolicy.ts';
 import { newId } from './server/ids.ts';
+import { isApplicationStatus, isOfficerRole, isRankChangeRequestRole, isWhitelistPromotionRole, isWhitelistStatus } from './server/accountValidation.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import {
   AcademyExamDoc,
   AnnouncementCategory,
+  ApplicationStatus,
   AnnouncementDoc,
   AnnouncementPriority,
   AuditLogDoc,
@@ -2590,6 +2592,14 @@ async function startServer() {
       res.status(400).json({ error: 'Benutzername und Passwort sind Pflichtfelder.' });
       return;
     }
+    if (role !== undefined && role !== null && role !== '' && !isOfficerRole(role)) {
+      res.status(400).json({ error: 'Die angegebene Kontorolle ist ungültig.' });
+      return;
+    }
+    if (whitelistStatus !== undefined && whitelistStatus !== null && whitelistStatus !== '' && !isWhitelistStatus(whitelistStatus)) {
+      res.status(400).json({ error: 'Der angegebene Whitelist-Status ist ungültig.' });
+      return;
+    }
     const passwordError = validateNewPassword(password);
     if (passwordError) {
       res.status(400).json({ error: passwordError });
@@ -2608,8 +2618,9 @@ async function startServer() {
     const uid = newId('usr');
     const nowIso = new Date().toISOString();
     // Default role is ALWAYS 'trainee' unless explicitly chosen otherwise by Admin
-    const targetRole: OfficerRole = (role as OfficerRole) || 'trainee';
-    const roleMeta = ROLE_HIERARCHY[targetRole] || ROLE_HIERARCHY.trainee;
+    const targetRole: OfficerRole = role === undefined || role === null || role === '' ? 'trainee' : role;
+    const targetWhitelistStatus: WhitelistStatus = whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === '' ? 'whitelisted' : whitelistStatus;
+    const roleMeta = ROLE_HIERARCHY[targetRole];
     const normalizedPerms = normalizeGranularPermissions(targetRole, granularPermissions);
 
     const newAccount: StoredAccountRecord = {
@@ -2640,7 +2651,7 @@ async function startServer() {
         division: String(division || 'Training & Evaluation Bureau')
           .trim()
           .slice(0, 60),
-        whitelistStatus: (whitelistStatus as WhitelistStatus) || 'whitelisted',
+        whitelistStatus: targetWhitelistStatus,
         granularPermissions: normalizedPerms,
         isOnline: false,
         lastSeenIso: nowIso,
@@ -2703,6 +2714,17 @@ async function startServer() {
       return;
     }
 
+    if (role !== undefined && role !== null && role !== '' && !isOfficerRole(role)) {
+      res.status(400).json({ error: 'Die angegebene Kontorolle ist ungültig.' });
+      return;
+    }
+    if (whitelistStatus !== undefined && whitelistStatus !== null && whitelistStatus !== '' && !isWhitelistStatus(whitelistStatus)) {
+      res.status(400).json({ error: 'Der angegebene Whitelist-Status ist ungültig.' });
+      return;
+    }
+
+
+
     const accountIdx = dbState.accounts.findIndex(a => a.uid === targetUid);
     if (accountIdx === -1) {
       res.status(404).json({ error: 'Benutzerkonto nicht gefunden.' });
@@ -2737,8 +2759,9 @@ async function startServer() {
       }
     }
 
-    const nextRole: OfficerRole = (role as OfficerRole) || previousRole;
-    const roleMeta = ROLE_HIERARCHY[nextRole] || ROLE_HIERARCHY.trainee;
+    const nextRole: OfficerRole = role === undefined || role === null || role === '' ? previousRole : role;
+    const nextWhitelistStatus: WhitelistStatus = whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === '' ? target.publicProfile.whitelistStatus : whitelistStatus;
+    const roleMeta = ROLE_HIERARCHY[nextRole];
     const previousPerms = normalizeGranularPermissions(
       previousRole,
       target.publicProfile.granularPermissions
@@ -2787,8 +2810,7 @@ async function startServer() {
           : target.publicProfile.clearanceLevel,
       division:
         division !== undefined ? String(division).trim() : target.publicProfile.division,
-      whitelistStatus:
-        (whitelistStatus as WhitelistStatus) || target.publicProfile.whitelistStatus,
+      whitelistStatus: nextWhitelistStatus,
       granularPermissions: nextPerms
     };
 
@@ -2991,6 +3013,15 @@ async function startServer() {
   app.put('/api/admin/applications/:appId', (req, res) => {
     const { appId } = req.params;
     const { adminUid, status, reviewerFeedback, promoteToRole } = req.body;
+    if (!isApplicationStatus(status)) {
+      res.status(400).json({ error: 'Der Bewerbungsstatus ist ungültig.' });
+      return;
+    }
+    if (status === 'accepted' && promoteToRole !== undefined && promoteToRole !== null && promoteToRole !== '' && !isWhitelistPromotionRole(promoteToRole)) {
+      res.status(400).json({ error: 'Der zugewiesene Zielrang ist ungültig.' });
+      return;
+    }
+    const assignedRole = isWhitelistPromotionRole(promoteToRole) ? promoteToRole : 'trainee';
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === adminUid);
     if (!caller || caller.publicProfile.role !== 'admin') {
@@ -3015,8 +3046,8 @@ async function startServer() {
     const applicantAccount = dbState.accounts.find(a => a.uid === appItem.applicantUid);
     if (applicantAccount) {
       if (status === 'accepted') {
-        const nextRole: OfficerRole = promoteToRole || 'trainee';
-        const meta = ROLE_HIERARCHY[nextRole] || ROLE_HIERARCHY.trainee;
+        const nextRole: OfficerRole = assignedRole;
+        const meta = ROLE_HIERARCHY[nextRole];
         applicantAccount.publicProfile.role = nextRole;
         applicantAccount.publicProfile.rank = meta.defaultRank;
         applicantAccount.publicProfile.clearanceLevel = meta.defaultClearance;
@@ -4733,6 +4764,10 @@ jobs:
       res.status(400).json({ error: 'Die Antragskategorie ist ungültig.' });
       return;
     }
+    if (category === 'rank_change' && !isRankChangeRequestRole(requestedRole)) {
+      res.status(400).json({ error: 'Der beantragte Zielrang ist ungültig.' });
+      return;
+    }
     if (category === 'exam_workshop_access') {
       const actor = resolveExamWorkshopActor(caller);
       if (!canRequestExamWorkshopAccess(actor)) {
@@ -4771,7 +4806,7 @@ jobs:
       requesterCurrentRole: caller.publicProfile.role,
       category: (category as RequestCategory) || 'rank_change',
       title: String(title).trim().slice(0, 150),
-      requestedRole: requestedRole ? (requestedRole as OfficerRole) : undefined,
+      requestedRole: category === 'rank_change' ? requestedRole : undefined,
       ...(category === 'exam_workshop_access' ? { examWorkshopAreas: [...req.body.examWorkshopAreas] } : {}),
       targetDetail: String(targetDetail || '').trim().slice(0, 200),
       justification: String(justification).trim().slice(0, 4000),
@@ -4854,6 +4889,10 @@ jobs:
       res.status(403).json({ error: 'Zugangsanträge für die Prüfungswerkstatt dürfen ausschließlich vom Admin entschieden werden.' });
       return;
     }
+    if (targetReq.category === 'rank_change' && targetReq.requestedRole !== undefined && !isRankChangeRequestRole(targetReq.requestedRole)) {
+      res.status(409).json({ error: 'Der gespeicherte Zielrang des Antrags ist ungültig. Die Entscheidung wurde nicht gespeichert.' });
+      return;
+    }
     if (status !== 'approved' && status !== 'rejected') {
       res.status(400).json({ error: 'Der Antragsstatus ist ungültig.' });
       return;
@@ -4931,7 +4970,7 @@ jobs:
       applyRankChange !== false
     ) {
       const applicantAcc = dbState.accounts.find(a => a.uid === targetReq.requesterUid);
-      if (applicantAcc && ROLE_HIERARCHY[targetReq.requestedRole]) {
+      if (applicantAcc && isRankChangeRequestRole(targetReq.requestedRole)) {
         const nextMeta = ROLE_HIERARCHY[targetReq.requestedRole];
         applicantAcc.publicProfile.role = targetReq.requestedRole;
         applicantAcc.publicProfile.rank = nextMeta.defaultRank;
