@@ -4,6 +4,26 @@ export function canReadModule(callerRankOrder: number | undefined, requiredRankO
   return callerRankOrder <= requiredRankOrder;
 }
 
+export interface LegacyExamAccessPolicy {
+  assessmentStage: 'test' | 'final_exam';
+  status?: 'draft' | 'published' | 'archived';
+  minClearance?: number;
+}
+
+/** Enforces the same publication, role, and clearance gates used by the legacy Academy UI. */
+export function canAccessLegacyExam(
+  exam: LegacyExamAccessPolicy,
+  canAccessFinalExams: boolean,
+  callerClearanceLevel: number
+): boolean {
+  if (exam.status === 'draft' || exam.status === 'archived') return false;
+  if (exam.assessmentStage === 'final_exam' && !canAccessFinalExams) return false;
+  const requiredClearance = exam.minClearance ?? 0;
+  return Number.isFinite(callerClearanceLevel) &&
+    Number.isFinite(requiredClearance) &&
+    callerClearanceLevel >= requiredClearance;
+}
+
 /** Soll der Heartbeat gespeichert werden? Nur wenn der letzte Eintrag älter als maxAgeMs ist oder die Person als offline galt. */
 export function shouldRefreshPresence(
   isOnline: boolean | undefined,

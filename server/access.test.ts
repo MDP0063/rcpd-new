@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { canReadModule, refreshAccountPresence, shouldRefreshPresence } from './access.ts';
+import { canAccessLegacyExam, canReadModule, refreshAccountPresence, shouldRefreshPresence } from './access.ts';
 
 test('Handbuch: gleicher oder höherer Rang darf lesen, niedrigerer nicht', () => {
   assert.ok(canReadModule(1, 3));
@@ -50,4 +50,32 @@ test('Anwesenheits-Heartbeat gleicht inkonsistente Profilfelder auch bei frische
   assert.equal(account.publicProfile.isOnline, true);
   assert.equal(account.publicProfile.lastSeenIso, account.lastSeenIso);
   assert.equal(account.lastSeenIso, new Date(now).toISOString());
+});
+
+test('Legacy-Prüfungen respektieren Veröffentlichungsstatus, Abschlussprüfungsrolle und Clearance', () => {
+  const traineeCanAccessFinalExams = false;
+  const officerCanAccessFinalExams = true;
+
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'test', status: 'published', minClearance: 1
+  }, traineeCanAccessFinalExams, 1), true);
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'test', status: 'draft', minClearance: 1
+  }, officerCanAccessFinalExams, 5), false);
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'test', status: 'archived', minClearance: 1
+  }, officerCanAccessFinalExams, 5), false);
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'final_exam', status: 'published', minClearance: 3
+  }, traineeCanAccessFinalExams, 5), false);
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'final_exam', status: 'published', minClearance: 3
+  }, officerCanAccessFinalExams, 2), false);
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'final_exam', status: 'published', minClearance: 3
+  }, officerCanAccessFinalExams, 3), true);
+  // Older published exam records without an explicit status remain available.
+  assert.equal(canAccessLegacyExam({
+    assessmentStage: 'test', minClearance: 1
+  }, traineeCanAccessFinalExams, 1), true);
 });
