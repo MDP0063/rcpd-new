@@ -14,6 +14,26 @@ const muted='text-sm text-slate-600 dark:text-slate-300';
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
+ const [selectedAnchor,setSelectedAnchor]=useState<AcademyPrivateNoteTextAnchor|null>(null);
+ const captureTextAnchor=(event:React.MouseEvent<HTMLElement>,kind:'markdown'|'code')=>{
+  const root=event.currentTarget;
+  const selection=window.getSelection();
+  if(!selection||selection.isCollapsed||selection.rangeCount===0)return;
+  const range=selection.getRangeAt(0);
+  if(range.startContainer!==range.endContainer||range.startContainer.nodeType!==Node.TEXT_NODE||!root.contains(range.startContainer))return;
+  const node=range.startContainer as Text;
+  const sourceText=node.textContent||'';
+  const headingPath:string[]=[];
+  if(kind==='markdown'){
+   let parent=node.parentElement;
+   while(parent&&root.contains(parent)){
+    if(/^H[1-6]$/.test(parent.tagName))headingPath.unshift(parent.textContent?.trim()||'');
+    parent=parent.parentElement;
+   }
+  }
+  const anchor=createTextAnchor({kind,text:range.toString(),startOffset:range.startOffset,endOffset:range.endOffset,headingPath},sourceText);
+  setSelectedAnchor(anchor);
+ };
  const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
  const selected=useMemo(()=>materials.find(x=>x.chapterId+'::'+x.materialId+'::'+x.materialVersionId===selectedKey)||null,[materials,selectedKey]);
  useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');
