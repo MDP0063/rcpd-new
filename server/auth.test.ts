@@ -52,6 +52,13 @@ test('Token: gültiges Token liefert die UID', () => {
   assert.equal(readSessionUid(token), 'usr_1');
 });
 
+test('Token: persistenter Logout-Widerruf durch erhöhte Session-Version', () => {
+  const token = createSessionToken('usr_1', SECRET, 1000, 5000, 4);
+  assert.equal(verifySessionToken(token, SECRET, 2000, 4), 'usr_1');
+  // Logout erhöht sessionVersion im persistenten Konto; alle älteren Tokens werden ungültig.
+  assert.equal(verifySessionToken(token, SECRET, 2000, 5), null);
+});
+
 test('Token: abgelaufen, manipuliert oder falsches Geheimnis wird abgelehnt', () => {
   const token = createSessionToken('usr_1', SECRET, 1000, 5000);
   assert.equal(verifySessionToken(token, SECRET, 6000), null);
