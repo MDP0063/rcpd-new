@@ -2138,7 +2138,7 @@ async function startServer() {
         caller.uid, 'Prüfungsvorgang administrativ neu zugewiesen', req.params.id,
         `Versuch ${req.params.attemptId} von ${previous?.publicProfile.displayName || 'bisheriger Prüfer'} an ${target.publicProfile.displayName} neu zugewiesen. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
       );
-      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
         console.error('Exam review reassignment notification delivery will be retried:', notificationError);
       }
       res.json({ claim, reassigned: true });
