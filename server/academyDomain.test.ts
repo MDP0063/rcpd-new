@@ -115,6 +115,23 @@ test('private notes require owner and exact material version; bookmark cannot co
   assert.equal(validatePrivateNote({ ...note, kind: 'bookmark', content: 'text' }).ok, false);
 });
 
+test('private notes support multiple unique exact material-version sources while preserving the original reference', () => {
+  const multiSource = {
+    ...note,
+    sources: [
+      { materialId: 'material_1', materialVersionId: 'material_1__v1' },
+      { materialId: 'material_2', materialVersionId: 'material_2__v3' }
+    ]
+  };
+  assert.deepEqual(validatePrivateNote(multiSource), { ok: true });
+  assert.equal(validatePrivateNote({ ...multiSource, sources: [multiSource.sources[0], multiSource.sources[0]] }).ok, false);
+  assert.equal(validatePrivateNote({ ...multiSource, sources: [multiSource.sources[1]] }).ok, false);
+  assert.equal(validatePrivateNote({ ...multiSource, kind: 'bookmark', sources: multiSource.sources }).ok, false);
+  assert.equal(validatePrivateNote({ ...multiSource, sources: Array.from({ length: 26 }, (_, index) => ({
+    materialId: `material_${index}`, materialVersionId: `material_${index}__v1`
+  })) }).ok, false);
+});
+
 test('private notes reject malformed optional title and content values', () => {
   assert.equal(validatePrivateNote({ ...note, title: { text: 'invalid' } } as never).ok, false);
   assert.equal(validatePrivateNote({ ...note, content: { text: 'invalid' } } as never).ok, false);
