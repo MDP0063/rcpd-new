@@ -5,7 +5,8 @@ import {
   isOfficerRole,
   isRankChangeRequestRole,
   isWhitelistPromotionRole,
-  isWhitelistStatus
+  isWhitelistStatus,
+  wouldRemoveLastAdministrator
 } from './accountValidation.ts';
 
 test('account roles accept only the five configured role values', () => {
@@ -51,4 +52,27 @@ test('rank change requests are limited to the ranks offered by the existing form
   for (const value of ['admin', 'trainee', '__proto__', 'constructor', '', null, {}, []]) {
     assert.equal(isRankChangeRequestRole(value), false);
   }
+});
+
+test('the final administrator cannot be demoted', () => {
+  const onlyAdmin = [{ uid: 'admin-1', publicProfile: { role: 'admin' as const } }];
+  assert.equal(wouldRemoveLastAdministrator(onlyAdmin, 'admin-1', 'officer'), true);
+  assert.equal(wouldRemoveLastAdministrator(onlyAdmin, 'admin-1', 'colonel'), true);
+  assert.equal(wouldRemoveLastAdministrator(onlyAdmin, 'admin-1', 'admin'), false);
+});
+
+test('an administrator can be demoted when another administrator remains', () => {
+  const accounts = [
+    { uid: 'admin-1', publicProfile: { role: 'admin' as const } },
+    { uid: 'admin-2', publicProfile: { role: 'admin' as const } }
+  ];
+  assert.equal(wouldRemoveLastAdministrator(accounts, 'admin-1', 'officer'), false);
+});
+
+test('non-admin role changes do not count as removing an administrator', () => {
+  const accounts = [
+    { uid: 'admin-1', publicProfile: { role: 'admin' as const } },
+    { uid: 'officer-1', publicProfile: { role: 'officer' as const } }
+  ];
+  assert.equal(wouldRemoveLastAdministrator(accounts, 'officer-1', 'colonel'), false);
 });
