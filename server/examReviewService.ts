@@ -102,11 +102,25 @@ export async function claimExamReview(
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
     if (attempt.reviewClaim) {
       if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIMED');
+      if (attempt.reviewClaim.disconnectedAtIso) {
+        const reclaimed: ExamReviewClaim = {
+          reviewerUid, reviewerName: reviewerName.trim(),
+          claimedAtIso: nowIso, lastActivityAtIso: nowIso
+        };
+        const next: ExamAttemptRecord = {
+          ...attempt, reviewClaim: reclaimed,
+          reviewClaimHistory: appendReviewClaimHistory(attempt, {
+            action: 'reclaimed', actorUid: reviewerUid, targetUid: reviewerUid, atIso: nowIso
+          })
+        };
+        await transaction.update('exam_attempts', attemptId, next);
+        return reclaimed;
+      }
       const resumed: ExamReviewClaim = {
         ...attempt.reviewClaim, reviewerName: reviewerName.trim(),
         lastActivityAtIso: nowIso
       };
-      const { warningStartedAtIso: _warning, disconnectedAtIso: _disconnected, ...active } = resumed;
+      const { warningStartedAtIso: _warning, ...active } = resumed;
       const next = { ...attempt, reviewClaim: active };
       await transaction.update('exam_attempts', attemptId, next);
       return active;
@@ -164,6 +178,7 @@ export async function recordExamReviewActivity(
     if (attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (!attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
     if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    if (attempt.reviewClaim.disconnectedAtIso) throw new Error('EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED');
     const { warningStartedAtIso: _warning, disconnectedAtIso: _disconnected, ...claim } = attempt.reviewClaim;
     const nextClaim = { ...claim, lastActivityAtIso: nowIso };
     await transaction.update('exam_attempts', attemptId, { ...attempt, reviewClaim: nextClaim });
@@ -210,6 +225,7 @@ export async function saveExamReviewDraft(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
     if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    if (attempt.reviewClaim.disconnectedAtIso) throw new Error('EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber) {
       throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
@@ -254,8 +270,9 @@ export interface ExamReviewItem {
   submittedAtIso: string;
   assessmentStage: 'test' | 'final_exam';
   questions: ReturnType<typeof pendingFreeTextQuestions>;
-  reviewClaim: { reviewerName: string; claimedAtIso: string; warningStartedAtIso?: string } | null;
+  reviewClaim: { reviewerName: string; claimedAtIso: string; warningStartedAtIso?: string; isDisconnected?: boolean } | null;
   isClaimOwner: boolean;
+  canClaim: boolean;
   draftGrades: Record<string, number>;
   draftRevision: number;
 }
@@ -275,7 +292,9 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
     if (attempt.status !== 'pending_review') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-    const isClaimOwner = attempt.reviewClaim?.reviewerUid === reviewerUid;
+    const isOwnDisconnectedClaim = attempt.reviewClaim?.reviewerUid === reviewerUid && Boolean(attempt.reviewClaim.disconnectedAtIso);
+    const isClaimOwner = attempt.reviewClaim?.reviewerUid === reviewerUid && !attempt.reviewClaim.disconnectedAtIso;
+    const canClaim = !attempt.reviewClaim || isOwnDisconnectedClaim;
     const questions = attempt.reviewClaim && !isClaimOwner ? [] : pendingFreeTextQuestions(attempt, version);
     if (questions.length || attempt.reviewClaim) results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
@@ -284,9 +303,10 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
       reviewClaim: attempt.reviewClaim ? {
         reviewerName: attempt.reviewClaim.reviewerName,
         claimedAtIso: attempt.reviewClaim.claimedAtIso,
-        ...(attempt.reviewClaim.warningStartedAtIso ? { warningStartedAtIso: attempt.reviewClaim.warningStartedAtIso } : {})
+        ...(attempt.reviewClaim.warningStartedAtIso ? { warningStartedAtIso: attempt.reviewClaim.warningStartedAtIso } : {}),
+        ...(isOwnDisconnectedClaim ? { isDisconnected: true } : {})
       } : null,
-      isClaimOwner,
+      isClaimOwner, canClaim,
       draftGrades: isClaimOwner ? (attempt.reviewDraft || {}) : {},
       draftRevision: isClaimOwner && Number.isSafeInteger(attempt.reviewDraftRevision) ? Number(attempt.reviewDraftRevision) : 0
     });
@@ -309,6 +329,7 @@ export async function gradeExamAttempt(
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
     if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    if (attempt.reviewClaim.disconnectedAtIso) throw new Error('EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber || !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     if (!Array.isArray(gradesInput)) throw new Error('EXAM_MANUAL_GRADES_INVALID');
