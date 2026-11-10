@@ -963,9 +963,11 @@ export function createAcademyApiRouter(
       if (!isObject(req.body) || (req.body.availability !== 'available' && req.body.availability !== 'unavailable')) {
         res.status(400).json({ error: 'ACADEMY_COURSE_AVAILABILITY_INVALID' }); return;
       }
-      if (req.body.availability === 'available' &&
-          ((master.materialReviewPending?.length ?? 0) > 0 || (master.materialReviewVersionRequired?.length ?? 0) > 0)) {
+      if (req.body.availability === 'available' && (master.materialReviewPending?.length ?? 0) > 0) {
         res.status(409).json({ error: 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING' }); return;
+      }
+      if (req.body.availability === 'available' && (master.materialReviewVersionRequired?.length ?? 0) > 0) {
+        res.status(409).json({ error: 'ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED' }); return;
       }
       const updated = await repository.setCourseAvailability(
         master.id, req.body.availability, new Date().toISOString()
