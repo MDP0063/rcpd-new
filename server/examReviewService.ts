@@ -254,7 +254,8 @@ export async function correctCompletedExamReview(
       questionGrades,
       reviewedByUid: reviewerUid,
       reviewedAtIso: nowIso,
-      reviewCorrections: [...previousCorrectionHistory, correction]
+      reviewCorrections: [...previousCorrectionHistory, correction],
+      ...(attempt.resultReleaseStatus === 'released' ? { resultReleaseStatus: 'pending_rerelease' as const } : {})
     };
     await transaction.update('exam_attempts', attemptId, corrected);
     return toPublicSubmission(corrected, version);
