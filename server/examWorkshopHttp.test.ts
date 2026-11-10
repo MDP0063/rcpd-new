@@ -564,6 +564,13 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(participantRead.status, 200);
     assert.equal(participantRead.body.message.id, 'msg-known-private');
 
+    const lastAdminDemotion = await jsonRequest('/api/admin/accounts/http-admin', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', role: 'officer' })
+    });
+    assert.equal(lastAdminDemotion.status, 409);
+
     const repeatedRequestDecision = await jsonRequest('/api/requests/req-already-reviewed/review', admin.token, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
