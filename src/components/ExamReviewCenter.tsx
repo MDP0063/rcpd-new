@@ -48,6 +48,11 @@ export const ExamReviewCenter: React.FC = () => {
     } else {
       setError('');
       const previousReviews = reviewsRef.current;
+      const nextReviewIds = new Set(response.data.reviews.map(review => review.id));
+      for (const previous of previousReviews) {
+        const current = response.data.reviews.find(review => review.id === previous.id);
+        if (!current || (previous.isClaimOwner && !current.isClaimOwner)) discardPendingDraftSaves(previous);
+      }
       reviewsRef.current = response.data.reviews;
       setReviews(response.data.reviews);
       setGrades(current => {
@@ -134,6 +139,7 @@ export const ExamReviewCenter: React.FC = () => {
           { method: 'PUT', body: JSON.stringify({ questionId: pending.question.questionId, pointsEarnedMilli }) }
         );
         if (!response.ok || !response.data) {
+          if (response.status === 403 || response.status === 409) discardPendingDraftSaves(pending.review);
           setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'error' }));
           setError(response.error || 'Der Bewertungsentwurf konnte nicht gespeichert werden. Prüfe deine Zuständigkeit.');
           return false;
