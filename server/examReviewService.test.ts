@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -52,9 +52,46 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(hiddenQueue[0].draftGrades, {}, 'draft points must not be exposed to other reviewers');
     await assert.rejects(claimExamReview(repository, 'review-exam', 'review-attempt', 'other-grader', 'Anderer Prüfer', '2026-11-05T12:02:41.000Z'), /EXAM_REVIEW_CLAIMED/);
     await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader', '2026-11-05T12:02:40.000Z'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
+    const transferredClaim = await transferExamReviewClaim(
+      repository, 'review-exam', 'review-attempt', 'grader', 'other-grader', 'Anderer Prüfer',
+      'Fachliche Zuständigkeit', '2026-11-05T12:02:42.000Z'
+    );
+    assert.equal(transferredClaim.reviewerUid, 'other-grader');
+    const oldOwnerQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:02:43.000Z');
+    assert.deepEqual(oldOwnerQueue[0].questions, [], 'the previous owner loses answer access immediately after transfer');
+    const newOwnerQueue = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T12:02:43.000Z');
+    assert.equal(newOwnerQueue[0].questions[0].answer, 'Meine Antwort');
+    assert.equal(newOwnerQueue[0].draftGrades.text, 400, 'saved drafts remain available after transfer');
+    const reassignedClaim = await reassignExamReviewClaim(
+      repository, 'review-exam', 'review-attempt', 'supervisor', 'grader', 'Prüfer',
+      'Dienstliche Neuverteilung', '2026-11-05T12:02:44.000Z'
+    );
+    assert.equal(reassignedClaim.reviewerUid, 'grader');
+    const claimHistory = (await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewClaimHistory;
+    assert.equal(claimHistory?.at(-2)?.action, 'transferred');
+    assert.equal(claimHistory?.at(-1)?.action, 'reassigned');
+    const pendingNotifications = await listPendingExamReviewNotifications(repository);
+    assert.equal(pendingNotifications.filter(item => item.event.action === 'transferred').length, 2);
+    assert.equal(pendingNotifications.filter(item => item.event.action === 'reassigned').length, 2);
+    const previousOwnerTransferNotification = pendingNotifications.find(item =>
+      item.event.action === 'transferred' && item.recipientUid === 'grader'
+    );
+    assert.ok(previousOwnerTransferNotification);
+    await markExamReviewNotificationDelivered(
+      repository, previousOwnerTransferNotification!.attemptId,
+      previousOwnerTransferNotification!.eventIndex, previousOwnerTransferNotification!.recipientUid,
+      '2026-11-05T12:02:44.500Z'
+    );
+    assert.equal(
+      (await listPendingExamReviewNotifications(repository)).some(item =>
+        item.event.action === 'transferred' && item.recipientUid === 'grader'
+      ), false, 'notification delivery markers are persisted idempotently'
+    );
     await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:02:45.000Z');
     const warningQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:32:45.000Z');
     assert.ok(warningQueue[0].reviewClaim?.warningStartedAtIso, '30 minutes of inactivity starts the warning phase');
+    assert.equal((await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewClaimHistory?.at(-1)?.action, 'warning_started');
+    assert.equal((await listPendingExamReviewNotifications(repository)).some(item => item.event.action === 'warning_started' && item.recipientUid === 'grader'), true);
     await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:32:46.000Z');
     const unchangedWarningClaim = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(unchangedWarningClaim?.reviewClaim?.warningStartedAtIso, '2026-11-05T12:32:45.000Z',
