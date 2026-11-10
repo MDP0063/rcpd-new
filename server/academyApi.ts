@@ -1245,7 +1245,7 @@ export function createAcademyApiRouter(
       if (!canManage(actor, master.ownerUid)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
       const storedParticipations = await repository.listCourseParticipations(master.id);
       const participations = await Promise.all(storedParticipations.map(async item =>
-        (await resolveCurrentCompletion(item)).participation
+        (await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam)).participation
       ));
       res.json({ participations });
     } catch (error) { fail(res, error, next); }
