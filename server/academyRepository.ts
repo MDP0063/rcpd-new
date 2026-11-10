@@ -830,7 +830,7 @@ export class AcademyRepository {
         const pending = course.materialReviewPending ?? [];
         const alreadyPending = pending.some(item => item.materialId === materialId && item.materialVersionId === version.id);
         if (alreadyPending) continue;
-        affectedCourses.push({
+        const affected: AcademyCourseMasterDoc = {
           ...course,
           availability: 'unavailable',
           materialReviewPending: [...pending, {
@@ -841,7 +841,9 @@ export class AcademyRepository {
             materialVersionNumber: version.versionNumber,
             detectedIso: version.publishedIso
           }]
-        });
+        };
+        assertValid(validateCourseMaster(affected));
+        affectedCourses.push(affected);
       }
       await tx.create('academy_material_versions', versionId, version);
       await tx.create('academy_material_category_assignments', versionId, versionCategoryAssignment);
