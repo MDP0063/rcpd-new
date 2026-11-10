@@ -30,6 +30,7 @@ export const ExamReviewCenter: React.FC = () => {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const activityTimers = useRef<Record<string, number>>({});
+  const reviewsRef = useRef<ReviewItem[]>([]);
 
   const load = useCallback(async () => {
     const response = await apiFetch<{ reviews: ReviewItem[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEWS, { cache: 'no-store' });
@@ -38,6 +39,7 @@ export const ExamReviewCenter: React.FC = () => {
       setReviews([]);
     } else {
       setError('');
+      reviewsRef.current = response.data.reviews;
       setReviews(response.data.reviews);
       setGrades(current => {
         const next = { ...current };
@@ -54,7 +56,7 @@ export const ExamReviewCenter: React.FC = () => {
     void load();
     const interval = window.setInterval(() => { void load(); }, 60_000);
     const onPageHide = () => {
-      for (const review of reviews) {
+      for (const review of reviewsRef.current) {
         if (review.isClaimOwner) {
           void apiFetch(API_ENDPOINTS.ACADEMY_EXAM_REVIEW_DISCONNECT(review.examId, review.id), {
             method: 'POST', keepalive: true
@@ -68,7 +70,7 @@ export const ExamReviewCenter: React.FC = () => {
       window.removeEventListener('pagehide', onPageHide);
       for (const timer of Object.values(activityTimers.current)) window.clearTimeout(timer);
     };
-  }, [load, reviews]);
+  }, [load]);
 
   const recordActivity = (review: ReviewItem) => {
     const previous = activityTimers.current[review.id];
