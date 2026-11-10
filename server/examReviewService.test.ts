@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -105,6 +105,64 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
     assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
 
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+
+test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam-Ergebnisse', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'rcpd-academy-final-exam-'));
+  try {
+    const repository = createJsonExamRepository(directory);
+    await repository.create('exam_masters', 'academy-final', {
+      id: 'academy-final', status: 'published', startable: true, minClearance: 0,
+      assignedCourseCodes: ['BASIC-01'], currentPublishedVersionId: 'academy-final__v1'
+    });
+    await repository.create('exam_versions', 'academy-final__v1', {
+      id: 'academy-final__v1', examId: 'academy-final', versionNumber: 1, title: 'Grundausbildung Abschluss',
+      assessmentStage: 'final_exam', minClearance: 0, timeLimitMinutes: 30, passingScoreBasisPoints: 9000,
+      questionsSnapshot: [
+        { id: 'written', type: 'free_text', question: 'Beschreibe das Vorgehen.', pointsMilli: 1000, gradingRubric: 'Intern' }
+      ]
+    });
+    await startExamAttempt(
+      repository, 'academy-final',
+      { uid: 'academy-student', displayName: 'Academy Student', clearanceLevel: 0 },
+      'BASIC-01', Date.parse('2026-11-10T12:00:00.000Z'), () => 'academy-final-attempt'
+    );
+    await saveExamAttemptAnswers(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-student', 1,
+      { written: 'Vollständige Antwort' }, Date.parse('2026-11-10T12:01:00.000Z')
+    );
+    await submitExamAttempt(repository, 'academy-final', 'academy-final-attempt', 'academy-student', Date.parse('2026-11-10T12:02:00.000Z'));
+    await gradeExamAttempt(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-admin',
+      [{ questionId: 'written', pointsEarnedMilli: 1000 }], '2026-11-10T12:03:00.000Z'
+    );
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
+    assert.equal(await getReleasedPassingFinalExam(repository, 'other-student', 'academy-final', 'BASIC-01'), null);
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'OTHER-01'), null);
+
+    const released = await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:04:00.000Z');
+    assert.equal(released.status, 'passed');
+    const proof = await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01');
+    assert.deepEqual(proof, {
+      attemptId: 'academy-final-attempt',
+      releasedAtIso: '2026-11-10T12:04:00.000Z',
+      finalScoreBasisPoints: 10_000
+    });
+
+    const corrected = await correctCompletedExamReview(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-admin',
+      [{ questionId: 'written', pointsEarnedMilli: 0 }],
+      'Bewertung nach erneuter Prüfung korrigiert.',
+      '2026-11-10T12:05:00.000Z'
+    );
+    assert.equal(corrected.status, 'failed');
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
+    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
