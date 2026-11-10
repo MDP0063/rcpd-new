@@ -299,6 +299,20 @@ export function validateExamRepositorySnapshot(value: unknown): ExamRepositorySn
     if (history.length !== Number(latestVersionNumber)) {
       return fail('EXAM_BACKUP_VERSION_HISTORY_INCOMPLETE');
     }
+    const orderedHistory = [...history].sort(
+      (left, right) => Number(left.versionNumber) - Number(right.versionNumber)
+    );
+    for (let index = 0; index < orderedHistory.length; index += 1) {
+      const expectedVersionNumber = index + 1;
+      const version = orderedHistory[index];
+      if (
+        !Number.isSafeInteger(version.versionNumber) ||
+        Number(version.versionNumber) !== expectedVersionNumber ||
+        version.id !== `${master.id}__v${expectedVersionNumber}`
+      ) {
+        return fail('EXAM_BACKUP_VERSION_SEQUENCE_INVALID');
+      }
+    }
 
     const currentVersionId = master.currentPublishedVersionId;
     if (currentVersionId !== undefined && currentVersionId !== null) {
