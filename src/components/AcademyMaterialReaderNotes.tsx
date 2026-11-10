@@ -159,7 +159,16 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      // Flush the current version's draft before the reader switches to another material.
+      // The debounce timer is cleaned up separately, so relying on it here could lose edits.
+      const current = currentDraftRef.current;
+      if (current && serializeDraft(current) !== lastSavedRef.current) {
+        pendingSaveRef.current = current;
+        void persistPendingRef.current();
+      }
+    };
   }, [materialId, materialVersionId]);
 
   const draft = useMemo<NoteDraft | null>(() => selectedNote ? ({
@@ -171,16 +180,6 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   currentDraftRef.current = draft;
   const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
-
-  useEffect(() => {
-    return () => {
-      const current = currentDraftRef.current;
-      if (current && serializeDraft(current) !== lastSavedRef.current) {
-        pendingSaveRef.current = current;
-        void persistPendingRef.current();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!draft) return;
