@@ -70,7 +70,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const claimHistory = (await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewClaimHistory;
     assert.equal(claimHistory?.at(-2)?.action, 'transferred');
     assert.equal(claimHistory?.at(-1)?.action, 'reassigned');
-    const pendingNotifications = await listPendingExamReviewNotifications(repository);
+    const pendingNotifications = await listPendingExamReviewNotifications(repository, ['review-attempt']);
     assert.equal(pendingNotifications.filter(item => item.event.action === 'transferred').length, 2);
     assert.equal(pendingNotifications.filter(item => item.event.action === 'reassigned').length, 2);
     const previousOwnerTransferNotification = pendingNotifications.find(item =>
