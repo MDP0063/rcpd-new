@@ -189,6 +189,7 @@ export const API_ENDPOINTS = {
   ACADEMY_PROGRAM_PARTICIPATIONS: '/api/academy/program-participations',
   ACADEMY_PROGRAM_PARTICIPATION: (id: string) => `/api/academy/program-participations/${encodeURIComponent(id)}`,
   ACADEMY_NOTES: '/api/academy/notes',
+  ACADEMY_NOTE_SOURCE_STATUS: (id: string) => `/api/academy/notes/${encodeURIComponent(id)}/source-status`,
   ACADEMY_MODULES: '/api/academy/modules',
   ACADEMY_MODULE_PDF: (id: string) => `/api/academy/modules/${encodeURIComponent(id)}/pdf`,
   ACADEMY_EXAMS: '/api/academy/exams',
