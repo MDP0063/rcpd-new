@@ -33,6 +33,13 @@ class FakeBulkWriter {
 class FakeFirestore {
   private readonly documents = new Map<string, Map<string, unknown>>();
   collection(name: string) { return new FakeCollection(this, name); }
+  doc(path: string) {
+    const [collection, id] = path.split('/');
+    return { get: async () => {
+      const data = this.read(collection, id);
+      return { exists: data !== null, get: (field: string) => data && typeof data === 'object' ? (data as Record<string, unknown>)[field] : undefined };
+    } };
+  }
   bulkWriter() { return new FakeBulkWriter(this); }
   seed(collection: string, id: string, data: unknown) {
     let items = this.documents.get(collection);
