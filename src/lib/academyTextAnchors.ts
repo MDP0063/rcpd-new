@@ -17,23 +17,28 @@ const MAX_QUOTE_LENGTH = 1000;
 const CONTEXT_LENGTH = 80;
 
 export function createTextAnchor(selection: TextAnchorSelection, sourceText: string): AcademyPrivateNoteTextAnchor | null {
+  const leadingWhitespace = selection.text.length - selection.text.trimStart().length;
+  const trailingEnd = selection.text.trimEnd().length;
   const quote = selection.text.trim();
-  if (!quote || selection.text !== quote || quote.length > MAX_QUOTE_LENGTH ||
+  const startOffset = selection.startOffset + leadingWhitespace;
+  const endOffset = selection.startOffset + trailingEnd;
+  if (!quote || quote.length > MAX_QUOTE_LENGTH ||
       selection.startOffset < 0 || selection.endOffset <= selection.startOffset ||
       selection.endOffset > sourceText.length ||
-      sourceText.slice(selection.startOffset, selection.endOffset) !== selection.text) return null;
+      sourceText.slice(selection.startOffset, selection.endOffset) !== selection.text ||
+      sourceText.slice(startOffset, endOffset) !== quote) return null;
 
   const anchor: AcademyPrivateNoteTextAnchor = {
     kind: selection.kind,
     quote,
-    prefix: sourceText.slice(Math.max(0, selection.startOffset - CONTEXT_LENGTH), selection.startOffset),
-    suffix: sourceText.slice(selection.endOffset, selection.endOffset + CONTEXT_LENGTH)
+    prefix: sourceText.slice(Math.max(0, startOffset - CONTEXT_LENGTH), startOffset),
+    suffix: sourceText.slice(endOffset, endOffset + CONTEXT_LENGTH)
   };
   if (selection.kind === 'markdown' && selection.headingPath?.length) {
     anchor.headingPath = selection.headingPath.slice(-6).map(value => value.slice(0, 120));
   }
   if (selection.kind === 'code') {
-    anchor.startLine = sourceText.slice(0, selection.startOffset).split(/\r?\n/).length;
+    anchor.startLine = sourceText.slice(0, startOffset).split(/\r?\n/).length;
     anchor.endLine = anchor.startLine + (selection.text.match(/\n/g)?.length ?? 0);
   }
   return anchor;
