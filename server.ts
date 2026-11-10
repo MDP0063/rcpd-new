@@ -87,6 +87,7 @@ import {
 import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { canAccessDeploymentManifest, mergeRestoredDeploymentConfig, toBackupDeploymentConfig } from './server/deploymentSecurity.ts';
+import { PORTAL_SECURITY_HEADERS } from './server/securityHeaders.ts';
 import {
   AcademyExamDoc,
   AnnouncementCategory,
@@ -1010,6 +1011,7 @@ async function startServer() {
     ? createFirestoreAcademyRepository(store.getDatabase())
     : createJsonAcademyRepository(DATA_DIR);
   const app = express();
+  app.disable('x-powered-by');
   const PORT = Number(process.env.PORT) || 3000;
 
   // Hinter dem Render-Proxy kommt die echte Client-IP aus X-Forwarded-For.
@@ -1032,8 +1034,9 @@ async function startServer() {
 
   // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
   app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'same-origin');
+    for (const [name, value] of Object.entries(PORTAL_SECURITY_HEADERS)) {
+      res.setHeader(name, value);
+    }
     const origin = req.headers.origin;
     if (origin && allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
