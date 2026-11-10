@@ -511,9 +511,17 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       method: 'POST'
     });
     assert.equal(claimResponse.status, 200, JSON.stringify(claimResponse.body));
+    const draftResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-draft`, courseReviewer.token, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionId: 'http-free-text', pointsEarnedMilli: 2500 })
+    });
+    assert.equal(draftResponse.status, 200, JSON.stringify(draftResponse.body));
+    assert.equal(draftResponse.body.draftGrades['http-free-text'], 2500);
+    assert.equal(draftResponse.body.revision, 1);
     const adminQueueDuringClaim = await jsonRequest('/api/academy/exam-reviews', admin.token);
     assert.equal(adminQueueDuringClaim.body.reviews.length, 1);
     assert.deepEqual(adminQueueDuringClaim.body.reviews[0].questions, [], 'claimed answers stay hidden from other reviewers');
+    assert.deepEqual(adminQueueDuringClaim.body.reviews[0].draftGrades, {}, 'claimed draft points stay hidden from other reviewers');
     assert.equal(adminQueueDuringClaim.body.reviews[0].reviewClaim.reviewerName, 'HttpCourseReviewer');
     assert.equal('reviewerUid' in adminQueueDuringClaim.body.reviews[0].reviewClaim, false);
     assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
