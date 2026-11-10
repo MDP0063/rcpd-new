@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -39,10 +39,15 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(await listExamReviews(repository, ['LAW-01'], 'grader'), []);
     const claim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:02:30.000Z');
     assert.equal(claim.reviewerUid, 'grader');
+    const savedDraft = await saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 400, '2026-11-05T12:02:35.000Z');
+    assert.equal(savedDraft.revision, 1);
+    assert.equal(savedDraft.draftGrades.text, 400);
+    await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'other-grader', 'text', 500), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
     const hiddenQueue = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T12:02:40.000Z');
     assert.equal(hiddenQueue.length, 1);
     assert.deepEqual(hiddenQueue[0].questions, [], 'other reviewers must not receive claimed answer content');
     assert.equal(hiddenQueue[0].reviewClaim?.reviewerName, 'Prüfer');
+    assert.deepEqual(hiddenQueue[0].draftGrades, {}, 'draft points must not be exposed to other reviewers');
     await assert.rejects(claimExamReview(repository, 'review-exam', 'review-attempt', 'other-grader', 'Anderer Prüfer', '2026-11-05T12:02:41.000Z'), /EXAM_REVIEW_CLAIMED/);
     await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
     await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:02:45.000Z');
@@ -52,9 +57,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const resumedClaim = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(resumedClaim?.reviewClaim?.warningStartedAtIso, undefined, 'actual work resets the warning');
     await markExamReviewDisconnected(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:34:00.000Z');
-    const afterDisconnect = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T13:04:00.000Z');
+    await assert.rejects(recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
+    await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 600, '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
+    await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:35:30.000Z');
+    const reclaimedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(reclaimedAttempt?.reviewClaimHistory?.at(-1)?.action, 'reclaimed');
+    const reclaimedQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:35:40.000Z');
+    assert.equal(reclaimedQueue[0].draftGrades.text, 400, 'saved draft survives disconnect and explicit reclaim');
+    await markExamReviewDisconnected(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:36:00.000Z');
+    const afterDisconnect = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T13:06:00.000Z');
     assert.equal(afterDisconnect[0].reviewClaim, null, 'disconnect releases the claim after at most 30 minutes');
-    await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T13:04:30.000Z');
+    await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T13:06:30.000Z');
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [], '2026-11-05T12:03:00.000Z'), /EXAM_MANUAL_GRADES_INCOMPLETE/);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 1001 }]), /EXAM_MANUAL_GRADES_INVALID/);
 
@@ -66,7 +79,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(await repository.get('exam_attempts', 'review-attempt'), attemptBeforeSelfReview);
     assert.equal((await repository.get('exam_attempts', 'review-attempt'))?.status, 'pending_review');
 
-    const submission = await gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T13:05:00.000Z');
+    const submission = await gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }], '2026-11-05T13:07:00.000Z');
     assert.equal(submission.status, 'passed');
     assert.equal(submission.finalScoreBasisPoints, 7500);
     assert.equal(submission.manuallyEarnedPointsMilli, 500);
