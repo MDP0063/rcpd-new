@@ -962,7 +962,11 @@ async function initFirestoreStorage() {
   await store.flush();
 
   const shutdown = () => {
-    void store?.flush().finally(() => process.exit(0));
+    void store?.flush()
+      .catch(error => {
+        console.error('[Firestore] Ausstehende Änderungen konnten beim Herunterfahren nicht vollständig gespeichert werden:', error);
+      })
+      .finally(() => process.exit(0));
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
