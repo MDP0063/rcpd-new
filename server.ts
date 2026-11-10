@@ -88,6 +88,7 @@ import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplication
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import { canAccessDeploymentManifest, mergeRestoredDeploymentConfig, toBackupDeploymentConfig } from './server/deploymentSecurity.ts';
 import { PORTAL_SECURITY_HEADERS } from './server/securityHeaders.ts';
+import { parseFirestoreMigrationSource } from './server/firestoreMigration.ts';
 import {
   AcademyExamDoc,
   AnnouncementCategory,
@@ -962,13 +963,9 @@ async function initFirestoreStorage() {
   let initial = (await store.loadAll()) as unknown as PortalDatabaseState | null;
   if (!initial) {
     // Erster Start mit Firestore: vorhandene JSON-Datei übernehmen, sonst neu anlegen.
-    let fromFile: PortalDatabaseState | null = null;
-    try {
-      fromFile = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) as PortalDatabaseState;
-    } catch {
-      fromFile = null;
-    }
-    initial = fromFile && fromFile.accounts?.length ? fromFile : createInitialDatabase();
+    const legacyJson = fs.existsSync(DB_FILE) ? fs.readFileSync(DB_FILE, 'utf8') : null;
+    const fromFile = parseFirestoreMigrationSource(legacyJson) as PortalDatabaseState | null;
+    initial = fromFile ?? createInitialDatabase();
     console.log(
       `[Firestore] Noch keine Daten vorhanden, ${fromFile ? 'übernehme die JSON-Datei' : 'lege eine neue Datenbank an'}.`
     );
