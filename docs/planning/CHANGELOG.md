@@ -109,3 +109,10 @@
 - Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
 - Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
 - Draft-PR #140 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
+
+
+## 2026-11-10 – CI-Korrektur und Status der Reader-Leseposition
+
+- PR #138: GitHub-CI für TypeScript/Build und 448/448 Tests erfolgreich; die PR-Vorlagenprüfung nach Ergänzung der erforderlichen Testeinschränkung ebenfalls erfolgreich. PR bleibt Draft, kein Merge.
+- PR #140: Draft-Implementierung der lokalen Reader-Leseposition. Die direkte GitHub-Integration hat bislang keinen Build-/Testlauf für diesen Branch ausgelöst; keine lokale Testausführung und keine manuelle Browserprüfung behauptet.
+- PR #140 enthält vorübergehend den gemeinsamen ID-Fix-Commit aus PR #138. PR #138 sollte vor PR #140 gemergt werden, damit keine doppelten Commits in der Main-Historie verbleiben.
