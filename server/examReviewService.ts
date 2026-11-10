@@ -1,7 +1,7 @@
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamAttemptRecord, ExamVersionRecord } from './examAttemptService.ts';
 import { scoreExam } from './examScore.ts';
-import { toPublicSubmission, type PublicExamSubmission } from './examSubmitService.ts';
+import { toParticipantSubmission, toPublicSubmission, type PublicExamSubmission } from './examSubmitService.ts';
 
 const HISTORY_LIMIT = 1000;
 
@@ -270,7 +270,77 @@ export async function listOwnExamResults(repository: ExamRepository, uid: string
     if (!['passed', 'failed', 'pending_review'].includes(attempt.status)) continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-    results.push(toPublicSubmission(attempt, version));
+    results.push(toParticipantSubmission(attempt, version));
   }
   return results.sort((left, right) => right.submittedAtIso.localeCompare(left.submittedAtIso));
+}
+
+
+export interface ExamResultReleaseQueueItem {
+  id: string;
+  examId: string;
+  examTitle: string;
+  userName: string;
+  attemptCourseCode: string;
+  submittedAtIso: string;
+  assessmentStage: 'test' | 'final_exam';
+  status: 'passed' | 'failed';
+  finalScoreBasisPoints: number | null;
+  resultReleaseStatus: 'unreleased' | 'pending_rerelease';
+}
+
+export async function listPendingExamResultReleases(repository: ExamRepository): Promise<ExamResultReleaseQueueItem[]> {
+  const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', { limit: HISTORY_LIMIT }));
+  const results: ExamResultReleaseQueueItem[] = [];
+  for (const attempt of attempts) {
+    if (attempt.status !== 'passed' && attempt.status !== 'failed') continue;
+    if (attempt.resultReleaseStatus === 'released') continue;
+    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) {
+      throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    }
+    results.push({
+      id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
+      attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
+      assessmentStage: version.assessmentStage, status: attempt.status,
+      finalScoreBasisPoints: Number.isSafeInteger(attempt.finalScoreBasisPoints) ? Number(attempt.finalScoreBasisPoints) : null,
+      resultReleaseStatus: attempt.resultReleaseStatus === 'pending_rerelease' ? 'pending_rerelease' : 'unreleased'
+    });
+  }
+  return results.sort((a, b) => a.submittedAtIso.localeCompare(b.submittedAtIso));
+}
+
+export async function releaseExamResult(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  releasedByUid: string,
+  releasedAtIso = new Date().toISOString()
+): Promise<PublicExamSubmission> {
+  if (!releasedByUid) throw new Error('EXAM_RESULT_RELEASE_ACTOR_INVALID');
+  if (!Number.isFinite(Date.parse(releasedAtIso))) throw new Error('EXAM_RESULT_RELEASE_TIME_INVALID');
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_RESULT_NOT_FINAL');
+    const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber || version.assessmentStage !== attempt.assessmentStage) {
+      throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    }
+    if (attempt.resultReleaseStatus === 'released') return toPublicSubmission(attempt, version);
+    const history = Array.isArray(attempt.resultReleaseHistory) ? attempt.resultReleaseHistory : [];
+    if (history.length >= 100) throw new Error('EXAM_RESULT_RELEASE_HISTORY_LIMIT');
+    const updated: ExamAttemptRecord = {
+      ...attempt,
+      resultReleaseStatus: 'released',
+      resultReleaseHistory: [...history, {
+        releasedByUid,
+        releasedAtIso,
+        status: attempt.status,
+        finalScoreBasisPoints: Number.isSafeInteger(attempt.finalScoreBasisPoints) ? Number(attempt.finalScoreBasisPoints) : null
+      }]
+    };
+    await transaction.update('exam_attempts', attemptId, updated);
+    return toPublicSubmission(updated, version);
+  });
 }
