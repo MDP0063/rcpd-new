@@ -64,6 +64,7 @@ function apiErrorMessage(value?: string): string {
     case 'ACADEMY_COURSE_CHAPTER_INVALID': return 'Prüfe für jedes Kapitel Titel, Reihenfolge und Pflichtstatus.';
     case 'ACADEMY_COURSE_COMPLETION_TARGET_MISSING': return 'Eine Abschlussbedingung verweist auf ein Kapitel oder Material, das nicht mehr im Kurs enthalten ist.';
     case 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING': return 'Der Kurs bleibt gesperrt, bis alle betroffenen Materialfassungen geprüft wurden.';
+    case 'ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED': return 'Vor der Reaktivierung muss eine neue Kursversion die betroffenen Materialien aktualisieren oder daraus entfernen.';
     case 'ACADEMY_MATERIAL_REVIEW_NOT_FOUND': return 'Diese Materialprüfung wurde bereits abgeschlossen oder ist nicht mehr aktuell.';
     case 'ACADEMY_COURSE_AVAILABILITY_INVALID': return 'Die Kursverfügbarkeit konnte nicht geändert werden.';
     default: return value || 'Die Änderung konnte nicht gespeichert werden. Prüfe deine Eingaben und versuche es erneut.';
@@ -415,7 +416,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                   <li key={entry.master.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">{entry.draft?.title || entry.version?.title || entry.master.code}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}{entry.master.publicationStatus === 'published' ? ' · ' + (entry.master.availability === 'available' ? 'Für neue Teilnehmende verfügbar' : 'Vorübergehend offline') : ''}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}{entry.master.publicationStatus === 'published' ? ' · ' + (entry.master.availability === 'available' ? 'Für neue Teilnehmende verfügbar' : 'Vorübergehend offline') : ''}{entry.master.materialReviewVersionRequired?.length ? ' · Neue Kursversion erforderlich' : ''}</p>
                       {entry.master.materialReviewPending?.map(item => (
                         <div key={item.materialId + ':' + item.materialVersionId} className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
                           <p className="text-sm font-semibold text-amber-950 dark:text-amber-100">Neue Materialfassung prüfen</p>
@@ -426,7 +427,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                           </div>
                         </div>
                       ))}
-                      {entry.master.publicationStatus === 'published' && entry.master.availability === 'unavailable' && !(entry.master.materialReviewPending?.length) && (
+                      {entry.master.publicationStatus === 'published' && entry.master.availability === 'unavailable' && !(entry.master.materialReviewPending?.length) && !(entry.master.materialReviewVersionRequired?.length) && (
                         <button type="button" className={secondary + ' mt-2'} disabled={busy} onClick={() => void setCourseAvailability(entry, 'available')}>Kurs wieder verfügbar machen</button>
                       )}
                     </div>
