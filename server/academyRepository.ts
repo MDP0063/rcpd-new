@@ -878,21 +878,19 @@ export class AcademyRepository {
       const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
       const affectedCourses: AcademyCourseMasterDoc[] = [];
       for (const course of courseMasters) {
-        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
-            (course.availability !== 'available' &&
-              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length))) continue;
+        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId) continue;
         const courseVersion = await tx.get<AcademyCourseVersionDoc>(
           'academy_course_versions', course.currentPublishedVersionId
         );
-        if (!courseVersion || courseVersion.courseId !== course.id ||
-            !courseVersion.chapters.some(chapter => chapter.materialReferences.some(reference => reference.materialId === materialId))) {
-          continue;
-        }
+        if (!courseVersion || courseVersion.courseId !== course.id) continue;
+        const matchingReferences = courseVersion.chapters.flatMap(chapter => chapter.materialReferences)
+          .filter(reference => reference.materialId === materialId);
+        if (matchingReferences.length === 0) continue;
         const requiredVersions = [...(course.materialReviewVersionRequired ?? [])];
         const requirement = {
           materialId,
-          materialVersionId: archivedVersion?.id || current.currentPublishedVersionId || '',
-          materialVersionNumber: archivedVersion?.versionNumber || current.latestVersionNumber
+          materialVersionId: archivedVersion?.id || current.currentPublishedVersionId || matchingReferences[0].materialVersionId,
+          materialVersionNumber: archivedVersion?.versionNumber || current.latestVersionNumber || matchingReferences[0].versionNumber || 1
         };
         const existingIndex = requiredVersions.findIndex(item => item.materialId === materialId);
         if (existingIndex < 0) requiredVersions.push(requirement);
