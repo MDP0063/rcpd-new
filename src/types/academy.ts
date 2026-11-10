@@ -386,9 +386,20 @@ export interface AcademyProgramParticipationDoc {
   updatedIso: string;
 }
 
+export interface AcademyPrivateNoteTextAnchor {
+  kind: 'markdown' | 'code';
+  quote: string;
+  prefix: string;
+  suffix: string;
+  headingPath?: string[];
+  startLine?: number;
+  endLine?: number;
+}
+
 export interface AcademyPrivateNoteSource {
   materialId: string;
   materialVersionId: string;
+  anchor?: AcademyPrivateNoteTextAnchor;
 }
 
 export interface AcademyPrivateNoteDoc {
@@ -404,7 +415,7 @@ export interface AcademyPrivateNoteDoc {
   tags: string[];
   /** Optional for legacy compatibility; when absent, materialId/materialVersionId are the sole source. */
   sources?: AcademyPrivateNoteSource[];
-  /** Page/text anchoring intentionally omitted until a stable PDF anchor strategy is selected. */
+  /** Optional per-source text anchor; absent on legacy notes and sources without a selected passage. */
   createdIso: string;
   updatedIso: string;
 }
