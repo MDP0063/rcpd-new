@@ -376,6 +376,6 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Korrekturen bereits freigegebener manueller Bewertungen setzen `pending_rerelease`; der bisherige Freigabeverlauf bleibt erhalten und die neue Bewertung wird erst nach erneuter Admin-Freigabe sichtbar.
 - Admin-Freigabequeue ist im bestehenden Korrekturzentrum ergänzt. Die Prüfungswerkstatt bleibt Admin-only; Colonels erhalten keine Ergebnisfreigabe-Berechtigung.
 - CI auf PR-Head erfolgreich: TypeScript-Check und Produktionsbuild erfolgreich; **451/451 Tests bestanden**; PR-Template-Validierung erfolgreich.
-- Der Main-Push-Workflow einschließlich optionalem Render-Hook läuft/ist gesondert zu prüfen. Ein erfolgreicher Hook ist kein Nachweis für die tatsächliche Laufzeitgesundheit.
+- Der Main-Push-Workflow einschließlich optionalem Render-Deploy-Hook war erfolgreich. Dies bestätigt den CI-/Hook-Schritt, aber nicht die tatsächliche Laufzeitgesundheit der Anwendung.
 - Keine manuelle Browser-/Live-Firestore-Prüfung durchgeführt; sie bleibt Teil des gemeinsamen Academy-Abnahmetests.
 - Noch nicht implementiert: konfigurierbare automatische Ergebnisfreigabe sowie die serverseitige Verknüpfung von `required_assessment` mit einem aktuell freigegebenen `final_exam`-Versuch. Der aktuell fehlende Konfigurationswert führt weiterhin sicher zur manuellen Erstfreigabe.
