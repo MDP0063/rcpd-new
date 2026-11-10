@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149 und #150 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `main` bei `99d7694abaa0be0254ce10f910c103a8d0db3d2b` (Squash-Merge von PR #150).  
 **Aktueller Umsetzungsstand:** PR #149 und PR #150 wurden nach erfolgreicher GitHub-CI gemergt. PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich, 453/453 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde im PR-Lauf übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine manuelle Browserprüfung und eine Live-Firestore-Abnahme stehen weiterhin aus.
@@ -401,4 +401,16 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Beim freiwilligen Freigeben kann der Prüfer gespeicherte Drafts behalten oder noch nicht gespeicherte lokale Eingaben verwerfen. Nach einem Disconnect ist ein ausdrücklicher neuer Claim erforderlich; vorher sind Draft-Speicherung und endgültige Bewertung gesperrt.
 - Wiederholte Claim-Anfragen verlängern die Inaktivitätsfrist nicht. Ablaufprüfungen erfolgen zusätzlich unmittelbar vor Freigabe und endgültiger Bewertung, damit ein veralteter Claim nicht allein deshalb nutzbar bleibt, weil noch keine Queue-Abfrage den Status aktualisiert hat.
 - GitHub-CI für PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
-- Nächste Schritte: die noch nicht implementierten, bereits beschlossenen Examiner-Funktionen aus `DECISIONS.md` und Abschnitt 14 der Academy-Spezifikation umsetzen – insbesondere Übergabe an andere autorisierte Prüfer, administrative Einzel-Neuzuweisung und die dazugehörigen Benachrichtigungen. Dabei ausschließlich die vorhandenen Rollen-/Berechtigungsregeln und Notification-Infrastruktur verwenden; falls eine echte technische oder fachliche Lücke eine neue Entscheidung erfordert, diese vor der Änderung gezielt klären.
+- Nächste Schritte: die verbleibenden beschlossenen Examiner-Elemente umsetzen, insbesondere die vollständige einsehbare Claim-/Übergabehistorie und die noch festgelegten wichtigen Aktionsanfragen samt Benachrichtigungen. Schwellenwerte für zusätzliche Vorgesetzten-Benachrichtigungen bei auffälligen automatischen Freigaben bleiben gemäß `OPEN-QUESTIONS.md` offen und werden nicht geraten. Browser-/Live-Firestore-Abnahme für Claims, Drafts, Übergabe, Benachrichtigungen und Direktnavigation steht ebenfalls aus.
+
+
+## 10.11.2026 – Examiner-Übergabe, administrative Neuzuweisung und Benachrichtigungen (PR #152 abgeschlossen)
+
+- PR #152 `feat(examiner): support review handoff and reassignment notifications` wurde per Squash gemergt; Main-Commit: `465c55ab92164e5f47e30b041ac80ef678c718ec`.
+- Aktive Prüfer können einen eigenen Claim an einen anderen für den konkreten Kurs berechtigten und nicht gesperrten Prüfer übergeben. Admins und Colonels können einzelne bestehende Claims administrativ neu zuweisen; Sammel-Neuzuweisungen gibt es nicht.
+- Ein Verantwortungswechsel ersetzt den serverseitigen Claim atomar. Der vorherige Prüfer verliert sofort Lese-/Schreibzugriff auf die vertraulichen Antworten und Schreibzugriff auf Drafts; gespeicherte Drafts bleiben für den neuen Verantwortlichen erhalten.
+- Bei freiwilliger Übergabe kann der Prüfer explizit gespeicherte Drafts vorab sichern oder lokale, noch nicht gespeicherte Eingaben verwerfen. Diese Eingaben werden nicht stillschweigend übertragen.
+- Die Claim-Historie protokolliert Übergabe, administrative Neuzuweisung, Warnungsbeginn, freiwillige Freigabe und automatische Freigabe samt Grund und Verantwortlichen. Benachrichtigungszustellung wird idempotent über persistente Historienmarker verfolgt.
+- In-App-Benachrichtigungen informieren neuen und bisherigen Verantwortlichen über den Wechsel, den aktuellen Prüfer über die bevorstehende automatische Freigabe und den bisherigen Prüfer über die automatische Freigabe einschließlich Hinweis auf den zuletzt gespeicherten Draft-Stand. Benachrichtigungen enthalten einen Direktlink zum konkreten Examiner-Vorgang in der Academy.
+- PR #152: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
+- Noch offen: vollständige UI-Einsicht in die Claim-/Übergabehistorie sowie die beschlossenen wichtigen Aktionsanfragen und deren Benachrichtigungen. Zusätzliche Vorgesetzten-Benachrichtigungen für auffällige automatische Freigaben bleiben bis zur Klärung der offenen Schwellenwerte zurückgestellt.
