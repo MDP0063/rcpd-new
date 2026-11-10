@@ -552,9 +552,9 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
     });
     assert.equal(submissionResponse.status, 200, JSON.stringify(submissionResponse.body));
-    assert.equal(submissionResponse.body.submission.status, 'pending_review');
-    assert.equal(submissionResponse.body.submission.questionResults.length, 5);
-    assert.equal(submissionResponse.body.submission.questionResults[3].correct, true);
+    assert.equal(submissionResponse.body.submission.status, 'awaiting_release');
+    assert.equal(submissionResponse.body.submission.finalScoreBasisPoints, null);
+    assert.deepEqual(submissionResponse.body.submission.questionResults, []);
     const nextReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
     assert.equal(nextReviewQueue.body.reviews.length, 1);
     const attemptToGrade = nextReviewQueue.body.reviews[0];
@@ -568,7 +568,18 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const updatedOwnResults = await jsonRequest('/api/academy/exam-results', delegate.token);
     assert.equal(updatedOwnResults.status, 200);
     assert.equal(updatedOwnResults.body.results.length, 2);
+    assert.equal(updatedOwnResults.body.results.every((item: any) => item.status === 'awaiting_release' && item.finalScoreBasisPoints === null && item.questionResults.length === 0), true);
     assert.equal((await jsonRequest('/api/academy/exam-results', admin.token)).body.results.length, 0);
+    assert.equal((await jsonRequest('/api/admin/exam-result-releases', delegate.token)).status, 403);
+    const releaseQueue = await jsonRequest('/api/admin/exam-result-releases', admin.token);
+    assert.equal(releaseQueue.status, 200, JSON.stringify(releaseQueue.body));
+    const releasable = releaseQueue.body.releases.find((item: any) => item.id === attemptToGrade.id);
+    assert.ok(releasable);
+    const releaseResponse = await jsonRequest(`/api/admin/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/release-result`, admin.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+    });
+    assert.equal(releaseResponse.status, 200, JSON.stringify(releaseResponse.body));
+    assert.equal((await jsonRequest('/api/academy/exam-results', delegate.token)).body.results.find((item: any) => item.id === attemptToGrade.id).status, 'passed');
 
     const assertDelegatedProjection = (exam: Record<string, any>) => {
       assert.deepEqual(exam.questions.map((question: { id: string }) => question.id), master.questions.map(question => question.id));
