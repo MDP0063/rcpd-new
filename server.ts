@@ -1963,9 +1963,9 @@ async function startServer() {
     next(error);
   }
 
-  async function deliverPendingExamReviewNotifications(): Promise<void> {
+  async function deliverPendingExamReviewNotifications(attemptIds: string[]): Promise<void> {
     const repository = getExamRepository();
-    const pending = await listPendingExamReviewNotifications(repository);
+    const pending = await listPendingExamReviewNotifications(repository, attemptIds);
     for (const item of pending) {
       const event = item.event;
       const state = loadDatabase();
@@ -2035,7 +2035,7 @@ async function startServer() {
       const role = caller.publicProfile.role;
       const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
       const reviews = await listExamReviews(getExamRepository(), allowed, caller.uid);
-      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+      try { await deliverPendingExamReviewNotifications(reviews.map(review => review.id)); } catch (notificationError) {
         console.error('Exam review notification delivery will be retried:', notificationError);
       }
       res.json({ reviews });
@@ -2095,7 +2095,7 @@ async function startServer() {
         caller.uid, 'Prüfungsvorgang übergeben', req.params.id,
         `Versuch ${req.params.attemptId} an ${target.publicProfile.displayName} übergeben. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
       );
-      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
         console.error('Exam review transfer notification delivery will be retried:', notificationError);
       }
       res.json({ claim, transferred: true });
