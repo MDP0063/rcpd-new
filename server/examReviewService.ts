@@ -449,7 +449,24 @@ export interface ExamReviewItem {
   draftRevision: number;
 }
 
-export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string, nowIso = new Date().toISOString()): Promise<ExamReviewItem[]> {
+function hasPendingExamReviewNotification(attempt: ExamAttemptRecord): boolean {
+  const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+  return history.some(event => {
+    if (!event.notificationRequired) return false;
+    const recipients = event.action === 'transferred' || event.action === 'reassigned'
+      ? [event.previousUid, event.targetUid]
+      : [event.targetUid];
+    return recipients.some(uid => Boolean(uid) && !event.notificationDeliveredTo?.includes(uid!));
+  });
+}
+
+export async function listExamReviews(
+  repository: ExamRepository,
+  allowedCourseCodes: readonly string[],
+  reviewerUid: string,
+  nowIso = new Date().toISOString(),
+  onNotificationPending?: (attemptId: string) => void
+): Promise<ExamReviewItem[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'pending_review' }], limit: HISTORY_LIMIT
   }));
@@ -461,6 +478,7 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
     const attempt = await repository.runTransaction(transaction =>
       refreshReviewClaim(transaction, listedAttempt.id, nowIso)
     );
+    if (hasPendingExamReviewNotification(attempt)) onNotificationPending?.(attempt.id);
     if (attempt.status !== 'pending_review') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
