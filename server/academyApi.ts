@@ -949,7 +949,7 @@ export function createAcademyApiRouter(
         master.id, materialId, materialVersionId, decision, new Date().toISOString()
       );
       await recordAudit(actor.uid, 'Academy-Materialprüfung abgeschlossen', master.code,
-        `Material ${materialId}, Fassung ${materialVersionId}; Entscheidung: ${decision === 'keep_available' ? 'bisherige Kursversion bleibt verfügbar' : 'Kurs bleibt offline'}.`);
+        `Material ${materialId}, Fassung ${materialVersionId}; Entscheidung: ${decision === 'keep_available' ? 'bisherige Kursversion fachlich freigegeben; Reaktivierung nur ohne weitere Sperren' : 'Kurs bleibt offline; neue Kursversion erforderlich'}.`);
       res.json({ master: updated });
     } catch (error) { fail(res, error, next); }
   });
