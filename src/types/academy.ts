@@ -235,12 +235,24 @@ export interface AcademyCourseCompletionRequirement {
   description?: string;
 }
 
+export interface AcademyCourseMaterialReview {
+  materialId: string;
+  materialCode: string;
+  materialTitle: string;
+  materialVersionId: string;
+  materialVersionNumber: number;
+  detectedIso: string;
+  notificationSentIso?: string;
+}
+
 export interface AcademyCourseMasterDoc {
   id: string;
   code: string;
   ownerUid: string;
   publicationStatus: AcademyPublicationStatus;
   availability: AcademyAvailability;
+  /** Pending review items created when a referenced material receives a new version. */
+  materialReviewPending?: AcademyCourseMaterialReview[];
   currentPublishedVersionId?: string;
   latestVersionNumber: number;
   workingRevision: number;
