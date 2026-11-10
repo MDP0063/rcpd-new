@@ -3,11 +3,12 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyPrivateNoteDoc } from '../types/academy';
+import type { AcademyPrivateNoteDoc, AcademyPrivateNoteTextAnchor } from '../types/academy';
 
 interface Props {
   materialId: string;
   materialVersionId: string;
+  selectedAnchor?: AcademyPrivateNoteTextAnchor | null;
 }
 
 type NoteDraft = {
@@ -57,7 +58,7 @@ const markdownComponents = {
   img: ({ alt }: any) => <span className="text-xs text-slate-500 dark:text-slate-400">Externe Bilder sind in privaten Notizen deaktiviert{alt ? ' (' + alt + ')' : ''}.</span>
 } satisfies Components;
 
-export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId }) => {
+export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -251,7 +252,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         kind: 'note',
         title: '',
         content: '',
-        tags: []
+        tags: [],
+        ...(selectedAnchor ? { sources: [{ materialId, materialVersionId, anchor: selectedAnchor }] } : {})
       })
     });
     setSavingAction(false);
@@ -355,7 +357,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         kind: 'bookmark',
         title: 'Lesezeichen',
         content: '',
-        tags: []
+        tags: [],
+        ...(selectedAnchor ? { sources: [{ materialId, materialVersionId, anchor: selectedAnchor }] } : {})
       })
     });
     setSavingAction(false);
@@ -432,9 +435,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         <p className="text-xs text-slate-600 dark:text-slate-300">
           Notizen und Lesezeichen gehören zu genau dieser Materialfassung. Sie werden automatisch mit deinem Konto synchronisiert und sind für andere Nutzer – auch Administratoren – nicht einsehbar.
         </p>
+        {selectedAnchor ? <p className="rounded-md border border-sky-200 bg-sky-50 p-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Ausgewählte Textstelle wird beim nächsten neuen Eintrag als Anker gespeichert: „{selectedAnchor.quote.slice(0, 180)}“</p> : null}
         <div className="flex flex-wrap gap-2">
           <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
-            Notiz hinzufügen
+            {selectedAnchor ? 'Notiz zur Textstelle hinzufügen' : 'Notiz hinzufügen'}
           </button>
           <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {bookmarks.length ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
