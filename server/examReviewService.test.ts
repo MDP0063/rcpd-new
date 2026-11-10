@@ -51,7 +51,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(hiddenQueue[0].reviewClaim?.reviewerName, 'Prüfer');
     assert.deepEqual(hiddenQueue[0].draftGrades, {}, 'draft points must not be exposed to other reviewers');
     await assert.rejects(claimExamReview(repository, 'review-exam', 'review-attempt', 'other-grader', 'Anderer Prüfer', '2026-11-05T12:02:41.000Z'), /EXAM_REVIEW_CLAIMED/);
-    await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
+    await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader', '2026-11-05T12:02:40.000Z'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
     await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:02:45.000Z');
     const warningQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:32:45.000Z');
     assert.ok(warningQueue[0].reviewClaim?.warningStartedAtIso, '30 minutes of inactivity starts the warning phase');
