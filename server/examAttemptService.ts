@@ -27,6 +27,22 @@ export interface ExamParticipant {
   clearanceLevel: number;
 }
 
+export interface ExamReviewClaim {
+  reviewerUid: string;
+  reviewerName: string;
+  claimedAtIso: string;
+  lastActivityAtIso: string;
+  warningStartedAtIso?: string;
+  disconnectedAtIso?: string;
+}
+
+export interface ExamReviewClaimHistoryEntry {
+  action: 'claimed' | 'released' | 'auto_released';
+  actorUid: string;
+  targetUid?: string;
+  atIso: string;
+}
+
 export interface ExamAttemptRecord extends ExamDocument {
   userId: string;
   userName: string;
@@ -52,6 +68,8 @@ export interface ExamAttemptRecord extends ExamDocument {
   manuallyEarnedPointsMilli: number;
   preliminaryScoreBasisPoints: number | null;
   finalScoreBasisPoints: number | null;
+  reviewClaim?: ExamReviewClaim | null;
+  reviewClaimHistory?: ExamReviewClaimHistoryEntry[];
   resultReleaseStatus?: 'unreleased' | 'released' | 'pending_rerelease';
   resultReleaseHistory?: Array<{
     releasedByUid: string;
