@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { newId } from './ids.ts';
 
 test('ID hat Präfix, Zeitstempel und Zufallsanteil', () => {
-  assert.match(newId('msg', 1730000000000), /^msg_1730000000000_[0-9a-f]{8}$/);
+  assert.match(newId('msg', 1730000000000), /^msg_1730000000000_[0-9a-f]{16}$/);
 });
 
 test('gleiche Millisekunde ergibt trotzdem verschiedene IDs', () => {
