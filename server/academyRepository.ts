@@ -869,6 +869,44 @@ export class AcademyRepository {
       assertValid(validateMaterialMaster(current));
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MATERIAL_ARCHIVED');
       if (current.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      const archivedVersion = current.currentPublishedVersionId
+        ? await tx.get<AcademyMaterialVersionDoc>('academy_material_versions', current.currentPublishedVersionId)
+        : null;
+      if (current.currentPublishedVersionId && !archivedVersion) {
+        throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+      }
+      const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
+      const affectedCourses: AcademyCourseMasterDoc[] = [];
+      for (const course of courseMasters) {
+        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
+            (course.availability !== 'available' &&
+              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length))) continue;
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>(
+          'academy_course_versions', course.currentPublishedVersionId
+        );
+        if (!courseVersion || courseVersion.courseId !== course.id ||
+            !courseVersion.chapters.some(chapter => chapter.materialReferences.some(reference => reference.materialId === materialId))) {
+          continue;
+        }
+        const requiredVersions = [...(course.materialReviewVersionRequired ?? [])];
+        const requirement = {
+          materialId,
+          materialVersionId: archivedVersion?.id || current.currentPublishedVersionId || '',
+          materialVersionNumber: archivedVersion?.versionNumber || current.latestVersionNumber
+        };
+        const existingIndex = requiredVersions.findIndex(item => item.materialId === materialId);
+        if (existingIndex < 0) requiredVersions.push(requirement);
+        else if (requiredVersions[existingIndex].materialVersionNumber <= requirement.materialVersionNumber) {
+          requiredVersions[existingIndex] = requirement;
+        }
+        const affected: AcademyCourseMasterDoc = {
+          ...course,
+          availability: 'unavailable',
+          materialReviewVersionRequired: requiredVersions
+        };
+        assertValid(validateCourseMaster(affected));
+        affectedCourses.push(affected);
+      }
       const next: AcademyMaterialMasterDoc = {
         ...current, publicationStatus: 'archived',
         archivedIso: now, archivedByUid: actorUid, archiveReason: reason.trim(),
@@ -876,6 +914,9 @@ export class AcademyRepository {
       };
       assertValid(validateMaterialMaster(next));
       await tx.update('academy_materials', materialId, next);
+      for (const affected of affectedCourses) {
+        await tx.update('academy_courses', affected.id, affected);
+      }
       return next;
     });
   }
