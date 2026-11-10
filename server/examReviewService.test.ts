@@ -52,6 +52,10 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(hiddenQueue[0].draftGrades, {}, 'draft points must not be exposed to other reviewers');
     await assert.rejects(claimExamReview(repository, 'review-exam', 'review-attempt', 'other-grader', 'Anderer Prüfer', '2026-11-05T12:02:41.000Z'), /EXAM_REVIEW_CLAIMED/);
     await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader', '2026-11-05T12:02:40.000Z'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
+    await assert.rejects(
+      transferExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader', 'grader', 'Prüfer', '', '2026-11-05T12:02:41.000Z'),
+      /EXAM_REVIEW_CLAIM_NOT_OWNED/
+    );
     const transferredClaim = await transferExamReviewClaim(
       repository, 'review-exam', 'review-attempt', 'grader', 'other-grader', 'Anderer Prüfer',
       'Fachliche Zuständigkeit', '2026-11-05T12:02:42.000Z'
@@ -108,6 +112,10 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(disconnectedQueue[0].reviewClaim?.isDisconnected, true);
     assert.deepEqual(disconnectedQueue[0].questions, [], 'disconnected owner must not keep edit access before reclaim');
     await assert.rejects(recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
+    await assert.rejects(
+      transferExamReviewClaim(repository, 'review-exam', 'review-attempt', 'grader', 'other-grader', 'Anderer Prüfer', '', '2026-11-05T12:35:00.000Z'),
+      /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/
+    );
     await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 600, '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
     await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:35:30.000Z');
     const reclaimedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
