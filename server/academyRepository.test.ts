@@ -64,7 +64,7 @@ const publishedProgramMaster: AcademyProgramMasterDoc = {
 
 test('Academy repository creates, reads and filters documents', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
-  assert.deepEqual(await repository.get('academy_courses', master.id), master);
+  assert.deepEqual(await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id), master);
   assert.deepEqual(await repository.list('academy_courses', { where: [{ field: 'ownerUid', value: 'owner-1' }] }), [master]);
   await assert.rejects(repository.create('academy_courses', master.id, master), /ACADEMY_DOCUMENT_ALREADY_EXISTS/);
 }));
@@ -469,9 +469,9 @@ test('account anonymization removes private notes and preserves anonymized Acade
   };
   await repository.saveOwnPrivateNote('deleted-user', note);
   await repository.anonymizeDeletedUser('deleted-user', 'deleted-random-marker', ['Former Officer']);
-  const anonymized = await repository.get('academy_courses', master.id);
+  const anonymized = await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id);
   assert.equal(anonymized?.ownerUid, 'deleted-random-marker');
   assert.deepEqual(await repository.listOwnPrivateNotes('deleted-user'), []);
   await repository.anonymizeDeletedUser('deleted-user', 'deleted-retry-marker', ['Former Officer']);
-  assert.equal((await repository.get('academy_courses', master.id))?.ownerUid, 'deleted-random-marker');
+  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.ownerUid, 'deleted-random-marker');
 }));
