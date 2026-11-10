@@ -183,6 +183,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerFeedback: 'Accepted',
       updatedIso: '2026-11-10T08:00:00.000Z'
     }, {
+      id: 'app-last-admin-promotion',
+      applicantUid: 'http-admin',
+      applicantName: 'HttpAdmin',
+      characterName: 'HTTP Administrator',
+      dateOfBirth: '1980-01-01',
+      discordTag: 'admin',
+      priorExperience: 'Existing service',
+      scenarioResponse: 'Existing response',
+      penalCodeAck: true,
+      status: 'pending',
+      reviewerUid: '',
+      reviewerFeedback: '',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }, {
       id: 'app-to-anonymize',
       applicantUid: 'http-deleted-account',
       applicantName: 'HttpDeletedAccount',
@@ -320,6 +334,21 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerComment: 'Done',
       createdIso: '2026-11-10T08:00:00.000Z',
       updatedIso: '2026-11-10T08:00:00.000Z'
+    }, {
+      id: 'req-last-admin-demotion',
+      requesterUid: 'http-admin',
+      requesterName: 'HttpAdmin',
+      requesterBadge: 'http-admin',
+      requesterCurrentRole: 'admin',
+      category: 'rank_change',
+      title: 'Demotion of final administrator',
+      requestedRole: 'colonel',
+      targetDetail: '',
+      justification: 'HTTP regression for final-admin protection',
+      priority: 'normal',
+      status: 'pending',
+      createdIso: '2026-11-10T08:00:00.000Z',
+      updatedIso: '2026-11-10T08:00:00.000Z'
     }],
     events: [], auditLogs: [], notifications: []
   };
@@ -419,6 +448,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({})
     });
     assert.equal(foreignMessageRead.status, 403);
+    assert.equal(JSON.stringify(foreignMessageRead.body).includes('Private message body'), false);
 
     const hideMessage = await jsonRequest('/api/messages/msg-known-private?actorUid=http-delegate', delegate.token, {
       method: 'DELETE'
@@ -643,6 +673,32 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(participantRead.status, 200);
     assert.equal(participantRead.body.message.id, 'msg-known-private');
 
+    const lastAdminDemotion = await jsonRequest('/api/admin/accounts/http-admin', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', role: 'officer' })
+    });
+    assert.equal(lastAdminDemotion.status, 409);
+
+    const lastAdminRequestDemotion = await jsonRequest('/api/requests/req-last-admin-demotion/review', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'approved', applyRankChange: true })
+    });
+    assert.equal(lastAdminRequestDemotion.status, 409);
+
+    const lastAdminApplicationPromotion = await jsonRequest('/api/admin/applications/app-last-admin-promotion', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', status: 'accepted', promoteToRole: 'trainee' })
+    });
+    assert.equal(lastAdminApplicationPromotion.status, 409);
+
+    const stateAfterAdminProtection = JSON.parse(await readFile(path.join(dataDirectory, 'portal-db-v3.json'), 'utf8'));
+    assert.equal(stateAfterAdminProtection.accounts.find((account: Record<string, any>) => account.uid === 'http-admin').publicProfile.role, 'admin');
+    assert.equal(stateAfterAdminProtection.applications.find((application: Record<string, any>) => application.id === 'app-last-admin-promotion').status, 'pending');
+    assert.equal(stateAfterAdminProtection.requests.find((request: Record<string, any>) => request.id === 'req-last-admin-demotion').status, 'pending');
+
     const repeatedRequestDecision = await jsonRequest('/api/requests/req-already-reviewed/review', admin.token, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -778,6 +834,25 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
     });
     assert.equal(updatedLogin.status, 200);
+
+    const freshSessionOneResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    const freshSessionTwoResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(freshSessionOneResponse.status, 200);
+    assert.equal(freshSessionTwoResponse.status, 200);
+    const freshSessionOne = await freshSessionOneResponse.json() as { token: string };
+    const freshSessionTwo = await freshSessionTwoResponse.json() as { token: string };
+    const logout = await jsonRequest('/api/auth/logout', freshSessionOne.token, { method: 'POST' });
+    assert.equal(logout.status, 200);
+    assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionOne.token)).status, 401);
+    assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionTwo.token)).status, 401);
 
     const deleteAccount = await jsonRequest('/api/admin/accounts/http-deleted-account?adminUid=http-admin', admin.token, {
       method: 'DELETE'
