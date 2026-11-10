@@ -20,7 +20,7 @@ import {
   verifyPassword,
   verifySessionToken
 } from './server/auth.ts';
-import { canAccessLegacyExam, canReadModule, refreshAccountPresence } from './server/access.ts';
+import { canAccessLegacyExam, canInstructorGradeStudent, canReadModule, refreshAccountPresence } from './server/access.ts';
 import { openFirestoreStore, type FirestoreStore } from './server/firestoreStore.ts';
 import {
   createFirestoreExamRepository,
@@ -3476,6 +3476,10 @@ async function startServer() {
 
     if (!instructor || !student) {
       res.status(404).json({ error: 'Ausbilder- oder Teilnehmer-Konto nicht gefunden.' });
+      return;
+    }
+    if (!canInstructorGradeStudent(instructor.uid, student.uid)) {
+      res.status(403).json({ error: 'Ausbilder dürfen den eigenen Lehrgangsfortschritt nicht bewerten.' });
       return;
     }
 

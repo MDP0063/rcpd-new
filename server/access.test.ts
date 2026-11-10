@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { canAccessLegacyExam, canReadModule, refreshAccountPresence, shouldRefreshPresence } from './access.ts';
+import { canAccessLegacyExam, canInstructorGradeStudent, canReadModule, refreshAccountPresence, shouldRefreshPresence } from './access.ts';
 
 test('Handbuch: gleicher oder höherer Rang darf lesen, niedrigerer nicht', () => {
   assert.ok(canReadModule(1, 3));
@@ -78,4 +78,12 @@ test('Legacy-Prüfungen respektieren Veröffentlichungsstatus, Abschlussprüfung
   assert.equal(canAccessLegacyExam({
     assessmentStage: 'test', minClearance: 1
   }, traineeCanAccessFinalExams, 1), true);
+});
+
+
+test('Ausbilder dürfen nicht ihren eigenen Fortschritt bewerten', () => {
+  assert.equal(canInstructorGradeStudent('usr_instructor', 'usr_student'), true);
+  assert.equal(canInstructorGradeStudent('usr_same', 'usr_same'), false);
+  assert.equal(canInstructorGradeStudent('', 'usr_student'), false);
+  assert.equal(canInstructorGradeStudent('usr_instructor', ''), false);
 });
