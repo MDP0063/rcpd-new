@@ -390,7 +390,7 @@ export interface CalendarEventDoc {
 export interface PortalNotificationDoc {
   id: string;
   recipientUid: string; // specific uid or 'ALL'
-  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review';
+  type: 'request_reviewed' | 'announcement_published' | 'role_updated' | 'course_graded' | 'event_created' | 'direct_message' | 'exam_workshop_review' | 'academy_material_review';
   title: string;
   message: string;
   linkSection:
