@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Private Reader-Notizen/Mehrfachquellen (PR #132/#134), Quellenstatus (PR #135) und stabile Markdown-/Code-Textanker (PR #136) sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Zusätzlich zu PR #132/#134/#135/#136 ist PR #137 (globale Bibliothekssuche, Relevanzsortierung und kompakte Kategorie-/Dokumenttypfilter) gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `50b791fb08bbba365d461b5c07b86109291f5d94` (`main`, Merge-Commit von PR #136).  
-**Aktueller Umsetzungsbranch:** keiner; PR #136 ist abgeschlossen. Nächste Umsetzung erst nach Prüfung des nächsten bereits beschlossenen Academy-Arbeitspakets.
+**Aktueller Basisstand:** `1dd9f83bfb4566a42a84359808624db36ab65da5` (`main`, Merge-Commit von PR #137).  
+**Aktueller Umsetzungsbranch:** keiner; PR #137 ist abgeschlossen. Nächste Umsetzung erst nach Prüfung des nächsten bereits beschlossenen Academy-Arbeitspakets.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -13,6 +13,9 @@
 - Kursversionen referenzieren konkrete veröffentlichte Materialfassungen. Bestehende Legacy-Materialien wurden nicht automatisch migriert.
 - Private Notizen und Lesezeichen sind direkt in den Material-Reader integriert; Mehrfachquellen pro Notiz sowie versionsgebundene Textanker für Markdown und Code sind umgesetzt (PR #132, #134 und #136).
 - PDF-Seitenanker bleiben bis zur Wiederaufnahme der ausdrücklich zurückgestellten PDF-Infrastruktur offen.
+- Die globale Teilnehmer-Suche nutzt gewichtete Relevanz aus den bereits vorhandenen freigegebenen Metadaten; ohne Suchbegriff bleibt die Ergebnisliste alphabetisch. Alternative Sortierungen nach Titel und tatsächlichem Veröffentlichungs-/Aktualisierungsdatum bleiben verfügbar.
+- Kategorie und Dokumenttyp sind kompakte, zunächst eingeklappte Filter. Aktive Filter bleiben sichtbar und einzeln entfernbar. Filteroptionen stammen ausschließlich aus den aktuell zugänglichen Katalogeinträgen.
+- Die Suche lädt/indexiert keinen Materialvolltext zusätzlich. PDF-Dateinamen bleiben bei Legacy-Materialien als bereits vorhandene Suchmetadaten nutzbar; OCR/Volltextindexierung bleibt eine gesonderte offene technische Frage.
 
 ### Legacy-PDFs – technische Bestandsbehandlung (09.11.2026)
 
@@ -98,7 +101,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 1. PR der versionierten Text-/Code-Materialverwaltung fachlich und technisch prüfen; nach Merge den Stand auf `main` verifizieren.
 2. Teilnehmer-Lernbibliothek und Reader an die neuen veröffentlichten Materialversionen anbinden; Zugriffsfilter und sichere Markdown-Darstellung prüfen.
 3. Kurseditor um eine gezielte Materialauswahl ergänzen, die nur veröffentlichte Fassungen auswählbar macht und konkrete Versionskennungen speichert.
-4. Suche/Filter über Materialcode, Titel, Kategorie und Dokumenttyp sowie erforderliche Metadaten-/Readerzustände integrieren, sobald die Daten zuverlässig verfügbar sind.
+4. Suche/Filter über Materialcode, Titel, Kategorie und Dokumenttyp sowie erforderliche Metadaten-/Readerzustände integrieren, sobald die Daten zuverlässig verfügbar sind. (Teilnehmer-Suche, Relevanzsortierung und Kategorie-/Dokumenttypfilter mit PR #137 umgesetzt; Volltext/OCR nicht Teil dieser Umsetzung.)
 5. Benachrichtigung betroffener Kursverantwortlicher bei neuen Fassungen und weitere offene Rücknahme-/Archivierungsfälle klären.
 6. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen; PDF-Unterstützung bleibt spätere Ausbaustufe.
 
