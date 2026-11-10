@@ -34,6 +34,18 @@ test('reports ambiguous matches instead of choosing one', () => {
   assert.deepEqual(resolveTextAnchor('same and same', anchor), { status: 'ambiguous', matches: 2 });
 });
 
+test('trims surrounding selection whitespace while preserving exact offsets and context', () => {
+  const source = 'Before  selected text  after';
+  const selected = '  selected text  ';
+  const startOffset = source.indexOf(selected);
+  const anchor = createTextAnchor({
+    kind: 'markdown', text: selected, startOffset, endOffset: startOffset + selected.length
+  }, source);
+  assert.ok(anchor);
+  assert.equal(anchor.quote, 'selected text');
+  assert.equal(resolveTextAnchor(source, anchor!).status, 'resolved');
+});
+
 test('rejects empty, oversized, and mismatched selections', () => {
   assert.equal(createTextAnchor({ kind: 'code', text: '', startOffset: 0, endOffset: 0 }, ''), null);
   const source = 'short';
