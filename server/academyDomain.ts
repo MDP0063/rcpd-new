@@ -522,8 +522,8 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
               (!Array.isArray(source.anchor.headingPath) || source.anchor.headingPath.length > 6 ||
                source.anchor.headingPath.some(item => typeof item !== 'string' || item.length > 120))) ||
             (source.anchor.kind === 'code' &&
-              (!Number.isSafeInteger(source.anchor.startLine) || source.anchor.startLine < 1 ||
-               !Number.isSafeInteger(source.anchor.endLine) || source.anchor.endLine < source.anchor.startLine)) ||
+              (typeof source.anchor.startLine !== 'number' || !Number.isSafeInteger(source.anchor.startLine) || source.anchor.startLine < 1 ||
+               typeof source.anchor.endLine !== 'number' || !Number.isSafeInteger(source.anchor.endLine) || source.anchor.endLine < source.anchor.startLine)) ||
             (source.anchor.kind === 'markdown' &&
               (source.anchor.startLine !== undefined || source.anchor.endLine !== undefined))))) {
       return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Notiz benötigt gültige, konkrete Materialquellen (maximal 25).');
