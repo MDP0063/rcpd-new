@@ -125,7 +125,7 @@ test('private notes support multiple unique exact material-version sources while
   };
   assert.deepEqual(validatePrivateNote(multiSource), { ok: true });
   assert.equal(validatePrivateNote({ ...multiSource, sources: [multiSource.sources[0], multiSource.sources[0]] }).ok, false);
-  assert.equal(validatePrivateNote({ ...multiSource, sources: [multiSource.sources[1]] }).ok, false);
+  assert.deepEqual(validatePrivateNote({ ...multiSource, sources: [multiSource.sources[1]] }), { ok: true });
   assert.equal(validatePrivateNote({ ...multiSource, kind: 'bookmark', sources: multiSource.sources }).ok, false);
   assert.equal(validatePrivateNote({ ...multiSource, sources: Array.from({ length: 26 }, (_, index) => ({
     materialId: `material_${index}`, materialVersionId: `material_${index}__v1`
