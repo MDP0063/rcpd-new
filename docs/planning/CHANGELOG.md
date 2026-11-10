@@ -68,3 +68,5 @@
 - Abschluss des systematischen Academy-Fehlerreviews mit tatsächlichem Test-/Buildstatus dokumentiert.
 - Den nächsten Implementierungsschritt für persönliche Notizen/Lesezeichen im Reader festgehalten, einschließlich vorhandenem Backend, neuem UI-Umfang und ausdrücklich offenen Anforderungen (Mehrfachquellen und stabile Anker).
 - CI-Ergebnis für PR #132 ergänzt: TypeScript-Prüfung, Produktionsbuild und 435/435 Tests erfolgreich; Browser-/Live-Firestore-Prüfung bleibt ausstehend.
+
+- Ergänzender Reader-Schutz: nicht gespeicherte Notizänderungen werden beim Wechsel der Materialfassung vor dem Zurücksetzen des alten Reader-Kontexts zum Speichern eingereiht. CI für den aktualisierten Commit steht aus.
