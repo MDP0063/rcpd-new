@@ -508,6 +508,22 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
   if (!Array.isArray(note.tags) || note.tags.some(tag => !isNonEmpty(tag) || tag.length > 40)) {
     return invalid('ACADEMY_NOTE_TAGS_INVALID', 'Notiz-Tags müssen gültige kurze Texte sein.');
   }
+  if (note.sources !== undefined) {
+    if (!Array.isArray(note.sources) || note.sources.length < 1 || note.sources.length > 25 ||
+        note.sources.some(source => !isRecord(source) ||
+          !isNonEmpty(source.materialId) || source.materialId.length > 120 ||
+          !isNonEmpty(source.materialVersionId) || source.materialVersionId.length > 160)) {
+      return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Notiz benötigt gültige, konkrete Materialquellen (maximal 25).');
+    }
+    const sourceKeys = note.sources.map(source => `${source.materialId}::${source.materialVersionId}`);
+    if (new Set(sourceKeys).size !== sourceKeys.length ||
+        !sourceKeys.includes(`${note.materialId}::${note.materialVersionId}`)) {
+      return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Quellen dürfen nicht doppelt sein und müssen die ursprüngliche Materialreferenz enthalten.');
+    }
+    if (note.kind === 'bookmark' && note.sources.length !== 1) {
+      return invalid('ACADEMY_BOOKMARK_SOURCES_INVALID', 'Ein Lesezeichen verweist auf genau eine Materialfassung.');
+    }
+  }
   return { ok: true };
 }
 
