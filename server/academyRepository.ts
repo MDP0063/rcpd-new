@@ -1114,7 +1114,7 @@ export class AcademyRepository {
       if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(master));
       const pinnedVersionId = pinnedVersionIds[0];
-      if (master.materialReviewPending?.length) {
+      if (master.materialReviewPending?.length || master.materialReviewVersionRequired?.length) {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
       }
       if (!pinnedVersionId &&
@@ -1131,7 +1131,9 @@ export class AcademyRepository {
       // already have a program pin. Existing course participations remain readable.
       for (const reference of version.chapters.flatMap(chapter => chapter.materialReferences)) {
         const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
-        if (!material || material.publicationStatus === 'archived') {
+        if (!material) throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+        assertValid(validateMaterialMaster(material));
+        if (material.publicationStatus === 'archived') {
           throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
         }
       }
