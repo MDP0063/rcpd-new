@@ -37,7 +37,7 @@ export interface ExamReviewClaim {
 }
 
 export interface ExamReviewClaimHistoryEntry {
-  action: 'claimed' | 'released' | 'auto_released';
+  action: 'claimed' | 'reclaimed' | 'released' | 'auto_released';
   actorUid: string;
   targetUid?: string;
   atIso: string;
