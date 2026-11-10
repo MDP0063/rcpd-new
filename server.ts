@@ -16,7 +16,6 @@ import {
   readSessionUid,
   parseAllowedOrigins,
   safeEqual,
-  tokenSignature,
   validateNewPassword,
   verifyPassword,
   verifySessionToken
@@ -1009,7 +1008,6 @@ async function startServer() {
   const loginByIp = new AttemptLimiter(40, 10 * 60 * 1000);
   const recoveryByIp = new AttemptLimiter(3, 15 * 60 * 1000);
   const resetByIp = new AttemptLimiter(5, 15 * 60 * 1000);
-  const revokedTokens = new Map<string, number>();
 
   // CORS nur für ausdrücklich erlaubte Herkunft (ALLOWED_ORIGINS). Gleiche Herkunft braucht keins.
   app.use((req, res, next) => {
@@ -1074,7 +1072,7 @@ async function startServer() {
     const uid = account && token
       ? verifySessionToken(token, SESSION_SECRET, Date.now(), account.sessionVersion ?? 0)
       : null;
-    if (!token || !uid || !account || revokedTokens.has(tokenSignature(token))) {
+    if (!token || !uid || !account) {
       res.status(401).json({ error: 'Nicht angemeldet oder Sitzung abgelaufen.' });
       return;
     }
@@ -2357,29 +2355,27 @@ async function startServer() {
   });
 
   // 3. Logout Endpoint (Marks account offline immediately)
-  app.post('/api/auth/logout', (req, res) => {
-    const token = res.locals.sessionToken as string | undefined;
-    if (token) {
-      const nowMs = Date.now();
-      for (const [sig, expiresAt] of revokedTokens) {
-        if (expiresAt <= nowMs) revokedTokens.delete(sig);
-      }
-      revokedTokens.set(tokenSignature(token), nowMs + 12 * 60 * 60 * 1000);
+  app.post('/api/auth/logout', (req, res, next) => {
+    const sessionUid = res.locals.sessionUid as string;
+    const dbState = loadDatabase();
+    const target = dbState.accounts.find(account => account.uid === sessionUid);
+    if (!target) {
+      res.status(401).json({ error: 'Sitzung abgelaufen oder Konto wurde gelöscht.' });
+      return;
     }
-    const { uid } = req.body as { uid?: string };
-    if (uid) {
-      const dbState = loadDatabase();
-      const target = dbState.accounts.find(a => a.uid === uid);
-      if (target) {
-        const nowIso = new Date().toISOString();
-        target.isOnline = false;
-        target.lastSeenIso = nowIso;
-        target.publicProfile.isOnline = false;
-        target.publicProfile.lastSeenIso = nowIso;
-        saveDatabase(dbState);
-      }
-    }
-    res.json({ ok: true });
+
+    // Session-Version dauerhaft erhöhen: widerruft dieses und alle anderen Tokens
+    // des Kontos auch nach Neustarts und auf parallelen Serverinstanzen.
+    target.sessionVersion = (target.sessionVersion ?? 0) + 1;
+    const nowIso = new Date().toISOString();
+    target.isOnline = false;
+    target.lastSeenIso = nowIso;
+    target.publicProfile.isOnline = false;
+    target.publicProfile.lastSeenIso = nowIso;
+
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ ok: true });
+    }).catch(next);
   });
 
   // Token für die Anmeldung des Browsers bei Firebase (nur für die Echtzeit-Benachrichtigung).
