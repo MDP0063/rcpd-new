@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, recordExamReviewActivity, releaseExamReviewClaim, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -32,11 +32,20 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(initialSubmission.submission.finalScoreBasisPoints, null);
 
     await assert.rejects(releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin'), /EXAM_RESULT_NOT_FINAL/);
-    const queue = await listExamReviews(repository, ['PC-101']);
+    const queue = await listExamReviews(repository, ['PC-101'], 'grader');
     assert.equal(queue.length, 1);
     assert.equal(queue[0].questions[0].answer, 'Meine Antwort');
     assert.equal(queue[0].questions[0].gradingRubric, 'Intern');
-    assert.deepEqual(await listExamReviews(repository, ['LAW-01']), []);
+    assert.deepEqual(await listExamReviews(repository, ['LAW-01'], 'grader'), []);
+    const claim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:02:30.000Z');
+    assert.equal(claim.reviewerUid, 'grader');
+    const hiddenQueue = await listExamReviews(repository, ['PC-101'], 'other-grader');
+    assert.equal(hiddenQueue.length, 1);
+    assert.deepEqual(hiddenQueue[0].questions, [], 'other reviewers must not receive claimed answer content');
+    assert.equal(hiddenQueue[0].reviewClaim?.reviewerName, 'Prüfer');
+    await assert.rejects(claimExamReview(repository, 'review-exam', 'review-attempt', 'other-grader', 'Anderer Prüfer'), /EXAM_REVIEW_CLAIMED/);
+    await assert.rejects(releaseExamReviewClaim(repository, 'review-exam', 'review-attempt', 'other-grader'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
+    await recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:02:45.000Z');
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [], '2026-11-05T12:03:00.000Z'), /EXAM_MANUAL_GRADES_INCOMPLETE/);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 1001 }]), /EXAM_MANUAL_GRADES_INVALID/);
 
@@ -52,7 +61,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(submission.status, 'passed');
     assert.equal(submission.finalScoreBasisPoints, 7500);
     assert.equal(submission.manuallyEarnedPointsMilli, 500);
-    assert.equal((await listExamReviews(repository, ['PC-101'])).length, 0);
+    assert.equal((await listExamReviews(repository, ['PC-101'], 'grader')).length, 0);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }]), /EXAM_REVIEW_NOT_PENDING/);
     assert.equal((await listOwnExamResults(repository, 'student-1')).length, 1);
     assert.deepEqual(await listOwnExamResults(repository, 'student-2'), []);
@@ -136,6 +145,7 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       { written: 'Vollständige Antwort' }, Date.parse('2026-11-10T12:01:00.000Z')
     );
     await submitExamAttempt(repository, 'academy-final', 'academy-final-attempt', 'academy-student', Date.parse('2026-11-10T12:02:00.000Z'));
+    await claimExamReview(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', 'Admin', '2026-11-10T12:02:30.000Z');
     await gradeExamAttempt(
       repository, 'academy-final', 'academy-final-attempt', 'academy-admin',
       [{ questionId: 'written', pointsEarnedMilli: 1000 }], '2026-11-10T12:03:00.000Z'
