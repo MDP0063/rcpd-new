@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMaterialReview, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
 import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import { ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
@@ -812,10 +812,43 @@ export class AcademyRepository {
       if (existingVersion || existingVersionCategoryAssignment || existingVersionDocumentTypeAssignment) {
         throw new Error('ACADEMY_MATERIAL_VERSION_ALREADY_EXISTS');
       }
+      // Read all affected course records before the first write so this remains
+      // compatible with Firestore's transaction read-before-write requirement.
+      const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
+      const affectedCourses: AcademyCourseMasterDoc[] = [];
+      for (const course of courseMasters) {
+        if (course.publicationStatus !== 'published' || course.availability !== 'available' ||
+            !course.currentPublishedVersionId) continue;
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>(
+          'academy_course_versions', course.currentPublishedVersionId
+        );
+        if (!courseVersion || courseVersion.courseId !== course.id ||
+            !courseVersion.chapters.some(chapter => chapter.materialReferences.some(reference => reference.materialId === materialId))) {
+          continue;
+        }
+        const pending = course.materialReviewPending ?? [];
+        const alreadyPending = pending.some(item => item.materialId === materialId && item.materialVersionId === version.id);
+        if (alreadyPending) continue;
+        affectedCourses.push({
+          ...course,
+          availability: 'unavailable',
+          materialReviewPending: [...pending, {
+            materialId,
+            materialCode: current.code,
+            materialTitle: version.title,
+            materialVersionId: version.id,
+            materialVersionNumber: version.versionNumber,
+            detectedIso: version.publishedIso
+          }]
+        });
+      }
       await tx.create('academy_material_versions', versionId, version);
       await tx.create('academy_material_category_assignments', versionId, versionCategoryAssignment);
       await tx.create('academy_material_document_type_assignments', versionId, versionDocumentTypeAssignment);
       await tx.update('academy_materials', materialId, nextMaster);
+      for (const affected of affectedCourses) {
+        await tx.update('academy_courses', affected.id, affected);
+      }
     });
   }
   async archiveMaterial(
@@ -1069,16 +1102,27 @@ export class AcademyRepository {
       if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(master));
       const pinnedVersionId = pinnedVersionIds[0];
+      if (master.materialReviewPending?.length) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
       if (!pinnedVersionId &&
           (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId)) {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
-      // A program participant may start the exact course version that was pinned at enrollment,
-      // even if the catalog has since moved to a newer version or the course was archived.
+      // A program pin preserves version identity, but does not bypass a precautionary
+      // material-review lock for a course that the participant has not started yet.
       const targetVersionId = pinnedVersionId || master.currentPublishedVersionId!;
       const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', targetVersionId);
       if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       assertValid(validateCourseVersion(courseId, version));
+      // Archiving a referenced material blocks new starts, including participants who
+      // already have a program pin. Existing course participations remain readable.
+      for (const reference of version.chapters.flatMap(chapter => chapter.materialReferences)) {
+        const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
+        if (!material || material.publicationStatus === 'archived') {
+          throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+        }
+      }
       const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
       if (existing) {
         assertValid(validateCourseParticipation(existing));
@@ -1166,6 +1210,51 @@ export class AcademyRepository {
   }
   async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
     return this.adapter.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+  }
+  async listPendingMaterialReviewCourses(): Promise<AcademyCourseMasterDoc[]> {
+    const courses = await this.adapter.list<AcademyCourseMasterDoc>('academy_courses');
+    return courses.filter(course => (course.materialReviewPending ?? []).some(item => !item.notificationSentIso));
+  }
+  async markMaterialReviewNotificationSent(
+    courseId: string, materialId: string, materialVersionId: string, sentIso: string
+  ): Promise<void> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) return;
+      const pending = current.materialReviewPending ?? [];
+      const nextPending = pending.map(item =>
+        item.materialId === materialId && item.materialVersionId === materialVersionId
+          ? { ...item, notificationSentIso: sentIso }
+          : item
+      );
+      if (nextPending.every((item, index) => item === pending[index])) return;
+      await tx.update('academy_courses', courseId, { ...current, materialReviewPending: nextPending });
+    });
+  }
+  async resolveMaterialReview(
+    courseId: string, materialId: string, materialVersionId: string,
+    decision: 'keep_available' | 'stay_offline', now: string
+  ): Promise<AcademyCourseMasterDoc> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(current));
+      const pending = current.materialReviewPending ?? [];
+      if (!pending.some(item => item.materialId === materialId && item.materialVersionId === materialVersionId)) {
+        throw new Error('ACADEMY_MATERIAL_REVIEW_NOT_FOUND');
+      }
+      const remaining = pending.filter(item => !(item.materialId === materialId && item.materialVersionId === materialVersionId));
+      const next: AcademyCourseMasterDoc = {
+        ...current,
+        materialReviewPending: remaining,
+        availability: decision === 'keep_available' && remaining.length === 0 ? 'available' : 'unavailable',
+        updatedIso: now
+      };
+      if (remaining.length === 0) delete next.materialReviewPending;
+      assertValid(validateCourseMaster(next));
+      await tx.update('academy_courses', courseId, next);
+      return next;
+    });
   }
   async listOwnCourseParticipations(userUid: string): Promise<AcademyCourseParticipationDoc[]> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
