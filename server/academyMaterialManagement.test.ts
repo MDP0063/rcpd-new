@@ -382,9 +382,9 @@ test('course publication requires an exact existing published material version',
     publishedIso: '2026-11-06T12:11:00.000Z', publishedByUid: 'admin-1',
     createdIso: '2026-11-06T12:11:00.000Z', createdByUid: 'admin-1', workingRevision: 4
   };
-  const latestCourseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  const courseMasterBeforeFinalPublish = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   const nextCourseMaster: AcademyCourseMasterDoc = {
-    ...latestCourseMaster!, publicationStatus: 'published',
+    ...courseMasterBeforeFinalPublish!, publicationStatus: 'published',
     currentPublishedVersionId: updatedCourseVersion.id, latestVersionNumber: 2,
     updatedIso: updatedCourseVersion.publishedIso!
   };
