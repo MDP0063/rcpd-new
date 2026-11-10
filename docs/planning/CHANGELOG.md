@@ -102,10 +102,10 @@
 - PDF-Seitenanker bleiben ausdrücklich zurückgestellt.
 
 
-## 2026-11-10 – Lokale Wiederaufnahme der Reader-Leseposition (Draft-PR #139)
+## 2026-11-10 – Lokale Wiederaufnahme der Reader-Leseposition (Draft-PR #140)
 
 - Beschlossene Reader-Funktion ergänzt: Markdown- und Code-Leseposition wird lokal nach Teilnahme und exakter Materialversion getrennt gespeichert und beim erneuten Öffnen wiederhergestellt.
 - Browser-Speicherfehler bleiben fail-soft; Positionen werden nicht serverseitig synchronisiert.
 - Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
 - Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
-- Draft-PR #139 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
+- Draft-PR #140 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
