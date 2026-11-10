@@ -204,7 +204,7 @@ export interface ExamReviewItem {
   isClaimOwner: boolean;
 }
 
-export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string): Promise<ExamReviewItem[]> {
+export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string, nowIso = new Date().toISOString()): Promise<ExamReviewItem[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'pending_review' }], limit: HISTORY_LIMIT
   }));
@@ -213,7 +213,7 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
   for (const listedAttempt of attempts) {
     if (!allowed.has('*') && !allowed.has(listedAttempt.attemptCourseCode.toUpperCase())) continue;
     const attempt = await repository.runTransaction(transaction =>
-      refreshReviewClaim(transaction, listedAttempt.id, new Date().toISOString())
+      refreshReviewClaim(transaction, listedAttempt.id, nowIso)
     );
     if (attempt.status !== 'pending_review') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
