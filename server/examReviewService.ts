@@ -374,7 +374,7 @@ export async function gradeExamAttempt(
 }
 
 
-export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner'> {
+export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner' | 'canClaim' | 'draftGrades' | 'draftRevision'> {
   status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null;
   reviewedAtIso: string;
