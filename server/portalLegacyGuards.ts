@@ -74,3 +74,8 @@ export function validateApplicationSubmission(input: unknown): string | null {
   }
   return null;
 }
+
+/** Legacy interactive exams cannot be scored from client-submitted values. */
+export function canSelfSubmitLegacyExamResult(examFormat: unknown): boolean {
+  return examFormat === 'structured_quiz';
+}
