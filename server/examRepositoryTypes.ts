@@ -66,6 +66,7 @@ export interface ExamStorageAdapter {
   replaceSnapshot(snapshot: ExamRepositorySnapshot): Promise<void>;
   isMaintenanceMode(): Promise<boolean>;
   setMaintenanceMode(enabled: boolean, allowExisting?: boolean): Promise<void>;
+  anonymizeUser(uid: string, anonymizedUid: string, identityNames?: readonly string[]): Promise<void>;
   get<T extends ExamDocument = ExamDocument>(
     collection: ExamCollection,
     id: string

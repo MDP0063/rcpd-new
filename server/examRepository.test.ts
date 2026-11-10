@@ -724,3 +724,34 @@ test('JSON-Repository: Audit-Korrektur wird bei abweichenden dokumentierten Punk
     assert.equal((await repository.get('exam_attempts', 'attempt-tampered-correction'))?.finalScoreBasisPoints, 5000);
   });
 });
+
+
+test('JSON-Repository: account anonymization preserves attempts while replacing identity references', async () => {
+  await withRepository(async repository => {
+    await repository.create('exam_attempts', 'privacy-attempt', {
+      id: 'privacy-attempt', userId: 'deleted-user', userName: 'Former Officer',
+      examId: 'exam-privacy', status: 'in_progress', answers: { question: 'answer' }
+    });
+    await repository.update('exam_attempts', 'privacy-attempt', {
+      id: 'privacy-attempt', userId: 'deleted-user', userName: 'Former Officer',
+      examId: 'exam-privacy', status: 'passed', answers: { question: 'answer' }
+    });
+    await repository.create('exam_progress', 'privacy-progress', {
+      id: 'privacy-progress', userId: 'deleted-user', targetId: 'exam-privacy',
+      targetType: 'test', status: 'completed', scorePercent: 100, attempts: 1
+    });
+    await repository.anonymizeDeletedUser('deleted-user', 'deleted-random-marker', ['Former Officer']);
+    const attempt = await repository.get('exam_attempts', 'privacy-attempt');
+    assert.equal(attempt?.userId, 'deleted-random-marker');
+    assert.equal(attempt?.userName, 'Gelöschtes Konto');
+    assert.equal(attempt?.status, 'passed');
+    assert.deepEqual(attempt?.answers, { question: 'answer' });
+    assert.equal((await repository.get('exam_progress', 'privacy-progress'))?.userId, 'deleted-random-marker');
+    await assert.rejects(
+      repository.update('exam_attempts', 'privacy-attempt', { ...attempt!, userName: 'Changed' }),
+      /EXAM_ATTEMPT_IMMUTABLE/
+    );
+    await repository.anonymizeDeletedUser('deleted-user', 'deleted-retry-marker', ['Former Officer']);
+    assert.equal((await repository.get('exam_attempts', 'privacy-attempt'))?.userId, 'deleted-random-marker');
+  });
+});

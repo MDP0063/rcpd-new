@@ -19,6 +19,7 @@ import {
   assertExamDocumentId,
   assertExamQuery
 } from './examRepositoryRules.ts';
+import { anonymizeIdentityReferences } from './privacyAnonymization.ts';
 
 function storageId(id: string): string {
   return encodeURIComponent(id);
@@ -278,6 +279,37 @@ export class FirestoreExamStorageAdapter implements ExamStorageAdapter {
         transaction.delete(reference);
       }
     });
+  }
+
+  async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('EXAM_ANONYMIZATION_INPUT_INVALID');
+    if (await this.isMaintenanceMode()) throw new Error('EXAM_MAINTENANCE_ACTIVE');
+    const writer = this.database.bulkWriter();
+    const writes: Promise<unknown>[] = [];
+    try {
+      for (const collection of EXAM_COLLECTIONS) {
+        const snapshot = await this.database.collection(collection).get();
+        for (const item of snapshot.docs) {
+          const document = documentFromSnapshot(collection, item);
+          if (!document) throw new Error('EXAM_FIRESTORE_DOCUMENT_INVALID');
+          const anonymized = anonymizeIdentityReferences(document, uid, anonymizedUid, identityNames);
+          if (JSON.stringify(anonymized) !== JSON.stringify(document)) {
+            // Dedicated privacy path: only identity fields change; attempt results and evidence remain intact.
+            assertExamDocument(collection, document.id, anonymized);
+            writes.push(writer.set(item.ref, clone(anonymized)));
+          }
+        }
+      }
+    } catch (error) {
+      await writer.close().catch(() => undefined);
+      throw error;
+    }
+    let closeError: unknown;
+    try { await writer.close(); } catch (error) { closeError = error; }
+    const settled = await Promise.allSettled(writes);
+    const failed = settled.find(result => result.status === 'rejected') as PromiseRejectedResult | undefined;
+    if (closeError) throw closeError;
+    if (failed) throw failed.reason;
   }
 
   runTransaction<T>(operation: (transaction: ExamTransaction) => Promise<T>): Promise<T> {

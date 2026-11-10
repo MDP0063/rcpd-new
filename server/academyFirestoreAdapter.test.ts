@@ -42,7 +42,7 @@ class FakeDocumentReference {
   }
   async get() {
     const data = this.database.read(this.collectionName, this.id);
-    return { id: this.id, exists: data !== null, data: () => data ?? undefined };
+    return { id: this.id, exists: data !== null, data: () => data ?? undefined, get: (field: string) => data && typeof data === 'object' ? (data as Record<string, unknown>)[field] : undefined };
   }
 }
 
@@ -336,4 +336,21 @@ test('Firestore Academy restore replaces shared collections and preserves privat
 
   assert.deepEqual(await repository.listMaterialCategories(), [newCategory]);
   assert.deepEqual(database.list('academy_repo_private_notes').map(item => item.data), [privateNote]);
+});
+
+
+test('Firestore Academy adapter deletes private notes and anonymizes retained identity references', async () => {
+  const database = new FakeFirestore();
+  database.seed('academy_repo_courses', encodeURIComponent(firestoreCourseMaster.id), {
+    ...firestoreCourseMaster, ownerUid: 'deleted-user'
+  });
+  database.seed('academy_repo_private_notes', 'private-note', {
+    id: 'private-note', ownerUid: 'deleted-user', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'private',
+    tags: [], createdIso: transactionTestIso, updatedIso: transactionTestIso
+  });
+  const adapter = new FirestoreAcademyStorageAdapter(database as unknown as Firestore);
+  await adapter.anonymizeUser('deleted-user', 'deleted-marker', ['Former Officer']);
+  assert.equal((database.read('academy_repo_courses', encodeURIComponent(firestoreCourseMaster.id)) as any).ownerUid, 'deleted-marker');
+  assert.equal(database.read('academy_repo_private_notes', 'private-note'), null);
 });

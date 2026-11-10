@@ -2,6 +2,7 @@ import type { Firestore, Transaction, DocumentSnapshot, Query } from 'firebase-a
 import { ACADEMY_COLLECTIONS, ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
+import { anonymizeIdentityReferences } from './privacyAnonymization.ts';
 
 // Keep the repository's collections separate from legacy PortalDatabaseState collections.
 export function academyFirestoreCollectionName(collection: AcademyCollection): string {
@@ -120,6 +121,40 @@ export class FirestoreAcademyStorageAdapter implements AcademyStorageAdapter {
     } catch (error) {
       closeError = error;
     }
+    const settled = await Promise.allSettled(writes);
+    const failed = settled.find(result => result.status === 'rejected') as PromiseRejectedResult | undefined;
+    if (closeError) throw closeError;
+    if (failed) throw failed.reason;
+  }
+  async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('ACADEMY_ANONYMIZATION_INPUT_INVALID');
+    const control = await this.database.doc('exam_system_control/state').get();
+    if (this.maintenanceMode || control.get('enabled') === true) throw new Error('ACADEMY_MAINTENANCE_ACTIVE');
+    const writer = this.database.bulkWriter();
+    const writes: Promise<unknown>[] = [];
+    try {
+      for (const collection of ACADEMY_COLLECTIONS) {
+        const snapshot = await this.database.collection(academyFirestoreCollectionName(collection)).get();
+        for (const item of snapshot.docs) {
+          const document = fromSnapshot(collection, item);
+          if (!document) throw new Error('ACADEMY_FIRESTORE_DOCUMENT_INVALID');
+          if (collection === 'academy_private_notes' && (document as unknown as Record<string, unknown>).ownerUid === uid) {
+            writes.push(writer.delete(item.ref));
+            continue;
+          }
+          const anonymized = anonymizeIdentityReferences(document, uid, anonymizedUid, identityNames);
+          if (JSON.stringify(anonymized) !== JSON.stringify(document)) {
+            assertAcademyDocument(collection, document.id, anonymized);
+            writes.push(writer.set(item.ref, clone(anonymized)));
+          }
+        }
+      }
+    } catch (error) {
+      await writer.close().catch(() => undefined);
+      throw error;
+    }
+    let closeError: unknown;
+    try { await writer.close(); } catch (error) { closeError = error; }
     const settled = await Promise.allSettled(writes);
     const failed = settled.find(result => result.status === 'rejected') as PromiseRejectedResult | undefined;
     if (closeError) throw closeError;

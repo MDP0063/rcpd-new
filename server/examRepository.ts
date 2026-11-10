@@ -43,6 +43,10 @@ export class ExamRepository {
     await this.adapter.replaceSnapshot(validated);
   }
 
+  async anonymizeDeletedUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    return this.adapter.anonymizeUser(uid, anonymizedUid, identityNames);
+  }
+
   async isMaintenanceMode(): Promise<boolean> {
     return this.adapter.isMaintenanceMode();
   }

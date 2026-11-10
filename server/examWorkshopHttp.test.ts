@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { createServer as createNetServer } from 'node:net';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { hashPassword } from './auth.ts';
 import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
+import { ACADEMY_COLLECTIONS } from './academyRepositoryTypes.ts';
 import { getDefaultGranularPermissions } from './rolePermissions.ts';
 
 const TEST_PASSWORD = 'Exam-http-test-password-123';
@@ -340,6 +341,24 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   };
   await writeFile(path.join(dataDirectory, 'portal-db-v3.json'), JSON.stringify(portalState));
   await writeFile(path.join(dataDirectory, 'exam-db-v1.json'), JSON.stringify({ version: 1, maintenanceMode: false, collections }));
+  collections.exam_attempts['doc:http-deleted-attempt'] = {
+    id: 'http-deleted-attempt', userId: 'http-deleted-account', userName: 'HttpDeletedAccount',
+    examId: TEST_EXAM_ID, status: 'passed', finalScoreBasisPoints: 9000
+  };
+  collections.exam_progress['doc:http-deleted-progress'] = {
+    id: 'http-deleted-progress', userId: 'http-deleted-account', targetId: TEST_EXAM_ID,
+    targetType: 'test', status: 'completed', scorePercent: 100, attempts: 1
+  };
+  const academyCollections = Object.fromEntries(ACADEMY_COLLECTIONS.map(collection => [collection, {}])) as Record<string, Record<string, unknown>>;
+  academyCollections.academy_courses['doc:http-deleted-course'] = { id: 'http-deleted-course', ownerUid: 'http-deleted-account' };
+  academyCollections.academy_private_notes['doc:http-deleted-note'] = {
+    id: 'http-deleted-note', ownerUid: 'http-deleted-account', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'private note',
+    tags: [], createdIso: '2026-11-10T08:00:00.000Z', updatedIso: '2026-11-10T08:00:00.000Z'
+  };
+  await writeFile(path.join(dataDirectory, 'exam-db-v1.json'), JSON.stringify({ version: 1, maintenanceMode: false, collections }));
+  await writeFile(path.join(dataDirectory, 'academy-db.json'), JSON.stringify({ version: 6, collections: academyCollections }));
+
   // Keep the child TSX runtime independent of host account lookup in locked-down test environments.
   const runtimePreload = path.join(dataDirectory, 'runtime-preload.mjs');
   await writeFile(runtimePreload, [
@@ -764,6 +783,14 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       method: 'DELETE'
     });
     assert.equal(deleteAccount.status, 200);
+    const academyAfterDeletion = JSON.parse(await readFile(path.join(dataDirectory, 'academy-db.json'), 'utf8'));
+    assert.equal(academyAfterDeletion.collections.academy_courses['doc:http-deleted-course'].ownerUid.startsWith('deleted-'), true);
+    assert.equal(academyAfterDeletion.collections.academy_private_notes['doc:http-deleted-note'], undefined);
+    const examsAfterDeletion = JSON.parse(await readFile(path.join(dataDirectory, 'exam-db-v1.json'), 'utf8'));
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].userId.startsWith('deleted-'), true);
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].userName, 'Gelöschtes Konto');
+    assert.equal(examsAfterDeletion.collections.exam_attempts['doc:http-deleted-attempt'].status, 'passed');
+    assert.equal(examsAfterDeletion.collections.exam_progress['doc:http-deleted-progress'].userId.startsWith('deleted-'), true);
     const adminStateAfterDeletion = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
     const anonymizedApplication = adminStateAfterDeletion.body.applications.find((application: Record<string, unknown>) => application.id === 'app-to-anonymize');
     assert.equal(anonymizedApplication.applicantUid, 'deleted-account');
