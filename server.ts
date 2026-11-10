@@ -2988,6 +2988,8 @@ async function startServer() {
       if (application.applicantUid !== targetUid) continue;
       application.applicantUid = 'deleted-account';
       application.applicantName = 'Gelöschtes Konto';
+      if (application.reviewerUid === targetUid) application.reviewerUid = 'deleted-account';
+      application.reviewerFeedback = anonymizeText(application.reviewerFeedback);
       application.characterName = 'Gelöschtes Konto';
       application.dateOfBirth = '';
       application.discordTag = '';
@@ -3048,11 +3050,9 @@ async function startServer() {
         log.actorName = 'Gelöschtes Konto';
         log.actorBadge = '';
       }
+      log.actionTitle = anonymizeText(log.actionTitle);
       log.targetLabel = anonymizeText(log.targetLabel);
       log.details = anonymizeText(log.details);
-    }
-    for (const event of dbState.events || []) {
-      event.attendees = (event.attendees || []).filter(attendee => attendee.uid !== targetUid);
     }
     appendAuditLog(
       dbState, caller, 'ACCOUNT_ROLE',
