@@ -108,4 +108,4 @@
 - Browser-Speicherfehler bleiben fail-soft; Positionen werden nicht serverseitig synchronisiert.
 - Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
 - Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
-- Draft-PR #139 basiert auf dem separaten ID-Zufallsentropie-Bugfix PR #138. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
+- Draft-PR #139 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
