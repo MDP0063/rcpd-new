@@ -989,9 +989,19 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
       { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
     ]);
+    const editNoteWithoutSourcePayload = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({ expectedRevision: 3, title: 'Mehrquellen-Notiz' })
+    });
+    assert.equal(editNoteWithoutSourcePayload.status, 200, JSON.stringify(editNoteWithoutSourcePayload.body));
+    assert.equal(editNoteWithoutSourcePayload.body!.note.revision, 4);
+    assert.deepEqual(editNoteWithoutSourcePayload.body!.note.sources, [
+      { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
+      { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+    ]);
+
     const duplicateNoteSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({
-        expectedRevision: 3,
+        expectedRevision: 4,
         sources: [
           { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
           { materialId: 'manual-1', materialVersionId: 'manual-1__v1' }
@@ -1002,7 +1012,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
 
     const removeOriginalSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({
-        expectedRevision: 3,
+        expectedRevision: 4,
         sources: [{ materialId: 'manual-2', materialVersionId: 'manual-2__v3' }]
       })
     });
