@@ -34,8 +34,6 @@ function parseTags(value: string): string[] {
 
 export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
-  const notesRef = useRef<AcademyPrivateNoteDoc[]>([]);
-  notesRef.current = notes;
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [selectedNoteId, setSelectedNoteId] = useState('');
@@ -86,7 +84,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         if (!response.ok || !response.data) {
           pendingSaveRef.current = null;
           setSaveStatus('error');
-          setSaveError(response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.');
+          setSaveError(response.status === 409
+            ? 'Diese Notiz wurde zwischenzeitlich geändert. Lade die aktuelle Fassung neu, bevor du weiterarbeitest.'
+            : response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.');
           return;
         }
         const saved = response.data.note;
@@ -261,6 +261,35 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     setLoadError('');
   };
 
+  const reloadSelectedNote = async () => {
+    if (!selectedNote || !window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    setSavingAction(true);
+    const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+    setSavingAction(false);
+    if (!response.ok || !response.data) {
+      setSaveError(response.error || 'Die aktuelle Notizfassung konnte nicht geladen werden.');
+      return;
+    }
+    const latest = response.data.notes.find(note => note.id === selectedNote.id);
+    if (!latest) {
+      setSaveError('Diese Notiz ist nicht mehr vorhanden. Lade den Reader neu.');
+      return;
+    }
+    revisionByIdRef.current.set(latest.id, latest.revision ?? 1);
+    setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
+    setTitle(latest.title || '');
+    setContent(latest.content || '');
+    setTags(latest.tags.join(', '));
+    lastSavedRef.current = serializeDraft({
+      id: latest.id,
+      title: latest.title || '',
+      content: latest.content || '',
+      tags: latest.tags
+    });
+    setSaveStatus('saved');
+    setSaveError('');
+  };
+
   const deleteSelectedNote = async () => {
     if (!selectedNote || !window.confirm('Diese private Notiz endgültig löschen?')) return;
     if (draft && serializeDraft(draft) !== lastSavedRef.current) pendingSaveRef.current = null;
@@ -354,7 +383,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             {saveError ? (
               <div className="space-y-2" role="alert">
                 <p className="text-sm text-rose-700 dark:text-rose-300">{saveError}</p>
-                <button type="button" className={secondary} onClick={() => queueSave(draft)}>Erneut speichern</button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className={secondary} onClick={() => queueSave(draft)}>Erneut speichern</button>
+                  <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction}>Aktuelle Fassung laden</button>
+                </div>
               </div>
             ) : null}
             <div className="flex flex-wrap justify-end gap-2">
