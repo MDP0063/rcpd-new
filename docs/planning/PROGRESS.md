@@ -3,7 +3,7 @@
 **Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 (ID-Zufallsentropie) ist mit erfolgreicher CI gemergt; PR #141 ergänzt als Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `738faab5d3e85b94df02f188c2fdd3236b73674d` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
-**Aktueller Umsetzungsstand:** PR #138 ist mit Squash-Commit `738faab5d3e85b94df02f188c2fdd3236b73674d` gemergt; GitHub-CI für TypeScript/Build und 448/448 Tests war erfolgreich. PR #141 (`feature/academy-reader-position-clean`) enthält nur die Reader-Lesepositionsfunktion und Planungsdokumentation. Kein Merge/Deployment von PR #141.
+**Aktueller Umsetzungsstand:** PR #138 ist mit Squash-Commit `738faab5d3e85b94df02f188c2fdd3236b73674d` gemergt; GitHub-CI für TypeScript/Build und 448/448 Tests war erfolgreich. Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war ebenfalls erfolgreich. PR #141 (`feature/academy-reader-position-clean`) enthält nur die Reader-Lesepositionsfunktion und Planungsdokumentation. Kein Merge/Deployment von PR #141.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
