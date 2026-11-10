@@ -235,12 +235,34 @@ export interface AcademyCourseCompletionRequirement {
   description?: string;
 }
 
+export interface AcademyCourseMaterialReview {
+  materialId: string;
+  materialCode: string;
+  materialTitle: string;
+  materialVersionId: string;
+  materialVersionNumber: number;
+  detectedIso: string;
+  notificationSentIso?: string;
+}
+
+export interface AcademyCourseMaterialVersionRequirement {
+  materialId: string;
+  materialVersionId: string;
+  materialVersionNumber: number;
+}
+
 export interface AcademyCourseMasterDoc {
   id: string;
   code: string;
   ownerUid: string;
   publicationStatus: AcademyPublicationStatus;
   availability: AcademyAvailability;
+  /** Pending review items created when a referenced material receives a new version. */
+  materialReviewPending?: AcademyCourseMaterialReview[];
+  /** Course has published the required revision but still awaits explicit reactivation. */
+  materialReviewAwaitingActivation?: boolean;
+  /** Course must publish a version that updates or removes these material references before reactivation. */
+  materialReviewVersionRequired?: AcademyCourseMaterialVersionRequirement[];
   currentPublishedVersionId?: string;
   latestVersionNumber: number;
   workingRevision: number;

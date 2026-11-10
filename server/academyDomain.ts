@@ -403,6 +403,50 @@ export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyVal
   if (master.publicationStatus === 'published' && !isNonEmpty(master.currentPublishedVersionId)) {
     return invalid('ACADEMY_COURSE_PUBLISHED_VERSION_MISSING', 'Ein veröffentlichter Kurs benötigt eine konkrete veröffentlichte Version.');
   }
+  if (master.materialReviewPending !== undefined) {
+    if (!Array.isArray(master.materialReviewPending) || master.materialReviewPending.length > 100 ||
+        master.materialReviewPending.some(item => !isRecord(item) ||
+          !isNonEmpty(item.materialId) || item.materialId.length > 160 ||
+          !isNonEmpty(item.materialCode) || item.materialCode.length > 40 ||
+          !isNonEmpty(item.materialTitle) || item.materialTitle.length > 200 ||
+          !isNonEmpty(item.materialVersionId) || item.materialVersionId.length > 200 ||
+          !Number.isSafeInteger(item.materialVersionNumber) || item.materialVersionNumber < 1 ||
+          !isNonEmpty(item.detectedIso) ||
+          (item.notificationSentIso !== undefined && !isNonEmpty(item.notificationSentIso)))) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_INVALID', 'Die ausstehenden Materialprüfungen des Kurses sind ungültig.');
+    }
+    const reviewKeys = master.materialReviewPending.map(item => item.materialId + '|' + item.materialVersionId);
+    if (new Set(reviewKeys).size !== reviewKeys.length) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_DUPLICATE', 'Eine Materialfassung darf pro Kurs nur einmal zur Prüfung vorgemerkt sein.');
+    }
+    if (master.materialReviewPending.length > 0 &&
+        (master.publicationStatus !== 'published' || master.availability !== 'unavailable')) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_STATE_INVALID', 'Ein Kurs mit ausstehender Materialprüfung muss veröffentlicht und vorübergehend nicht verfügbar sein.');
+    }
+  }
+  if (master.materialReviewVersionRequired !== undefined) {
+    if (!Array.isArray(master.materialReviewVersionRequired) || master.materialReviewVersionRequired.length > 100 ||
+        master.materialReviewVersionRequired.some(item => !isRecord(item) ||
+          !isNonEmpty(item.materialId) || item.materialId.length > 160 ||
+          !isNonEmpty(item.materialVersionId) || item.materialVersionId.length > 200 ||
+          !Number.isSafeInteger(item.materialVersionNumber) || item.materialVersionNumber < 1)) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_INVALID', 'Die erforderlichen Materialaktualisierungen des Kurses sind ungültig.');
+    }
+    if (new Set(master.materialReviewVersionRequired.map(item => item.materialId)).size !== master.materialReviewVersionRequired.length) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_DUPLICATE', 'Ein Material darf nur einmal als erforderliche Kursaktualisierung hinterlegt sein.');
+    }
+    if (master.materialReviewVersionRequired.length > 0 &&
+        (master.publicationStatus !== 'published' || master.availability !== 'unavailable')) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_STATE_INVALID', 'Ein Kurs mit erforderlicher Materialaktualisierung muss offline bleiben.');
+    }
+  }
+  if (master.materialReviewAwaitingActivation !== undefined &&
+      (typeof master.materialReviewAwaitingActivation !== 'boolean' ||
+        (master.materialReviewAwaitingActivation &&
+          (master.publicationStatus !== 'published' || master.availability !== 'unavailable' ||
+            (master.materialReviewPending?.length ?? 0) > 0 || (master.materialReviewVersionRequired?.length ?? 0) > 0)))) {
+    return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_ACTIVATION_STATE_INVALID', 'Ein Kurs mit ausstehender manueller Reaktivierung muss offline sein und darf keine offene Materialprüfung haben.');
+  }
   return { ok: true };
 }
 

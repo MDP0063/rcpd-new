@@ -812,10 +812,50 @@ export class AcademyRepository {
       if (existingVersion || existingVersionCategoryAssignment || existingVersionDocumentTypeAssignment) {
         throw new Error('ACADEMY_MATERIAL_VERSION_ALREADY_EXISTS');
       }
+      // Read all affected course records before the first write so this remains
+      // compatible with Firestore's transaction read-before-write requirement.
+      const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
+      const affectedCourses: AcademyCourseMasterDoc[] = [];
+      for (const course of courseMasters) {
+        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
+            (course.availability !== 'available' &&
+              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length) &&
+              !course.materialReviewAwaitingActivation)) continue;
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>(
+          'academy_course_versions', course.currentPublishedVersionId
+        );
+        if (!courseVersion || courseVersion.courseId !== course.id ||
+            !courseVersion.chapters.some(chapter => chapter.materialReferences.some(reference => reference.materialId === materialId))) {
+          continue;
+        }
+        const pending = course.materialReviewPending ?? [];
+        const alreadyPending = pending.some(item => item.materialId === materialId && item.materialVersionId === version.id);
+        if (alreadyPending) continue;
+        const affected: AcademyCourseMasterDoc = {
+          ...course,
+          availability: 'unavailable',
+          updatedIso: version.publishedIso,
+          materialReviewPending: [...pending, {
+            materialId,
+            materialCode: current.code,
+            materialTitle: version.title,
+            materialVersionId: version.id,
+            materialVersionNumber: version.versionNumber,
+            detectedIso: version.publishedIso
+          }]
+        };
+        delete affected.materialReviewAwaitingActivation;
+        delete affected.materialReviewAwaitingActivation;
+        assertValid(validateCourseMaster(affected));
+        affectedCourses.push(affected);
+      }
       await tx.create('academy_material_versions', versionId, version);
       await tx.create('academy_material_category_assignments', versionId, versionCategoryAssignment);
       await tx.create('academy_material_document_type_assignments', versionId, versionDocumentTypeAssignment);
       await tx.update('academy_materials', materialId, nextMaster);
+      for (const affected of affectedCourses) {
+        await tx.update('academy_courses', affected.id, affected);
+      }
     });
   }
   async archiveMaterial(
@@ -835,6 +875,44 @@ export class AcademyRepository {
       assertValid(validateMaterialMaster(current));
       if (current.publicationStatus === 'archived') throw new Error('ACADEMY_MATERIAL_ARCHIVED');
       if (current.workingRevision !== expectedRevision) throw new Error('ACADEMY_WORKING_REVISION_CONFLICT');
+      const archivedVersion = current.currentPublishedVersionId
+        ? await tx.get<AcademyMaterialVersionDoc>('academy_material_versions', current.currentPublishedVersionId)
+        : null;
+      if (current.currentPublishedVersionId && !archivedVersion) {
+        throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+      }
+      if (archivedVersion) assertValid(validateMaterialVersion(materialId, archivedVersion));
+      const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
+      const affectedCourses: AcademyCourseMasterDoc[] = [];
+      for (const course of courseMasters) {
+        if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId) continue;
+        const courseVersion = await tx.get<AcademyCourseVersionDoc>(
+          'academy_course_versions', course.currentPublishedVersionId
+        );
+        if (!courseVersion || courseVersion.courseId !== course.id) continue;
+        const matchingReferences = courseVersion.chapters.flatMap(chapter => chapter.materialReferences)
+          .filter(reference => reference.materialId === materialId);
+        if (matchingReferences.length === 0) continue;
+        const requiredVersions = [...(course.materialReviewVersionRequired ?? [])];
+        const requirement = {
+          materialId,
+          materialVersionId: archivedVersion?.id || current.currentPublishedVersionId || matchingReferences[0].materialVersionId,
+          materialVersionNumber: archivedVersion?.versionNumber || current.latestVersionNumber || matchingReferences[0].versionNumber || 1
+        };
+        const existingIndex = requiredVersions.findIndex(item => item.materialId === materialId);
+        if (existingIndex < 0) requiredVersions.push(requirement);
+        else if (requiredVersions[existingIndex].materialVersionNumber <= requirement.materialVersionNumber) {
+          requiredVersions[existingIndex] = requirement;
+        }
+        const affected: AcademyCourseMasterDoc = {
+          ...course,
+          availability: 'unavailable',
+          materialReviewVersionRequired: requiredVersions,
+          updatedIso: now
+        };
+        assertValid(validateCourseMaster(affected));
+        affectedCourses.push(affected);
+      }
       const next: AcademyMaterialMasterDoc = {
         ...current, publicationStatus: 'archived',
         archivedIso: now, archivedByUid: actorUid, archiveReason: reason.trim(),
@@ -842,6 +920,9 @@ export class AcademyRepository {
       };
       assertValid(validateMaterialMaster(next));
       await tx.update('academy_materials', materialId, next);
+      for (const affected of affectedCourses) {
+        await tx.update('academy_courses', affected.id, affected);
+      }
       return next;
     });
   }
@@ -985,6 +1066,13 @@ export class AcademyRepository {
         assertValid(validateMaterialMaster(materialMaster));
         assertValid(validateMaterialVersion(reference.materialId, materialVersion));
       }
+      for (const requirement of current.materialReviewVersionRequired ?? []) {
+        const references = version.chapters.flatMap(chapter => chapter.materialReferences)
+          .filter(reference => reference.materialId === requirement.materialId);
+        if (references.some(reference => reference.materialVersionId !== requirement.materialVersionId)) {
+          throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
+        }
+      }
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${courseId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
@@ -996,7 +1084,15 @@ export class AcademyRepository {
           nextMaster.publicationStatus !== 'published' ||
           !version.publishedIso || !version.publishedByUid) throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
       await tx.create('academy_course_versions', versionId, version);
-      await tx.update('academy_courses', courseId, nextMaster);
+      const publishedMaster: AcademyCourseMasterDoc = { ...nextMaster };
+      if (current.materialReviewVersionRequired?.length) {
+        delete publishedMaster.materialReviewVersionRequired;
+        if (!(current.materialReviewPending?.length)) {
+          publishedMaster.materialReviewAwaitingActivation = true;
+        }
+      }
+      assertValid(validateCourseMaster(publishedMaster));
+      await tx.update('academy_courses', courseId, publishedMaster);
     });
   }
   async publishProgramVersion(programId: string, version: AcademyProgramVersionDoc, nextMaster: AcademyProgramMasterDoc, expectedRevision: number, publisherUid: string): Promise<void> {
@@ -1070,15 +1166,31 @@ export class AcademyRepository {
       assertValid(validateCourseMaster(master));
       const pinnedVersionId = pinnedVersionIds[0];
       if (!pinnedVersionId &&
-          (master.publicationStatus !== 'published' || master.availability !== 'available' || !master.currentPublishedVersionId)) {
+          (master.publicationStatus !== 'published' || !master.currentPublishedVersionId)) {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
-      // A program participant may start the exact course version that was pinned at enrollment,
-      // even if the catalog has since moved to a newer version or the course was archived.
+      // A program pin preserves version identity, but does not bypass a precautionary
+      // material-review lock for a course that the participant has not started yet.
       const targetVersionId = pinnedVersionId || master.currentPublishedVersionId!;
       const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', targetVersionId);
       if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       assertValid(validateCourseVersion(courseId, version));
+      // Archiving a referenced material blocks new starts, including participants who
+      // already have a program pin. Existing course participations remain readable.
+      for (const reference of version.chapters.flatMap(chapter => chapter.materialReferences)) {
+        const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
+        if (!material) throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+        assertValid(validateMaterialMaster(material));
+        if (material.publicationStatus === 'archived') {
+          throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+        }
+      }
+      if (master.materialReviewPending?.length || master.materialReviewVersionRequired?.length) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
+      if (!pinnedVersionId && master.availability !== 'available') {
+        throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
+      }
       const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
       if (existing) {
         assertValid(validateCourseParticipation(existing));
@@ -1129,6 +1241,14 @@ export class AcademyRepository {
         const courseVersion = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', course.currentPublishedVersionId);
         if (!courseVersion) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
         assertValid(validateCourseVersion(course.id, courseVersion));
+        for (const materialReference of courseVersion.chapters.flatMap(chapter => chapter.materialReferences)) {
+          const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', materialReference.materialId);
+          if (!material) throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_NOT_STARTABLE');
+          assertValid(validateMaterialMaster(material));
+          if (material.publicationStatus === 'archived') {
+            throw new Error('ACADEMY_PROGRAM_REQUIRED_COURSE_NOT_STARTABLE');
+          }
+        }
         const conflictingProgramPin = otherProgramParticipations.some(item =>
           item.requiredCoursePins.some(pin => pin.courseId === course.id && pin.courseVersionId !== courseVersion.id)
         );
@@ -1166,6 +1286,106 @@ export class AcademyRepository {
   }
   async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
     return this.adapter.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+  }
+  async setCourseAvailability(
+    courseId: string, availability: 'available' | 'unavailable', now: string
+  ): Promise<AcademyCourseMasterDoc> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(current));
+      if (availability === 'available' && (current.materialReviewPending?.length ?? 0) > 0) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
+      if (availability === 'available' && (current.materialReviewVersionRequired?.length ?? 0) > 0) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
+      }
+      if (availability === 'available' && current.currentPublishedVersionId) {
+        const version = await tx.get<AcademyCourseVersionDoc>('academy_course_versions', current.currentPublishedVersionId);
+        if (!version) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+        assertValid(validateCourseVersion(courseId, version));
+        for (const reference of version.chapters.flatMap(chapter => chapter.materialReferences)) {
+          const material = await tx.get<AcademyMaterialMasterDoc>('academy_materials', reference.materialId);
+          if (!material) throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+          assertValid(validateMaterialMaster(material));
+          if (material.publicationStatus === 'archived') {
+            throw new Error('ACADEMY_COURSE_ARCHIVED_MATERIAL_NOT_STARTABLE');
+          }
+        }
+      }
+      const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
+      if (availability === 'available') delete next.materialReviewAwaitingActivation;
+      assertValid(validateCourseMaster(next));
+      await tx.update('academy_courses', courseId, next);
+      return next;
+    });
+  }
+  async listPendingMaterialReviewCourses(): Promise<AcademyCourseMasterDoc[]> {
+    const courses = await this.adapter.list<AcademyCourseMasterDoc>('academy_courses');
+    return courses.filter(course => (course.materialReviewPending ?? []).some(item => !item.notificationSentIso));
+  }
+  async markMaterialReviewNotificationSent(
+    courseId: string, materialId: string, materialVersionId: string, sentIso: string
+  ): Promise<void> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) return;
+      const pending = current.materialReviewPending ?? [];
+      const nextPending = pending.map(item =>
+        item.materialId === materialId && item.materialVersionId === materialVersionId
+          ? { ...item, notificationSentIso: sentIso }
+          : item
+      );
+      if (nextPending.every((item, index) => item === pending[index])) return;
+      const updated: AcademyCourseMasterDoc = { ...current, materialReviewPending: nextPending };
+      assertValid(validateCourseMaster(updated));
+      await tx.update('academy_courses', courseId, updated);
+    });
+  }
+  async resolveMaterialReview(
+    courseId: string, materialId: string, materialVersionId: string,
+    decision: 'keep_available' | 'stay_offline', now: string
+  ): Promise<AcademyCourseMasterDoc> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(current));
+      const pending = current.materialReviewPending ?? [];
+      if (!pending.some(item => item.materialId === materialId && item.materialVersionId === materialVersionId)) {
+        throw new Error('ACADEMY_MATERIAL_REVIEW_NOT_FOUND');
+      }
+      const reviewedItem = pending.find(item => item.materialId === materialId && item.materialVersionId === materialVersionId)!;
+      const remaining = pending.filter(item => !(item.materialId === materialId && item.materialVersionId === materialVersionId));
+      const requiredVersions = [...(current.materialReviewVersionRequired ?? [])];
+      if (decision === 'stay_offline') {
+        const existingRequirementIndex = requiredVersions.findIndex(item => item.materialId === materialId);
+        const requirement = {
+          materialId: reviewedItem.materialId,
+          materialVersionId: reviewedItem.materialVersionId,
+          materialVersionNumber: reviewedItem.materialVersionNumber
+        };
+        if (existingRequirementIndex < 0) requiredVersions.push(requirement);
+        else if (requiredVersions[existingRequirementIndex].materialVersionNumber <= requirement.materialVersionNumber) {
+          requiredVersions[existingRequirementIndex] = requirement;
+        }
+      }
+      const next: AcademyCourseMasterDoc = {
+        ...current,
+        materialReviewPending: remaining,
+        materialReviewVersionRequired: requiredVersions,
+        availability: decision === 'keep_available' && remaining.length === 0 && requiredVersions.length === 0
+          ? 'available' : 'unavailable',
+        updatedIso: now
+      };
+      if (remaining.length === 0) delete next.materialReviewPending;
+      if (requiredVersions.length === 0) delete next.materialReviewVersionRequired;
+      if (next.availability === 'available' || decision === 'stay_offline') {
+        delete next.materialReviewAwaitingActivation;
+      }
+      assertValid(validateCourseMaster(next));
+      await tx.update('academy_courses', courseId, next);
+      return next;
+    });
   }
   async listOwnCourseParticipations(userUid: string): Promise<AcademyCourseParticipationDoc[]> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');

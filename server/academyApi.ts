@@ -27,7 +27,12 @@ const canManage = (actor: AcademyApiActor, ownerUid: string) =>
 
 /** Remove internal ownership and administrative archive metadata from participant-facing views. */
 function participantCourseMasterView(master: AcademyCourseMasterDoc) {
-  const { ownerUid: _ownerUid, archivedByUid: _archivedByUid, archiveReason: _archiveReason, ...visible } = master;
+  const {
+    ownerUid: _ownerUid, archivedByUid: _archivedByUid,
+    archiveReason: _archiveReason, materialReviewPending: _materialReviewPending,
+    materialReviewVersionRequired: _materialReviewVersionRequired,
+    materialReviewAwaitingActivation: _materialReviewAwaitingActivation, ...visible
+  } = master;
   return visible;
 }
 function participantCourseVersionView(version: AcademyCourseVersionDoc) {
@@ -64,7 +69,9 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED')) return 409;
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
+      code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
+      code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
@@ -196,7 +203,8 @@ function makeProgramDraft(programId: string, body: Record<string, unknown>, work
 export function createAcademyApiRouter(
   repository: AcademyRepository,
   resolveActor: ActorResolver,
-  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>
+  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>,
+  notifyMaterialReview?: (recipientUid: string, notificationId: string, title: string, message: string) => Promise<void>
 ) {
   const router = Router();
 
@@ -215,6 +223,35 @@ export function createAcademyApiRouter(
       return { ...chapter, materialReferences };
     }));
     return { ...draft, chapters };
+  }
+
+  async function dispatchPendingMaterialReviewNotifications(): Promise<void> {
+    if (!notifyMaterialReview) return;
+    try {
+      const courses = await repository.listPendingMaterialReviewCourses();
+      for (const course of courses) {
+        for (const item of course.materialReviewPending ?? []) {
+          if (item.notificationSentIso) continue;
+          const notificationId = `academy-material-review-${course.id}-${item.materialVersionId}`;
+          try {
+            await notifyMaterialReview(
+              course.ownerUid,
+              notificationId,
+              'Neue Materialfassung – Kursprüfung erforderlich',
+              `Im Kurs ${course.code} wird das Material ${item.materialCode} (${item.materialTitle}, Version ${item.materialVersionNumber}) verwendet. Eine neue Materialfassung wurde veröffentlicht. Bitte prüfe, ob die bisherige Kursversion unverändert verfügbar bleiben kann oder aktualisiert werden muss.`
+            );
+            await repository.markMaterialReviewNotificationSent(
+              course.id, item.materialId, item.materialVersionId, new Date().toISOString()
+            );
+          } catch {
+            // The durable review marker remains pending; a later Academy request retries it.
+          }
+        }
+      }
+    } catch {
+      // Notification lookup/delivery is best-effort and must never roll back or mask
+      // the already committed material publication and precautionary course lock.
+    }
   }
 
   function getActor(req: Request, res: Response): AcademyApiActor | null {
@@ -705,6 +742,7 @@ export function createAcademyApiRouter(
       await repository.publishMaterialVersion(master.id, version, nextMaster, expected, actor.uid);
       await recordAudit(actor.uid, 'Academy-Materialversion veröffentlicht', master.code,
         'Version ' + version.versionNumber + ' veröffentlicht (' + version.id + ').');
+      await dispatchPendingMaterialReviewNotifications();
       res.status(201).json({ master: nextMaster, version });
     } catch (error) { fail(res, error, next); }
   });
@@ -730,6 +768,7 @@ export function createAcademyApiRouter(
     try {
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      await dispatchPendingMaterialReviewNotifications();
       const [masters, ownParticipations] = await Promise.all([
         repository.list<AcademyCourseMasterDoc>('academy_courses'),
         repository.listOwnCourseParticipations(actor.uid)
@@ -888,6 +927,55 @@ export function createAcademyApiRouter(
         };
       }));
       res.json({ programs });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/courses/:courseId/material-review', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!requireOwnerOrAdmin(actor, master.ownerUid, res)) return;
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_MATERIAL_REVIEW_BODY_INVALID' }); return; }
+      const materialId = boundedText(req.body.materialId, 160);
+      const materialVersionId = boundedText(req.body.materialVersionId, 200);
+      const decision = req.body.decision;
+      if (!materialId || !materialVersionId ||
+          (decision !== 'keep_available' && decision !== 'stay_offline')) {
+        res.status(400).json({ error: 'ACADEMY_MATERIAL_REVIEW_DECISION_INVALID' }); return;
+      }
+      const updated = await repository.resolveMaterialReview(
+        master.id, materialId, materialVersionId, decision, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Materialprüfung abgeschlossen', master.code,
+        `Material ${materialId}, Fassung ${materialVersionId}; Entscheidung: ${decision === 'keep_available' ? 'bisherige Kursversion fachlich freigegeben; Reaktivierung nur ohne weitere Sperren' : 'Kurs bleibt offline; neue Kursversion erforderlich'}.`);
+      res.json({ master: updated });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.put('/courses/:courseId/availability', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!master) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!requireOwnerOrAdmin(actor, master.ownerUid, res)) return;
+      if (!isObject(req.body) || (req.body.availability !== 'available' && req.body.availability !== 'unavailable')) {
+        res.status(400).json({ error: 'ACADEMY_COURSE_AVAILABILITY_INVALID' }); return;
+      }
+      if (req.body.availability === 'available' && (master.materialReviewPending?.length ?? 0) > 0) {
+        res.status(409).json({ error: 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING' }); return;
+      }
+      if (req.body.availability === 'available' && (master.materialReviewVersionRequired?.length ?? 0) > 0) {
+        res.status(409).json({ error: 'ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED' }); return;
+      }
+      const updated = await repository.setCourseAvailability(
+        master.id, req.body.availability, new Date().toISOString()
+      );
+      await recordAudit(actor.uid, 'Academy-Kursverfügbarkeit geändert', master.code,
+        `Verfügbarkeit: ${updated.availability}.`);
+      res.json({ master: updated });
     } catch (error) { fail(res, error, next); }
   });
 

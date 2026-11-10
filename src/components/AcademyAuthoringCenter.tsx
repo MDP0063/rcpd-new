@@ -63,6 +63,10 @@ function apiErrorMessage(value?: string): string {
     case 'ACADEMY_PROGRAM_TITLE_INVALID': return 'Gib einen Programmtitel mit höchstens 200 Zeichen ein.';
     case 'ACADEMY_COURSE_CHAPTER_INVALID': return 'Prüfe für jedes Kapitel Titel, Reihenfolge und Pflichtstatus.';
     case 'ACADEMY_COURSE_COMPLETION_TARGET_MISSING': return 'Eine Abschlussbedingung verweist auf ein Kapitel oder Material, das nicht mehr im Kurs enthalten ist.';
+    case 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING': return 'Der Kurs bleibt gesperrt, bis alle betroffenen Materialfassungen geprüft wurden.';
+    case 'ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED': return 'Vor der Reaktivierung muss eine neue Kursversion die betroffenen Materialien aktualisieren oder daraus entfernen.';
+    case 'ACADEMY_MATERIAL_REVIEW_NOT_FOUND': return 'Diese Materialprüfung wurde bereits abgeschlossen oder ist nicht mehr aktuell.';
+    case 'ACADEMY_COURSE_AVAILABILITY_INVALID': return 'Die Kursverfügbarkeit konnte nicht geändert werden.';
     default: return value || 'Die Änderung konnte nicht gespeichert werden. Prüfe deine Eingaben und versuche es erneut.';
   }
 }
@@ -230,6 +234,44 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     onStatusToast('Kursversion ' + response.data.version.versionNumber + ' wurde veröffentlicht.');
   };
 
+  const resolveMaterialReview = async (
+    entry: CourseEntry,
+    item: NonNullable<AcademyCourseMasterDoc['materialReviewPending']>[number],
+    decision: 'keep_available' | 'stay_offline'
+  ) => {
+    const explanation = decision === 'keep_available'
+      ? 'Die bisherige Kursversion wird nach Abschluss aller offenen Materialprüfungen wieder für neue Teilnehmende verfügbar.'
+      : 'Der Kurs bleibt offline. Veröffentliche zuerst eine aktualisierte Kursversion und aktiviere ihn danach ausdrücklich wieder.';
+    if (!window.confirm(`Materialprüfung für ${entry.master.code} abschließen? ${explanation}`)) return;
+    setBusy(true);
+    const response = await apiFetch<{ master: AcademyCourseMasterDoc }>(
+      API_ENDPOINTS.ACADEMY_COURSE(entry.master.id) + '/material-review',
+      { method: 'POST', body: JSON.stringify({
+        materialId: item.materialId, materialVersionId: item.materialVersionId, decision
+      }) }
+    );
+    setBusy(false);
+    if (!response.ok || !response.data) { onStatusToast(apiErrorMessage(response.error)); return; }
+    await load();
+    onStatusToast(decision === 'keep_available'
+      ? 'Materialprüfung abgeschlossen. Der Kurs wird nur verfügbar, wenn keine weitere Prüfung oder Versionsanforderung offen ist.'
+      : 'Materialprüfung abgeschlossen. Der Kurs bleibt vorübergehend offline.');
+  };
+
+  const setCourseAvailability = async (entry: CourseEntry, availability: 'available' | 'unavailable') => {
+    if (availability === 'available' &&
+        !window.confirm(`Soll der Kurs ${entry.master.code} nach Prüfung wieder für neue Teilnehmende verfügbar sein?`)) return;
+    setBusy(true);
+    const response = await apiFetch<{ master: AcademyCourseMasterDoc }>(
+      API_ENDPOINTS.ACADEMY_COURSE(entry.master.id) + '/availability',
+      { method: 'PUT', body: JSON.stringify({ availability }) }
+    );
+    setBusy(false);
+    if (!response.ok || !response.data) { onStatusToast(apiErrorMessage(response.error)); return; }
+    await load();
+    onStatusToast(availability === 'available' ? 'Der Kurs ist wieder verfügbar.' : 'Der Kurs ist vorübergehend nicht verfügbar.');
+  };
+
   const saveProgram = async (event: React.FormEvent) => {
     event.preventDefault();
     const errors = programValidation(programCode, programTitle, programObjectives, programReferences);
@@ -374,7 +416,20 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                   <li key={entry.master.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">{entry.draft?.title || entry.version?.title || entry.master.code}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}{entry.master.publicationStatus === 'published' ? ' · ' + (entry.master.availability === 'available' ? 'Für neue Teilnehmende verfügbar' : 'Vorübergehend offline') : ''}{entry.master.materialReviewVersionRequired?.length ? ' · Neue Kursversion erforderlich' : entry.master.materialReviewAwaitingActivation ? ' · Reaktivierung ausstehend' : ''}</p>
+                      {entry.master.materialReviewPending?.map(item => (
+                        <div key={item.materialId + ':' + item.materialVersionId} className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+                          <p className="text-sm font-semibold text-amber-950 dark:text-amber-100">Neue Materialfassung prüfen</p>
+                          <p className="mt-1 text-xs text-amber-900 dark:text-amber-200">{item.materialCode} · {item.materialTitle} · Version {item.materialVersionNumber}. Der Kurs ist bis zur Entscheidung für neue Teilnehmende gesperrt.</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button type="button" className={secondary} disabled={busy} onClick={() => void resolveMaterialReview(entry, item, 'keep_available')}>Bisherige Kursversion beibehalten</button>
+                            <button type="button" className={secondary} disabled={busy} onClick={() => void resolveMaterialReview(entry, item, 'stay_offline')}>Kurs offline lassen</button>
+                          </div>
+                        </div>
+                      ))}
+                      {entry.master.publicationStatus === 'published' && entry.master.availability === 'unavailable' && !(entry.master.materialReviewPending?.length) && !(entry.master.materialReviewVersionRequired?.length) && (
+                        <button type="button" className={secondary + ' mt-2'} disabled={busy} onClick={() => void setCourseAvailability(entry, 'available')}>Kurs wieder verfügbar machen</button>
+                      )}
                     </div>
                     {entry.draft && entry.master.publicationStatus !== 'archived'
                       ? <button type="button" className={secondary} onClick={() => openCourse(entry)}>Entwurf bearbeiten</button>

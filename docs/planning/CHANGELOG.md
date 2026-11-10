@@ -116,3 +116,13 @@
 - PR #138: GitHub-CI für TypeScript/Build und 448/448 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Per Squash gemergt (Commit `738faab5d3e85b94df02f188c2fdd3236b73674d`). Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich.
 - PR #141: saubere Draft-Implementierung der lokalen Reader-Leseposition auf dem aktualisierten `main`; kein Build-/Testlauf sichtbar, keine lokale Testausführung und keine manuelle Browserprüfung behauptet.
 - PR #141 enthält den ID-Fix nicht; keine doppelte Commit-Historie.
+
+
+## 2026-11-10 – Materialaktualisierung und vorsorgliche Kurssperre (in Umsetzung)
+
+- Die verbindlichen Beschlüsse wurden um den Programmpin-Sonderfall, mehrere gleichzeitige Materialprüfungen und die Reaktivierungssperre bis zur Veröffentlichung einer angepassten Kursversion ergänzt.
+- Branch `fix/academy-material-review-lock`: Materialveröffentlichung und Sperre betroffener veröffentlichter/verfügbarer Kurse erfolgen in einer Repository-Transaktion.
+- Review-Einträge werden je Materialfassung gespeichert; Benachrichtigungen verwenden deterministische IDs und einen wiederholbaren Zustellmarker, damit ein Prozessabbruch zwischen den beiden Speichern keine verlorene oder doppelte Meldung erzeugt.
+- Server blockiert neue Kursstarts bei offener Materialprüfung und bei archivierten Materialreferenzen, einschließlich noch nicht gestarteter, bereits gepinnter Programmkursversionen. Bestehende Teilnahmen behalten ihre Reader-Zugriffe.
+- Die Kursverwaltung erhält Review-Entscheidungen und eine explizite Reaktivierungsaktion. Bei „offline lassen“ muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; Veröffentlichung reaktiviert den Kurs nicht automatisch. Bis zur ausdrücklichen Aktivierung bleiben weitere Materialupdates prüfpflichtig. Archivierte Materialien setzen alle betroffenen veröffentlichten Kurse offline und müssen vor einer Reaktivierung aus einer neuen Kursversion entfernt werden.
+- Tests für atomare Sperre, bestehende Teilnahmen, neue Starts, Programmpins und Reaktivierung nach aktualisierter Kursversion ergänzt. GitHub-CI und abschließende Codeprüfung stehen noch aus; kein Merge/Deployment.
