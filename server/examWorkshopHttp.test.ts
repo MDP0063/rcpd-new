@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { hashPassword } from './auth.ts';
 import { EXAM_COLLECTIONS } from './examRepositoryTypes.ts';
+import { ACADEMY_COLLECTIONS } from './academyRepositoryTypes.ts';
 import { getDefaultGranularPermissions } from './rolePermissions.ts';
 
 const TEST_PASSWORD = 'Exam-http-test-password-123';
