@@ -1018,6 +1018,13 @@ export class AcademyRepository {
         assertValid(validateMaterialMaster(materialMaster));
         assertValid(validateMaterialVersion(reference.materialId, materialVersion));
       }
+      for (const requirement of current.materialReviewVersionRequired ?? []) {
+        const references = version.chapters.flatMap(chapter => chapter.materialReferences)
+          .filter(reference => reference.materialId === requirement.materialId);
+        if (references.some(reference => reference.materialVersionId !== requirement.materialVersionId)) {
+          throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
+        }
+      }
       const nextNumber = current.latestVersionNumber + 1;
       const versionId = `${courseId}__v${nextNumber}`;
       if (version.id !== versionId || version.versionNumber !== nextNumber ||
@@ -1029,7 +1036,12 @@ export class AcademyRepository {
           nextMaster.publicationStatus !== 'published' ||
           !version.publishedIso || !version.publishedByUid) throw new Error('ACADEMY_VERSION_SEQUENCE_INVALID');
       await tx.create('academy_course_versions', versionId, version);
-      await tx.update('academy_courses', courseId, nextMaster);
+      const publishedMaster: AcademyCourseMasterDoc = { ...nextMaster };
+      if (current.materialReviewVersionRequired?.length) {
+        delete publishedMaster.materialReviewVersionRequired;
+      }
+      assertValid(validateCourseMaster(publishedMaster));
+      await tx.update('academy_courses', courseId, publishedMaster);
     });
   }
   async publishProgramVersion(programId: string, version: AcademyProgramVersionDoc, nextMaster: AcademyProgramMasterDoc, expectedRevision: number, publisherUid: string): Promise<void> {
@@ -1218,7 +1230,8 @@ export class AcademyRepository {
       const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(current));
-      if (availability === 'available' && (current.materialReviewPending?.length ?? 0) > 0) {
+      if (availability === 'available' &&
+          ((current.materialReviewPending?.length ?? 0) > 0 || (current.materialReviewVersionRequired?.length ?? 0) > 0)) {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
       }
       const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
@@ -1259,14 +1272,31 @@ export class AcademyRepository {
       if (!pending.some(item => item.materialId === materialId && item.materialVersionId === materialVersionId)) {
         throw new Error('ACADEMY_MATERIAL_REVIEW_NOT_FOUND');
       }
+      const reviewedItem = pending.find(item => item.materialId === materialId && item.materialVersionId === materialVersionId)!;
       const remaining = pending.filter(item => !(item.materialId === materialId && item.materialVersionId === materialVersionId));
+      const requiredVersions = [...(current.materialReviewVersionRequired ?? [])];
+      if (decision === 'stay_offline') {
+        const existingRequirementIndex = requiredVersions.findIndex(item => item.materialId === materialId);
+        const requirement = {
+          materialId: reviewedItem.materialId,
+          materialVersionId: reviewedItem.materialVersionId,
+          materialVersionNumber: reviewedItem.materialVersionNumber
+        };
+        if (existingRequirementIndex < 0) requiredVersions.push(requirement);
+        else if (requiredVersions[existingRequirementIndex].materialVersionNumber <= requirement.materialVersionNumber) {
+          requiredVersions[existingRequirementIndex] = requirement;
+        }
+      }
       const next: AcademyCourseMasterDoc = {
         ...current,
         materialReviewPending: remaining,
-        availability: decision === 'keep_available' && remaining.length === 0 ? 'available' : 'unavailable',
+        materialReviewVersionRequired: requiredVersions,
+        availability: decision === 'keep_available' && remaining.length === 0 && requiredVersions.length === 0
+          ? 'available' : 'unavailable',
         updatedIso: now
       };
       if (remaining.length === 0) delete next.materialReviewPending;
+      if (requiredVersions.length === 0) delete next.materialReviewVersionRequired;
       assertValid(validateCourseMaster(next));
       await tx.update('academy_courses', courseId, next);
       return next;
