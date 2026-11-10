@@ -36,6 +36,7 @@ export const ExamReviewCenter: React.FC = () => {
     const response = await apiFetch<{ reviews: ReviewItem[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEWS, { cache: 'no-store' });
     if (!response.ok || !response.data) {
       setError(response.error || 'Die offenen Freitextbewertungen konnten nicht geladen werden.');
+      reviewsRef.current = [];
       setReviews([]);
     } else {
       setError('');
