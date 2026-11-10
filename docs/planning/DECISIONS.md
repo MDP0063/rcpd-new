@@ -359,3 +359,13 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Nach einer Korrektur eines bereits freigegebenen Ergebnisses muss die bisherige Freigabe kontrolliert aufgehoben werden. Das korrigierte Ergebnis ist bis zur erneuten Freigabe nicht als gültiger Kursabschlussnachweis verwendbar. Frühere Freigaben und Korrekturen bleiben revisionssicher historisch nachvollziehbar.
 - **BESCHLOSSEN:** Die Prüfungsteilnehmeransicht zeigt Ergebnisstatus und Bewertungsdetails erst nach offizieller Freigabe. Vorher darf sie nur einen neutralen Abgabe-/Bearbeitungsstatus zeigen.
 - **BESCHLOSSEN:** Die Kursabschlussprüfung wird serverseitig anhand des tatsächlich freigegebenen Prüfungsversuchs verifiziert. Clientseitig übermittelte Nachweise oder ein bloßes `status === 'passed'` sind kein gültiger Beleg.
+
+
+### Umsetzung der dynamischen Prüfungsnachweis-Verifikation (10.11.2026)
+
+- **BESCHLOSSEN:** `required_assessment` verweist mit `targetId` auf die exakte Prüfungs-ID der Abschlussprüfung. Zusätzlich muss der Versuchscode der Kurskennung des betreffenden Academy-Kurses entsprechen.
+- **BESCHLOSSEN:** Der Server akzeptiert ausschließlich einen aktuellen Versuch mit `assessmentStage === 'final_exam'`, identischer Prüfungs-ID und unveränderlicher, passender Prüfungsversion, Teilnehmer-UID der Kursteilnahme, Status `passed`, Ergebnisfreigabestatus `released` und einem dazu passenden letzten Freigabeeintrag. Die erreichte Punktzahl muss mindestens der Bestehensgrenze der Version entsprechen.
+- **BESCHLOSSEN:** Bei mehreren Versuchen kann jeder aktuell gültig freigegebene bestandene Abschlussprüfungsversuch den Nachweis erfüllen. Ein korrigierter Versuch zählt bis zur erneuten Freigabe nicht; ein erneut freigegebenes, nicht bestandenes Ergebnis zählt nicht. Andere unabhängige gültige bestandene Versuche bleiben eigenständige Nachweise.
+- **BESCHLOSSEN:** Es wird kein dauerhaftes Academy-Evidenzduplikat des Prüfungsversuchs angelegt. Der aktuelle Prüfungsstand wird bei Academy-Abschlussprojektionen serverseitig dynamisch aufgelöst. Dadurch werden Korrekturen und erneute Freigaben beim nächsten Lesen wirksam, ohne zwei getrennte Repositories atomar synchronisieren zu müssen.
+- **BESCHLOSSEN:** Wenn die Prüfungsdaten nicht verfügbar, ungültig oder nicht eindeutig verifizierbar sind, gilt der Nachweis als nicht erfüllt (fail-closed). Ein Kurs darf dann nicht als abgeschlossen projiziert werden.
+- **BESCHLOSSEN:** Die dynamische Projektion gilt für Kursdetail, eigene Kursteilnahmen, administrative Kursteilnahmeübersichten und den Fortschritt erforderlicher Lehrgangskurse. Die Teilnehmeransicht zeigt den Freigabezeitpunkt des verifizierten Prüfungsnachweises.

@@ -263,6 +263,66 @@ export async function correctCompletedExamReview(
   });
 }
 
+export interface ReleasedFinalExamProof {
+  attemptId: string;
+  releasedAtIso: string;
+  finalScoreBasisPoints: number;
+}
+
+/**
+ * Resolve an Academy assessment requirement against the live exam repository.
+ * No Academy evidence is persisted: a later review correction or re-release is
+ * reflected on the next read because the current attempt state is authoritative.
+ */
+export async function getReleasedPassingFinalExam(
+  repository: ExamRepository,
+  uid: string,
+  examId: string,
+  courseCode: string
+): Promise<ReleasedFinalExamProof | null> {
+  if (!uid.trim() || !isValidId(examId) || !courseCode.trim()) return null;
+  const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [
+      { field: 'userId', value: uid },
+      { field: 'examId', value: examId }
+    ],
+    limit: HISTORY_LIMIT
+  }));
+  const matching = attempts.filter(attempt =>
+    typeof attempt.attemptCourseCode === 'string' &&
+    attempt.attemptCourseCode.trim().toUpperCase() === courseCode.trim().toUpperCase() &&
+    attempt.status === 'passed' &&
+    attempt.assessmentStage === 'final_exam' &&
+    attempt.resultReleaseStatus === 'released' &&
+    Number.isSafeInteger(attempt.finalScoreBasisPoints) &&
+    Array.isArray(attempt.resultReleaseHistory) &&
+    attempt.resultReleaseHistory.length > 0
+  );
+  const proofs: ReleasedFinalExamProof[] = [];
+  for (const attempt of matching) {
+    if (typeof attempt.examVersionId !== 'string' || !isValidId(attempt.examVersionId)) continue;
+    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== examId ||
+        version.versionNumber !== attempt.versionNumber ||
+        version.assessmentStage !== 'final_exam') continue;
+    const lastRelease = attempt.resultReleaseHistory![attempt.resultReleaseHistory!.length - 1];
+    if (lastRelease.status !== 'passed' ||
+        lastRelease.finalScoreBasisPoints !== attempt.finalScoreBasisPoints ||
+        typeof lastRelease.releasedByUid !== 'string' || !lastRelease.releasedByUid.trim() ||
+        typeof lastRelease.releasedAtIso !== 'string' ||
+        !Number.isFinite(Date.parse(lastRelease.releasedAtIso)) ||
+        !Number.isSafeInteger(version.passingScoreBasisPoints) ||
+        Number(attempt.finalScoreBasisPoints) < version.passingScoreBasisPoints ||
+        Number(attempt.finalScoreBasisPoints) > 10_000) continue;
+    proofs.push({
+      attemptId: attempt.id,
+      releasedAtIso: lastRelease.releasedAtIso,
+      finalScoreBasisPoints: Number(attempt.finalScoreBasisPoints)
+    });
+  }
+  return proofs.sort((left, right) => right.releasedAtIso.localeCompare(left.releasedAtIso))[0] ?? null;
+}
+
 export async function listOwnExamResults(repository: ExamRepository, uid: string): Promise<PublicExamSubmission[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'userId', value: uid }], limit: HISTORY_LIMIT

@@ -53,6 +53,7 @@ interface CourseParticipationDetail {
   version: ParticipantCourseVersion;
   evidence: ParticipantEvidenceView[];
   corrections: ParticipantCorrectionView[];
+  assessmentProofs: Record<string, { attemptId: string; releasedAtIso: string; finalScoreBasisPoints: number }>;
   materials: AcademyCourseMaterialReaderItem[];
 }
 interface ProgramCourseProgress {
@@ -534,6 +535,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       {courseDetail.version.completionRequirements.map(requirement => {
                         const invalidated = new Set(courseDetail.corrections.flatMap(item => item.invalidatedEvidenceIds || []));
                         const matching = courseDetail.evidence.filter(item => item.requirementId === requirement.id && !invalidated.has(item.id));
+                        const assessmentProof = courseDetail.assessmentProofs[requirement.id];
+                        const satisfied = requirement.type === 'required_assessment' ? Boolean(assessmentProof) : matching.length > 0;
                         const selfConfirmable = ['required_chapter', 'required_material', 'accepted_self_confirmation'].includes(requirement.type);
                         return (
                           <div key={requirement.id} className="border-t border-slate-200 pt-3 dark:border-slate-800 space-y-2">
@@ -542,9 +545,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{requirement.description || requirement.targetId}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">{requirement.required ? 'Erforderlich' : 'Optional'} · {requirement.type === 'required_assessment' ? 'Prüfungsnachweis' : requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung' : requirement.type === 'instructor_confirmation' ? 'Bestätigung durch Ausbilder' : requirement.type === 'practical_task' ? 'Praktische Aufgabe' : requirement.type === 'required_chapter' ? 'Kapitel' : 'Material'}</p>
                               </div>
-                              <span className="text-xs font-semibold">{matching.length ? 'Nachweis vorhanden' : 'Offen'}</span>
+                              <span className="text-xs font-semibold">{satisfied ? 'Nachweis vorhanden' : 'Offen'}</span>
                             </div>
                             {matching.map(item => <p key={item.id} className="text-xs text-slate-500 dark:text-slate-400">Erfasst am {dateLabel(item.recordedIso)} · {item.evidenceType === 'accepted_self_confirmation' ? 'Selbstbestätigung' : item.recordedByParticipant ? 'Dein Nachweis' : 'Ausbildernachweis'}</p>)}
+                            {assessmentProof && <p className="text-xs text-slate-500 dark:text-slate-400">Prüfung bestanden und offiziell freigegeben am {dateLabel(assessmentProof.releasedAtIso)}.</p>}
                             {!matching.length && selfConfirmable && requirement.required && (
                               <button type="button" className={secondary} disabled={saving} onClick={() => void recordEvidence(requirement.id, requirement.description || requirement.targetId)}>
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}

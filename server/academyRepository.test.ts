@@ -4,6 +4,7 @@ import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
+import { resolveAcademyCourseCompletion } from './academyApi.ts';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
@@ -475,3 +476,59 @@ test('account anonymization removes private notes and preserves anonymized Acade
   await repository.anonymizeDeletedUser('deleted-user', 'deleted-retry-marker', ['Former Officer']);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', master.id))?.ownerUid, 'deleted-random-marker');
 }));
+
+
+test('required_assessment dynamically completes a course only while a released final exam remains passing', async () => {
+  const participation = {
+    id: 'participation_student-1_course-basic', userUid: 'student-1',
+    courseId: 'course-basic', courseVersionId: 'course-basic__v1',
+    status: 'in_progress' as const,
+    createdIso: '2026-11-10T10:00:00.000Z', updatedIso: '2026-11-10T10:00:00.000Z'
+  };
+  const courseMaster = {
+    id: 'course-basic', code: 'BASIC-01', ownerUid: 'admin',
+    publicationStatus: 'published' as const, availability: 'available' as const,
+    currentPublishedVersionId: 'course-basic__v1', latestVersionNumber: 1,
+    workingRevision: 1, createdIso: participation.createdIso, updatedIso: participation.updatedIso
+  };
+  const version = {
+    id: 'course-basic__v1', courseId: 'course-basic', versionNumber: 1,
+    title: 'Grundausbildung', summary: '', learningObjectives: [],
+    chapters: [{ id: 'chapter-1', title: 'Grundlagen', materialReferences: [], required: true, order: 0 }],
+    completionRequirements: [
+      { id: 'chapter-required', type: 'required_chapter' as const, targetId: 'chapter-1', required: true },
+      { id: 'final-exam-required', type: 'required_assessment' as const, targetId: 'exam-final-1', required: true }
+    ],
+    createdIso: participation.createdIso, createdByUid: 'admin', workingRevision: 1
+  };
+  const evidence = [{
+    id: 'evidence-chapter', participationId: participation.id,
+    requirementId: 'chapter-required', evidenceType: 'required_chapter' as const,
+    sourceId: 'chapter-1', recordedByUid: 'student-1',
+    recordedIso: '2026-11-10T11:00:00.000Z'
+  }];
+  const fakeRepository = {
+    get: async (collection: string) => collection === 'academy_course_versions' ? version
+      : collection === 'academy_courses' ? courseMaster : null,
+    listParticipationEvidence: async () => evidence,
+    listParticipationCorrections: async () => []
+  } as unknown as AcademyRepository;
+  let proof: { attemptId: string; releasedAtIso: string; finalScoreBasisPoints: number } | null = null;
+  const resolver = async () => proof;
+
+  const unreleased = await resolveAcademyCourseCompletion(fakeRepository, participation, resolver);
+  assert.equal(unreleased.participation.status, 'in_progress');
+  assert.deepEqual(unreleased.assessmentProofs, {});
+
+  proof = { attemptId: 'final-attempt-1', releasedAtIso: '2026-11-10T12:00:00.000Z', finalScoreBasisPoints: 9500 };
+  const released = await resolveAcademyCourseCompletion(fakeRepository, participation, resolver);
+  assert.equal(released.participation.status, 'completed');
+  assert.equal(released.participation.completedIso, proof.releasedAtIso);
+  assert.equal(released.assessmentProofs['final-exam-required'].attemptId, 'final-attempt-1');
+
+  proof = null;
+  const corrected = await resolveAcademyCourseCompletion(fakeRepository, released.participation, resolver);
+  assert.equal(corrected.participation.status, 'in_progress');
+  assert.equal('completedIso' in corrected.participation, false);
+  assert.deepEqual(corrected.assessmentProofs, {});
+});
