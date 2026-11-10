@@ -180,6 +180,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerUid: 'http-admin',
       reviewerFeedback: 'Accepted',
       updatedIso: '2026-11-10T08:00:00.000Z'
+    }, {
+      id: 'app-last-admin-promotion',
+      applicantUid: 'http-admin',
+      applicantName: 'HttpAdmin',
+      characterName: 'HTTP Administrator',
+      dateOfBirth: '1980-01-01',
+      discordTag: 'admin',
+      priorExperience: 'Existing service',
+      scenarioResponse: 'Existing record',
+      penalCodeAck: true,
+      status: 'pending',
+      reviewerUid: '',
+      reviewerFeedback: '',
+      updatedIso: '2026-11-10T08:00:00.000Z'
     }],
     modules: [{
       id: 'http-rookie-material',
@@ -288,6 +302,21 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerUid: 'http-admin',
       reviewerName: 'HttpAdmin',
       reviewerComment: 'Done',
+      createdIso: '2026-11-10T08:00:00.000Z',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }, {
+      id: 'req-last-admin-demotion',
+      requesterUid: 'http-admin',
+      requesterName: 'HttpAdmin',
+      requesterBadge: 'http-admin',
+      requesterCurrentRole: 'admin',
+      category: 'rank_change',
+      title: 'Demotion of final administrator',
+      requestedRole: 'colonel',
+      targetDetail: '',
+      justification: 'HTTP regression for final-admin protection',
+      priority: 'normal',
+      status: 'pending',
       createdIso: '2026-11-10T08:00:00.000Z',
       updatedIso: '2026-11-10T08:00:00.000Z'
     }],
@@ -570,6 +599,20 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ adminUid: 'http-admin', role: 'officer' })
     });
     assert.equal(lastAdminDemotion.status, 409);
+
+    const lastAdminRequestDemotion = await jsonRequest('/api/requests/req-last-admin-demotion/review', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'approved', applyRankChange: true })
+    });
+    assert.equal(lastAdminRequestDemotion.status, 409);
+
+    const lastAdminApplicationPromotion = await jsonRequest('/api/admin/applications/app-last-admin-promotion', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', status: 'accepted', promoteToRole: 'trainee' })
+    });
+    assert.equal(lastAdminApplicationPromotion.status, 409);
 
     const repeatedRequestDecision = await jsonRequest('/api/requests/req-already-reviewed/review', admin.token, {
       method: 'PUT',
