@@ -191,6 +191,11 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
 import { getDefaultGranularPermissions, normalizeExamWorkshopPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
+function canBeAssignedExamReviewer(account: StoredAccountRecord, courseCode: string): boolean {
+  if (['pending', 'suspended', 'revoked'].includes(account.publicProfile.whitelistStatus)) return false;
+  return canActorEditCourseCode(account, courseCode);
+}
+
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
   if (role === 'admin' || role === 'colonel') return true;
@@ -1923,6 +1928,10 @@ async function startServer() {
       EXAM_REVIEW_CLAIM_HISTORY_INVALID: { status: 409, message: 'Die Claim-Historie ist ungültig.' },
       EXAM_REVIEW_CLAIM_INVALID: { status: 409, message: 'Der gespeicherte Claim ist ungültig.' },
       EXAM_REVIEW_DRAFT_INVALID: { status: 400, message: 'Der Bewertungsentwurf enthält ungültige Angaben.' },
+      EXAM_REVIEW_TRANSFER_INVALID: { status: 400, message: 'Die Übergabeangaben sind ungültig.' },
+      EXAM_REVIEW_TRANSFER_REASON_INVALID: { status: 400, message: 'Die Übergabebegründung ist zu lang.' },
+      EXAM_REVIEW_REASSIGN_INVALID: { status: 400, message: 'Die Neuzuweisungsangaben sind ungültig.' },
+      EXAM_REVIEW_REASSIGN_UNCHANGED: { status: 409, message: 'Dieser Vorgang ist bereits dieser Person zugewiesen.' },
       EXAM_REVIEW_CORRECTION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die korrigiert werden kann.' },
       EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
       EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
@@ -2025,7 +2034,11 @@ async function startServer() {
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const role = caller.publicProfile.role;
       const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
-      res.json({ reviews: await listExamReviews(getExamRepository(), allowed, caller.uid) });
+      const reviews = await listExamReviews(getExamRepository(), allowed, caller.uid);
+      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+        console.error('Exam review notification delivery will be retried:', notificationError);
+      }
+      res.json({ reviews });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
@@ -2047,6 +2060,87 @@ async function startServer() {
       );
       recordExamWorkshopAudit(caller.uid, 'Prüfungsvorgang beansprucht', req.params.id, 'Versuch ' + req.params.attemptId + ' beansprucht.');
       res.json({ claim });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/transfer', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const state = peekDatabase();
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      const body = req.body;
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diese Übergabe fehlt die Berechtigung.' }); return;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body) ||
+          Object.keys(body).some(key => key !== 'targetUid' && key !== 'reason') ||
+          typeof body.targetUid !== 'string' || (body.reason !== undefined && typeof body.reason !== 'string') ||
+          (typeof body.reason === 'string' && body.reason.length > 500)) {
+        res.status(400).json({ error: 'Die Übergabeangaben sind ungültig.' }); return;
+      }
+      const target = state.accounts.find(account => account.uid === body.targetUid);
+      if (!target || !canBeAssignedExamReviewer(target, String(attempt.attemptCourseCode || ''))) {
+        res.status(400).json({ error: 'Die ausgewählte Person ist für diesen Kurs nicht als Prüfer berechtigt.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const claim = await transferExamReviewClaim(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid, target.uid,
+        String(target.publicProfile.displayName || target.username || target.uid),
+        typeof body.reason === 'string' ? body.reason : ''
+      );
+      recordExamWorkshopAudit(
+        caller.uid, 'Prüfungsvorgang übergeben', req.params.id,
+        `Versuch ${req.params.attemptId} an ${target.publicProfile.displayName} übergeben. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
+      );
+      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+        console.error('Exam review transfer notification delivery will be retried:', notificationError);
+      }
+      res.json({ claim, transferred: true });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/reassign', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const state = peekDatabase();
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      const body = req.body;
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nur berechtigte Vorgesetzte dürfen Prüfungsvorgänge neu zuweisen.' }); return;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body) ||
+          Object.keys(body).some(key => key !== 'targetUid' && key !== 'reason') ||
+          typeof body.targetUid !== 'string' || (body.reason !== undefined && typeof body.reason !== 'string') ||
+          (typeof body.reason === 'string' && body.reason.length > 500)) {
+        res.status(400).json({ error: 'Die Neuzuweisungsangaben sind ungültig.' }); return;
+      }
+      const target = state.accounts.find(account => account.uid === body.targetUid);
+      if (!target || !canBeAssignedExamReviewer(target, String(attempt.attemptCourseCode || ''))) {
+        res.status(400).json({ error: 'Die ausgewählte Person ist für diesen Kurs nicht als Prüfer berechtigt.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const previous = attempt.reviewClaim?.reviewerUid
+        ? state.accounts.find(account => account.uid === attempt.reviewClaim!.reviewerUid)
+        : null;
+      const claim = await reassignExamReviewClaim(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid, target.uid,
+        String(target.publicProfile.displayName || target.username || target.uid),
+        typeof body.reason === 'string' ? body.reason : ''
+      );
+      recordExamWorkshopAudit(
+        caller.uid, 'Prüfungsvorgang administrativ neu zugewiesen', req.params.id,
+        `Versuch ${req.params.attemptId} von ${previous?.publicProfile.displayName || 'bisheriger Prüfer'} an ${target.publicProfile.displayName} neu zugewiesen. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
+      );
+      try { await deliverPendingExamReviewNotifications(); } catch (notificationError) {
+        console.error('Exam review reassignment notification delivery will be retried:', notificationError);
+      }
+      res.json({ claim, reassigned: true });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
