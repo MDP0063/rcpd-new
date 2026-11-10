@@ -86,6 +86,7 @@ import {
 } from './server/accountValidation.ts';
 import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
+import { canAccessDeploymentManifest, mergeRestoredDeploymentConfig, toBackupDeploymentConfig } from './server/deploymentSecurity.ts';
 import {
   AcademyExamDoc,
   AnnouncementCategory,
@@ -3896,8 +3897,13 @@ async function startServer() {
   });
 
   // Generate Render.com Blueprint (Free Tier + Auto-Deploy on main) & GitHub Actions CI/CD manifest
-  app.get(['/api/v1/deployment/manifests', '/api/deployment/manifests'], (_req, res) => {
+  app.get(['/api/v1/deployment/manifests', '/api/deployment/manifests'], (req, res) => {
     const dbState = loadDatabase();
+    const caller = dbState.accounts.find(account => account.uid === res.locals.sessionUid);
+    if (!caller || !canAccessDeploymentManifest(caller.publicProfile.role)) {
+      res.status(403).json({ error: 'Zugriff verweigert. Nur der Administrator kann Deployment-Manifeste abrufen.' });
+      return;
+    }
     const cfg = ensureDeploymentConfig(dbState);
 
     const renderYaml = `services:
@@ -4324,7 +4330,7 @@ jobs:
           events: dbState.events || [],
           auditLogs: dbState.auditLogs || [],
           notifications: dbState.notifications || [],
-          deploymentConfig: cfg
+          deploymentConfig: toBackupDeploymentConfig(cfg)
         }
       };
 
@@ -4573,12 +4579,7 @@ jobs:
         // Private notes are intentionally excluded from administrator-readable exports.
         // A restore must never import or overwrite them; keep the live owner-private collection intact.
         academy_private_notes: currentState.academy_private_notes || [],
-        deploymentConfig: {
-          ...currentCfg,
-          ...incomingCfg,
-          lastBackupRestoreIso: nowIso,
-          updatedIso: nowIso
-        }
+        deploymentConfig: mergeRestoredDeploymentConfig(currentCfg, incomingCfg, nowIso)
       };
 
       migrateLegacyPasswords(nextState);
