@@ -77,7 +77,7 @@ import { describeError } from './server/errors.ts';
 import { getAuthenticatedApiBodyPolicy } from './server/apiBodyPolicy.ts';
 import { newId } from './server/ids.ts';
 import { isApplicationStatus, isOfficerRole, isRankChangeRequestRole, isWhitelistPromotionRole, isWhitelistStatus } from './server/accountValidation.ts';
-import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
+import { canAccessDirectMessage, canSelfSubmitLegacyExamResult, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import {
   AcademyExamDoc,
@@ -3623,7 +3623,14 @@ async function startServer() {
         return;
       }
 
-      if (exam.examFormat === 'structured_quiz') {
+      if (exam.examFormat !== 'structured_quiz') {
+        res.status(409).json({
+          error: 'Diese ältere interaktive Prüfung kann nicht automatisch ausgewertet werden. Selbst gemeldete Ergebnisse werden nicht als bestanden übernommen.'
+        });
+        return;
+      }
+
+      {
         let questions: unknown;
         try {
           questions = JSON.parse(exam.questionsPayload || '[]');
@@ -3683,15 +3690,6 @@ async function startServer() {
           }
           return result;
         }, {});
-      } else {
-        // Interaktive Code-Prüfungen verwenden weiterhin die bisherige manuelle Selbsteinschätzung.
-        // Die Absicherung dieser clientseitigen Eingabe ist ein separater Punkt.
-        const score = Number(scorePercent);
-        if (!Number.isFinite(score) || score < 0 || score > 100) {
-          res.status(400).json({ error: 'scorePercent muss zwischen 0 und 100 liegen.' });
-          return;
-        }
-        resolvedScore = Math.round(score);
       }
 
       resolvedType = targetType;
