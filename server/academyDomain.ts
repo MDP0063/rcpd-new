@@ -424,6 +424,22 @@ export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyVal
       return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_STATE_INVALID', 'Ein Kurs mit ausstehender Materialprüfung muss veröffentlicht und vorübergehend nicht verfügbar sein.');
     }
   }
+  if (master.materialReviewVersionRequired !== undefined) {
+    if (!Array.isArray(master.materialReviewVersionRequired) || master.materialReviewVersionRequired.length > 100 ||
+        master.materialReviewVersionRequired.some(item => !isRecord(item) ||
+          !isNonEmpty(item.materialId) || item.materialId.length > 160 ||
+          !isNonEmpty(item.materialVersionId) || item.materialVersionId.length > 200 ||
+          !Number.isSafeInteger(item.materialVersionNumber) || item.materialVersionNumber < 1)) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_INVALID', 'Die erforderlichen Materialaktualisierungen des Kurses sind ungültig.');
+    }
+    if (new Set(master.materialReviewVersionRequired.map(item => item.materialId)).size !== master.materialReviewVersionRequired.length) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_DUPLICATE', 'Ein Material darf nur einmal als erforderliche Kursaktualisierung hinterlegt sein.');
+    }
+    if (master.materialReviewVersionRequired.length > 0 &&
+        (master.publicationStatus !== 'published' || master.availability !== 'unavailable')) {
+      return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_STATE_INVALID', 'Ein Kurs mit erforderlicher Materialaktualisierung muss offline bleiben.');
+    }
+  }
   return { ok: true };
 }
 
