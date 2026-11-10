@@ -4568,7 +4568,7 @@ jobs:
   // ==========================================================================
   // MODULE 1: ANNOUNCEMENTS & FEED (/api/announcements)
   // ==========================================================================
-  app.post('/api/announcements', (req, res) => {
+  app.post('/api/announcements', (req, res, next) => {
     const { actorUid, title, category, priority, content, pinned } = req.body;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
@@ -4632,8 +4632,8 @@ jobs:
       'announcements'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, announcement: newAnnouncement });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, announcement: newAnnouncement }));
+    return;
   });
 
   app.post('/api/announcements/:id/ack', (req, res) => {
@@ -4698,7 +4698,7 @@ jobs:
   // ==========================================================================
   // MODULE 2: DIRECT MESSAGING & COMMUNICATION (/api/messages)
   // ==========================================================================
-  app.post('/api/messages', (req, res) => {
+  app.post('/api/messages', (req, res, next) => {
     const { senderUid, recipientUid, subject, body, priority } = req.body;
     const dbState = loadDatabase();
     const sender = dbState.accounts.find(a => a.uid === senderUid);
@@ -4765,8 +4765,8 @@ jobs:
       'messages'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, message: newMsg });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, message: newMsg }));
+    return;
   });
 
   app.put('/api/messages/:id/read', (req, res) => {
@@ -4797,7 +4797,7 @@ jobs:
     res.json({ ok: true, message: msg });
   });
 
-  app.delete('/api/messages/:id', (req, res) => {
+  app.delete('/api/messages/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -4823,8 +4823,8 @@ jobs:
     }
 
     dbState.messages = (dbState.messages || []).filter(m => m.id !== id);
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
@@ -5141,7 +5141,7 @@ jobs:
   // ==========================================================================
   // MODULE 4: INTERACTIVE CALENDAR & EVENTS (/api/events)
   // ==========================================================================
-  app.post('/api/events', (req, res) => {
+  app.post('/api/events', (req, res, next) => {
     const {
       actorUid,
       title,
@@ -5232,11 +5232,11 @@ jobs:
       'calendar'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, event: newEvent });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, event: newEvent }));
+    return;
   });
 
-  app.post('/api/events/:id/rsvp', (req, res) => {
+  app.post('/api/events/:id/rsvp', (req, res, next) => {
     const { id } = req.params;
     const { userUid, status } = req.body as {
       userUid?: string;
@@ -5280,11 +5280,11 @@ jobs:
       });
     }
 
-    saveDatabase(dbState);
-    res.json({ ok: true, event: evt });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, event: evt }));
+    return;
   });
 
-  app.delete('/api/events/:id', (req, res) => {
+  app.delete('/api/events/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -5364,7 +5364,7 @@ jobs:
   // ==========================================================================
   // MODULE 6: SELF PROFILE SETTINGS (/api/profile/self)
   // ==========================================================================
-  app.put('/api/profile/self', (req, res) => {
+  app.put('/api/profile/self', (req, res, next) => {
     const { uid, callsign, division, bio } = req.body as {
       uid?: string;
       callsign?: string;
@@ -5390,9 +5390,8 @@ jobs:
       caller.publicProfile.bio = bio.trim().slice(0, 500);
     }
     caller.publicProfile.updatedIso = nowIso;
-    saveDatabase(dbState);
-
-    res.json({ ok: true, user: caller.publicProfile });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, user: caller.publicProfile }));
+    return;
   });
 
   // Ensure unknown /api/* requests always return JSON 404 instead of SPA index.html
