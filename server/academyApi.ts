@@ -1176,7 +1176,7 @@ export function createAcademyApiRouter(
           throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
         }
         const currentParticipation = courseParticipation
-          ? (await resolveAcademyCourseCompletion(repository, courseParticipation)).participation
+          ? (await resolveAcademyCourseCompletion(repository, courseParticipation, resolveReleasedFinalExam)).participation
           : null;
         return { pin, version: courseVersion, participation: currentParticipation };
       }));
