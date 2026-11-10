@@ -16,7 +16,6 @@ import {
   readSessionUid,
   parseAllowedOrigins,
   safeEqual,
-  tokenSignature,
   validateNewPassword,
   verifyPassword,
   verifySessionToken
