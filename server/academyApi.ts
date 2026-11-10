@@ -1216,7 +1216,7 @@ export function createAcademyApiRouter(
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
       const storedParticipations = await repository.listOwnCourseParticipations(actor.uid);
       const participations = await Promise.all(storedParticipations.map(async item =>
-        (await resolveCurrentCompletion(item)).participation
+        (await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam)).participation
       ));
       res.json({ participations });
     } catch (error) { fail(res, error, next); }
@@ -1247,7 +1247,7 @@ export function createAcademyApiRouter(
       const isOwner = participation.userUid === actor.uid;
       const isManager = Boolean(master && canManage(actor, master.ownerUid));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
-      const completion = await resolveCurrentCompletion(participation);
+      const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
       const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
       const references = version.chapters.flatMap(chapter => chapter.materialReferences.map(reference => ({ ...reference, chapterId: chapter.id, chapterTitle: chapter.title, chapterOrder: chapter.order })));
       const materials: AcademyCourseMaterialReaderItem[] = await Promise.all(references.map(async reference => {
