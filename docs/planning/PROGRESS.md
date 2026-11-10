@@ -379,3 +379,13 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Der Main-Push-Workflow einschließlich optionalem Render-Deploy-Hook war erfolgreich. Dies bestätigt den CI-/Hook-Schritt, aber nicht die tatsächliche Laufzeitgesundheit der Anwendung.
 - Keine manuelle Browser-/Live-Firestore-Prüfung durchgeführt; sie bleibt Teil des gemeinsamen Academy-Abnahmetests.
 - Noch nicht implementiert: konfigurierbare automatische Ergebnisfreigabe sowie die serverseitige Verknüpfung von `required_assessment` mit einem aktuell freigegebenen `final_exam`-Versuch. Der aktuell fehlende Konfigurationswert führt weiterhin sicher zur manuellen Erstfreigabe.
+
+
+
+## 10.11.2026 – Dynamischer Academy-Nachweis für freigegebene Abschlussprüfungen (PR in Arbeit)
+
+- Umsetzung auf Branch `feature/academy-final-exam-evidence`.
+- `required_assessment` wird gegen das Prüfungsrepository aufgelöst: exakte Prüfungs-ID, Teilnehmer-UID, Kurskennung, Versuchstyp `final_exam`, passende unveränderliche Prüfungsversion, endgültiger Status `passed`, aktuelle Freigabe und konsistenter letzter Freigabehistorieneintrag; Punktzahl muss die Versions-Bestehensgrenze erreichen.
+- Es wird kein persistentes Academy-Nachweisduplikat erzeugt. Kursstatus und Lehrgangsfortschritt werden bei den relevanten Leseansichten dynamisch projiziert. Nach Korrektur mit `pending_rerelease` oder nach erneut freigegebenem Nichtbestehen fällt ein zuvor dynamisch projizierter Abschluss beim nächsten Lesen auf „in Bearbeitung“ zurück.
+- Bei fehlenden/ungültigen Prüfungsdaten oder Repositoryfehlern wird der Prüfungsnachweis nicht erfüllt (fail-closed).
+- CI und Code-Review stehen noch aus. Keine Browser-/Live-Firestore-Prüfung; diese bleibt für den gemeinsamen Academy-Abnahmetest vorgesehen.
