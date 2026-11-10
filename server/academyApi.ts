@@ -1366,8 +1366,9 @@ export function createAcademyApiRouter(
         ...(req.body.details === undefined ? {} : { details: text(req.body.details, 2000) })
       };
       const result = await repository.recordProgressEvidence(participation.id, evidence, actor.uid, isInstructor);
+      const completion = await resolveAcademyCourseCompletion(repository, result.participation, resolveReleasedFinalExam, true);
       await recordAudit(actor.uid, 'Academy-Fortschrittsnachweis erfasst', master?.code || participation.courseId, `Nachweis für Abschlussbedingung ${requirement.id} erfasst.`, 'ACADEMY_PROGRESS');
-      res.status(201).json(result);
+      res.status(201).json({ ...result, participation: completion.participation, assessmentProofs: completion.assessmentProofs });
     } catch (error) { fail(res, error, next); }
   });
 
