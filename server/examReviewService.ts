@@ -292,7 +292,7 @@ export async function gradeExamAttempt(
 }
 
 
-export interface CompletedManualReviewItem extends ExamReviewItem {
+export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner'> {
   status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null;
   reviewedAtIso: string;
