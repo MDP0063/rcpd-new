@@ -69,6 +69,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [saveError, setSaveError] = useState('');
   const [savingAction, setSavingAction] = useState(false);
+  const [linkNoteSearch, setLinkNoteSearch] = useState('');
   const revisionByIdRef = useRef(new Map<string, number>());
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
@@ -84,6 +85,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     () => notes.filter(note => note.kind === 'note' && !noteReferencesMaterial(note, materialId, materialVersionId)),
     [notes, materialId, materialVersionId]
   );
+  const linkableNotes = useMemo(() => {
+    const query = linkNoteSearch.trim().toLocaleLowerCase('de-DE');
+    const matches = query
+      ? unlinkedNotes.filter(note => [note.title || '', note.content || '', ...note.tags]
+          .some(value => value.toLocaleLowerCase('de-DE').includes(query)))
+      : unlinkedNotes;
+    return matches.slice(0, 10);
+  }, [unlinkedNotes, linkNoteSearch]);
   const selectedNote = useMemo(
     () => linkedNotes.find(note => note.id === selectedNoteId && note.kind === 'note') ?? null,
     [linkedNotes, selectedNoteId]
@@ -451,9 +460,18 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         )}
         {unlinkedNotes.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Vorhandene Notiz mit dieser Quelle verknüpfen</p>
+            <label className="block space-y-1">
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-100">Vorhandene Notiz mit dieser Quelle verknüpfen</span>
+              <input
+                className={field}
+                value={linkNoteSearch}
+                onChange={event => setLinkNoteSearch(event.target.value)}
+                placeholder="Eigene Notizen nach Titel, Inhalt oder Schlagwort suchen"
+                maxLength={120}
+              />
+            </label>
             <div className="flex flex-wrap gap-2">
-              {unlinkedNotes.map(note => (
+              {linkableNotes.map(note => (
                 <button
                   key={note.id}
                   type="button"
@@ -464,6 +482,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                   {note.title || 'Notiz ohne Titel'} · Quelle hinzufügen
                 </button>
               ))}
+              {linkableNotes.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400">Keine passende Notiz gefunden.</p> : null}
+              {unlinkedNotes.length > linkableNotes.length && !linkNoteSearch.trim() ? <p className="w-full text-xs text-slate-500 dark:text-slate-400">Es werden höchstens 10 Notizen angezeigt. Nutze die Suche, um weitere zu finden.</p> : null}
             </div>
           </div>
         ) : null}
