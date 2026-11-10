@@ -30,7 +30,7 @@ function participantCourseMasterView(master: AcademyCourseMasterDoc) {
   const {
     ownerUid: _ownerUid, archivedByUid: _archivedByUid,
     archiveReason: _archiveReason, materialReviewPending: _materialReviewPending,
-    ...visible
+    materialReviewVersionRequired: _materialReviewVersionRequired, ...visible
   } = master;
   return visible;
 }
@@ -70,7 +70,7 @@ function statusFor(error: unknown): number {
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
       code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
       code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
-      code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
+      code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
@@ -958,7 +958,8 @@ export function createAcademyApiRouter(
       if (!isObject(req.body) || (req.body.availability !== 'available' && req.body.availability !== 'unavailable')) {
         res.status(400).json({ error: 'ACADEMY_COURSE_AVAILABILITY_INVALID' }); return;
       }
-      if (req.body.availability === 'available' && (master.materialReviewPending?.length ?? 0) > 0) {
+      if (req.body.availability === 'available' &&
+          ((master.materialReviewPending?.length ?? 0) > 0 || (master.materialReviewVersionRequired?.length ?? 0) > 0)) {
         res.status(409).json({ error: 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING' }); return;
       }
       const updated = await repository.setCourseAvailability(
