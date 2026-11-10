@@ -330,7 +330,8 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           nextRecipients.length >= previousRecipients.length &&
           previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) &&
           nextRecipients.length <= 2 &&
-          nextRecipients.every(uid => typeof uid === 'string' && uid.trim().length > 0);
+          nextRecipients.every(uid => typeof uid === 'string' && uid.trim().length > 0) &&
+          nextRecipients.every((uid, recipientIndex) => nextRecipients.indexOf(uid) === recipientIndex);
       });
     if ((!historyUnchanged && !historyAppended && !historyDeliveryUpdated) || nextHistory.length > 100) {
       throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
@@ -398,16 +399,21 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           previousClaim === null || nextClaim !== null ||
           entry.actorUid !== 'system' ||
           entry.targetUid !== previousClaim.reviewerUid ||
-          (entry.reason !== undefined && !['inactivity', 'disconnect'].includes(String(entry.reason)))
+          !['inactivity', 'disconnect'].includes(String(entry.reason)) ||
+          (entry.reason === 'disconnect' && !previousClaim.disconnectedAtIso) ||
+          (entry.reason === 'inactivity' && previousClaim.disconnectedAtIso !== undefined) ||
+          entry.notificationRequired !== true
         )) ||
         (action === 'warning_started' && (
           previousClaim === null || nextClaim === null ||
           previousClaim.reviewerUid !== nextClaim.reviewerUid ||
           previousClaim.warningStartedAtIso !== undefined ||
+          previousClaim.disconnectedAtIso !== undefined ||
           nextClaim.warningStartedAtIso !== entry.atIso ||
           previousClaim.lastActivityAtIso !== nextClaim.lastActivityAtIso ||
           entry.actorUid !== 'system' ||
           entry.targetUid !== previousClaim.reviewerUid ||
+          entry.reason !== 'inactivity' ||
           entry.notificationRequired !== true
         )) ||
         (action === 'transferred' && (
