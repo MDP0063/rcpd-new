@@ -166,12 +166,36 @@ export function assertExamAttemptCreate(
 
 export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocument): void {
   if (existing.status === 'passed' || existing.status === 'failed') {
+    const previousReleaseHistory = Array.isArray(existing.resultReleaseHistory) ? existing.resultReleaseHistory : [];
+    const nextReleaseHistory = Array.isArray(next.resultReleaseHistory) ? next.resultReleaseHistory : [];
+    const releaseEntry = nextReleaseHistory[nextReleaseHistory.length - 1] as Record<string, unknown> | undefined;
+    const isReleaseAppend = nextReleaseHistory.length === previousReleaseHistory.length + 1 &&
+      isDeepStrictEqual(nextReleaseHistory.slice(0, -1), previousReleaseHistory);
+    if (isReleaseAppend) {
+      const stripReleaseMutable = (document: ExamDocument) => Object.fromEntries(
+        Object.entries(document).filter(([key]) => key !== 'resultReleaseStatus' && key !== 'resultReleaseHistory')
+      );
+      if (
+        next.resultReleaseStatus !== 'released' ||
+        existing.resultReleaseStatus === 'released' ||
+        next.status !== existing.status ||
+        !isDeepStrictEqual(stripReleaseMutable(existing), stripReleaseMutable(next)) ||
+        !releaseEntry ||
+        Object.keys(releaseEntry).sort().join(',') !== 'finalScoreBasisPoints,releasedAtIso,releasedByUid,status' ||
+        typeof releaseEntry.releasedByUid !== 'string' || !releaseEntry.releasedByUid.trim() ||
+        typeof releaseEntry.releasedAtIso !== 'string' || Number.isNaN(Date.parse(releaseEntry.releasedAtIso)) ||
+        releaseEntry.status !== existing.status ||
+        !isDeepStrictEqual(releaseEntry.finalScoreBasisPoints, existing.finalScoreBasisPoints ?? null) ||
+        nextReleaseHistory.length > 100
+      ) throw new Error('EXAM_RESULT_RELEASE_INVALID');
+      return;
+    }
     const previousHistory = Array.isArray(existing.reviewCorrections) ? existing.reviewCorrections : [];
     const nextHistory = Array.isArray(next.reviewCorrections) ? next.reviewCorrections : [];
     const allowedMutableFields = new Set([
       'status', 'manuallyEarnedPointsMilli', 'preliminaryScoreBasisPoints',
       'finalScoreBasisPoints', 'questionGrades', 'reviewedByUid', 'reviewedAtIso',
-      'reviewCorrections'
+      'reviewCorrections', 'resultReleaseStatus', 'resultReleaseHistory'
     ]);
     const stripMutable = (document: ExamDocument) => Object.fromEntries(
       Object.entries(document).filter(([key]) => !allowedMutableFields.has(key))
@@ -188,6 +212,10 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     if (
       (next.status !== 'passed' && next.status !== 'failed') ||
       !isDeepStrictEqual(stripMutable(existing), stripMutable(next)) ||
+      !isDeepStrictEqual(next.resultReleaseHistory, existing.resultReleaseHistory) ||
+      !(existing.resultReleaseStatus === 'released'
+        ? next.resultReleaseStatus === 'pending_rerelease'
+        : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus)) ||
       !appended || typeof appended !== 'object' ||
       typeof appended.reviewerUid !== 'string' || !appended.reviewerUid.trim() ||
       typeof appended.atIso !== 'string' || Number.isNaN(Date.parse(appended.atIso)) ||
