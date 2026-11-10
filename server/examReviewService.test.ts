@@ -44,7 +44,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(savedDraft.draftGrades.text, 400);
     const persistedDraftAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(persistedDraftAttempt?.reviewClaim?.reviewerUid, 'grader', 'saving a draft must preserve the active claim');
-    await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'other-grader', 'text', 500), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
+    await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'other-grader', 'text', 500, '2026-11-05T12:02:40.000Z'), /EXAM_REVIEW_CLAIM_NOT_OWNED/);
     const hiddenQueue = await listExamReviews(repository, ['PC-101'], 'other-grader', '2026-11-05T12:02:40.000Z');
     assert.equal(hiddenQueue.length, 1);
     assert.deepEqual(hiddenQueue[0].questions, [], 'other reviewers must not receive claimed answer content');
@@ -90,6 +90,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(submission.status, 'passed');
     assert.equal(submission.finalScoreBasisPoints, 7500);
     assert.equal(submission.manuallyEarnedPointsMilli, 500);
+    assert.deepEqual((await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewDraft, {}, 'final grading clears the saved draft');
     assert.equal((await listExamReviews(repository, ['PC-101'], 'grader')).length, 0);
     await assert.rejects(gradeExamAttempt(repository, 'review-exam', 'review-attempt', 'grader', [{ questionId: 'text', pointsEarnedMilli: 500 }]), /EXAM_REVIEW_NOT_PENDING/);
     assert.equal((await listOwnExamResults(repository, 'student-1')).length, 1);
