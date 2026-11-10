@@ -83,7 +83,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       '2026-11-05T12:02:44.500Z'
     );
     assert.equal(
-      (await listPendingExamReviewNotifications(repository)).some(item =>
+      (await listPendingExamReviewNotifications(repository, ['review-attempt'])).some(item =>
         item.event.action === 'transferred' && item.recipientUid === 'grader'
       ), false, 'notification delivery markers are persisted idempotently'
     );
@@ -91,7 +91,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const warningQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:32:45.000Z');
     assert.ok(warningQueue[0].reviewClaim?.warningStartedAtIso, '30 minutes of inactivity starts the warning phase');
     assert.equal((await repository.get<any>('exam_attempts', 'review-attempt'))?.reviewClaimHistory?.at(-1)?.action, 'warning_started');
-    assert.equal((await listPendingExamReviewNotifications(repository)).some(item => item.event.action === 'warning_started' && item.recipientUid === 'grader'), true);
+    assert.equal((await listPendingExamReviewNotifications(repository, ['review-attempt'])).some(item => item.event.action === 'warning_started' && item.recipientUid === 'grader'), true);
     await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:32:46.000Z');
     const unchangedWarningClaim = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(unchangedWarningClaim?.reviewClaim?.warningStartedAtIso, '2026-11-05T12:32:45.000Z',
