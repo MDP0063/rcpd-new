@@ -274,12 +274,17 @@ export interface ExamReviewNotificationEvent {
 }
 
 export async function listPendingExamReviewNotifications(
-  repository: ExamRepository
+  repository: ExamRepository,
+  attemptIds: string[]
 ): Promise<ExamReviewNotificationEvent[]> {
-  const statuses = ['pending_review', 'passed', 'failed', 'invalidated_by_admin'];
-  const attempts = (await Promise.all(statuses.map(status =>
-    repository.list<ExamAttemptRecord>('exam_attempts', { where: [{ field: 'status', value: status }], limit: HISTORY_LIMIT })
-  ))).flat();
+  if (!Array.isArray(attemptIds) || attemptIds.length > HISTORY_LIMIT ||
+      attemptIds.some(id => typeof id !== 'string' || !id.trim())) {
+    throw new Error('EXAM_REVIEW_NOTIFICATION_QUERY_INVALID');
+  }
+  const uniqueAttemptIds = [...new Set(attemptIds)];
+  const attempts = (await Promise.all(uniqueAttemptIds.map(id =>
+    repository.get<ExamAttemptRecord>('exam_attempts', id)
+  ))).filter((attempt): attempt is ExamAttemptRecord => Boolean(attempt));
   const results: ExamReviewNotificationEvent[] = [];
   for (const attempt of attempts) {
     const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
