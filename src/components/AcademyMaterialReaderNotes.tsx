@@ -157,6 +157,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }) : null, [selectedNote, title, content, tags]);
 
   currentDraftRef.current = draft;
+  const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
 
   useEffect(() => {
     return () => {
@@ -178,7 +179,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
-    if (draft && serializeDraft(draft) !== lastSavedRef.current) queueSave(draft);
+    if (hasUnsavedChanges && draft) {
+      queueSave(draft);
+      return;
+    }
     setSelectedNoteId(note.id);
     setTitle(note.title || '');
     setContent(note.content || '');
@@ -195,7 +199,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const createNote = async () => {
-    if (draft && serializeDraft(draft) !== lastSavedRef.current) queueSave(draft);
+    if (hasUnsavedChanges && draft) {
+      queueSave(draft);
+      return;
+    }
     setSavingAction(true);
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES, {
       method: 'POST',
@@ -325,10 +332,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           Notizen und Lesezeichen gehören zu genau dieser Materialfassung. Sie werden automatisch mit deinem Konto synchronisiert und sind für andere Nutzer – auch Administratoren – nicht einsehbar.
         </p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || savingAction}>
+          <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             Notiz hinzufügen
           </button>
-          <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || savingAction}>
+          <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {bookmarks.length ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
           </button>
         </div>
@@ -343,6 +350,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                 type="button"
                 className={note.id === selectedNoteId ? primary : secondary}
                 onClick={() => selectNote(note)}
+                disabled={hasUnsavedChanges || saveStatus !== 'saved'}
               >
                 {note.title || 'Notiz ohne Titel'}
               </button>
@@ -390,7 +398,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
               </div>
             ) : null}
             <div className="flex flex-wrap justify-end gap-2">
-              <button type="button" className={secondary} disabled={savingAction || saveStatus === 'saving'} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
+              <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
             </div>
           </div>
         ) : null}
