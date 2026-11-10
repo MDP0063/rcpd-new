@@ -322,7 +322,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     if (historyAppended) {
       const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
       if (!entry || Object.keys(entry).some(key => !['action', 'actorUid', 'targetUid', 'atIso'].includes(key)) ||
-          !['claimed', 'released', 'auto_released'].includes(String(entry.action)) ||
+          !['claimed', 'reclaimed', 'released', 'auto_released'].includes(String(entry.action)) ||
           typeof entry.actorUid !== 'string' || !entry.actorUid.trim() ||
           (entry.targetUid !== undefined && (typeof entry.targetUid !== 'string' || !entry.targetUid.trim())) ||
           typeof entry.atIso !== 'string' || Number.isNaN(Date.parse(entry.atIso))) {
@@ -343,6 +343,15 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           !nextClaim || previousClaim !== null ||
           entry.actorUid !== nextClaim.reviewerUid ||
           entry.targetUid !== nextClaim.reviewerUid
+        )) ||
+        (action === 'reclaimed' && (
+          previousClaim === null || nextClaim === null ||
+          !previousClaim.disconnectedAtIso ||
+          previousClaim.reviewerUid !== nextClaim.reviewerUid ||
+          entry.actorUid !== previousClaim.reviewerUid ||
+          entry.targetUid !== nextClaim.reviewerUid ||
+          previousClaim.claimedAtIso === nextClaim.claimedAtIso ||
+          nextClaim.disconnectedAtIso !== undefined
         )) ||
         (action === 'released' && (
           previousClaim === null || nextClaim !== null ||
