@@ -109,9 +109,10 @@ export const ExamReviewCenter: React.FC = () => {
   const saveDraftNow = async (key: string): Promise<boolean> => {
     const inFlight = inFlightDraftSaves.current[key];
     if (inFlight) {
-      await inFlight.promise;
+      const saved = await inFlight.promise;
+      if (saved && pendingDrafts.current[key] === inFlight.pending) delete pendingDrafts.current[key];
       if (pendingDrafts.current[key] && pendingDrafts.current[key] !== inFlight.pending) return saveDraftNow(key);
-      return !pendingDrafts.current[key];
+      return saved;
     }
     const pending = pendingDrafts.current[key];
     if (!pending) return true;
