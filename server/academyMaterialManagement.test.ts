@@ -303,6 +303,12 @@ test('course publication requires an exact existing published material version',
   const multipleReviews = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   assert.equal(multipleReviews?.materialReviewPending?.length, 2,
     'a later material update adds a review item instead of overwriting the first');
+  await repository.markMaterialReviewNotificationSent(courseMaster.id, master.id, secondVersion.id, later);
+  await repository.markMaterialReviewNotificationSent(courseMaster.id, master.id, secondVersion.id, later);
+  const notificationOutbox = await repository.listPendingMaterialReviewCourses();
+  const outboxCourse = notificationOutbox.find(item => item.id === courseMaster.id);
+  assert.equal(outboxCourse?.materialReviewPending?.find(item => item.materialVersionId === secondVersion.id)?.notificationSentIso, later);
+  assert.equal(outboxCourse?.materialReviewPending?.find(item => item.materialVersionId === thirdVersion.id)?.notificationSentIso, undefined);
   await assert.rejects(
     repository.startCourseParticipation('learner-new', courseMaster.id, later),
     /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
