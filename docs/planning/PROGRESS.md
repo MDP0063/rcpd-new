@@ -286,6 +286,6 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Seiten-/Textstellenanker und Warnungen bei veralteten Ankern bleiben offen. Das passt zur bestehenden Spezifikationsnotiz, dass stabile Anker erst nach einer tragfähigen Strategie umgesetzt werden.
 - Vollständige Offline-Bearbeitung ist weiterhin nicht zugesagt.
 - PDF-Unterstützung und PDF-Sicherheitsinfrastruktur werden nicht wieder aufgenommen.
-- GitHub Actions auf Commit `125479409e6f4dc3e7007bd438ccc97a6f78b423`: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 435 Tests bestanden, 0 fehlgeschlagen. Die PR-Vorlagenprüfung ist ebenfalls erfolgreich.
+- GitHub Actions auf Commit `b9cf2268340a2d9b2f44de14e5726322a85f30c3`: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 435 Tests bestanden, 0 fehlgeschlagen. Die PR-Vorlagenprüfung ist ebenfalls erfolgreich.
 - Der optionale Render-Deploy-Schritt wurde übersprungen. Es fand kein Produktionsdeployment statt.
 - Manuelle Browser-/App- und Live-Firestore-Prüfung stehen noch aus; PR #132 bleibt deshalb Draft und wird nicht gemergt.
