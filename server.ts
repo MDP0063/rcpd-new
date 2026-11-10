@@ -2211,7 +2211,7 @@ async function startServer() {
     };
     saveDatabase(dbState);
     try {
-      if (store) await store.flush();
+      if (store) await store.flushStrict();
       const recoveryUrl = new URL('/', baseUrl);
       recoveryUrl.hash = new URLSearchParams({ adminRecovery: rawToken }).toString();
       const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -2229,7 +2229,7 @@ async function startServer() {
         console.error('[Admin-Recovery] Resend-Versand fehlgeschlagen. HTTP-Status:', emailResponse.status);
         dbState.adminRecovery = null;
         saveDatabase(dbState);
-        if (store) await store.flush();
+        if (store) await store.flushStrict();
         res.status(503).json({ error: 'Die Wiederherstellungs-E-Mail konnte nicht versendet werden.' });
         return;
       }
@@ -2238,7 +2238,7 @@ async function startServer() {
       console.error('[Admin-Recovery] Anfrage fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
       dbState.adminRecovery = null;
       saveDatabase(dbState);
-      if (store) await store.flush().catch(() => undefined);
+      if (store) await store.flushStrict().catch(() => undefined);
       res.status(503).json({ error: 'Die Wiederherstellungs-E-Mail konnte nicht versendet werden.' });
     }
   });
@@ -2282,7 +2282,7 @@ async function startServer() {
       appendAuditLog(dbState, admin, 'ACCOUNT_ROLE', 'Administrator-Passwort wiederhergestellt', 'Admin1', 'Passwort über den verifizierten E-Mail-Wiederherstellungslink zurückgesetzt.');
       saveDatabase(dbState);
       try {
-        if (store) await store.flush();
+        if (store) await store.flushStrict();
       } catch (error) {
         console.error('[Admin-Recovery] Persistierung fehlgeschlagen:', error instanceof Error ? error.message : 'Unbekannter Fehler');
         res.status(503).json({ error: 'Die Änderung konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut.' });
@@ -2552,7 +2552,7 @@ async function startServer() {
   });
 
   // 5. ADMIN ONLY: Create New Account (Defaults to 'trainee' unless specified)
-  app.post('/api/admin/accounts', (req, res) => {
+  app.post('/api/admin/accounts', (req, res, next) => {
     const {
       adminUid,
       username,
@@ -2679,12 +2679,13 @@ async function startServer() {
       `${newAccount.publicProfile.displayName} (${newAccount.username} · ${newAccount.publicProfile.badgeNumber})`,
       `Start-Rang: ${targetRole.toUpperCase()} (${newAccount.publicProfile.rank}) · Abteilung: ${newAccount.publicProfile.division}`
     );
-    saveDatabase(dbState);
-    res.json({ account: toAdminView(newAccount) });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ account: toAdminView(newAccount) });
+    }).catch(next);
   });
 
   // 6. ADMIN ONLY: Update Any Account (Including Admin1's own username & password, role, granularPermissions, status)
-  app.put('/api/admin/accounts/:targetUid', (req, res) => {
+  app.put('/api/admin/accounts/:targetUid', (req, res, next) => {
     const { targetUid } = req.params;
     const {
       adminUid,
@@ -2911,12 +2912,17 @@ async function startServer() {
       }
     }
 
-    if (accountChanged) saveDatabase(dbState);
+    if (accountChanged) {
+      saveDatabaseAndWait(dbState).then(() => {
+        res.json({ account: toAdminView(target) });
+      }).catch(next);
+      return;
+    }
     res.json({ account: toAdminView(target) });
   });
 
   // 7. ADMIN ONLY: Delete Account
-  app.delete('/api/admin/accounts/:targetUid', (req, res) => {
+  app.delete('/api/admin/accounts/:targetUid', (req, res, next) => {
     const { targetUid } = req.params;
     const adminUid = String(req.query.adminUid || '');
     const dbState = loadDatabase();
@@ -2950,12 +2956,13 @@ async function startServer() {
         `Konto mit Dienstnummer ${target.publicProfile.badgeNumber} wurde dauerhaft entfernt.`
       );
     }
-    saveDatabase(dbState);
-    res.json({ deleted: true });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ deleted: true });
+    }).catch(next);
   });
 
   // 8. Whitelist Applications Submit & Admin Review
-  app.post('/api/applications', (req, res) => {
+  app.post('/api/applications', (req, res, next) => {
     const {
       applicantUid,
       characterName,
@@ -3016,11 +3023,12 @@ async function startServer() {
       });
     }
 
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ ok: true });
+    }).catch(next);
   });
 
-  app.put('/api/admin/applications/:appId', (req, res) => {
+  app.put('/api/admin/applications/:appId', (req, res, next) => {
     const { appId } = req.params;
     const { adminUid, status, reviewerFeedback, promoteToRole } = req.body;
     if (!isApplicationStatus(status)) {
@@ -3102,8 +3110,9 @@ async function startServer() {
       'whitelist'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ ok: true });
+    }).catch(next);
   });
 
   // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
@@ -4769,7 +4778,7 @@ jobs:
   // ==========================================================================
   // MODULE 3: OFFICIAL REQUESTS & REQUISITIONS (/api/requests)
   // ==========================================================================
-  app.post('/api/requests', (req, res) => {
+  app.post('/api/requests', (req, res, next) => {
     const {
       category,
       title,
@@ -4875,11 +4884,12 @@ jobs:
       );
     }
 
-    saveDatabase(dbState);
-    res.json({ ok: true, request: newReq });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ ok: true, request: newReq });
+    }).catch(next);
   });
 
-  app.put('/api/requests/:id/review', (req, res) => {
+  app.put('/api/requests/:id/review', (req, res, next) => {
     const { id } = req.params;
     const { status, reviewerComment, applyRankChange } = req.body as {
       status?: RequestStatus;
@@ -5045,8 +5055,9 @@ jobs:
       'requests'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, request: targetReq });
+    saveDatabaseAndWait(dbState).then(() => {
+      res.json({ ok: true, request: targetReq });
+    }).catch(next);
   });
 
   app.delete('/api/requests/:id', (req, res) => {
