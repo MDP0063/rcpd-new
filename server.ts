@@ -4882,7 +4882,7 @@ jobs:
 
   app.delete('/api/messages/:id', (req, res, next) => {
     const { id } = req.params;
-    const actorUid = String(req.query.actorUid || '');
+    const actorUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
     if (!caller) {
