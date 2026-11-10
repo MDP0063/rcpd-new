@@ -27,7 +27,11 @@ const canManage = (actor: AcademyApiActor, ownerUid: string) =>
 
 /** Remove internal ownership and administrative archive metadata from participant-facing views. */
 function participantCourseMasterView(master: AcademyCourseMasterDoc) {
-  const { ownerUid: _ownerUid, archivedByUid: _archivedByUid, archiveReason: _archiveReason, ...visible } = master;
+  const {
+    ownerUid: _ownerUid, archivedByUid: _archivedByUid,
+    archiveReason: _archiveReason, materialReviewPending: _materialReviewPending,
+    ...visible
+  } = master;
   return visible;
 }
 function participantCourseVersionView(version: AcademyCourseVersionDoc) {
