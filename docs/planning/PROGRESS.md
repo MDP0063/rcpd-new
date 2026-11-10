@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Zusätzlich zu PR #132/#134/#135/#136 ist PR #137 (globale Bibliothekssuche, Relevanzsortierung und kompakte Kategorie-/Dokumenttypfilter) gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 (ID-Zufallsentropie) ist mit erfolgreicher CI gemergt; PR #141 ergänzt als Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `1dd9f83bfb4566a42a84359808624db36ab65da5` (`main`, Merge-Commit von PR #137).  
-**Aktueller Umsetzungsbranch:** keiner; PR #137 ist abgeschlossen. Nächste Umsetzung erst nach Prüfung des nächsten bereits beschlossenen Academy-Arbeitspakets.
+**Aktueller Basisstand:** `738faab5d3e85b94df02f188c2fdd3236b73674d` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
+**Aktueller Umsetzungsstand:** PR #138 ist mit Squash-Commit `738faab5d3e85b94df02f188c2fdd3236b73674d` gemergt; GitHub-CI für TypeScript/Build und 448/448 Tests war erfolgreich. Der anschließende Main-Workflow einschließlich Render-Deploy-Hook war ebenfalls erfolgreich. PR #141 (`feature/academy-reader-position-clean`) enthält nur die Reader-Lesepositionsfunktion und Planungsdokumentation. Kein Merge/Deployment von PR #141.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -96,14 +96,13 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 7. Designsystem und grafische Detailgestaltung erst anschließend beginnen.
 8. Unabhängige kritische Review des Gesamtplans vorbereiten.
 
-## 6. Nächste konkrete Schritte
+## 6. Noch offene nächste Schritte
 
-1. PR der versionierten Text-/Code-Materialverwaltung fachlich und technisch prüfen; nach Merge den Stand auf `main` verifizieren.
-2. Teilnehmer-Lernbibliothek und Reader an die neuen veröffentlichten Materialversionen anbinden; Zugriffsfilter und sichere Markdown-Darstellung prüfen.
-3. Kurseditor um eine gezielte Materialauswahl ergänzen, die nur veröffentlichte Fassungen auswählbar macht und konkrete Versionskennungen speichert.
-4. Suche/Filter über Materialcode, Titel, Kategorie und Dokumenttyp sowie erforderliche Metadaten-/Readerzustände integrieren, sobald die Daten zuverlässig verfügbar sind. (Teilnehmer-Suche, Relevanzsortierung und Kategorie-/Dokumenttypfilter mit PR #137 umgesetzt; Volltext/OCR nicht Teil dieser Umsetzung.)
-5. Benachrichtigung betroffener Kursverantwortlicher bei neuen Fassungen und weitere offene Rücknahme-/Archivierungsfälle klären.
-6. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen; PDF-Unterstützung bleibt spätere Ausbaustufe.
+1. Benachrichtigung betroffener Kursverantwortlicher bei neuen Materialfassungen und konkrete Auswirkungen auf laufende Kursentwürfe klären.
+2. Rückzug/Archivierung veröffentlichter Materialien weiter spezifizieren: betroffene Kursversionen, konkrete Zustände und Benachrichtigungen sind noch offen.
+3. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen.
+4. PDF-Unterstützung einschließlich der bereits beschlossenen Sicherheitsanforderungen bleibt ausdrücklich zurückgestellt.
+5. Weitere Academy-Arbeit nur aus den verbleibenden offenen Punkten in `OPEN-QUESTIONS.md` ableiten; keine neuen Funktionsannahmen ergänzen.
 
 Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen.
 
@@ -223,7 +222,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Der Reader lädt Inhalte ausschließlich über eine serverseitig geprüfte Route, die die exakte Materialversion in der gepinnten Kursversion verifiziert. Rollenbeschränkungen werden serverseitig geprüft.
 - Markdown wird mit `react-markdown`, `remark-gfm` und `rehype-sanitize` ohne Raw-HTML-Durchleitung dargestellt. Code bleibt Quelltext und wird nicht ausgeführt.
 - PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler. TypeScript-Prüfung, Produktionsbuild und 333 Tests liefen erfolgreich; eine manuelle Browserprüfung wurde nicht durchgeführt.
-- Notizen/Lesezeichen, Autosave und geräteübergreifende Leseposition bleiben ein eigener Folgeabschnitt.
+- Notizen/Lesezeichen, Autosave, Mehrfachquellen und stabile Textanker sind mit PR #132/#134/#136 umgesetzt. Die lokale Lesepositions-Wiederaufnahme wird mit Draft-PR #141 ergänzt; geräte-/browserübergreifende Synchronisierung bleibt offen.
 
 
 ## Vorübergehende Sperre neuer PDF-Uploads
@@ -331,3 +330,14 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Detailreview ergänzt: Markdown-Wiederfindung berücksichtigt zusätzlich den gespeicherten Überschriftenpfad; Anker-Schreibaktionen werden während ungespeicherter Notizänderungen blockiert.
 - GitHub-CI für PR #136: 443/443 Tests bestanden; TypeScript-Prüfung und Produktionsbuild erfolgreich. PR-Vorlagenprüfung erfolgreich.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
+
+
+## 10.11.2026 – Lokale Wiederaufnahme der Academy-Reader-Leseposition (Draft-PR #141)
+
+- Die beschlossene Speicherung/Wiederaufnahme der letzten Leseposition wird zunächst lokal im selben Browser/Gerät umgesetzt.
+- Speicheridentität umfasst Teilnahme, Materialstamm und die exakte unveränderliche Materialversion. Eine Position wird nicht auf eine andere Teilnahme oder Materialfassung übertragen.
+- Markdown speichert den relativen Dokumentfortschritt; Code-Materialien speichern die interne Scrollposition des Quelltextbereichs.
+- Lokaler Speicher wird fail-soft behandelt: nicht verfügbare Browser-Speicherung verhindert nicht das Öffnen/Lesen.
+- Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
+- Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
+- Draft-PR #141 basiert sauber auf dem nach PR #138 aktualisierten `main`; der ID-Fix ist nicht Teil dieses PR-Diffs. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus. Kein Merge/Deployment.
