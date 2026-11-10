@@ -136,3 +136,13 @@
 - Tests decken Draft-Speicherung, Vertraulichkeit, Wiederaufnahme nach Disconnect, Claim-Historie, Ablauf vor Bewertung und das Löschen der Drafts nach endgültiger Bewertung ab.
 - PR #150: GitHub-CI erfolgreich – TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung. Optionaler Render-Deploy-Hook übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung nicht verifiziert.
 - Squash-Merge PR #150: `99d7694abaa0be0254ce10f910c103a8d0db3d2b`.
+
+
+## 2026-11-10 – Examiner-Übergabe, administrative Neuzuweisung und Benachrichtigungen (PR #152)
+
+- Prüfer können eigene aktive Claims an andere für den konkreten Kurs berechtigte Prüfer übergeben; Admins und Colonels können einzelne Claims administrativ neu zuweisen.
+- Der Verantwortungswechsel entzieht dem bisherigen Prüfer sofort die Schreibrechte. Bereits gespeicherte Drafts bleiben erhalten; lokale ungespeicherte Eingaben werden nur nach ausdrücklicher Auswahl verworfen oder vor der Übergabe gespeichert.
+- Claim-Historie ergänzt um Übergabe, administrative Neuzuweisung, Warnungsbeginn, Freigabegrund und Benachrichtigungszustellmarker.
+- Idempotente In-App-Benachrichtigungen für bisherigen und neuen Verantwortlichen, bevorstehende automatische Freigabe und automatische Freigabe; Direktnavigation zum konkreten Examiner-Vorgang.
+- PR #152: GitHub-CI erfolgreich – TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung. Optionaler Render-Deploy-Hook übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung nicht verifiziert.
+- Squash-Merge PR #152: `465c55ab92164e5f47e30b041ac80ef678c718ec`.
