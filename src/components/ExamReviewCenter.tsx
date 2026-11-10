@@ -20,6 +20,14 @@ interface ReviewItem {
 
 const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
 
+function canReviewCourse(member: UserPublicProfile, courseCode: string): boolean {
+  if (['pending', 'suspended', 'revoked'].includes(member.whitelistStatus)) return false;
+  if (member.role === 'admin' || member.role === 'colonel') return true;
+  const permissions = member.granularPermissions;
+  return Boolean(permissions?.canGradeAssignedCourses &&
+    (permissions.assignedCourseCodes.includes('*') || permissions.assignedCourseCodes.includes(courseCode)));
+}
+
 function warningMinutesRemaining(claim: ReviewClaim): number {
   if (!claim.warningStartedAtIso) return 0;
   return Math.max(0, Math.ceil((Date.parse(claim.warningStartedAtIso) + 10 * 60_000 - Date.now()) / 60_000));
@@ -38,6 +46,10 @@ export const ExamReviewCenter: React.FC<{
   const [notice, setNotice] = useState('');
   const [draftSaveStatus, setDraftSaveStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
   const [releaseDialogId, setReleaseDialogId] = useState('');
+  const [transferDialog, setTransferDialog] = useState<{ review: ReviewItem; mode: 'transfer' | 'reassign' } | null>(null);
+  const [transferTargetUid, setTransferTargetUid] = useState('');
+  const [transferReason, setTransferReason] = useState('');
+  const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
   const pendingDrafts = useRef<Record<string, { review: ReviewItem; question: ReviewQuestion; value: string }>>({});
@@ -221,6 +233,50 @@ export const ExamReviewCenter: React.FC<{
     await load();
   };
 
+  const openTransferDialog = (review: ReviewItem, mode: 'transfer' | 'reassign') => {
+    const currentOwnerName = review.reviewClaim?.reviewerName;
+    const candidates = roster.filter(member =>
+      canReviewCourse(member, review.attemptCourseCode) &&
+      (mode === 'transfer'
+        ? member.uid !== currentUser.uid
+        : member.displayName !== currentOwnerName)
+    );
+    setTransferDialog({ review, mode });
+    setTransferTargetUid(candidates[0]?.uid || '');
+    setTransferReason('');
+    setError('');
+  };
+
+  const submitTransfer = async (savePendingDrafts: boolean) => {
+    if (!transferDialog) return;
+    const { review, mode } = transferDialog;
+    if (!transferTargetUid) {
+      setError('Für diesen Kurs wurde kein anderer berechtigter Prüfer gefunden.');
+      return;
+    }
+    if (mode === 'transfer' && savePendingDrafts && !(await flushDraftSaves(review))) return;
+    if (mode === 'transfer' && !savePendingDrafts) discardPendingDraftSaves(review);
+    setSavingId(review.id);
+    setError('');
+    setNotice('');
+    const response = await apiFetch(
+      mode === 'transfer'
+        ? API_ENDPOINTS.ACADEMY_EXAM_REVIEW_TRANSFER(review.examId, review.id)
+        : API_ENDPOINTS.ACADEMY_EXAM_REVIEW_REASSIGN(review.examId, review.id),
+      { method: 'POST', body: JSON.stringify({ targetUid: transferTargetUid, reason: transferReason.trim() }) }
+    );
+    setSavingId('');
+    if (!response.ok) {
+      setError(response.error || 'Der Prüfungsvorgang konnte nicht übergeben werden.');
+      return;
+    }
+    setTransferDialog(null);
+    setNotice(mode === 'transfer'
+      ? 'Der Prüfungsvorgang wurde übergeben. Deine Schreibrechte sind beendet.'
+      : 'Der Prüfungsvorgang wurde administrativ neu zugewiesen.');
+    await load();
+  };
+
   const submit = async (review: ReviewItem) => {
     const activityTimer = activityTimers.current[review.id];
     if (activityTimer) window.clearTimeout(activityTimer);
@@ -251,7 +307,7 @@ export const ExamReviewCenter: React.FC<{
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
     {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine offenen Freitextbewertungen.</div> : reviews.map(review => <article id={`exam-review-${review.id}`} key={review.id} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
-        {review.reviewClaim ? <div className="text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={() => setReleaseDialogId(review.id)} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 rounded-lg bg-sky-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
+        {review.reviewClaim ? <div className="text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <><button type="button" disabled={Boolean(savingId)} onClick={() => openTransferDialog(review, 'transfer')} className="mt-1 mr-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Übergeben</button><button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={() => setReleaseDialogId(review.id)} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button></>}{isSupervisor && review.reviewClaim && !review.isClaimOwner && <button type="button" disabled={Boolean(savingId)} onClick={() => openTransferDialog(review, 'reassign')} className="mt-1 rounded-lg border border-amber-400 px-3 py-1.5 font-semibold text-amber-800 dark:text-amber-300">Administrativ neu zuweisen</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 rounded-lg bg-sky-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
       </header>
       {review.reviewClaim?.warningStartedAtIso && review.isClaimOwner && <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Wegen Inaktivität läuft die Freigabewarnung. Noch ca. {warningMinutesRemaining(review.reviewClaim)} Minuten bis zur automatischen Freigabe. Eine tatsächliche Bearbeitungsaktion setzt die Frist zurück.</p>}
@@ -259,6 +315,30 @@ export const ExamReviewCenter: React.FC<{
         ? <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300">Die vertraulichen Antwort- und Bewertungsinhalte sind während der Bearbeitung durch einen anderen Prüfer ausgeblendet.</p>
         : review.questions.map((question, index) => <div key={question.questionId} className="grid gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 md:grid-cols-[1fr_180px]"><div className="space-y-2"><h4 className="text-sm font-semibold">Frage {index + 1}: {question.question}</h4><p onClick={() => { if (review.isClaimOwner) recordActivity(review); }} className="whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-950">{question.answer}</p>{question.gradingRubric && <p className="whitespace-pre-wrap text-xs text-slate-500">Rubrik: {question.gradingRubric}</p>}</div><label className="text-xs font-medium text-slate-600 dark:text-slate-300">Punkte / {question.pointsMilli / 1000}<input className={fieldClass + ' mt-1'} type="number" disabled={!review.isClaimOwner || savingId === review.id} min={0} max={question.pointsMilli / 1000} step="0.001" value={grades[review.id]?.[question.questionId] ?? ''} onFocus={() => { if (review.isClaimOwner) recordActivity(review); }} onChange={event => { const value = event.target.value; setGrades(current => ({ ...current, [review.id]: { ...current[review.id], [question.questionId]: value } })); if (review.isClaimOwner) scheduleDraftSave(review, question, value); }}/></label></div>)}
       {review.isClaimOwner && <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-slate-800"><p className="text-xs text-slate-500">{draftSaveStatus[review.id] === 'saving' ? 'Bewertungsentwurf wird gespeichert …' : draftSaveStatus[review.id] === 'saved' ? 'Entwurf gespeichert' : draftSaveStatus[review.id] === 'error' ? 'Entwurf konnte nicht gespeichert werden' : 'Änderungen werden automatisch als Entwurf gespeichert.'}</p><button type="button" disabled={Boolean(savingId)} onClick={() => void submit(review)} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Speichert …' : 'Bewertung abschließen'}</button></div>}
+      {transferDialog?.review.id === review.id && <div role="dialog" aria-modal="true" aria-label={transferDialog.mode === 'transfer' ? 'Prüfungsvorgang übergeben' : 'Prüfungsvorgang neu zuweisen'} className="space-y-3 rounded-lg border border-sky-300 bg-sky-50 p-4 text-sm text-sky-950">
+        <p className="font-semibold">{transferDialog.mode === 'transfer' ? 'Vorgang an einen anderen Prüfer übergeben' : 'Zuständigkeit administrativ neu zuweisen'}</p>
+        <p className="text-xs">Gespeicherte Bewertungsentwürfe bleiben erhalten. Nicht gespeicherte Eingaben werden nicht übertragen.</p>
+        <label className="block text-xs font-semibold">Neuer Verantwortlicher
+          <select value={transferTargetUid} onChange={event => setTransferTargetUid(event.target.value)} className={fieldClass + ' mt-1'}>
+            <option value="">Prüfer auswählen …</option>
+            {roster.filter(member =>
+              canReviewCourse(member, review.attemptCourseCode) &&
+              (transferDialog.mode === 'transfer'
+                ? member.uid !== currentUser.uid
+                : member.displayName !== review.reviewClaim?.reviewerName)
+            ).map(member => <option key={member.uid} value={member.uid}>{member.displayName} · {member.role.toUpperCase()}</option>)}
+          </select>
+        </label>
+        <label className="block text-xs font-semibold">Grund (optional)
+          <textarea value={transferReason} onChange={event => setTransferReason(event.target.value)} maxLength={500} rows={2} className={fieldClass + ' mt-1'} placeholder="Kurze Begründung für die Übergabe …" />
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {transferDialog.mode === 'transfer'
+            ? <><button type="button" disabled={Boolean(savingId) || !transferTargetUid} onClick={() => void submitTransfer(true)} className="rounded-lg bg-sky-700 px-3 py-2 font-semibold text-white disabled:opacity-50">Draft speichern und übergeben</button><button type="button" disabled={Boolean(savingId) || !transferTargetUid || hasDraftSaveInFlight(review.id)} onClick={() => void submitTransfer(false)} className="rounded-lg border border-sky-600 px-3 py-2 font-semibold">Übergeben und ungespeicherte Eingaben verwerfen</button></>
+            : <button type="button" disabled={Boolean(savingId) || !transferTargetUid} onClick={() => void submitTransfer(false)} className="rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white disabled:opacity-50">Neu zuweisen</button>}
+          <button type="button" disabled={Boolean(savingId)} onClick={() => setTransferDialog(null)} className="rounded-lg border border-sky-600 px-3 py-2">Abbrechen</button>
+        </div>
+      </div>}
       {releaseDialogId === review.id && <div role="dialog" aria-modal="true" aria-label="Prüfungsvorgang freigeben" className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Was soll mit noch nicht gespeicherten Eingaben geschehen?</p><div className="flex flex-wrap gap-2"><button type="button" disabled={Boolean(savingId)} onClick={async () => { const saved = await flushDraftSaves(review); if (saved) { setReleaseDialogId(''); setNotice('Entwurf gespeichert. Du bleibst für den Vorgang zuständig.'); } }} className="rounded-lg border border-amber-500 px-3 py-2 font-semibold">Zurück und speichern</button><button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={async () => { discardPendingDraftSaves(review); setReleaseDialogId(''); await claimOrRelease(review, 'release'); }} className="rounded-lg bg-amber-800 px-3 py-2 font-semibold text-white">Freigeben und ungespeicherte Änderungen verwerfen</button><button type="button" onClick={() => setReleaseDialogId('')} className="rounded-lg border border-amber-500 px-3 py-2">Abbrechen</button></div></div>}
     </article>)}
   </section>;
