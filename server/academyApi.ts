@@ -82,6 +82,31 @@ function fail(res: Response, error: unknown, next: NextFunction): void {
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
+function normalizePrivateNoteSources(
+  value: unknown,
+  fallback: { materialId: string; materialVersionId: string }
+): Array<{ materialId: string; materialVersionId: string }> {
+  const input = value === undefined ? [fallback] : value;
+  if (!Array.isArray(input) || input.length < 1 || input.length > 25) {
+    throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+  }
+  const sources = input.map(source => {
+    if (!isObject(source)) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+    const materialId = boundedText(source.materialId, 120);
+    const materialVersionId = boundedText(source.materialVersionId, 160);
+    if (!materialId || !materialVersionId) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+    return { materialId, materialVersionId };
+  });
+  const keys = sources.map(source => `${source.materialId}::${source.materialVersionId}`);
+  if (new Set(keys).size !== keys.length) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+  return sources;
+}
+function privateNoteWithNormalizedSources(note: AcademyPrivateNoteDoc): AcademyPrivateNoteDoc {
+  return {
+    ...note,
+    sources: note.sources ?? [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]
+  };
+}
 function revision(value: unknown): number | null {
   return Number.isSafeInteger(value) && Number(value) >= 1 ? Number(value) : null;
 }
@@ -1206,7 +1231,7 @@ export function createAcademyApiRouter(
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
       const notes = await repository.listOwnPrivateNotes(actor.uid);
-      res.json({ notes });
+      res.json({ notes: notes.map(privateNoteWithNormalizedSources) });
     } catch (error) { fail(res, error, next); }
   });
 
@@ -1216,12 +1241,21 @@ export function createAcademyApiRouter(
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
       if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_NOTE_BODY_INVALID' }); return; }
       const now = new Date().toISOString();
+      const requestedKind = req.body.kind === 'bookmark' ? 'bookmark' : 'note';
+      const requestedMaterialId = text(req.body.materialId, 120);
+      const requestedMaterialVersionId = text(req.body.materialVersionId, 160);
+      const sources = normalizePrivateNoteSources(req.body.sources, {
+        materialId: requestedMaterialId,
+        materialVersionId: requestedMaterialVersionId
+      });
       const note: AcademyPrivateNoteDoc = {
         id: id('note'), ownerUid: actor.uid, revision: 1,
-        materialId: text(req.body.materialId, 120), materialVersionId: text(req.body.materialVersionId, 160),
-        kind: req.body.kind === 'bookmark' ? 'bookmark' : 'note',
+        materialId: requestedMaterialId || sources[0].materialId,
+        materialVersionId: requestedMaterialVersionId || sources[0].materialVersionId,
+        kind: requestedKind,
         title: text(req.body.title, 200), content: text(req.body.content, 20000),
         tags: Array.isArray(req.body.tags) ? req.body.tags.filter((tag): tag is string => typeof tag === 'string').map(tag => tag.trim().slice(0, 40)).filter(Boolean).slice(0, 20) : [],
+        sources,
         createdIso: now, updatedIso: now
       };
       await repository.saveOwnPrivateNote(actor.uid, note);
@@ -1247,6 +1281,10 @@ export function createAcademyApiRouter(
         tags: req.body.tags === undefined ? existing.tags : Array.isArray(req.body.tags)
           ? req.body.tags.filter((tag): tag is string => typeof tag === 'string').map(tag => tag.trim().slice(0, 40)).filter(Boolean).slice(0, 20)
           : existing.tags,
+        sources: normalizePrivateNoteSources(req.body.sources, {
+          materialId: existing.materialId,
+          materialVersionId: existing.materialVersionId
+        }),
         updatedIso: new Date().toISOString()
       };
       await repository.updateOwnPrivateNote(actor.uid, note, expectedRevision);
