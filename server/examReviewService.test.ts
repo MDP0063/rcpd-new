@@ -163,6 +163,37 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
     assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
     await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
     assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
+
+    await repository.create('exam_masters', 'academy-knowledge-test', {
+      id: 'academy-knowledge-test', status: 'published', startable: true, minClearance: 0,
+      assignedCourseCodes: ['BASIC-01'], currentPublishedVersionId: 'academy-knowledge-test__v1'
+    });
+    await repository.create('exam_versions', 'academy-knowledge-test__v1', {
+      id: 'academy-knowledge-test__v1', examId: 'academy-knowledge-test', versionNumber: 1,
+      title: 'Freiwilliger Wissenstest', assessmentStage: 'test', minClearance: 0,
+      timeLimitMinutes: 15, passingScoreBasisPoints: 5000,
+      questionsSnapshot: [{
+        id: 'choice', type: 'single_choice', question: 'Welche Antwort ist richtig?', pointsMilli: 1000,
+        options: [{ id: 'a', text: 'Falsch' }, { id: 'b', text: 'Richtig' }], correctOptionId: 'b'
+      }]
+    });
+    await startExamAttempt(
+      repository, 'academy-knowledge-test',
+      { uid: 'academy-student', displayName: 'Academy Student', clearanceLevel: 0 },
+      'BASIC-01', Date.parse('2026-11-10T13:00:00.000Z'), () => 'academy-test-attempt'
+    );
+    await saveExamAttemptAnswers(
+      repository, 'academy-knowledge-test', 'academy-test-attempt', 'academy-student', 1,
+      { choice: 'b' }, Date.parse('2026-11-10T13:01:00.000Z')
+    );
+    const knowledgeTestSubmission = await submitExamAttempt(
+      repository, 'academy-knowledge-test', 'academy-test-attempt', 'academy-student',
+      Date.parse('2026-11-10T13:02:00.000Z')
+    );
+    assert.equal(knowledgeTestSubmission.submission.status, 'awaiting_release');
+    await releaseExamResult(repository, 'academy-knowledge-test', 'academy-test-attempt', 'academy-admin', '2026-11-10T13:03:00.000Z');
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-knowledge-test', 'BASIC-01'), null,
+      'a released voluntary knowledge test must never satisfy a final-exam requirement');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
