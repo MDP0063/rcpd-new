@@ -47,18 +47,23 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
   const sourceText=node.textContent||'';
   const headingPath:string[]=[];
   if(kind==='markdown'){
-   let parent=node.parentElement;
-   while(parent&&root.contains(parent)){
-    if(/^H[1-6]$/.test(parent.tagName))headingPath.unshift(parent.textContent?.trim()||'');
-    parent=parent.parentElement;
+   const stack:Array<{level:number;title:string}>=[];
+   const headings=Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+   for(const heading of headings){
+    const followsSelection=(heading.compareDocumentPosition(node.parentElement!) & Node.DOCUMENT_POSITION_FOLLOWING)!==0;
+    if(!heading.contains(node)&&!followsSelection)continue;
+    const level=Number(heading.tagName.slice(1));
+    while(stack.length&&stack[stack.length-1].level>=level)stack.pop();
+    stack.push({level,title:heading.textContent?.trim()||''});
    }
+   headingPath.push(...stack.map(item=>item.title).filter(Boolean).slice(-6));
   }
   const anchor=createTextAnchor({kind,text:range.toString(),startOffset:range.startOffset,endOffset:range.endOffset,headingPath},sourceText);
   setSelectedAnchor(anchor);
  };
  const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
  const selected=useMemo(()=>materials.find(x=>x.chapterId+'::'+x.materialId+'::'+x.materialVersionId===selectedKey)||null,[materials,selectedKey]);
- useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');
+ useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');setSelectedAnchor(null);
   if(!selected||selected.accessStatus!=='available'){setLoading(false);return()=>{active=false;};}
   setLoading(true);
   void apiFetch<{material:AcademyMaterialReaderContent}>(API_ENDPOINTS.ACADEMY_COURSE_MATERIAL_VERSION(participationId,selected.materialId,selected.materialVersionId))
