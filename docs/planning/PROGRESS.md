@@ -378,7 +378,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - CI auf PR-Head erfolgreich: TypeScript-Check und Produktionsbuild erfolgreich; **451/451 Tests bestanden**; PR-Template-Validierung erfolgreich.
 - Der Main-Push-Workflow einschließlich optionalem Render-Deploy-Hook war erfolgreich. Dies bestätigt den CI-/Hook-Schritt, aber nicht die tatsächliche Laufzeitgesundheit der Anwendung.
 - Keine manuelle Browser-/Live-Firestore-Prüfung durchgeführt; sie bleibt Teil des gemeinsamen Academy-Abnahmetests.
-- Noch nicht implementiert: konfigurierbare automatische Ergebnisfreigabe sowie die serverseitige Verknüpfung von `required_assessment` mit einem aktuell freigegebenen `final_exam`-Versuch. Der aktuell fehlende Konfigurationswert führt weiterhin sicher zur manuellen Erstfreigabe.
+- Zum Zeitpunkt des Abschlusses von PR #144 waren automatische Freigabekonfiguration und `required_assessment`-Integration noch nicht umgesetzt. Die dynamische `required_assessment`-Verknüpfung folgt im nachstehenden PR #146; automatische Freigabekonfiguration bleibt eine spätere offene Erweiterung. Ohne explizite Einstellung gilt manuelle Erstfreigabe.
 
 
 
