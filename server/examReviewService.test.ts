@@ -57,6 +57,11 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const resumedClaim = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(resumedClaim?.reviewClaim?.warningStartedAtIso, undefined, 'actual work resets the warning');
     await markExamReviewDisconnected(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:34:00.000Z');
+    const disconnectedQueue = await listExamReviews(repository, ['PC-101'], 'grader', '2026-11-05T12:34:30.000Z');
+    assert.equal(disconnectedQueue[0].isClaimOwner, false);
+    assert.equal(disconnectedQueue[0].canClaim, true);
+    assert.equal(disconnectedQueue[0].reviewClaim?.isDisconnected, true);
+    assert.deepEqual(disconnectedQueue[0].questions, [], 'disconnected owner must not keep edit access before reclaim');
     await assert.rejects(recordExamReviewActivity(repository, 'review-exam', 'review-attempt', 'grader', '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
     await assert.rejects(saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 600, '2026-11-05T12:35:00.000Z'), /EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED/);
     await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:35:30.000Z');
