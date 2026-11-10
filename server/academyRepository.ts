@@ -1211,6 +1211,22 @@ export class AcademyRepository {
   async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
     return this.adapter.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
   }
+  async setCourseAvailability(
+    courseId: string, availability: 'available' | 'unavailable', now: string
+  ): Promise<AcademyCourseMasterDoc> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(current));
+      if (availability === 'available' && (current.materialReviewPending?.length ?? 0) > 0) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
+      const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
+      assertValid(validateCourseMaster(next));
+      await tx.update('academy_courses', courseId, next);
+      return next;
+    });
+  }
   async listPendingMaterialReviewCourses(): Promise<AcademyCourseMasterDoc[]> {
     const courses = await this.adapter.list<AcademyCourseMasterDoc>('academy_courses');
     return courses.filter(course => (course.materialReviewPending ?? []).some(item => !item.notificationSentIso));
