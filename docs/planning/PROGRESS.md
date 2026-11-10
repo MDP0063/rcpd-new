@@ -315,4 +315,5 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Archivierte Materialstämme bzw. historische Fassungen gelten nicht allein wegen der Archivierung als entfernt.
 - Die Statusroute ist auf den Eigentümer der privaten Notiz beschränkt und liefert ausschließlich Quell-IDs und Status, niemals Materialinhalte.
 - Frühere/beendete Kursteilnahme ist nicht ausschlaggebend, wenn der Nutzer die konkrete Fassung aktuell direkt lesen darf.
-- Tests und CI-Ergebnisse werden nach Abschluss des PR ergänzt.
+- GitHub-CI für PR #135: 436/436 Tests bestanden; TypeScript-Prüfung und Produktionsbuild erfolgreich. Die PR-Vorlagenprüfung wurde nach Ergänzung des erforderlichen `feature`-Labels ebenfalls erfolgreich wiederholt.
+- Keine manuelle Browser-/Live-Firestore-Prüfung und kein Produktionsdeployment durchgeführt.
