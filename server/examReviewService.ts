@@ -210,6 +210,7 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
   const allowed = new Set(allowedCourseCodes.map(code => code.toUpperCase()));
   const results: ExamReviewItem[] = [];
   for (const listedAttempt of attempts) {
+    if (listedAttempt.userId === reviewerUid) continue;
     if (!allowed.has('*') && !allowed.has(listedAttempt.attemptCourseCode.toUpperCase())) continue;
     const attempt = await repository.runTransaction(transaction =>
       refreshReviewClaim(transaction, listedAttempt.id, nowIso)
