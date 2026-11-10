@@ -126,3 +126,13 @@
 - Server blockiert neue Kursstarts bei offener Materialprüfung und bei archivierten Materialreferenzen, einschließlich noch nicht gestarteter, bereits gepinnter Programmkursversionen. Bestehende Teilnahmen behalten ihre Reader-Zugriffe.
 - Die Kursverwaltung erhält Review-Entscheidungen und eine explizite Reaktivierungsaktion. Bei „offline lassen“ muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; Veröffentlichung reaktiviert den Kurs nicht automatisch. Bis zur ausdrücklichen Aktivierung bleiben weitere Materialupdates prüfpflichtig. Archivierte Materialien setzen alle betroffenen veröffentlichten Kurse offline und müssen vor einer Reaktivierung aus einer neuen Kursversion entfernt werden.
 - Tests für atomare Sperre, bestehende Teilnahmen, neue Starts, Programmpins, idempotente Review-Outbox, parallele Materialupdates und Reaktivierung nach aktualisierter Kursversion ergänzt. GitHub-CI: TypeScript/Produktionsbuild erfolgreich, 451/451 Tests bestanden; PR-Vorlagenprüfung und Main-Workflow einschließlich Render-Deploy-Hook erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung wurde nicht durchgeführt.
+
+
+## 2026-11-10 – Persistente Examiner-Claims und Bewertungs-Drafts (PR #149/#150)
+
+- PR #149: serverseitige persistente Claims für manuelle Freitextbewertungen mit explizitem Claim/Release, Statusprojektion ohne vertrauliche Antwortinhalte für andere Prüfer, Inaktivitätswarnung und automatischer Freigabe.
+- PR #150: einzelne Bewertungswerte werden serverseitig als Draft gespeichert; Prüfungsversion, Frage, Punkteobergrenze und aktuelle Claim-Zuständigkeit werden serverseitig geprüft. Drafts bleiben vor anderen Prüfern und Teilnehmern verborgen.
+- Disconnect verlangt nach Wiederverbindung einen expliziten neuen Claim. Wiederholte Claim-Anfragen gelten nicht als tatsächliche Aktivität; Inaktivitäts- und Disconnect-Ablauf werden vor schreibenden Abschlussaktionen serverseitig geprüft.
+- Tests decken Draft-Speicherung, Vertraulichkeit, Wiederaufnahme nach Disconnect, Claim-Historie, Ablauf vor Bewertung und das Löschen der Drafts nach endgültiger Bewertung ab.
+- PR #150: GitHub-CI erfolgreich – TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung. Optionaler Render-Deploy-Hook übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung nicht verifiziert.
+- Squash-Merge PR #150: `99d7694abaa0be0254ce10f910c103a8d0db3d2b`.
