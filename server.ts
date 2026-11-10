@@ -4636,7 +4636,7 @@ jobs:
     return;
   });
 
-  app.post('/api/announcements/:id/ack', (req, res) => {
+  app.post('/api/announcements/:id/ack', (req, res, next) => {
     const { id } = req.params;
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
@@ -4654,7 +4654,8 @@ jobs:
 
     if (!ann.acknowledgedByUids.includes(caller.uid)) {
       ann.acknowledgedByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true, announcement: ann }));
+      return;
     }
 
     res.json({ ok: true, announcement: ann });
@@ -4769,7 +4770,7 @@ jobs:
     return;
   });
 
-  app.put('/api/messages/:id/read', (req, res) => {
+  app.put('/api/messages/:id/read', (req, res, next) => {
     const { id } = req.params;
     const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
@@ -4791,7 +4792,8 @@ jobs:
 
     if (!msg.readByUids.includes(caller.uid)) {
       msg.readByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true, message: msg }));
+      return;
     }
 
     res.json({ ok: true, message: msg });
@@ -5322,7 +5324,7 @@ jobs:
   // ==========================================================================
   // MODULE 5: LIVE NOTIFICATIONS (/api/notifications)
   // ==========================================================================
-  app.put('/api/notifications/read-all', (req, res) => {
+  app.put('/api/notifications/read-all', (req, res, next) => {
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === userUid);
@@ -5339,11 +5341,11 @@ jobs:
         n.readByUids.push(caller.uid);
       }
     }
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
-  app.put('/api/notifications/:id/read', (req, res) => {
+  app.put('/api/notifications/:id/read', (req, res, next) => {
     const { id } = req.params;
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
@@ -5356,7 +5358,8 @@ jobs:
     const notif = (dbState.notifications || []).find(n => n.id === id);
     if (notif && !notif.readByUids.includes(caller.uid)) {
       notif.readByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+      return;
     }
     res.json({ ok: true });
   });
