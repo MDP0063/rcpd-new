@@ -144,6 +144,7 @@ export async function releaseExamReviewClaim(
   nowIso = new Date().toISOString()
 ): Promise<void> {
   validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
   await repository.runTransaction(async transaction => {
     const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
@@ -320,6 +321,8 @@ export async function gradeExamAttempt(
   nowIso = new Date().toISOString()
 ): Promise<PublicExamSubmission> {
   if (!reviewerUid) throw new Error('EXAM_REVIEWER_INVALID');
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
   return repository.runTransaction(async transaction => {
     const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
