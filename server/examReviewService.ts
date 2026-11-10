@@ -199,7 +199,7 @@ export interface ExamReviewItem {
   submittedAtIso: string;
   assessmentStage: 'test' | 'final_exam';
   questions: ReturnType<typeof pendingFreeTextQuestions>;
-  reviewClaim: ExamReviewClaim | null;
+  reviewClaim: { reviewerName: string; claimedAtIso: string; warningStartedAtIso?: string } | null;
   isClaimOwner: boolean;
 }
 
@@ -224,7 +224,12 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
       assessmentStage: version.assessmentStage, questions,
-      reviewClaim: attempt.reviewClaim ?? null, isClaimOwner
+      reviewClaim: attempt.reviewClaim ? {
+        reviewerName: attempt.reviewClaim.reviewerName,
+        claimedAtIso: attempt.reviewClaim.claimedAtIso,
+        ...(attempt.reviewClaim.warningStartedAtIso ? { warningStartedAtIso: attempt.reviewClaim.warningStartedAtIso } : {})
+      } : null,
+      isClaimOwner
     });
   }
   return results;
