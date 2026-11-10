@@ -2982,8 +2982,13 @@ async function startServer() {
     // These repository operations are idempotent. If one store fails, the Portal
     // account remains intact and the administrator can safely retry the deletion.
     const anonymizedUid = `deleted-${randomBytes(18).toString('hex')}`;
-    await getAcademyRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
-    await getExamRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
+    try {
+      await getAcademyRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
+      await getExamRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
+    } catch (error) {
+      next(error);
+      return;
+    }
     const anonymizeText = (value: string): string =>
       identities.reduce((result, identity) => result.split(identity).join('Gelöschtes Konto'), value);
 
