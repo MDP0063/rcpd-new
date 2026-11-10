@@ -325,25 +325,56 @@ test('course publication requires an exact existing published material version',
     /ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED/
   );
 
-  const updatedCourseDraft: AcademyCourseDraftDoc = {
+  const staleCourseDraft: AcademyCourseDraftDoc = {
     ...courseDraft,
     chapters: courseDraft.chapters.map(chapter => ({
+      ...chapter,
+      materialReferences: chapter.materialReferences.map(reference => ({
+        ...reference, materialVersionId: secondVersion.id, title: secondVersion.title,
+        versionNumber: secondVersion.versionNumber
+      }))
+    })),
+    workingRevision: 3, updatedIso: '2026-11-06T12:08:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveCourseDraft(courseMaster.id, staleCourseDraft, 2, 'admin-1');
+  const staleCourseVersion: AcademyCourseVersionDoc = {
+    id: courseMaster.id + '__v2', courseId: courseMaster.id, versionNumber: 2,
+    title: staleCourseDraft.title, summary: staleCourseDraft.summary,
+    learningObjectives: staleCourseDraft.learningObjectives, chapters: staleCourseDraft.chapters,
+    completionRequirements: staleCourseDraft.completionRequirements,
+    publishedIso: '2026-11-06T12:09:00.000Z', publishedByUid: 'admin-1',
+    createdIso: '2026-11-06T12:09:00.000Z', createdByUid: 'admin-1', workingRevision: 3
+  };
+  const latestCourseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  const staleNextCourseMaster: AcademyCourseMasterDoc = {
+    ...latestCourseMaster!, publicationStatus: 'published',
+    currentPublishedVersionId: staleCourseVersion.id, latestVersionNumber: 2,
+    updatedIso: staleCourseVersion.publishedIso!
+  };
+  await assert.rejects(
+    repository.publishCourseVersion(courseMaster.id, staleCourseVersion, staleNextCourseMaster, 3, 'admin-1'),
+    /ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED/
+  );
+
+  const updatedCourseDraft: AcademyCourseDraftDoc = {
+    ...staleCourseDraft,
+    chapters: staleCourseDraft.chapters.map(chapter => ({
       ...chapter,
       materialReferences: chapter.materialReferences.map(reference => ({
         ...reference, materialVersionId: thirdVersion.id, title: thirdVersion.title,
         versionNumber: thirdVersion.versionNumber
       }))
     })),
-    workingRevision: 3, updatedIso: '2026-11-06T12:08:00.000Z', updatedByUid: 'admin-1'
+    workingRevision: 4, updatedIso: '2026-11-06T12:10:00.000Z', updatedByUid: 'admin-1'
   };
-  await repository.saveCourseDraft(courseMaster.id, updatedCourseDraft, 2, 'admin-1');
+  await repository.saveCourseDraft(courseMaster.id, updatedCourseDraft, 3, 'admin-1');
   const updatedCourseVersion: AcademyCourseVersionDoc = {
     id: courseMaster.id + '__v2', courseId: courseMaster.id, versionNumber: 2,
     title: updatedCourseDraft.title, summary: updatedCourseDraft.summary,
     learningObjectives: updatedCourseDraft.learningObjectives, chapters: updatedCourseDraft.chapters,
     completionRequirements: updatedCourseDraft.completionRequirements,
-    publishedIso: '2026-11-06T12:09:00.000Z', publishedByUid: 'admin-1',
-    createdIso: '2026-11-06T12:09:00.000Z', createdByUid: 'admin-1', workingRevision: 3
+    publishedIso: '2026-11-06T12:11:00.000Z', publishedByUid: 'admin-1',
+    createdIso: '2026-11-06T12:11:00.000Z', createdByUid: 'admin-1', workingRevision: 4
   };
   const latestCourseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   const nextCourseMaster: AcademyCourseMasterDoc = {
@@ -351,7 +382,7 @@ test('course publication requires an exact existing published material version',
     currentPublishedVersionId: updatedCourseVersion.id, latestVersionNumber: 2,
     updatedIso: updatedCourseVersion.publishedIso!
   };
-  await repository.publishCourseVersion(courseMaster.id, updatedCourseVersion, nextCourseMaster, 3, 'admin-1');
+  await repository.publishCourseVersion(courseMaster.id, updatedCourseVersion, nextCourseMaster, 4, 'admin-1');
   const revisedCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   assert.equal(revisedCourse?.materialReviewVersionRequired, undefined);
   assert.equal(revisedCourse?.availability, 'unavailable', 'publishing a corrected version does not silently reactivate the course');
