@@ -277,6 +277,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Eintragserstellung direkt aus der geöffneten, zugänglichen Materialfassung; Einträge werden nur für die exakte Materialversion geladen.
 - Markdown-Notizinhalt mit sicherer Vorschau, Titel und Tags.
 - Automatisches Speichern mit sichtbarem Status, serialisierten Schreibvorgängen und Behandlung von Revisionskonflikten.
+- Beim Wechsel der Materialfassung reiht die Reader-Komponente einen noch nicht gespeicherten Entwurf vor dem Zurücksetzen des alten Kontexts zum Speichern ein; der Debounce-Timer allein wird nicht als Persistenzgarantie behandelt.
 - Lesezeichen setzen/entfernen; bestehende Notiz- und Lesezeichen-Privatsphäre bleibt über die vorhandene serverseitige Owner-Isolation erhalten.
 - Die vorhandene zentrale Notizenansicht bleibt als Such- und Verwaltungsübersicht bestehen.
 
