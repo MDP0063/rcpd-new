@@ -207,7 +207,7 @@ export async function submitExamAttempt(
         throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
       }
       return {
-        submission: toPublicSubmission(attempt, version),
+        submission: toParticipantSubmission(attempt, version),
         expired: attempt.submissionReason === 'time_expired',
         alreadySubmitted: true
       };
@@ -224,7 +224,7 @@ export async function submitExamAttempt(
     const finalized = finalizeAttempt(attempt, version, requestReceivedAtMs, expired);
     await transaction.update('exam_attempts', attemptId, finalized);
     return {
-      submission: toPublicSubmission(finalized, version),
+      submission: toParticipantSubmission(finalized, version),
       expired,
       alreadySubmitted: false
     };
