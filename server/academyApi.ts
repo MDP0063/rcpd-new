@@ -1226,6 +1226,32 @@ export function createAcademyApiRouter(
     } catch (error) { fail(res, error, next); }
   });
 
+  // Statusprüfung ist pro privater Notiz begrenzt (max. 25 Quellen) und owner-isoliert.
+  // Die Quellenreferenz selbst gewährt keinen Zugriff auf Materialinhalte.
+  router.get('/notes/:noteId/source-status', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const note = await repository.getOwnPrivateNote(actor.uid, req.params.noteId);
+      if (!note) { res.status(404).json({ error: 'ACADEMY_NOTE_NOT_FOUND' }); return; }
+      const sources = privateNoteWithNormalizedSources(note).sources || [];
+      const statuses = await Promise.all(sources.map(async source => {
+        const [master, version] = await Promise.all([
+          repository.get<AcademyMaterialMasterDoc>('academy_materials', source.materialId),
+          repository.get<AcademyMaterialVersionDoc>('academy_material_versions', source.materialVersionId)
+        ]);
+        const exists = Boolean(master && version && version.id === source.materialVersionId &&
+          version.materialId === source.materialId && version.publishedIso && version.publishedByUid);
+        if (!exists) return { ...source, status: 'unavailable' as const };
+        if (!canReadMaterialRole(actor.role, version!.requiredRole)) {
+          return { ...source, status: 'restricted' as const };
+        }
+        return { ...source, status: 'available' as const };
+      }));
+      res.json({ sources: statuses });
+    } catch (error) { fail(res, error, next); }
+  });
+
   router.get('/notes', async (req, res, next) => {
     try {
       const actor = getActor(req, res);
