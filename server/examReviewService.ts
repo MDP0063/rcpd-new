@@ -288,6 +288,7 @@ export interface ExamResultReleaseQueueItem {
   status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null;
   resultReleaseStatus: 'unreleased' | 'pending_rerelease';
+  resultReleaseHistory: Array<{ releasedByUid: string; releasedAtIso: string; status: 'passed' | 'failed'; finalScoreBasisPoints: number | null }>;
 }
 
 export async function listPendingExamResultReleases(repository: ExamRepository): Promise<ExamResultReleaseQueueItem[]> {
@@ -305,7 +306,8 @@ export async function listPendingExamResultReleases(repository: ExamRepository):
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
       assessmentStage: version.assessmentStage, status: attempt.status,
       finalScoreBasisPoints: Number.isSafeInteger(attempt.finalScoreBasisPoints) ? Number(attempt.finalScoreBasisPoints) : null,
-      resultReleaseStatus: attempt.resultReleaseStatus === 'pending_rerelease' ? 'pending_rerelease' : 'unreleased'
+      resultReleaseStatus: attempt.resultReleaseStatus === 'pending_rerelease' ? 'pending_rerelease' : 'unreleased',
+      resultReleaseHistory: Array.isArray(attempt.resultReleaseHistory) ? attempt.resultReleaseHistory : []
     });
   }
   return results.sort((a, b) => a.submittedAtIso.localeCompare(b.submittedAtIso));
