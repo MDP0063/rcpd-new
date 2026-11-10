@@ -264,7 +264,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     return;
   }
   if (existing.status === 'pending_review' && next.status === 'pending_review') {
-    const mutable = new Set(['reviewClaim', 'reviewClaimHistory']);
+    const mutable = new Set(['reviewClaim', 'reviewClaimHistory', 'reviewDraft', 'reviewDraftRevision', 'reviewDraftUpdatedAtIso', 'reviewDraftUpdatedByUid']);
     const strip = (document: ExamDocument) => Object.fromEntries(
       Object.entries(document).filter(([key]) => !mutable.has(key))
     );
@@ -283,6 +283,32 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           ((claim as any).disconnectedAtIso !== undefined && (typeof (claim as any).disconnectedAtIso !== 'string' || Number.isNaN(Date.parse((claim as any).disconnectedAtIso))))) {
         throw new Error('EXAM_REVIEW_CLAIM_INVALID');
       }
+    }
+
+    const draft = next.reviewDraft;
+    if (draft !== undefined && (typeof draft !== 'object' || draft === null || Array.isArray(draft) ||
+        Object.entries(draft).some(([questionId, points]) =>
+          !questionId.trim() || questionId.length > 128 || !Number.isSafeInteger(points) || Number(points) < 0
+        ))) {
+      throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+    }
+    const previousDraft = existing.reviewDraft ?? {};
+    const nextDraft = next.reviewDraft ?? {};
+    const draftChanged = !isDeepStrictEqual(previousDraft, nextDraft);
+    const previousDraftRevision = Number.isSafeInteger(existing.reviewDraftRevision) ? Number(existing.reviewDraftRevision) : 0;
+    const nextDraftRevision = Number.isSafeInteger(next.reviewDraftRevision) ? Number(next.reviewDraftRevision) : 0;
+    if (draftChanged) {
+      if (nextDraftRevision !== previousDraftRevision + 1 ||
+          typeof next.reviewDraftUpdatedByUid !== 'string' || !next.reviewDraftUpdatedByUid.trim() ||
+          typeof next.reviewDraftUpdatedAtIso !== 'string' || Number.isNaN(Date.parse(next.reviewDraftUpdatedAtIso))) {
+        throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+      }
+    } else if (
+      nextDraftRevision !== previousDraftRevision ||
+      !isDeepStrictEqual(next.reviewDraftUpdatedAtIso, existing.reviewDraftUpdatedAtIso) ||
+      !isDeepStrictEqual(next.reviewDraftUpdatedByUid, existing.reviewDraftUpdatedByUid)
+    ) {
+      throw new Error('EXAM_REVIEW_DRAFT_INVALID');
     }
 
     const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
