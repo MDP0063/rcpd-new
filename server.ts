@@ -4660,7 +4660,7 @@ jobs:
     res.json({ ok: true, announcement: ann });
   });
 
-  app.delete('/api/announcements/:id', (req, res) => {
+  app.delete('/api/announcements/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -5134,8 +5134,8 @@ jobs:
     }
 
     dbState.requests = (dbState.requests || []).filter(r => r.id !== id);
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
