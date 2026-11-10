@@ -24,6 +24,15 @@ export function canAccessLegacyExam(
     callerClearanceLevel >= requiredClearance;
 }
 
+/** Prevents an instructor from grading their own account. */
+export function canInstructorGradeStudent(instructorUid: string, studentUid: string): boolean {
+  return typeof instructorUid === 'string' &&
+    instructorUid.length > 0 &&
+    typeof studentUid === 'string' &&
+    studentUid.length > 0 &&
+    instructorUid !== studentUid;
+}
+
 /** Soll der Heartbeat gespeichert werden? Nur wenn der letzte Eintrag älter als maxAgeMs ist oder die Person als offline galt. */
 export function shouldRefreshPresence(
   isOnline: boolean | undefined,
