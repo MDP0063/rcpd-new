@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138 und #141 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt. Der nächste Bugfix-Abschnitt zur Materialaktualisierung läuft auf `fix/academy-material-review-lock`.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141 und #142 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #141; PR #138s Squash-Commit war `738faab5d3e85b94df02f188c2fdd3236b73674d`.  
-**Aktueller Umsetzungsstand:** PR #141 (`feature/academy-reader-position-clean`) wurde nach erfolgreicher GitHub-CI (451/451 Tests, TypeScript und Produktionsbuild) gemergt. Der Main-Workflow einschließlich Render-Deploy-Hook war erfolgreich; eine manuelle Browserprüfung und eine unabhängige Live-Runtime-Prüfung wurden nicht durchgeführt. Branch `fix/academy-material-review-lock` enthält die in Umsetzung befindliche Materialprüfsperre einschließlich API, Benachrichtigungs-Outbox und Kursverwaltungsaktionen; CI/Review stehen aus.
+**Aktueller Basisstand:** `main` bei `7780cf2aa26c4b8160965d2f33de29219638823c` (Squash-Merge von PR #142).  
+**Aktueller Umsetzungsstand:** PR #141 und PR #142 wurden nach erfolgreicher GitHub-CI gemergt. PR #142: TypeScript/Produktionsbuild erfolgreich, 451/451 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der Main-Workflow einschließlich Render-Deploy-Hook war ebenfalls erfolgreich. Eine manuelle Browserprüfung und eine unabhängige Live-Runtime-Prüfung wurden nicht durchgeführt.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -37,9 +37,9 @@
 - JSON-Speicherschema wurde auf Version 6 erweitert; bestehende v1-v5-Stores bleiben rückwärtskompatibel lesbar. Firestore nutzt eigene Repository-Collections.
 - Diese Implementierung führt keine neue Dateiablage, keine externen Dienste und keine zusätzlichen Infrastrukturkosten ein. PDF bleibt zurückgestellt.
 
-## 0.2 Materialaktualisierung und betroffene Kurse – Umsetzung in Arbeit
+## 0.2 Materialaktualisierung und betroffene Kurse – umgesetzt mit PR #142
 
-Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DETAILED-SPECIFICATION.md` festgehalten. Branch `fix/academy-material-review-lock` implementiert derzeit:
+Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DETAILED-SPECIFICATION.md` festgehalten. PR #142 hat die Umsetzung in `main` gebracht:
 
 - Atomare Sperre veröffentlichter/verfügbarer Kurse, deren aktuelle Kursversion das neu veröffentlichte Material referenziert.
 - Mehrere offene Materialprüfungen pro Kurs, ohne bereits offene Einträge zu überschreiben.
@@ -49,7 +49,7 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 - Entscheidung „Kurs offline lassen“ setzt eine zusätzliche Versionsanforderung: vor Reaktivierung muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; die neue Kursversion aktiviert den Kurs nicht automatisch.
 - Kursverwaltung erhält explizite Aktionen zur Prüfung, Freigabe und späteren Reaktivierung. Nach Veröffentlichung der korrigierten Kursversion bleibt ein eigener Marker bis zur manuellen Reaktivierung bestehen; neue Materialfassungen in diesem Zeitraum lösen erneut eine Prüfung aus.
 
-Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. CI, Tests und abschließende Prüfung stehen noch aus; kein Merge/Deployment.
+Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. PR #142 ist gemergt; CI (TypeScript/Build und 451/451 Tests), PR-Vorlagenprüfung sowie Main-Workflow einschließlich Render-Deploy-Hook waren erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung bleibt offen.
 
 ## 1. Gesamtstatus
 

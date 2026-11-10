@@ -1,6 +1,6 @@
 # RCPD – Offene Fragen und Prüffelder
 
-**Stand:** 06.11.2026  
+**Stand:** 10.11.2026  
 **Wichtig:** Diese Liste ist kein Feature-Backlog und keine Genehmigung zur Umsetzung. Jeder Punkt ist auf tatsächliche Notwendigkeit zu prüfen. Keine Scope Creep. Die ausführlichen bereits festgelegten Regeln stehen in `PORTAL-REDESIGN-DETAILS.md` und `ACADEMY-DETAILED-SPECIFICATION.md`; hier bleiben nur echte offene Entscheidungen und Prüffelder.
 
 ## 1. Academy – verbleibende fachliche Klärungen
@@ -25,7 +25,7 @@
 - **In `main` umgesetzt:** private Reader-Notizen/Lesezeichen mit Autosave (PR #132), Mehrfachquellen (PR #134) und versionsgebundene Textanker für Markdown/Code (PR #136).
 - **Mit PR #141 in `main` umgesetzt:** lokale Wiederaufnahme der letzten Leseposition, isoliert nach Teilnahme und exakter Materialversion. Geräte-/browserübergreifende Synchronisierung bleibt ausdrücklich offen.
 - **Mit PR #137 in `main` umgesetzt:** globale Teilnehmer-Suche, Relevanzsortierung sowie Kategorie-/Dokumenttypfilter; zusätzliche Volltext-/OCR-Suche bleibt zurückgestellt/offen.
-- **In Branch `fix/academy-material-review-lock` in Umsetzung:** Atomare Sperre betroffener Kurse bei neuer Materialfassung, getrennte Review-Einträge, idempotente In-App-Benachrichtigungen, Review-Entscheidung und serverseitige Sperre auch für noch nicht gestartete Programmpins. Die Offline-Entscheidung verlangt vor Reaktivierung eine neue Kursversion mit aktualisierten/entfernten betroffenen Materialreferenzen; archivierte Materialien setzen betroffene veröffentlichte Kurse ebenfalls offline, bis die archivierte Referenz entfernt ist. CI und abschließende Codeprüfung stehen aus.
+- **Mit PR #142 in `main` umgesetzt:** Atomare Sperre betroffener Kurse bei neuer Materialfassung, getrennte Review-Einträge, idempotente In-App-Benachrichtigungen, Review-Entscheidung und serverseitige Sperre auch für noch nicht gestartete Programmpins. Die Offline-Entscheidung verlangt vor Reaktivierung eine neue Kursversion mit aktualisierten/entfernten betroffenen Materialreferenzen; archivierte Materialien setzen betroffene veröffentlichte Kurse ebenfalls offline, bis die archivierte Referenz entfernt ist. CI (TypeScript/Build und 451/451 Tests), PR-Vorlagenprüfung und Main-Workflow einschließlich Render-Deploy-Hook waren erfolgreich; manuelle Browser-/Live-Runtime-Prüfung bleibt offen.
 - Bestehende Legacy-Materialien bleiben unberührt, bis ein gesonderter Migrations-/Kompatibilitätsplan beschlossen und umgesetzt ist.
 
 **Zurückgestellt – PDF und dateibasierte Materialien (nicht Teil der aktuellen Ausbaustufe):**
@@ -230,5 +230,5 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
 - Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
 - Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
-- Rücknahme/Archivierung veröffentlichter Materialien und Materialaktualisierungs-Sperre anhand der beschlossenen Regeln abschließend testen; die Implementierung läuft im Branch `fix/academy-material-review-lock`.
+- Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
 - Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
