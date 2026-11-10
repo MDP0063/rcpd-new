@@ -1954,6 +1954,60 @@ async function startServer() {
     next(error);
   }
 
+  async function deliverPendingExamReviewNotifications(): Promise<void> {
+    const repository = getExamRepository();
+    const pending = await listPendingExamReviewNotifications(repository);
+    for (const item of pending) {
+      const event = item.event;
+      const state = loadDatabase();
+      const recipient = state.accounts.find(account => account.uid === item.recipientUid);
+      const notificationId = `exam-review-${item.attemptId}-${item.eventIndex}-${item.recipientUid}`;
+      if (recipient && !state.notifications?.some(notification => notification.id === notificationId)) {
+        const version = await repository.get('exam_versions', item.examVersionId);
+        const examTitle = typeof version?.title === 'string' ? version.title : 'Freitextprüfung';
+        const processLabel = `${examTitle} · ${item.courseCode} · ${item.participantName}`;
+        const reason = event.reason || 'Keine zusätzliche Begründung angegeben';
+        let type: PortalNotificationDoc['type'] = 'exam_review_assignment';
+        let title = 'Bewertungsvorgang aktualisiert';
+        let message = processLabel;
+        if (event.action === 'transferred' || event.action === 'reassigned') {
+          const target = state.accounts.find(account => account.uid === event.targetUid);
+          const previous = state.accounts.find(account => account.uid === event.previousUid);
+          const isNewOwner = item.recipientUid === event.targetUid;
+          if (event.action === 'transferred') {
+            title = isNewOwner ? 'Neue Bewertungsaufgabe' : 'Bewertungsvorgang übergeben';
+            message = isNewOwner
+              ? `${processLabel} wurde dir von ${previous?.publicProfile.displayName || 'einem Prüfer'} übergeben. Grund: ${reason}.`
+              : `Du hast ${processLabel} an ${target?.publicProfile.displayName || 'einen anderen Prüfer'} übergeben. Grund: ${reason}.`;
+          } else {
+            title = isNewOwner ? 'Bewertung administrativ zugewiesen' : 'Bewertung administrativ neu zugewiesen';
+            message = isNewOwner
+              ? `${processLabel} wurde dir von ${state.accounts.find(account => account.uid === event.actorUid)?.publicProfile.displayName || 'einem Vorgesetzten'} zugewiesen. Grund: ${reason}.`
+              : `Deine Zuständigkeit für ${processLabel} wurde administrativ an ${target?.publicProfile.displayName || 'einen anderen Prüfer'} übertragen. Grund: ${reason}.`;
+          }
+        } else if (event.action === 'warning_started') {
+          type = 'exam_review_warning';
+          title = 'Dein Bewertungs-Claim läuft bald aus';
+          const minutes = Math.max(0, Math.ceil((Date.parse(event.atIso) + 10 * 60_000 - Date.now()) / 60_000));
+          message = `${processLabel}: Wegen Inaktivität wird dein Claim in ungefähr ${minutes} Minuten automatisch freigegeben, wenn du nicht weiterarbeitest.`;
+        } else if (event.action === 'auto_released') {
+          type = 'exam_review_auto_released';
+          title = 'Bewertungs-Claim automatisch freigegeben';
+          const releaseReason = event.reason === 'disconnect' ? 'Verbindungsabbruch' : 'Inaktivität';
+          message = `${processLabel}: Dein Claim wurde wegen ${releaseReason.toLowerCase()} automatisch freigegeben. Deine zuletzt gespeicherten Bewertungsentwürfe bleiben erhalten; ungespeicherte Eingaben wurden verworfen.`;
+        }
+        pushNotification(
+          state, item.recipientUid, type, title, message, 'academy', notificationId,
+          { type: 'exam_review', examId: item.examId, attemptId: item.attemptId }
+        );
+        await saveDatabaseAndWait(state);
+      }
+      await markExamReviewNotificationDelivered(
+        repository, item.attemptId, item.eventIndex, item.recipientUid
+      );
+    }
+  }
+
   app.get('/api/academy/exam-reviews', async (_req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
