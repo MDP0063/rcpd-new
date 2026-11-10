@@ -197,6 +197,8 @@ export const API_ENDPOINTS = {
   ACADEMY_EXAM_REVIEW_CORRECTIONS: '/api/academy/exam-review-corrections',
   ACADEMY_EXAM_REVIEW_CORRECT: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/correct-review`,
   ACADEMY_EXAM_RESULTS: '/api/academy/exam-results',
+  ADMIN_EXAM_RESULT_RELEASES: '/api/admin/exam-result-releases',
+  ADMIN_EXAM_RESULT_RELEASE: (id: string, attemptId: string) => `/api/admin/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/release-result`,
   ACADEMY_EXAM_CATALOG: '/api/academy/exams/catalog',
   ACADEMY_EXAM_START: (id: string) => `/api/academy/exams/${encodeURIComponent(id)}/start`,
   ACADEMY_EXAM_ATTEMPT: (id: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempt`,
