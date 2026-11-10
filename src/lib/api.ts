@@ -206,6 +206,7 @@ export const API_ENDPOINTS = {
   ACADEMY_EXAM_SUBMIT: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/submit`,
   ACADEMY_EXAM_REVIEW_CLAIM: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/review-claim`,
   ACADEMY_EXAM_REVIEW_ACTIVITY: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/review-claim/activity`,
+  ACADEMY_EXAM_REVIEW_DRAFT: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/review-draft`,
   ACADEMY_EXAM_REVIEW_DISCONNECT: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/review-claim/disconnect`,
   ACADEMY_EXAM_GRADE: (id: string, attemptId: string) => `/api/academy/exams/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/grade`,
   PROGRESS: '/api/progress',
