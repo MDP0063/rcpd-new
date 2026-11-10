@@ -2954,7 +2954,7 @@ async function startServer() {
   });
 
   // 7. ADMIN ONLY: Delete Account
-  app.delete('/api/admin/accounts/:targetUid', (req, res, next) => {
+  app.delete('/api/admin/accounts/:targetUid', async (req, res, next) => {
     const { targetUid } = req.params;
     const adminUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
@@ -2979,6 +2979,11 @@ async function startServer() {
     }
     const identities = [target.uid, target.username, target.publicProfile.displayName, target.publicProfile.badgeNumber]
       .filter((value): value is string => typeof value === 'string' && value.length > 0);
+    // These repository operations are idempotent. If one store fails, the Portal
+    // account remains intact and the administrator can safely retry the deletion.
+    const anonymizedUid = `deleted-${randomBytes(18).toString('hex')}`;
+    await getAcademyRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
+    await getExamRepository().anonymizeDeletedUser(targetUid, anonymizedUid, identities);
     const anonymizeText = (value: string): string =>
       identities.reduce((result, identity) => result.split(identity).join('Gelöschtes Konto'), value);
 
