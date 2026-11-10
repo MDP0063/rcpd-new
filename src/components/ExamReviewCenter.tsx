@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { parseManualReviewGrades } from '../lib/examReviewGrades';
+import type { UserPublicProfile } from '../types/portal';
 
 interface ReviewQuestion { questionId: string; question: string; answer: string; pointsMilli: number; gradingRubric: string }
 interface ReviewClaim {
@@ -24,7 +25,11 @@ function warningMinutesRemaining(claim: ReviewClaim): number {
   return Math.max(0, Math.ceil((Date.parse(claim.warningStartedAtIso) + 10 * 60_000 - Date.now()) / 60_000));
 }
 
-export const ExamReviewCenter: React.FC = () => {
+export const ExamReviewCenter: React.FC<{
+  currentUser: UserPublicProfile;
+  roster: UserPublicProfile[];
+  initialAttemptId?: string | null;
+}> = ({ currentUser, roster, initialAttemptId }) => {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [grades, setGrades] = useState<Record<string, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
@@ -38,6 +43,15 @@ export const ExamReviewCenter: React.FC = () => {
   const pendingDrafts = useRef<Record<string, { review: ReviewItem; question: ReviewQuestion; value: string }>>({});
   const inFlightDraftSaves = useRef<Record<string, { pending: { review: ReviewItem; question: ReviewQuestion; value: string }; promise: Promise<boolean> }>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
+  const scrolledTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialAttemptId || loading || scrolledTargetRef.current === initialAttemptId) return;
+    const target = document.getElementById(`exam-review-${initialAttemptId}`);
+    if (target) {
+      target.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      scrolledTargetRef.current = initialAttemptId;
+    }
+  }, [initialAttemptId, loading, reviews]);
 
   const load = useCallback(async () => {
     const response = await apiFetch<{ reviews: ReviewItem[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEWS, { cache: 'no-store' });
@@ -235,7 +249,7 @@ export const ExamReviewCenter: React.FC = () => {
     <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">Aktualisieren</button></div>
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
-    {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine offenen Freitextbewertungen.</div> : reviews.map(review => <article key={review.id} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine offenen Freitextbewertungen.</div> : reviews.map(review => <article id={`exam-review-${review.id}`} key={review.id} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
         {review.reviewClaim ? <div className="text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={() => setReleaseDialogId(review.id)} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 rounded-lg bg-sky-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
