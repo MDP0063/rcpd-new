@@ -263,6 +263,77 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     ) throw new Error('EXAM_ATTEMPT_CORRECTION_INVALID');
     return;
   }
+  if (existing.status === 'pending_review' && next.status === 'pending_review') {
+    const mutable = new Set(['reviewClaim', 'reviewClaimHistory']);
+    const strip = (document: ExamDocument) => Object.fromEntries(
+      Object.entries(document).filter(([key]) => !mutable.has(key))
+    );
+    if (!isDeepStrictEqual(strip(existing), strip(next))) throw new Error('EXAM_ATTEMPT_IMMUTABLE');
+
+    const claim = next.reviewClaim;
+    if (claim !== undefined && claim !== null) {
+      const allowedKeys = ['claimedAtIso', 'lastActivityAtIso', 'reviewerName', 'reviewerUid', 'warningStartedAtIso', 'disconnectedAtIso'];
+      if (typeof claim !== 'object' || Array.isArray(claim) ||
+          Object.keys(claim as object).some(key => !allowedKeys.includes(key)) ||
+          typeof (claim as any).reviewerUid !== 'string' || !(claim as any).reviewerUid.trim() ||
+          typeof (claim as any).reviewerName !== 'string' || !(claim as any).reviewerName.trim() || (claim as any).reviewerName.length > 120 ||
+          typeof (claim as any).claimedAtIso !== 'string' || Number.isNaN(Date.parse((claim as any).claimedAtIso)) ||
+          typeof (claim as any).lastActivityAtIso !== 'string' || Number.isNaN(Date.parse((claim as any).lastActivityAtIso)) ||
+          ((claim as any).warningStartedAtIso !== undefined && (typeof (claim as any).warningStartedAtIso !== 'string' || Number.isNaN(Date.parse((claim as any).warningStartedAtIso)))) ||
+          ((claim as any).disconnectedAtIso !== undefined && (typeof (claim as any).disconnectedAtIso !== 'string' || Number.isNaN(Date.parse((claim as any).disconnectedAtIso))))) {
+        throw new Error('EXAM_REVIEW_CLAIM_INVALID');
+      }
+    }
+
+    const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
+    const nextHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
+    const historyUnchanged = isDeepStrictEqual(previousHistory, nextHistory);
+    const historyAppended = nextHistory.length === previousHistory.length + 1 &&
+      isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory);
+    if ((!historyUnchanged && !historyAppended) || nextHistory.length > 100) {
+      throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
+    }
+    if (historyAppended) {
+      const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
+      if (!entry || Object.keys(entry).some(key => !['action', 'actorUid', 'targetUid', 'atIso'].includes(key)) ||
+          !['claimed', 'released', 'auto_released'].includes(String(entry.action)) ||
+          typeof entry.actorUid !== 'string' || !entry.actorUid.trim() ||
+          (entry.targetUid !== undefined && (typeof entry.targetUid !== 'string' || !entry.targetUid.trim())) ||
+          typeof entry.atIso !== 'string' || Number.isNaN(Date.parse(entry.atIso))) {
+        throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
+      }
+    }
+    const previousClaim = (existing.reviewClaim ?? null) as Record<string, unknown> | null;
+    const nextClaim = (next.reviewClaim ?? null) as Record<string, unknown> | null;
+    if (!isDeepStrictEqual(previousClaim, nextClaim) && !historyAppended) {
+      const sameOwner = previousClaim && nextClaim && previousClaim.reviewerUid === nextClaim.reviewerUid;
+      if (!sameOwner) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
+    }
+    if (historyAppended) {
+      const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
+      const action = entry.action;
+      if (
+        (action === 'claimed' && (
+          !nextClaim || previousClaim !== null ||
+          entry.actorUid !== nextClaim.reviewerUid ||
+          entry.targetUid !== nextClaim.reviewerUid
+        )) ||
+        (action === 'released' && (
+          previousClaim === null || nextClaim !== null ||
+          entry.actorUid !== previousClaim.reviewerUid ||
+          entry.targetUid !== previousClaim.reviewerUid
+        )) ||
+        (action === 'auto_released' && (
+          previousClaim === null || nextClaim !== null ||
+          entry.actorUid !== 'system' ||
+          entry.targetUid !== previousClaim.reviewerUid
+        ))
+      ) {
+        throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
+      }
+    }
+    return;
+  }
   if (existing.status !== 'in_progress' && existing.status !== 'pending_review') {
     throw new Error('EXAM_ATTEMPT_IMMUTABLE');
   }

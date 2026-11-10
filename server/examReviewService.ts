@@ -1,5 +1,5 @@
 import type { ExamRepository } from './examRepository.ts';
-import type { ExamAttemptRecord, ExamVersionRecord } from './examAttemptService.ts';
+import type { ExamAttemptRecord, ExamReviewClaim, ExamReviewClaimHistoryEntry, ExamVersionRecord } from './examAttemptService.ts';
 import { scoreExam } from './examScore.ts';
 import { toParticipantSubmission, toPublicSubmission, type PublicExamSubmission } from './examSubmitService.ts';
 import { isValidId } from './examValidate.ts';
@@ -22,6 +22,174 @@ function pendingFreeTextQuestions(attempt: ExamAttemptRecord, version: ExamVersi
   });
 }
 
+const REVIEW_CLAIM_IDLE_MS = 30 * 60_000;
+const REVIEW_CLAIM_WARNING_MS = 10 * 60_000;
+const REVIEW_CLAIM_DISCONNECT_MS = 30 * 60_000;
+const REVIEW_CLAIM_HISTORY_LIMIT = 100;
+
+function validReviewTime(value: string): number {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) throw new Error('EXAM_REVIEW_CLAIM_TIME_INVALID');
+  return parsed;
+}
+
+function appendReviewClaimHistory(
+  attempt: ExamAttemptRecord,
+  entry: ExamReviewClaimHistoryEntry
+): ExamReviewClaimHistoryEntry[] {
+  const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+  if (history.length >= REVIEW_CLAIM_HISTORY_LIMIT) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_LIMIT');
+  return [...history, entry];
+}
+
+async function refreshReviewClaim(
+  transaction: Parameters<Parameters<ExamRepository['runTransaction']>[0]>[0],
+  attemptId: string,
+  nowIso: string
+): Promise<ExamAttemptRecord> {
+  const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+  if (!attempt || attempt.status !== 'pending_review' || !attempt.reviewClaim) {
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    return attempt;
+  }
+  const now = validReviewTime(nowIso);
+  const claim = attempt.reviewClaim;
+  const disconnectedAt = claim.disconnectedAtIso ? validReviewTime(claim.disconnectedAtIso) : null;
+  const lastActivityAt = validReviewTime(claim.lastActivityAtIso);
+  const disconnectedExpired = disconnectedAt !== null && now - disconnectedAt >= REVIEW_CLAIM_DISCONNECT_MS;
+  const idleExpired = disconnectedAt === null && now - lastActivityAt >= REVIEW_CLAIM_IDLE_MS + REVIEW_CLAIM_WARNING_MS;
+  if (disconnectedExpired || idleExpired) {
+    const next: ExamAttemptRecord = {
+      ...attempt,
+      reviewClaim: null,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'auto_released', actorUid: 'system', targetUid: claim.reviewerUid, atIso: nowIso
+      })
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return next;
+  }
+  if (disconnectedAt === null && now - lastActivityAt >= REVIEW_CLAIM_IDLE_MS && !claim.warningStartedAtIso) {
+    const nextClaim = {
+      ...claim,
+      warningStartedAtIso: new Date(lastActivityAt + REVIEW_CLAIM_IDLE_MS).toISOString()
+    };
+    const next = { ...attempt, reviewClaim: nextClaim };
+    await transaction.update('exam_attempts', attemptId, next);
+    return next;
+  }
+  return attempt;
+}
+
+export async function claimExamReview(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  reviewerName: string,
+  nowIso = new Date().toISOString()
+): Promise<ExamReviewClaim> {
+  if (!reviewerUid.trim() || !reviewerName.trim() || reviewerName.trim().length > 120) {
+    throw new Error('EXAM_REVIEW_CLAIM_ACTOR_INVALID');
+  }
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+    if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
+    if (attempt.reviewClaim) {
+      if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIMED');
+      const resumed: ExamReviewClaim = {
+        ...attempt.reviewClaim, reviewerName: reviewerName.trim(),
+        lastActivityAtIso: nowIso
+      };
+      const { warningStartedAtIso: _warning, disconnectedAtIso: _disconnected, ...active } = resumed;
+      const next = { ...attempt, reviewClaim: active };
+      await transaction.update('exam_attempts', attemptId, next);
+      return active;
+    }
+    const claim: ExamReviewClaim = {
+      reviewerUid, reviewerName: reviewerName.trim(),
+      claimedAtIso: nowIso, lastActivityAtIso: nowIso
+    };
+    const next: ExamAttemptRecord = {
+      ...attempt, reviewClaim: claim,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'claimed', actorUid: reviewerUid, targetUid: reviewerUid, atIso: nowIso
+      })
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return claim;
+  });
+}
+
+export async function releaseExamReviewClaim(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  nowIso = new Date().toISOString()
+): Promise<void> {
+  validReviewTime(nowIso);
+  await repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.status !== 'pending_review' || !attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
+    if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    const next = {
+      ...attempt, reviewClaim: null,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'released', actorUid: reviewerUid, targetUid: reviewerUid, atIso: nowIso
+      })
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+  });
+}
+
+export async function recordExamReviewActivity(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  nowIso = new Date().toISOString()
+): Promise<ExamReviewClaim> {
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (!attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
+    if (attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    const { warningStartedAtIso: _warning, disconnectedAtIso: _disconnected, ...claim } = attempt.reviewClaim;
+    const nextClaim = { ...claim, lastActivityAtIso: nowIso };
+    await transaction.update('exam_attempts', attemptId, { ...attempt, reviewClaim: nextClaim });
+    return nextClaim;
+  });
+}
+
+export async function markExamReviewDisconnected(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  nowIso = new Date().toISOString()
+): Promise<void> {
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  await repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) return;
+    await transaction.update('exam_attempts', attemptId, {
+      ...attempt, reviewClaim: { ...attempt.reviewClaim, disconnectedAtIso: nowIso }
+    });
+  });
+}
+
 export interface ExamReviewItem {
   id: string;
   examId: string;
@@ -31,23 +199,37 @@ export interface ExamReviewItem {
   submittedAtIso: string;
   assessmentStage: 'test' | 'final_exam';
   questions: ReturnType<typeof pendingFreeTextQuestions>;
+  reviewClaim: { reviewerName: string; claimedAtIso: string; warningStartedAtIso?: string } | null;
+  isClaimOwner: boolean;
 }
 
-export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[]): Promise<ExamReviewItem[]> {
+export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string, nowIso = new Date().toISOString()): Promise<ExamReviewItem[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'pending_review' }], limit: HISTORY_LIMIT
   }));
   const allowed = new Set(allowedCourseCodes.map(code => code.toUpperCase()));
   const results: ExamReviewItem[] = [];
-  for (const attempt of attempts) {
-    if (!allowed.has('*') && !allowed.has(attempt.attemptCourseCode.toUpperCase())) continue;
+  for (const listedAttempt of attempts) {
+    if (listedAttempt.userId === reviewerUid) continue;
+    if (!allowed.has('*') && !allowed.has(listedAttempt.attemptCourseCode.toUpperCase())) continue;
+    const attempt = await repository.runTransaction(transaction =>
+      refreshReviewClaim(transaction, listedAttempt.id, nowIso)
+    );
+    if (attempt.status !== 'pending_review') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-    const questions = pendingFreeTextQuestions(attempt, version);
-    if (questions.length) results.push({
+    const isClaimOwner = attempt.reviewClaim?.reviewerUid === reviewerUid;
+    const questions = attempt.reviewClaim && !isClaimOwner ? [] : pendingFreeTextQuestions(attempt, version);
+    if (questions.length || attempt.reviewClaim) results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
-      assessmentStage: version.assessmentStage, questions
+      assessmentStage: version.assessmentStage, questions,
+      reviewClaim: attempt.reviewClaim ? {
+        reviewerName: attempt.reviewClaim.reviewerName,
+        claimedAtIso: attempt.reviewClaim.claimedAtIso,
+        ...(attempt.reviewClaim.warningStartedAtIso ? { warningStartedAtIso: attempt.reviewClaim.warningStartedAtIso } : {})
+      } : null,
+      isClaimOwner
     });
   }
   return results;
@@ -67,6 +249,7 @@ export async function gradeExamAttempt(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
+    if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber || !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     if (!Array.isArray(gradesInput)) throw new Error('EXAM_MANUAL_GRADES_INVALID');
@@ -94,6 +277,7 @@ export async function gradeExamAttempt(
     }));
     const finalized: ExamAttemptRecord = {
       ...attempt,
+      reviewClaim: null,
       status: result.status,
       manuallyEarnedPointsMilli: result.manualEarnedPointsMilli,
       preliminaryScoreBasisPoints: result.preliminaryScoreBasisPoints,
@@ -108,7 +292,7 @@ export async function gradeExamAttempt(
 }
 
 
-export interface CompletedManualReviewItem extends ExamReviewItem {
+export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner'> {
   status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null;
   reviewedAtIso: string;

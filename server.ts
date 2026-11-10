@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1910,6 +1910,14 @@ async function startServer() {
       EXAM_ATTEMPT_ID_INVALID: { status: 500, message: 'Der Prüfungsversuch konnte nicht angelegt werden.' },
       EXAM_ATTEMPT_NOT_FOUND: { status: 404, message: 'Prüfungsversuch nicht gefunden.' },
       EXAM_REVIEW_NOT_PENDING: { status: 409, message: 'Dieser Versuch wartet nicht mehr auf eine manuelle Bewertung.' },
+      EXAM_REVIEW_CLAIMED: { status: 409, message: 'Dieser Vorgang wird bereits von einem anderen Prüfer bearbeitet.' },
+      EXAM_REVIEW_CLAIM_REQUIRED: { status: 409, message: 'Beanspruche diesen Vorgang zuerst, bevor du ihn bearbeitest.' },
+      EXAM_REVIEW_CLAIM_NOT_OWNED: { status: 409, message: 'Du bist nicht mehr für diesen Vorgang zuständig. Die Bearbeitung wurde gesperrt.' },
+      EXAM_REVIEW_CLAIM_ACTOR_INVALID: { status: 400, message: 'Die Prüferdaten sind ungültig.' },
+      EXAM_REVIEW_CLAIM_TIME_INVALID: { status: 400, message: 'Der Claim-Zeitpunkt ist ungültig.' },
+      EXAM_REVIEW_CLAIM_HISTORY_LIMIT: { status: 409, message: 'Die Claim-Historie hat ihre zulässige Größe erreicht.' },
+      EXAM_REVIEW_CLAIM_HISTORY_INVALID: { status: 409, message: 'Die Claim-Historie ist ungültig.' },
+      EXAM_REVIEW_CLAIM_INVALID: { status: 409, message: 'Der gespeicherte Claim ist ungültig.' },
       EXAM_REVIEW_CORRECTION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die korrigiert werden kann.' },
       EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
       EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
@@ -1958,7 +1966,74 @@ async function startServer() {
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const role = caller.publicProfile.role;
       const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
-      res.json({ reviews: await listExamReviews(getExamRepository(), allowed) });
+      res.json({ reviews: await listExamReviews(getExamRepository(), allowed, caller.uid) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          attempt.userId === caller.uid ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const claim = await claimExamReview(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
+        String(caller.publicProfile.displayName || caller.username || caller.uid)
+      );
+      recordExamWorkshopAudit(caller.uid, 'Prüfungsvorgang beansprucht', req.params.id, 'Versuch ' + req.params.attemptId + ' beansprucht.');
+      res.json({ claim });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.delete('/api/academy/exams/:id/attempts/:attemptId/review-claim', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
+      }
+      await releaseExamReviewClaim(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
+      recordExamWorkshopAudit(caller.uid, 'Prüfungsvorgang freigegeben', req.params.id, 'Versuch ' + req.params.attemptId + ' freigegeben.');
+      res.json({ released: true });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/activity', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
+      }
+      const claim = await recordExamReviewActivity(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
+      res.json({ claim });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/disconnect', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
+      }
+      await markExamReviewDisconnected(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
+      res.json({ disconnected: true });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 

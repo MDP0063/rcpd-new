@@ -484,7 +484,10 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.deepEqual(new Set(listExam.questions[3].matchingPairs.map((pair: { id: string }) => pair.id)), new Set(detailExam.questions[3].matchingPairs.map((pair: { id: string }) => pair.id)));
     assert.deepEqual(new Set(listExam.questions[3].matchingTargets.map((target: { id: string }) => target.id)), new Set(detailExam.questions[3].matchingTargets.map((target: { id: string }) => target.id)));
 
-    const reviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
+    const ownReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
+    assert.equal(ownReviewQueue.status, 200, JSON.stringify(ownReviewQueue.body));
+    assert.deepEqual(ownReviewQueue.body.reviews, [], 'reviewers must not receive their own submitted answers');
+    const reviewQueue = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
     assert.equal(reviewQueue.status, 200, JSON.stringify(reviewQueue.body));
     assert.equal(reviewQueue.body.reviews.length, 1);
     assert.equal(reviewQueue.body.reviews[0].questions[0].answer, 'Meine HTTP Antwort');
@@ -498,7 +501,22 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     });
     assert.equal(selfGradeResponse.status, 403, JSON.stringify(selfGradeResponse.body));
     assert.match(selfGradeResponse.body.error, /eigenen Prüfungsversuch/);
-    assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 1);
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
+    const gradeWithoutClaim = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, courseReviewer.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
+    });
+    assert.equal(gradeWithoutClaim.status, 409, JSON.stringify(gradeWithoutClaim.body));
+    const claimResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim`, courseReviewer.token, {
+      method: 'POST'
+    });
+    assert.equal(claimResponse.status, 200, JSON.stringify(claimResponse.body));
+    const adminQueueDuringClaim = await jsonRequest('/api/academy/exam-reviews', admin.token);
+    assert.equal(adminQueueDuringClaim.body.reviews.length, 1);
+    assert.deepEqual(adminQueueDuringClaim.body.reviews[0].questions, [], 'claimed answers stay hidden from other reviewers');
+    assert.equal(adminQueueDuringClaim.body.reviews[0].reviewClaim.reviewerName, 'HttpCourseReviewer');
+    assert.equal('reviewerUid' in adminQueueDuringClaim.body.reviews[0].reviewClaim, false);
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
 
     const gradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -555,9 +573,13 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(submissionResponse.body.submission.status, 'awaiting_release');
     assert.equal(submissionResponse.body.submission.finalScoreBasisPoints, null);
     assert.deepEqual(submissionResponse.body.submission.questionResults, []);
-    const nextReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
+    const ownNextReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
+    assert.deepEqual(ownNextReviewQueue.body.reviews, []);
+    const nextReviewQueue = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
     assert.equal(nextReviewQueue.body.reviews.length, 1);
     const attemptToGrade = nextReviewQueue.body.reviews[0];
+    const nextClaimResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/review-claim`, courseReviewer.token, { method: 'POST' });
+    assert.equal(nextClaimResponse.status, 200, JSON.stringify(nextClaimResponse.body));
     const finalGradeResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/grade`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 4000 }] })
