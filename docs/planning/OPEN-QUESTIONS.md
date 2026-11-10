@@ -23,7 +23,7 @@
 - **Mit PR #62 in `main` umgesetzt:** Teilnehmer-Reader mit serverseitiger Prüfung der Kursteilnahme, exakter Kurs-/Materialversionsbindung, rollenabhängigem Zugriff, sicherer Markdown-Darstellung und Codeanzeige ohne Ausführung.
 - **Mit PR #62 in `main` umgesetzt:** Materialauswahl im Kurseditor. Kapitel wählen veröffentlichte Fassungen und speichern die konkrete Versions-ID unveränderlich.
 - **In `main` umgesetzt:** private Reader-Notizen/Lesezeichen mit Autosave (PR #132), Mehrfachquellen (PR #134) und versionsgebundene Textanker für Markdown/Code (PR #136).
-- **Mit Draft-PR #141 in Umsetzung:** lokale Wiederaufnahme der letzten Leseposition, isoliert nach Teilnahme und exakter Materialversion. Geräte-/browserübergreifende Synchronisierung bleibt ausdrücklich offen.
+- **Mit PR #141 in `main` umgesetzt:** lokale Wiederaufnahme der letzten Leseposition, isoliert nach Teilnahme und exakter Materialversion. Geräte-/browserübergreifende Synchronisierung bleibt ausdrücklich offen.
 - **Mit PR #137 in `main` umgesetzt:** globale Teilnehmer-Suche, Relevanzsortierung sowie Kategorie-/Dokumenttypfilter; zusätzliche Volltext-/OCR-Suche bleibt zurückgestellt/offen.
 - **In Branch `fix/academy-material-review-lock` in Umsetzung:** Atomare Sperre betroffener Kurse bei neuer Materialfassung, getrennte Review-Einträge, idempotente In-App-Benachrichtigungen, Review-Entscheidung und serverseitige Sperre auch für noch nicht gestartete Programmpins. Die Offline-Entscheidung verlangt vor Reaktivierung eine neue Kursversion mit aktualisierten/entfernten betroffenen Materialreferenzen. CI und abschließende Codeprüfung stehen aus.
 - Bestehende Legacy-Materialien bleiben unberührt, bis ein gesonderter Migrations-/Kompatibilitätsplan beschlossen und umgesetzt ist.
@@ -39,7 +39,7 @@
 ### Reader, Notizen und Lesezeichen
 - Konkrete Toolbar- und Werkzeuganordnung erst in der Designphase.
 - **Für Markdown und Code mit PR #136 umgesetzt:** versionsgebundene Textanker je Quelle, eindeutige Wiederfindung und Warnung bei fehlenden/mehrdeutigen Treffern.
-- **Mit Draft-PR #141 in Umsetzung:** lokale Leseposition wird je Teilnahme und exakter Materialversion gespeichert und beim erneuten Öffnen wiederhergestellt; keine serverseitige oder geräteübergreifende Synchronisierung.
+- **Mit PR #141 in `main` umgesetzt:** lokale Leseposition wird je Teilnahme und exakter Materialversion gespeichert und beim erneuten Öffnen wiederhergestellt; keine serverseitige oder geräteübergreifende Synchronisierung.
 - PDF-Seiten-/Textstellenreferenzen bei Layoutänderungen bleiben offen und zurückgestellt, bis PDF-Infrastruktur wieder aufgenommen wird.
 - Sync-Konflikte und fehlgeschlagene Speicherung korrekt anzeigen; keine stillen Datenverluste.
 - Auswirkungen von Kontoentfernung und gesetzlichen Löschpflichten auf persönliche Notizen konkret datenschutzrechtlich/technisch prüfen.
