@@ -46,6 +46,8 @@ interface AcademyCenterProps {
   userProgress: UserProgressDoc[];
   onRefreshState: () => Promise<void>;
   onStatusToast: (msg: string) => void;
+  reviewNavigationTarget?: { examId: string; attemptId: string } | null;
+  onReviewNavigationConsumed?: () => void;
 }
 
 export const AcademyCenter: React.FC<AcademyCenterProps> = ({
@@ -55,7 +57,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   exams,
   userProgress,
   onRefreshState,
-  onStatusToast
+  onStatusToast,
+  reviewNavigationTarget = null,
+  onReviewNavigationConsumed
 }) => {
   const rolePermissions = ROLE_HIERARCHY[currentUser.role] || ROLE_HIERARCHY.trainee;
   const assignedCourses = currentUser.granularPermissions?.assignedCourseCodes || [];
@@ -68,6 +72,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
+  const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!reviewNavigationTarget) return;
+    setActiveTab('exam_reviews');
+    setInitialReviewAttemptId(reviewNavigationTarget.attemptId);
+    onReviewNavigationConsumed?.();
+  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId]);
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
   const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
@@ -1023,7 +1034,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
       {activeTab === 'exam_center' && <ExamParticipantRunner />}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
-      {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter />}
+      {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
       {(activeTab === 'tests' || activeTab === 'final_exams') && (
