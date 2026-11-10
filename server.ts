@@ -241,11 +241,13 @@ function pushNotification(
   title: string,
   message: string,
   linkSection: PortalNotificationDoc['linkSection'],
-  notificationId?: string
+  notificationId?: string,
+  linkTarget?: PortalNotificationDoc['linkTarget']
 ) {
   if (!Array.isArray(state.notifications)) {
     state.notifications = [];
   }
+  if (notificationId && state.notifications.some(item => item.id === notificationId)) return;
   // New Academy collections are additive: existing legacy modules/progress remain untouched.
   if (!Array.isArray(state.academy_courses)) state.academy_courses = [];
   if (!Array.isArray(state.academy_course_versions)) state.academy_course_versions = [];
@@ -263,6 +265,7 @@ function pushNotification(
     title,
     message,
     linkSection,
+    ...(linkTarget ? { linkTarget } : {}),
     readByUids: [],
     createdIso: new Date().toISOString()
   };
