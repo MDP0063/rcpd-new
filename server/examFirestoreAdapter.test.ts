@@ -4,14 +4,26 @@ import type { Firestore } from 'firebase-admin/firestore';
 import { FirestoreExamStorageAdapter } from './examFirestoreAdapter.ts';
 
 class FakeReference {
-  constructor(private readonly database: FakeFirestore, readonly collectionName: string, readonly id: string) {}
+  private readonly database: FakeFirestore;
+  readonly collectionName: string;
+  readonly id: string;
+  constructor(database: FakeFirestore, collectionName: string, id: string) {
+    this.database = database;
+    this.collectionName = collectionName;
+    this.id = id;
+  }
   async get() {
     const data = this.database.read(this.collectionName, this.id);
     return { id: this.id, exists: data !== null, data: () => data ?? undefined };
   }
 }
 class FakeCollection {
-  constructor(private readonly database: FakeFirestore, readonly collectionName: string) {}
+  private readonly database: FakeFirestore;
+  readonly collectionName: string;
+  constructor(database: FakeFirestore, collectionName: string) {
+    this.database = database;
+    this.collectionName = collectionName;
+  }
   doc(id: string) { return new FakeReference(this.database, this.collectionName, id); }
   async get() {
     return { docs: this.database.list(this.collectionName).map(({ id, data }) => ({
@@ -21,7 +33,8 @@ class FakeCollection {
 }
 class FakeBulkWriter {
   private readonly writes: Array<{ kind: 'set'; collection: string; id: string; data: unknown }> = [];
-  constructor(private readonly database: FakeFirestore) {}
+  private readonly database: FakeFirestore;
+  constructor(database: FakeFirestore) { this.database = database; }
   set(reference: FakeReference, data: unknown) {
     this.writes.push({ kind: 'set', collection: reference.collectionName, id: reference.id, data });
     return Promise.resolve();
