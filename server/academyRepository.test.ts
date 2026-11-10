@@ -543,6 +543,9 @@ test('required_assessment dynamically completes a course only while a released f
   assert.equal(administrativeResult.participation.endedIso, administrativelyEnded.endedIso);
 
   proof = null;
+  const endedWithoutProof = await resolveAcademyCourseCompletion(fakeRepository, voluntarilyEnded, resolver);
+  assert.equal(endedWithoutProof.participation.status, 'voluntarily_ended');
+
   const corrected = await resolveAcademyCourseCompletion(fakeRepository, released.participation, resolver);
   assert.equal(corrected.participation.status, 'in_progress');
   assert.equal('completedIso' in corrected.participation, false);
