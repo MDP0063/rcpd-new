@@ -288,7 +288,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           method: 'PUT',
           body: JSON.stringify({
             expectedRevision: note.revision ?? 1,
-            sources: [...sources, { materialId, materialVersionId }]
+            sources: [...sources, { materialId, materialVersionId, ...(selectedAnchor ? { anchor: selectedAnchor } : {}) }]
           })
         }
       );
@@ -300,6 +300,34 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
+  const attachAnchorToNote = async (note: AcademyPrivateNoteDoc) => {
+    if (!selectedAnchor) return;
+    const sources = noteSources(note).map(source =>
+      source.materialId === materialId && source.materialVersionId === materialVersionId
+        ? { ...source, anchor: selectedAnchor }
+        : source
+    );
+    setSavingAction(true);
+    setLoadError('');
+    try {
+      const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+        API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
+        { method: 'PUT', body: JSON.stringify({ expectedRevision: note.revision ?? 1, sources }) }
+      );
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Der Textanker konnte nicht gespeichert werden.');
+        return;
+      }
+      revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
+      setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      setAnchorNotice('Textanker wurde an dieser Materialquelle gespeichert.');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Der Textanker konnte nicht gespeichert werden.');
     } finally {
       setSavingAction(false);
     }
@@ -453,12 +481,13 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {bookmarks.map(note => {
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
           return anchor ? <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <span>Lesezeichen · „{anchor.quote.slice(0, 100)}“</span>
-            <button type="button" className={secondary} onClick={() => {
+            <span>Lesezeichen{anchor ? ' · „' + anchor.quote.slice(0, 100) + '“' : ' ohne Textanker'}</span>
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(note)} disabled={savingAction}>Auswahl anheften</button> : null}
+            {anchor ? <button type="button" className={secondary} onClick={() => {
               const result = onJumpToAnchor?.(anchor) || 'missing';
               setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
-            }}>Textstelle anzeigen</button>
-          </div> : <p key={note.id} className="text-xs text-slate-500">Lesezeichen ohne Textanker</p>;
+            }}>Textstelle anzeigen</button> : null}
+          </div>;
         })}
         {linkedNotes.filter(note => note.kind === 'note').length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Vorhandene Notizen">
@@ -508,6 +537,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         ) : null}
         {selectedNote && draft ? (
           <div className={panel + ' space-y-3'}>
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(selectedNote)} disabled={savingAction}>Ausgewählte Textstelle an diese Notiz anheften</button> : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h4>
               <span className="text-xs text-slate-600 dark:text-slate-300" role="status" aria-live="polite">
