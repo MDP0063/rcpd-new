@@ -512,7 +512,20 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
     if (!Array.isArray(note.sources) || note.sources.length < 1 || note.sources.length > 25 ||
         note.sources.some(source => !isRecord(source) ||
           !isNonEmpty(source.materialId) || source.materialId.length > 120 ||
-          !isNonEmpty(source.materialVersionId) || source.materialVersionId.length > 160)) {
+          !isNonEmpty(source.materialVersionId) || source.materialVersionId.length > 160 ||
+          (source.anchor !== undefined && (!isRecord(source.anchor) ||
+            !['markdown', 'code'].includes(String(source.anchor.kind)) ||
+            !isNonEmpty(source.anchor.quote) || source.anchor.quote.length > 1000 ||
+            typeof source.anchor.prefix !== 'string' || source.anchor.prefix.length > 80 ||
+            typeof source.anchor.suffix !== 'string' || source.anchor.suffix.length > 80 ||
+            (source.anchor.headingPath !== undefined &&
+              (!Array.isArray(source.anchor.headingPath) || source.anchor.headingPath.length > 6 ||
+               source.anchor.headingPath.some(item => typeof item !== 'string' || item.length > 120))) ||
+            (source.anchor.kind === 'code' &&
+              (!Number.isSafeInteger(source.anchor.startLine) || source.anchor.startLine < 1 ||
+               !Number.isSafeInteger(source.anchor.endLine) || source.anchor.endLine < source.anchor.startLine)) ||
+            (source.anchor.kind === 'markdown' &&
+              (source.anchor.startLine !== undefined || source.anchor.endLine !== undefined))))) {
       return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Notiz benötigt gültige, konkrete Materialquellen (maximal 25).');
     }
     const sourceKeys = note.sources.map(source => `${source.materialId}::${source.materialVersionId}`);
