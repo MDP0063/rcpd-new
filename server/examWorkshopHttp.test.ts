@@ -1,3 +1,4 @@
+// HTTP regression coverage for legacy portal authorization and session lifecycle.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
