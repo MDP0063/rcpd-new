@@ -322,7 +322,7 @@ test('course publication requires an exact existing published material version',
   }]);
   await assert.rejects(
     repository.setCourseAvailability(courseMaster.id, 'available', later),
-    /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
+    /ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED/
   );
 
   const updatedCourseDraft: AcademyCourseDraftDoc = {
