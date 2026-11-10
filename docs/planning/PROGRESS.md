@@ -382,10 +382,10 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 
 
-## 10.11.2026 – Dynamischer Academy-Nachweis für freigegebene Abschlussprüfungen (PR in Arbeit)
+## 10.11.2026 – Dynamischer Academy-Nachweis für freigegebene Abschlussprüfungen (PR #146 abgeschlossen)
 
 - Umsetzung auf Branch `feature/academy-final-exam-evidence`.
 - `required_assessment` wird gegen das Prüfungsrepository aufgelöst: exakte Prüfungs-ID, Teilnehmer-UID, Kurskennung, Versuchstyp `final_exam`, passende unveränderliche Prüfungsversion, endgültiger Status `passed`, aktuelle Freigabe und konsistenter letzter Freigabehistorieneintrag; Punktzahl muss die Versions-Bestehensgrenze erreichen.
 - Es wird kein persistentes Academy-Nachweisduplikat erzeugt. Kursstatus und Lehrgangsfortschritt werden bei den relevanten Leseansichten dynamisch projiziert. Nach Korrektur mit `pending_rerelease` oder nach erneut freigegebenem Nichtbestehen fällt ein zuvor dynamisch projizierter Abschluss beim nächsten Lesen auf „in Bearbeitung“ zurück.
 - Bei fehlenden/ungültigen Prüfungsdaten oder Repositoryfehlern wird der Prüfungsnachweis nicht erfüllt (fail-closed).
-- CI und Code-Review stehen noch aus. Keine Browser-/Live-Firestore-Prüfung; diese bleibt für den gemeinsamen Academy-Abnahmetest vorgesehen.
+- PR #146 wurde per Squash gemergt; Main-Commit: `534b9df2fa6f5a312d27abb7edcc7a82792ceb3b`. CI auf PR-Head erfolgreich: TypeScript-Prüfung, Produktionsbuild und 453/453 Tests; PR-Template-Validierung erfolgreich. Keine Browser-/Live-Firestore-Prüfung; diese bleibt für den gemeinsamen Academy-Abnahmetest vorgesehen.
