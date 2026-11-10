@@ -295,9 +295,50 @@ test('course publication requires an exact existing published material version',
     /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
   );
 
-  await repository.resolveMaterialReview(courseMaster.id, master.id, secondVersion.id, 'keep_available', later);
+  await repository.resolveMaterialReview(courseMaster.id, master.id, secondVersion.id, 'stay_offline', later);
+  const offlineCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(offlineCourse?.availability, 'unavailable');
+  assert.equal(offlineCourse?.materialReviewPending, undefined);
+  assert.deepEqual(offlineCourse?.materialReviewVersionRequired, [{
+    materialId: master.id, materialVersionId: secondVersion.id, materialVersionNumber: 2
+  }]);
+  await assert.rejects(
+    repository.setCourseAvailability(courseMaster.id, 'available', later),
+    /ACADEMY_COURSE_MATERIAL_REVIEW_PENDING/
+  );
+
+  const updatedCourseDraft: AcademyCourseDraftDoc = {
+    ...courseDraft,
+    chapters: courseDraft.chapters.map(chapter => ({
+      ...chapter,
+      materialReferences: chapter.materialReferences.map(reference => ({
+        ...reference, materialVersionId: secondVersion.id, title: secondVersion.title,
+        versionNumber: secondVersion.versionNumber
+      }))
+    })),
+    workingRevision: 3, updatedIso: '2026-11-06T12:08:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveCourseDraft(courseMaster.id, updatedCourseDraft, 2, 'admin-1');
+  const updatedCourseVersion: AcademyCourseVersionDoc = {
+    id: courseMaster.id + '__v2', courseId: courseMaster.id, versionNumber: 2,
+    title: updatedCourseDraft.title, summary: updatedCourseDraft.summary,
+    learningObjectives: updatedCourseDraft.learningObjectives, chapters: updatedCourseDraft.chapters,
+    completionRequirements: updatedCourseDraft.completionRequirements,
+    publishedIso: '2026-11-06T12:09:00.000Z', publishedByUid: 'admin-1',
+    createdIso: '2026-11-06T12:09:00.000Z', createdByUid: 'admin-1', workingRevision: 3
+  };
+  const latestCourseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  const nextCourseMaster: AcademyCourseMasterDoc = {
+    ...latestCourseMaster!, publicationStatus: 'published',
+    currentPublishedVersionId: updatedCourseVersion.id, latestVersionNumber: 2,
+    updatedIso: updatedCourseVersion.publishedIso!
+  };
+  await repository.publishCourseVersion(courseMaster.id, updatedCourseVersion, nextCourseMaster, 3, 'admin-1');
+  const revisedCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(revisedCourse?.materialReviewVersionRequired, undefined);
+  assert.equal(revisedCourse?.availability, 'unavailable', 'publishing a corrected version does not silently reactivate the course');
+  await repository.setCourseAvailability(courseMaster.id, 'available', later);
   assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id))?.availability, 'available');
-  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id))?.materialReviewPending, undefined);
 }));
 
 test('archiving a material requires a reason and retains all published versions', async () => withRepository(async repository => {
