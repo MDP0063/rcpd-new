@@ -17,7 +17,7 @@ export interface PublicExamSubmission {
   attemptCourseCode: string;
   attemptNumber: number;
   submittedAtIso: string;
-  status: 'passed' | 'failed' | 'pending_review';
+  status: 'passed' | 'failed' | 'pending_review' | 'awaiting_release';
   totalPossiblePointsMilli: number;
   automaticallyEarnedPointsMilli: number;
   manuallyEarnedPointsMilli: number;
@@ -62,6 +62,30 @@ function validAttemptVersion(
     throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
   }
   return version as unknown as ExamVersionRecord;
+}
+
+export function toParticipantSubmission(
+  attempt: ExamAttemptRecord,
+  version: ExamVersionRecord
+): PublicExamSubmission {
+  if (attempt.resultReleaseStatus === 'released') return toPublicSubmission(attempt, version);
+  return {
+    id: attempt.id,
+    examId: attempt.examId,
+    title: version.title,
+    assessmentStage: version.assessmentStage,
+    attemptCourseCode: attempt.attemptCourseCode,
+    attemptNumber: attempt.attemptNumber,
+    submittedAtIso: String(attempt.submittedAtIso || ''),
+    status: 'awaiting_release',
+    totalPossiblePointsMilli: 0,
+    automaticallyEarnedPointsMilli: 0,
+    manuallyEarnedPointsMilli: 0,
+    preliminaryScoreBasisPoints: 0,
+    finalScoreBasisPoints: null,
+    requiresManualReview: false,
+    questionResults: []
+  };
 }
 
 export function toPublicSubmission(
@@ -183,7 +207,7 @@ export async function submitExamAttempt(
         throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
       }
       return {
-        submission: toPublicSubmission(attempt, version),
+        submission: toParticipantSubmission(attempt, version),
         expired: attempt.submissionReason === 'time_expired',
         alreadySubmitted: true
       };
@@ -200,7 +224,7 @@ export async function submitExamAttempt(
     const finalized = finalizeAttempt(attempt, version, requestReceivedAtMs, expired);
     await transaction.update('exam_attempts', attemptId, finalized);
     return {
-      submission: toPublicSubmission(finalized, version),
+      submission: toParticipantSubmission(finalized, version),
       expired,
       alreadySubmitted: false
     };

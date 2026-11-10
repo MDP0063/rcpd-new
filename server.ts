@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults } from './server/examReviewService.ts';
+import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1264,6 +1264,47 @@ async function startServer() {
   async function examWorkshopMaintenanceActive(): Promise<boolean> {
     return examMaintenanceActive || await getExamRepository().isMaintenanceMode();
   }
+
+  app.get('/api/admin/exam-result-releases', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      if (!getExamWorkshopAdmin(res)) {
+        res.status(403).json({ error: 'Die Ergebnisfreigabe ist ausschließlich dem Administrator vorbehalten.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
+        return;
+      }
+      res.json({ releases: await listPendingExamResultReleases(getExamRepository()) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/admin/exams/:id/attempts/:attemptId/release-result', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const caller = getExamWorkshopAdmin(res);
+      if (!caller) {
+        res.status(403).json({ error: 'Die Ergebnisfreigabe ist ausschließlich dem Administrator vorbehalten.' });
+        return;
+      }
+      if (req.body && (typeof req.body !== 'object' || Array.isArray(req.body) || Object.keys(req.body).length > 0)) {
+        res.status(400).json({ error: 'Die Ergebnisfreigabe-Anfrage ist ungültig.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
+        return;
+      }
+      const submission = await releaseExamResult(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid
+      );
+      recordExamWorkshopAudit(caller.uid, 'Prüfungsergebnis freigegeben', req.params.id,
+        'Versuch ' + req.params.attemptId + ' für den Teilnehmer freigegeben.');
+      res.json({ submission });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
 
   function recordExamWorkshopAudit(actorUid: string, action: string, target: string, details: string): void {
     const dbState = loadDatabase();

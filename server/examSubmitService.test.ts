@@ -78,11 +78,11 @@ nodeTest('Abgabe wertet den letzten gespeicherten Stand aus und setzt Freitext a
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
     assert.equal(result.expired, false);
     assert.equal(result.alreadySubmitted, false);
-    assert.equal(result.submission.status, 'pending_review');
-    assert.equal(result.submission.automaticallyEarnedPointsMilli, 1000);
+    assert.equal(result.submission.status, 'awaiting_release');
+    assert.equal(result.submission.automaticallyEarnedPointsMilli, 0);
     assert.equal(result.submission.finalScoreBasisPoints, null);
-    assert.equal(result.submission.questionResults[0].correct, true);
-    assert.equal(result.submission.questionResults[0].explanation, 'B ist richtig.');
+    assert.deepEqual(result.submission.questionResults, []);
+    assert.equal((await repository.get('exam_attempts', 'attempt-1'))?.status, 'pending_review');
     const stored = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(stored?.submissionReason, 'submitted');
     assert.equal(stored?.submittedAtIso, new Date(at(2)).toISOString());
@@ -104,8 +104,9 @@ nodeTest('Objektive Prüfung wird nach Abgabe anhand der Bestehensgrenze final b
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
-    assert.equal(result.submission.status, 'passed');
-    assert.equal(result.submission.finalScoreBasisPoints, 10_000);
+    assert.equal(result.submission.status, 'awaiting_release');
+    assert.equal(result.submission.finalScoreBasisPoints, null);
+    assert.equal((await repository.get('exam_attempts', 'attempt-1'))?.status, 'passed');
   }, { includeFreeText: false });
 });
 
@@ -113,8 +114,9 @@ nodeTest('Nicht bestandene objektive Prüfung erhält den endgültigen Fehlstatu
   await withAttempt(async repository => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'a' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(2));
-    assert.equal(result.submission.status, 'failed');
-    assert.equal(result.submission.finalScoreBasisPoints, 0);
+    assert.equal(result.submission.status, 'awaiting_release');
+    assert.equal(result.submission.finalScoreBasisPoints, null);
+    assert.equal((await repository.get('exam_attempts', 'attempt-1'))?.status, 'failed');
   }, { includeFreeText: false });
 });
 
@@ -123,7 +125,7 @@ nodeTest('Eingang exakt zur Deadline ist eine reguläre Abgabe', async () => {
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(30));
     assert.equal(result.expired, false);
-    assert.equal(result.submission.status, 'passed');
+    assert.equal(result.submission.status, 'awaiting_release');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
   }, { includeFreeText: false });
 });
@@ -133,7 +135,7 @@ nodeTest('Verspätete Abgabe finalisiert ausschließlich den letzten Autosave-St
     await saveExamAttemptAnswers(repository, 'exam-1', 'attempt-1', 'user-1', 1, { q1: 'b' }, at(1));
     const result = await submitExamAttempt(repository, 'exam-1', 'attempt-1', 'user-1', at(31));
     assert.equal(result.expired, true);
-    assert.equal(result.submission.status, 'passed');
+    assert.equal(result.submission.status, 'awaiting_release');
     assert.equal(result.submission.submittedAtIso, new Date(at(30)).toISOString());
     const stored = await repository.get('exam_attempts', 'attempt-1');
     assert.equal(stored?.submissionReason, 'time_expired');

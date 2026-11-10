@@ -52,6 +52,13 @@ export interface ExamAttemptRecord extends ExamDocument {
   manuallyEarnedPointsMilli: number;
   preliminaryScoreBasisPoints: number | null;
   finalScoreBasisPoints: number | null;
+  resultReleaseStatus?: 'unreleased' | 'released' | 'pending_rerelease';
+  resultReleaseHistory?: Array<{
+    releasedByUid: string;
+    releasedAtIso: string;
+    status: 'passed' | 'failed';
+    finalScoreBasisPoints: number | null;
+  }>;
 }
 
 export interface ExamVersionRecord extends ExamDocument {
