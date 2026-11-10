@@ -51,8 +51,8 @@ test('Firestore Exam adapter anonymizes identity fields without changing attempt
     id: 'attempt-1', userId: 'deleted-user', userName: 'Former Officer',
     examId: 'exam-1', status: 'passed', finalScoreBasisPoints: 9000
   });
-  database.seed('exam_legacy_verifications', 'verification-1', {
-    id: 'verification-1', userId: 'deleted-user', verifiedByUid: 'deleted-user',
+  database.seed('exam_legacy_verifications', 'legacy_verification__legacy-1', {
+    id: 'legacy_verification__legacy-1', userId: 'deleted-user', verifiedByUid: 'deleted-user',
     legacyProgressId: 'legacy-1', examId: 'exam-1', verifiedStatus: 'passed',
     verifiedScoreBasisPoints: 9000, verifiedAtIso: '2026-11-09T12:00:00.000Z',
     reason: 'Historischen Nachweis geprüft'
@@ -64,7 +64,7 @@ test('Firestore Exam adapter anonymizes identity fields without changing attempt
   assert.equal(attempt.userName, 'Gelöschtes Konto');
   assert.equal(attempt.status, 'passed');
   assert.equal(attempt.finalScoreBasisPoints, 9000);
-  const verification = database.read('exam_legacy_verifications', 'verification-1') as Record<string, unknown>;
+  const verification = database.read('exam_legacy_verifications', 'legacy_verification__legacy-1') as Record<string, unknown>;
   assert.equal(verification.userId, 'deleted-marker');
   assert.equal(verification.verifiedByUid, 'deleted-marker');
   assert.equal(verification.verifiedScoreBasisPoints, 9000);
