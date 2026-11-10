@@ -80,10 +80,13 @@ export const ExamReviewCenter: React.FC = () => {
         }
       }
     };
+    const onPageShow = () => { void load(); };
     window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('pageshow', onPageShow);
     return () => {
       window.clearInterval(interval);
       window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('pageshow', onPageShow);
       for (const timer of Object.values(activityTimers.current)) window.clearTimeout(timer);
       for (const timer of Object.values(draftSaveTimers.current)) window.clearTimeout(timer);
     };
