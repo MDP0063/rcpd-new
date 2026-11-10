@@ -356,6 +356,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     materialVersionId: 'material-1__v1', kind: 'note', content: 'private note',
     tags: [], createdIso: '2026-11-10T08:00:00.000Z', updatedIso: '2026-11-10T08:00:00.000Z'
   };
+  await writeFile(path.join(dataDirectory, 'exam-db-v1.json'), JSON.stringify({ version: 1, maintenanceMode: false, collections }));
   await writeFile(path.join(dataDirectory, 'academy-db.json'), JSON.stringify({ version: 6, collections: academyCollections }));
 
   // Keep the child TSX runtime independent of host account lookup in locked-down test environments.
