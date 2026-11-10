@@ -8,11 +8,12 @@ interface ReviewClaim {
   reviewerName: string;
   claimedAtIso: string;
   warningStartedAtIso?: string;
+  isDisconnected?: boolean;
 }
 interface ReviewItem {
   id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
   submittedAtIso: string; questions: ReviewQuestion[];
-  reviewClaim: ReviewClaim | null; isClaimOwner: boolean;
+  reviewClaim: ReviewClaim | null; isClaimOwner: boolean; canClaim: boolean;
   draftGrades: Record<string, number>; draftRevision: number;
 }
 
@@ -199,7 +200,7 @@ export const ExamReviewCenter: React.FC = () => {
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
     {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine offenen Freitextbewertungen.</div> : reviews.map(review => <article key={review.id} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
-        {review.reviewClaim ? <div className="text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <button type="button" disabled={Boolean(savingId)} onClick={() => setReleaseDialogId(review.id)} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button>}</div>
+        {review.reviewClaim ? <div className="text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <button type="button" disabled={Boolean(savingId)} onClick={() => setReleaseDialogId(review.id)} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 rounded-lg bg-sky-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
       </header>
       {review.reviewClaim?.warningStartedAtIso && review.isClaimOwner && <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Wegen Inaktivität läuft die Freigabewarnung. Noch ca. {warningMinutesRemaining(review.reviewClaim)} Minuten bis zur automatischen Freigabe. Eine tatsächliche Bearbeitungsaktion setzt die Frist zurück.</p>}
