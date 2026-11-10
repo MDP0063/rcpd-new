@@ -484,6 +484,21 @@ export function validateCompletionCorrection(correction: AcademyCompletionCorrec
   return { ok: true };
 }
 
+function isValidPrivateNoteAnchor(value: unknown): boolean {
+  if (!isRecord(value) || !['markdown', 'code'].includes(String(value.kind)) ||
+      !isNonEmpty(value.quote) || value.quote.length > 1000 ||
+      typeof value.prefix !== 'string' || value.prefix.length > 80 ||
+      typeof value.suffix !== 'string' || value.suffix.length > 80) return false;
+  if (value.headingPath !== undefined &&
+      (!Array.isArray(value.headingPath) || value.headingPath.length > 6 ||
+       value.headingPath.some(item => typeof item !== 'string' || item.length > 120))) return false;
+  if (value.kind === 'code') {
+    return typeof value.startLine === 'number' && Number.isSafeInteger(value.startLine) && value.startLine >= 1 &&
+      typeof value.endLine === 'number' && Number.isSafeInteger(value.endLine) && value.endLine >= value.startLine;
+  }
+  return value.startLine === undefined && value.endLine === undefined;
+}
+
 export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidationResult {
   if (!isRecord(note)) return invalid('ACADEMY_NOTE_INVALID', 'Die private Notiz ist ungültig.');
   if (note.kind !== 'note' && note.kind !== 'bookmark') {
@@ -513,19 +528,7 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
         note.sources.some(source => !isRecord(source) ||
           !isNonEmpty(source.materialId) || source.materialId.length > 120 ||
           !isNonEmpty(source.materialVersionId) || source.materialVersionId.length > 160 ||
-          (source.anchor !== undefined && (!isRecord(source.anchor) ||
-            !['markdown', 'code'].includes(String(source.anchor.kind)) ||
-            !isNonEmpty(source.anchor.quote) || source.anchor.quote.length > 1000 ||
-            typeof source.anchor.prefix !== 'string' || source.anchor.prefix.length > 80 ||
-            typeof source.anchor.suffix !== 'string' || source.anchor.suffix.length > 80 ||
-            (source.anchor.headingPath !== undefined &&
-              (!Array.isArray(source.anchor.headingPath) || source.anchor.headingPath.length > 6 ||
-               source.anchor.headingPath.some(item => typeof item !== 'string' || item.length > 120))) ||
-            (source.anchor.kind === 'code' &&
-              (typeof source.anchor.startLine !== 'number' || !Number.isSafeInteger(source.anchor.startLine) || source.anchor.startLine < 1 ||
-               typeof source.anchor.endLine !== 'number' || !Number.isSafeInteger(source.anchor.endLine) || source.anchor.endLine < source.anchor.startLine)) ||
-            (source.anchor.kind === 'markdown' &&
-              (source.anchor.startLine !== undefined || source.anchor.endLine !== undefined))))) {
+          (source.anchor !== undefined && !isValidPrivateNoteAnchor(source.anchor)))) {
       return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Notiz benötigt gültige, konkrete Materialquellen (maximal 25).');
     }
     const sourceKeys = note.sources.map(source => `${source.materialId}::${source.materialVersionId}`);
