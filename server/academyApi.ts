@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
+  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
   AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail
 } from '../src/types/academy.ts';
@@ -85,7 +85,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function normalizePrivateNoteSources(
   value: unknown,
   fallback: { materialId: string; materialVersionId: string }
-): Array<{ materialId: string; materialVersionId: string }> {
+): AcademyPrivateNoteSource[] {
   const input = value === undefined ? [fallback] : value;
   if (!Array.isArray(input) || input.length < 1 || input.length > 25) {
     throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
