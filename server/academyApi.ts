@@ -226,25 +226,30 @@ export function createAcademyApiRouter(
 
   async function dispatchPendingMaterialReviewNotifications(): Promise<void> {
     if (!notifyMaterialReview) return;
-    const courses = await repository.listPendingMaterialReviewCourses();
-    for (const course of courses) {
-      for (const item of course.materialReviewPending ?? []) {
-        if (item.notificationSentIso) continue;
-        const notificationId = `academy-material-review-${course.id}-${item.materialVersionId}`;
-        try {
-          await notifyMaterialReview(
-            course.ownerUid,
-            notificationId,
-            'Neue Materialfassung – Kursprüfung erforderlich',
-            `Im Kurs ${course.code} wird das Material ${item.materialCode} (${item.materialTitle}, Version ${item.materialVersionNumber}) verwendet. Eine neue Materialfassung wurde veröffentlicht. Bitte prüfe, ob die bisherige Kursversion unverändert verfügbar bleiben kann oder aktualisiert werden muss.`
-          );
-          await repository.markMaterialReviewNotificationSent(
-            course.id, item.materialId, item.materialVersionId, new Date().toISOString()
-          );
-        } catch {
-          // The durable review marker remains pending; a later Academy request retries it.
+    try {
+      const courses = await repository.listPendingMaterialReviewCourses();
+      for (const course of courses) {
+        for (const item of course.materialReviewPending ?? []) {
+          if (item.notificationSentIso) continue;
+          const notificationId = `academy-material-review-${course.id}-${item.materialVersionId}`;
+          try {
+            await notifyMaterialReview(
+              course.ownerUid,
+              notificationId,
+              'Neue Materialfassung – Kursprüfung erforderlich',
+              `Im Kurs ${course.code} wird das Material ${item.materialCode} (${item.materialTitle}, Version ${item.materialVersionNumber}) verwendet. Eine neue Materialfassung wurde veröffentlicht. Bitte prüfe, ob die bisherige Kursversion unverändert verfügbar bleiben kann oder aktualisiert werden muss.`
+            );
+            await repository.markMaterialReviewNotificationSent(
+              course.id, item.materialId, item.materialVersionId, new Date().toISOString()
+            );
+          } catch {
+            // The durable review marker remains pending; a later Academy request retries it.
+          }
         }
       }
+    } catch {
+      // Notification lookup/delivery is best-effort and must never roll back or mask
+      // the already committed material publication and precautionary course lock.
     }
   }
 
