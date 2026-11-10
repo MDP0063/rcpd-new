@@ -818,7 +818,8 @@ export class AcademyRepository {
       const affectedCourses: AcademyCourseMasterDoc[] = [];
       for (const course of courseMasters) {
         if (course.publicationStatus !== 'published' || !course.currentPublishedVersionId ||
-            (course.availability !== 'available' && !(course.materialReviewPending?.length))) continue;
+            (course.availability !== 'available' &&
+              !(course.materialReviewPending?.length) && !(course.materialReviewVersionRequired?.length))) continue;
         const courseVersion = await tx.get<AcademyCourseVersionDoc>(
           'academy_course_versions', course.currentPublishedVersionId
         );
