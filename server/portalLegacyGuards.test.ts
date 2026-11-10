@@ -4,6 +4,7 @@ import {
   canAccessDirectMessage,
   isPendingPortalRequest,
   isReviewableApplicationStatus,
+  parseOptionalPortalDatabaseText,
   parsePortalDatabaseText,
   validateApplicationSubmission
 } from './portalLegacyGuards.ts';
@@ -20,6 +21,14 @@ test('empty or structurally invalid portal databases are not treated as initial 
 test('valid portal database text is returned without changing its records', () => {
   const data = { accounts: [{ uid: 'usr_1' }], messages: [{ id: 'msg_1' }] };
   assert.deepEqual(parsePortalDatabaseText(JSON.stringify(data)), data);
+});
+
+test('optional Firestore migration source distinguishes an absent file from corrupt existing data', () => {
+  assert.equal(parseOptionalPortalDatabaseText(null), null);
+  const valid = { accounts: [{ uid: 'usr_1' }] };
+  assert.deepEqual(parseOptionalPortalDatabaseText(JSON.stringify(valid)), valid);
+  assert.throws(() => parseOptionalPortalDatabaseText('{broken'), /PORTAL_DATABASE_JSON_INVALID/);
+  assert.throws(() => parseOptionalPortalDatabaseText(JSON.stringify({ accounts: [] })), /PORTAL_DATABASE_STATE_INVALID/);
 });
 
 test('a direct message is accessible only to its participants or an ALL broadcast', () => {
