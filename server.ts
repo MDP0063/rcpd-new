@@ -3684,8 +3684,9 @@ async function startServer() {
           return result;
         }, {});
       } else {
-        // Interaktive Code-Prüfungen verwenden weiterhin die bisherige manuelle Selbsteinschätzung.
-        // Die Absicherung dieser clientseitigen Eingabe ist ein separater Punkt.
+        // Legacy-Code-Prüfungen haben keine serverseitig prüfbaren Antworten.
+        // Ein clientseitig gemeldeter Score ist daher nur ein unbestätigter Nachweis,
+        // niemals eine Grundlage für den offiziellen Status "passed".
         const score = Number(scorePercent);
         if (!Number.isFinite(score) || score < 0 || score > 100) {
           res.status(400).json({ error: 'scorePercent muss zwischen 0 und 100 liegen.' });
@@ -3696,7 +3697,9 @@ async function startServer() {
 
       resolvedType = targetType;
       resolvedTitle = exam.title;
-      resolvedStatus = resolvedScore >= exam.passingScore ? 'passed' : 'failed';
+      resolvedStatus = exam.examFormat === 'interactive_code'
+        ? 'completed'
+        : resolvedScore >= exam.passingScore ? 'passed' : 'failed';
     } else {
       res.status(400).json({ error: 'Ungültiger targetType.' });
       return;
