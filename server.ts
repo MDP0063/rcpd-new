@@ -77,7 +77,7 @@ import type {
 import { describeError } from './server/errors.ts';
 import { getAuthenticatedApiBodyPolicy } from './server/apiBodyPolicy.ts';
 import { newId } from './server/ids.ts';
-import { isApplicationStatus, isOfficerRole, isRankChangeRequestRole, isWhitelistPromotionRole, isWhitelistStatus } from './server/accountValidation.ts';
+import { isApplicationStatus, isOfficerRole, isRankChangeRequestRole, isWhitelistPromotionRole, isWhitelistStatus, wouldRemoveLastAdministrator } from './server/accountValidation.ts';
 import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import {
@@ -2784,6 +2784,10 @@ async function startServer() {
 
     const nextRole: OfficerRole =
       role === undefined || role === null || role === '' ? previousRole : role;
+    if (wouldRemoveLastAdministrator(dbState.accounts, target.uid, nextRole)) {
+      res.status(409).json({ error: 'Das letzte Administratorkonto kann nicht herabgestuft werden.' });
+      return;
+    }
     const nextWhitelistStatus: WhitelistStatus =
       whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === ''
         ? target.publicProfile.whitelistStatus
@@ -3093,13 +3097,19 @@ async function startServer() {
       return;
     }
 
+    const applicantAccount = dbState.accounts.find(a => a.uid === appItem.applicantUid);
+    if (status === 'accepted' && applicantAccount &&
+        wouldRemoveLastAdministrator(dbState.accounts, applicantAccount.uid, assignedRole)) {
+      res.status(409).json({ error: 'Der letzte Administrator kann nicht über eine Bewerbungsentscheidung herabgestuft werden.' });
+      return;
+    }
+
     const nowIso = new Date().toISOString();
     appItem.status = status;
     appItem.reviewerUid = caller.uid;
     appItem.reviewerFeedback = String(reviewerFeedback || '').trim();
     appItem.updatedIso = nowIso;
 
-    const applicantAccount = dbState.accounts.find(a => a.uid === appItem.applicantUid);
     if (applicantAccount) {
       if (status === 'accepted') {
         const nextRole: OfficerRole = assignedRole;
@@ -5006,6 +5016,16 @@ jobs:
         return;
       }
       workshopGrantAreas = rawGrantAreas as Array<'tests' | 'final_exams'>;
+    }
+
+    if (targetReq.category === 'rank_change' && status === 'approved' &&
+        targetReq.requestedRole && applyRankChange !== false) {
+      const rankApplicant = dbState.accounts.find(a => a.uid === targetReq.requesterUid);
+      if (rankApplicant &&
+          wouldRemoveLastAdministrator(dbState.accounts, rankApplicant.uid, targetReq.requestedRole)) {
+        res.status(409).json({ error: 'Der letzte Administrator kann nicht über einen Rangänderungsantrag herabgestuft werden.' });
+        return;
+      }
     }
 
     const nowIso = new Date().toISOString();
