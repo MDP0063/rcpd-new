@@ -1,3 +1,8 @@
+/** Verhindert, dass Ausbilder ihren eigenen Lehrgangsfortschritt bewerten. */
+export function canInstructorGradeStudent(instructorUid: string, studentUid: string): boolean {
+  return instructorUid.length > 0 && studentUid.length > 0 && instructorUid !== studentUid;
+}
+
 /** Kleinere rankOrder = höherer Rang. Ein Handbuch ist lesbar, wenn der Rang mindestens dem geforderten entspricht. */
 export function canReadModule(callerRankOrder: number | undefined, requiredRankOrder: number | undefined): boolean {
   if (callerRankOrder === undefined || requiredRankOrder === undefined) return false;
