@@ -7,6 +7,7 @@ interface PendingRelease {
   id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
   submittedAtIso: string; assessmentStage: 'test' | 'final_exam'; status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null; resultReleaseStatus: 'unreleased' | 'pending_rerelease';
+  resultReleaseHistory: Array<{ releasedByUid: string; releasedAtIso: string; status: 'passed' | 'failed'; finalScoreBasisPoints: number | null }>;
 }
 interface CorrectionAudit {
   reviewerUid: string;
@@ -166,7 +167,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
     {canReleaseResults && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div><h3 className="font-bold text-slate-900 dark:text-white">Ausstehende Ergebnisfreigaben</h3><p className="mt-1 text-xs text-slate-500">Nur endgültig bewertete Ergebnisse können hier offiziell für Teilnehmer freigegeben werden. Korrekturen nach einer früheren Freigabe erfordern eine erneute Freigabe.</p></div>
       {pendingReleases.length === 0 ? <p className="text-sm text-slate-500">Keine ausstehenden Ergebnisfreigaben.</p> : pendingReleases.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
-        <div><p className="font-semibold text-slate-900 dark:text-white">{item.examTitle} · {item.attemptCourseCode}</p><p className="text-xs text-slate-500">{item.userName} · {item.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {new Date(item.submittedAtIso).toLocaleString('de-DE')}</p><p className="text-xs text-slate-500">{item.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {formatScore(item.finalScoreBasisPoints)}{item.resultReleaseStatus === 'pending_rerelease' ? ' · erneute Freigabe nach Korrektur' : ''}</p></div>
+        <div><p className="font-semibold text-slate-900 dark:text-white">{item.examTitle} · {item.attemptCourseCode}</p><p className="text-xs text-slate-500">{item.userName} · {item.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {new Date(item.submittedAtIso).toLocaleString('de-DE')}</p><p className="text-xs text-slate-500">{item.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {formatScore(item.finalScoreBasisPoints)}{item.resultReleaseStatus === 'pending_rerelease' ? ' · erneute Freigabe nach Korrektur' : ''}</p>{item.resultReleaseHistory.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Vorherige Freigaben: {item.resultReleaseHistory.map(entry => `${new Date(entry.releasedAtIso).toLocaleString('de-DE')} (${entry.releasedByUid})`).join(' · ')}</p>}</div>
         <button type="button" disabled={Boolean(savingId)} onClick={() => void release(item)} className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingId === item.id ? 'Gibt frei …' : 'Ergebnis freigeben'}</button>
       </div>)}
     </section>}
