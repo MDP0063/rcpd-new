@@ -1281,10 +1281,10 @@ export function createAcademyApiRouter(
         tags: req.body.tags === undefined ? existing.tags : Array.isArray(req.body.tags)
           ? req.body.tags.filter((tag): tag is string => typeof tag === 'string').map(tag => tag.trim().slice(0, 40)).filter(Boolean).slice(0, 20)
           : existing.tags,
-        sources: normalizePrivateNoteSources(req.body.sources, {
-          materialId: existing.materialId,
-          materialVersionId: existing.materialVersionId
-        }),
+        sources: normalizePrivateNoteSources(
+          req.body.sources === undefined ? existing.sources : req.body.sources,
+          { materialId: existing.materialId, materialVersionId: existing.materialVersionId }
+        ),
         updatedIso: new Date().toISOString()
       };
       await repository.updateOwnPrivateNote(actor.uid, note, expectedRevision);
