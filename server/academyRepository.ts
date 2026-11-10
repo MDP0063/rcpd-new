@@ -1087,7 +1087,9 @@ export class AcademyRepository {
       const publishedMaster: AcademyCourseMasterDoc = { ...nextMaster };
       if (current.materialReviewVersionRequired?.length) {
         delete publishedMaster.materialReviewVersionRequired;
-        publishedMaster.materialReviewAwaitingActivation = true;
+        if (!(current.materialReviewPending?.length)) {
+          publishedMaster.materialReviewAwaitingActivation = true;
+        }
       }
       assertValid(validateCourseMaster(publishedMaster));
       await tx.update('academy_courses', courseId, publishedMaster);
