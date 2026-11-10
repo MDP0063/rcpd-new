@@ -5,12 +5,9 @@ import { parseManualReviewGrades } from '../lib/examReviewGrades';
 
 interface ReviewQuestion { questionId: string; question: string; answer: string; pointsMilli: number; gradingRubric: string }
 interface ReviewClaim {
-  reviewerUid: string;
   reviewerName: string;
   claimedAtIso: string;
-  lastActivityAtIso: string;
   warningStartedAtIso?: string;
-  disconnectedAtIso?: string;
 }
 interface ReviewItem {
   id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
