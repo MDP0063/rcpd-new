@@ -306,7 +306,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const attachAnchorToNote = async (note: AcademyPrivateNoteDoc) => {
-    if (!selectedAnchor) return;
+    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction) return;
     const sources = noteSources(note).map(source =>
       source.materialId === materialId && source.materialVersionId === materialVersionId
         ? { ...source, anchor: selectedAnchor }
@@ -482,7 +482,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
           return <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
             <span>Lesezeichen{anchor ? ' · „' + anchor.quote.slice(0, 100) + '“' : ' ohne Textanker'}</span>
-            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(note)} disabled={savingAction}>Auswahl anheften</button> : null}
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(note)} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>Auswahl anheften</button> : null}
             {anchor ? <button type="button" className={secondary} onClick={() => {
               const result = onJumpToAnchor?.(anchor) || 'missing';
               setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
@@ -537,7 +537,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         ) : null}
         {selectedNote && draft ? (
           <div className={panel + ' space-y-3'}>
-            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(selectedNote)} disabled={savingAction}>Ausgewählte Textstelle an diese Notiz anheften</button> : null}
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(selectedNote)} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>Ausgewählte Textstelle an diese Notiz anheften</button> : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h4>
               <span className="text-xs text-slate-600 dark:text-slate-300" role="status" aria-live="polite">
