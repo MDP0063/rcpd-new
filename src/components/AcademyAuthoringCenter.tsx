@@ -254,7 +254,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     if (!response.ok || !response.data) { onStatusToast(apiErrorMessage(response.error)); return; }
     await load();
     onStatusToast(decision === 'keep_available'
-      ? 'Materialprüfung abgeschlossen. Der Kurs ist wieder verfügbar, sofern keine weitere Prüfung offen ist.'
+      ? 'Materialprüfung abgeschlossen. Der Kurs wird nur verfügbar, wenn keine weitere Prüfung oder Versionsanforderung offen ist.'
       : 'Materialprüfung abgeschlossen. Der Kurs bleibt vorübergehend offline.');
   };
 
