@@ -164,7 +164,47 @@ export function assertExamAttemptCreate(
   }
 }
 
+function isReviewNotificationDeliveryUpdate(previousValue: unknown, nextValue: unknown): boolean {
+  const previousHistory = Array.isArray(previousValue) ? previousValue : [];
+  const nextHistory = Array.isArray(nextValue) ? nextValue : [];
+  if (previousHistory.length !== nextHistory.length) return false;
+  let changed = false;
+  for (let index = 0; index < nextHistory.length; index++) {
+    const previous = previousHistory[index] as Record<string, unknown>;
+    const current = nextHistory[index] as Record<string, unknown>;
+    const { notificationDeliveredTo: previousDelivered, ...previousCore } = previous;
+    const { notificationDeliveredTo: nextDelivered, ...nextCore } = current;
+    const previousRecipients = Array.isArray(previousDelivered) ? previousDelivered : [];
+    const nextRecipients = Array.isArray(nextDelivered) ? nextDelivered : [];
+    if (!isDeepStrictEqual(previousCore, nextCore) ||
+        nextRecipients.length < previousRecipients.length ||
+        !previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) ||
+        nextRecipients.length > 2 ||
+        nextRecipients.some((uid, recipientIndex) =>
+          typeof uid !== 'string' || !uid.trim() || nextRecipients.indexOf(uid) !== recipientIndex
+        )) return false;
+    if (nextRecipients.length > previousRecipients.length) {
+      changed = true;
+      const expectedRecipients = current.action === 'transferred' || current.action === 'reassigned'
+        ? [current.previousUid, current.targetUid]
+        : [current.targetUid];
+      if (current.notificationRequired !== true ||
+          nextRecipients.some(uid => !expectedRecipients.includes(uid)) ||
+          nextRecipients.length > expectedRecipients.length) return false;
+    }
+  }
+  return changed;
+}
+
 export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocument): void {
+  if (['passed', 'failed', 'invalidated_by_admin'].includes(String(existing.status))) {
+    const stripNotificationHistory = (document: ExamDocument) =>
+      Object.fromEntries(Object.entries(document).filter(([key]) => key !== 'reviewClaimHistory'));
+    if (
+      isDeepStrictEqual(stripNotificationHistory(existing), stripNotificationHistory(next)) &&
+      isReviewNotificationDeliveryUpdate(existing.reviewClaimHistory, next.reviewClaimHistory)
+    ) return;
+  }
   if (existing.status === 'passed' || existing.status === 'failed') {
     const previousReleaseHistory = Array.isArray(existing.resultReleaseHistory) ? existing.resultReleaseHistory : [];
     const nextReleaseHistory = Array.isArray(next.resultReleaseHistory) ? next.resultReleaseHistory : [];
@@ -318,21 +358,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const historyUnchanged = isDeepStrictEqual(previousHistory, nextHistory);
     const historyAppended = nextHistory.length === previousHistory.length + 1 &&
       isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory);
-    const historyDeliveryUpdated = !historyUnchanged && nextHistory.length === previousHistory.length &&
-      nextHistory.every((value, index) => {
-        const previous = previousHistory[index] as Record<string, unknown>;
-        const current = value as Record<string, unknown>;
-        const { notificationDeliveredTo: previousDelivered, ...previousCore } = previous;
-        const { notificationDeliveredTo: nextDelivered, ...nextCore } = current;
-        const previousRecipients = Array.isArray(previousDelivered) ? previousDelivered : [];
-        const nextRecipients = Array.isArray(nextDelivered) ? nextDelivered : [];
-        return isDeepStrictEqual(previousCore, nextCore) &&
-          nextRecipients.length >= previousRecipients.length &&
-          previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) &&
-          nextRecipients.length <= 2 &&
-          nextRecipients.every(uid => typeof uid === 'string' && uid.trim().length > 0) &&
-          nextRecipients.every((uid, recipientIndex) => nextRecipients.indexOf(uid) === recipientIndex);
-      });
+    const historyDeliveryUpdated = isReviewNotificationDeliveryUpdate(previousHistory, nextHistory);
     if ((!historyUnchanged && !historyAppended && !historyDeliveryUpdated) || nextHistory.length > 100) {
       throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
     }
@@ -442,23 +468,6 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         ))
       ) {
         throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
-      }
-    }
-    if (historyDeliveryUpdated) {
-      for (let index = 0; index < nextHistory.length; index++) {
-        const previous = previousHistory[index] as Record<string, unknown>;
-        const current = nextHistory[index] as Record<string, unknown>;
-        const previousRecipients = Array.isArray(previous.notificationDeliveredTo) ? previous.notificationDeliveredTo : [];
-        const nextRecipients = Array.isArray(current.notificationDeliveredTo) ? current.notificationDeliveredTo : [];
-        if (nextRecipients.length === previousRecipients.length) continue;
-        const expectedRecipients = current.action === 'transferred' || current.action === 'reassigned'
-          ? [current.previousUid, current.targetUid]
-          : [current.targetUid];
-        if (current.notificationRequired !== true ||
-            nextRecipients.some(uid => !expectedRecipients.includes(uid)) ||
-            nextRecipients.length > expectedRecipients.length) {
-          throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
-        }
       }
     }
     if (!isDeepStrictEqual(previousClaim, nextClaim) && !historyAppended) {
