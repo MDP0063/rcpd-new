@@ -3,7 +3,7 @@
 **Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 behebt im Draft einen probabilistischen ID-Kollisionstest; PR #139 ergänzt im Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `c39c44706e73ca6b813c51e334182b186f72b41c` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
-**Aktueller Umsetzungsstand:** PR #138 (`fix/id-random-id-entropy`) ist Draft gegen `main`; PR #139 (`feature/academy-reader-position`) ist Draft und darauf gestapelt. Kein Merge und kein Deployment durch diese Arbeit.
+**Aktueller Umsetzungsstand:** PR #138 (`fix/id-random-id-entropy`) ist Draft gegen `main`; PR #139 (`feature/academy-reader-position`) ist Draft gegen `main` und enthält vorübergehend auch den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden, damit dieser Commit nicht doppelt in die Historie gelangt. Kein Merge und kein Deployment durch diese Arbeit.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -341,4 +341,4 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Lokaler Speicher wird fail-soft behandelt: nicht verfügbare Browser-Speicherung verhindert nicht das Öffnen/Lesen.
 - Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
 - Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
-- Draft-PR #139 ist auf dem Bugfix-Branch für PR #138 gestapelt; kein Merge/Deployment. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus.
+- Draft-PR #139 zielt auf `main` und enthält vorübergehend den gemeinsamen ID-Fix-Commit aus PR #138; PR #138 sollte zuerst gemergt werden. Kein Merge/Deployment. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus.
