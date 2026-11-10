@@ -51,6 +51,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const savingRef = useRef(false);
   const lastSavedRef = useRef('');
   const currentDraftRef = useRef<NoteDraft | null>(null);
+  const persistPendingRef = useRef<() => Promise<void>>(async () => {});
 
   const selectedNote = useMemo(
     () => notes.find(note => note.id === selectedNoteId && note.kind === 'note') ?? null,
@@ -103,9 +104,11 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
     } finally {
       savingRef.current = false;
-      if (pendingSaveRef.current) void persistPending();
+      if (pendingSaveRef.current) void persistPendingRef.current();
     }
   }, []);
+
+  persistPendingRef.current = persistPending;
 
   const queueSave = useCallback((draft: NoteDraft) => {
     pendingSaveRef.current = draft;
@@ -154,6 +157,16 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }) : null, [selectedNote, title, content, tags]);
 
   currentDraftRef.current = draft;
+
+  useEffect(() => {
+    return () => {
+      const current = currentDraftRef.current;
+      if (current && serializeDraft(current) !== lastSavedRef.current) {
+        pendingSaveRef.current = current;
+        void persistPendingRef.current();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!draft) return;
@@ -345,7 +358,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
               </div>
             ) : null}
             <div className="flex flex-wrap justify-end gap-2">
-              <button type="button" className={secondary} disabled={savingAction} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
+              <button type="button" className={secondary} disabled={savingAction || saveStatus === 'saving'} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
             </div>
           </div>
         ) : null}
