@@ -224,6 +224,7 @@ export async function saveExamReviewDraft(
     const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.status !== 'pending_review') throw new Error('EXAM_REVIEW_NOT_PENDING');
+    if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (!attempt.reviewClaim || attempt.reviewClaim.reviewerUid !== reviewerUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
     if (attempt.reviewClaim.disconnectedAtIso) throw new Error('EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
