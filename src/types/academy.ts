@@ -259,6 +259,8 @@ export interface AcademyCourseMasterDoc {
   availability: AcademyAvailability;
   /** Pending review items created when a referenced material receives a new version. */
   materialReviewPending?: AcademyCourseMaterialReview[];
+  /** Course has published the required revision but still awaits explicit reactivation. */
+  materialReviewAwaitingActivation?: boolean;
   /** Course must publish a version that updates or removes these material references before reactivation. */
   materialReviewVersionRequired?: AcademyCourseMaterialVersionRequirement[];
   currentPublishedVersionId?: string;
