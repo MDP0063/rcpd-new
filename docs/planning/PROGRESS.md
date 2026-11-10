@@ -96,14 +96,13 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 7. Designsystem und grafische Detailgestaltung erst anschließend beginnen.
 8. Unabhängige kritische Review des Gesamtplans vorbereiten.
 
-## 6. Nächste konkrete Schritte
+## 6. Noch offene nächste Schritte
 
-1. PR der versionierten Text-/Code-Materialverwaltung fachlich und technisch prüfen; nach Merge den Stand auf `main` verifizieren.
-2. Teilnehmer-Lernbibliothek und Reader an die neuen veröffentlichten Materialversionen anbinden; Zugriffsfilter und sichere Markdown-Darstellung prüfen.
-3. Kurseditor um eine gezielte Materialauswahl ergänzen, die nur veröffentlichte Fassungen auswählbar macht und konkrete Versionskennungen speichert.
-4. Suche/Filter über Materialcode, Titel, Kategorie und Dokumenttyp sowie erforderliche Metadaten-/Readerzustände integrieren, sobald die Daten zuverlässig verfügbar sind. (Teilnehmer-Suche, Relevanzsortierung und Kategorie-/Dokumenttypfilter mit PR #137 umgesetzt; Volltext/OCR nicht Teil dieser Umsetzung.)
-5. Benachrichtigung betroffener Kursverantwortlicher bei neuen Fassungen und weitere offene Rücknahme-/Archivierungsfälle klären.
-6. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen; PDF-Unterstützung bleibt spätere Ausbaustufe.
+1. Benachrichtigung betroffener Kursverantwortlicher bei neuen Materialfassungen und konkrete Auswirkungen auf laufende Kursentwürfe klären.
+2. Rückzug/Archivierung veröffentlichter Materialien weiter spezifizieren: betroffene Kursversionen, konkrete Zustände und Benachrichtigungen sind noch offen.
+3. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen.
+4. PDF-Unterstützung einschließlich der bereits beschlossenen Sicherheitsanforderungen bleibt ausdrücklich zurückgestellt.
+5. Weitere Academy-Arbeit nur aus den verbleibenden offenen Punkten in `OPEN-QUESTIONS.md` ableiten; keine neuen Funktionsannahmen ergänzen.
 
 Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen.
 
