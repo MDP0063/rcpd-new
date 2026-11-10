@@ -90,3 +90,10 @@
 - Quellenstatus liefert keine Materialinhalte und gewährt keine indirekten Leserechte.
 - GitHub-CI erfolgreich: 436/436 Tests, TypeScript-Prüfung und Produktionsbuild bestanden; PR-Vorlagenprüfung nach Ergänzung des Labels `feature` erfolgreich.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
+
+
+## 2026-11-10 – Stabile Textanker für private Notizen (in Arbeit)
+
+- Projektinhaber hat die vorgeschlagene Strategie bestätigt: Anker je Quelle, Markdown-/Code-spezifische Metadaten, nur eindeutige Wiederfindung, keine automatische Versionsübertragung.
+- Implementierung ergänzt optionales Datenmodell, serverseitige Validierung, Reader-Auswahl und Navigation sowie Unit-Tests. CI und abschließende Codeprüfung stehen noch aus.
+- PDF-Seitenanker bleiben ausdrücklich zurückgestellt.
