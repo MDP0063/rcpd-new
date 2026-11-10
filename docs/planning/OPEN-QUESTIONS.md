@@ -242,3 +242,9 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Kursabschlussnachweis muss Prüfung, Versuch, Teilnehmer, `final_exam`, Ergebnisstatus, Freigabestatus und Kursversionskontext serverseitig verifizieren. Auswahlregel bei mehreren Versuchen muss deterministisch und gegen veraltete/ungültige Versuche abgesichert sein.
 - Prüfungs- und Academy-Repositories sind getrennte Speichertransaktionen. Die Integrationslösung muss Race Conditions und Teilfehler so behandeln, dass ein nicht freigegebenes oder korrigiertes Ergebnis niemals fälschlich einen Kursabschluss erzeugt.
 - Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt; CI-Tests müssen alle Freigabe-, Korrektur-, Datenschutz- und Nachweisfälle abdecken.
+
+
+### Ergebnisfreigabe – nächste Implementierungsstufe
+- PR #144 liefert die manuelle Admin-Erstfreigabe und die erneute Freigabe nach Korrekturen. Die explizite Einstellung für automatische Freigabe ist noch nicht konfigurierbar und darf daher nicht als verfügbar dargestellt werden.
+- Die Integration von `required_assessment` ist noch offen. Exam- und Academy-Daten liegen in getrennten Repository-/Transaktionsgrenzen; eine einmalige Prüfung beim Schreiben eines Fortschrittsnachweises wäre bei späterer Korrektur/Widerruf nicht ausreichend.
+- Vor der Implementierung muss deshalb eine Lösung festgelegt werden, die den aktuellen Freigabestatus bei jeder Abschlussentscheidung zuverlässig berücksichtigt und auch nach Korrekturen keine veralteten Abschlussnachweise gültig lässt. Keine clientseitige Evidenz und kein bloßes `status === 'passed'`.
