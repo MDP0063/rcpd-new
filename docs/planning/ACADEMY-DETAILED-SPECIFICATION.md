@@ -1322,3 +1322,13 @@ Die Prüfung erfolgt serverseitig. Ein Kursabschluss darf nicht aus einem nicht 
 ### Qualitätssicherung
 
 CI muss Erstfreigabe, fehlende Konfiguration (manuell), explizit automatische Freigabe, ausstehende manuelle Bewertung, Teilnehmerdatenschutz, Korrektur mit erneuter Freigabe, fehlgeschlagene und bestandene Versuche sowie die Academy-Nachweisverknüpfung abdecken. Manuelle Browser-/Live-Firestore-Prüfung bleibt Teil des späteren gemeinsamen Academy-Abnahmetests.
+
+
+
+### Laufzeit-Verifikation des `required_assessment`-Nachweises (Umsetzung 10.11.2026)
+
+Der Prüfungsnachweis wird nicht als eigenständiger Academy-Datensatz kopiert. Bei der Berechnung des Kursabschlusses löst der Server den Nachweis live im Prüfungsrepository auf. Erforderlich sind dieselbe Teilnehmer-UID wie die Kursteilnahme, die exakte Prüfungs-ID aus `targetId`, die Kurskennung als `attemptCourseCode`, ein Versuch der Prüfungsart `final_exam`, die passende unveränderliche Prüfungsversion, aktueller Status `passed`, aktuelle Freigabe `released` und ein konsistenter letzter Freigabeeintrag. Die aktuelle Punktzahl muss mindestens der Bestehensgrenze der gebundenen Prüfungsversion entsprechen.
+
+Ein aktuell gültig freigegebener bestandener Versuch erfüllt die Bedingung. Eine Korrektur, die den Versuch auf `pending_rerelease` setzt, oder eine erneut freigegebene nicht bestandene Bewertung entzieht diesem Versuch die Nachweiswirkung. Andere unabhängige gültige bestandene Versuche bleiben separat gültig. Die Auswahl des angezeigten Nachweises erfolgt deterministisch nach Freigabezeitpunkt.
+
+Die Kurs- und erforderlichen Lehrgangsfortschritte werden in den Teilnehmer- und Verwaltungsansichten dynamisch projiziert. Ein Abschluss wird nicht dauerhaft in der Academy gespeichert, solange eine verpflichtende Abschlussprüfung nicht aktuell verifiziert werden kann. Fehler oder fehlende Daten im Prüfungssystem führen fail-closed zu einem nicht erfüllten Nachweis. Dadurch ist keine transaktionale Kopplung der getrennten Academy- und Prüfungsrepositories erforderlich; eine Korrektur wirkt auf die nächste Statusauflösung.
