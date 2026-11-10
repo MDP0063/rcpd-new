@@ -4,6 +4,7 @@ import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
+import { resolveAcademyCourseCompletion } from './academyApi.ts';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
