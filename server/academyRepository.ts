@@ -1306,6 +1306,9 @@ export class AcademyRepository {
       where: [{ field: 'participationId', value: participationId }], limit: 1000
     });
   }
+  async anonymizeDeletedUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    return this.adapter.anonymizeUser(uid, anonymizedUid, identityNames);
+  }
   async listOwnPrivateNotes(ownerUid: string): Promise<AcademyPrivateNoteDoc[]> {
     if (!ownerUid.trim()) throw new Error('ACADEMY_NOTE_OWNER_REQUIRED');
     return this.adapter.list<AcademyPrivateNoteDoc>('academy_private_notes', { where: [{ field: 'ownerUid', value: ownerUid }], limit: 1000 });
