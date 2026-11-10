@@ -350,7 +350,31 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       createdIso: '2026-11-10T08:00:00.000Z',
       updatedIso: '2026-11-10T08:00:00.000Z'
     }],
-    events: [], auditLogs: [], notifications: []
+    events: [{
+      id: 'http-event-to-delete',
+      title: 'HTTP test event',
+      category: 'Training & Lehrgang',
+      location: 'Test location',
+      startIso: '2026-11-12T12:00:00.000Z',
+      durationMinutes: 60,
+      maxParticipants: 10,
+      instructorName: 'HttpAdmin',
+      instructorUid: 'http-admin',
+      description: 'Event used to verify durable deletion',
+      mandatoryForRoles: [],
+      attendees: [],
+      createdIso: '2026-11-10T08:00:00.000Z'
+    }],
+    auditLogs: [], notifications: [],
+    deploymentConfig: {
+      githubRepoUrl: 'https://github.com/MDP0063/rcpd-new',
+      renderServiceUrl: 'https://rcpd-new.onrender.com',
+      renderDeployHookUrl: 'https://api.render.com/deploy/test-secret-must-not-be-exported',
+      branchName: 'main',
+      autoDeployEnabled: false,
+      completedSteps: [],
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }
   };
   const collections = Object.fromEntries(EXAM_COLLECTIONS.map(name => [name, {}])) as Record<string, Record<string, unknown>>;
   collections.exam_masters[`doc:${encodeURIComponent(TEST_EXAM_ID)}`] = master;
@@ -427,6 +451,10 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     assert.equal(ready, true, `server did not become ready: ${lastError}\n${childOutput}\n${childError}`);
+    const healthHeaders = await fetch(`${baseUrl}/api/health`);
+    assert.equal(healthHeaders.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(healthHeaders.headers.get('x-frame-options'), 'SAMEORIGIN');
+    assert.equal(healthHeaders.headers.get('referrer-policy'), 'same-origin');
 
     const delegate = await login(baseUrl, 'HttpDelegate');
     const admin = await login(baseUrl, 'HttpAdmin');
@@ -441,6 +469,13 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       const response = await fetch(`${baseUrl}${url}`, { ...init, headers });
       return { status: response.status, body: await response.json() as Record<string, any> };
     };
+
+    const eventDelete = await jsonRequest('/api/events/http-event-to-delete?actorUid=http-admin', admin.token, {
+      method: 'DELETE'
+    });
+    assert.equal(eventDelete.status, 200, JSON.stringify(eventDelete.body));
+    const stateAfterEventDelete = JSON.parse(await readFile(path.join(dataDirectory, 'portal-db-v3.json'), 'utf8'));
+    assert.equal(stateAfterEventDelete.events.some((event: Record<string, unknown>) => event.id === 'http-event-to-delete'), false);
 
     const foreignMessageRead = await jsonRequest('/api/messages/msg-known-private/read', unauthorized.token, {
       method: 'PUT',
@@ -853,6 +888,11 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(logout.status, 200);
     assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionOne.token)).status, 401);
     assert.equal((await jsonRequest('/api/portal/heartbeat', freshSessionTwo.token)).status, 401);
+
+    const backup = await jsonRequest('/api/admin/backup?adminUid=http-admin', admin.token);
+    assert.equal(backup.status, 200, JSON.stringify(backup.body));
+    assert.equal(backup.body.database.deploymentConfig.renderDeployHookUrl, '');
+    assert.equal(JSON.stringify(backup.body).includes('test-secret-must-not-be-exported'), false);
 
     const deleteAccount = await jsonRequest('/api/admin/accounts/http-deleted-account?adminUid=http-admin', admin.token, {
       method: 'DELETE'
