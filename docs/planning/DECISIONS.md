@@ -334,3 +334,14 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Nur eindeutige Treffer werden automatisch angesprungen. Fehlende oder mehrdeutige Treffer werden ausdrücklich gemeldet; keine heuristische automatische Auswahl.
 - **BESCHLOSSEN:** Anker bleiben an die exakte Materialversion gebunden; keine automatische Übertragung auf neue Fassungen.
 - **BESCHLOSSEN:** Anker vermitteln keinerlei Leserechte und dürfen gesperrte Materialinhalte nicht offenlegen.
+
+
+## M. Materialaktualisierung und betroffene Kurse (10.11.2026)
+
+- **BESCHLOSSEN:** Wird eine neue veröffentlichte Materialfassung angelegt, werden alle aktuell veröffentlichten und verfügbaren Kursversionen ermittelt, deren fest gebundene Materialreferenzen auf den Materialstamm zeigen.
+- **BESCHLOSSEN:** Betroffene Kurse werden unmittelbar bei Veröffentlichung der neuen Materialfassung vorsorglich für neue Teilnahmen gesperrt (Verfügbarkeit „nicht verfügbar“), bis eine berechtigte Person die Auswirkungen geprüft und entschieden hat. Die Sperre muss serverseitig und atomar mit der Materialveröffentlichung erfolgen.
+- **BESCHLOSSEN:** Bereits begonnene Teilnahmen behalten den Zugriff auf ihre fest gebundene Kurs- und Materialversion. Die vorsorgliche Sperre verhindert ausschließlich neue Teilnahmen; sie ändert oder löscht keine bestehenden Teilnahmen, Kursversionen, Nachweise oder Abschlüsse.
+- **BESCHLOSSEN:** Nach Prüfung kann die berechtigte Kursverwaltung entscheiden, die bisherige Kursversion unverändert wieder verfügbar zu machen oder den Kurs bis zur Veröffentlichung einer angepassten Kursversion nicht verfügbar zu lassen. Eine neue Kursversion muss die beabsichtigten Materialfassungen explizit referenzieren.
+- **BESCHLOSSEN:** Dauerhafte Archivierung ist von der vorübergehenden Nichtverfügbarkeit zu unterscheiden. Kurs- und Materialhistorien werden nicht regulär endgültig gelöscht.
+- **BESCHLOSSEN:** Betroffene Kursverantwortliche erhalten eine In-App-Benachrichtigung mit Kurs, Material und neuer Versionskennung sowie dem Hinweis, dass eine Prüfung erforderlich ist.
+- **BESCHLOSSEN:** Benachrichtigungszustellung muss wiederholbar und idempotent sein; die fachliche Sperre darf nicht davon abhängen, ob die Benachrichtigung erfolgreich zugestellt wurde.
