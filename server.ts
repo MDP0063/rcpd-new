@@ -78,6 +78,7 @@ import { describeError } from './server/errors.ts';
 import { getAuthenticatedApiBodyPolicy } from './server/apiBodyPolicy.ts';
 import { newId } from './server/ids.ts';
 import { isApplicationStatus, isOfficerRole, isRankChangeRequestRole, isWhitelistPromotionRole, isWhitelistStatus } from './server/accountValidation.ts';
+import { canAccessDirectMessage, isPendingPortalRequest, isReviewableApplicationStatus, parsePortalDatabaseText, validateApplicationSubmission } from './server/portalLegacyGuards.ts';
 import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from './server/validate.ts';
 import {
   AcademyExamDoc,
@@ -872,24 +873,15 @@ function loadDatabase(): PortalDatabaseState {
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf8');
     return initial;
   }
-  try {
-    const raw = fs.readFileSync(DB_FILE, 'utf8');
-    const parsed = JSON.parse(raw) as PortalDatabaseState;
-    if (!parsed.accounts || parsed.accounts.length === 0) {
-      const initial = createInitialDatabase();
-      fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf8');
-      return initial;
-    }
-    ensureDeploymentConfig(parsed);
-    if (migrateLegacyPasswords(parsed)) {
-      saveDatabase(parsed);
-    }
-    return parsed;
-  } catch {
-    const initial = createInitialDatabase();
-    fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf8');
-    return initial;
+  const raw = fs.readFileSync(DB_FILE, 'utf8');
+  // An existing but invalid database is never replaced with an empty initial state.
+  // Preserve the original file and fail the request/startup path so recovery can use a backup.
+  const parsed = parsePortalDatabaseText(raw) as unknown as PortalDatabaseState;
+  ensureDeploymentConfig(parsed);
+  if (migrateLegacyPasswords(parsed)) {
+    saveDatabase(parsed);
   }
+  return parsed;
 }
 
 function saveDatabase(state: PortalDatabaseState) {
@@ -2792,6 +2784,8 @@ async function startServer() {
       !verifyPassword(String(password), target.passwordHash)
     ) {
       target.passwordHash = hashPassword(String(password));
+      // A password change revokes every previously issued token for this account.
+      target.sessionVersion = (target.sessionVersion ?? 0) + 1;
     }
 
     target.publicProfile = {
@@ -2972,6 +2966,12 @@ async function startServer() {
       penalCodeAck
     } = req.body;
 
+    const applicationValidationError = validateApplicationSubmission(req.body);
+    if (applicationValidationError) {
+      res.status(400).json({ error: applicationValidationError });
+      return;
+    }
+
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === applicantUid);
     if (!caller) {
@@ -3047,6 +3047,17 @@ async function startServer() {
     const appItem = dbState.applications.find(a => a.id === appId);
     if (!appItem) {
       res.status(404).json({ error: 'Bewerbungsakte nicht gefunden.' });
+      return;
+    }
+    if (!isReviewableApplicationStatus(appItem.status)) {
+      res.status(409).json({ error: 'Diese Bewerbungsakte wurde bereits abschließend entschieden.' });
+      return;
+    }
+    if (
+      reviewerFeedback !== undefined &&
+      (typeof reviewerFeedback !== 'string' || reviewerFeedback.length > 2000)
+    ) {
+      res.status(400).json({ error: 'Das Prüfer-Feedback darf höchstens 2.000 Zeichen lang sein.' });
       return;
     }
 
@@ -4699,9 +4710,9 @@ jobs:
 
   app.put('/api/messages/:id/read', (req, res) => {
     const { id } = req.params;
-    const { userUid } = req.body as { userUid?: string };
+    const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
-    const caller = dbState.accounts.find(a => a.uid === userUid);
+    const caller = dbState.accounts.find(a => a.uid === callerUid);
     if (!caller) {
       res.status(401).json({ error: 'Nicht autorisiert.' });
       return;
@@ -4710,6 +4721,10 @@ jobs:
     const msg = (dbState.messages || []).find(m => m.id === id);
     if (!msg) {
       res.status(404).json({ error: 'Nachricht nicht gefunden.' });
+      return;
+    }
+    if (!canAccessDirectMessage(msg, caller.uid)) {
+      res.status(403).json({ error: 'Du bist nicht an dieser Nachricht beteiligt.' });
       return;
     }
 
@@ -4895,6 +4910,10 @@ jobs:
     const targetReq = (dbState.requests || []).find(r => r.id === id);
     if (!targetReq) {
       res.status(404).json({ error: 'Antrag nicht gefunden.' });
+      return;
+    }
+    if (!isPendingPortalRequest(targetReq.status)) {
+      res.status(409).json({ error: 'Dieser Antrag wurde bereits entschieden.' });
       return;
     }
 
