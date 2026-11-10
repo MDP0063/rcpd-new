@@ -833,6 +833,7 @@ export class AcademyRepository {
         const affected: AcademyCourseMasterDoc = {
           ...course,
           availability: 'unavailable',
+          updatedIso: version.publishedIso,
           materialReviewPending: [...pending, {
             materialId,
             materialCode: current.code,
@@ -903,7 +904,8 @@ export class AcademyRepository {
         const affected: AcademyCourseMasterDoc = {
           ...course,
           availability: 'unavailable',
-          materialReviewVersionRequired: requiredVersions
+          materialReviewVersionRequired: requiredVersions,
+          updatedIso: now
         };
         assertValid(validateCourseMaster(affected));
         affectedCourses.push(affected);
