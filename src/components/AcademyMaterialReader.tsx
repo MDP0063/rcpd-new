@@ -15,9 +15,10 @@ const secondary='inline-flex items-center justify-center rounded-md border borde
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
  const [selectedAnchor,setSelectedAnchor]=useState<AcademyPrivateNoteTextAnchor|null>(null);
- const materialContentRef=useRef<HTMLElement|null>(null);
+ const markdownContentRef=useRef<HTMLElement|null>(null);
+ const codeContentRef=useRef<HTMLPreElement|null>(null);
  const jumpToAnchor=(anchor:AcademyPrivateNoteTextAnchor):'resolved'|'missing'|'ambiguous'=>{
-  const root=materialContentRef.current;
+  const root=markdownContentRef.current||codeContentRef.current;
   if(!root)return 'missing';
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const matches:Array<{node:Text;start:number;end:number}>=[];
@@ -115,8 +116,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
       {headings.length>0&&<nav id="academy-material-outline" hidden={!navigationOpen} className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="block break-words text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
       <div className="min-w-0 flex-1">
        {loading?<p className={muted} role="status">Material wird geladen …</p>:loadError?<div role="alert" className="rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">{loadError}</div>
-        :currentVersion?.contentFormat==='markdown'?<article ref={materialContentRef} className="max-w-none" onMouseUp={event=>captureTextAnchor(event,'markdown')}><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
-        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre ref={materialContentRef} onMouseUp={event=>captureTextAnchor(event,'code')} className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
+        :currentVersion?.contentFormat==='markdown'?<article ref={markdownContentRef} className="max-w-none" onMouseUp={event=>captureTextAnchor(event,'markdown')}><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
+        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre ref={codeContentRef} onMouseUp={event=>captureTextAnchor(event,'code')} className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
       </div>
      </div>
    </div>}
