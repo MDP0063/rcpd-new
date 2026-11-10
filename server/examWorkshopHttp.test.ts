@@ -365,6 +365,13 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       return { status: response.status, body: await response.json() as Record<string, any> };
     };
 
+    const foreignMessageRead = await jsonRequest('/api/messages/msg-known-private/read', unauthorized.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    assert.equal(foreignMessageRead.status, 403);
+
     const selfInstructorGrade = await jsonRequest('/api/academy/instructor-grade', courseReviewer.token, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
