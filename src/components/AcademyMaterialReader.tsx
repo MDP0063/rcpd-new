@@ -38,6 +38,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
   return 'resolved';
  };
  const captureTextAnchor=(event:React.MouseEvent<HTMLElement>,kind:'markdown'|'code')=>{
+  setSelectedAnchor(null);
   const root=event.currentTarget;
   const selection=window.getSelection();
   if(!selection||selection.isCollapsed||selection.rangeCount===0)return;
