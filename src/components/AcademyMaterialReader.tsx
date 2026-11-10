@@ -1,21 +1,74 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } from '../types/academy';
+import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPrivateNoteTextAnchor } from '../types/academy';
+import { createTextAnchor, resolveTextAnchor } from '../lib/academyTextAnchors';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
 import { extractHeadings } from '../lib/academyMaterialOutline';
 const panel='rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted='text-sm text-slate-600 dark:text-slate-300';
+function headingPathForTextNode(root: HTMLElement, node: Text): string[] {
+  const stack: Array<{ level: number; title: string }> = [];
+  for (const heading of Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'))) {
+    const precedesNode = heading.contains(node) ||
+      (heading.compareDocumentPosition(node.parentElement!) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    if (!precedesNode) continue;
+    const level = Number(heading.tagName.slice(1));
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    const title = heading.textContent?.trim() || '';
+    if (title) stack.push({ level, title });
+  }
+  return stack.slice(-6).map(item => item.title);
+}
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
+ const [selectedAnchor,setSelectedAnchor]=useState<AcademyPrivateNoteTextAnchor|null>(null);
+ const markdownContentRef=useRef<HTMLElement|null>(null);
+ const codeContentRef=useRef<HTMLPreElement|null>(null);
+ const jumpToAnchor=(anchor:AcademyPrivateNoteTextAnchor):'resolved'|'missing'|'ambiguous'=>{
+  const root=anchor.kind==='markdown'?markdownContentRef.current:codeContentRef.current;
+  if(!root)return 'missing';
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const matches:Array<{node:Text;start:number;end:number}>=[];
+  let current:Node|null;
+  while((current=walker.nextNode())){
+   const node=current as Text;
+   if(anchor.kind==='markdown'&&anchor.headingPath?.length&&
+      JSON.stringify(headingPathForTextNode(root,node))!==JSON.stringify(anchor.headingPath))continue;
+   const result=resolveTextAnchor(node.textContent||'',anchor);
+   if(result.status==='ambiguous')return 'ambiguous';
+   if(result.status==='resolved')matches.push({node,start:result.start,end:result.end});
+   if(matches.length>1)return 'ambiguous';
+  }
+  if(matches.length!==1)return 'missing';
+  const match=matches[0];
+  const range=document.createRange();
+  range.setStart(match.node,match.start);range.setEnd(match.node,match.end);
+  const selection=window.getSelection();selection?.removeAllRanges();selection?.addRange(range);
+  match.node.parentElement?.scrollIntoView({behavior:'smooth',block:'center'});
+  return 'resolved';
+ };
+ const captureTextAnchor=(event:React.MouseEvent<HTMLElement>,kind:'markdown'|'code')=>{
+  setSelectedAnchor(null);
+  const root=event.currentTarget;
+  const selection=window.getSelection();
+  if(!selection||selection.isCollapsed||selection.rangeCount===0)return;
+  const range=selection.getRangeAt(0);
+  if(range.startContainer!==range.endContainer||range.startContainer.nodeType!==Node.TEXT_NODE||!root.contains(range.startContainer))return;
+  const node=range.startContainer as Text;
+  const sourceText=node.textContent||'';
+  const headingPath=kind==='markdown'?headingPathForTextNode(root,node):[];
+  const anchor=createTextAnchor({kind,text:range.toString(),startOffset:range.startOffset,endOffset:range.endOffset,headingPath},sourceText);
+  setSelectedAnchor(anchor);
+ };
  const [currentVersion,setCurrentVersion]=useState<AcademyMaterialReaderContent|null>(null);const [loading,setLoading]=useState(false);const [loadError,setLoadError]=useState('');
  const selected=useMemo(()=>materials.find(x=>x.chapterId+'::'+x.materialId+'::'+x.materialVersionId===selectedKey)||null,[materials,selectedKey]);
- useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');
+ useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');setSelectedAnchor(null);
   if(!selected||selected.accessStatus!=='available'){setLoading(false);return()=>{active=false;};}
   setLoading(true);
   void apiFetch<{material:AcademyMaterialReaderContent}>(API_ENDPOINTS.ACADEMY_COURSE_MATERIAL_VERSION(participationId,selected.materialId,selected.materialVersionId))
@@ -66,12 +119,12 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
       {headings.length>0&&<nav id="academy-material-outline" hidden={!navigationOpen} className="max-h-[70vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 lg:w-64 lg:shrink-0" aria-label="Inhaltsübersicht"><p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Inhaltsübersicht</p><ol className="space-y-1">{headings.map(h=><li key={h.id} style={{paddingLeft:(h.level-1)*12}}><a href={'#'+h.id} className="block break-words text-sm text-sky-700 hover:underline dark:text-sky-300">{h.title}</a></li>)}</ol></nav>}
       <div className="min-w-0 flex-1">
        {loading?<p className={muted} role="status">Material wird geladen …</p>:loadError?<div role="alert" className="rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">{loadError}</div>
-        :currentVersion?.contentFormat==='markdown'?<article className="max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
-        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
+        :currentVersion?.contentFormat==='markdown'?<article ref={markdownContentRef} className="max-w-none" onMouseUp={event=>captureTextAnchor(event,'markdown')}><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={components}>{currentVersion.content}</ReactMarkdown></article>
+        :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre ref={codeContentRef} onMouseUp={event=>captureTextAnchor(event,'code')} className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
       </div>
      </div>
    </div>}
   </div>}
-  {selected && currentVersion && <AcademyMaterialReaderNotes materialId={selected.materialId} materialVersionId={selected.materialVersionId} />}
+  {selected && currentVersion && <AcademyMaterialReaderNotes materialId={selected.materialId} materialVersionId={selected.materialVersionId} selectedAnchor={selectedAnchor} onJumpToAnchor={jumpToAnchor} />}
  </section>;
 };

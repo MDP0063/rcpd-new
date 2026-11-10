@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) und Mehrfachquellen pro privater Notiz (PR #134) gemergt. Aktuelle Umsetzung: bedarfsgesteuerte Statusprüfung versionierter Notizquellen; maßgeblich ist der tatsächliche Zugriff auf die konkrete Fassung, nicht eine frühere Kursteilnahme. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Reader-Notizen und Mehrfachquellen (PR #132/#134) sowie Quellenstatus (PR #135) gemergt. Folgeabschnitt in Arbeit: stabile Markdown-/Code-Textanker pro Quelle. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `052410e19a5046bedd7d730d78d7b5eb7d815431` (`main` beim Start von PR #135).  
 **Aktueller Umsetzungsbranch:** `feature/academy-private-note-source-status`; Statusanzeige und serverseitige Prüfung privater Notizquellen werden umgesetzt.
@@ -305,7 +305,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 **Prüfergebnis:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle sowie CI geprüft. PR #134 wurde nach erfolgreicher GitHub-CI (436/436 Tests, TypeScript und Produktionsbuild) und Codeprüfung gemergt. Der optionale Render-Deploy-Schritt wurde übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung wurden nicht verifiziert.
 
-**In Umsetzung mit PR #135:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Weiterhin offen bleiben stabile Seiten-/Textstellenanker samt Warnung bei nicht mehr eindeutig zuordenbaren Referenzen; diese hängen von einer belastbaren Ankerstrategie ab.
+**In Umsetzung mit PR #135:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Für Markdown- und Code-Materialien ist die stabile Ankerstrategie mit PR #136 umgesetzt; PDF-Seitenanker bleiben bis zur Wiederaufnahme der PDF-Infrastruktur zurückgestellt.
 
 
 ## 10.11.2026 – Status privater Notizquellen (in Umsetzung)
@@ -317,3 +317,14 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Frühere/beendete Kursteilnahme ist nicht ausschlaggebend, wenn der Nutzer die konkrete Fassung aktuell direkt lesen darf.
 - GitHub-CI für PR #135: 436/436 Tests bestanden; TypeScript-Prüfung und Produktionsbuild erfolgreich. Die PR-Vorlagenprüfung wurde nach Ergänzung des erforderlichen `feature`-Labels ebenfalls erfolgreich wiederholt.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein Produktionsdeployment durchgeführt.
+
+
+## 0.2 Textanker für private Notizen und Lesezeichen – PR #136, CI erfolgreich
+
+- Beschlossene Strategie: Anker pro Materialquelle, exakte Materialversionsbindung, Auswahltext plus Kontext und Markdown-Überschriftenpfad bzw. Code-Zeilenbereich.
+- Eindeutige Wiederfindung ist Voraussetzung für das Anspringen. Fehlende/mehrdeutige Treffer dürfen nicht automatisch auf eine ähnliche Position umgedeutet werden.
+- Die erste Implementierung ergänzt das optionale Ankerdatenmodell, serverseitige Validierung, Auswahl im Reader, Speichern mit neu erstellten Notizen/Lesezeichen sowie die Prüfung und Navigation zu eindeutigen Treffern.
+- Bestehende Notizen ohne Anker bleiben rückwärtskompatibel. Keine PDF-Funktionalität und keine Übertragung auf neue Materialversionen.
+- Detailreview ergänzt: Markdown-Wiederfindung berücksichtigt zusätzlich den gespeicherten Überschriftenpfad; Anker-Schreibaktionen werden während ungespeicherter Notizänderungen blockiert.
+- GitHub-CI für PR #136: 443/443 Tests bestanden; TypeScript-Prüfung und Produktionsbuild erfolgreich. PR-Vorlagenprüfung erfolgreich.
+- Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.

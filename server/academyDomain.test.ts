@@ -132,6 +132,31 @@ test('private notes support multiple unique exact material-version sources while
   })) }).ok, false);
 });
 
+test('private note source anchors are optional but strictly validated', () => {
+  const anchored = {
+    ...note,
+    sources: [{
+      materialId: 'material_1',
+      materialVersionId: 'material_1__v1',
+      anchor: {
+        kind: 'markdown' as const,
+        quote: 'Selected passage',
+        prefix: 'before ',
+        suffix: ' after',
+        headingPath: ['Grundlagen', 'Zugriff']
+      }
+    }]
+  };
+  assert.deepEqual(validatePrivateNote(anchored), { ok: true });
+  assert.equal(validatePrivateNote({ ...anchored, sources: [{ ...anchored.sources[0], anchor: {
+    ...anchored.sources[0].anchor, quote: 'x'.repeat(1001)
+  }}] }).ok, false);
+  assert.equal(validatePrivateNote({ ...anchored, sources: [{ ...anchored.sources[0], anchor: {
+    kind: 'code', quote: 'x', prefix: '', suffix: '', startLine: 0, endLine: 1
+  }}] }).ok, false);
+  assert.equal(validatePrivateNote({ ...note, sources: [{ materialId: 'material_1', materialVersionId: 'material_1__v1' }] }).ok, true);
+});
+
 test('private notes reject malformed optional title and content values', () => {
   assert.equal(validatePrivateNote({ ...note, title: { text: 'invalid' } } as never).ok, false);
   assert.equal(validatePrivateNote({ ...note, content: { text: 'invalid' } } as never).ok, false);

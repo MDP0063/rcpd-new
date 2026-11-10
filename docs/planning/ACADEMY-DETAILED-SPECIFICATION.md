@@ -713,6 +713,17 @@ Notizen und Lesezeichen sind persönliche, private Inhalte. Eine Sharing-Funktio
 
 Sie sind an die konkrete Dokumentversion gebunden. Eine neue Dokumentfassung verschiebt die Referenz nicht automatisch. Beim Öffnen einer neuen Fassung kann ein Hinweis auf persönliche Notizen oder Lesezeichen aus einer älteren Version sinnvoll sein; die ursprüngliche Referenz bleibt erhalten.
 
+### 12.1a Stabile Textanker für Markdown und Code (beschlossen am 10.11.2026)
+
+Textanker werden je Materialquelle einer privaten Notiz gespeichert. Dadurch kann eine Notiz mehrere konkrete Materialversionen mit jeweils eigener Textstelle referenzieren. Ein Lesezeichen bleibt auf genau eine Quelle begrenzt. Ein fehlender Anker ist für ältere Notizen und Quellen ohne Textauswahl weiterhin gültig.
+
+- Markdown-Anker speichern die exakt ausgewählte Textpassage, den begrenzten unmittelbaren Vor- und Nachtextkontext sowie – soweit im Reader bestimmbar – den Überschriftenpfad.
+- Code-Anker speichern die exakt ausgewählte Quelltextpassage, den Kontext und die ursprüngliche Zeilenposition. Quelltext bleibt reine Anzeige und wird niemals ausgeführt.
+- Auswahl über mehrere getrennte Textknoten wird nicht stillschweigend angenähert; ein Anker wird nur bei einer exakt abbildbaren Auswahl erstellt.
+- Beim Wiederfinden werden Passage und Kontext geprüft. Genau ein Treffer darf angesprungen werden. Kein Treffer wird als nicht mehr auffindbar, mehrere Treffer als mehrdeutig gemeldet. Es erfolgt niemals eine automatische Auswahl des „wahrscheinlichsten“ Treffers.
+- Die Zuordnung bleibt an die exakte Materialversion gebunden. Es gibt keine automatische Übertragung auf eine neuere Fassung.
+- Anker sind nur Navigationsmetadaten innerhalb bereits zugänglicher Inhalte. Sie gewähren keine Leserechte und dürfen keine Materialinhalte über private Notiz- oder Statusendpunkte offenlegen.
+
 ### 12.2 Funktionen
 
 Als Zielumfang wurden festgehalten:

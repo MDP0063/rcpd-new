@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
+  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
   AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail
 } from '../src/types/academy.ts';
@@ -85,7 +85,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function normalizePrivateNoteSources(
   value: unknown,
   fallback: { materialId: string; materialVersionId: string }
-): Array<{ materialId: string; materialVersionId: string }> {
+): AcademyPrivateNoteSource[] {
   const input = value === undefined ? [fallback] : value;
   if (!Array.isArray(input) || input.length < 1 || input.length > 25) {
     throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
@@ -95,7 +95,21 @@ function normalizePrivateNoteSources(
     const materialId = boundedText(source.materialId, 120);
     const materialVersionId = boundedText(source.materialVersionId, 160);
     if (!materialId || !materialVersionId) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
-    return { materialId, materialVersionId };
+    const anchor = source.anchor;
+    if (anchor !== undefined && !isObject(anchor)) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+    return {
+      materialId,
+      materialVersionId,
+      ...(isObject(anchor) ? { anchor: {
+        kind: anchor.kind,
+        quote: anchor.quote,
+        prefix: anchor.prefix,
+        suffix: anchor.suffix,
+        ...(anchor.headingPath === undefined ? {} : { headingPath: anchor.headingPath }),
+        ...(anchor.startLine === undefined ? {} : { startLine: anchor.startLine }),
+        ...(anchor.endLine === undefined ? {} : { endLine: anchor.endLine })
+      } as AcademyPrivateNoteSource['anchor'] } : {})
+    };
   });
   const keys = sources.map(source => `${source.materialId}::${source.materialVersionId}`);
   if (new Set(keys).size !== keys.length) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');

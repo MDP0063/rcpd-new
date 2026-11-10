@@ -325,3 +325,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Die Materialstruktur trennt Materialstamm, Arbeitsentwurf und unveränderliche veröffentlichte Materialversion. Das Speichern eines Entwurfs veröffentlicht nicht; eine ausdrückliche Veröffentlichung erzeugt einen neuen Snapshot. Kursreferenzen bleiben an konkrete `materialId`-/`materialVersionId`-Paare gebunden.
 - Die neue Verwaltung nutzt die bestehende Kurszuständigkeit getrennt vom Materialcode. Kursverantwortliche veröffentlichen im zugewiesenen Bereich selbst; Archivierung bleibt Admin/Colonel vorbehalten. Der Teilnehmer-Reader und die Materialauswahl im Kurseditor sind noch nicht Teil dieses Implementierungsschritts.
 
+
+
+## L. Private Notizen – stabile Textanker (10.11.2026)
+
+- **BESCHLOSSEN:** Textanker werden pro konkreter Materialquelle gespeichert, nicht pauschal auf der Notiz. Mehrfachquellen können jeweils eigene Positionen enthalten; Lesezeichen bleiben Einzelquellen.
+- **BESCHLOSSEN:** Markdown-Anker verwenden ausgewählten Text, begrenzten Vor-/Nachtextkontext und Überschriftenpfad. Code-Anker verwenden exakten Quelltext, Kontext und ursprüngliche Zeilenposition.
+- **BESCHLOSSEN:** Nur eindeutige Treffer werden automatisch angesprungen. Fehlende oder mehrdeutige Treffer werden ausdrücklich gemeldet; keine heuristische automatische Auswahl.
+- **BESCHLOSSEN:** Anker bleiben an die exakte Materialversion gebunden; keine automatische Übertragung auf neue Fassungen.
+- **BESCHLOSSEN:** Anker vermitteln keinerlei Leserechte und dürfen gesperrte Materialinhalte nicht offenlegen.

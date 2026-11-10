@@ -3,11 +3,13 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
-import type { AcademyPrivateNoteDoc } from '../types/academy';
+import type { AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor } from '../types/academy';
 
 interface Props {
   materialId: string;
   materialVersionId: string;
+  selectedAnchor?: AcademyPrivateNoteTextAnchor | null;
+  onJumpToAnchor?: (anchor: AcademyPrivateNoteTextAnchor) => 'resolved' | 'missing' | 'ambiguous';
 }
 
 type NoteDraft = {
@@ -32,7 +34,7 @@ function parseTags(value: string): string[] {
   return [...new Set(value.split(',').map(tag => tag.trim()).filter(Boolean))].slice(0, 20).map(tag => tag.slice(0, 40));
 }
 
-function noteSources(note: AcademyPrivateNoteDoc) {
+function noteSources(note: AcademyPrivateNoteDoc): AcademyPrivateNoteSource[] {
   return note.sources?.length
     ? note.sources
     : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }];
@@ -57,7 +59,7 @@ const markdownComponents = {
   img: ({ alt }: any) => <span className="text-xs text-slate-500 dark:text-slate-400">Externe Bilder sind in privaten Notizen deaktiviert{alt ? ' (' + alt + ')' : ''}.</span>
 } satisfies Components;
 
-export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId }) => {
+export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor, onJumpToAnchor }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -70,6 +72,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [saveError, setSaveError] = useState('');
   const [savingAction, setSavingAction] = useState(false);
   const [linkNoteSearch, setLinkNoteSearch] = useState('');
+  const [anchorNotice, setAnchorNotice] = useState('');
   const revisionByIdRef = useRef(new Map<string, number>());
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
@@ -251,7 +254,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         kind: 'note',
         title: '',
         content: '',
-        tags: []
+        tags: [],
+        ...(selectedAnchor ? { sources: [{ materialId, materialVersionId, anchor: selectedAnchor }] } : {})
       })
     });
     setSavingAction(false);
@@ -284,7 +288,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           method: 'PUT',
           body: JSON.stringify({
             expectedRevision: note.revision ?? 1,
-            sources: [...sources, { materialId, materialVersionId }]
+            sources: [...sources, { materialId, materialVersionId, ...(selectedAnchor ? { anchor: selectedAnchor } : {}) }]
           })
         }
       );
@@ -296,6 +300,34 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
+  const attachAnchorToNote = async (note: AcademyPrivateNoteDoc) => {
+    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction) return;
+    const sources = noteSources(note).map(source =>
+      source.materialId === materialId && source.materialVersionId === materialVersionId
+        ? { ...source, anchor: selectedAnchor }
+        : source
+    );
+    setSavingAction(true);
+    setLoadError('');
+    try {
+      const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+        API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
+        { method: 'PUT', body: JSON.stringify({ expectedRevision: note.revision ?? 1, sources }) }
+      );
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Der Textanker konnte nicht gespeichert werden.');
+        return;
+      }
+      revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
+      setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      setAnchorNotice('Textanker wurde an dieser Materialquelle gespeichert.');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Der Textanker konnte nicht gespeichert werden.');
     } finally {
       setSavingAction(false);
     }
@@ -355,7 +387,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         kind: 'bookmark',
         title: 'Lesezeichen',
         content: '',
-        tags: []
+        tags: [],
+        ...(selectedAnchor ? { sources: [{ materialId, materialVersionId, anchor: selectedAnchor }] } : {})
       })
     });
     setSavingAction(false);
@@ -432,9 +465,11 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         <p className="text-xs text-slate-600 dark:text-slate-300">
           Notizen und Lesezeichen gehören zu genau dieser Materialfassung. Sie werden automatisch mit deinem Konto synchronisiert und sind für andere Nutzer – auch Administratoren – nicht einsehbar.
         </p>
+        {selectedAnchor ? <p className="rounded-md border border-sky-200 bg-sky-50 p-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Ausgewählte Textstelle wird beim nächsten neuen Eintrag als Anker gespeichert: „{selectedAnchor.quote.slice(0, 180)}“</p> : null}
+        {anchorNotice ? <p className="text-xs text-amber-700 dark:text-amber-300" role="status">{anchorNotice}</p> : null}
         <div className="flex flex-wrap gap-2">
           <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
-            Notiz hinzufügen
+            {selectedAnchor ? 'Notiz zur Textstelle hinzufügen' : 'Notiz hinzufügen'}
           </button>
           <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {bookmarks.length ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
@@ -443,19 +478,32 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
         {loadError ? <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p> : null}
         {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
+        {bookmarks.map(note => {
+          const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
+          return <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <span>Lesezeichen{anchor ? ' · „' + anchor.quote.slice(0, 100) + '“' : ' ohne Textanker'}</span>
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(note)} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>Auswahl anheften</button> : null}
+            {anchor ? <button type="button" className={secondary} onClick={() => {
+              const result = onJumpToAnchor?.(anchor) || 'missing';
+              setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
+            }}>Textstelle anzeigen</button> : null}
+          </div>;
+        })}
         {linkedNotes.filter(note => note.kind === 'note').length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Vorhandene Notizen">
-            {linkedNotes.filter(note => note.kind === 'note').map(note => (
-              <button
-                key={note.id}
-                type="button"
-                className={note.id === selectedNoteId ? primary : secondary}
-                onClick={() => selectNote(note)}
-                disabled={hasUnsavedChanges || saveStatus !== 'saved'}
-              >
-                {note.title || 'Notiz ohne Titel'}
-              </button>
-            ))}
+            {linkedNotes.filter(note => note.kind === 'note').map(note => {
+              const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
+              return <div key={note.id} className="flex flex-wrap items-center gap-2">
+                <button type="button" className={note.id === selectedNoteId ? primary : secondary}
+                  onClick={() => selectNote(note)} disabled={hasUnsavedChanges || saveStatus !== 'saved'}>
+                  {note.title || 'Notiz ohne Titel'}
+                </button>
+                {anchor ? <button type="button" className={secondary} onClick={() => {
+                  const result = onJumpToAnchor?.(anchor) || 'missing';
+                  setAnchorNotice(result === 'resolved' ? 'Textstelle eindeutig gefunden.' : result === 'ambiguous' ? 'Textstelle ist nicht eindeutig – es wurde keine Position ausgewählt.' : 'Textstelle wurde in dieser Materialfassung nicht gefunden.');
+                }}>Textstelle anzeigen</button> : null}
+              </div>;
+            })}
           </div>
         )}
         {unlinkedNotes.length > 0 ? (
@@ -489,6 +537,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         ) : null}
         {selectedNote && draft ? (
           <div className={panel + ' space-y-3'}>
+            {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(selectedNote)} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>Ausgewählte Textstelle an diese Notiz anheften</button> : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h4>
               <span className="text-xs text-slate-600 dark:text-slate-300" role="status" aria-live="polite">
