@@ -292,6 +292,39 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     }
   };
 
+  const removeCurrentSourceFromNote = async (note: AcademyPrivateNoteDoc) => {
+    const sources = noteSources(note);
+    if (sources.length <= 1) return;
+    setSavingAction(true);
+    setLoadError('');
+    try {
+      const nextSources = sources.filter(source =>
+        source.materialId !== materialId || source.materialVersionId !== materialVersionId
+      );
+      const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+        API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            expectedRevision: note.revision ?? 1,
+            sources: nextSources
+          })
+        }
+      );
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
+        return;
+      }
+      revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
+      setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      if (selectedNoteId === note.id) setSelectedNoteId('');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
   const toggleBookmark = async () => {
     const existing = bookmarks[0];
     setSavingAction(true);
@@ -400,7 +433,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         </div>
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
         {loadError ? <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p> : null}
-        {!loading && notes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
+        {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
         {linkedNotes.filter(note => note.kind === 'note').length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Vorhandene Notizen">
             {linkedNotes.filter(note => note.kind === 'note').map(note => (
@@ -474,7 +507,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                 </div>
               </div>
             ) : null}
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap justify-between gap-2">
+              {noteSources(selectedNote).length > 1 ? (
+                <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void removeCurrentSourceFromNote(selectedNote)}>
+                  Diese Quelle lösen
+                </button>
+              ) : <span />}
               <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
             </div>
           </div>
