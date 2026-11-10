@@ -2422,8 +2422,6 @@ export default function App() {
               totalOfficersCount={roster.length}
               onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
               onStatusToast={triggerToast}
-              reviewNavigationTarget={academyReviewNavigationTarget}
-              onReviewNavigationConsumed={() => setAcademyReviewNavigationTarget(null)}
             />
           )}
 
@@ -2476,6 +2474,8 @@ export default function App() {
               userProgress={userProgress}
               onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
               onStatusToast={triggerToast}
+              reviewNavigationTarget={academyReviewNavigationTarget}
+              onReviewNavigationConsumed={() => setAcademyReviewNavigationTarget(null)}
             />
           )}
 
