@@ -20,6 +20,7 @@ import {
   assertExamDocumentId,
   assertExamQuery
 } from './examRepositoryRules.ts';
+import { anonymizeIdentityReferences } from './privacyAnonymization.ts';
 
 const operationQueues = new Map<string, Promise<void>>();
 
@@ -308,6 +309,26 @@ export class JsonExamStorageAdapter implements ExamStorageAdapter {
       }
       state.maintenanceMode = enabled;
       await this.writeState(state);
+    });
+  }
+
+  async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('EXAM_ANONYMIZATION_INPUT_INVALID');
+    return this.runExclusive(async () => {
+      const state = await this.readState();
+      const working = clone(state);
+      for (const collection of EXAM_COLLECTIONS) {
+        for (const [key, document] of Object.entries(working.collections[collection])) {
+          const anonymized = anonymizeIdentityReferences(document, uid, anonymizedUid, identityNames);
+          if (JSON.stringify(anonymized) !== JSON.stringify(document)) {
+            // This dedicated privacy path changes identity references only. It deliberately
+            // does not expose ordinary updates to append-only exam attempts.
+            assertExamDocument(collection, document.id, anonymized);
+            working.collections[collection][key] = anonymized;
+          }
+        }
+      }
+      await this.writeState(working);
     });
   }
 
