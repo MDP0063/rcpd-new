@@ -180,9 +180,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       reviewerUid: 'http-admin',
       reviewerFeedback: 'Accepted',
       updatedIso: '2026-11-10T08:00:00.000Z'
-    }],
-    // Account-deletion fixture: preserve the decision while removing applicant identity data.
-    applications: [{
+    }, {
       id: 'app-to-anonymize',
       applicantUid: 'http-applicant',
       applicantName: 'HttpApplicant',
