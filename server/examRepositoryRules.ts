@@ -303,8 +303,8 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
       }
     }
-    const previousClaim = existing.reviewClaim ?? null;
-    const nextClaim = next.reviewClaim ?? null;
+    const previousClaim = (existing.reviewClaim ?? null) as Record<string, unknown> | null;
+    const nextClaim = (next.reviewClaim ?? null) as Record<string, unknown> | null;
     if (!isDeepStrictEqual(previousClaim, nextClaim) && !historyAppended) {
       const sameOwner = previousClaim && nextClaim && previousClaim.reviewerUid === nextClaim.reviewerUid;
       if (!sameOwner) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
