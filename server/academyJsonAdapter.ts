@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { ACADEMY_COLLECTIONS, ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyCanDelete, assertAcademyCanUpdate, assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
+import { anonymizeIdentityReferences } from './privacyAnonymization.ts';
 
 type State = { version: 6; collections: Record<AcademyCollection, Record<string, AcademyDocument>> };
 type ParsedState = { version: 1 | 2 | 3 | 4 | 5 | 6; collections: Partial<Record<AcademyCollection, Record<string, AcademyDocument>>> };
@@ -130,6 +131,26 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
       // Private notes are owner-only and never part of an administrator backup.
       next.collections.academy_private_notes = current.collections.academy_private_notes;
       await this.write(next);
+    });
+  }
+  async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
+    if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('ACADEMY_ANONYMIZATION_INPUT_INVALID');
+    return this.exclusive(async () => {
+      const state = await this.read();
+      for (const collection of ACADEMY_COLLECTIONS) {
+        for (const [key, document] of Object.entries(state.collections[collection])) {
+          if (collection === 'academy_private_notes' && document.ownerUid === uid) {
+            delete state.collections[collection][key];
+            continue;
+          }
+          const anonymized = anonymizeIdentityReferences(document, uid, anonymizedUid, identityNames);
+          if (JSON.stringify(anonymized) !== JSON.stringify(document)) {
+            assertAcademyDocument(collection, document.id, anonymized);
+            state.collections[collection][key] = anonymized;
+          }
+        }
+      }
+      await this.write(state);
     });
   }
   async runTransaction<T>(operation: (transaction: AcademyTransaction) => Promise<T>): Promise<T> {
