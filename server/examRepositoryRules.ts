@@ -264,7 +264,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     return;
   }
   if (existing.status === 'pending_review' && next.status === 'pending_review') {
-    const mutable = new Set(['reviewClaim', 'reviewClaimHistory']);
+    const mutable = new Set(['reviewClaim', 'reviewClaimHistory', 'reviewDraft', 'reviewDraftRevision', 'reviewDraftUpdatedAtIso', 'reviewDraftUpdatedByUid']);
     const strip = (document: ExamDocument) => Object.fromEntries(
       Object.entries(document).filter(([key]) => !mutable.has(key))
     );
@@ -285,6 +285,34 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       }
     }
 
+    const draft = next.reviewDraft;
+    const nextReviewClaim = next.reviewClaim as { reviewerUid?: string; disconnectedAtIso?: string } | null | undefined;
+    if (draft !== undefined && (typeof draft !== 'object' || draft === null || Array.isArray(draft) ||
+        Object.entries(draft).some(([questionId, points]) =>
+          !questionId.trim() || questionId.length > 128 || !Number.isSafeInteger(points) || Number(points) < 0
+        ))) {
+      throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+    }
+    const previousDraft = existing.reviewDraft ?? {};
+    const nextDraft = next.reviewDraft ?? {};
+    const draftChanged = !isDeepStrictEqual(previousDraft, nextDraft);
+    const previousDraftRevision = Number.isSafeInteger(existing.reviewDraftRevision) ? Number(existing.reviewDraftRevision) : 0;
+    const nextDraftRevision = Number.isSafeInteger(next.reviewDraftRevision) ? Number(next.reviewDraftRevision) : 0;
+    if (draftChanged) {
+      if (nextDraftRevision !== previousDraftRevision + 1 ||
+          typeof next.reviewDraftUpdatedByUid !== 'string' || !next.reviewDraftUpdatedByUid.trim() ||
+          !nextReviewClaim || nextReviewClaim.reviewerUid !== next.reviewDraftUpdatedByUid || nextReviewClaim.disconnectedAtIso !== undefined ||
+          typeof next.reviewDraftUpdatedAtIso !== 'string' || Number.isNaN(Date.parse(next.reviewDraftUpdatedAtIso))) {
+        throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+      }
+    } else if (
+      nextDraftRevision !== previousDraftRevision ||
+      !isDeepStrictEqual(next.reviewDraftUpdatedAtIso, existing.reviewDraftUpdatedAtIso) ||
+      !isDeepStrictEqual(next.reviewDraftUpdatedByUid, existing.reviewDraftUpdatedByUid)
+    ) {
+      throw new Error('EXAM_REVIEW_DRAFT_INVALID');
+    }
+
     const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
     const nextHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
     const historyUnchanged = isDeepStrictEqual(previousHistory, nextHistory);
@@ -296,7 +324,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     if (historyAppended) {
       const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
       if (!entry || Object.keys(entry).some(key => !['action', 'actorUid', 'targetUid', 'atIso'].includes(key)) ||
-          !['claimed', 'released', 'auto_released'].includes(String(entry.action)) ||
+          !['claimed', 'reclaimed', 'released', 'auto_released'].includes(String(entry.action)) ||
           typeof entry.actorUid !== 'string' || !entry.actorUid.trim() ||
           (entry.targetUid !== undefined && (typeof entry.targetUid !== 'string' || !entry.targetUid.trim())) ||
           typeof entry.atIso !== 'string' || Number.isNaN(Date.parse(entry.atIso))) {
@@ -317,6 +345,15 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           !nextClaim || previousClaim !== null ||
           entry.actorUid !== nextClaim.reviewerUid ||
           entry.targetUid !== nextClaim.reviewerUid
+        )) ||
+        (action === 'reclaimed' && (
+          previousClaim === null || nextClaim === null ||
+          !previousClaim.disconnectedAtIso ||
+          previousClaim.reviewerUid !== nextClaim.reviewerUid ||
+          entry.actorUid !== previousClaim.reviewerUid ||
+          entry.targetUid !== nextClaim.reviewerUid ||
+          previousClaim.claimedAtIso === nextClaim.claimedAtIso ||
+          nextClaim.disconnectedAtIso !== undefined
         )) ||
         (action === 'released' && (
           previousClaim === null || nextClaim !== null ||

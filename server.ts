@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1913,11 +1913,13 @@ async function startServer() {
       EXAM_REVIEW_CLAIMED: { status: 409, message: 'Dieser Vorgang wird bereits von einem anderen Prüfer bearbeitet.' },
       EXAM_REVIEW_CLAIM_REQUIRED: { status: 409, message: 'Beanspruche diesen Vorgang zuerst, bevor du ihn bearbeitest.' },
       EXAM_REVIEW_CLAIM_NOT_OWNED: { status: 409, message: 'Du bist nicht mehr für diesen Vorgang zuständig. Die Bearbeitung wurde gesperrt.' },
+      EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED: { status: 409, message: 'Nach der Wiederverbindung musst du den Vorgang erneut beanspruchen, bevor du weiterarbeiten kannst.' },
       EXAM_REVIEW_CLAIM_ACTOR_INVALID: { status: 400, message: 'Die Prüferdaten sind ungültig.' },
       EXAM_REVIEW_CLAIM_TIME_INVALID: { status: 400, message: 'Der Claim-Zeitpunkt ist ungültig.' },
       EXAM_REVIEW_CLAIM_HISTORY_LIMIT: { status: 409, message: 'Die Claim-Historie hat ihre zulässige Größe erreicht.' },
       EXAM_REVIEW_CLAIM_HISTORY_INVALID: { status: 409, message: 'Die Claim-Historie ist ungültig.' },
       EXAM_REVIEW_CLAIM_INVALID: { status: 409, message: 'Der gespeicherte Claim ist ungültig.' },
+      EXAM_REVIEW_DRAFT_INVALID: { status: 400, message: 'Der Bewertungsentwurf enthält ungültige Angaben.' },
       EXAM_REVIEW_CORRECTION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die korrigiert werden kann.' },
       EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
       EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
@@ -2034,6 +2036,32 @@ async function startServer() {
       }
       await markExamReviewDisconnected(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
       res.json({ disconnected: true });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.put('/api/academy/exams/:id/attempts/:attemptId/review-draft', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          attempt.userId === caller.uid ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diesen Bewertungsvorgang fehlt die Berechtigung.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+          Object.keys(req.body).some(key => key !== 'questionId' && key !== 'pointsEarnedMilli') ||
+          typeof req.body.questionId !== 'string' ||
+          (req.body.pointsEarnedMilli !== null && typeof req.body.pointsEarnedMilli !== 'number')) {
+        res.status(400).json({ error: 'Der Bewertungsentwurf ist ungültig.' }); return;
+      }
+      const draft = await saveExamReviewDraft(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
+        req.body.questionId, req.body.pointsEarnedMilli
+      );
+      res.json(draft);
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
