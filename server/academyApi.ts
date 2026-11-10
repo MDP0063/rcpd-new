@@ -210,55 +210,69 @@ function makeProgramDraft(programId: string, body: Record<string, unknown>, work
 export async function resolveAcademyCourseCompletion(
   repository: AcademyRepository,
   participation: AcademyCourseParticipationDoc,
-  resolveReleasedFinalExam?: FinalExamProofResolver
+  resolveReleasedFinalExam?: FinalExamProofResolver,
+  includeDetails = false
 ) {
-    const [version, evidence, corrections, courseMaster] = await Promise.all([
-      repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId),
+  const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
+  if (!version || version.courseId !== participation.courseId) throw new Error('ACADEMY_PINNED_VERSION_MISSING');
+  const assessmentRequirements = version.completionRequirements.filter(item =>
+    item.type === 'required_assessment' && (includeDetails || item.required)
+  );
+  const assessmentProofs: Record<string, AcademyAssessmentProof> = {};
+  if (assessmentRequirements.length > 0 && resolveReleasedFinalExam) {
+    const courseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+    if (courseMaster) {
+      for (const requirement of assessmentRequirements) {
+        const proof = await resolveReleasedFinalExam(participation.userUid, requirement.targetId, courseMaster.code);
+        if (proof) assessmentProofs[requirement.id] = proof;
+      }
+    }
+  }
+  const requiresLiveAssessment = version.completionRequirements.some(item =>
+    item.required && item.type === 'required_assessment'
+  );
+  if (!requiresLiveAssessment) {
+    if (!includeDetails) return { participation, version, evidence: [], corrections: [], assessmentProofs };
+    const [evidence, corrections] = await Promise.all([
       repository.listParticipationEvidence(participation.id),
-      repository.listParticipationCorrections(participation.id),
-      repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId)
+      repository.listParticipationCorrections(participation.id)
     ]);
-    if (!version || version.courseId !== participation.courseId) throw new Error('ACADEMY_PINNED_VERSION_MISSING');
-    const assessmentProofs: Record<string, AcademyAssessmentProof> = {};
-    for (const requirement of version.completionRequirements.filter(item => item.type === 'required_assessment')) {
-      const proof = resolveReleasedFinalExam && courseMaster
-        ? await resolveReleasedFinalExam(participation.userUid, requirement.targetId, courseMaster.code)
-        : null;
-      if (proof) assessmentProofs[requirement.id] = proof;
-    }
-    const required = version.completionRequirements.filter(item => item.required);
-    if (!required.some(item => item.type === 'required_assessment')) {
-      return { participation, version, evidence, corrections, assessmentProofs };
-    }
-    const invalidated = new Set(corrections.flatMap(item => item.invalidatedEvidenceIds ?? []));
-    const activeEvidence = evidence.filter(item => !invalidated.has(item.id));
-    const complete = required.length > 0 && required.every(requirement =>
-      requirement.type === 'required_assessment'
-        ? Boolean(assessmentProofs[requirement.id])
-        : activeEvidence.some(item => item.requirementId === requirement.id)
-    );
-    if (complete) {
-      const completionTimes = required.flatMap(requirement => {
-        if (requirement.type === 'required_assessment') {
-          const timestamp = assessmentProofs[requirement.id]?.releasedAtIso;
-          return timestamp ? [timestamp] : [];
-        }
-        return activeEvidence.filter(item => item.requirementId === requirement.id).map(item => item.recordedIso);
-      }).filter(value => Number.isFinite(Date.parse(value))).sort();
-      const completedIso = completionTimes[completionTimes.length - 1] || participation.completedIso || participation.updatedIso;
-      return {
-        participation: { ...participation, status: 'completed' as const, completedIso },
-        version, evidence, corrections, assessmentProofs
-      };
-    }
-    if (participation.status === 'completed') {
-      const { completedIso: _completedIso, ...inProgress } = participation;
-      return {
-        participation: { ...inProgress, status: 'in_progress' as const },
-        version, evidence, corrections, assessmentProofs
-      };
-    }
     return { participation, version, evidence, corrections, assessmentProofs };
+  }
+  const [evidence, corrections] = await Promise.all([
+    repository.listParticipationEvidence(participation.id),
+    repository.listParticipationCorrections(participation.id)
+  ]);
+  const invalidated = new Set(corrections.flatMap(item => item.invalidatedEvidenceIds ?? []));
+  const activeEvidence = evidence.filter(item => !invalidated.has(item.id));
+  const required = version.completionRequirements.filter(item => item.required);
+  const complete = required.length > 0 && required.every(requirement =>
+    requirement.type === 'required_assessment'
+      ? Boolean(assessmentProofs[requirement.id])
+      : activeEvidence.some(item => item.requirementId === requirement.id)
+  );
+  if (complete) {
+    const completionTimes = required.flatMap(requirement => {
+      if (requirement.type === 'required_assessment') {
+        const timestamp = assessmentProofs[requirement.id]?.releasedAtIso;
+        return timestamp ? [timestamp] : [];
+      }
+      return activeEvidence.filter(item => item.requirementId === requirement.id).map(item => item.recordedIso);
+    }).filter(value => Number.isFinite(Date.parse(value))).sort();
+    const completedIso = completionTimes[completionTimes.length - 1] || participation.completedIso || participation.updatedIso;
+    return {
+      participation: { ...participation, status: 'completed' as const, completedIso },
+      version, evidence, corrections, assessmentProofs
+    };
+  }
+  if (participation.status === 'completed') {
+    const { completedIso: _completedIso, ...inProgress } = participation;
+    return {
+      participation: { ...inProgress, status: 'in_progress' as const },
+      version, evidence, corrections, assessmentProofs
+    };
+  }
+  return { participation, version, evidence, corrections, assessmentProofs };
 }
 
 export function createAcademyApiRouter(
@@ -1247,7 +1261,7 @@ export function createAcademyApiRouter(
       const isOwner = participation.userUid === actor.uid;
       const isManager = Boolean(master && canManage(actor, master.ownerUid));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
-      const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
+      const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam, true);
       const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
       const references = version.chapters.flatMap(chapter => chapter.materialReferences.map(reference => ({ ...reference, chapterId: chapter.id, chapterTitle: chapter.title, chapterOrder: chapter.order })));
       const materials: AcademyCourseMaterialReaderItem[] = await Promise.all(references.map(async reference => {
