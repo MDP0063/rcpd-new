@@ -14,7 +14,7 @@ import { getDefaultGranularPermissions } from './rolePermissions.ts';
 const TEST_PASSWORD = 'Exam-http-test-password-123';
 const TEST_EXAM_ID = 'http-workshop-exam';
 
-function makeAccount(uid: string, username: string, role: 'admin' | 'officer', permissions?: ReturnType<typeof getDefaultGranularPermissions>) {
+function makeAccount(uid: string, username: string, role: 'admin' | 'officer' | 'trainee', permissions?: ReturnType<typeof getDefaultGranularPermissions>) {
   const nowIso = new Date().toISOString();
   return {
     uid,
@@ -29,9 +29,9 @@ function makeAccount(uid: string, username: string, role: 'admin' | 'officer', p
       displayName: username,
       badgeNumber: uid,
       callsign: username,
-      rank: role === 'admin' ? 'Chief' : 'Officer',
+      rank: role === 'admin' ? 'Chief' : role === 'trainee' ? 'Trainee' : 'Officer',
       role,
-      clearanceLevel: 10,
+      clearanceLevel: role === 'admin' ? 10 : role === 'officer' ? 5 : 1,
       division: 'HTTP test fixture',
       whitelistStatus: 'whitelisted',
       granularPermissions: permissions || getDefaultGranularPermissions(role),
