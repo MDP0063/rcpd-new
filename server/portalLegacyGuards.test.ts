@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   canAccessDirectMessage,
+  canSelfSubmitLegacyExamResult,
   isPendingPortalRequest,
   isReviewableApplicationStatus,
   parsePortalDatabaseText,
@@ -62,4 +63,12 @@ test('whitelist form fields are validated and bounded', () => {
   assert.equal(validateApplicationSubmission({ ...input, penalCodeAck: false }), null);
   assert.match(validateApplicationSubmission({ ...input, penalCodeAck: 'true' }) || '', /ungültig/);
   assert.match(validateApplicationSubmission({ ...input, discordTag: undefined }) || '', /Discord-Kennung/);
+});
+
+
+test('client-submitted results are accepted only for server-scored structured quizzes', () => {
+  assert.equal(canSelfSubmitLegacyExamResult('structured_quiz'), true);
+  assert.equal(canSelfSubmitLegacyExamResult('interactive_code'), false);
+  assert.equal(canSelfSubmitLegacyExamResult(undefined), false);
+  assert.equal(canSelfSubmitLegacyExamResult('unknown'), false);
 });
