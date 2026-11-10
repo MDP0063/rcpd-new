@@ -5,6 +5,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPrivateNoteTextAnchor } from '../types/academy';
 import { createTextAnchor, resolveTextAnchor } from '../lib/academyTextAnchors';
+import { createAcademyReaderPositionKey, parseAcademyReaderPosition, serializeAcademyReaderPosition } from '../lib/academyReaderPosition';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
@@ -30,6 +31,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  const [selectedAnchor,setSelectedAnchor]=useState<AcademyPrivateNoteTextAnchor|null>(null);
  const markdownContentRef=useRef<HTMLElement|null>(null);
  const codeContentRef=useRef<HTMLPreElement|null>(null);
+ const readerPositionReadyRef=useRef(false);
  const jumpToAnchor=(anchor:AcademyPrivateNoteTextAnchor):'resolved'|'missing'|'ambiguous'=>{
   const root=anchor.kind==='markdown'?markdownContentRef.current:codeContentRef.current;
   if(!root)return 'missing';
@@ -77,6 +79,65 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    .finally(()=>{if(active)setLoading(false);});
   return()=>{active=false;};
  },[participationId,selected]);
+ const readerPositionKey=useMemo(()=>selected?createAcademyReaderPositionKey(participationId,selected.materialId,selected.materialVersionId):null,[participationId,selected?.materialId,selected?.materialVersionId]);
+ useEffect(()=>{
+  if(!selected||!currentVersion||!readerPositionKey){readerPositionReadyRef.current=false;return;}
+  readerPositionReadyRef.current=false;
+  let restoreFrame:number|null=null;
+  let saveTimer:number|null=null;
+  const readPosition=()=>{
+   try{return parseAcademyReaderPosition(window.localStorage.getItem(readerPositionKey));}
+   catch{return null;}
+  };
+  const capturePosition=()=>{
+   if(!readerPositionReadyRef.current)return;
+   let position:{kind:'markdown'|'code';offset:number}|null=null;
+   if(currentVersion.contentFormat==='markdown'){
+    const article=markdownContentRef.current;
+    if(article){
+     const articleTop=article.getBoundingClientRect().top+window.scrollY;
+     position={kind:'markdown',offset:Math.max(0,Math.min(article.scrollHeight,window.scrollY-articleTop))};
+    }
+   }else if(currentVersion.contentFormat==='code'){
+    const code=codeContentRef.current;
+    if(code)position={kind:'code',offset:Math.max(0,Math.min(code.scrollHeight,code.scrollTop))};
+   }
+   if(position){
+    try{window.localStorage.setItem(readerPositionKey,serializeAcademyReaderPosition(position));}
+    catch{/* Local position storage is optional when browser storage is unavailable. */}
+   }
+  };
+  const scheduleSave=()=>{
+   if(!readerPositionReadyRef.current)return;
+   if(saveTimer!==null)window.clearTimeout(saveTimer);
+   saveTimer=window.setTimeout(()=>{saveTimer=null;capturePosition();},250);
+  };
+  const flushSave=()=>{
+   if(saveTimer!==null){window.clearTimeout(saveTimer);saveTimer=null;}
+   capturePosition();
+  };
+  const saved=readPosition();
+  restoreFrame=window.requestAnimationFrame(()=>{
+   if(currentVersion.contentFormat==='markdown'&&saved?.kind==='markdown'&&markdownContentRef.current){
+    const articleTop=markdownContentRef.current.getBoundingClientRect().top+window.scrollY;
+    window.scrollTo({top:articleTop+saved.offset,behavior:'auto'});
+   }else if(currentVersion.contentFormat==='code'&&saved?.kind==='code'&&codeContentRef.current){
+    codeContentRef.current.scrollTop=saved.offset;
+   }
+   readerPositionReadyRef.current=true;
+  });
+  if(currentVersion.contentFormat==='markdown')window.addEventListener('scroll',scheduleSave,{passive:true});
+  else codeContentRef.current?.addEventListener('scroll',scheduleSave,{passive:true});
+  window.addEventListener('pagehide',flushSave);
+  return()=>{
+   if(restoreFrame!==null)window.cancelAnimationFrame(restoreFrame);
+   if(currentVersion.contentFormat==='markdown')window.removeEventListener('scroll',scheduleSave);
+   else codeContentRef.current?.removeEventListener('scroll',scheduleSave);
+   window.removeEventListener('pagehide',flushSave);
+   flushSave();
+   readerPositionReadyRef.current=false;
+  };
+ },[readerPositionKey,currentVersion]);
  const headings=useMemo(()=>currentVersion?.contentFormat==='markdown'?extractHeadings(currentVersion.content):[],[currentVersion]);
  const components=useMemo(()=>{
    const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6') => {
