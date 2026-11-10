@@ -246,5 +246,5 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 
 ### Ergebnisfreigabe und Kursabschlussnachweis – verbleibende Punkte
 - Die manuelle Erstfreigabe ohne explizite Konfiguration ist umgesetzt (PR #144). Eine explizite automatische Freigabekonfiguration ist derzeit im Datenmodell/Workshop nicht vorhanden und bleibt eine spätere offene Erweiterung; bis dahin darf kein automatischer Modus angenommen werden.
-- Die dynamische serverseitige `required_assessment`-Verifikation ist in Umsetzung auf `feature/academy-final-exam-evidence`: nur aktuell freigegebene bestandene `final_exam`-Versuche mit passender Teilnehmer- und Kurskennung zählen. Es wird kein persistentes Academy-Duplikat des Prüfungsnachweises erzeugt.
+- Die dynamische serverseitige `required_assessment`-Verifikation ist in PR #146 umgesetzt: nur aktuell freigegebene bestandene `final_exam`-Versuche mit passender Teilnehmer- und Kurskennung zählen. Es wird kein persistentes Academy-Duplikat des Prüfungsnachweises erzeugt; CI und Diff-Review laufen bzw. stehen vor dem Merge aus.
 - Noch zu prüfen: CI, unabhängiger Diff-Review und die anschließende Produktions-/Browserprüfung. Die manuelle Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt.
