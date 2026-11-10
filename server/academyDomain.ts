@@ -440,6 +440,13 @@ export function validateCourseMaster(master: AcademyCourseMasterDoc): AcademyVal
       return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_STATE_INVALID', 'Ein Kurs mit erforderlicher Materialaktualisierung muss offline bleiben.');
     }
   }
+  if (master.materialReviewAwaitingActivation !== undefined &&
+      (typeof master.materialReviewAwaitingActivation !== 'boolean' ||
+        (master.materialReviewAwaitingActivation &&
+          (master.publicationStatus !== 'published' || master.availability !== 'unavailable' ||
+            (master.materialReviewPending?.length ?? 0) > 0 || (master.materialReviewVersionRequired?.length ?? 0) > 0)))) {
+    return invalid('ACADEMY_COURSE_MATERIAL_REVIEW_ACTIVATION_STATE_INVALID', 'Ein Kurs mit ausstehender manueller Reaktivierung muss offline sein und darf keine offene Materialprüfung haben.');
+  }
   return { ok: true };
 }
 
