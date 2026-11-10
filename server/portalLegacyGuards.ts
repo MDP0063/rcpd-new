@@ -16,6 +16,14 @@ export function parsePortalDatabaseText(raw: string): Record<string, unknown> {
   return parsed;
 }
 
+/**
+ * Reads an optional legacy JSON database during Firestore bootstrap.
+ * Only a genuinely absent file means "no migration source"; existing invalid data must fail closed.
+ */
+export function parseOptionalPortalDatabaseText(raw: string | null): Record<string, unknown> | null {
+  return raw === null ? null : parsePortalDatabaseText(raw);
+}
+
 export interface DirectMessageAccessRecord {
   senderUid: string;
   recipientUid: string;
