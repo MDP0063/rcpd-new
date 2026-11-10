@@ -298,6 +298,43 @@ test('Backup lehnt Lücken in der unveränderlichen Versionshistorie ab', () => 
 });
 
 
+test('Backup lehnt doppelte Versionsnummern und dadurch fehlende Zwischenversionen ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].latestVersionNumber = 3;
+  snapshot.collections.exam_masters[0].currentPublishedVersionId = 'exam-1__v3';
+  snapshot.collections.exam_versions[0].versionNumber = 1;
+  snapshot.collections.exam_versions.push(
+    {
+      ...snapshot.collections.exam_versions[0],
+      id: 'exam-1__v2',
+      versionNumber: 1
+    },
+    {
+      ...snapshot.collections.exam_versions[0],
+      id: 'exam-1__v3',
+      versionNumber: 3
+    }
+  );
+  snapshot.collections.exam_attempts = [];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_SEQUENCE_INVALID/);
+});
+
+
+test('Backup lehnt falsch zugeordnete stabile Versionskennungen ab', () => {
+  const snapshot = validSnapshot();
+  snapshot.collections.exam_masters[0].latestVersionNumber = 2;
+  snapshot.collections.exam_masters[0].currentPublishedVersionId = 'exam-1__v2';
+  snapshot.collections.exam_versions[0].id = 'exam-1__v99';
+  snapshot.collections.exam_versions.push({
+    ...snapshot.collections.exam_versions[0],
+    id: 'exam-1__v2',
+    versionNumber: 2
+  });
+  snapshot.collections.exam_attempts = [];
+  assert.throws(() => validateExamRepositorySnapshot(snapshot), /EXAM_BACKUP_VERSION_SEQUENCE_INVALID/);
+});
+
+
 test('Backup lehnt Prüfungsversuche mit unbekanntem Status ab', () => {
   const snapshot = validSnapshot();
   snapshot.collections.exam_attempts[0].status = 'completed';
