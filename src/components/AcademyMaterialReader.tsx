@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent } from '../types/academy';
+import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 
 interface Props { participationId: string; materials: AcademyCourseMaterialReaderItem[]; }
 import { extractHeadings } from '../lib/academyMaterialOutline';
@@ -71,5 +72,6 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
      </div>
    </div>}
   </div>}
+  {selected && currentVersion && <AcademyMaterialReaderNotes materialId={selected.materialId} materialVersionId={selected.materialVersionId} />}
  </section>;
 };
