@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyPrivateNoteSource } from '../types/academy';
 
@@ -18,21 +18,17 @@ const statusLabels: Record<SourceStatus['status'], string> = {
 };
 
 export const AcademyPrivateNoteSources: React.FC<Props> = ({ noteId, sources }) => {
-  const [expanded, setExpanded] = useState(false);
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [statuses, setStatuses] = useState<SourceStatus[] | null>(null);
 
-  useEffect(() => {
-    if (!expanded || requested) return;
-    let active = true;
+  const loadStatus = () => {
     setRequested(true);
     setLoading(true);
     setError('');
     void apiFetch<{ sources: SourceStatus[] }>(API_ENDPOINTS.ACADEMY_NOTE_SOURCE_STATUS(noteId))
       .then(response => {
-        if (!active) return;
         if (!response.ok || !response.data) {
           setError(response.error || 'Der Quellenstatus konnte nicht geladen werden.');
           return;
@@ -40,24 +36,23 @@ export const AcademyPrivateNoteSources: React.FC<Props> = ({ noteId, sources }) 
         setStatuses(response.data.sources);
       })
       .catch(fetchError => {
-        if (active) setError(fetchError instanceof Error ? fetchError.message : 'Der Quellenstatus konnte nicht geladen werden.');
+        setError(fetchError instanceof Error ? fetchError.message : 'Der Quellenstatus konnte nicht geladen werden.');
       })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
-  }, [expanded, noteId, requested]);
+      .finally(() => setLoading(false));
+  };
 
   const retry = () => {
     setStatuses(null);
     setRequested(false);
-    setError('');
+    loadStatus();
   };
 
   return (
     <details
       className="space-y-1 text-xs text-slate-500 dark:text-slate-400"
-      onToggle={event => setExpanded(event.currentTarget.open)}
+      onToggle={event => {
+        if (event.currentTarget.open && !requested && !loading) loadStatus();
+      }}
     >
       <summary className="cursor-pointer">Verknüpfte Quellen ({sources.length}) – Zugriffsstatus anzeigen</summary>
       <div className="space-y-2 pt-1">
