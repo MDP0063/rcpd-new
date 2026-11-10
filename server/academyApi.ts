@@ -30,7 +30,8 @@ function participantCourseMasterView(master: AcademyCourseMasterDoc) {
   const {
     ownerUid: _ownerUid, archivedByUid: _archivedByUid,
     archiveReason: _archiveReason, materialReviewPending: _materialReviewPending,
-    materialReviewVersionRequired: _materialReviewVersionRequired, ...visible
+    materialReviewVersionRequired: _materialReviewVersionRequired,
+    materialReviewAwaitingActivation: _materialReviewAwaitingActivation, ...visible
   } = master;
   return visible;
 }
