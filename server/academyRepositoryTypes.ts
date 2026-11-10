@@ -59,6 +59,7 @@ export interface AcademyStorageAdapter {
   exportSnapshot(): Promise<AcademyRepositoryBackupSnapshot>;
   replaceSnapshot(snapshot: AcademyRepositoryBackupSnapshot): Promise<void>;
   setMaintenanceMode(enabled: boolean): Promise<void>;
+  anonymizeUser(uid: string, anonymizedUid: string, identityNames?: readonly string[]): Promise<void>;
 }
 export interface AcademyDocumentMap {
   academy_material_categories: AcademyMaterialCategoryDoc;
