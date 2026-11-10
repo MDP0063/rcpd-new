@@ -974,6 +974,54 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(firstNoteEdit.status, 200, JSON.stringify(firstNoteEdit.body));
     assert.equal(firstNoteEdit.body!.note.revision, 2);
+    const addSecondNoteSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({
+        expectedRevision: 2,
+        sources: [
+          { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
+          { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+        ]
+      })
+    });
+    assert.equal(addSecondNoteSource.status, 200, JSON.stringify(addSecondNoteSource.body));
+    assert.equal(addSecondNoteSource.body!.note.revision, 3);
+    assert.deepEqual(addSecondNoteSource.body!.note.sources, [
+      { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
+      { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+    ]);
+    const editNoteWithoutSourcePayload = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({ expectedRevision: 3, title: 'Mehrquellen-Notiz' })
+    });
+    assert.equal(editNoteWithoutSourcePayload.status, 200, JSON.stringify(editNoteWithoutSourcePayload.body));
+    assert.equal(editNoteWithoutSourcePayload.body!.note.revision, 4);
+    assert.deepEqual(editNoteWithoutSourcePayload.body!.note.sources, [
+      { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
+      { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+    ]);
+
+    const duplicateNoteSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({
+        expectedRevision: 4,
+        sources: [
+          { materialId: 'manual-1', materialVersionId: 'manual-1__v1' },
+          { materialId: 'manual-1', materialVersionId: 'manual-1__v1' }
+        ]
+      })
+    });
+    assert.equal(duplicateNoteSource.status, 400);
+
+    const removeOriginalSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
+      method: 'PUT', ...json({
+        expectedRevision: 4,
+        sources: [{ materialId: 'manual-2', materialVersionId: 'manual-2__v3' }]
+      })
+    });
+    assert.equal(removeOriginalSource.status, 200, JSON.stringify(removeOriginalSource.body));
+    assert.deepEqual(removeOriginalSource.body!.note.sources, [
+      { materialId: 'manual-2', materialVersionId: 'manual-2__v3' }
+    ]);
+    assert.equal(removeOriginalSource.body!.note.materialId, 'manual-1');
+
     const staleNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({ expectedRevision: 1, content: 'Veralteter Schreibversuch' })
     });

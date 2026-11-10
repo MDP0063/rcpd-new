@@ -724,7 +724,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       </div>
                       {note.content && <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-4">{note.content}</p>}
                       {note.tags.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{note.tags.join(' · ')}</p>}
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Material {note.materialId} · Fassung {note.materialVersionId}</p>
+                      <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p>Verknüpfte Quellen ({note.sources?.length || 1}):</p>
+                        {(note.sources?.length ? note.sources : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]).map(source => (
+                          <p key={source.materialId + '::' + source.materialVersionId}>
+                            Material {source.materialId} · Fassung {source.materialVersionId}
+                          </p>
+                        ))}
+                      </div>
                     </article>
                   ))}
                 </div>

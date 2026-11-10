@@ -32,6 +32,18 @@ function parseTags(value: string): string[] {
   return [...new Set(value.split(',').map(tag => tag.trim()).filter(Boolean))].slice(0, 20).map(tag => tag.slice(0, 40));
 }
 
+function noteSources(note: AcademyPrivateNoteDoc) {
+  return note.sources?.length
+    ? note.sources
+    : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }];
+}
+
+function noteReferencesMaterial(note: AcademyPrivateNoteDoc, materialId: string, materialVersionId: string): boolean {
+  return noteSources(note).some(source =>
+    source.materialId === materialId && source.materialVersionId === materialVersionId
+  );
+}
+
 const markdownComponents = {
   h1: ({ children, node: _node, ...props }: any) => <h1 {...props} className="my-4 text-xl font-bold text-slate-900 dark:text-white">{children}</h1>,
   h2: ({ children, node: _node, ...props }: any) => <h2 {...props} className="my-3 text-lg font-semibold text-slate-900 dark:text-white">{children}</h2>,
@@ -57,6 +69,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [saveError, setSaveError] = useState('');
   const [savingAction, setSavingAction] = useState(false);
+  const [linkNoteSearch, setLinkNoteSearch] = useState('');
   const revisionByIdRef = useRef(new Map<string, number>());
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
@@ -64,13 +77,29 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const currentDraftRef = useRef<NoteDraft | null>(null);
   const persistPendingRef = useRef<() => Promise<void>>(async () => {});
 
+  const linkedNotes = useMemo(
+    () => notes.filter(note => noteReferencesMaterial(note, materialId, materialVersionId)),
+    [notes, materialId, materialVersionId]
+  );
+  const unlinkedNotes = useMemo(
+    () => notes.filter(note => note.kind === 'note' && !noteReferencesMaterial(note, materialId, materialVersionId)),
+    [notes, materialId, materialVersionId]
+  );
+  const linkableNotes = useMemo(() => {
+    const query = linkNoteSearch.trim().toLocaleLowerCase('de-DE');
+    const matches = query
+      ? unlinkedNotes.filter(note => [note.title || '', note.content || '', ...note.tags]
+          .some(value => value.toLocaleLowerCase('de-DE').includes(query)))
+      : unlinkedNotes;
+    return matches.slice(0, 10);
+  }, [unlinkedNotes, linkNoteSearch]);
   const selectedNote = useMemo(
-    () => notes.find(note => note.id === selectedNoteId && note.kind === 'note') ?? null,
-    [notes, selectedNoteId]
+    () => linkedNotes.find(note => note.id === selectedNoteId && note.kind === 'note') ?? null,
+    [linkedNotes, selectedNoteId]
   );
   const bookmarks = useMemo(
-    () => notes.filter(note => note.kind === 'bookmark'),
-    [notes]
+    () => linkedNotes.filter(note => note.kind === 'bookmark'),
+    [linkedNotes]
   );
 
   const persistPending = useCallback(async () => {
@@ -147,11 +176,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           setLoadError(response.error || 'Deine privaten Notizen konnten nicht geladen werden.');
           return;
         }
-        const matching = response.data.notes.filter(note =>
-          note.materialId === materialId && note.materialVersionId === materialVersionId
-        );
-        for (const note of matching) revisionByIdRef.current.set(note.id, note.revision ?? 1);
-        setNotes(matching);
+        const ownNotes = response.data.notes;
+        for (const note of ownNotes) revisionByIdRef.current.set(note.id, note.revision ?? 1);
+        setNotes(ownNotes);
       })
       .catch(error => {
         if (active) setLoadError(error instanceof Error ? error.message : 'Deine privaten Notizen konnten nicht geladen werden.');
@@ -245,6 +272,68 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     setLoadError('');
   };
 
+  const addCurrentSourceToNote = async (note: AcademyPrivateNoteDoc) => {
+    const sources = noteSources(note);
+    if (sources.some(source => source.materialId === materialId && source.materialVersionId === materialVersionId)) return;
+    setSavingAction(true);
+    setLoadError('');
+    try {
+      const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+        API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            expectedRevision: note.revision ?? 1,
+            sources: [...sources, { materialId, materialVersionId }]
+          })
+        }
+      );
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
+        return;
+      }
+      revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
+      setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
+  const removeCurrentSourceFromNote = async (note: AcademyPrivateNoteDoc) => {
+    const sources = noteSources(note);
+    if (sources.length <= 1) return;
+    setSavingAction(true);
+    setLoadError('');
+    try {
+      const nextSources = sources.filter(source =>
+        source.materialId !== materialId || source.materialVersionId !== materialVersionId
+      );
+      const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+        API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            expectedRevision: note.revision ?? 1,
+            sources: nextSources
+          })
+        }
+      );
+      if (!response.ok || !response.data) {
+        setLoadError(response.error || 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
+        return;
+      }
+      revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
+      setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      if (selectedNoteId === note.id) setSelectedNoteId('');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
   const toggleBookmark = async () => {
     const existing = bookmarks[0];
     setSavingAction(true);
@@ -336,7 +425,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       <summary className="cursor-pointer px-3 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 marker:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
         Persönliche Notizen und Lesezeichen
         <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-          {notes.length} gespeichert · nur für dich sichtbar
+          {linkedNotes.length} verknüpft · nur für dich sichtbar
         </span>
       </summary>
       <div className="space-y-3 border-t border-slate-200 p-3 dark:border-slate-800">
@@ -353,10 +442,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         </div>
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
         {loadError ? <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p> : null}
-        {!loading && notes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
-        {notes.filter(note => note.kind === 'note').length > 0 && (
+        {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
+        {linkedNotes.filter(note => note.kind === 'note').length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Vorhandene Notizen">
-            {notes.filter(note => note.kind === 'note').map(note => (
+            {linkedNotes.filter(note => note.kind === 'note').map(note => (
               <button
                 key={note.id}
                 type="button"
@@ -369,6 +458,35 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             ))}
           </div>
         )}
+        {unlinkedNotes.length > 0 ? (
+          <div className="space-y-2">
+            <label className="block space-y-1">
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-100">Vorhandene Notiz mit dieser Quelle verknüpfen</span>
+              <input
+                className={field}
+                value={linkNoteSearch}
+                onChange={event => setLinkNoteSearch(event.target.value)}
+                placeholder="Eigene Notizen nach Titel, Inhalt oder Schlagwort suchen"
+                maxLength={120}
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {linkableNotes.map(note => (
+                <button
+                  key={note.id}
+                  type="button"
+                  className={secondary}
+                  onClick={() => void addCurrentSourceToNote(note)}
+                  disabled={savingAction}
+                >
+                  {note.title || 'Notiz ohne Titel'} · Quelle hinzufügen
+                </button>
+              ))}
+              {linkableNotes.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400">Keine passende Notiz gefunden.</p> : null}
+              {unlinkedNotes.length > linkableNotes.length && !linkNoteSearch.trim() ? <p className="w-full text-xs text-slate-500 dark:text-slate-400">Es werden höchstens 10 Notizen angezeigt. Nutze die Suche, um weitere zu finden.</p> : null}
+            </div>
+          </div>
+        ) : null}
         {selectedNote && draft ? (
           <div className={panel + ' space-y-3'}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -409,7 +527,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                 </div>
               </div>
             ) : null}
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap justify-between gap-2">
+              {noteSources(selectedNote).length > 1 ? (
+                <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void removeCurrentSourceFromNote(selectedNote)}>
+                  Diese Quelle lösen
+                </button>
+              ) : <span />}
               <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void deleteSelectedNote()}>Notiz löschen</button>
             </div>
           </div>

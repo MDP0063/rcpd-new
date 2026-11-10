@@ -386,6 +386,11 @@ export interface AcademyProgramParticipationDoc {
   updatedIso: string;
 }
 
+export interface AcademyPrivateNoteSource {
+  materialId: string;
+  materialVersionId: string;
+}
+
 export interface AcademyPrivateNoteDoc {
   id: string;
   ownerUid: string;
@@ -397,6 +402,8 @@ export interface AcademyPrivateNoteDoc {
   title?: string;
   content?: string;
   tags: string[];
+  /** Optional for legacy compatibility; when absent, materialId/materialVersionId are the sole source. */
+  sources?: AcademyPrivateNoteSource[];
   /** Page/text anchoring intentionally omitted until a stable PDF anchor strategy is selected. */
   createdIso: string;
   updatedIso: string;

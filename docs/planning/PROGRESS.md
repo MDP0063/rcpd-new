@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration für private Notizen/Lesezeichen in Arbeit. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) gemergt; Mehrfachquellen pro Notiz in Umsetzung. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand von `main`:** `c92b57c7259d0d129b0c2821502cc2e3cfcb26e3`.  
-**Aktueller Umsetzungsbranch:** `feature/academy-reader-private-notes` – PR #132 (Draft); GitHub-CI: TypeScript-Prüfung, Produktionsbuild und 435/435 Tests erfolgreich. Browser-/Live-Firestore-Prüfung steht noch aus.
+**Aktueller Basisstand von `main`:** `b1060020b853e8e1ee5f9e426fedba4e224f0f71` (Merge PR #132).  
+**Aktueller Umsetzungsbranch:** `feature/academy-multi-source-notes` – Mehrfachquellen pro privater Notiz; Implementierung und Tests in Arbeit.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -264,15 +264,15 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Bestätigte sicherheits- und datenintegritätsrelevante Fehler wurden in den zwischenzeitlich integrierten Korrekturen behoben. Für die verbleibenden Punkte siehe den Gesprächs-/Reviewstand; offene Architektur- und Skalierungsfragen werden nicht als akute Academy-Blocker behandelt.
 - Vor neuen Academy-Funktionen gilt weiterhin: reine bestätigte Bugfixes können nach grüner CI eigenständig gemergt werden; neue fachliche Abläufe und Architekturentscheidungen benötigen weiterhin Freigabe.
 
-## 10.11.2026 – Reader-Integration persönlicher Notizen und Lesezeichen (in Arbeit)
+## 10.11.2026 – Reader-Integration persönlicher Notizen und Lesezeichen (PR #132 gemergt)
 
-**Technischer Ist-Befund auf `main` (`c92b57c`):**
+**Technischer Ist-Befund vor Umsetzung auf `main` (`c92b57c`):**
 - `AcademyPrivateNoteDoc`, die private Repository-Collection, Owner-isolierte CRUD-Methoden und die serverseitigen Endpunkte `GET/POST/PUT/DELETE /api/academy/notes` sind bereits vorhanden.
 - Der separate Bereich „Meine Notizen“ bietet Suche nach Titel/Inhalt/Tags sowie manuelle Bearbeitung und Löschung.
 - `AcademyMaterialReader.tsx` zeigte die gepinnte Materialfassung und die Inhaltsübersicht, hatte aber noch keine direkten Notiz-/Lesezeichenwerkzeuge.
 - Notizen sind bereits an `materialId` und `materialVersionId` gebunden; die Backend-Revision schützt vor konkurrierenden Änderungen.
 
-**Umsetzung auf `feature/academy-reader-private-notes` (noch nicht gemergt):**
+**Umsetzung auf `feature/academy-reader-private-notes` (PR #132, Merge-Commit `b1060020b853e8e1ee5f9e426fedba4e224f0f71`):**
 - Einklappbares Reader-Panel für persönliche Notizen und Lesezeichen.
 - Eintragserstellung direkt aus der geöffneten, zugänglichen Materialfassung; Einträge werden nur für die exakte Materialversion geladen.
 - Markdown-Notizinhalt mit sicherer Vorschau, Titel und Tags.
@@ -288,4 +288,19 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - PDF-Unterstützung und PDF-Sicherheitsinfrastruktur werden nicht wieder aufgenommen.
 - GitHub Actions auf Commit `b9cf2268340a2d9b2f44de14e5726322a85f30c3`: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 435 Tests bestanden, 0 fehlgeschlagen. Die PR-Vorlagenprüfung ist ebenfalls erfolgreich.
 - Der optionale Render-Deploy-Schritt wurde übersprungen. Es fand kein Produktionsdeployment statt.
-- Manuelle Browser-/App- und Live-Firestore-Prüfung stehen noch aus; PR #132 bleibt deshalb Draft und wird nicht gemergt.
+- Die CI-Prüfung auf dem finalen PR-Stand war erfolgreich (435/435 Tests, TypeScript und Produktionsbuild). Eine manuelle Browser-/App- und Live-Firestore-Prüfung wurde nicht durchgeführt. PR #132 wurde nach erfolgreicher CI und Codeprüfung gemergt; tatsächlicher Render-Deploymentstatus wurde nicht verifiziert.
+
+
+## 10.11.2026 – Mehrere Quellen pro persönlicher Notiz (in Umsetzung)
+
+**Fachliche Grundlage:** Abschnitt 12 der Academy-Detail-Spezifikation legt mehrere Quellen pro Notiz fest. Notizen bleiben privat, versionsgebunden und dürfen keinen Zugriff auf gesperrte Quellen vermitteln. Seiten-/Textstellenanker bleiben bis zu einer belastbaren Strategie zurückgestellt.
+
+**Technische Umsetzung auf `feature/academy-multi-source-notes`:**
+- Ergänzung eines optionalen `sources`-Arrays mit konkreten `materialId`-/`materialVersionId`-Paaren.
+- Legacy-Felder bleiben für bestehende Notizen erhalten; fehlende Quellenlisten werden bei API-Ausgabe als einzelne bisherige Quelle projiziert.
+- Servervalidierung begrenzt Quellenlisten, lehnt ungültige und doppelte Referenzen ab und lässt Lesezeichen weiterhin nur auf eine Quelle zeigen.
+- Im Reader können bestehende persönliche Notizen mit der aktuell geöffneten Materialfassung verknüpft und zusätzliche Verknüpfungen wieder gelöst werden.
+- Die zentrale Ansicht „Meine Notizen“ zeigt alle zugeordneten Quellen.
+- Die eigentliche Materialfreigabe wird weiterhin ausschließlich durch die bestehenden Reader-/Materialzugriffs-APIs kontrolliert; eine private Quellenreferenz ist kein Zugriffsrecht.
+
+**Noch zu prüfen:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle und CI. Quellzugriffsstatus (zugänglich/nicht zugänglich/nicht mehr vorhanden) sowie stabile Seiten-/Textstellenanker sind noch nicht Teil dieses Implementierungsschritts und dürfen nicht als umgesetzt dargestellt werden.
