@@ -58,6 +58,8 @@ test('whitelist form fields are validated and bounded', () => {
   assert.match(validateApplicationSubmission({ ...input, characterName: 'X' }) || '', /zu kurz/);
   assert.match(validateApplicationSubmission({ ...input, priorExperience: 'x'.repeat(8001) }) || '', /zu lang/);
   assert.match(validateApplicationSubmission({ ...input, dateOfBirth: '2026-02-31' }) || '', /gültiges Datum/);
-  assert.match(validateApplicationSubmission({ ...input, penalCodeAck: false }) || '', /bestätige/);
+  // The existing UI permits an unchecked acknowledgment; preserve that behavior.
+  assert.equal(validateApplicationSubmission({ ...input, penalCodeAck: false }), null);
+  assert.match(validateApplicationSubmission({ ...input, penalCodeAck: 'true' }) || '', /ungültig/);
   assert.match(validateApplicationSubmission({ ...input, discordTag: undefined }) || '', /Discord-Kennung/);
 });
