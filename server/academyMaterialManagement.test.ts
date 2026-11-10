@@ -386,10 +386,31 @@ test('course publication requires an exact existing published material version',
   const revisedCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   assert.equal(revisedCourse?.materialReviewVersionRequired, undefined);
   assert.equal(revisedCourse?.availability, 'unavailable', 'publishing a corrected version does not silently reactivate the course');
-  await repository.setCourseAvailability(courseMaster.id, 'available', later);
-  assert.equal((await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id))?.availability, 'available');
+  assert.equal(revisedCourse?.materialReviewAwaitingActivation, true);
 
-  await repository.archiveMaterial(master.id, 3, 'admin-1', 'Fachlich nicht mehr aktuell.', later);
+  const fourthDraft: AcademyMaterialDraftDoc = {
+    ...thirdDraft, title: 'Operations Handbook – latest', content: '# Operations\\n\\nLatest guidance.',
+    workingRevision: 4, updatedIso: '2026-11-06T12:12:00.000Z', updatedByUid: 'admin-1'
+  };
+  await repository.saveMaterialDraft(master.id, fourthDraft, 3, 'admin-1');
+  const thirdCurrentMaterialMaster = await repository.get<AcademyMaterialMasterDoc>('academy_materials', master.id);
+  const fourthVersion = version(4, fourthDraft, 4);
+  const fourthPublishedMaster: AcademyMaterialMasterDoc = {
+    ...thirdCurrentMaterialMaster!, publicationStatus: 'published',
+    currentPublishedVersionId: fourthVersion.id, latestVersionNumber: 4,
+    lastPublishedWorkingRevision: 4, updatedIso: '2026-11-06T12:13:00.000Z'
+  };
+  await repository.publishMaterialVersion(master.id, fourthVersion, fourthPublishedMaster, 4, 'admin-1');
+  const reviewBeforeActivation = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(reviewBeforeActivation?.availability, 'unavailable');
+  assert.equal(reviewBeforeActivation?.materialReviewPending?.[0].materialVersionId, fourthVersion.id,
+    'a further material update is reviewed even before the owner manually reactivates the corrected course');
+  await repository.resolveMaterialReview(courseMaster.id, master.id, fourthVersion.id, 'keep_available', later);
+  const reactivatedCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
+  assert.equal(reactivatedCourse?.availability, 'available');
+  assert.equal(reactivatedCourse?.materialReviewAwaitingActivation, undefined);
+
+  await repository.archiveMaterial(master.id, 4, 'admin-1', 'Fachlich nicht mehr aktuell.', later);
   const archivedMaterialCourse = await repository.get<AcademyCourseMasterDoc>('academy_courses', courseMaster.id);
   assert.equal(archivedMaterialCourse?.availability, 'unavailable');
   assert.equal(archivedMaterialCourse?.materialReviewVersionRequired?.[0].materialId, master.id);
