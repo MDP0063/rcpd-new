@@ -2238,6 +2238,9 @@ async function startServer() {
       }
       const submission = await gradeExamAttempt(getExamRepository(), req.params.id, req.params.attemptId, caller.uid, req.body.grades);
       recordExamWorkshopAudit(caller.uid, 'Freitextprüfung bewertet', req.params.id, `Versuch ${req.params.attemptId} manuell bewertet.`);
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
+        console.error('Exam review notification delivery will be retried:', notificationError);
+      }
       res.json({ submission });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
