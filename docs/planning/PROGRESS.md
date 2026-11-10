@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Reader-Notizen und Mehrfachquellen (PR #132/#134) sowie Quellenstatus (PR #135) gemergt. Folgeabschnitt in Arbeit: stabile Markdown-/Code-Textanker pro Quelle. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Private Reader-Notizen/Mehrfachquellen (PR #132/#134), Quellenstatus (PR #135) und stabile Markdown-/Code-Textanker (PR #136) sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `052410e19a5046bedd7d730d78d7b5eb7d815431` (`main` beim Start von PR #135).  
-**Aktueller Umsetzungsbranch:** `feature/academy-private-note-source-status`; Statusanzeige und serverseitige Prüfung privater Notizquellen werden umgesetzt.
+**Aktueller Basisstand:** `50b791fb08bbba365d461b5c07b86109291f5d94` (`main`, Merge-Commit von PR #136).  
+**Aktueller Umsetzungsbranch:** keiner; PR #136 ist abgeschlossen. Nächste Umsetzung erst nach Prüfung des nächsten bereits beschlossenen Academy-Arbeitspakets.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -11,8 +11,8 @@
 - Erste Inhaltsarten: Text/Markdown und codebasierte Inhalte. Code wird als Quelltext gespeichert/dargestellt; Codeausführung ist nicht Teil der ersten Ausbaustufe.
 - Kategorieverwaltung (PR #59), Dokumenttypverwaltung (PR #60), versionierte Text-/Code-Materialverwaltung (PR #61) sowie Teilnehmer-Reader und konkrete Materialauswahl im Kurseditor (PR #62; Konsolidierung durch PR #63) sind in `main` integriert.
 - Kursversionen referenzieren konkrete veröffentlichte Materialfassungen. Bestehende Legacy-Materialien wurden nicht automatisch migriert.
-- Die vorhandene private Notiz-/Lesezeichen-Domäne, serverseitige CRUD-API und der separate Bereich „Meine Notizen“ sind bereits vorhanden. Die direkte Einbindung in den Material-Reader mit Autosave und sichtbarem Speicherstatus war noch nicht umgesetzt.
-- Aktueller Folgeschritt: private Notizen und Lesezeichen direkt im Reader integrieren. Mehrfachquellen pro Notiz sowie stabile Seiten-/Textstellenanker bleiben getrennt zu prüfende Anforderungen; PDF bleibt zurückgestellt.
+- Private Notizen und Lesezeichen sind direkt in den Material-Reader integriert; Mehrfachquellen pro Notiz sowie versionsgebundene Textanker für Markdown und Code sind umgesetzt (PR #132, #134 und #136).
+- PDF-Seitenanker bleiben bis zur Wiederaufnahme der ausdrücklich zurückgestellten PDF-Infrastruktur offen.
 
 ### Legacy-PDFs – technische Bestandsbehandlung (09.11.2026)
 
@@ -319,7 +319,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein Produktionsdeployment durchgeführt.
 
 
-## 0.2 Textanker für private Notizen und Lesezeichen – PR #136, CI erfolgreich
+## 0.2 Textanker für private Notizen und Lesezeichen – PR #136 gemergt
 
 - Beschlossene Strategie: Anker pro Materialquelle, exakte Materialversionsbindung, Auswahltext plus Kontext und Markdown-Überschriftenpfad bzw. Code-Zeilenbereich.
 - Eindeutige Wiederfindung ist Voraussetzung für das Anspringen. Fehlende/mehrdeutige Treffer dürfen nicht automatisch auf eine ähnliche Position umgedeutet werden.
