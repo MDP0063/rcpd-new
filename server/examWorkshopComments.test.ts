@@ -19,6 +19,7 @@ class MemoryAdapter implements ExamStorageAdapter {
   }
   async isMaintenanceMode() { return false; }
   async setMaintenanceMode() {}
+  async anonymizeUser() {}
   async get<T extends ExamDocument = ExamDocument>(collection: ExamCollection, id: string): Promise<T | null> {
     return (this.collections[collection].find(doc => doc.id === id) as T | undefined) ?? null;
   }
