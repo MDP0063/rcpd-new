@@ -159,6 +159,11 @@ export const ExamReviewCenter: React.FC = () => {
   };
 
   const claimOrRelease = async (review: ReviewItem, action: 'claim' | 'release') => {
+    if (action === 'release') {
+      const timer = activityTimers.current[review.id];
+      if (timer) window.clearTimeout(timer);
+      delete activityTimers.current[review.id];
+    }
     setSavingId(review.id); setError(''); setNotice('');
     const response = await apiFetch(
       API_ENDPOINTS.ACADEMY_EXAM_REVIEW_CLAIM(review.examId, review.id),
@@ -171,6 +176,9 @@ export const ExamReviewCenter: React.FC = () => {
   };
 
   const submit = async (review: ReviewItem) => {
+    const activityTimer = activityTimers.current[review.id];
+    if (activityTimer) window.clearTimeout(activityTimer);
+    delete activityTimers.current[review.id];
     if (!review.isClaimOwner) {
       setError('Du musst den Vorgang zuerst beanspruchen, bevor du ihn abschließen kannst.');
       return;
