@@ -1272,9 +1272,11 @@ export class AcademyRepository {
       const current = await tx.get<AcademyCourseMasterDoc>('academy_courses', courseId);
       if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(current));
-      if (availability === 'available' &&
-          ((current.materialReviewPending?.length ?? 0) > 0 || (current.materialReviewVersionRequired?.length ?? 0) > 0)) {
+      if (availability === 'available' && (current.materialReviewPending?.length ?? 0) > 0) {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
+      }
+      if (availability === 'available' && (current.materialReviewVersionRequired?.length ?? 0) > 0) {
+        throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_VERSION_REQUIRED');
       }
       const next: AcademyCourseMasterDoc = { ...current, availability, updatedIso: now };
       assertValid(validateCourseMaster(next));
