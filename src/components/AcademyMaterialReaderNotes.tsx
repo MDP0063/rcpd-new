@@ -480,7 +480,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
         {bookmarks.map(note => {
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
-          return anchor ? <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+          return <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
             <span>Lesezeichen{anchor ? ' · „' + anchor.quote.slice(0, 100) + '“' : ' ohne Textanker'}</span>
             {selectedAnchor ? <button type="button" className={secondary} onClick={() => void attachAnchorToNote(note)} disabled={savingAction}>Auswahl anheften</button> : null}
             {anchor ? <button type="button" className={secondary} onClick={() => {
