@@ -11,6 +11,19 @@ interface Props { participationId: string; materials: AcademyCourseMaterialReade
 import { extractHeadings } from '../lib/academyMaterialOutline';
 const panel='rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted='text-sm text-slate-600 dark:text-slate-300';
+function headingPathForTextNode(root: HTMLElement, node: Text): string[] {
+  const stack: Array<{ level: number; title: string }> = [];
+  for (const heading of Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'))) {
+    const precedesNode = heading.contains(node) ||
+      (heading.compareDocumentPosition(node.parentElement!) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    if (!precedesNode) continue;
+    const level = Number(heading.tagName.slice(1));
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    const title = heading.textContent?.trim() || '';
+    if (title) stack.push({ level, title });
+  }
+  return stack.slice(-6).map(item => item.title);
+}
 const secondary='inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})=>{
  const [selectedKey,setSelectedKey]=useState('');const [navigationOpen,setNavigationOpen]=useState(false);
@@ -18,13 +31,15 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  const markdownContentRef=useRef<HTMLElement|null>(null);
  const codeContentRef=useRef<HTMLPreElement|null>(null);
  const jumpToAnchor=(anchor:AcademyPrivateNoteTextAnchor):'resolved'|'missing'|'ambiguous'=>{
-  const root=markdownContentRef.current||codeContentRef.current;
+  const root=anchor.kind==='markdown'?markdownContentRef.current:codeContentRef.current;
   if(!root)return 'missing';
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const matches:Array<{node:Text;start:number;end:number}>=[];
   let current:Node|null;
   while((current=walker.nextNode())){
    const node=current as Text;
+   if(anchor.kind==='markdown'&&anchor.headingPath?.length&&
+      JSON.stringify(headingPathForTextNode(root,node))!==JSON.stringify(anchor.headingPath))continue;
    const result=resolveTextAnchor(node.textContent||'',anchor);
    if(result.status==='ambiguous')return 'ambiguous';
    if(result.status==='resolved')matches.push({node,start:result.start,end:result.end});
@@ -47,19 +62,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
   if(range.startContainer!==range.endContainer||range.startContainer.nodeType!==Node.TEXT_NODE||!root.contains(range.startContainer))return;
   const node=range.startContainer as Text;
   const sourceText=node.textContent||'';
-  const headingPath:string[]=[];
-  if(kind==='markdown'){
-   const stack:Array<{level:number;title:string}>=[];
-   const headings=Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6'));
-   for(const heading of headings){
-    const followsSelection=(heading.compareDocumentPosition(node.parentElement!) & Node.DOCUMENT_POSITION_FOLLOWING)!==0;
-    if(!heading.contains(node)&&!followsSelection)continue;
-    const level=Number(heading.tagName.slice(1));
-    while(stack.length&&stack[stack.length-1].level>=level)stack.pop();
-    stack.push({level,title:heading.textContent?.trim()||''});
-   }
-   headingPath.push(...stack.map(item=>item.title).filter(Boolean).slice(-6));
-  }
+  const headingPath=kind==='markdown'?headingPathForTextNode(root,node):[];
   const anchor=createTextAnchor({kind,text:range.toString(),startOffset:range.startOffset,endOffset:range.endOffset,headingPath},sourceText);
   setSelectedAnchor(anchor);
  };
