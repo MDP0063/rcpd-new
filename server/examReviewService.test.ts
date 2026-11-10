@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults } from './examReviewService.ts';
+import { correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -54,6 +54,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal((await listOwnExamResults(repository, 'student-1')).length, 1);
     assert.deepEqual(await listOwnExamResults(repository, 'student-2'), []);
 
+    const participantBeforeRelease = await listOwnExamResults(repository, 'student-1');
+    assert.equal(participantBeforeRelease[0].status, 'awaiting_release');
+    assert.equal(participantBeforeRelease[0].finalScoreBasisPoints, null);
+    assert.deepEqual(participantBeforeRelease[0].questionResults, []);
+    assert.equal((await listPendingExamResultReleases(repository)).length, 1);
+    await assert.rejects(releaseExamResult(repository, 'review-exam', 'review-attempt', ''), /EXAM_RESULT_RELEASE_ACTOR_INVALID/);
+    const released = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:05:00.000Z');
+    assert.equal(released.status, 'passed');
+    assert.equal((await listOwnExamResults(repository, 'student-1'))[0].status, 'passed');
+    assert.equal((await listPendingExamResultReleases(repository)).length, 0);
+
     const completedReviews = await listCompletedManualReviews(repository);
     assert.equal(completedReviews.length, 1);
     assert.equal(completedReviews[0].questions[0].pointsEarnedMilli, 500);
@@ -80,6 +91,13 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(correctedAttempt?.reviewCorrections?.[0].reason, 'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.');
     assert.equal(correctedAttempt?.reviewCorrections?.[0].previousGrades[0].pointsEarnedMilli, 500);
     assert.equal(correctedAttempt?.reviewCorrections?.[0].nextGrades[0].pointsEarnedMilli, 900);
+    assert.equal((correctedAttempt as any)?.resultReleaseStatus, 'pending_rerelease');
+    assert.equal((await listOwnExamResults(repository, 'student-1'))[0].status, 'awaiting_release');
+    assert.equal((await listPendingExamResultReleases(repository)).length, 1);
+    const rereleased = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:11:00.000Z');
+    assert.equal(rereleased.status, 'passed');
+    const rereleasedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
     assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
 
   } finally {
