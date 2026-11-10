@@ -100,3 +100,19 @@
 - GitHub-CI erfolgreich: 443/443 Tests, TypeScript-Prüfung und Produktionsbuild; PR-Vorlagenprüfung ebenfalls erfolgreich.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
 - PDF-Seitenanker bleiben ausdrücklich zurückgestellt.
+
+
+## 2026-11-10 – Lokale Wiederaufnahme der Reader-Leseposition (Draft-PR #141)
+
+- Beschlossene Reader-Funktion ergänzt: Markdown- und Code-Leseposition wird lokal nach Teilnahme und exakter Materialversion getrennt gespeichert und beim erneuten Öffnen wiederhergestellt.
+- Browser-Speicherfehler bleiben fail-soft; Positionen werden nicht serverseitig synchronisiert.
+- Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
+- Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
+- Draft-PR #141 zielt auf `main` und enthält vorübergehend denselben ID-Fix-Commit wie PR #138; PR #138 sollte zuerst gemergt werden, um doppelte Commit-Historie zu vermeiden. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
+
+
+## 2026-11-10 – CI-Korrektur und Status der Reader-Leseposition
+
+- PR #138: GitHub-CI für TypeScript/Build und 448/448 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Per Squash gemergt (Commit `738faab5d3e85b94df02f188c2fdd3236b73674d`); optionaler Render-Deploy-Schritt übersprungen.
+- PR #141: saubere Draft-Implementierung der lokalen Reader-Leseposition auf dem aktualisierten `main`; kein Build-/Testlauf sichtbar, keine lokale Testausführung und keine manuelle Browserprüfung behauptet.
+- PR #141 enthält den ID-Fix nicht; keine doppelte Commit-Historie.
