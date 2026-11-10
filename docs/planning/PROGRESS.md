@@ -3,7 +3,7 @@
 **Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration für private Notizen/Lesezeichen in Arbeit. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand von `main`:** `c92b57c7259d0d129b0c2821502cc2e3cfcb26e3`.  
-**Aktueller Umsetzungsbranch:** `feature/academy-reader-private-notes` – Reader-Notizen/Lesezeichen, noch nicht gemergt; CI-Prüfung steht aus.
+**Aktueller Umsetzungsbranch:** `feature/academy-reader-private-notes` – PR #132 (Draft); GitHub-CI: TypeScript-Prüfung, Produktionsbuild und 435/435 Tests erfolgreich. Browser-/Live-Firestore-Prüfung steht noch aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -285,4 +285,6 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Seiten-/Textstellenanker und Warnungen bei veralteten Ankern bleiben offen. Das passt zur bestehenden Spezifikationsnotiz, dass stabile Anker erst nach einer tragfähigen Strategie umgesetzt werden.
 - Vollständige Offline-Bearbeitung ist weiterhin nicht zugesagt.
 - PDF-Unterstützung und PDF-Sicherheitsinfrastruktur werden nicht wieder aufgenommen.
-- TypeScript, Build, Tests, Browser- und Live-Firestore-Prüfungen für diesen Branch stehen noch aus; erst nach den tatsächlichen CI-Ergebnissen wird der Status aktualisiert.
+- GitHub Actions auf Commit `125479409e6f4dc3e7007bd438ccc97a6f78b423`: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 435 Tests bestanden, 0 fehlgeschlagen. Die PR-Vorlagenprüfung ist ebenfalls erfolgreich.
+- Der optionale Render-Deploy-Schritt wurde übersprungen. Es fand kein Produktionsdeployment statt.
+- Manuelle Browser-/App- und Live-Firestore-Prüfung stehen noch aus; PR #132 bleibt deshalb Draft und wird nicht gemergt.
