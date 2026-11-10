@@ -286,6 +286,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     }
 
     const draft = next.reviewDraft;
+    const nextReviewClaim = next.reviewClaim as { reviewerUid?: string; disconnectedAtIso?: string } | null | undefined;
     if (draft !== undefined && (typeof draft !== 'object' || draft === null || Array.isArray(draft) ||
         Object.entries(draft).some(([questionId, points]) =>
           !questionId.trim() || questionId.length > 128 || !Number.isSafeInteger(points) || Number(points) < 0
@@ -300,7 +301,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     if (draftChanged) {
       if (nextDraftRevision !== previousDraftRevision + 1 ||
           typeof next.reviewDraftUpdatedByUid !== 'string' || !next.reviewDraftUpdatedByUid.trim() ||
-          !next.reviewClaim || next.reviewClaim.reviewerUid !== next.reviewDraftUpdatedByUid || next.reviewClaim.disconnectedAtIso !== undefined ||
+          !nextReviewClaim || nextReviewClaim.reviewerUid !== next.reviewDraftUpdatedByUid || nextReviewClaim.disconnectedAtIso !== undefined ||
           typeof next.reviewDraftUpdatedAtIso !== 'string' || Number.isNaN(Date.parse(next.reviewDraftUpdatedAtIso))) {
         throw new Error('EXAM_REVIEW_DRAFT_INVALID');
       }
