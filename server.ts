@@ -903,6 +903,15 @@ async function saveDatabaseAndWait(state: PortalDatabaseState): Promise<void> {
   if (store) await store.flushStrict();
 }
 
+function persistAndRespond(
+  state: PortalDatabaseState,
+  res: express.Response,
+  next: express.NextFunction,
+  respond: () => void
+): void {
+  void saveDatabaseAndWait(state).then(respond).catch(next);
+}
+
 
 /** Prüft die Felder eines Lehrmaterials. Gibt eine Fehlermeldung zurück oder null. */
 function validateModuleFields(
@@ -3140,7 +3149,7 @@ async function startServer() {
   });
 
   // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
-  app.post('/api/academy/modules', (req, res) => {
+  app.post('/api/academy/modules', (req, res, next) => {
     const {
       title,
       code,
@@ -3208,11 +3217,11 @@ async function startServer() {
       `${newMod.code} — ${newMod.title}`,
       `Format: ${newMod.embedType} · Mindest-Rang: ${newMod.requiredRole.toUpperCase()}`
     );
-    saveDatabase(dbState);
-    res.json({ module: toClientModule(newMod) });
+    persistAndRespond(dbState, res, next, () => res.json({ module: toClientModule(newMod) }));
+    return;
   });
 
-  app.put('/api/academy/modules/:modId', (req, res) => {
+  app.put('/api/academy/modules/:modId', (req, res, next) => {
     const { modId } = req.params;
     const {
       title,
@@ -3299,8 +3308,8 @@ async function startServer() {
       `${dbState.modules[idx].code} — ${dbState.modules[idx].title}`,
       `Aktualisiert durch ${caller.publicProfile.displayName}`
     );
-    saveDatabase(dbState);
-    res.json({ module: toClientModule(updatedModule) });
+    persistAndRespond(dbState, res, next, () => res.json({ module: toClientModule(updatedModule) }));
+    return;
   });
 
   app.get('/api/academy/modules/:modId/pdf', async (req, res) => {
@@ -3340,7 +3349,7 @@ async function startServer() {
     res.json({ pdfDataUrl });
   });
 
-  app.delete('/api/academy/modules/:modId', (req, res) => {
+  app.delete('/api/academy/modules/:modId', (req, res, next) => {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetMod = dbState.modules.find(m => m.id === req.params.modId);
@@ -3361,11 +3370,11 @@ async function startServer() {
       `${targetMod.code} — ${targetMod.title}`,
       `Modul wurde aus dem Ausbildungsbereich entfernt.`
     );
-    saveDatabase(dbState);
-    res.json({ deleted: true });
+    persistAndRespond(dbState, res, next, () => res.json({ deleted: true }));
+    return;
   });
 
-  app.post('/api/academy/exams', (req, res) => {
+  app.post('/api/academy/exams', (req, res, next) => {
     const {
       actorUid,
       title,
@@ -3420,11 +3429,11 @@ async function startServer() {
       `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
     );
     appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung angelegt', `${newExam.moduleCode} — ${newExam.title}`, `Prüfungsbereich: ${stage}.`);
-    saveDatabase(dbState);
-    res.json({ exam: newExam });
+    persistAndRespond(dbState, res, next, () => res.json({ exam: newExam }));
+    return;
   });
 
-  app.delete('/api/academy/exams/:examId', (req, res) => {
+  app.delete('/api/academy/exams/:examId', (req, res, next) => {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetExam = dbState.exams.find(e => e.id === req.params.examId);
@@ -3452,13 +3461,13 @@ async function startServer() {
       reason.trim()
     );
     appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung archiviert', `${targetExam.moduleCode} — ${targetExam.title}`, reason.trim());
-    saveDatabase(dbState);
-    res.json({ archived: true });
+    persistAndRespond(dbState, res, next, () => res.json({ archived: true }));
+    return;
   });
 
   // 9b. GRANULAR INSTRUCTOR COURSE GRADING (/api/academy/instructor-grade)
   // Allows Admin, Colonel, or an Officer assigned to a specific courseCode to assign a score/status to a trainee/officer
-  app.post('/api/academy/instructor-grade', (req, res) => {
+  app.post('/api/academy/instructor-grade', (req, res, next) => {
     const {
       instructorUid,
       targetUserUid,
@@ -3551,12 +3560,12 @@ async function startServer() {
       'academy'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, progressRecord: record });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, progressRecord: record }));
+    return;
   });
 
   // 10. Self Progress Tracking
-  app.post('/api/progress', (req, res) => {
+  app.post('/api/progress', (req, res, next) => {
     const { targetId, targetType, scorePercent, answers } = req.body;
     const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
@@ -3729,13 +3738,13 @@ async function startServer() {
       });
     }
 
-    saveDatabase(dbState);
-    res.json({
+    persistAndRespond(dbState, res, next, () => res.json({
       ok: true,
       scorePercent: resolvedScore,
       passed: resolvedStatus === 'passed',
       explanations
-    });
+    }));
+    return;
   });
 
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
@@ -3845,7 +3854,7 @@ jobs:
   });
 
   // ADMIN ONLY: Update GitHub Repository URL, Render Service URL & Setup Checklist Progress
-  app.put('/api/admin/deployment-config', (req, res) => {
+  app.put('/api/admin/deployment-config', (req, res, next) => {
     const {
       adminUid,
       githubRepoUrl,
@@ -3893,8 +3902,8 @@ jobs:
     }
     cfg.updatedIso = new Date().toISOString();
 
-    saveDatabase(dbState);
-    res.json({ ok: true, deploymentConfig: cfg });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, deploymentConfig: cfg }));
+    return;
   });
 
   // ADMIN ONLY: verify one historical passed exam result; identity comes only from the session.
@@ -4682,8 +4691,8 @@ jobs:
         `Kategorie: ${target.category}`
       );
     }
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
@@ -5103,7 +5112,7 @@ jobs:
     }).catch(next);
   });
 
-  app.delete('/api/requests/:id', (req, res) => {
+  app.delete('/api/requests/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
