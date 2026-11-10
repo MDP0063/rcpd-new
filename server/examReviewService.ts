@@ -269,6 +269,7 @@ export interface ExamReviewNotificationEvent {
   participantName: string;
   courseCode: string;
   eventIndex: number;
+  recipientUid: string;
   event: ExamReviewClaimHistoryEntry;
 }
 
@@ -292,7 +293,7 @@ export async function listPendingExamReviewNotifications(
           results.push({
             attemptId: attempt.id, examId: attempt.examId, examVersionId: attempt.examVersionId,
             participantName: attempt.userName, courseCode: attempt.attemptCourseCode,
-            eventIndex, event
+            eventIndex, recipientUid, event
           });
         }
       }
