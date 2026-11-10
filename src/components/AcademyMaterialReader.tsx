@@ -81,7 +81,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  },[participationId,selected]);
  const readerPositionKey=useMemo(()=>selected?createAcademyReaderPositionKey(participationId,selected.materialId,selected.materialVersionId):null,[participationId,selected?.materialId,selected?.materialVersionId]);
  useEffect(()=>{
-  if(!selected||!currentVersion||!readerPositionKey){readerPositionReadyRef.current=false;return;}
+  if(!currentVersion||!readerPositionKey){readerPositionReadyRef.current=false;return;}
   readerPositionReadyRef.current=false;
   let restoreFrame:number|null=null;
   let saveTimer:number|null=null;
