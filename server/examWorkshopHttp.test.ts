@@ -341,6 +341,23 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   };
   await writeFile(path.join(dataDirectory, 'portal-db-v3.json'), JSON.stringify(portalState));
   await writeFile(path.join(dataDirectory, 'exam-db-v1.json'), JSON.stringify({ version: 1, maintenanceMode: false, collections }));
+  collections.exam_attempts['doc:http-deleted-attempt'] = {
+    id: 'http-deleted-attempt', userId: 'http-deleted-account', userName: 'HttpDeletedAccount',
+    examId: TEST_EXAM_ID, status: 'passed', finalScoreBasisPoints: 9000
+  };
+  collections.exam_progress['doc:http-deleted-progress'] = {
+    id: 'http-deleted-progress', userId: 'http-deleted-account', targetId: TEST_EXAM_ID,
+    targetType: 'test', status: 'completed', scorePercent: 100, attempts: 1
+  };
+  const academyCollections = Object.fromEntries(ACADEMY_COLLECTIONS.map(collection => [collection, {}])) as Record<string, Record<string, unknown>>;
+  academyCollections.academy_courses['doc:http-deleted-course'] = { id: 'http-deleted-course', ownerUid: 'http-deleted-account' };
+  academyCollections.academy_private_notes['doc:http-deleted-note'] = {
+    id: 'http-deleted-note', ownerUid: 'http-deleted-account', materialId: 'material-1',
+    materialVersionId: 'material-1__v1', kind: 'note', content: 'private note',
+    tags: [], createdIso: '2026-11-10T08:00:00.000Z', updatedIso: '2026-11-10T08:00:00.000Z'
+  };
+  await writeFile(path.join(dataDirectory, 'academy-db.json'), JSON.stringify({ version: 6, collections: academyCollections }));
+
   // Keep the child TSX runtime independent of host account lookup in locked-down test environments.
   const runtimePreload = path.join(dataDirectory, 'runtime-preload.mjs');
   await writeFile(runtimePreload, [
