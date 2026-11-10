@@ -365,3 +365,17 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Korrekturen nach einer Freigabe müssen die bisherige Freigabe bis zur erneuten kontrollierten Freigabe unwirksam machen; Audit-Historie bleibt erhalten.
 - Teilnehmer sehen bis zur Freigabe keinen Pass/Fail-Status und keine Ergebnisdetails.
 - Umsetzung der ersten Ergebnisfreigabe-Stufe erfolgt auf Branch `feature/exam-result-release`, PR #144. Enthalten sind ein Admin-only Freigabeendpunkt und eine Admin-Freigabequeue, persistenter Freigabestatus samt Audit-Historie, neutrale Teilnehmerprojektion bis zur Freigabe sowie erneute Freigabepflicht nach Korrektur. Die Service-Tests wurden ergänzt; GitHub-CI und unabhängige PR-Prüfung stehen noch aus. Die automatische Freigabe-Konfiguration ist noch nicht umgesetzt; mangels vorhandener Einstellung gilt aktuell manuelle Erstfreigabe. Die `required_assessment`-Verknüpfung ist ebenfalls noch nicht implementiert. Browser-/Live-Firestore-Tests bleiben bis zum gemeinsamen Academy-Test zurückgestellt.
+
+
+## 10.11.2026 – Ergebnisfreigabe-Stufe 1 abgeschlossen (PR #144)
+
+- PR #144 `feat(exams): introduce controlled result release` wurde per Squash gemergt.
+- Main-Commit: `bb309ba5fa1e0fb8bd458e63cbac6dd2f8032f9b`.
+- Ergebnisfreigabe ist serverseitig transaktional und Admin-only. Eine Freigabe wird mit Actor, Zeit, Ergebnisstand und Historie gespeichert; doppelte Freigaben sind idempotent.
+- Teilnehmer erhalten vor der offiziellen Freigabe nur eine neutrale Abgabe-/Freigabeinformation. Das gilt sowohl für die direkte Submit-Antwort als auch für die Ergebnisübersicht.
+- Korrekturen bereits freigegebener manueller Bewertungen setzen `pending_rerelease`; der bisherige Freigabeverlauf bleibt erhalten und die neue Bewertung wird erst nach erneuter Admin-Freigabe sichtbar.
+- Admin-Freigabequeue ist im bestehenden Korrekturzentrum ergänzt. Die Prüfungswerkstatt bleibt Admin-only; Colonels erhalten keine Ergebnisfreigabe-Berechtigung.
+- CI auf PR-Head erfolgreich: TypeScript-Check und Produktionsbuild erfolgreich; **451/451 Tests bestanden**; PR-Template-Validierung erfolgreich.
+- Der Main-Push-Workflow einschließlich optionalem Render-Deploy-Hook war erfolgreich. Dies bestätigt den CI-/Hook-Schritt, aber nicht die tatsächliche Laufzeitgesundheit der Anwendung.
+- Keine manuelle Browser-/Live-Firestore-Prüfung durchgeführt; sie bleibt Teil des gemeinsamen Academy-Abnahmetests.
+- Noch nicht implementiert: konfigurierbare automatische Ergebnisfreigabe sowie die serverseitige Verknüpfung von `required_assessment` mit einem aktuell freigegebenen `final_exam`-Versuch. Der aktuell fehlende Konfigurationswert führt weiterhin sicher zur manuellen Erstfreigabe.
