@@ -164,6 +164,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
       makeAccount('http-applicant', 'HttpApplicant', 'officer'),
+      makeAccount('http-deleted-account', 'HttpDeletedAccount', 'officer'),
       makeAccount('http-trainee', 'HttpTrainee', 'trainee')
     ],
     applications: [{
@@ -182,8 +183,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       updatedIso: '2026-11-10T08:00:00.000Z'
     }, {
       id: 'app-to-anonymize',
-      applicantUid: 'http-applicant',
-      applicantName: 'HttpApplicant',
+      applicantUid: 'http-deleted-account',
+      applicantName: 'HttpDeletedAccount',
       characterName: 'Applicant Character',
       dateOfBirth: '2001-02-03',
       discordTag: 'Applicant#1234',
@@ -287,9 +288,9 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       createdIso: '2026-11-10T08:00:00.000Z'
     }, {
       id: 'msg-from-applicant',
-      senderUid: 'http-applicant',
-      senderName: 'HttpApplicant',
-      senderBadge: 'http-applicant',
+      senderUid: 'http-deleted-account',
+      senderName: 'HttpDeletedAccount',
+      senderBadge: 'http-deleted-account',
       senderRole: 'officer',
       recipientUid: 'http-delegate',
       recipientName: 'HttpDelegate',
@@ -759,7 +760,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     });
     assert.equal(updatedLogin.status, 200);
 
-    const deleteAccount = await jsonRequest('/api/admin/accounts/http-applicant?adminUid=http-admin', admin.token, {
+    const deleteAccount = await jsonRequest('/api/admin/accounts/http-deleted-account?adminUid=http-admin', admin.token, {
       method: 'DELETE'
     });
     assert.equal(deleteAccount.status, 200);
@@ -772,7 +773,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(anonymizedApplication.scenarioResponse, '');
     assert.equal(anonymizedApplication.status, 'rejected');
     assert.equal(adminStateAfterDeletion.body.messages.some((message: Record<string, unknown>) => message.id === 'msg-from-applicant'), false);
-    assert.equal(adminStateAfterDeletion.body.accounts.some((account: Record<string, unknown>) => account.uid === 'http-applicant'), false);
+    assert.equal(adminStateAfterDeletion.body.accounts.some((account: Record<string, unknown>) => account.uid === 'http-deleted-account'), false);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
