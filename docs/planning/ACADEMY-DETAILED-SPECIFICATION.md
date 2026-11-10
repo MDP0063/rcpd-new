@@ -1295,3 +1295,30 @@ Sonderfälle und technische Durchsetzung:
 - Mehrere Materialaktualisierungen während einer offenen Prüfung werden als getrennte Review-Einträge geführt. Die Benachrichtigungen besitzen deterministische IDs und werden über einen dauerhaft gespeicherten, wiederholbaren Zustellstatus idempotent verarbeitet.
 - Bei der Entscheidung „Kurs offline lassen“ wird zusätzlich die erforderliche Materialversion festgehalten. Eine neue Kursversion darf diese Sperre nur aufheben, wenn sie die betroffenen Materialreferenzen auf die gewünschte Version aktualisiert oder vollständig entfernt. Nach Veröffentlichung bleibt der Kurs weiterhin offline und muss ausdrücklich wieder aktiviert werden. Bis zu dieser ausdrücklichen Reaktivierung lösen weitere Materialaktualisierungen erneut eine Prüfung aus.
 - Die Archivierung eines Materials setzt alle veröffentlichten Kurse, deren aktuelle Version dieses Material referenziert, auf nicht verfügbar und hinterlegt eine Versionsanforderung. Dadurch werden sie auch in der Teilnehmerübersicht nicht mehr als startbar angeboten. Eine neue Kursversion muss die archivierte Referenz entfernen, bevor der Kurs ausdrücklich wieder aktiviert werden kann. Dies gilt auch für bereits bestehende, noch nicht gestartete Programmpins; die Leserechte bereits gestarteter Teilnahmen bleiben davon getrennt und bestehen fort.
+
+
+## Ergebnisfreigabe und verpflichtende Kursabschlussprüfung – verbindliche Ergänzung (10.11.2026)
+
+### Trennung von Abgabe, Bewertung und Veröffentlichung
+
+1. Die Abgabe speichert den Versuch und beendet die Bearbeitung.
+2. Die Bewertung wird vollständig abgeschlossen; bei Freitextaufgaben ist dies erst nach vollständiger manueller Bewertung der Fall.
+3. Das Ergebnis wird in einem eigenständigen, protokollierten Schritt für den Teilnehmer freigegeben.
+
+Ohne explizite Prüfungskonfiguration gilt manuelle Erstfreigabe. Ein explizit konfigurierter automatischer Modus darf erst nach endgültiger Bewertung freigeben; ein Versuch mit ausstehender manueller Bewertung darf niemals automatisch freigegeben werden.
+
+Vor der Freigabe sieht der Teilnehmer nur, dass die Abgabe eingegangen ist bzw. noch bewertet wird. Bestehen/Nichtbestehen, Punktzahlen und Ergebnisdetails bleiben verborgen. Die interne Prüfungswerkstatt und interne Bewertungsdaten bleiben von der Teilnehmerprojektion getrennt.
+
+### Korrekturen nach Ergebnisfreigabe
+
+Eine Korrektur eines freigegebenen Ergebnisses muss in derselben transaktionalen Änderung die aktuelle Freigabe auf „erneute Freigabe erforderlich“ setzen. Das frühere Ergebnis bleibt mit Freigabezeitpunkt, freigebender Person und damaligem Bewertungsstand in der Historie erhalten. Bis zur erneuten Freigabe ist weder das korrigierte Ergebnis für Teilnehmer sichtbar noch darf es als Kursabschlussnachweis gelten.
+
+### Verbindliche Abschlussbedingung `required_assessment`
+
+Ein Nachweis gilt ausschließlich für eine Prüfung, deren Versuch `assessmentStage === 'final_exam'` ist, deren Prüfung-ID exakt dem in der Kursversion referenzierten Ziel entspricht, deren Teilnehmer-ID der Eigentümer der Kursteilnahme ist und deren endgültiges Ergebnis `passed` sowie aktuell offiziell freigegeben ist. Ein `test`, ein lediglich abgegebener Versuch, `pending_review`, ein fehlgeschlagener Versuch, eine widerrufene Freigabe oder eine clientseitig behauptete Evidenz erfüllt die Bedingung nicht.
+
+Die Prüfung erfolgt serverseitig. Ein Kursabschluss darf nicht aus einem nicht verifizierten Fortschrittsdatensatz abgeleitet werden. Bei mehreren Versuchen ist eine deterministische, versionsgebundene Auswahl erforderlich; alte oder ungültig gemachte Ergebnisse dürfen nicht stillschweigend wieder als Nachweis dienen.
+
+### Qualitätssicherung
+
+CI muss Erstfreigabe, fehlende Konfiguration (manuell), explizit automatische Freigabe, ausstehende manuelle Bewertung, Teilnehmerdatenschutz, Korrektur mit erneuter Freigabe, fehlgeschlagene und bestandene Versuche sowie die Academy-Nachweisverknüpfung abdecken. Manuelle Browser-/Live-Firestore-Prüfung bleibt Teil des späteren gemeinsamen Academy-Abnahmetests.
