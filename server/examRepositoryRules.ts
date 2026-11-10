@@ -310,9 +310,25 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       if (!sameOwner) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
     }
     if (historyAppended) {
-      const action = (nextHistory[nextHistory.length - 1] as any).action;
-      if ((action === 'claimed' && (!nextClaim || previousClaim)) ||
-          ((action === 'released' || action === 'auto_released') && (previousClaim === null || nextClaim !== null))) {
+      const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
+      const action = entry.action;
+      if (
+        (action === 'claimed' && (
+          !nextClaim || previousClaim !== null ||
+          entry.actorUid !== nextClaim.reviewerUid ||
+          entry.targetUid !== nextClaim.reviewerUid
+        )) ||
+        (action === 'released' && (
+          previousClaim === null || nextClaim !== null ||
+          entry.actorUid !== previousClaim.reviewerUid ||
+          entry.targetUid !== previousClaim.reviewerUid
+        )) ||
+        (action === 'auto_released' && (
+          previousClaim === null || nextClaim !== null ||
+          entry.actorUid !== 'system' ||
+          entry.targetUid !== previousClaim.reviewerUid
+        ))
+      ) {
         throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
       }
     }
