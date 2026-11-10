@@ -2,7 +2,7 @@
 
 **Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) und Mehrfachquellen pro privater Notiz (PR #134) gemergt. Aktuelle Umsetzung: bedarfsgesteuerte Statusprüfung versionierter Notizquellen; maßgeblich ist der tatsächliche Zugriff auf die konkrete Fassung, nicht eine frühere Kursteilnahme. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` zum Start dieser Umsetzung (Branch `feature/academy-private-note-source-status`).  
+**Aktueller Basisstand:** `052410e19a5046bedd7d730d78d7b5eb7d815431` (`main` beim Start von PR #135).  
 **Aktueller Umsetzungsbranch:** `feature/academy-private-note-source-status`; Statusanzeige und serverseitige Prüfung privater Notizquellen werden umgesetzt.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -305,7 +305,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 
 **Prüfergebnis:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle sowie CI geprüft. PR #134 wurde nach erfolgreicher GitHub-CI (436/436 Tests, TypeScript und Produktionsbuild) und Codeprüfung gemergt. Der optionale Render-Deploy-Schritt wurde übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung wurden nicht verifiziert.
 
-**Noch offen und bereits beschlossen:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Stabile Seiten-/Textstellenanker samt Warnung bei nicht mehr eindeutig zuordenbaren Referenzen bleiben ebenfalls beschlossen, aber abhängig von einer belastbaren Ankerstrategie.
+**In Umsetzung mit PR #135:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Weiterhin offen bleiben stabile Seiten-/Textstellenanker samt Warnung bei nicht mehr eindeutig zuordenbaren Referenzen; diese hängen von einer belastbaren Ankerstrategie ab.
 
 
 ## 10.11.2026 – Status privater Notizquellen (in Umsetzung)
