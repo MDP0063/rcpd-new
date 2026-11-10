@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Zusätzlich zu PR #132/#134/#135/#136 ist PR #137 (globale Bibliothekssuche, Relevanzsortierung und kompakte Kategorie-/Dokumenttypfilter) gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – PR #132/#134/#135/#136 und #137 sind gemergt. PR #138 behebt im Draft einen probabilistischen ID-Kollisionstest; PR #139 ergänzt im Draft die lokale Wiederaufnahme der Reader-Leseposition. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `1dd9f83bfb4566a42a84359808624db36ab65da5` (`main`, Merge-Commit von PR #137).  
-**Aktueller Umsetzungsbranch:** keiner; PR #137 ist abgeschlossen. Nächste Umsetzung erst nach Prüfung des nächsten bereits beschlossenen Academy-Arbeitspakets.
+**Aktueller Basisstand:** `c39c44706e73ca6b813c51e334182b186f72b41c` (`main`; nach dem Merge von PR #137 folgte ein Dokumentationscommit).  
+**Aktueller Umsetzungsstand:** PR #138 (`fix/id-random-id-entropy`) ist Draft gegen `main`; PR #139 (`feature/academy-reader-position`) ist Draft und darauf gestapelt. Kein Merge und kein Deployment durch diese Arbeit.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -223,7 +223,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Der Reader lädt Inhalte ausschließlich über eine serverseitig geprüfte Route, die die exakte Materialversion in der gepinnten Kursversion verifiziert. Rollenbeschränkungen werden serverseitig geprüft.
 - Markdown wird mit `react-markdown`, `remark-gfm` und `rehype-sanitize` ohne Raw-HTML-Durchleitung dargestellt. Code bleibt Quelltext und wird nicht ausgeführt.
 - PR #63 konsolidiert die nach dem Merge gefundenen Materialreferenz-, Reader-Darstellungs-, Datenschutz- und Versionshistorienfehler. TypeScript-Prüfung, Produktionsbuild und 333 Tests liefen erfolgreich; eine manuelle Browserprüfung wurde nicht durchgeführt.
-- Notizen/Lesezeichen, Autosave und geräteübergreifende Leseposition bleiben ein eigener Folgeabschnitt.
+- Notizen/Lesezeichen, Autosave, Mehrfachquellen und stabile Textanker sind mit PR #132/#134/#136 umgesetzt. Die lokale Lesepositions-Wiederaufnahme wird mit Draft-PR #139 ergänzt; geräte-/browserübergreifende Synchronisierung bleibt offen.
 
 
 ## Vorübergehende Sperre neuer PDF-Uploads
@@ -331,3 +331,14 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Detailreview ergänzt: Markdown-Wiederfindung berücksichtigt zusätzlich den gespeicherten Überschriftenpfad; Anker-Schreibaktionen werden während ungespeicherter Notizänderungen blockiert.
 - GitHub-CI für PR #136: 443/443 Tests bestanden; TypeScript-Prüfung und Produktionsbuild erfolgreich. PR-Vorlagenprüfung erfolgreich.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
+
+
+## 10.11.2026 – Lokale Wiederaufnahme der Academy-Reader-Leseposition (Draft-PR #139)
+
+- Die beschlossene Speicherung/Wiederaufnahme der letzten Leseposition wird zunächst lokal im selben Browser/Gerät umgesetzt.
+- Speicheridentität umfasst Teilnahme, Materialstamm und die exakte unveränderliche Materialversion. Eine Position wird nicht auf eine andere Teilnahme oder Materialfassung übertragen.
+- Markdown speichert den relativen Dokumentfortschritt; Code-Materialien speichern die interne Scrollposition des Quelltextbereichs.
+- Lokaler Speicher wird fail-soft behandelt: nicht verfügbare Browser-Speicherung verhindert nicht das Öffnen/Lesen.
+- Keine API-, Backend-, Datenmodell- oder Berechtigungsänderung; keine externen Dienste oder laufenden Kosten.
+- Geräte-/browserübergreifende Synchronisierung bleibt offen. PDF-Seitenpositionen bleiben wegen der zurückgestellten PDF-Infrastruktur unberührt.
+- Draft-PR #139 ist auf dem Bugfix-Branch für PR #138 gestapelt; kein Merge/Deployment. Lokale Tests und manuelle Browserprüfung sind nicht erfolgt; CI steht aus.
