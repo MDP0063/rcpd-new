@@ -82,7 +82,6 @@ import { isRenderDeployHook, isSafeHttpUrl, isSafePdfDataUrl, limitText } from '
 import {
   AcademyExamDoc,
   AnnouncementCategory,
-  ApplicationStatus,
   AnnouncementDoc,
   AnnouncementPriority,
   AuditLogDoc,
@@ -2596,7 +2595,10 @@ async function startServer() {
       res.status(400).json({ error: 'Die angegebene Kontorolle ist ungültig.' });
       return;
     }
-    if (whitelistStatus !== undefined && whitelistStatus !== null && whitelistStatus !== '' && !isWhitelistStatus(whitelistStatus)) {
+    if (
+      whitelistStatus !== undefined && whitelistStatus !== null && whitelistStatus !== '' &&
+      !isWhitelistStatus(whitelistStatus)
+    ) {
       res.status(400).json({ error: 'Der angegebene Whitelist-Status ist ungültig.' });
       return;
     }
@@ -2618,8 +2620,12 @@ async function startServer() {
     const uid = newId('usr');
     const nowIso = new Date().toISOString();
     // Default role is ALWAYS 'trainee' unless explicitly chosen otherwise by Admin
-    const targetRole: OfficerRole = role === undefined || role === null || role === '' ? 'trainee' : role;
-    const targetWhitelistStatus: WhitelistStatus = whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === '' ? 'whitelisted' : whitelistStatus;
+    const targetRole: OfficerRole =
+      role === undefined || role === null || role === '' ? 'trainee' : role;
+    const targetWhitelistStatus: WhitelistStatus =
+      whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === ''
+        ? 'whitelisted'
+        : whitelistStatus;
     const roleMeta = ROLE_HIERARCHY[targetRole];
     const normalizedPerms = normalizeGranularPermissions(targetRole, granularPermissions);
 
@@ -2759,8 +2765,12 @@ async function startServer() {
       }
     }
 
-    const nextRole: OfficerRole = role === undefined || role === null || role === '' ? previousRole : role;
-    const nextWhitelistStatus: WhitelistStatus = whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === '' ? target.publicProfile.whitelistStatus : whitelistStatus;
+    const nextRole: OfficerRole =
+      role === undefined || role === null || role === '' ? previousRole : role;
+    const nextWhitelistStatus: WhitelistStatus =
+      whitelistStatus === undefined || whitelistStatus === null || whitelistStatus === ''
+        ? target.publicProfile.whitelistStatus
+        : whitelistStatus;
     const roleMeta = ROLE_HIERARCHY[nextRole];
     const previousPerms = normalizeGranularPermissions(
       previousRole,
@@ -3017,7 +3027,10 @@ async function startServer() {
       res.status(400).json({ error: 'Der Bewerbungsstatus ist ungültig.' });
       return;
     }
-    if (status === 'accepted' && promoteToRole !== undefined && promoteToRole !== null && promoteToRole !== '' && !isWhitelistPromotionRole(promoteToRole)) {
+    if (
+      status === 'accepted' && promoteToRole !== undefined && promoteToRole !== null && promoteToRole !== '' &&
+      !isWhitelistPromotionRole(promoteToRole)
+    ) {
       res.status(400).json({ error: 'Der zugewiesene Zielrang ist ungültig.' });
       return;
     }
@@ -4889,7 +4902,10 @@ jobs:
       res.status(403).json({ error: 'Zugangsanträge für die Prüfungswerkstatt dürfen ausschließlich vom Admin entschieden werden.' });
       return;
     }
-    if (targetReq.category === 'rank_change' && targetReq.requestedRole !== undefined && !isRankChangeRequestRole(targetReq.requestedRole)) {
+    if (
+      targetReq.category === 'rank_change' && targetReq.requestedRole !== undefined &&
+      !isRankChangeRequestRole(targetReq.requestedRole)
+    ) {
       res.status(409).json({ error: 'Der gespeicherte Zielrang des Antrags ist ungültig. Die Entscheidung wurde nicht gespeichert.' });
       return;
     }
