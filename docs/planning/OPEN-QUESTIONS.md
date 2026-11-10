@@ -25,7 +25,7 @@
 - **In `main` umgesetzt:** private Reader-Notizen/Lesezeichen mit Autosave (PR #132), Mehrfachquellen (PR #134) und versionsgebundene Textanker für Markdown/Code (PR #136).
 - **Mit Draft-PR #141 in Umsetzung:** lokale Wiederaufnahme der letzten Leseposition, isoliert nach Teilnahme und exakter Materialversion. Geräte-/browserübergreifende Synchronisierung bleibt ausdrücklich offen.
 - **Mit PR #137 in `main` umgesetzt:** globale Teilnehmer-Suche, Relevanzsortierung sowie Kategorie-/Dokumenttypfilter; zusätzliche Volltext-/OCR-Suche bleibt zurückgestellt/offen.
-- Benachrichtigung betroffener Kursverantwortlicher bei neuer veröffentlichter Materialfassung und konkrete Auswirkungen einer neuen Fassung auf laufende Kursentwürfe abschließen.
+- **Fachlich entschieden am 10.11.2026:** Neue Materialfassung sperrt betroffene verfügbare Kurse vorsorglich für neue Teilnahmen; bestehende Teilnahmen bleiben auf ihrer fest gebundenen Version zugriffsberechtigt. Kursverantwortliche werden benachrichtigt und entscheiden nach Prüfung über erneute Verfügbarkeit oder eine aktualisierte Kursversion. Technische Umsetzung und Zustell-/Idempotenzprüfung der Benachrichtigungen stehen noch aus.
 - Bestehende Legacy-Materialien bleiben unberührt, bis ein gesonderter Migrations-/Kompatibilitätsplan beschlossen und umgesetzt ist.
 
 **Zurückgestellt – PDF und dateibasierte Materialien (nicht Teil der aktuellen Ausbaustufe):**
@@ -230,5 +230,5 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
 - Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
 - Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
-- Rücknahme/Archivierung veröffentlichter Materialien, Auswirkungen auf Kursreferenzen und Benachrichtigung betroffener Kursverantwortlicher abschließen.
+- Rücknahme/Archivierung veröffentlichter Materialien und die technisch beschlossene Materialaktualisierungs-Sperre für neue Kursteilnahmen implementieren und testen.
 - Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
