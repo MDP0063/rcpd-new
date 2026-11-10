@@ -27,7 +27,9 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     });
     await startExamAttempt(repository, 'review-exam', { uid: 'student-1', displayName: 'Student', clearanceLevel: 0 }, 'PC-101', Date.parse('2026-11-05T12:00:00.000Z'), () => 'review-attempt');
     await saveExamAttemptAnswers(repository, 'review-exam', 'review-attempt', 'student-1', 1, { choice: 'b', text: 'Meine Antwort' }, Date.parse('2026-11-05T12:01:00.000Z'));
-    await submitExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', Date.parse('2026-11-05T12:02:00.000Z'));
+    const initialSubmission = await submitExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', Date.parse('2026-11-05T12:02:00.000Z'));
+    assert.equal(initialSubmission.submission.status, 'awaiting_release');
+    assert.equal(initialSubmission.submission.finalScoreBasisPoints, null);
 
     await assert.rejects(releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin'), /EXAM_RESULT_NOT_FINAL/);
     const queue = await listExamReviews(repository, ['PC-101']);
