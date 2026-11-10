@@ -14,7 +14,7 @@ interface ReviewItem {
   id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
   submittedAtIso: string; questions: ReviewQuestion[];
   reviewClaim: ReviewClaim | null; isClaimOwner: boolean; canClaim: boolean;
-  draftGrades: Record<string, number>; draftRevision: number;
+  draftGrades: Record<string, number>;
 }
 
 const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
@@ -36,7 +36,6 @@ export const ExamReviewCenter: React.FC = () => {
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
   const pendingDrafts = useRef<Record<string, { review: ReviewItem; question: ReviewQuestion; value: string }>>({});
-  const draftRevisionRef = useRef<Record<string, number>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
 
   const load = useCallback(async () => {
@@ -54,7 +53,6 @@ export const ExamReviewCenter: React.FC = () => {
         const next = { ...current };
         for (const review of response.data!.reviews) {
           const wasClaimOwner = previousReviews.some(previous => previous.id === review.id && previous.isClaimOwner);
-          draftRevisionRef.current[review.id] = review.draftRevision;
           if (!next[review.id] || (review.isClaimOwner && !wasClaimOwner)) {
             next[review.id] = Object.fromEntries(review.questions.map(question => [
               question.questionId,
@@ -124,7 +122,6 @@ export const ExamReviewCenter: React.FC = () => {
       setError(response.error || 'Der Bewertungsentwurf konnte nicht gespeichert werden. Prüfe deine Zuständigkeit.');
       return false;
     }
-    draftRevisionRef.current[pending.review.id] = response.data.revision;
     if (pendingDrafts.current[key] === pending) delete pendingDrafts.current[key];
     setDraftSaveStatus(current => ({ ...current, [pending.review.id]: 'saved' }));
     return true;
