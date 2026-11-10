@@ -1022,6 +1022,30 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     ]);
     assert.equal(removeOriginalSource.body!.note.materialId, 'manual-1');
 
+    const sourceStatusNote = await request('/api/academy/notes', officer, {
+      method: 'POST',
+      ...json({
+        materialId,
+        materialVersionId: materialVersion1Id,
+        kind: 'note',
+        sources: [
+          { materialId, materialVersionId: materialVersion1Id },
+          { materialId, materialVersionId: materialPublishedV2.body!.version.id },
+          { materialId, materialVersionId: materialId + '__v99' }
+        ]
+      })
+    });
+    assert.equal(sourceStatusNote.status, 201, JSON.stringify(sourceStatusNote.body));
+    const sourceStatusNoteId = sourceStatusNote.body!.note.id as string;
+    const sourceStatuses = await request(`/api/academy/notes/${sourceStatusNoteId}/source-status`, officer);
+    assert.equal(sourceStatuses.status, 200, JSON.stringify(sourceStatuses.body));
+    assert.deepEqual(sourceStatuses.body!.sources.map((source: { status: string }) => source.status), [
+      'available', 'restricted', 'unavailable'
+    ]);
+    assert.equal('content' in sourceStatuses.body!.sources[0], false, 'source status must never return material content');
+    assert.equal((await request(`/api/academy/notes/${sourceStatusNoteId}/source-status`, admin)).status, 404,
+      'another account must not inspect a private note source status');
+
     const staleNoteEdit = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({ expectedRevision: 1, content: 'Veralteter Schreibversuch' })
     });
