@@ -3897,7 +3897,7 @@ async function startServer() {
   });
 
   // Generate Render.com Blueprint (Free Tier + Auto-Deploy on main) & GitHub Actions CI/CD manifest
-  app.get(['/api/v1/deployment/manifests', '/api/deployment/manifests'], (req, res) => {
+  app.get(['/api/v1/deployment/manifests', '/api/deployment/manifests'], (_req, res) => {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(account => account.uid === res.locals.sessionUid);
     if (!caller || !canAccessDeploymentManifest(caller.publicProfile.role)) {
