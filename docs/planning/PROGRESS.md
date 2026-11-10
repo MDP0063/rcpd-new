@@ -47,7 +47,7 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 - Serverblock für neue Kursstarts, auch wenn ein bestehender Programmpin eine Kursversion vorgibt; bereits gestartete Teilnahmen bleiben lesbar.
 - Archivierte Materialreferenzen setzen betroffene veröffentlichte Kurse ebenfalls offline und verlangen vor einer Reaktivierung eine neue Kursversion ohne die archivierte Referenz; neue Programmpins werden dadurch verhindert, laufende Teilnahmen behalten ihren Zugriff.
 - Entscheidung „Kurs offline lassen“ setzt eine zusätzliche Versionsanforderung: vor Reaktivierung muss eine neue Kursversion die betroffenen Materialreferenzen aktualisieren oder entfernen; die neue Kursversion aktiviert den Kurs nicht automatisch.
-- Kursverwaltung erhält explizite Aktionen zur Prüfung, Freigabe und späteren Reaktivierung.
+- Kursverwaltung erhält explizite Aktionen zur Prüfung, Freigabe und späteren Reaktivierung. Nach Veröffentlichung der korrigierten Kursversion bleibt ein eigener Marker bis zur manuellen Reaktivierung bestehen; neue Materialfassungen in diesem Zeitraum lösen erneut eine Prüfung aus.
 
 Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. CI, Tests und abschließende Prüfung stehen noch aus; kein Merge/Deployment.
 
