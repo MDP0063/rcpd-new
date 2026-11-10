@@ -690,14 +690,22 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     });
     assert.equal(highClearanceExamProgress.status, 403);
 
-    // The existing manual self-assessment remains available for an active, accessible code test.
+    // Legacy code exams may record completion, but a client-reported score is never an official pass.
     const activeCodeExamProgress = await jsonRequest('/api/progress', delegate.token, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: 'http-delegate', targetId: 'http-active-test', targetType: 'test', scorePercent: 100 })
     });
     assert.equal(activeCodeExamProgress.status, 200);
-    assert.equal(activeCodeExamProgress.body.passed, true);
+    assert.equal(activeCodeExamProgress.body.passed, false);
+    assert.equal(activeCodeExamProgress.body.scorePercent, 100);
+    const legacyProgressState = await jsonRequest('/api/portal/state?uid=http-delegate', delegate.token);
+    assert.equal(legacyProgressState.status, 200);
+    const legacyCodeProgress = legacyProgressState.body.progress.find((item: Record<string, unknown>) =>
+      item.targetId === 'http-active-test' && item.targetType === 'test'
+    );
+    assert.equal(legacyCodeProgress.status, 'completed');
+    assert.equal(legacyCodeProgress.scorePercent, 100);
 
     const passwordUpdate = await jsonRequest('/api/admin/accounts/http-delegate', admin.token, {
       method: 'PUT',
