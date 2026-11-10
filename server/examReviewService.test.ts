@@ -29,6 +29,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     await saveExamAttemptAnswers(repository, 'review-exam', 'review-attempt', 'student-1', 1, { choice: 'b', text: 'Meine Antwort' }, Date.parse('2026-11-05T12:01:00.000Z'));
     await submitExamAttempt(repository, 'review-exam', 'review-attempt', 'student-1', Date.parse('2026-11-05T12:02:00.000Z'));
 
+    await assert.rejects(releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin'), /EXAM_RESULT_NOT_FINAL/);
     const queue = await listExamReviews(repository, ['PC-101']);
     assert.equal(queue.length, 1);
     assert.equal(queue[0].questions[0].answer, 'Meine Antwort');
@@ -64,6 +65,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(released.status, 'passed');
     assert.equal((await listOwnExamResults(repository, 'student-1'))[0].status, 'passed');
     assert.equal((await listPendingExamResultReleases(repository)).length, 0);
+    await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:06:00.000Z');
+    assert.equal((await repository.get<any>('exam_attempts', 'review-attempt'))?.resultReleaseHistory?.length, 1);
 
     const completedReviews = await listCompletedManualReviews(repository);
     assert.equal(completedReviews.length, 1);
