@@ -773,7 +773,12 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(anonymizedApplication.scenarioResponse, '');
     assert.equal(anonymizedApplication.status, 'rejected');
     assert.equal(adminStateAfterDeletion.body.messages.some((message: Record<string, unknown>) => message.id === 'msg-from-applicant'), false);
-    assert.equal(adminStateAfterDeletion.body.accounts.some((account: Record<string, unknown>) => account.uid === 'http-deleted-account'), false);
+    const deletedAccountLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDeletedAccount', password: TEST_PASSWORD })
+    });
+    assert.equal(deletedAccountLogin.status, 401);
 
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
