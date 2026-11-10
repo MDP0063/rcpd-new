@@ -100,3 +100,12 @@
 - GitHub-CI erfolgreich: 443/443 Tests, TypeScript-Prüfung und Produktionsbuild; PR-Vorlagenprüfung ebenfalls erfolgreich.
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
 - PDF-Seitenanker bleiben ausdrücklich zurückgestellt.
+
+
+## 2026-11-10 – Lokale Wiederaufnahme der Reader-Leseposition (Draft-PR #139)
+
+- Beschlossene Reader-Funktion ergänzt: Markdown- und Code-Leseposition wird lokal nach Teilnahme und exakter Materialversion getrennt gespeichert und beim erneuten Öffnen wiederhergestellt.
+- Browser-Speicherfehler bleiben fail-soft; Positionen werden nicht serverseitig synchronisiert.
+- Geräte-/browserübergreifende Wiederaufnahme bleibt ausdrücklich offen; keine PDF-Seitenpositionen.
+- Tests für Versions-/Teilnahmeisolation, beide Inhaltsarten und ungültige lokale Speicherwerte ergänzt.
+- Draft-PR #139 basiert auf dem separaten ID-Zufallsentropie-Bugfix PR #138. Kein Merge/Deployment; CI und manuelle Browserprüfung stehen aus.
