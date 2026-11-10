@@ -104,7 +104,7 @@ function normalizePrivateNoteSources(
 function privateNoteWithNormalizedSources(note: AcademyPrivateNoteDoc): AcademyPrivateNoteDoc {
   return {
     ...note,
-    sources: note.sources ?? [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]
+    sources: note.sources?.length ? note.sources : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]
   };
 }
 function revision(value: unknown): number | null {
