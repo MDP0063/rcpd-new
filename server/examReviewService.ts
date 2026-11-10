@@ -116,14 +116,10 @@ export async function claimExamReview(
         await transaction.update('exam_attempts', attemptId, next);
         return reclaimed;
       }
-      const resumed: ExamReviewClaim = {
-        ...attempt.reviewClaim, reviewerName: reviewerName.trim(),
-        lastActivityAtIso: nowIso
-      };
-      const { warningStartedAtIso: _warning, ...active } = resumed;
-      const next = { ...attempt, reviewClaim: active };
-      await transaction.update('exam_attempts', attemptId, next);
-      return active;
+      // A repeated claim request is not real work and must not extend inactivity.
+      // Active claims remain persistent across reloads; only recordExamReviewActivity
+      // or a successful draft save may refresh lastActivityAtIso.
+      return attempt.reviewClaim;
     }
     const claim: ExamReviewClaim = {
       reviewerUid, reviewerName: reviewerName.trim(),
