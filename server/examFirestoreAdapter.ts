@@ -283,6 +283,7 @@ export class FirestoreExamStorageAdapter implements ExamStorageAdapter {
 
   async anonymizeUser(uid: string, anonymizedUid: string, identityNames: readonly string[] = []): Promise<void> {
     if (!uid.trim() || !anonymizedUid.trim() || uid === anonymizedUid) throw new Error('EXAM_ANONYMIZATION_INPUT_INVALID');
+    if (await this.isMaintenanceMode()) throw new Error('EXAM_MAINTENANCE_ACTIVE');
     const writer = this.database.bulkWriter();
     const writes: Promise<unknown>[] = [];
     try {
