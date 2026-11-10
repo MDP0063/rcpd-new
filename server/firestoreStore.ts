@@ -139,6 +139,31 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
     }, delayMs);
   }
 
+  async function flushPendingStrict(): Promise<void> {
+    strictFlushing = true;
+    let failed = false;
+    try {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (running) await running;
+      while (pending) {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        await writeOnce();
+      }
+    } catch (error) {
+      failed = true;
+      throw error;
+    } finally {
+      strictFlushing = false;
+      if (pending) schedule(failed ? RETRY_DELAY_MS : SAVE_DELAY_MS);
+    }
+  }
+
   return {
     getDatabase() {
       return db;
@@ -194,37 +219,12 @@ export async function openFirestoreStore(options: FirestoreStoreOptions): Promis
     },
 
     async flush() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-      await run();
-      if (running) await running;
+      // A flush is a durability boundary: callers must never mistake a failed write for success.
+      await flushPendingStrict();
     },
 
     async flushStrict() {
-      strictFlushing = true;
-      let failed = false;
-      try {
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        if (running) await running;
-        while (pending) {
-          if (timer) {
-            clearTimeout(timer);
-            timer = null;
-          }
-          await writeOnce();
-        }
-      } catch (error) {
-        failed = true;
-        throw error;
-      } finally {
-        strictFlushing = false;
-        if (pending) schedule(failed ? RETRY_DELAY_MS : SAVE_DELAY_MS);
-      }
+      await flushPendingStrict();
     },
 
     createCustomToken(uid) {
