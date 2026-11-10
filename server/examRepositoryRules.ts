@@ -300,6 +300,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     if (draftChanged) {
       if (nextDraftRevision !== previousDraftRevision + 1 ||
           typeof next.reviewDraftUpdatedByUid !== 'string' || !next.reviewDraftUpdatedByUid.trim() ||
+          !next.reviewClaim || next.reviewClaim.reviewerUid !== next.reviewDraftUpdatedByUid || next.reviewClaim.disconnectedAtIso !== undefined ||
           typeof next.reviewDraftUpdatedAtIso !== 'string' || Number.isNaN(Date.parse(next.reviewDraftUpdatedAtIso))) {
         throw new Error('EXAM_REVIEW_DRAFT_INVALID');
       }
