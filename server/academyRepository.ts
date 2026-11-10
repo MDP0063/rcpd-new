@@ -877,6 +877,7 @@ export class AcademyRepository {
       if (current.currentPublishedVersionId && !archivedVersion) {
         throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       }
+      if (archivedVersion) assertValid(validateMaterialVersion(materialId, archivedVersion));
       const courseMasters = await tx.list<AcademyCourseMasterDoc>('academy_courses');
       const affectedCourses: AcademyCourseMasterDoc[] = [];
       for (const course of courseMasters) {
