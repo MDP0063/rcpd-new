@@ -207,16 +207,11 @@ function makeProgramDraft(programId: string, body: Record<string, unknown>, work
   };
 }
 
-export function createAcademyApiRouter(
+export async function resolveAcademyCourseCompletion(
   repository: AcademyRepository,
-  resolveActor: ActorResolver,
-  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>,
-  notifyMaterialReview?: (recipientUid: string, notificationId: string, title: string, message: string) => Promise<void>,
+  participation: AcademyCourseParticipationDoc,
   resolveReleasedFinalExam?: FinalExamProofResolver
 ) {
-  const router = Router();
-
-  async function resolveCurrentCompletion(participation: AcademyCourseParticipationDoc) {
     const [version, evidence, corrections, courseMaster] = await Promise.all([
       repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId),
       repository.listParticipationEvidence(participation.id),
@@ -264,7 +259,17 @@ export function createAcademyApiRouter(
       };
     }
     return { participation, version, evidence, corrections, assessmentProofs };
-  }
+}
+
+export function createAcademyApiRouter(
+  repository: AcademyRepository,
+  resolveActor: ActorResolver,
+  recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>,
+  notifyMaterialReview?: (recipientUid: string, notificationId: string, title: string, message: string) => Promise<void>,
+  resolveReleasedFinalExam?: FinalExamProofResolver
+) {
+  const router = Router();
+
 
   async function withPinnedMaterialLabels(draft: AcademyCourseDraftDoc): Promise<AcademyCourseDraftDoc> {
     const chapters = await Promise.all(draft.chapters.map(async chapter => {
@@ -1171,7 +1176,7 @@ export function createAcademyApiRouter(
           throw new Error('ACADEMY_PROGRAM_PIN_INTEGRITY_ERROR');
         }
         const currentParticipation = courseParticipation
-          ? (await resolveCurrentCompletion(courseParticipation)).participation
+          ? (await resolveAcademyCourseCompletion(repository, courseParticipation)).participation
           : null;
         return { pin, version: courseVersion, participation: currentParticipation };
       }));
