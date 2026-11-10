@@ -903,6 +903,15 @@ async function saveDatabaseAndWait(state: PortalDatabaseState): Promise<void> {
   if (store) await store.flushStrict();
 }
 
+function persistAndRespond(
+  state: PortalDatabaseState,
+  res: express.Response,
+  next: express.NextFunction,
+  respond: () => void
+): void {
+  void saveDatabaseAndWait(state).then(respond).catch(next);
+}
+
 
 /** Prüft die Felder eines Lehrmaterials. Gibt eine Fehlermeldung zurück oder null. */
 function validateModuleFields(
@@ -3140,7 +3149,7 @@ async function startServer() {
   });
 
   // 9. Academy Textbooks/PDFs & Code Tests/Final Exams (Editable by Admin, Colonel, or Granular Course Instructor)
-  app.post('/api/academy/modules', (req, res) => {
+  app.post('/api/academy/modules', (req, res, next) => {
     const {
       title,
       code,
@@ -3208,11 +3217,11 @@ async function startServer() {
       `${newMod.code} — ${newMod.title}`,
       `Format: ${newMod.embedType} · Mindest-Rang: ${newMod.requiredRole.toUpperCase()}`
     );
-    saveDatabase(dbState);
-    res.json({ module: toClientModule(newMod) });
+    persistAndRespond(dbState, res, next, () => res.json({ module: toClientModule(newMod) }));
+    return;
   });
 
-  app.put('/api/academy/modules/:modId', (req, res) => {
+  app.put('/api/academy/modules/:modId', (req, res, next) => {
     const { modId } = req.params;
     const {
       title,
@@ -3299,8 +3308,8 @@ async function startServer() {
       `${dbState.modules[idx].code} — ${dbState.modules[idx].title}`,
       `Aktualisiert durch ${caller.publicProfile.displayName}`
     );
-    saveDatabase(dbState);
-    res.json({ module: toClientModule(updatedModule) });
+    persistAndRespond(dbState, res, next, () => res.json({ module: toClientModule(updatedModule) }));
+    return;
   });
 
   app.get('/api/academy/modules/:modId/pdf', async (req, res) => {
@@ -3340,7 +3349,7 @@ async function startServer() {
     res.json({ pdfDataUrl });
   });
 
-  app.delete('/api/academy/modules/:modId', (req, res) => {
+  app.delete('/api/academy/modules/:modId', (req, res, next) => {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetMod = dbState.modules.find(m => m.id === req.params.modId);
@@ -3361,11 +3370,11 @@ async function startServer() {
       `${targetMod.code} — ${targetMod.title}`,
       `Modul wurde aus dem Ausbildungsbereich entfernt.`
     );
-    saveDatabase(dbState);
-    res.json({ deleted: true });
+    persistAndRespond(dbState, res, next, () => res.json({ deleted: true }));
+    return;
   });
 
-  app.post('/api/academy/exams', (req, res) => {
+  app.post('/api/academy/exams', (req, res, next) => {
     const {
       actorUid,
       title,
@@ -3420,11 +3429,11 @@ async function startServer() {
       `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
     );
     appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung angelegt', `${newExam.moduleCode} — ${newExam.title}`, `Prüfungsbereich: ${stage}.`);
-    saveDatabase(dbState);
-    res.json({ exam: newExam });
+    persistAndRespond(dbState, res, next, () => res.json({ exam: newExam }));
+    return;
   });
 
-  app.delete('/api/academy/exams/:examId', (req, res) => {
+  app.delete('/api/academy/exams/:examId', (req, res, next) => {
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === res.locals.sessionUid);
     const targetExam = dbState.exams.find(e => e.id === req.params.examId);
@@ -3452,13 +3461,13 @@ async function startServer() {
       reason.trim()
     );
     appendAuditLog(dbState, caller, 'EXAM_WORKSHOP', 'Legacy-Prüfung archiviert', `${targetExam.moduleCode} — ${targetExam.title}`, reason.trim());
-    saveDatabase(dbState);
-    res.json({ archived: true });
+    persistAndRespond(dbState, res, next, () => res.json({ archived: true }));
+    return;
   });
 
   // 9b. GRANULAR INSTRUCTOR COURSE GRADING (/api/academy/instructor-grade)
   // Allows Admin, Colonel, or an Officer assigned to a specific courseCode to assign a score/status to a trainee/officer
-  app.post('/api/academy/instructor-grade', (req, res) => {
+  app.post('/api/academy/instructor-grade', (req, res, next) => {
     const {
       instructorUid,
       targetUserUid,
@@ -3551,12 +3560,12 @@ async function startServer() {
       'academy'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, progressRecord: record });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, progressRecord: record }));
+    return;
   });
 
   // 10. Self Progress Tracking
-  app.post('/api/progress', (req, res) => {
+  app.post('/api/progress', (req, res, next) => {
     const { targetId, targetType, scorePercent, answers } = req.body;
     const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
@@ -3729,13 +3738,13 @@ async function startServer() {
       });
     }
 
-    saveDatabase(dbState);
-    res.json({
+    persistAndRespond(dbState, res, next, () => res.json({
       ok: true,
       scorePercent: resolvedScore,
       passed: resolvedStatus === 'passed',
       explanations
-    });
+    }));
+    return;
   });
 
   // External Game-Server Whitelist Verification Webhook / REST Endpoint
@@ -3845,7 +3854,7 @@ jobs:
   });
 
   // ADMIN ONLY: Update GitHub Repository URL, Render Service URL & Setup Checklist Progress
-  app.put('/api/admin/deployment-config', (req, res) => {
+  app.put('/api/admin/deployment-config', (req, res, next) => {
     const {
       adminUid,
       githubRepoUrl,
@@ -3893,8 +3902,8 @@ jobs:
     }
     cfg.updatedIso = new Date().toISOString();
 
-    saveDatabase(dbState);
-    res.json({ ok: true, deploymentConfig: cfg });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, deploymentConfig: cfg }));
+    return;
   });
 
   // ADMIN ONLY: verify one historical passed exam result; identity comes only from the session.
@@ -4559,7 +4568,7 @@ jobs:
   // ==========================================================================
   // MODULE 1: ANNOUNCEMENTS & FEED (/api/announcements)
   // ==========================================================================
-  app.post('/api/announcements', (req, res) => {
+  app.post('/api/announcements', (req, res, next) => {
     const { actorUid, title, category, priority, content, pinned } = req.body;
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === actorUid);
@@ -4623,11 +4632,11 @@ jobs:
       'announcements'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, announcement: newAnnouncement });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, announcement: newAnnouncement }));
+    return;
   });
 
-  app.post('/api/announcements/:id/ack', (req, res) => {
+  app.post('/api/announcements/:id/ack', (req, res, next) => {
     const { id } = req.params;
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
@@ -4645,13 +4654,14 @@ jobs:
 
     if (!ann.acknowledgedByUids.includes(caller.uid)) {
       ann.acknowledgedByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true, announcement: ann }));
+      return;
     }
 
     res.json({ ok: true, announcement: ann });
   });
 
-  app.delete('/api/announcements/:id', (req, res) => {
+  app.delete('/api/announcements/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -4682,14 +4692,14 @@ jobs:
         `Kategorie: ${target.category}`
       );
     }
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
   // MODULE 2: DIRECT MESSAGING & COMMUNICATION (/api/messages)
   // ==========================================================================
-  app.post('/api/messages', (req, res) => {
+  app.post('/api/messages', (req, res, next) => {
     const { senderUid, recipientUid, subject, body, priority } = req.body;
     const dbState = loadDatabase();
     const sender = dbState.accounts.find(a => a.uid === senderUid);
@@ -4756,11 +4766,11 @@ jobs:
       'messages'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, message: newMsg });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, message: newMsg }));
+    return;
   });
 
-  app.put('/api/messages/:id/read', (req, res) => {
+  app.put('/api/messages/:id/read', (req, res, next) => {
     const { id } = req.params;
     const callerUid = res.locals.sessionUid as string;
     const dbState = loadDatabase();
@@ -4782,13 +4792,14 @@ jobs:
 
     if (!msg.readByUids.includes(caller.uid)) {
       msg.readByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true, message: msg }));
+      return;
     }
 
     res.json({ ok: true, message: msg });
   });
 
-  app.delete('/api/messages/:id', (req, res) => {
+  app.delete('/api/messages/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -4814,8 +4825,8 @@ jobs:
     }
 
     dbState.messages = (dbState.messages || []).filter(m => m.id !== id);
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
@@ -5103,7 +5114,7 @@ jobs:
     }).catch(next);
   });
 
-  app.delete('/api/requests/:id', (req, res) => {
+  app.delete('/api/requests/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -5125,14 +5136,14 @@ jobs:
     }
 
     dbState.requests = (dbState.requests || []).filter(r => r.id !== id);
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
   // ==========================================================================
   // MODULE 4: INTERACTIVE CALENDAR & EVENTS (/api/events)
   // ==========================================================================
-  app.post('/api/events', (req, res) => {
+  app.post('/api/events', (req, res, next) => {
     const {
       actorUid,
       title,
@@ -5223,11 +5234,11 @@ jobs:
       'calendar'
     );
 
-    saveDatabase(dbState);
-    res.json({ ok: true, event: newEvent });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, event: newEvent }));
+    return;
   });
 
-  app.post('/api/events/:id/rsvp', (req, res) => {
+  app.post('/api/events/:id/rsvp', (req, res, next) => {
     const { id } = req.params;
     const { userUid, status } = req.body as {
       userUid?: string;
@@ -5271,11 +5282,11 @@ jobs:
       });
     }
 
-    saveDatabase(dbState);
-    res.json({ ok: true, event: evt });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, event: evt }));
+    return;
   });
 
-  app.delete('/api/events/:id', (req, res) => {
+  app.delete('/api/events/:id', (req, res, next) => {
     const { id } = req.params;
     const actorUid = String(req.query.actorUid || '');
     const dbState = loadDatabase();
@@ -5313,7 +5324,7 @@ jobs:
   // ==========================================================================
   // MODULE 5: LIVE NOTIFICATIONS (/api/notifications)
   // ==========================================================================
-  app.put('/api/notifications/read-all', (req, res) => {
+  app.put('/api/notifications/read-all', (req, res, next) => {
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
     const caller = dbState.accounts.find(a => a.uid === userUid);
@@ -5330,11 +5341,11 @@ jobs:
         n.readByUids.push(caller.uid);
       }
     }
-    saveDatabase(dbState);
-    res.json({ ok: true });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+    return;
   });
 
-  app.put('/api/notifications/:id/read', (req, res) => {
+  app.put('/api/notifications/:id/read', (req, res, next) => {
     const { id } = req.params;
     const { userUid } = req.body as { userUid?: string };
     const dbState = loadDatabase();
@@ -5347,7 +5358,8 @@ jobs:
     const notif = (dbState.notifications || []).find(n => n.id === id);
     if (notif && !notif.readByUids.includes(caller.uid)) {
       notif.readByUids.push(caller.uid);
-      saveDatabase(dbState);
+      persistAndRespond(dbState, res, next, () => res.json({ ok: true }));
+      return;
     }
     res.json({ ok: true });
   });
@@ -5355,7 +5367,7 @@ jobs:
   // ==========================================================================
   // MODULE 6: SELF PROFILE SETTINGS (/api/profile/self)
   // ==========================================================================
-  app.put('/api/profile/self', (req, res) => {
+  app.put('/api/profile/self', (req, res, next) => {
     const { uid, callsign, division, bio } = req.body as {
       uid?: string;
       callsign?: string;
@@ -5381,9 +5393,8 @@ jobs:
       caller.publicProfile.bio = bio.trim().slice(0, 500);
     }
     caller.publicProfile.updatedIso = nowIso;
-    saveDatabase(dbState);
-
-    res.json({ ok: true, user: caller.publicProfile });
+    persistAndRespond(dbState, res, next, () => res.json({ ok: true, user: caller.publicProfile }));
+    return;
   });
 
   // Ensure unknown /api/* requests always return JSON 404 instead of SPA index.html
