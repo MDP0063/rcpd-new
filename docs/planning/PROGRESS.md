@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) gemergt; Mehrfachquellen pro Notiz in Umsetzung. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 10.11.2026 – Academy-Fehlerreview abgeschlossen; Reader-Integration privater Notizen/Lesezeichen (PR #132) und Mehrfachquellen pro privater Notiz (PR #134) gemergt. Als nächster beschlossener Schritt folgt der Status nicht zugänglicher bzw. entfernter Notizquellen. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand von `main`:** `b1060020b853e8e1ee5f9e426fedba4e224f0f71` (Merge PR #132).  
-**Aktueller Umsetzungsbranch:** `feature/academy-multi-source-notes` – Mehrfachquellen pro privater Notiz; Implementierung und Tests in Arbeit.
+**Aktueller Basisstand von `main`:** `24d70684488582a227b69e6321856a5d38826f7a` (Merge PR #134).  
+**Aktueller Umsetzungsbranch:** derzeit keiner; nächster Arbeitsschritt ist die Anzeige des Zugriffs-/Verfügbarkeitsstatus persönlicher Notizquellen.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -291,7 +291,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die CI-Prüfung auf dem finalen PR-Stand war erfolgreich (435/435 Tests, TypeScript und Produktionsbuild). Eine manuelle Browser-/App- und Live-Firestore-Prüfung wurde nicht durchgeführt. PR #132 wurde nach erfolgreicher CI und Codeprüfung gemergt; tatsächlicher Render-Deploymentstatus wurde nicht verifiziert.
 
 
-## 10.11.2026 – Mehrere Quellen pro persönlicher Notiz (in Umsetzung)
+## 10.11.2026 – Mehrere Quellen pro persönlicher Notiz (PR #134 gemergt)
 
 **Fachliche Grundlage:** Abschnitt 12 der Academy-Detail-Spezifikation legt mehrere Quellen pro Notiz fest. Notizen bleiben privat, versionsgebunden und dürfen keinen Zugriff auf gesperrte Quellen vermitteln. Seiten-/Textstellenanker bleiben bis zu einer belastbaren Strategie zurückgestellt.
 
@@ -303,4 +303,6 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die zentrale Ansicht „Meine Notizen“ zeigt alle zugeordneten Quellen.
 - Die eigentliche Materialfreigabe wird weiterhin ausschließlich durch die bestehenden Reader-/Materialzugriffs-APIs kontrolliert; eine private Quellenreferenz ist kein Zugriffsrecht.
 
-**Noch zu prüfen:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle und CI. Quellzugriffsstatus (zugänglich/nicht zugänglich/nicht mehr vorhanden) sowie stabile Seiten-/Textstellenanker sind noch nicht Teil dieses Implementierungsschritts und dürfen nicht als umgesetzt dargestellt werden.
+**Prüfergebnis:** rückwärtskompatible Behandlung alter Datensätze, API-Revisionen bei parallelen Änderungen, Fehler-/Grenzfälle sowie CI geprüft. PR #134 wurde nach erfolgreicher GitHub-CI (436/436 Tests, TypeScript und Produktionsbuild) und Codeprüfung gemergt. Der optionale Render-Deploy-Schritt wurde übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung wurden nicht verifiziert.
+
+**Noch offen und bereits beschlossen:** Quellstatus bei verlorener Berechtigung („nicht zugänglich“) und endgültiger Entfernung („nicht mehr verfügbar“). Stabile Seiten-/Textstellenanker samt Warnung bei nicht mehr eindeutig zuordenbaren Referenzen bleiben ebenfalls beschlossen, aber abhängig von einer belastbaren Ankerstrategie.
