@@ -162,10 +162,60 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-delegate', 'HttpDelegate', 'officer', delegatePermissions),
       makeAccount('http-other-course', 'HttpOtherCourse', 'officer', otherCoursePermissions),
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
-      makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer')
+      makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
+      makeAccount('http-applicant', 'HttpApplicant', 'officer')
     ],
-    applications: [], modules: [], exams: [], progress: [], announcements: [], messages: [],
-    requests: [], events: [], auditLogs: [], notifications: []
+    applications: [{
+      id: 'app-already-reviewed',
+      applicantUid: 'http-delegate',
+      applicantName: 'HttpDelegate',
+      characterName: 'HTTP Candidate',
+      dateOfBirth: '2000-01-01',
+      discordTag: 'candidate',
+      priorExperience: 'Existing experience',
+      scenarioResponse: 'Existing response',
+      penalCodeAck: true,
+      status: 'accepted',
+      reviewerUid: 'http-admin',
+      reviewerFeedback: 'Accepted',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }],
+    modules: [], exams: [], progress: [], announcements: [],
+    messages: [{
+      id: 'msg-known-private',
+      senderUid: 'http-admin',
+      senderName: 'HttpAdmin',
+      senderBadge: 'http-admin',
+      senderRole: 'admin',
+      recipientUid: 'http-delegate',
+      recipientName: 'HttpDelegate',
+      recipientBadge: 'http-delegate',
+      subject: 'Private route regression test',
+      body: 'Private message body',
+      priority: 'routine',
+      readByUids: [],
+      createdIso: '2026-11-10T08:00:00.000Z'
+    }],
+    requests: [{
+      id: 'req-already-reviewed',
+      requesterUid: 'http-delegate',
+      requesterName: 'HttpDelegate',
+      requesterBadge: 'http-delegate',
+      requesterCurrentRole: 'officer',
+      category: 'rank_change',
+      title: 'Already reviewed',
+      requestedRole: 'colonel',
+      targetDetail: '',
+      justification: 'Existing decision',
+      priority: 'normal',
+      status: 'approved',
+      reviewerUid: 'http-admin',
+      reviewerName: 'HttpAdmin',
+      reviewerComment: 'Done',
+      createdIso: '2026-11-10T08:00:00.000Z',
+      updatedIso: '2026-11-10T08:00:00.000Z'
+    }],
+    events: [], auditLogs: [], notifications: []
   };
   const collections = Object.fromEntries(EXAM_COLLECTIONS.map(name => [name, {}])) as Record<string, Record<string, unknown>>;
   collections.exam_masters[`doc:${encodeURIComponent(TEST_EXAM_ID)}`] = master;
@@ -230,6 +280,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const otherCourse = await login(baseUrl, 'HttpOtherCourse');
     const courseReviewer = await login(baseUrl, 'HttpCourseReviewer');
     const unauthorized = await login(baseUrl, 'HttpUnauthorized');
+    const applicant = await login(baseUrl, 'HttpApplicant');
     const jsonRequest = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -422,6 +473,79 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ expectedRevision: 1, definition: updateDefinition })
     });
     assert.equal(forbiddenUpdate.status, 403);
+    const outsiderRead = await jsonRequest('/api/messages/msg-known-private/read', unauthorized.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userUid: 'http-unauthorized' })
+    });
+    assert.equal(outsiderRead.status, 403);
+    const participantRead = await jsonRequest('/api/messages/msg-known-private/read', delegate.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userUid: 'http-delegate' })
+    });
+    assert.equal(participantRead.status, 200);
+    assert.equal(participantRead.body.message.id, 'msg-known-private');
+
+    const repeatedRequestDecision = await jsonRequest('/api/requests/req-already-reviewed/review', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'rejected', reviewerComment: 'second decision' })
+    });
+    assert.equal(repeatedRequestDecision.status, 409);
+
+    const repeatedApplicationDecision = await jsonRequest('/api/admin/applications/app-already-reviewed', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', status: 'rejected', reviewerFeedback: 'second decision' })
+    });
+    assert.equal(repeatedApplicationDecision.status, 409);
+
+    const invalidApplication = await jsonRequest('/api/applications', applicant.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        applicantUid: 'http-applicant',
+        characterName: 'A',
+        dateOfBirth: '2000-01-01',
+        discordTag: 'applicant',
+        priorExperience: 'Existing experience',
+        scenarioResponse: 'Existing response',
+        penalCodeAck: false
+      })
+    });
+    assert.equal(invalidApplication.status, 400);
+
+    const validApplication = await jsonRequest('/api/applications', applicant.token, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        applicantUid: 'http-applicant',
+        characterName: 'Alex Applicant',
+        dateOfBirth: '2000-01-01',
+        discordTag: 'applicant',
+        priorExperience: 'Existing experience',
+        scenarioResponse: 'Existing response',
+        penalCodeAck: false
+      })
+    });
+    assert.equal(validApplication.status, 200);
+
+    const passwordUpdate = await jsonRequest('/api/admin/accounts/http-delegate', admin.token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminUid: 'http-admin', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(passwordUpdate.status, 200);
+    const revokedOldSession = await jsonRequest('/api/portal/heartbeat', delegate.token);
+    assert.equal(revokedOldSession.status, 401);
+    const updatedLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'HttpDelegate', password: 'Updated-Password-For-Test-123' })
+    });
+    assert.equal(updatedLogin.status, 200);
+
     const unauthenticatedDetail = await jsonRequest(`/api/workshop/exams/${TEST_EXAM_ID}`);
     assert.equal(unauthenticatedDetail.status, 401);
   } finally {
