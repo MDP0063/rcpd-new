@@ -48,7 +48,6 @@ export const ExamReviewCenter: React.FC = () => {
     } else {
       setError('');
       const previousReviews = reviewsRef.current;
-      const nextReviewIds = new Set(response.data.reviews.map(review => review.id));
       for (const previous of previousReviews) {
         const current = response.data.reviews.find(review => review.id === previous.id);
         if (!current || (previous.isClaimOwner && !current.isClaimOwner)) discardPendingDraftSaves(previous);
