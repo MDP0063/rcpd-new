@@ -92,8 +92,11 @@
 - Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
 
 
-## 2026-11-10 – Stabile Textanker für private Notizen (in Arbeit)
+## 2026-11-10 – Stabile Textanker für private Notizen (PR #136)
 
 - Projektinhaber hat die vorgeschlagene Strategie bestätigt: Anker je Quelle, Markdown-/Code-spezifische Metadaten, nur eindeutige Wiederfindung, keine automatische Versionsübertragung.
-- Implementierung ergänzt optionales Datenmodell, serverseitige Validierung, Reader-Auswahl und Navigation sowie Unit-Tests. CI und abschließende Codeprüfung stehen noch aus.
+- Implementierung ergänzt optionales Datenmodell, serverseitige Validierung, Reader-Auswahl und Navigation sowie Unit-Tests.
+- Detailreview verhindert konkurrierende Anker-/Notizspeicherungen bei ungespeicherten Eingaben; Markdown-Wiederfindung prüft zusätzlich den Überschriftenpfad.
+- GitHub-CI erfolgreich: 443/443 Tests, TypeScript-Prüfung und Produktionsbuild; PR-Vorlagenprüfung ebenfalls erfolgreich.
+- Keine manuelle Browser-/Live-Firestore-Prüfung und kein verifiziertes Produktionsdeployment.
 - PDF-Seitenanker bleiben ausdrücklich zurückgestellt.
