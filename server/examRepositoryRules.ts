@@ -164,7 +164,47 @@ export function assertExamAttemptCreate(
   }
 }
 
+function isReviewNotificationDeliveryUpdate(previousValue: unknown, nextValue: unknown): boolean {
+  const previousHistory = Array.isArray(previousValue) ? previousValue : [];
+  const nextHistory = Array.isArray(nextValue) ? nextValue : [];
+  if (previousHistory.length !== nextHistory.length) return false;
+  let changed = false;
+  for (let index = 0; index < nextHistory.length; index++) {
+    const previous = previousHistory[index] as Record<string, unknown>;
+    const current = nextHistory[index] as Record<string, unknown>;
+    const { notificationDeliveredTo: previousDelivered, ...previousCore } = previous;
+    const { notificationDeliveredTo: nextDelivered, ...nextCore } = current;
+    const previousRecipients = Array.isArray(previousDelivered) ? previousDelivered : [];
+    const nextRecipients = Array.isArray(nextDelivered) ? nextDelivered : [];
+    if (!isDeepStrictEqual(previousCore, nextCore) ||
+        nextRecipients.length < previousRecipients.length ||
+        !previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) ||
+        nextRecipients.length > 2 ||
+        nextRecipients.some((uid, recipientIndex) =>
+          typeof uid !== 'string' || !uid.trim() || nextRecipients.indexOf(uid) !== recipientIndex
+        )) return false;
+    if (nextRecipients.length > previousRecipients.length) {
+      changed = true;
+      const expectedRecipients = current.action === 'transferred' || current.action === 'reassigned'
+        ? [current.previousUid, current.targetUid]
+        : [current.targetUid];
+      if (current.notificationRequired !== true ||
+          nextRecipients.some(uid => !expectedRecipients.includes(uid)) ||
+          nextRecipients.length > expectedRecipients.length) return false;
+    }
+  }
+  return changed;
+}
+
 export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocument): void {
+  if (['passed', 'failed', 'invalidated_by_admin'].includes(String(existing.status))) {
+    const stripNotificationHistory = (document: ExamDocument) =>
+      Object.fromEntries(Object.entries(document).filter(([key]) => key !== 'reviewClaimHistory'));
+    if (
+      isDeepStrictEqual(stripNotificationHistory(existing), stripNotificationHistory(next)) &&
+      isReviewNotificationDeliveryUpdate(existing.reviewClaimHistory, next.reviewClaimHistory)
+    ) return;
+  }
   if (existing.status === 'passed' || existing.status === 'failed') {
     const previousReleaseHistory = Array.isArray(existing.resultReleaseHistory) ? existing.resultReleaseHistory : [];
     const nextReleaseHistory = Array.isArray(next.resultReleaseHistory) ? next.resultReleaseHistory : [];
@@ -318,27 +358,47 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const historyUnchanged = isDeepStrictEqual(previousHistory, nextHistory);
     const historyAppended = nextHistory.length === previousHistory.length + 1 &&
       isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory);
-    if ((!historyUnchanged && !historyAppended) || nextHistory.length > 100) {
+    const historyDeliveryUpdated = isReviewNotificationDeliveryUpdate(previousHistory, nextHistory);
+    if ((!historyUnchanged && !historyAppended && !historyDeliveryUpdated) || nextHistory.length > 100) {
+      throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
+    }
+    const previousClaim = (existing.reviewClaim ?? null) as Record<string, unknown> | null;
+    const nextClaim = (next.reviewClaim ?? null) as Record<string, unknown> | null;
+    if (historyDeliveryUpdated && (
+      !isDeepStrictEqual(previousClaim, nextClaim) ||
+      draftChanged ||
+      nextDraftRevision !== previousDraftRevision
+    )) {
       throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
     }
     if (historyAppended) {
       const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
-      if (!entry || Object.keys(entry).some(key => !['action', 'actorUid', 'targetUid', 'atIso'].includes(key)) ||
-          !['claimed', 'reclaimed', 'released', 'auto_released'].includes(String(entry.action)) ||
+      const allowedHistoryKeys = [
+        'action', 'actorUid', 'targetUid', 'previousUid', 'reason',
+        'notificationRequired', 'notificationDeliveredTo', 'atIso'
+      ];
+      const notificationActions = ['warning_started', 'auto_released', 'transferred', 'reassigned'];
+      const validRecipients = entry.action === 'transferred' || entry.action === 'reassigned'
+        ? [entry.previousUid, entry.targetUid]
+        : [entry.targetUid];
+      if (!entry || Object.keys(entry).some(key => !allowedHistoryKeys.includes(key)) ||
+          !['claimed', 'reclaimed', 'released', 'auto_released', 'warning_started', 'transferred', 'reassigned'].includes(String(entry.action)) ||
           typeof entry.actorUid !== 'string' || !entry.actorUid.trim() ||
           (entry.targetUid !== undefined && (typeof entry.targetUid !== 'string' || !entry.targetUid.trim())) ||
+          (entry.previousUid !== undefined && (typeof entry.previousUid !== 'string' || !entry.previousUid.trim())) ||
+          (entry.reason !== undefined && (typeof entry.reason !== 'string' || !entry.reason.trim() || entry.reason.length > 500)) ||
+          (entry.notificationRequired !== undefined && entry.notificationRequired !== true) ||
+          (entry.notificationRequired === true && !notificationActions.includes(String(entry.action))) ||
+          (entry.notificationDeliveredTo !== undefined && (
+            entry.notificationRequired !== true || !Array.isArray(entry.notificationDeliveredTo) ||
+            entry.notificationDeliveredTo.length > 2 ||
+            entry.notificationDeliveredTo.some((uid, index, values) =>
+              typeof uid !== 'string' || !uid.trim() || !validRecipients.includes(uid) || values.indexOf(uid) !== index
+            )
+          )) ||
           typeof entry.atIso !== 'string' || Number.isNaN(Date.parse(entry.atIso))) {
         throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
       }
-    }
-    const previousClaim = (existing.reviewClaim ?? null) as Record<string, unknown> | null;
-    const nextClaim = (next.reviewClaim ?? null) as Record<string, unknown> | null;
-    if (!isDeepStrictEqual(previousClaim, nextClaim) && !historyAppended) {
-      const sameOwner = previousClaim && nextClaim && previousClaim.reviewerUid === nextClaim.reviewerUid;
-      if (!sameOwner) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
-    }
-    if (historyAppended) {
-      const entry = nextHistory[nextHistory.length - 1] as Record<string, unknown>;
       const action = entry.action;
       if (
         (action === 'claimed' && (
@@ -358,16 +418,61 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         (action === 'released' && (
           previousClaim === null || nextClaim !== null ||
           entry.actorUid !== previousClaim.reviewerUid ||
-          entry.targetUid !== previousClaim.reviewerUid
+          entry.targetUid !== previousClaim.reviewerUid ||
+          (entry.reason !== undefined && entry.reason !== 'voluntary')
         )) ||
         (action === 'auto_released' && (
           previousClaim === null || nextClaim !== null ||
           entry.actorUid !== 'system' ||
-          entry.targetUid !== previousClaim.reviewerUid
+          entry.targetUid !== previousClaim.reviewerUid ||
+          !['inactivity', 'disconnect'].includes(String(entry.reason)) ||
+          (entry.reason === 'disconnect' && !previousClaim.disconnectedAtIso) ||
+          (entry.reason === 'inactivity' && previousClaim.disconnectedAtIso !== undefined) ||
+          entry.notificationRequired !== true
+        )) ||
+        (action === 'warning_started' && (
+          previousClaim === null || nextClaim === null ||
+          previousClaim.reviewerUid !== nextClaim.reviewerUid ||
+          previousClaim.warningStartedAtIso !== undefined ||
+          previousClaim.disconnectedAtIso !== undefined ||
+          nextClaim.warningStartedAtIso !== entry.atIso ||
+          previousClaim.lastActivityAtIso !== nextClaim.lastActivityAtIso ||
+          entry.actorUid !== 'system' ||
+          entry.targetUid !== previousClaim.reviewerUid ||
+          entry.reason !== 'inactivity' ||
+          entry.notificationRequired !== true
+        )) ||
+        (action === 'transferred' && (
+          previousClaim === null || nextClaim === null ||
+          previousClaim.reviewerUid !== entry.previousUid ||
+          previousClaim.reviewerUid !== entry.actorUid ||
+          nextClaim.reviewerUid !== entry.targetUid ||
+          entry.targetUid === entry.previousUid ||
+          previousClaim.disconnectedAtIso !== undefined ||
+          nextClaim.claimedAtIso !== entry.atIso ||
+          nextClaim.lastActivityAtIso !== entry.atIso ||
+          nextClaim.warningStartedAtIso !== undefined ||
+          nextClaim.disconnectedAtIso !== undefined ||
+          entry.notificationRequired !== true
+        )) ||
+        (action === 'reassigned' && (
+          previousClaim === null || nextClaim === null ||
+          previousClaim.reviewerUid !== entry.previousUid ||
+          nextClaim.reviewerUid !== entry.targetUid ||
+          entry.targetUid === entry.previousUid ||
+          nextClaim.claimedAtIso !== entry.atIso ||
+          nextClaim.lastActivityAtIso !== entry.atIso ||
+          nextClaim.warningStartedAtIso !== undefined ||
+          nextClaim.disconnectedAtIso !== undefined ||
+          entry.notificationRequired !== true
         ))
       ) {
         throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
       }
+    }
+    if (!isDeepStrictEqual(previousClaim, nextClaim) && !historyAppended) {
+      const sameOwner = previousClaim && nextClaim && previousClaim.reviewerUid === nextClaim.reviewerUid;
+      if (!sameOwner) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_INVALID');
     }
     return;
   }

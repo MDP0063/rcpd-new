@@ -63,18 +63,25 @@ async function refreshReviewClaim(
       ...attempt,
       reviewClaim: null,
       reviewClaimHistory: appendReviewClaimHistory(attempt, {
-        action: 'auto_released', actorUid: 'system', targetUid: claim.reviewerUid, atIso: nowIso
+        action: 'auto_released', actorUid: 'system', targetUid: claim.reviewerUid,
+        reason: disconnectedExpired ? 'disconnect' : 'inactivity',
+        notificationRequired: true, atIso: nowIso
       })
     };
     await transaction.update('exam_attempts', attemptId, next);
     return next;
   }
   if (disconnectedAt === null && now - lastActivityAt >= REVIEW_CLAIM_IDLE_MS && !claim.warningStartedAtIso) {
-    const nextClaim = {
-      ...claim,
-      warningStartedAtIso: new Date(lastActivityAt + REVIEW_CLAIM_IDLE_MS).toISOString()
+    const warningStartedAtIso = new Date(lastActivityAt + REVIEW_CLAIM_IDLE_MS).toISOString();
+    const nextClaim = { ...claim, warningStartedAtIso };
+    const next = {
+      ...attempt,
+      reviewClaim: nextClaim,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'warning_started', actorUid: 'system', targetUid: claim.reviewerUid,
+        reason: 'inactivity', notificationRequired: true, atIso: warningStartedAtIso
+      })
     };
-    const next = { ...attempt, reviewClaim: nextClaim };
     await transaction.update('exam_attempts', attemptId, next);
     return next;
   }
@@ -153,10 +160,177 @@ export async function releaseExamReviewClaim(
     const next = {
       ...attempt, reviewClaim: null,
       reviewClaimHistory: appendReviewClaimHistory(attempt, {
-        action: 'released', actorUid: reviewerUid, targetUid: reviewerUid, atIso: nowIso
+        action: 'released', actorUid: reviewerUid, targetUid: reviewerUid,
+        reason: 'voluntary', atIso: nowIso
       })
     };
     await transaction.update('exam_attempts', attemptId, next);
+  });
+}
+
+function normalizeReviewReason(value: string): string {
+  const normalized = value.trim();
+  if (normalized.length > 500) throw new Error('EXAM_REVIEW_TRANSFER_REASON_INVALID');
+  return normalized || 'Keine zusätzliche Begründung angegeben.';
+}
+
+function createTransferredClaim(
+  attempt: ExamAttemptRecord,
+  targetUid: string,
+  targetName: string,
+  nowIso: string
+): ExamReviewClaim {
+  return {
+    reviewerUid: targetUid,
+    reviewerName: targetName.trim(),
+    claimedAtIso: nowIso,
+    lastActivityAtIso: nowIso
+  };
+}
+
+export async function transferExamReviewClaim(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  actorUid: string,
+  targetUid: string,
+  targetName: string,
+  reason: string,
+  nowIso = new Date().toISOString()
+): Promise<ExamReviewClaim> {
+  if (!actorUid.trim() || !targetUid.trim() || !targetName.trim() || targetName.trim().length > 120 ||
+      targetUid === actorUid) throw new Error('EXAM_REVIEW_TRANSFER_INVALID');
+  const normalizedReason = normalizeReviewReason(reason);
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.status !== 'pending_review' || !attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
+    if (attempt.userId === actorUid || attempt.userId === targetUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+    if (attempt.reviewClaim.reviewerUid !== actorUid) throw new Error('EXAM_REVIEW_CLAIM_NOT_OWNED');
+    if (attempt.reviewClaim.disconnectedAtIso) throw new Error('EXAM_REVIEW_CLAIM_RECLAIM_REQUIRED');
+    const previousUid = attempt.reviewClaim.reviewerUid;
+    const nextClaim = createTransferredClaim(attempt, targetUid, targetName, nowIso);
+    const next: ExamAttemptRecord = {
+      ...attempt,
+      reviewClaim: nextClaim,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'transferred', actorUid, previousUid, targetUid,
+        reason: normalizedReason, notificationRequired: true, atIso: nowIso
+      })
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return nextClaim;
+  });
+}
+
+export async function reassignExamReviewClaim(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  supervisorUid: string,
+  targetUid: string,
+  targetName: string,
+  reason: string,
+  nowIso = new Date().toISOString()
+): Promise<ExamReviewClaim> {
+  if (!supervisorUid.trim() || !targetUid.trim() || !targetName.trim() || targetName.trim().length > 120) {
+    throw new Error('EXAM_REVIEW_REASSIGN_INVALID');
+  }
+  const normalizedReason = normalizeReviewReason(reason);
+  validReviewTime(nowIso);
+  await repository.runTransaction(transaction => refreshReviewClaim(transaction, attemptId, nowIso));
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.status !== 'pending_review' || !attempt.reviewClaim) throw new Error('EXAM_REVIEW_CLAIM_REQUIRED');
+    if (attempt.userId === supervisorUid || attempt.userId === targetUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+    const previousUid = attempt.reviewClaim.reviewerUid;
+    if (previousUid === targetUid) throw new Error('EXAM_REVIEW_REASSIGN_UNCHANGED');
+    const nextClaim = createTransferredClaim(attempt, targetUid, targetName, nowIso);
+    const next: ExamAttemptRecord = {
+      ...attempt,
+      reviewClaim: nextClaim,
+      reviewClaimHistory: appendReviewClaimHistory(attempt, {
+        action: 'reassigned', actorUid: supervisorUid, previousUid, targetUid,
+        reason: normalizedReason, notificationRequired: true, atIso: nowIso
+      })
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return nextClaim;
+  });
+}
+
+export interface ExamReviewNotificationEvent {
+  attemptId: string;
+  examId: string;
+  examVersionId: string;
+  participantName: string;
+  courseCode: string;
+  eventIndex: number;
+  recipientUid: string;
+  event: ExamReviewClaimHistoryEntry;
+}
+
+export async function listPendingExamReviewNotifications(
+  repository: ExamRepository,
+  attemptIds: string[]
+): Promise<ExamReviewNotificationEvent[]> {
+  if (!Array.isArray(attemptIds) || attemptIds.length > HISTORY_LIMIT ||
+      attemptIds.some(id => typeof id !== 'string' || !id.trim())) {
+    throw new Error('EXAM_REVIEW_NOTIFICATION_QUERY_INVALID');
+  }
+  const uniqueAttemptIds = [...new Set(attemptIds)];
+  const attempts = (await Promise.all(uniqueAttemptIds.map(id =>
+    repository.get<ExamAttemptRecord>('exam_attempts', id)
+  ))).filter((attempt): attempt is ExamAttemptRecord => Boolean(attempt));
+  const results: ExamReviewNotificationEvent[] = [];
+  for (const attempt of attempts) {
+    const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    history.forEach((event, eventIndex) => {
+      if (!event.notificationRequired) return;
+      const recipients = event.action === 'transferred' || event.action === 'reassigned'
+        ? [event.previousUid, event.targetUid]
+        : [event.targetUid];
+      for (const recipientUid of recipients) {
+        if (recipientUid && !event.notificationDeliveredTo?.includes(recipientUid)) {
+          results.push({
+            attemptId: attempt.id, examId: attempt.examId, examVersionId: attempt.examVersionId,
+            participantName: attempt.userName, courseCode: attempt.attemptCourseCode,
+            eventIndex, recipientUid, event
+          });
+        }
+      }
+    });
+  }
+  return results;
+}
+
+export async function markExamReviewNotificationDelivered(
+  repository: ExamRepository,
+  attemptId: string,
+  eventIndex: number,
+  recipientUid: string,
+  nowIso = new Date().toISOString()
+): Promise<void> {
+  validReviewTime(nowIso);
+  await repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    const history = [...(attempt.reviewClaimHistory || [])];
+    const event = history[eventIndex];
+    if (!event?.notificationRequired) throw new Error('EXAM_REVIEW_NOTIFICATION_NOT_FOUND');
+    const recipients = event.action === 'transferred' || event.action === 'reassigned'
+      ? [event.previousUid, event.targetUid]
+      : [event.targetUid];
+    if (!recipients.includes(recipientUid)) throw new Error('EXAM_REVIEW_NOTIFICATION_RECIPIENT_INVALID');
+    if (event.notificationDeliveredTo?.includes(recipientUid)) return;
+    history[eventIndex] = {
+      ...event,
+      notificationDeliveredTo: [...(event.notificationDeliveredTo || []), recipientUid]
+    };
+    await transaction.update('exam_attempts', attemptId, { ...attempt, reviewClaimHistory: history });
   });
 }
 
@@ -275,7 +449,24 @@ export interface ExamReviewItem {
   draftRevision: number;
 }
 
-export async function listExamReviews(repository: ExamRepository, allowedCourseCodes: readonly string[], reviewerUid: string, nowIso = new Date().toISOString()): Promise<ExamReviewItem[]> {
+function hasPendingExamReviewNotification(attempt: ExamAttemptRecord): boolean {
+  const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+  return history.some(event => {
+    if (!event.notificationRequired) return false;
+    const recipients = event.action === 'transferred' || event.action === 'reassigned'
+      ? [event.previousUid, event.targetUid]
+      : [event.targetUid];
+    return recipients.some(uid => Boolean(uid) && !event.notificationDeliveredTo?.includes(uid!));
+  });
+}
+
+export async function listExamReviews(
+  repository: ExamRepository,
+  allowedCourseCodes: readonly string[],
+  reviewerUid: string,
+  nowIso = new Date().toISOString(),
+  onNotificationPending?: (attemptId: string) => void
+): Promise<ExamReviewItem[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'pending_review' }], limit: HISTORY_LIMIT
   }));
@@ -287,6 +478,7 @@ export async function listExamReviews(repository: ExamRepository, allowedCourseC
     const attempt = await repository.runTransaction(transaction =>
       refreshReviewClaim(transaction, listedAttempt.id, nowIso)
     );
+    if (hasPendingExamReviewNotification(attempt)) onNotificationPending?.(attempt.id);
     if (attempt.status !== 'pending_review') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');

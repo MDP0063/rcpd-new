@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -191,6 +191,11 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
 import { getDefaultGranularPermissions, normalizeExamWorkshopPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
+function canBeAssignedExamReviewer(account: StoredAccountRecord, courseCode: string): boolean {
+  if (['pending', 'suspended', 'revoked'].includes(account.publicProfile.whitelistStatus)) return false;
+  return canActorEditCourseCode(account, courseCode);
+}
+
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
   const role = caller.publicProfile.role;
   if (role === 'admin' || role === 'colonel') return true;
@@ -241,11 +246,13 @@ function pushNotification(
   title: string,
   message: string,
   linkSection: PortalNotificationDoc['linkSection'],
-  notificationId?: string
+  notificationId?: string,
+  linkTarget?: PortalNotificationDoc['linkTarget']
 ) {
   if (!Array.isArray(state.notifications)) {
     state.notifications = [];
   }
+  if (notificationId && state.notifications.some(item => item.id === notificationId)) return;
   // New Academy collections are additive: existing legacy modules/progress remain untouched.
   if (!Array.isArray(state.academy_courses)) state.academy_courses = [];
   if (!Array.isArray(state.academy_course_versions)) state.academy_course_versions = [];
@@ -263,6 +270,7 @@ function pushNotification(
     title,
     message,
     linkSection,
+    ...(linkTarget ? { linkTarget } : {}),
     readByUids: [],
     createdIso: new Date().toISOString()
   };
@@ -1920,6 +1928,10 @@ async function startServer() {
       EXAM_REVIEW_CLAIM_HISTORY_INVALID: { status: 409, message: 'Die Claim-Historie ist ungültig.' },
       EXAM_REVIEW_CLAIM_INVALID: { status: 409, message: 'Der gespeicherte Claim ist ungültig.' },
       EXAM_REVIEW_DRAFT_INVALID: { status: 400, message: 'Der Bewertungsentwurf enthält ungültige Angaben.' },
+      EXAM_REVIEW_TRANSFER_INVALID: { status: 400, message: 'Die Übergabeangaben sind ungültig.' },
+      EXAM_REVIEW_TRANSFER_REASON_INVALID: { status: 400, message: 'Die Übergabebegründung ist zu lang.' },
+      EXAM_REVIEW_REASSIGN_INVALID: { status: 400, message: 'Die Neuzuweisungsangaben sind ungültig.' },
+      EXAM_REVIEW_REASSIGN_UNCHANGED: { status: 409, message: 'Dieser Vorgang ist bereits dieser Person zugewiesen.' },
       EXAM_REVIEW_CORRECTION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die korrigiert werden kann.' },
       EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
       EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
@@ -1951,6 +1963,60 @@ async function startServer() {
     next(error);
   }
 
+  async function deliverPendingExamReviewNotifications(attemptIds: string[]): Promise<void> {
+    const repository = getExamRepository();
+    const pending = await listPendingExamReviewNotifications(repository, attemptIds);
+    for (const item of pending) {
+      const event = item.event;
+      const state = loadDatabase();
+      const recipient = state.accounts.find(account => account.uid === item.recipientUid);
+      const notificationId = `exam-review-${item.attemptId}-${item.eventIndex}-${item.recipientUid}`;
+      if (recipient && !state.notifications?.some(notification => notification.id === notificationId)) {
+        const version = await repository.get('exam_versions', item.examVersionId);
+        const examTitle = typeof version?.title === 'string' ? version.title : 'Freitextprüfung';
+        const processLabel = `${examTitle} · ${item.courseCode} · ${item.participantName}`;
+        const reason = event.reason || 'Keine zusätzliche Begründung angegeben';
+        let type: PortalNotificationDoc['type'] = 'exam_review_assignment';
+        let title = 'Bewertungsvorgang aktualisiert';
+        let message = processLabel;
+        if (event.action === 'transferred' || event.action === 'reassigned') {
+          const target = state.accounts.find(account => account.uid === event.targetUid);
+          const previous = state.accounts.find(account => account.uid === event.previousUid);
+          const isNewOwner = item.recipientUid === event.targetUid;
+          if (event.action === 'transferred') {
+            title = isNewOwner ? 'Neue Bewertungsaufgabe' : 'Bewertungsvorgang übergeben';
+            message = isNewOwner
+              ? `${processLabel} wurde dir von ${previous?.publicProfile.displayName || 'einem Prüfer'} übergeben. Grund: ${reason}.`
+              : `Du hast ${processLabel} an ${target?.publicProfile.displayName || 'einen anderen Prüfer'} übergeben. Grund: ${reason}.`;
+          } else {
+            title = isNewOwner ? 'Bewertung administrativ zugewiesen' : 'Bewertung administrativ neu zugewiesen';
+            message = isNewOwner
+              ? `${processLabel} wurde dir von ${state.accounts.find(account => account.uid === event.actorUid)?.publicProfile.displayName || 'einem Vorgesetzten'} zugewiesen. Grund: ${reason}.`
+              : `Deine Zuständigkeit für ${processLabel} wurde administrativ an ${target?.publicProfile.displayName || 'einen anderen Prüfer'} übertragen. Grund: ${reason}.`;
+          }
+        } else if (event.action === 'warning_started') {
+          type = 'exam_review_warning';
+          title = 'Dein Bewertungs-Claim läuft bald aus';
+          const minutes = Math.max(0, Math.ceil((Date.parse(event.atIso) + 10 * 60_000 - Date.now()) / 60_000));
+          message = `${processLabel}: Wegen Inaktivität wird dein Claim in ungefähr ${minutes} Minuten automatisch freigegeben, wenn du nicht weiterarbeitest.`;
+        } else if (event.action === 'auto_released') {
+          type = 'exam_review_auto_released';
+          title = 'Bewertungs-Claim automatisch freigegeben';
+          const releaseReason = event.reason === 'disconnect' ? 'Verbindungsabbruch' : 'Inaktivität';
+          message = `${processLabel}: Dein Claim wurde wegen ${releaseReason.toLowerCase()} automatisch freigegeben. Deine zuletzt gespeicherten Bewertungsentwürfe bleiben erhalten; ungespeicherte Eingaben wurden verworfen.`;
+        }
+        pushNotification(
+          state, item.recipientUid, type, title, message, 'academy', notificationId,
+          { type: 'exam_review', examId: item.examId, attemptId: item.attemptId }
+        );
+        await saveDatabaseAndWait(state);
+      }
+      await markExamReviewNotificationDelivered(
+        repository, item.attemptId, item.eventIndex, item.recipientUid
+      );
+    }
+  }
+
   app.get('/api/academy/exam-reviews', async (_req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
@@ -1968,7 +2034,15 @@ async function startServer() {
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const role = caller.publicProfile.role;
       const allowed = role === 'admin' || role === 'colonel' ? ['*'] : permissions!.assignedCourseCodes;
-      res.json({ reviews: await listExamReviews(getExamRepository(), allowed, caller.uid) });
+      const notificationAttemptIds: string[] = [];
+      const reviews = await listExamReviews(
+        getExamRepository(), allowed, caller.uid, new Date().toISOString(),
+        attemptId => notificationAttemptIds.push(attemptId)
+      );
+      try { await deliverPendingExamReviewNotifications(notificationAttemptIds); } catch (notificationError) {
+        console.error('Exam review notification delivery will be retried:', notificationError);
+      }
+      res.json({ reviews });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
@@ -1990,6 +2064,88 @@ async function startServer() {
       );
       recordExamWorkshopAudit(caller.uid, 'Prüfungsvorgang beansprucht', req.params.id, 'Versuch ' + req.params.attemptId + ' beansprucht.');
       res.json({ claim });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/transfer', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const state = peekDatabase();
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      const body = req.body;
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für diese Übergabe fehlt die Berechtigung.' }); return;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body) ||
+          Object.keys(body).some(key => key !== 'targetUid' && key !== 'reason') ||
+          typeof body.targetUid !== 'string' || (body.reason !== undefined && typeof body.reason !== 'string') ||
+          (typeof body.reason === 'string' && body.reason.length > 500)) {
+        res.status(400).json({ error: 'Die Übergabeangaben sind ungültig.' }); return;
+      }
+      const target = state.accounts.find(account => account.uid === body.targetUid);
+      if (!target || !canBeAssignedExamReviewer(target, String(attempt.attemptCourseCode || ''))) {
+        res.status(400).json({ error: 'Die ausgewählte Person ist für diesen Kurs nicht als Prüfer berechtigt.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const claim = await transferExamReviewClaim(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid, target.uid,
+        String(target.publicProfile.displayName || target.username || target.uid),
+        typeof body.reason === 'string' ? body.reason : ''
+      );
+      recordExamWorkshopAudit(
+        caller.uid, 'Prüfungsvorgang übergeben', req.params.id,
+        `Versuch ${req.params.attemptId} an ${target.publicProfile.displayName} übergeben. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
+      );
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
+        console.error('Exam review transfer notification delivery will be retried:', notificationError);
+      }
+      res.json({ claim, transferred: true });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  app.post('/api/academy/exams/:id/attempts/:attemptId/review-claim/reassign', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const state = peekDatabase();
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      const body = req.body;
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nur berechtigte Vorgesetzte dürfen Prüfungsvorgänge neu zuweisen.' }); return;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body) ||
+          Object.keys(body).some(key => key !== 'targetUid' && key !== 'reason') ||
+          typeof body.targetUid !== 'string' || (body.reason !== undefined && typeof body.reason !== 'string') ||
+          (typeof body.reason === 'string' && body.reason.length > 500)) {
+        res.status(400).json({ error: 'Die Neuzuweisungsangaben sind ungültig.' }); return;
+      }
+      const target = state.accounts.find(account => account.uid === body.targetUid);
+      if (!target || !canBeAssignedExamReviewer(target, String(attempt.attemptCourseCode || ''))) {
+        res.status(400).json({ error: 'Die ausgewählte Person ist für diesen Kurs nicht als Prüfer berechtigt.' }); return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const previousClaimOwnerUid = (attempt as { reviewClaim?: { reviewerUid?: string } | null }).reviewClaim?.reviewerUid;
+      const previous = previousClaimOwnerUid
+        ? state.accounts.find(account => account.uid === previousClaimOwnerUid)
+        : null;
+      const claim = await reassignExamReviewClaim(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid, target.uid,
+        String(target.publicProfile.displayName || target.username || target.uid),
+        typeof body.reason === 'string' ? body.reason : ''
+      );
+      recordExamWorkshopAudit(
+        caller.uid, 'Prüfungsvorgang administrativ neu zugewiesen', req.params.id,
+        `Versuch ${req.params.attemptId} von ${previous?.publicProfile.displayName || 'bisheriger Prüfer'} an ${target.publicProfile.displayName} neu zugewiesen. Grund: ${typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Keine zusätzliche Begründung angegeben'}.`
+      );
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
+        console.error('Exam review reassignment notification delivery will be retried:', notificationError);
+      }
+      res.json({ claim, reassigned: true });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
@@ -2086,6 +2242,9 @@ async function startServer() {
       }
       const submission = await gradeExamAttempt(getExamRepository(), req.params.id, req.params.attemptId, caller.uid, req.body.grades);
       recordExamWorkshopAudit(caller.uid, 'Freitextprüfung bewertet', req.params.id, `Versuch ${req.params.attemptId} manuell bewertet.`);
+      try { await deliverPendingExamReviewNotifications([req.params.attemptId]); } catch (notificationError) {
+        console.error('Exam review notification delivery will be retried:', notificationError);
+      }
       res.json({ submission });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });

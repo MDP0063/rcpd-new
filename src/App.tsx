@@ -235,6 +235,7 @@ export default function App() {
   // Command Palette (Ctrl+K) & Live Notification Center Popover
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
+  const [academyReviewNavigationTarget, setAcademyReviewNavigationTarget] = useState<{ examId: string; attemptId: string } | null>(null);
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initialLoadCompleteRef = useRef<boolean>(false);
 
@@ -732,6 +733,11 @@ export default function App() {
       method: 'PUT',
       body: JSON.stringify({ userUid: currentUserProfile.uid })
     });
+    setAcademyReviewNavigationTarget(
+      notif.linkTarget?.type === 'exam_review'
+        ? { examId: notif.linkTarget.examId, attemptId: notif.linkTarget.attemptId }
+        : null
+    );
     setActiveSection(notif.linkSection);
     setIsNotifPopoverOpen(false);
     await fetchPortalState(currentUserProfile.uid);
@@ -2468,6 +2474,8 @@ export default function App() {
               userProgress={userProgress}
               onRefreshState={() => fetchPortalState(currentUserProfile.uid)}
               onStatusToast={triggerToast}
+              reviewNavigationTarget={academyReviewNavigationTarget}
+              onReviewNavigationConsumed={() => setAcademyReviewNavigationTarget(null)}
             />
           )}
 
