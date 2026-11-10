@@ -2125,8 +2125,9 @@ async function startServer() {
         res.status(400).json({ error: 'Die ausgewählte Person ist für diesen Kurs nicht als Prüfer berechtigt.' }); return;
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
-      const previous = attempt.reviewClaim?.reviewerUid
-        ? state.accounts.find(account => account.uid === attempt.reviewClaim!.reviewerUid)
+      const previousClaimOwnerUid = (attempt as { reviewClaim?: { reviewerUid?: string } | null }).reviewClaim?.reviewerUid;
+      const previous = previousClaimOwnerUid
+        ? state.accounts.find(account => account.uid === previousClaimOwnerUid)
         : null;
       const claim = await reassignExamReviewClaim(
         getExamRepository(), req.params.id, req.params.attemptId, caller.uid, target.uid,
