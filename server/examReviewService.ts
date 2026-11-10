@@ -305,9 +305,9 @@ export async function listPendingExamResultReleases(repository: ExamRepository):
     if (attempt.status !== 'passed' && attempt.status !== 'failed') continue;
     if (attempt.resultReleaseStatus === 'released') continue;
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
-    if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) {
-      throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
-    }
+    // Historische oder beschädigte Versuche ohne exakt passende unveränderliche Version
+    // dürfen nicht zur Freigabe angeboten werden.
+    if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) continue;
     results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
@@ -334,7 +334,7 @@ export async function releaseExamResult(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_RESULT_NOT_FINAL');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
-    if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber || version.assessmentStage !== attempt.assessmentStage) {
+    if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber) {
       throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     }
     if (attempt.resultReleaseStatus === 'released') return toPublicSubmission(attempt, version);
