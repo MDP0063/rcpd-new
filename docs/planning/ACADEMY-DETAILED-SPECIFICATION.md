@@ -746,6 +746,8 @@ Wenn ein Nutzer den Zugriff auf ein Quelldokument verliert:
 - bleiben historische Versions- und Seitenzuordnungen erhalten;
 - erhält der Nutzer über die Notiz keinen indirekten Zugriff auf das gesperrte Dokument.
 
+**Maßgeblich ist der aktuelle tatsächliche Zugriff auf die konkrete Materialfassung:** Die Statusprüfung berücksichtigt die Existenz des Materialstamms und der exakt referenzierten veröffentlichten Version sowie die aktuelle Rollenfreigabe dieser Version. Eine frühere oder beendete Kursteilnahme ist für den Quellenstatus nicht eigenständig ausschlaggebend, wenn die konkrete Fassung weiterhin direkt zugänglich ist. Eine vorhandene archivierte/historische Materialfassung gilt nicht allein wegen der Archivierung als entfernt.
+
 ### 12.5 Entfernung des Quelldokuments – Option A beschlossen
 
 Wenn ein Quelldokument endgültig entfernt wird, bleiben persönliche Notizen und Lesezeichen grundsätzlich erhalten und die Quelle wird als nicht mehr verfügbar gekennzeichnet.
