@@ -516,9 +516,8 @@ export function validatePrivateNote(note: AcademyPrivateNoteDoc): AcademyValidat
       return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Notiz benötigt gültige, konkrete Materialquellen (maximal 25).');
     }
     const sourceKeys = note.sources.map(source => `${source.materialId}::${source.materialVersionId}`);
-    if (new Set(sourceKeys).size !== sourceKeys.length ||
-        !sourceKeys.includes(`${note.materialId}::${note.materialVersionId}`)) {
-      return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Quellen dürfen nicht doppelt sein und müssen die ursprüngliche Materialreferenz enthalten.');
+    if (new Set(sourceKeys).size !== sourceKeys.length) {
+      return invalid('ACADEMY_NOTE_SOURCES_INVALID', 'Eine Materialquelle darf innerhalb einer Notiz nur einmal vorkommen.');
     }
     if (note.kind === 'bookmark' && note.sources.length !== 1) {
       return invalid('ACADEMY_BOOKMARK_SOURCES_INVALID', 'Ein Lesezeichen verweist auf genau eine Materialfassung.');
