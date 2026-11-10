@@ -81,7 +81,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  },[participationId,selected]);
  const readerPositionKey=useMemo(()=>selected?createAcademyReaderPositionKey(participationId,selected.materialId,selected.materialVersionId):null,[participationId,selected?.materialId,selected?.materialVersionId]);
  useEffect(()=>{
-  if(!currentVersion||!readerPositionKey){readerPositionReadyRef.current=false;return;}
+  if(loading||!currentVersion||!readerPositionKey){readerPositionReadyRef.current=false;return;}
   readerPositionReadyRef.current=false;
   let restoreFrame:number|null=null;
   let saveTimer:number|null=null;
@@ -137,7 +137,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    flushSave();
    readerPositionReadyRef.current=false;
   };
- },[readerPositionKey,currentVersion]);
+ },[readerPositionKey,currentVersion,loading]);
  const headings=useMemo(()=>currentVersion?.contentFormat==='markdown'?extractHeadings(currentVersion.content):[],[currentVersion]);
  const components=useMemo(()=>{
    const heading=(tag:'h1'|'h2'|'h3'|'h4'|'h5'|'h6') => {
