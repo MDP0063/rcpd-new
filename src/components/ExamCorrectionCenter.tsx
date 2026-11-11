@@ -209,7 +209,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
           </div>
         </div>
 
-        {review.reviewCorrections.length > 0 && <div className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+        {review.reviewCorrections.length > 0 && <div className="exam-correction-history space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
           <h4 className="text-sm font-semibold">Korrekturhistorie</h4>
           {review.reviewCorrections.map((entry, index) => <div key={entry.atIso + index} className="exam-correction-history-entry rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-950">
             <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · korrigiert von {entry.reviewerUid}</p>
