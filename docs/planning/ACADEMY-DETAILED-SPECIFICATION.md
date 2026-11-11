@@ -1655,16 +1655,18 @@ Die drei Bücher gehören exakt derselben Illustrationsfamilie an wie der Wegwei
 
 Diese Präzisierung ersetzt nicht die gemeinsame Basis: frontale Perspektive, matte neutrale Füllflächen, zurückhaltender Bereichsfarbakzent, sparsame gegenstandsbezogene Überlagerung und klare Unterscheidbarkeit anhand der Silhouette bleiben bestehen. Exakte Strichstärke und Rundungsradien werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und anschließend konsistent auf alle fünf SVGs angewendet.
 
-## Räumlichere Illustrationswirkung und klassisches Motiv für die Lernbibliothek (11.11.2026)
+## Aktuelle Korrektur: flacher Outline-Stil mit Ebenenwirkung (11.11.2026)
 
-Die fünf Academy-SVGs sollen etwas stärker räumlich wirken und leicht hervorgehoben erscheinen. Damit wird die frühere Festlegung auf vollständig flache, schattenlose SVGs präzisiert und teilweise ersetzt:
+Die zuvor beschriebene 3D-Anmutung wird ausdrücklich zurückgenommen. Die fünf Academy-SVGs werden nicht räumlich modelliert und erhalten keine sichtbaren Seitenflächen oder 3D-Schattierung. Gewünscht ist ein schlichter, flacher Outline-Stil mit einer dezenten Tiefenwirkung durch wenige überlagerte Ebenen.
 
-- Dezente 3D-Anmutung durch flache sichtbare Seitenflächen, leichte Versätze/Überlagerungen und sanfte, zurückhaltende Schattierung.
-- Die Grundausrichtung bleibt überwiegend frontal und unmittelbar lesbar. Keine ausgeprägte isometrische oder stark schräge Perspektive.
-- Die schlichte geometrische Gestaltung, etwas kräftigere einheitliche Konturen, geringe Detaildichte, neutrale Grundflächen und zurückhaltende Bereichsfarbakzente bleiben bestehen.
-- Kein glänzender Plastik-Look, keine künstlichen Glanzreflexe, keine harten/großen Schlagschatten und keine überladene 3D-Tiefe. Die Illustrationen bleiben überwiegend matt.
-- Die räumliche Wirkung muss bei allen fünf Motiven vergleichbar sein und mit den glänzenden Kacheloberflächen sowie der Text-Hierarchie harmonieren.
+- Etwas kräftigere, dunkle und über alle fünf Motive einheitliche Konturen.
+- Wenige klare, geometrische Füllflächen; nur notwendige Details zur schnellen Erkennbarkeit.
+- Frontal und flach ausgerichtete Motive ohne isometrische oder schräge räumliche Perspektive.
+- Leichte Tiefe ausschließlich durch sparsame, gegenstandsbezogene Überlagerung bzw. kleine Versätze zusammengehöriger Bestandteile. Keine dekorativen Hintergrundebenen.
+- Keine 3D-Seitenflächen, keine plastische Modellierung, keine 3D-Schattierung, keine starken Schatten oder künstlichen Glanzreflexe.
+- Neutrale Grundflächen und ein zurückhaltender Akzent aus der jeweiligen Bereichsfarbfamilie bleiben bestehen. Die Kacheloberfläche selbst behält unabhängig davon ihre bereits beschlossene leichte Glanzreflexion.
+- Geringe Detaildichte, klare Silhouetten und gute Lesbarkeit bei kleiner Kachelgröße haben Vorrang. Alle fünf Motive müssen dieselbe Outline-Sprache und Ebenentechnik verwenden.
 
-### Korrigiertes Motiv für „Lernbibliothek“: drei klassische Bücher
+### Lernbibliothek-Motiv: drei klassische Bücher
 
-Das zuvor festgelegte Bücherregal wird durch drei klassische Bücher ersetzt. Die drei Bücher stehen als kleine Gruppe nebeneinander; eines davon ist leicht schräg geneigt. Es wird keine Regalstruktur dargestellt. Das Motiv bleibt reduziert, gut erkennbar und erhält einen dezenten violetten Akzent. Die Bücher werden mit derselben leichten räumlichen Hervorhebung wie Wegweiser und Abschlusskappe ausgearbeitet.
+Das zuvor vorgesehene Bücherregal ist verworfen. Stattdessen werden drei klassische Bücher als kleine Gruppe dargestellt; eines davon ist leicht schräg geneigt. Es gibt keine Regalstruktur. Die Bücher werden flach im gemeinsamen Outline-Stil gestaltet. Die leichte Tiefenwirkung entsteht nur durch die sparsame Überlagerung bzw. Staffelung der drei Bücher. Der Akzent bleibt dezent violett.
