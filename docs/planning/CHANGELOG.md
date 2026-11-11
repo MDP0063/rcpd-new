@@ -259,3 +259,11 @@
 - Leicht abgerundete Ecken bleiben erwünscht, aber ohne übertriebene Rundungen. Wenige prägnante Grundformen und nur notwendige Erkennungsdetails; keine dekorativen Kurven oder unnötigen Kleinteile.
 - Die Stilpräzisierung gilt rückwirkend auch für Wegweiser und Abschlusskappe sowie für die zwei noch offenen Motive. Exakte Strichstärke und Rundungsradien werden bei der gemeinsamen Ausarbeitung festgelegt.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Räumlichere Academy-Illustrationen und Büchergruppe statt Regal
+
+- Nutzer wünscht für alle fünf Academy-SVGs wieder eine etwas stärkere räumliche Wirkung: Die Motive sollen leicht hervorgehoben und dezent dreidimensional erscheinen.
+- Vorgesehen sind flache Seitenflächen, leichte Versätze/Überlagerungen und sanfte Schattierung. Die Grundausrichtung bleibt überwiegend frontal; keine ausgeprägte isometrische Perspektive, kein glänzender Plastik-Look und keine starken Schatten.
+- Die schlichte geometrische Gestaltung, kräftigeren einheitlichen Konturen, geringe Detaildichte und neutralen Grundflächen mit dezentem Bereichsfarbakzent bleiben erhalten. Die Anpassung gilt rückwirkend für Wegweiser und Abschlusskappe sowie für alle folgenden Motive.
+- Das zuvor festgelegte Bücherregal wird auf Nutzerwunsch ersetzt: „Lernbibliothek“ zeigt nun drei klassische Bücher als Gruppe, eines davon leicht schräg geneigt. Eine Regalstruktur entfällt.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
