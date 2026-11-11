@@ -210,3 +210,12 @@
 - Einheitliche Blickrichtung, Ausrichtung, Geometrie und Proportionen werden als gemeinsame Set-Regeln festgehalten.
 - Die Illustrationen bleiben matt und zurückhaltend, damit sie mit den kräftigen, leicht glänzenden Kacheloberflächen, deren Reflexion sowie Titel und Beschreibung harmonieren. Die endgültige Wirkung wird im responsiven Kachelprototyp validiert.
 - Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Flächenbetonte Gestaltung mit Konturen für Academy-SVGs bestätigt
+
+- Nutzer hat Variante B bestätigt: Die fünf Illustrationen werden überwiegend aus matten, neutralen Füllflächen aufgebaut und durch klare dunkle Konturen sowie wenige Details definiert.
+- Die jeweilige Bereichsfarbe bleibt ein zurückhaltender Akzent; die kräftige Kachelgrundfarbe wird nicht großflächig in den SVGs wiederholt.
+- Einheitliche Konturwirkung und Geometrie sowie höchstens drei bis vier bewusst eingesetzte Farben pro Illustration wurden als gemeinsame Set-Regeln festgehalten.
+- Keine SVG-Glanzreflexe, künstlichen Schatten oder 3D-Effekte. Kontrast, Lesbarkeit und Harmonie mit den kräftigen Kacheloberflächen werden im responsiven Kachelprototyp geprüft.
+- Die Entscheidung ergänzt die bereits beschlossene frontale Perspektive und dezente Überlagerung. Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
