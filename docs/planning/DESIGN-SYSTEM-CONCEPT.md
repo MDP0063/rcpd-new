@@ -256,3 +256,13 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Legacy- und versionierte Materialien behalten ihre vorhandenen getrennten Daten-/Renderpfade. Es werden keine PDF-Infrastruktur, Parser, Speicher- oder Abruffunktionen ergänzt.
 - Bestehende Suche, Sortierung, Filter, Zugriffsschutz, externe Quellen, Code-Sandbox und private Notizfunktionen bleiben unverändert.
 - Diese Gestaltung ist ein erster Prototyp und wird nach Deployment auf großen und kleinen Viewports geprüft.
+
+
+## 16. Prüfungen – Teilnehmer-Prüfungszentrum (11.11.2026)
+
+- Der Prüfungsbereich verwendet den bestehenden Beerenton (#A33370) als ruhigen, fokussierten Akzent. Ergebniszustände wie bestanden, Bewertung offen und nicht bestanden behalten ihre fachlich unterschiedlichen Statusfarben.
+- Prüfungskatalog, ausgewählte Prüfung, aktiver Versuch und Ergebnisansicht bleiben klar unterscheidbare Zustände innerhalb desselben Bereichs.
+- Die Darstellung priorisiert Konzentration und Lesbarkeit: klare Prüfungsmetadaten, verständliche Fortschrittsanzeige, gut erkennbare Fragennavigation und ausreichend große Antwortflächen.
+- Autospeicherstatus, Zeitlimit, Abgabe, offizielle Ergebnisfreigabe und manuelle Bewertung bleiben inhaltlich unverändert und sichtbar.
+- Die Auswahl einer Prüfung erhält zusätzlich den semantischen Zustand aria-pressed; dies verbessert die programmatische Erkennbarkeit für assistive Technologien.
+- Die Gestaltung betrifft zunächst das Teilnehmer-Prüfungszentrum. Die Legacy-Ansichten Übungstests/Abschlussprüfungen und die Examiner-Verwaltungsansichten werden nicht stillschweigend vereinheitlicht; ihre fachliche Abgrenzung bleibt Gegenstand des bestehenden Audits.
