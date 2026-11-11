@@ -1,5 +1,12 @@
 # Änderungsverlauf der Planungsdokumentation
 
+## 2026-11-11 – Ergebnisfreigabe und Bewertungsverlauf bei Korrekturen (PR #189/#190)
+
+- PR #189 speichert vor einer Korrektur den zuletzt freigegebenen Ergebnisstand. Während `pending_rerelease` bleibt dieser Snapshot für Teilnehmende sichtbar; erst nach erneuter Freigabe wird die korrigierte Fassung sichtbar.
+- PR #190 hält ursprünglichen Prüfer (`reviewedByUid`) und tatsächlichen Bewertungsabschlusszeitpunkt (`reviewedAtIso`) unverändert. Korrekturen werden separat in `reviewCorrections` dokumentiert und verschieben die Historienposition nicht.
+- Regressionstests decken alten Ergebnisstand während der Korrektur, neuen Stand nach erneuter Freigabe sowie die Unveränderlichkeit der ursprünglichen Abschlussmetadaten ab.
+- Für beide PRs waren TypeScript-Prüfung, Produktionsbuild, Tests und PR-Beschreibungsprüfung erfolgreich. Optionale Render-Deploy-Hooks wurden übersprungen; Live-Deployment ist nicht bestätigt.
+
 ## 2026-11-11 – Sortierung abgeschlossener manueller Bewertungen (PR #187)
 
 - Die Liste abgeschlossener manueller Bewertungen wird jetzt nach dem tatsächlichen Bewertungsabschluss (reviewedAtIso) sortiert, nicht nach dem Zeitpunkt der Teilnehmerabgabe.
