@@ -738,3 +738,14 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - Eine zentrale Teilnehmerakte, wie sie Abschnitt 15.7 vorsieht, ist in der aktuellen UI noch nicht vorhanden. Historie wird deshalb nicht redundant in Prüferwarteschlange und Korrekturcenter eingeführt.
 - Als nächster zusammenhängender Funktionsblock ist die zentrale Teilnehmerakte bzw. deren Academy-Integration zu untersuchen und umzusetzen. Darauf aufbauend folgen berechtigungsgesteuerte Historienprojektion, Revisionsrückgabe mit Pflichtfeedback pro betroffenem Bewertungsschritt und passende Action-Request-Benachrichtigungen.
 - Vor Revisionsimplementierung müssen Ergebnis-Snapshot, bestehende Bewertungs-Drafts, Claim-Übergänge und Repository-Validierungsregeln gemeinsam regressionsgesichert werden. Kein neuer Prüfungsversuch darf entstehen.
+
+
+## 11.11.2026 – Zentrale Teilnehmer-Prüferhistorie (Implementierungsbranch)
+
+- Branch `feature/academy-exam-participant-record`: zentrale Teilnehmerakte im Examiner-Bereich mit Suche über Name, Badge und Callsign.
+- Neue geschützte API liefert nur Prüfungsvorgänge innerhalb der serverseitig geprüften Kurszuständigkeit des angemeldeten Prüfers.
+- Vertrauliche Bewertungsantworten, Rubriken, Claim-Ereignisse und Korrekturdetails erscheinen nur für Admins/Colonels sowie Prüfer, die am konkreten Vorgang beteiligt waren. Andere berechtigte Prüfer erhalten nur Status und aktuelle Zuständigkeit.
+- Teilnehmerakte sortiert nach tatsächlichem Bewertungsabschluss (neueste zuerst); bei offenen Bewertungen dient die Einreichung als Fallback. Fehlerzustand und fachlicher Leerzustand bleiben getrennt.
+- Backend- und HTTP-Regressionstests für Kurs-Scope, Whitelist-Sperre und Vertraulichkeitsprojektion ergänzt.
+- Der Branch ist noch nicht gemergt. Lint, Build, vollständige Tests und unabhängiges Review stehen aus; kein Deployment oder Browser-Test behauptet.
+- Nächster Schritt nach dieser Basis: beschlossene Revisionsrückgabe und Action Requests, mit Erhalt desselben Prüfungsversuchs, gespeicherter Drafts und des zuletzt freigegebenen Ergebnisses.
