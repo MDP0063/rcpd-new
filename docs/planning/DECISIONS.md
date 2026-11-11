@@ -425,3 +425,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die am 11.11.2026 bestätigte Grundrichtung für interne Academy-Seiten umfasst eine matte, dezente, begrenzte blaue Wellenform, einen leicht getönten ruhigen Hintergrund, klar gegliederte Flächen und eine gemeinsame Designsprache mit bereichsspezifischen Akzenten. Die konkrete Ausgestaltung wird prototypisch geprüft.
 - **OFFEN:** Finale globale Portalidentität, globale Sidebar-/Header-/Navigationsgestaltung, übergreifende Theme-Strategie und weitere subjektive visuelle Grundsatzfragen. Sie werden nicht aus dem Academy-Mockup abgeleitet.
 - Details und Quellen: [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md).
+
+
+## 11.11.2026 – Äußerer Academy-Seitenhintergrund
+
+- **BESCHLOSSEN:** Die variable freie Fläche des Academy-Viewports darf zusätzlich einen eigenen, sehr dezenten Hintergrund erhalten, damit breite Bildschirme nicht wie eine weiße, ungestaltete Umgebung um die Academy-Inhaltsfläche wirken.
+- **BESCHLOSSEN:** Dieser äußere Hintergrund unterscheidet sich bewusst von der blauen Wellenform innerhalb der Academy-Fläche: zurückhaltende, großflächige Farbverläufe bzw. diffuse Farbflächen statt einer zweiten Welle oder eines weiteren Motivs.
+- **BESCHLOSSEN:** Der Übergang zur bestehenden Academy-Fläche bleibt weich und kontrastarm. Die innere Wellenform, die Inhaltsfläche und ihre bisherige Gestaltung werden nicht ersetzt.
+- **GELTUNGSBEREICH:** Nur wenn die Academy geöffnet ist. Die globale Portalhülle und die Hintergründe anderer Portalbereiche bleiben unverändert. Die Academy-Inhaltsbreite bleibt auf dem bisherigen Maß begrenzt; nur der äußere Viewport-Hintergrund nutzt die verfügbare Breite.

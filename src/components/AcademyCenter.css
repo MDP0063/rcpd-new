@@ -266,3 +266,37 @@
   .academy-main-nav button, .academy-back-link { transition: none; }
 }
 
+
+/* Academy-only full-width ambient canvas. The content keeps its established max width;
+   only the surrounding variable viewport receives this quieter secondary surface. */
+main.academy-main-viewport {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: clamp(1rem, 2vw, 2rem);
+  min-height: calc(100vh - 57px);
+  background-color: #f3f6fa;
+  background-image:
+    radial-gradient(ellipse at 13% 14%, rgba(198, 215, 238, 0.20) 0%, transparent 43%),
+    radial-gradient(ellipse at 91% 86%, rgba(215, 225, 240, 0.19) 0%, transparent 42%),
+    linear-gradient(132deg, #f5f7fb 0%, #f0f4f9 52%, #f6f8fb 100%);
+  background-repeat: no-repeat;
+}
+.academy-center-root {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+}
+.dark main.academy-main-viewport {
+  background-color: #0b1422;
+  background-image:
+    radial-gradient(ellipse at 13% 14%, rgba(52, 79, 116, 0.16) 0%, transparent 43%),
+    radial-gradient(ellipse at 91% 86%, rgba(42, 65, 96, 0.14) 0%, transparent 42%),
+    linear-gradient(132deg, #0d1726 0%, #101c2d 52%, #0d1725 100%);
+}
+@media (max-width: 640px) {
+  main.academy-main-viewport {
+    padding: 1rem;
+    min-height: calc(100vh - 57px);
+  }
+}

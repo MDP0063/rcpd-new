@@ -211,3 +211,17 @@ Die Implementierung bleibt eng auf die bereits vorhandene Übersicht aus PR #158
 - Light-/Dark-Mode, Tastaturfokus und reduzierte Bewegung wurden im Stylesheet berücksichtigt.
 
 **Prüfstand:** GitHub Actions für den Code-Commit meldet TypeScript-Prüfung, Produktionsbuild und Tests als erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Eine echte Browser-/Responsive-Abnahme mit Screenshots steht noch aus. Der Code ist gemergt, die gestalterische Abnahme bleibt jedoch offen; der Prototyp ist daher noch kein finales Academy- oder Portaldesign.
+
+
+## 13. Äußerer Academy-Viewport-Hintergrund (11.11.2026)
+
+Auf Rückmeldung zur Browseransicht wurde die Gestaltung der variablen freien Fläche ergänzt. Auf breiten Displays soll sie nicht als große reinweiße Umgebung erscheinen, aber auch nicht mit der inneren blauen Wellenform konkurrieren.
+
+- Der äußere Academy-Viewport erhält eine sehr helle, kühle und zurückhaltende Grundtönung.
+- Zwei sehr diffuse, niedrig kontrastierte Farbverläufe geben der Fläche Tiefe, ohne als sichtbare zweite Wellenform oder Illustration aufzutreten.
+- Der Übergang zur bestehenden inneren Academy-Fläche bleibt weich; deren blaue Wellenform und Karten bleiben unverändert.
+- Der Hintergrund wird ausschließlich während des Academy-Moduls aktiv. Andere Portalbereiche und die globale Portalgestaltung bleiben unberührt.
+- Die Inhaltsbreite der Academy bleibt auf dem bisherigen Maximalmaß begrenzt und wird nicht über breite Monitore auseinandergezogen.
+- Dark Mode erhält eine entsprechend zurückhaltende dunkle Variante.
+
+Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, keine Festlegung des späteren globalen Portalhintergrunds.

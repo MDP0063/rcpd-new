@@ -523,3 +523,12 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 - Der optionale Render-Deploy-Hook wurde übersprungen. Kein Deployment, kein Merge.
 - Noch offen: echte Browser-/Responsive-Abnahme und Screenshots. CI-Erfolg ersetzt keine visuelle Prüfung.
 - PR #160 ist gemergt, aber die Gestaltung bleibt ein erster, noch nicht visuell abgenommener Prototyp und kein finales Academy- oder Portaldesign.
+
+
+## 11.11.2026 – Äußerer Academy-Viewport-Hintergrund (PR folgt)
+
+- Browserfeedback: Auf breiten Bildschirmen wirkt die variable weiße Fläche außerhalb des inneren Academy-Panels zu leer. Gewünscht ist ein passender, aber eigenständiger, insgesamt dezenter Hintergrund mit weichem Übergang.
+- Umsetzung vorbereitet: nur bei geöffnetem Academy-Modul wird der verfügbare Hauptviewport flächig gestaltet; die innere Academy-Inhaltsbreite bleibt auf maximal 80rem begrenzt. Dadurch werden bestehende Inhaltsflächen nicht überbreit.
+- Äußerer Hintergrund: sehr helle kühle Grundtönung mit zwei diffusen, niedrig kontrastierten Farbverläufen; ausdrücklich keine zweite Welle/Illustration. Dark-Mode-Variante vorhanden.
+- Bestehende innere Wellenform, Kachel-Startseite, globale Portalhülle außerhalb der Academy, Inhalte, Daten, Funktionen und Rechte bleiben unverändert.
+- Die konkrete Umsetzung wird in einem separaten PR mit CI dokumentiert. Browserabnahme auf dem breiten Desktop und einem schmalen Viewport steht nach Deployment weiterhin aus.

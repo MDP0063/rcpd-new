@@ -213,3 +213,11 @@
 - Bestehende Übersichtsinhalte, Navigation-Aktionen und fachliche Regeln erhalten; keine Änderung an der fertigen Kachel-Startseite.
 - CI: TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich; PR-Vorlagenprüfung erfolgreich.
 - PR #160 anschließend am 11.11.2026 gemergt (Merge-Commit `691e679e5fb1f8e087647256f7211130ed6dcee7`). Kein bestätigtes Deployment; Browser-/Responsive-Abnahme noch offen.
+
+
+## 2026-11-11 – Dezenter äußerer Academy-Hintergrund
+
+- Academy-only Hintergrund für die bislang weiße, variable Fläche des Hauptviewports ergänzt.
+- Sanfte kühle Farbverläufe statt einer zweiten Wellenform; Übergang zur bestehenden inneren Academy-Fläche bleibt zurückhaltend.
+- Bestehende Academy-Inhaltsbreite bleibt begrenzt; globale Portalgestaltung und andere Module sind nicht betroffen.
+- Dark-Mode-Variante ergänzt.
