@@ -2,7 +2,7 @@
 
 **Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Squash-Merge von PR #150).  
+**Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Dokumentations-/Fortschrittscommit nach PR #152).  
 **Aktueller Umsetzungsstand:** PR #149 und PR #150 wurden nach erfolgreicher GitHub-CI gemergt. PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich, 453/453 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde im PR-Lauf übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine manuelle Browserprüfung und eine Live-Firestore-Abnahme stehen weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
