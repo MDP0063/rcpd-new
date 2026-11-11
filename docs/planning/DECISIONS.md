@@ -593,3 +593,11 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Das Wegweiser-Motiv wurde gewählt, um eine eigenständige Silhouette zu schaffen und die Verwechslung mit den bereits ähnlichen Papier-, Buch- und Dokumentmotiven der anderen Bereiche zu vermeiden.
 - Die Darstellung bleibt modern, weich und abgerundet sowie bewusst detailarm. Keine Dashboard-Karten, kein Papierblatt und keine dekorativen Zusatzformen.
 - Die gemeinsamen SVG-Regeln bleiben unverändert: frontale Perspektive, matte neutrale Füllflächen, klare dunkle Konturen, dezenter blauer Bereichsfarbakzent und sparsame gegenstandsbezogene Überlagerung.
+
+## 2026-11-11 – Motiv der Academy-Kachel „Kurse“ festgelegt
+
+- Nutzer hat Variante B bestätigt: Die Kachel „Kurse“ erhält als eigenständiges Motiv eine reduzierte, weich abgerundete Abschlusskappe.
+- Die Abschlusskappe muss gestalterisch exakt derselben Illustrationsfamilie wie der bereits festgelegte Wegweiser für „Übersicht“ angehören. Unterschiedliche Gegenstände sind erwünscht, aber kein Wechsel der Designart.
+- Für beide und alle folgenden Motive gelten dieselben weichen Formen, der reduzierte Detailgrad, matte neutrale Füllflächen, klare dunkle Konturen, frontale Perspektive, sparsame gegenstandsbezogene Überlagerung sowie einheitliche Geometrie, Proportionen und Konturwirkung.
+- Für „Kurse“ wird ausschließlich ein zurückhaltender türkiser Akzent aus der zugeordneten Bereichsfarbfamilie verwendet. Die Motive müssen auch ohne ihre Kachelfarben anhand ihrer Silhouette unterscheidbar bleiben.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
