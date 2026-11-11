@@ -662,3 +662,12 @@ PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c2
 - aria-pressed ergänzt die programmatische Erkennbarkeit der aktiven Materialauswahl.
 - Keine Änderung an Entwurfsspeicherung, Veröffentlichung, Archivierung, Versionierung, Validierung, Zugriffsschutz oder Datenmodell. PDF-Infrastruktur bleibt zurückgestellt.
 - Browserabnahme steht nach Deployment aus.
+
+
+## 11.11.2026 – Kategorien und Dokumenttypen: visueller Ausbau (PR in Vorbereitung)
+
+- Kategorie- und Dokumenttypverwaltung mit gemeinsamem, konsistentem Layout für Formular und durchsuchbare Bestandsliste gestaltet.
+- Status, Bearbeiten, Aktivieren/Archivieren, Löschen und vorhandene Bestätigungsabläufe bleiben unverändert.
+- Keine neuen Taxonomiefelder, Status, Berechtigungen oder API-Änderungen.
+- Responsive Darstellung, Dark Mode und Tastaturfokus berücksichtigt.
+- Browserabnahme steht nach Deployment aus.
