@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import './AcademyAuthoringCenter.css';
 import { removeChapterMaterialReference, removeCourseChapter, updateCourseChapterTitle } from '../lib/academyCourseEditor';
 import type {
   AcademyCourseChapter,
@@ -391,10 +392,10 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   }
 
   return (
-    <div className="space-y-6">
+    <div className="academy-authoring-center space-y-6">
       {mode === 'list' && (
         <>
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <header className="academy-authoring-heading flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Kurse und Programme verwalten</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Entwürfe bearbeiten, neue Versionen vorbereiten und Veröffentlichungen bewusst auslösen.</p>
@@ -405,7 +406,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             </div>
           </header>
           {loadError && <div role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">{loadError} <button type="button" className="underline" onClick={() => void load()}>Erneut laden</button></div>}
-          <section className={panel} aria-labelledby="academy-author-courses-heading">
+          <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-courses-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 id="academy-author-courses-heading" className="font-semibold text-slate-900 dark:text-white">Kurse</h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">{listedCourses.length} Einträge</span>
@@ -413,7 +414,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             {listedCourses.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kurse vorhanden.</p> : (
               <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                 {listedCourses.map(entry => (
-                  <li key={entry.master.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">{entry.draft?.title || entry.version?.title || entry.master.code}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}{entry.master.publicationStatus === 'published' ? ' · ' + (entry.master.availability === 'available' ? 'Für neue Teilnehmende verfügbar' : 'Vorübergehend offline') : ''}{entry.master.materialReviewVersionRequired?.length ? ' · Neue Kursversion erforderlich' : entry.master.materialReviewAwaitingActivation ? ' · Reaktivierung ausstehend' : ''}</p>
@@ -439,7 +440,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               </ul>
             )}
           </section>
-          <section className={panel} aria-labelledby="academy-author-programs-heading">
+          <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-programs-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Programme</h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">{listedPrograms.length} Einträge</span>
@@ -447,7 +448,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             {listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Programme vorhanden.</p> : (
               <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                 {listedPrograms.map(entry => (
-                  <li key={entry.master.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">{entry.draft?.title || entry.version?.title || entry.master.code}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{entry.master.code} · {statusName(entry.master.publicationStatus)} · {entry.master.latestVersionNumber > 0 ? 'Veröffentlichte Version ' + entry.master.latestVersionNumber : 'Noch keine veröffentlichte Version'}{entry.draft ? ' · Entwurf Revision ' + entry.draft.workingRevision : ''}</p>
@@ -464,30 +465,30 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       )}
 
       {isCourseEditor && (
-        <section className="mx-auto max-w-3xl space-y-5">
-          <header className="flex items-start justify-between gap-3">
+        <section className="academy-authoring-editor academy-authoring-editor--course mx-auto max-w-3xl space-y-5">
+          <header className="academy-authoring-editor-heading flex items-start justify-between gap-3">
             <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Kursverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{courseMaster ? 'Kursentwurf bearbeiten' : 'Neuen Kurs anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{courseMaster ? courseCode + ' · Revision ' + courseDraft?.workingRevision : 'Ein neuer Kurs beginnt als unveröffentlichter Entwurf.'}</p></div>
             <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
           <form className="space-y-5" noValidate onSubmit={saveCourse}>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Grunddaten</h3>
               <div><label htmlFor="academy-course-code" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurskennung</label><input id="academy-course-code" className={field} value={courseCode} onChange={event => { setCourseCode(event.target.value.toUpperCase()); setCourseDirty(true); }} disabled={Boolean(courseMaster)} maxLength={40} autoComplete="off" /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">2 bis 40 Zeichen, eindeutig im Academy-Bereich</p></div>
               <div><label htmlFor="academy-course-title" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurstitel</label><input id="academy-course-title" className={field} value={courseTitle} onChange={event => { setCourseTitle(event.target.value); setCourseDirty(true); }} maxLength={200} /></div>
               <div><label htmlFor="academy-course-summary" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Zusammenfassung</label><textarea id="academy-course-summary" className={field} value={courseSummary} onChange={event => { setCourseSummary(event.target.value); setCourseDirty(true); }} maxLength={2000} rows={4} /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Bis zu 2.000 Zeichen</p></div>
             </section>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button type="button" className={secondary} onClick={addCourseObjective}>Lernziel hinzufügen</button></div>
               {courseObjectives.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lernziele angelegt.</p>}
-              {courseObjectives.map((item, index) => <div key={item.id} className="space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-course-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-course-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setCourseObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setCourseDirty(true); }} /><button type="button" className={danger} onClick={() => { setCourseObjectives(items => items.filter(current => current.id !== item.id)); setCourseDirty(true); }}>Lernziel entfernen</button></div>)}
+              {courseObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-course-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-course-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setCourseObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setCourseDirty(true); }} /><button type="button" className={danger} onClick={() => { setCourseObjectives(items => items.filter(current => current.id !== item.id)); setCourseDirty(true); }}>Lernziel entfernen</button></div>)}
             </section>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3><button type="button" className={secondary} onClick={addCourseChapter}>Kapitel hinzufügen</button></div>
               {courseChapters.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kapitel angelegt.</p>}
               {courseChapters.map((item, index) => {
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
-                return <div key={item.id} className="space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                return <div key={item.id} className="academy-authoring-chapter space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
                   <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => removeCourseChapterById(item.id)}>Kapitel entfernen</button></div>
                   <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => setChapterTitle(item.id, event.target.value)} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
@@ -526,25 +527,25 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       )}
 
       {isProgramEditor && (
-        <section className="mx-auto max-w-3xl space-y-5">
-          <header className="flex items-start justify-between gap-3">
+        <section className="academy-authoring-editor academy-authoring-editor--program mx-auto max-w-3xl space-y-5">
+          <header className="academy-authoring-editor-heading flex items-start justify-between gap-3">
             <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Programmverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{programMaster ? 'Programmentwurf bearbeiten' : 'Neues Programm anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neues Programm beginnt als unveröffentlichter Entwurf.'}</p></div>
             <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
           <form className="space-y-5" noValidate onSubmit={saveProgram}>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Grunddaten</h3>
               <div><label htmlFor="academy-program-code" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Programmkennung</label><input id="academy-program-code" className={field} value={programCode} onChange={event => { setProgramCode(event.target.value.toUpperCase()); setProgramDirty(true); }} disabled={Boolean(programMaster)} maxLength={40} autoComplete="off" /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">2 bis 40 Zeichen, eindeutig im Academy-Bereich</p></div>
               <div><label htmlFor="academy-program-title" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Programmname</label><input id="academy-program-title" className={field} value={programTitle} onChange={event => { setProgramTitle(event.target.value); setProgramDirty(true); }} maxLength={200} /></div>
               <div><label htmlFor="academy-program-summary" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Zusammenfassung</label><textarea id="academy-program-summary" className={field} value={programSummary} onChange={event => { setProgramSummary(event.target.value); setProgramDirty(true); }} maxLength={2000} rows={4} /></div>
             </section>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button type="button" className={secondary} onClick={addProgramObjective} disabled={programObjectives.length >= 6}>Lernziel hinzufügen</button></div>
               <p className="text-xs text-slate-500 dark:text-slate-400">Ein Programm benötigt drei bis sechs konkrete Lernziele.</p>
-              {programObjectives.map((item, index) => <div key={item.id} className="space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-program-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-program-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setProgramObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setProgramDirty(true); }} /><button type="button" className={danger} onClick={() => { setProgramObjectives(items => items.filter(current => current.id !== item.id)); setProgramDirty(true); }}>Lernziel entfernen</button></div>)}
+              {programObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-program-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-program-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setProgramObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setProgramDirty(true); }} /><button type="button" className={danger} onClick={() => { setProgramObjectives(items => items.filter(current => current.id !== item.id)); setProgramDirty(true); }}>Lernziel entfernen</button></div>)}
             </section>
-            <section className={panel + ' space-y-4'}>
+            <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Kurszuordnung</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">Du kannst veröffentlichte, verfügbare Kurse als Pflicht- oder Empfehlungskurse aufnehmen. Die genaue Kursversion wird bei einer Programmteilnahme fest zugeordnet.</p>
               <div className="flex flex-col gap-2 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="academy-program-course-select" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurs auswählen</label><select id="academy-program-course-select" className={field} value={programCourseToAdd} onChange={event => setProgramCourseToAdd(event.target.value)}><option value="">Kurs auswählen</option>{selectableCourses.filter(item => !programReferences.some(reference => reference.courseId === item.master.id)).map(item => <option key={item.master.id} value={item.master.id}>{item.master.code} · {item.version?.title || item.master.code}</option>)}</select></div><button type="button" className={secondary + ' self-end'} onClick={addProgramCourse} disabled={!programCourseToAdd}>Kurs hinzufügen</button></div>
