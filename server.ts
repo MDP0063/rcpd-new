@@ -2314,6 +2314,12 @@ async function startServer() {
               targetName: reviewerName(event.targetUid || null),
               previousName: reviewerName(event.previousUid || null)
             }))
+          } : {}),
+          ...(item.detailed && item.reviewCorrections ? {
+            reviewCorrections: item.reviewCorrections.map(correction => ({
+              ...correction,
+              reviewerName: reviewerName(typeof correction.reviewerUid === 'string' ? correction.reviewerUid : null)
+            }))
           } : {})
         }))
       });
