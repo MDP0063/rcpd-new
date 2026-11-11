@@ -799,7 +799,7 @@ export interface ExamParticipantReviewHistoryItem {
   reviewedAtIso: string | null;
   detailed: boolean;
   claimHistory?: ExamReviewClaimHistoryEntry[];
-  reviewCorrections?: NonNullable<ExamAttemptRecord['reviewCorrections']>;
+  reviewCorrections?: Array<Record<string, unknown>>;
   questions?: Array<{
     questionId: string;
     question: string;
@@ -842,10 +842,6 @@ export async function listExamParticipantReviewHistory(
         event.actorUid === reviewerUid || event.targetUid === reviewerUid || event.previousUid === reviewerUid
       );
     const detailed = isSupervisor || wasInvolved;
-    const grades = new Map(
-      (Array.isArray(attempt.questionGrades) ? attempt.questionGrades : [])
-        .map((grade: any) => [String(grade?.questionId || ''), grade])
-    );
     const questions = attempt.status === 'pending_review'
       ? pendingFreeTextQuestions(attempt, version)
       : completedFreeTextQuestions(attempt, version).map(question => ({
@@ -866,7 +862,7 @@ export async function listExamParticipantReviewHistory(
       detailed,
       ...(detailed ? {
         claimHistory: claimHistory.map(event => ({ ...event })),
-        reviewCorrections: Array.isArray(attempt.reviewCorrections) ? attempt.reviewCorrections : [],
+        reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
         questions
       } : {})
     });
