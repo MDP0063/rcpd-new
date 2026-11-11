@@ -235,7 +235,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const allowedMutableFields = new Set([
       'status', 'manuallyEarnedPointsMilli', 'preliminaryScoreBasisPoints',
       'finalScoreBasisPoints', 'questionGrades', 'reviewedByUid', 'reviewedAtIso',
-      'reviewCorrections', 'resultReleaseStatus', 'resultReleaseHistory'
+      'reviewCorrections', 'resultReleaseStatus', 'resultReleaseHistory', 'publishedResultSnapshot'
     ]);
     const stripMutable = (document: ExamDocument) => Object.fromEntries(
       Object.entries(document).filter(([key]) => !allowedMutableFields.has(key))
@@ -245,6 +245,36 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const nextGrades = Array.isArray(appended?.nextGrades) ? appended.nextGrades : null;
     const previousScore = appended?.previousScoreBasisPoints;
     const nextScore = appended?.nextScoreBasisPoints;
+    const publishedSnapshot = next.publishedResultSnapshot as Record<string, unknown> | undefined;
+    const publishedSnapshotValid = existing.resultReleaseStatus === 'released'
+      ? Boolean(publishedSnapshot &&
+          Object.keys(publishedSnapshot).sort().join(',') === 'automaticallyEarnedPointsMilli,finalScoreBasisPoints,manuallyEarnedPointsMilli,preliminaryScoreBasisPoints,questionResults,status,totalPossiblePointsMilli' &&
+          publishedSnapshot.status === existing.status &&
+          publishedSnapshot.totalPossiblePointsMilli === existing.totalPossiblePointsMilli &&
+          publishedSnapshot.automaticallyEarnedPointsMilli === existing.automaticallyEarnedPointsMilli &&
+          publishedSnapshot.manuallyEarnedPointsMilli === existing.manuallyEarnedPointsMilli &&
+          publishedSnapshot.preliminaryScoreBasisPoints === existing.preliminaryScoreBasisPoints &&
+          publishedSnapshot.finalScoreBasisPoints === (existing.finalScoreBasisPoints ?? null) &&
+          Array.isArray(publishedSnapshot.questionResults) &&
+          (existing.assessmentStage === 'final_exam'
+            ? publishedSnapshot.questionResults.length === 0
+            : publishedSnapshot.questionResults.every((item: any, index: number, all: any[]) =>
+                item && typeof item.questionId === 'string' &&
+                Number.isSafeInteger(item.pointsEarnedMilli) && item.pointsEarnedMilli >= 0 &&
+                Number.isSafeInteger(item.maxPointsMilli) && item.maxPointsMilli >= item.pointsEarnedMilli &&
+                typeof item.requiresManualReview === 'boolean' &&
+                all.findIndex(candidate => candidate?.questionId === item.questionId) === index &&
+                Array.isArray(existing.questionGrades) &&
+                existing.questionGrades.some((grade: any) =>
+                  grade?.questionId === item.questionId &&
+                  grade.pointsEarnedMilli === item.pointsEarnedMilli &&
+                  grade.maxPointsMilli === item.maxPointsMilli &&
+                  grade.requiresManualReview === item.requiresManualReview
+                ) &&
+                (item.correct === undefined || typeof item.correct === 'boolean') &&
+                (item.explanation === undefined || typeof item.explanation === 'string')
+              )))
+      : isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot);
     if (
       nextHistory.length !== previousHistory.length + 1 ||
       !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory)
@@ -253,6 +283,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       (next.status !== 'passed' && next.status !== 'failed') ||
       !isDeepStrictEqual(stripMutable(existing), stripMutable(next)) ||
       !isDeepStrictEqual(next.resultReleaseHistory, existing.resultReleaseHistory) ||
+      !publishedSnapshotValid ||
       !(existing.resultReleaseStatus === 'released'
         ? next.resultReleaseStatus === 'pending_rerelease'
         : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus)) ||

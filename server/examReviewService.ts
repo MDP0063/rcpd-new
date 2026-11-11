@@ -1,7 +1,7 @@
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamAttemptRecord, ExamReviewClaim, ExamReviewClaimHistoryEntry, ExamVersionRecord } from './examAttemptService.ts';
 import { scoreExam } from './examScore.ts';
-import { toParticipantSubmission, toPublicSubmission, type PublicExamSubmission } from './examSubmitService.ts';
+import { toParticipantSubmission, toPublicSubmission, toPublishedResultSnapshot, type PublicExamSubmission } from './examSubmitService.ts';
 import { isValidId } from './examValidate.ts';
 
 const HISTORY_LIMIT = 1000;
@@ -717,7 +717,10 @@ export async function correctCompletedExamReview(
       reviewedByUid: reviewerUid,
       reviewedAtIso: nowIso,
       reviewCorrections: [...previousCorrectionHistory, correction],
-      ...(attempt.resultReleaseStatus === 'released' ? { resultReleaseStatus: 'pending_rerelease' as const } : {})
+      ...(attempt.resultReleaseStatus === 'released' ? {
+        resultReleaseStatus: 'pending_rerelease' as const,
+        publishedResultSnapshot: toPublishedResultSnapshot(toPublicSubmission(attempt, version))
+      } : {})
     };
     await transaction.update('exam_attempts', attemptId, corrected);
     return toPublicSubmission(corrected, version);
