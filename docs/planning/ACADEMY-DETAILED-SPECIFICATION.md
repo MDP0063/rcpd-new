@@ -1685,3 +1685,10 @@ Der Nutzer hat eine konkrete Wegweiser-Abbildung als neue gemeinsame Stilreferen
 Die bereitgestellte Wegweiser-Referenz ist nicht nur ein Beispiel für „Übersicht“, sondern der verbindliche Stilmaßstab für Wegweiser, Abschlusskappe, Büchergruppe sowie die beiden noch offenen Motive. Die Motiventscheidungen bleiben unverändert: Übersicht – Wegweiser; Kurse – Abschlusskappe; Lernbibliothek – drei klassische Bücher, eines leicht geneigt, ohne Regal. Prüfungen und Meine Notizen sind weiterhin motivisch offen.
 
 Die bereits festgelegten Kachelgrundfarben und deren dezente Oberflächenreflexion betreffen die Kachel selbst und bleiben von der SVG-Stilkorrektur getrennt. Die Illustration wird farblich auf die jeweilige Kachel abgestimmt, ohne die Referenz durch zusätzliche Details oder Effekte zu überladen.
+
+
+### Festgelegtes Motiv für „Prüfungen“: reduzierter Prüfungsbogen
+
+Für die Academy-Kachel „Prüfungen“ wurde Variante B gewählt: ein kompakter, stark vereinfachter Prüfungsbogen mit wenigen Antwortfeldern und einem klar markierten Häkchen. Die Form soll unmittelbar an Prüfungsfragen bzw. Antworten erinnern, aber nicht als weiteres Buch, Lernmaterial oder Notizblatt gelesen werden. Deshalb werden nur die für die Erkennung notwendigen Flächen verwendet und die Silhouette bleibt kompakt.
+
+Das Motiv folgt verbindlich der bereitgestellten Wegweiser-Referenz: flächiges Piktogramm aus wenigen geometrischen Füllflächen, einfache ruhige Formen und dezente Überlagerung echter Motivbestandteile. Keine dominanten Konturen, keine 3D-Modellierung, keine plastischen Schatten und keine dekorativen Details. Der dezente Beeren-/Pinkakzent entspricht der bereits festgelegten Bereichsfarbe der Prüfungen-Kachel.
