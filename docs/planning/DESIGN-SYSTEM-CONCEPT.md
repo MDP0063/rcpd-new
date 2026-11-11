@@ -276,3 +276,14 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Bearbeiten und Löschen bleiben klar getrennte Aktionen; der Editor wird als eigener Arbeitsbereich dargestellt.
 - Neue Notizen werden weiterhin im Reader angelegt. Es wird keine neue Erstellungsfunktion oder ein neues Datenmodell erfunden.
 - Private Notizdaten, Quellenverknüpfung, Zugriffsschutz, Synchronisierung und API-Verhalten bleiben unverändert.
+
+
+## 18. Examiner-Bewertungsarbeitsplatz – visuelle Ausarbeitung (11.11.2026)
+
+- Der Bewertungsarbeitsplatz gehört zum rollen-/berechtigungsabhängigen Prüfungsbereich und bleibt kein sechster Academy-Hauptbereich.
+- Die vorhandene Aufgabenkarte wird als geteilte Arbeitsfläche strukturiert: links die eigentliche Bewertung mit Frage, Antwort, Rubrik und Punkteingabe; rechts ein einklappbarer Kontextbereich mit den bereits vorhandenen Vorgangsinformationen.
+- Der Kontextbereich zeigt ausschließlich vorhandene Metadaten (Teilnehmer, Kurskennung, Abgabezeitpunkt, Anzahl der Freitextfragen und Zuständigkeit). Er führt keine neue Datenquelle und keine zusätzlichen Status ein.
+- Auf schmaleren Viewports wechselt die Fläche in eine einspaltige Darstellung; der Kontext bleibt über ein natives, tastaturbedienbares Disclosure erreichbar.
+- Der Beerenton #A33370 dient als zurückhaltender Arbeitsbereichsakzent. Warnungen, Fehler und Erfolg behalten ihre eigenen Statusfarben.
+- Anspruchs-/Claim-, Übergabe-, Freigabe-, Draft-Speicher- und Abschlussaktionen bleiben in ihrer bestehenden Position/Funktion und werden nicht fachlich verändert.
+- Die Examiner-Historienansicht, Revisionen und weitere noch offene Examiner-Funktionen werden nicht durch diese visuelle Änderung vorweggenommen.
