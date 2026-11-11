@@ -856,7 +856,7 @@ export async function listExamParticipantReviewHistory(
       submittedAtIso: String(attempt.submittedAtIso || ''),
       assessmentStage: version.assessmentStage,
       status: attempt.status as ExamParticipantReviewHistoryItem['status'],
-      responsibleReviewerUid: attempt.reviewClaim?.reviewerUid || attempt.reviewedByUid || null,
+      responsibleReviewerUid: attempt.reviewClaim?.reviewerUid || (typeof attempt.reviewedByUid === 'string' ? attempt.reviewedByUid : null),
       responsibleReviewerName: attempt.reviewClaim?.reviewerName || null,
       reviewedAtIso: attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
       detailed,
