@@ -1,0 +1,213 @@
+.academy-authoring-center {
+  --academy-author-accent: #087f8c;
+  --academy-author-line: #d9e9e9;
+  min-width: 0;
+}
+.academy-authoring-heading {
+  padding: 0.25rem 0 0.65rem;
+}
+.academy-authoring-heading h2 {
+  color: #183e43;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.academy-authoring-heading p {
+  max-width: 48rem;
+  line-height: 1.6;
+}
+.academy-authoring-heading button {
+  min-height: 2.65rem;
+  border-radius: 0.7rem;
+}
+.academy-authoring-list-panel {
+  border-color: var(--academy-author-line) !important;
+  border-radius: 1rem !important;
+  background: rgba(255,255,255,0.95) !important;
+  box-shadow: 0 6px 18px rgba(15,70,76,0.045);
+}
+.academy-authoring-list-panel > div:first-child {
+  align-items: baseline;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e4eeee;
+}
+.academy-authoring-list-panel h3 {
+  color: #214b50;
+  font-size: 1rem;
+  font-weight: 750;
+}
+.academy-authoring-list-item {
+  padding: 0.95rem 0.2rem !important;
+  border-color: #e7eeee;
+}
+.academy-authoring-list-item > div:first-child {
+  min-width: 0;
+}
+.academy-authoring-list-item > div:first-child > p:first-child {
+  color: #243e42;
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+.academy-authoring-list-item > div:first-child > p:nth-child(2) {
+  margin-top: 0.22rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.academy-authoring-list-item > button,
+.academy-authoring-list-item > span {
+  flex-shrink: 0;
+}
+.academy-authoring-list-item button {
+  min-height: 2.45rem;
+  border-radius: 0.65rem;
+}
+.academy-authoring-editor {
+  width: 100%;
+  max-width: 54rem !important;
+}
+.academy-authoring-editor-heading {
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--academy-author-line);
+}
+.academy-authoring-editor-heading h2 {
+  color: #183e43;
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+.academy-authoring-editor-heading button {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  border-radius: 0.7rem;
+}
+.academy-authoring-form-section {
+  border-color: var(--academy-author-line) !important;
+  border-radius: 1rem !important;
+  background: rgba(255,255,255,0.96) !important;
+  box-shadow: 0 5px 16px rgba(15,70,76,0.035);
+}
+.academy-authoring-form-section > h3,
+.academy-authoring-form-section > div:first-child h3 {
+  color: #214b50;
+  font-size: 0.98rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+.academy-authoring-form-section > div:first-child {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e4eeee;
+}
+.academy-authoring-form-section input:not([type="checkbox"]),
+.academy-authoring-form-section textarea,
+.academy-authoring-form-section select {
+  border-color: #c8dddd !important;
+  border-radius: 0.7rem !important;
+  background-color: #fff !important;
+}
+.academy-authoring-form-section input:focus-visible,
+.academy-authoring-form-section textarea:focus-visible,
+.academy-authoring-form-section select:focus-visible {
+  outline: 3px solid rgba(8,127,140,0.2);
+  outline-offset: 2px;
+  border-color: #087f8c !important;
+}
+.academy-authoring-objective,
+.academy-authoring-chapter {
+  border-color: #dce9e9 !important;
+  border-radius: 0.8rem !important;
+  background: #fbfdfd;
+}
+.academy-authoring-objective label,
+.academy-authoring-chapter label {
+  line-height: 1.5;
+}
+.academy-authoring-chapter > div:first-child {
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #e4eeee;
+}
+.academy-authoring-chapter > div:last-child {
+  border-color: #e4eeee !important;
+}
+.academy-authoring-chapter li {
+  padding: 0.7rem 0;
+  border-color: #e4eeee;
+}
+.academy-authoring-editor form > div:last-of-type button {
+  min-height: 2.65rem;
+  border-radius: 0.7rem;
+}
+.academy-authoring-editor button:focus-visible {
+  outline: 3px solid rgba(8,127,140,0.22);
+  outline-offset: 2px;
+}
+.academy-authoring-error {
+  border-radius: 0.8rem !important;
+  line-height: 1.55;
+}
+.dark .academy-authoring-heading h2,
+.dark .academy-authoring-editor-heading h2 {
+  color: #d6eeee;
+}
+.dark .academy-authoring-list-panel,
+.dark .academy-authoring-form-section {
+  border-color: #34565a !important;
+  background: #172326 !important;
+  box-shadow: none;
+}
+.dark .academy-authoring-list-panel > div:first-child,
+.dark .academy-authoring-editor-heading,
+.dark .academy-authoring-form-section > div:first-child {
+  border-color: #34565a;
+}
+.dark .academy-authoring-list-panel h3,
+.dark .academy-authoring-form-section > h3,
+.dark .academy-authoring-form-section > div:first-child h3,
+.dark .academy-authoring-list-item > div:first-child > p:first-child {
+  color: #d6eeee;
+}
+.dark .academy-authoring-list-item {
+  border-color: #304c50;
+}
+.dark .academy-authoring-form-section input:not([type="checkbox"]),
+.dark .academy-authoring-form-section textarea,
+.dark .academy-authoring-form-section select {
+  border-color: #42666a !important;
+  background-color: #101b1d !important;
+  color: #f2f7f7 !important;
+}
+.dark .academy-authoring-objective,
+.dark .academy-authoring-chapter {
+  border-color: #34565a !important;
+  background: #1c2b2e;
+}
+.dark .academy-authoring-chapter > div:first-child,
+.dark .academy-authoring-chapter > div:last-child,
+.dark .academy-authoring-chapter li {
+  border-color: #34565a !important;
+}
+@media (max-width: 640px) {
+  .academy-authoring-list-panel { padding: 1rem !important; }
+  .academy-authoring-list-item {
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .academy-authoring-list-item > button { width: 100%; }
+  .academy-authoring-editor-heading { flex-direction: column; }
+  .academy-authoring-editor-heading button { width: 100%; }
+  .academy-authoring-form-section { padding: 1rem !important; }
+  .academy-authoring-objective,
+  .academy-authoring-chapter { padding: 0.85rem !important; }
+  .academy-authoring-editor form > div:last-of-type {
+    align-items: stretch;
+  }
+  .academy-authoring-editor form > div:last-of-type button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-authoring-center * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
