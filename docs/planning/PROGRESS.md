@@ -1,6 +1,6 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150 und #152 sind laut bisheriger Projektdokumentation gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Dokumentations-/Fortschrittscommit nach PR #152).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts) sowie PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
