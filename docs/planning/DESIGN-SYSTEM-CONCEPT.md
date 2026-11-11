@@ -213,7 +213,7 @@ Die Implementierung bleibt eng auf die bereits vorhandene Übersicht aus PR #158
 **Prüfstand:** GitHub Actions für den Code-Commit meldet TypeScript-Prüfung, Produktionsbuild und Tests als erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Eine echte Browser-/Responsive-Abnahme mit Screenshots steht noch aus. Der Code ist gemergt, die gestalterische Abnahme bleibt jedoch offen; der Prototyp ist daher noch kein finales Academy- oder Portaldesign.
 
 
-## 13. Äußerer Academy-Viewport-Hintergrund (11.11.2026)
+## 13. Äußerer Academy-Viewport-Hintergrund (11.11.2026, PR #162 gemergt)
 
 Auf Rückmeldung zur Browseransicht wurde die Gestaltung der variablen freien Fläche ergänzt. Auf breiten Displays soll sie nicht als große reinweiße Umgebung erscheinen, aber auch nicht mit der inneren blauen Wellenform konkurrieren.
 
@@ -224,4 +224,4 @@ Auf Rückmeldung zur Browseransicht wurde die Gestaltung der variablen freien Fl
 - Die Inhaltsbreite der Academy bleibt auf dem bisherigen Maximalmaß begrenzt und wird nicht über breite Monitore auseinandergezogen.
 - Dark Mode erhält eine entsprechend zurückhaltende dunkle Variante.
 
-Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, keine Festlegung des späteren globalen Portalhintergrunds.
+Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, keine Festlegung des späteren globalen Portalhintergrunds. Die Umsetzung wurde in PR #162 gemergt. TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. Die Browserabnahme der neuen Außenfläche steht nach dem Deployment noch aus.
