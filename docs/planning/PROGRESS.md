@@ -704,3 +704,12 @@ PR #181 wurde am 11.11.2026 gemergt (Merge-Commit c7bcf07fae9633a23b4ef03c4424d1
 
 ### Nächster Arbeitsschritt
 Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend wird die vom Projektinhaber gewünschte abschließende Bug-/Fehlerprüfung der tatsächlich implementierten Academy-Funktionen durchgeführt. Erst konkrete, nachgewiesene Probleme führen zu weiteren Codeänderungen.
+
+
+## 11.11.2026 – Bugaudit: Whitelist-Prüfung im Examiner-Workflow (PR in Vorbereitung)
+
+- **Bestätigter Befund:** Die Teilnehmer-/Prüferoberfläche sperrte den Status `pending`, die serverseitige Review-Queue und mehrere Claim-/Bewertungsrouten prüften dagegen nur Rollen-/Kursrechte. Die zentrale Session-Middleware blockiert `suspended` und `revoked`, nicht aber `pending`; die UI-Sperre allein war daher keine Sicherheitsgrenze.
+- **Korrektur:** Die serverseitige Reviewer-Eignungsprüfung wird für Queue, Claim, Transfer, Reassignment, Freigabe, Aktivität, Disconnect, Draft und Bewertung einheitlich verwendet.
+- **Regressionstests:** HTTP-Integrationstests für pending Reviewer und pending Supervisor sowie für alle relevanten Review-Aktionen und die Zuweisung an pending Reviewer ergänzt.
+- Status: Codeänderung und Regressionstests in PR #185; CI und unabhängige Abnahme stehen aus.
+- Weitere Exam-/Academy-Berechtigungs- und Datenflussprüfungen bleiben offen; dieser Befund ist nicht als vollständiger Sicherheitsaudit zu verstehen.
