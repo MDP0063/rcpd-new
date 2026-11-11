@@ -46,16 +46,17 @@
 - Geräte-/Browserunterstützung und mobile Reader-Qualität prüfen.
 
 ### Prüfungen und Examiner
-- Sonderfälle und Fehlerzustände bei Prüfungsstart, Autosave, Resume, Abgabe, Bewertung und Ergebnisfreigabe.
-- Draft-Speicherung einzelner Bewertungsänderungen (genehmigtes Konzept benötigt Backend-Erweiterung).
-- Claim-/Inaktivitäts-/Disconnect-Grenzfälle.
-- Historienanzeige und lesbare Zuordnung von Korrekturen zu Fragen/Bewertungsschritten.
-- Berechtigungen und Ergebnisprojektionen anhand aktueller API/Serverlogik prüfen.
-- Sortierung nach tatsächlichem Bewertungsabschlussdatum gegen vorhandene Datenfelder prüfen.
+- Die serverseitigen Bewertungs-Drafts sowie Claim-, Inaktivitäts-, Disconnect-, Übergabe- und Neuzuweisungslogik sind in PR #149/#150/#152 umgesetzt. Ihre tatsächlichen Laufzeit-/Browserzustände bleiben Teil der gemeinsamen Academy-Abnahme.
+- Noch offen: vollständige einsehbare Claim-/Übergabehistorie in der UI.
+- Noch offen: wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe gemäß Academy-Spezifikation Abschnitt 14.12/14.14.
+- Die Revisionsberechtigung Option A wurde am 11.11.2026 beschlossen: jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben und die Action Request auslösen. Kein neuer Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten.
+- Die konkrete Historienanzeige muss die Sichtbarkeitsregeln aus Abschnitt 15.7 einhalten. Historische Korrekturen sind lesbar Fragen/Bewertungsschritten zuzuordnen.
+- Sonderfälle bei Prüfungsstart, Autosave, Resume, Abgabe, Bewertung und Ergebnisfreigabe sowie Sortierung nach tatsächlichem Bewertungsabschlussdatum bleiben im abschließenden technischen/Browser-Audit zu prüfen.
 
 ### Ergebnisfreigabe
-- **Entscheidung erforderlich:** Standard für erstmalige Freigabe, wenn für eine Prüfung keine Einstellung hinterlegt ist. Vor Implementierung prüfen, ob bestehendes Modell bereits einen klaren Default liefert; andernfalls Projektinhaber fragen.
-- Datenmodell/Migration, atomare Veröffentlichung, Fehler-/Rollback-Verhalten, Idempotenz, Nebenläufigkeit und Benachrichtigungsreihenfolge technisch verifizieren.
+- Der Default der erstmaligen Freigabe ist beschlossen und umgesetzt: ohne explizite Konfiguration erfolgt die erste Freigabe manuell (PR #144).
+- Die dynamische serverseitige `required_assessment`-Verifikation ist mit PR #146 umgesetzt. Eine explizite automatische Freigabekonfiguration ist derzeit nicht im Datenmodell/Workshop vorhanden; bis zu einer späteren gesonderten Erweiterung darf kein automatischer Modus angenommen werden.
+- Korrektur-/Neufreigabe-, Idempotenz-, Nebenläufigkeits- und Benachrichtigungsfälle sowie die getrennte Academy-/Prüfungsrepository-Projektion müssen im gemeinsamen Abnahmetest verifiziert werden.
 
 ### Empfehlungen und Meldungen
 - Lebenszyklus: Rückzug, Ablauf, nicht verfügbare oder obsolet gewordene Empfehlungen; eigenständige neue Empfehlung definieren, soweit notwendig.
@@ -209,29 +210,25 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - UX-/Accessibility-Empfehlungen benötigen vor ihrer Vorstellung aktuelle Recherche und Quellen mit konkreter RCPD-Begründung.
 
 ### Academy
-- **Beschlossen:** Upload zunächst als Entwurf, danach bewusste Veröffentlichung (Option B). Nicht veröffentlichte Entwürfe sind für Teilnehmer unsichtbar.
-- **Beschlossen:** maximale PDF-Rohdateigröße 15 MB; serverseitige Validierung und erfolgreiche Sicherheitsprüfung sind vor Veröffentlichung erforderlich.
-- **Beschlossen – PDF-Sicherheitsprüfung Option A:** Signatur-/Parserprüfung, Ablehnung beschädigter und passwortgeschützter Dateien, Malwareprüfung vor Veröffentlichung und Fail-closed bei Prüf-/Scanner-Ausfall.
-- Offen bleiben die Rollen-/Freigaberegeln,  Pflichtmetadaten/Materialcodes, Uploadgrenzen, serverseitige PDF-Prüfung, OCR sowie Rückzug/Benachrichtigung. Ein verpflichtendes PDF-Template ist ausdrücklich nicht beschlossen.
-- Rollen und Berechtigungen für Materialupload und Veröffentlichung müssen aus dem bestehenden System und dem späteren Konzept abgeleitet werden.
-- Der technische Nachweis einer fest gepinnten Dokumentversion je veröffentlichter Kursversion muss geprüft werden.
-- Reader-Seiten-/Textstellenreferenzen bei veränderten PDF-Layouts müssen auf Robustheit geprüft werden.
-- Empfehlungsregeln für unabhängige neue Empfehlungen, veraltete/entzogene Inhalte, Fristen und Erinnerungen sind offen.
-- Die Draft-Grading-Erweiterung ist fachlich beschlossen, aber backendseitig zu spezifizieren und gegen den aktuellen Code zu prüfen.
-- Der Default der erstmaligen Ergebnisfreigabe ist beschlossen: Ohne explizite Konfiguration gilt manuelle Erstfreigabe.
-- Der spätere Kontext-Meldebutton ist als Integrationspunkt vorzusehen; der vollständige Meldeprozess ist ein separates Planungsvorhaben.
-
+- Die Academy-Informationsarchitektur und wesentlichen fachlichen/UX-Abläufe sind in `ACADEMY-DETAILED-SPECIFICATION.md` und `DECISIONS.md` bereits ausführlich beschlossen. Sie werden nicht erneut von Grund auf konzipiert.
+- Die fünf Hauptbereiche bleiben Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Examiner bleibt rollen-/berechtigungsabhängig integriert.
+- PDF-Infrastruktur, PDF-Upload/-Abruf, Parser-/Malwareprüfung, Quarantäne, OCR und neue Speicherinfrastruktur bleiben ausdrücklich zurückgestellt. Bereits vorhandene Legacy-PDFs werden als Bestand behandelt.
+- Die erste Materialausbaustufe (Text/Markdown und Code ohne Codeausführung), versionierte Materialien, Kursversionsbindung, Entwurfs-/Veröffentlichungsworkflow, Metadaten- und Berechtigungsmodell sind umgesetzt; Details und verbleibende technische Abnahme siehe `PROGRESS.md`.
+- Reader, private Notizen/Lesezeichen, Mehrfachquellen, Textanker und lokale Leseposition sind umgesetzt. Die genaue Toolbar-/Werkzeuganordnung ist eine visuelle Designfrage; Sync-/Fehlerzustände und mobile Bedienung sind im Abnahmetest zu prüfen.
+- Noch offen sind die Examiner-Historienansicht, wichtige Action Requests/Benachrichtigungen und die Umsetzung der beschlossenen Revisionsrückgabe.
+- Empfehlungen: Regeln für Rückzug/Verfall/Obsoleszenz, unabhängige neue Empfehlungen, Fristen und Erinnerungen bleiben nur dort offen, wo sie in Abschnitt 8.6 der Academy-Spezifikation nicht bereits festgelegt sind.
+- Die manuelle Erstfreigabe ohne Konfiguration (PR #144) und der dynamische `required_assessment`-Nachweis (PR #146) sind umgesetzt; automatische Erstfreigabe bleibt mangels Konfigurationsmöglichkeit nicht verfügbar.
+- Noch offen: gemeinsame Browser-/Live-Firestore-Abnahme der aktuellen Academy-Implementierung und prototypische Validierung der visuellen Neugestaltung.
 ### Dokumentationsqualität
 - Die verfügbaren Erinnerungen sind keine vollständigen Wortprotokolle aller älteren Chats. Neue Details aus später wieder verfügbaren Originalgesprächen müssen ergänzt werden, statt sie durch Vermutungen zu ersetzen.
 - Bei jedem neuen Gesprächsschritt ist vor einer Rückfrage das Entscheidungsregister und die passende Detail-Spezifikation zu prüfen.
 
 
-### Nächster Abschlussabschnitt Lernbibliothek
-- Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
-- Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
-- Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
-- Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
-- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
+### Nächster Abschlussabschnitt Academy – Validierung und Abschluss
+- Gemeinsame manuelle Browser-/Live-Firestore-Prüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
+- Examiner-Historienansicht und Action-Request-/Revisionsworkflow gemäß den bereits beschlossenen Regeln abschließen.
+- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen ↔ Examiner) und formale Markierung der fachlichen/technischen Academy-Ausbaustufe als abgeschlossen; dies ist getrennt vom visuellen Redesign zu dokumentieren.
+- PDF-Parser-/Scan-/Quarantäne-/Hostinglösung und OCR bleiben bis zur ausdrücklich beschlossenen Wiederaufnahme der PDF-Infrastruktur zurückgestellt.
 
 
 ### Ergebnisfreigabe und Kursabschlussnachweis – Umsetzung nach Beschluss vom 10.11.2026

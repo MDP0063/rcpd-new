@@ -146,3 +146,25 @@
 - Idempotente In-App-Benachrichtigungen für bisherigen und neuen Verantwortlichen, bevorstehende automatische Freigabe und automatische Freigabe; Direktnavigation zum konkreten Examiner-Vorgang.
 - PR #152: GitHub-CI erfolgreich – TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung. Optionaler Render-Deploy-Hook übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung nicht verifiziert.
 - Squash-Merge PR #152: `465c55ab92164e5f47e30b041ac80ef678c718ec`.
+
+
+## 2026-11-11 – Start des Academy-UX-/UI-Audits
+
+- Neue Datei `ACADEMY-UX-AUDIT.md` mit erster read-only Bestandsaufnahme am Main-Commit `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`.
+- Tatsächliche Academy-Struktur, Komponenten, globale Portalnavigation, erste UX-Hypothesen und offene technische/visuelle Prüfaufträge dokumentiert.
+- Erste Recherche etablierter Produkte und Standards aufgenommen: Canvas, Open edX, Moodle, GOV.UK Design System, WAI-ARIA APG, WCAG 2.2 und Nielsen Norman Group.
+- README und PROGRESS um den neuen Audit-Einstieg und den tatsächlichen Main-Basisstand ergänzt.
+- Rollenmatrix, granulare Kursrechte, Dashboard-Fortschrittsprojektion und tatsächliche Einstiege zu Examiner-/Legacy-Bereichen zusätzlich untersucht; offene Cross-Module- und Erreichbarkeitsrisiken dokumentiert.
+- DWP Design System als zusätzliche Referenz für interne Verwaltungsnavigation und deren Accessibility-Anforderungen aufgenommen.
+- Prüfungswarteschlangen, Korrektur-/Freigabelisten, Teilnehmer-Prüfungskatalog und Materialverwaltung auf Such-/Filter-/Sortiermöglichkeiten sowie Volumenabhängigkeiten geprüft.
+- Keine Anwendungslogik, UI-Komponenten, API, Datenmodelle, Berechtigungen oder Deployment-Konfiguration geändert. Keine UX-/UI-Entscheidung vorweggenommen.
+
+
+## 2026-11-11 – Academy-Redesign-Scope klargestellt und Planungsstand abgeglichen
+
+- Nach Hinweis des Projektinhabers klargestellt: Das umfangreiche Academy-Konzept und die Informationsarchitektur liegen bereits vor. Es wird keine erneute Grundsatz-UX-Konzeption begonnen.
+- Die fünf beschlossenen Hauptbereiche und die Integration des Examiner-Bereichs bleiben unverändert. Die bestehenden Detailentscheidungen zu Kursen/Programmen, Bibliothek, Reader/Notizen, Prüfungen, Claims, Ergebnisfreigabe, Korrekturen und Berechtigungen bleiben maßgeblich.
+- `ACADEMY-UX-AUDIT.md` neu eingeordnet: ergänzende Prüfung der Umsetzung gegen vorhandene Beschlüsse und Vorbereitung des visuellen Redesigns, kein Ersatz für die frühere Spezifikation.
+- Veraltete Academy-Offenpunkte in `OPEN-QUESTIONS.md` mit dem tatsächlichen Stand aus PR #132–#152 abgeglichen. Bereits umgesetzte Draft-Grading-, Claim-, Übergabe- und Ergebnisfreigabefunktionen werden nicht mehr als offen geführt.
+- Revisionsrückgabe-Berechtigung Option A in `DECISIONS.md` festgehalten. Die Umsetzung der Revision/Action Requests bleibt als funktionale Restarbeit gekennzeichnet.
+- `PROGRESS.md` präzisiert den Status: Academy-Fachkonzept weitgehend beschlossen, Kernfunktionen weit fortgeschritten, Examiner-Restarbeiten und Browser-/Live-Firestore-Abnahme offen; visueller Designabschnitt folgt auf Basis der bestehenden Entscheidungen.

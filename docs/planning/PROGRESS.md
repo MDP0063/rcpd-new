@@ -1,9 +1,9 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150 und #152 sind laut bisheriger Projektdokumentation gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `99d7694abaa0be0254ce10f910c103a8d0db3d2b` (Squash-Merge von PR #150).  
-**Aktueller Umsetzungsstand:** PR #149 und PR #150 wurden nach erfolgreicher GitHub-CI gemergt. PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich, 453/453 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde im PR-Lauf übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine manuelle Browserprüfung und eine Live-Firestore-Abnahme stehen weiterhin aus.
+**Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Dokumentations-/Fortschrittscommit nach PR #152).  
+**Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts) sowie PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -59,7 +59,7 @@ Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar
 - Bestehende technische Architektur, Datenmodelle, Geschäftslogik und Berechtigungen bleiben grundsätzlich unverändert.
 - Die vorherige Gesamt-Redesign-Erweiterung wurde in PR #44 in `main` gemergt. Sie war eine breite Baseline, aber noch zu stark zusammengefasst.
 - Die aktuelle Revision ergänzt deshalb eigenständige ausführliche Spezifikationen für das Gesamtportal und die Academy und dokumentiert offen, welche Details aus den verfügbaren Erinnerungen stammen bzw. nicht wortgetreu rekonstruierbar sind.
-- Die Academy ist in `ACADEMY-DETAILED-SPECIFICATION.md` deutlich ausführlicher beschrieben, aber fachlich noch nicht vollständig abgeschlossen und nicht automatisch umsetzungsreif.
+- Die Academy-Informationsarchitektur und wesentlichen fachlichen/UX-Abläufe sind in `ACADEMY-DETAILED-SPECIFICATION.md` und `DECISIONS.md` bereits umfangreich ausgearbeitet. Sie werden nicht erneut von Grund auf konzipiert. Die funktionale Umsetzung ist weit fortgeschritten, aber wegen der offenen Examiner-Historien-/Action-Request-Arbeiten und der ausstehenden gemeinsamen Browser-/Live-Firestore-Abnahme noch nicht vollständig abgeschlossen.
 - Die übrigen Module sind im Inventar erfasst und in `PORTAL-REDESIGN-DETAILS.md` detailliert mit Grundsätzen und Audit-Aufträgen beschrieben; konkrete Modulkonzepte fehlen weiterhin dort, wo sie im verfügbaren Kontext noch nicht entschieden wurden.
 
 ## 2. Dokumentationsstruktur
@@ -101,24 +101,23 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Academy-Lernbibliothek: konkrete Kategorien-/Dokumenttypwerte; automatische Kennungen/Lesezeit; technische Parser-/Scan-/OCR-Auswahl; Rücknahme/Archivierung und Benachrichtigungen abschließen.
-2. Restliche Academy-Fragen und Cross-Module-Abhängigkeiten prüfen.
-3. Alle übrigen Portalmodule anhand des tatsächlichen Bestands systematisch auditieren.
-4. Rollen- und Aufgabenmatrix aus bestehenden Berechtigungen ableiten.
-5. Globale Informationsarchitektur erst nach Modulkonzepten abstimmen.
-6. Technische Machbarkeit und Abweichungen vom Architektur-Erhaltungsprinzip dokumentieren.
-7. Designsystem und grafische Detailgestaltung erst anschließend beginnen.
-8. Unabhängige kritische Review des Gesamtplans vorbereiten.
+1. Beschlossene Examiner-Restarbeiten abschließen: einsehbare Claim-/Übergabehistorie sowie wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe.
+2. Gemeinsame Academy-Abnahme der implementierten Funktionen in realen Browser-/Live-Firestore-Szenarien; CI-Ergebnisse ersetzen diese Prüfung nicht.
+3. Die bestehende Academy-Spezifikation gegen den aktuellen Code abschließend auf echte Lücken, Regressionen, Datenschutz-/Berechtigungsfehler und inkonsistente Zustandsdarstellung prüfen. Bereits beschlossene UX-/Fachregeln nicht neu aufrollen.
+4. Danach die visuelle Academy-Gestaltung ausarbeiten und prototypisch validieren: gemeinsame Portal-Designgrundlagen, Screen-Kompositionen der fünf vorhandenen Bereiche, Examiner-Ansichten, Reader-Werkzeuge, responsive Layouts und Accessibility.
+5. Globale Portalgrundlagen und Abhängigkeiten so weit berücksichtigen, dass die Academy in das spätere Gesamtdesign passt; die vollständige Konzeption anderer Module erfolgt später in eigenen Abschnitten.
+6. PDF-Infrastruktur bleibt zurückgestellt. Sie ist kein Blocker für das aktuelle Text-/Code-basierte Academy-Visual-Redesign.
+7. Empfehlungen und sonstige noch offene fachliche Randregeln nur dann weiter konkretisieren, wenn sie für einen tatsächlich umgesetzten und jetzt zu gestaltenden Ablauf erforderlich sind. Keine Scope-Erweiterung aus bloßer Vollständigkeit.
 
 ## 6. Noch offene nächste Schritte
 
-1. Benachrichtigung betroffener Kursverantwortlicher bei neuen Materialfassungen und konkrete Auswirkungen auf laufende Kursentwürfe klären.
-2. Rückzug/Archivierung veröffentlichter Materialien weiter spezifizieren: betroffene Kursversionen, konkrete Zustände und Benachrichtigungen sind noch offen.
-3. Legacy-Materialien erst nach gesondertem Migrations-/Kompatibilitätsplan berücksichtigen.
-4. PDF-Unterstützung einschließlich der bereits beschlossenen Sicherheitsanforderungen bleibt ausdrücklich zurückgestellt.
-5. Weitere Academy-Arbeit nur aus den verbleibenden offenen Punkten in `OPEN-QUESTIONS.md` ableiten; keine neuen Funktionsannahmen ergänzen.
+1. Examiner-Historienansicht und Action-Request-/Revisionsworkflow gemäß `ACADEMY-DETAILED-SPECIFICATION.md` und den Beschlüssen vom 11.11.2026 implementieren und testen.
+2. Verbleibende technische/UX-Befunde aus dem Academy-Audit gezielt gegen die aktuelle Implementierung verifizieren. Nur nachgewiesene Fehler oder unvollständige Beschlüsse korrigieren.
+3. Gemeinsame Browser-/Live-Firestore-Abnahme der Academy-Funktionen einschließlich Rollen, Benachrichtigungen, Direktnavigation, Reader, Prüfungen und Ergebnisprojektionen durchführen.
+4. Visuelle Designphase beginnen: bestehende Academy-Struktur als verbindliche Grundlage nehmen; passende etablierte Websites/Designsysteme und Accessibility-Standards für konkrete UI-Entscheidungen recherchieren; Optionen mit Vor-/Nachteilen und RCPD-Begründung dokumentieren.
+5. Designsystem und globalen Portalrahmen als gemeinsame Grundlage berücksichtigen; andere Module erst in ihren späteren Redesign-Abschnitten vollständig konzipieren.
 
-Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen.
+Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen. Bereits entschiedene Fragen werden nicht erneut gestellt oder stillschweigend geändert.
 
 ## 7. Technische Ausführung und Tests
 
@@ -414,3 +413,26 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - In-App-Benachrichtigungen informieren neuen und bisherigen Verantwortlichen über den Wechsel, den aktuellen Prüfer über die bevorstehende automatische Freigabe und den bisherigen Prüfer über die automatische Freigabe einschließlich Hinweis auf den zuletzt gespeicherten Draft-Stand. Benachrichtigungen enthalten einen Direktlink zum konkreten Examiner-Vorgang in der Academy.
 - PR #152: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
 - Noch offen: vollständige UI-Einsicht in die Claim-/Übergabehistorie sowie die beschlossenen wichtigen Aktionsanfragen und deren Benachrichtigungen. Zusätzliche Vorgesetzten-Benachrichtigungen für auffällige automatische Freigaben bleiben bis zur Klärung der offenen Schwellenwerte zurückgestellt.
+
+
+## 11.11.2026 – Start des vollständigen Academy-UX-/UI-Audits
+
+- Der Projektinhaber hat bestätigt, dass die Academy als erster Teil des vollständigen Portal-Redesigns gründlich und recherchegestützt konzipiert wird. Das Gesamtportal bleibt das Ziel; globale Design- und Navigationsgrundlagen müssen deshalb von Beginn an berücksichtigt werden.
+- Neue Planungsdatei `ACADEMY-UX-AUDIT.md`: erste read-only Bestandsaufnahme von `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`, erste technische Befunde, UX-Hypothesen, offene Prüfpunkte und Recherche etablierter Plattformen/Designsysteme.
+- Erste Codebereiche geprüft: `src/App.tsx`, `src/components/AcademyCenter.tsx`, `AcademyLearningCenter.tsx`, `AcademyAuthoringCenter.tsx`, Materialverwaltung/Reader/Notizen sowie Prüfungs- und Examiner-Komponenten.
+- Erste Recherche: Canvas, Open edX, Moodle, GOV.UK Design System, DWP Design System (interne Verwaltungsoberflächen), WAI-ARIA APG, WCAG 2.2 und Nielsen Norman Group. Quellen und RCPD-spezifische Prüfimplikationen sind im Audit dokumentiert.
+- Vorläufige technische Prüfpunkte: lokaler Academy-Navigationsstate ohne URL-Abbildung; parallele neue und ältere Prüfungsdarstellungen; mögliche fehlende normale Einstiege zu Examiner-/Korrekturbereichen; Übersicht nutzt teilweise Legacy-Props, während neue Lernbereiche eigene API-Daten laden; Legacy- und versionierte Materialien werden in einer Bibliotheksliste zusammengeführt.
+- Zusätzliche Prüfung: Rollenmatrix und granulare Kursrechte aus `src/types/portal.ts`, `server/rolePermissions.ts` und `server/academyApi.ts`; Dashboard-Verknüpfung von `ProfessionalDevelopmentModule`; Examiner-Einstiege über `App.tsx`-Benachrichtigungen; Such-/Filter-/Sortiermöglichkeiten der Prüfungswarteschlangen und Verwaltungslisten. Befunde zu doppelten Fortschrittsprojektionen, parallelen Prüfungsdarstellungen, nicht regulär erreichbaren Legacy-Zweigen und Listenbedienung wurden in Abschnitt 8 des Audits ergänzt.
+- Diese Punkte sind noch keine freigegebenen UX-Entscheidungen. Die Live-Browser-, Responsive-, Tastatur- und Screenreader-Prüfung steht aus. Es wurden keine Anwendungsdateien verändert.
+- Die Rollen-/Rechte- und Aufgabenprüfung wurde ergänzend begonnen und in Abschnitt 8 des Audits dokumentiert. Sie dient der Validierung der vorhandenen Academy-Spezifikation; sie eröffnet keine erneute Grundsatzkonzeption. Nächster Academy-Schritt ist die gezielte Schließung der bereits dokumentierten funktionalen Restarbeiten und danach das visuelle Redesign auf Basis der bestehenden Beschlüsse.
+
+
+## 11.11.2026 – Klarstellung: Academy-Konzept ist bereits ausgearbeitet; nächster Schwerpunkt ist Visual Design
+
+- Der Projektinhaber hat ausdrücklich klargestellt, dass die Academy-Struktur, die wesentlichen Nutzeraufgaben und die fachlichen/UX-Abläufe bereits in den früheren Audits und in `ACADEMY-DETAILED-SPECIFICATION.md`, `DECISIONS.md` und `PORTAL-REDESIGN-DETAILS.md` ausgearbeitet wurden. Diese Arbeit wird nicht erneut begonnen.
+- Die fünf Hauptbereiche bleiben verbindlich: Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Examiner bleibt rollen-/berechtigungsabhängig integriert und ist kein sechster allgemeiner Hauptbereich.
+- Die neue Datei `ACADEMY-UX-AUDIT.md` ist deshalb ausdrücklich nur eine ergänzende Implementierungsprüfung und Vorbereitung des visuellen Redesigns. Ihre Codebeobachtungen sind Prüfhinweise gegen die bestehende Spezifikation, keine neue IA-Konzeption und keine Freigabe, bereits entschiedene Fragen erneut zu öffnen.
+- Die funktionale Academy ist weit fortgeschritten, aber nicht vollständig abgeschlossen: Der Planungsstand nennt als konkrete Restarbeiten die vollständige UI-Einsicht in Claim-/Übergabehistorie sowie wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe. Die Revisionsberechtigung Option A wurde am 11.11.2026 beschlossen (alle aktuell kursautorisierten Prüfer dürfen eine abgeschlossene Bewertung zurückgeben); die Implementierung ist noch nicht durch einen Code-PR belegt.
+- Der gemeinsame Browser-/Live-Firestore-Abnahmetest für die neueren Academy-Funktionen bleibt offen. CI-Ergebnisse und manuelle Laufzeitabnahme dürfen nicht gleichgesetzt werden.
+- Für das Visual Design verbleiben insbesondere Designsystem/Portalrahmen, konkrete Screen-Kompositionen der bestehenden fünf Bereiche und berechtigungsabhängigen Examiner-Ansichten, responsive Umsetzung, Reader-Toolbar-Anordnung, visuelle Zustände sowie prototypische Validierung. Jede größere Designentscheidung muss mit aktueller Recherche etablierter Produkte/Designsysteme und Accessibility-Standards begründet werden.
+- Nicht erneut zu konzipieren sind die beschlossenen Academy-Regeln zu Kursen/Programmen, Statusdimensionen, Bibliotheksversionen, Reader-/Notizlogik, Prüfungsabläufen, Claims, Ergebnisfreigabe, Korrekturen und Berechtigungen. Änderungen sind nur bei nachgewiesenem Implementierungsfehler, unvollständiger Umsetzung oder ausdrücklich neuem Beschluss zulässig.
