@@ -254,3 +254,9 @@
 - Prüfungskatalog, Auswahlpanel, aktiver Prüfungsversuch und Ergebnisansicht visuell überarbeitet.
 - Auswahlzustand der Prüfungen semantisch über aria-pressed ergänzt.
 - Bestehende Status-, Zeit-, Autospeicher-, Bewertungs- und Freigabelogik unverändert.
+
+
+## 2026-11-11 – Academy-Bereich Meine Notizen
+
+- Notizen-/Lesezeichenliste, Privatsphäre-Hinweis und Editor visuell an die Academy-Designsprache angepasst.
+- Private Daten, Quellenbezüge und bestehende Bearbeitungs-/Löschaktionen unverändert.
