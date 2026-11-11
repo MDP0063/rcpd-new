@@ -1693,7 +1693,7 @@ export default function App() {
         </aside>
 
         {/* Main White Content Viewport */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8">
+        <main className={`flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-8 ${activeSection === 'academy' ? 'academy-main-viewport' : ''}`}>
           {/* Mobile Quick Navigation Bar */}
           <div className="flex lg:hidden items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
             {(
