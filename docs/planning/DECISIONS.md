@@ -449,3 +449,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Katalog und Reader bleiben klar getrennte Ansichten. Der Reader ersetzt nicht die Bibliotheksübersicht; die Rückkehr zur Bibliothek und die Materialliste bleiben klar erreichbar.
 - **BESCHLOSSEN:** Suche, Sortierung und bestehende Filter bleiben an der Bibliotheksübersicht gebündelt. Materialeinträge zeigen weiterhin die vorhandenen Metadaten.
 - **SCHUTZGRENZE:** Legacy-/versionierte Materialien, PDF-Bestand, Zugriffsschutz, Versionsbindung, Reader, Notizen, Code-Sandbox und APIs werden funktional nicht verändert.
+
+
+## 11.11.2026 – Teilnehmer-Prüfungszentrum: visuelle Ausarbeitung
+
+- **BESCHLOSSEN:** Der Bereichsakzent für Prüfungen ist der bereits definierte Beerenton #A33370.
+- **BESCHLOSSEN:** Der Prüfungsablauf erhält eine konzentrierte, sachliche Oberfläche mit klarer Trennung zwischen Katalog, aktivem Versuch und Ergebnis.
+- **BESCHLOSSEN:** Ergebniszustände behalten ihre eigenen Bedeutungsfarben und werden immer textlich benannt; der Beerenton ersetzt keine Erfolgs-/Warn-/Fehlerstatusfarbe.
+- **SCHUTZGRENZE:** Zeitlimit, Autospeicher, Versuchsversion, Abgabe, Bewertung, Freigabe, API und Berechtigungen bleiben unverändert. Legacy-Prüfungsansichten und Examiner-Administration werden separat geprüft.
