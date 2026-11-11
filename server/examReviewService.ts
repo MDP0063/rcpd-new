@@ -604,7 +604,7 @@ function completedFreeTextQuestions(attempt: ExamAttemptRecord, version: ExamVer
   });
 }
 
-export function sortCompletedManualReviewAttempts<T extends { reviewedAtIso?: string }>(attempts: T[]): T[] {
+export function sortCompletedManualReviewAttempts<T extends ExamAttemptRecord>(attempts: T[]): T[] {
   return [...attempts].sort((a, b) =>
     String(b.reviewedAtIso || '').localeCompare(String(a.reviewedAtIso || ''))
   );
