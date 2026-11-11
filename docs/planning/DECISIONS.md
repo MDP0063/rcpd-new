@@ -527,3 +527,16 @@ Der Nutzer hat den vorgeschlagenen Farbentwurf ausdrücklich bestätigt (Auswahl
 Die Farben dienen ausschließlich der visuellen Orientierung der fünf Academy-Bereiche. Sie erhalten keine Statusbedeutung (z. B. Erfolg, Warnung oder Fehler). Die fünf Farbfamilien sollen kräftig, satt, lebendig und untereinander harmonisch wirken und den professionellen Charakter des Portals bewahren.
 
 Die Werte sind die bestätigten Ausgangsfarben für den visuellen Prototyp. Eine abschließende technische Freigabe der Design-Tokens erfolgt nach Prüfung der tatsächlichen Kacheloberfläche einschließlich weißer Lichtreflexion, Textpositionen, Kontrast, Fokusdarstellung und responsiver Darstellung. Falls dabei eine kleine Farbwertkorrektur für Lesbarkeit oder Oberflächenwirkung nötig wird, ist sie auf diese Palette zurückzuführen und darf die beschlossene Farbfamilie oder Bereichszuordnung nicht ohne erneute Nutzerentscheidung ändern.
+
+## Academy-SVG-Illustrationen – bestätigtes Farbkonzept (11.11.2026)
+
+Der Nutzer hat **Variante B – neutrale Basis mit Bereichsfarbakzent** ausdrücklich ausgewählt. Diese Entscheidung gilt verbindlich für alle fünf individuellen Academy-SVG-Illustrationen:
+
+- Die Illustrationen verwenden eine gemeinsame, zurückhaltende neutrale Grundpalette für Hauptflächen und wiederkehrende Elemente.
+- Jede Illustration erhält einen gezielten, dezenten Akzent aus der zugehörigen Kachelfarbfamilie: Übersicht Blau (`#2864D9`), Kurse Türkis (`#087F8C`), Lernbibliothek Violett (`#6841B8`), Prüfungen Beere (`#A33370`), Meine Notizen Grün (`#287A45`).
+- Der Akzent wird gegenüber der kräftigen Kachelgrundfarbe visuell zurückgenommen. Er stellt eine erkennbare Verbindung zum Bereich her, darf aber nicht mit der Kacheloberfläche konkurrieren.
+- Dunkle Konturen/Details und neutrale Füllflächen bleiben über alle fünf Illustrationen konsistent.
+- Pro Illustration sind höchstens drei bis vier bewusst eingesetzte Farben vorgesehen. Die genaue neutrale Palette und die konkreten Akzentabstufungen werden im visuellen Entwurf festgelegt.
+- Die SVGs bleiben matt, geometrisch, reduziert und frei von künstlichen Glanzreflexen, dekorativen Schatten und überladenen 3D-Effekten.
+
+Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen. Motive, Geometrie, Strichstärke, Proportionen und Detailtiefe müssen weiterhin ein kohärentes Set bilden. Die kräftigen Kachelfarben und ihre Zuordnung bleiben unverändert.
