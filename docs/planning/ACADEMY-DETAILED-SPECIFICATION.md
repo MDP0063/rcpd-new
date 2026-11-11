@@ -1670,3 +1670,18 @@ Die zuvor beschriebene 3D-Anmutung wird ausdrücklich zurückgenommen. Die fünf
 ### Lernbibliothek-Motiv: drei klassische Bücher
 
 Das zuvor vorgesehene Bücherregal ist verworfen. Stattdessen werden drei klassische Bücher als kleine Gruppe dargestellt; eines davon ist leicht schräg geneigt. Es gibt keine Regalstruktur. Die Bücher werden flach im gemeinsamen Outline-Stil gestaltet. Die leichte Tiefenwirkung entsteht nur durch die sparsame Überlagerung bzw. Staffelung der drei Bücher. Der Akzent bleibt dezent violett.
+
+
+## Verbindliche Bildreferenz für alle fünf Academy-Illustrationen (11.11.2026)
+
+Der Nutzer hat eine konkrete Wegweiser-Abbildung als neue gemeinsame Stilreferenz bereitgestellt und ausdrücklich auf alle fünf Motive übertragen. Diese Referenz ersetzt die vorherige Outline-Stilrichtung. Maßgeblich ist die schlichte, flächige Piktogrammwirkung:
+
+- Wenige große, klare, geometrische Formen mit gut lesbarer Silhouette; überwiegend gefüllte Flächen statt linienbasierter Outline-Zeichnung.
+- Ruhige, einfache Formgebung mit nur leichter Abrundung dort, wo sie zur Referenz passt.
+- Dezente Ebenenwirkung durch Überlagerung bzw. Staffelung echter Motivbestandteile. Die Ebenen bleiben flach und einfach; keine räumliche Tiefe oder 3D-Modellierung.
+- Keine dominanten dunklen Konturen, keine detaillierten Linien, keine 3D-Seitenflächen, keine plastische Schattierung, keine SVG-Glanzreflexe, keine starken Schatten und keine dekorativen Zusatzformen.
+- Einheitliche Einfachheit und Detaildichte über alle fünf Motive. Jedes Motiv muss auch in kleiner Kachelgröße sofort erkennbar bleiben.
+
+Die bereitgestellte Wegweiser-Referenz ist nicht nur ein Beispiel für „Übersicht“, sondern der verbindliche Stilmaßstab für Wegweiser, Abschlusskappe, Büchergruppe sowie die beiden noch offenen Motive. Die Motiventscheidungen bleiben unverändert: Übersicht – Wegweiser; Kurse – Abschlusskappe; Lernbibliothek – drei klassische Bücher, eines leicht geneigt, ohne Regal. Prüfungen und Meine Notizen sind weiterhin motivisch offen.
+
+Die bereits festgelegten Kachelgrundfarben und deren dezente Oberflächenreflexion betreffen die Kachel selbst und bleiben von der SVG-Stilkorrektur getrennt. Die Illustration wird farblich auf die jeweilige Kachel abgestimmt, ohne die Referenz durch zusätzliche Details oder Effekte zu überladen.
