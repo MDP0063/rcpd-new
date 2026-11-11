@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150 und #152 sind laut bisheriger Projektdokumentation gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150/#152 sowie #185/#186/#187 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Dokumentations-/Fortschrittscommit nach PR #152).  
+**Aktueller Basisstand:** `main` nach PR #187; die ältere nach PR #152 festgehaltene Commit-ID ist historisch und nicht mehr der aktuelle HEAD.  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts) sowie PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -433,7 +433,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die fünf Hauptbereiche bleiben verbindlich: Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Examiner bleibt rollen-/berechtigungsabhängig integriert und ist kein sechster allgemeiner Hauptbereich.
 - Die neue Datei `ACADEMY-UX-AUDIT.md` ist deshalb ausdrücklich nur eine ergänzende Implementierungsprüfung und Vorbereitung des visuellen Redesigns. Ihre Codebeobachtungen sind Prüfhinweise gegen die bestehende Spezifikation, keine neue IA-Konzeption und keine Freigabe, bereits entschiedene Fragen erneut zu öffnen.
 - Die funktionale Academy ist weit fortgeschritten, aber nicht vollständig abgeschlossen: Der Planungsstand nennt als konkrete Restarbeiten die vollständige UI-Einsicht in Claim-/Übergabehistorie sowie wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe. Die Revisionsberechtigung Option A wurde am 11.11.2026 beschlossen (alle aktuell kursautorisierten Prüfer dürfen eine abgeschlossene Bewertung zurückgeben); die Implementierung ist noch nicht durch einen Code-PR belegt.
-- Der gemeinsame Browser-/Live-Firestore-Abnahmetest für die neueren Academy-Funktionen bleibt offen. CI-Ergebnisse und manuelle Laufzeitabnahme dürfen nicht gleichgesetzt werden.
+- Der gemeinsame Browser-/Live-Firestore-Abnahmetest für die neueren Academy-Funktionen bleibt offen. PR #187 korrigiert zusätzlich die Sortierung abgeschlossener manueller Bewertungen auf das tatsächliche Bewertungsabschlussdatum (reviewedAtIso) und sichert die Reihenfolge mit einem Regressionstest ab. CI-Ergebnisse und manuelle Laufzeitabnahme dürfen nicht gleichgesetzt werden.
 - Für das Visual Design verbleiben insbesondere Designsystem/Portalrahmen, konkrete Screen-Kompositionen der bestehenden fünf Bereiche und berechtigungsabhängigen Examiner-Ansichten, responsive Umsetzung, Reader-Toolbar-Anordnung, visuelle Zustände sowie prototypische Validierung. Jede größere Designentscheidung muss mit aktueller Recherche etablierter Produkte/Designsysteme und Accessibility-Standards begründet werden.
 - Nicht erneut zu konzipieren sind die beschlossenen Academy-Regeln zu Kursen/Programmen, Statusdimensionen, Bibliotheksversionen, Reader-/Notizlogik, Prüfungsabläufen, Claims, Ergebnisfreigabe, Korrekturen und Berechtigungen. Änderungen sind nur bei nachgewiesenem Implementierungsfehler, unvollständiger Umsetzung oder ausdrücklich neuem Beschluss zulässig.
 
