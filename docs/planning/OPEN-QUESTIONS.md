@@ -281,3 +281,10 @@ Die visuellen PRs ändern keine der bestehenden fachlichen Schutzgrenzen. Nicht 
 - **Bestätigt und in PR #185 korrigiert:** Der Whitelist-Status `pending` wurde in der UI für Reviewer gesperrt, aber nicht durchgehend in den serverseitigen Endpunkten für die manuelle Prüfungsbewertung erzwungen. Die globale Session-Middleware blockiert nur `suspended` und `revoked`; `pending` konnte deshalb bei vorhandenen Kursrechten die UI-Sperre umgehen.
 - PR #185 vereinheitlicht die serverseitige Reviewer-Eignungsprüfung und ergänzt HTTP-Regressionstests.
 - **Weiter offen:** Vollständiger Audit der übrigen Teilnehmer-, Workshop-, Ergebnisfreigabe-, Korrektur- und Academy-Berechtigungswege sowie gemeinsame Browser-/Live-Firestore-Abnahme.
+
+
+### Abgeschlossen: Reviewer-Whitelist-Guard (PR #185)
+
+Die serverseitige Berechtigungsprüfung für den manuellen Examiner-Workflow wurde vereinheitlicht und am 11.11.2026 gemergt. Pending Konten sind von Review-Queue, Claim, Draft, Bewertung und Claim-Verwaltung ausgeschlossen. Der vollständige CI-Lauf einschließlich Tests war erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment bleibt unbestätigt.
+
+Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offen und wird getrennt fortgesetzt.
