@@ -387,14 +387,10 @@ Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffne
 
 ### 8.6 Noch offene Empfehlungsregeln
 
-Noch nicht entschieden sind:
-- entfällt: Kriterien für eine tatsächlich neue unabhängige Empfehlung (am 11.11.2026 beschlossen; siehe Entscheidungsregister);
-- entfällt: Ablauf/Rückzug bei nicht verfügbaren oder fachlich veralteten Inhalten (am 11.11.2026 beschlossen; siehe Regelung unterhalb).
-- Fristen und Erinnerungen;
-- entfällt: Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie (am 11.11.2026 beschlossen; beide Historien sind fachlich getrennt).
-- Verhalten bei manueller Zurücknahme einer Empfehlung.
+Für die visuelle Überarbeitung noch nicht festgelegt und daher bewusst zurückgestellt:
+- konkrete Fristen- und Erinnerungsregeln.
 
-Diese Punkte dürfen nicht stillschweigend als bereits beschlossen behandelt werden.
+Die übrigen zuvor offenen Empfehlungsregeln wurden am 11.11.2026 entschieden und sind nachfolgend dokumentiert.
 
 
 **Historienabgrenzung – beschlossen am 11.11.2026:** Die Empfehlungshistorie dokumentiert den fachlichen Lebenszyklus (Erstellung, Zusammenführung, Ausblenden, Erledigung und Zurücknahme einschließlich Herkunft/Grund). Die Benachrichtigungshistorie dokumentiert Versand/Zustellung, Lesezustand und Ziel der Benachrichtigung. Eine Änderung einer bestehenden Empfehlung erzeugt nicht automatisch eine neue Benachrichtigung. Bereits versendete Benachrichtigungen bleiben nachvollziehbar, wenn die Empfehlung später zurückgenommen wird.
