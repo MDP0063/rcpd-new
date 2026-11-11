@@ -613,3 +613,13 @@ PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c908365
 - Die GitHub-CI für die jeweiligen Code-PRs hat TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich ausgeführt; die PR-Vorlagenprüfungen waren ebenfalls erfolgreich.
 - Die optionalen Render-Deploy-Hooks in den PR-Läufen wurden übersprungen. Ein erfolgreiches Live-Deployment und die visuelle Browserabnahme des konsolidierten Stands sind noch nicht bestätigt.
 - Nächster sinnvoller Schritt: Browserprüfung der fünf Academy-Bereiche auf großem Desktop, Tablet und Smartphone sowie bei Bedarf Light-/Dark-Mode. Danach werden nur konkret beobachtete Probleme angepasst.
+
+
+## 11.11.2026 – Examiner-Bewertungsarbeitsplatz: visueller Ausbau (PR in Vorbereitung)
+
+- Der vorhandene Freitext-Bewertungsarbeitsplatz wird gemäß der beschlossenen Split-View-Vorgabe strukturiert: Bewertung links, einklappbarer Kontext rechts.
+- Der Kontext verwendet ausschließlich bereits geladene Metadaten; vertrauliche Antwort- und Bewertungsinhalte bleiben weiterhin nur für den zuständigen Prüfer sichtbar.
+- Responsive einspaltige Darstellung, natives Disclosure, sichtbare Tastaturfokusse und Dark Mode werden berücksichtigt.
+- Keine Änderung an Claim, Disconnect, Übergabe, administrativer Neuzuweisung, Draft-Speicherung, Bewertung, Abschluss oder Berechtigungen.
+- Examiner-Historie, Revision-Workflow und weitere offene Funktionen bleiben außerhalb dieses visuellen PRs.
+- Browserabnahme steht nach Deployment aus.

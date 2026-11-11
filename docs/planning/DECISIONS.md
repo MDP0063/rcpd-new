@@ -465,3 +465,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die Erklärung zur Privatsphäre bleibt sichtbar. Notizen und Lesezeichen werden mit ihren vorhandenen Quellenbezügen dargestellt.
 - **BESCHLOSSEN:** Bearbeiten/Löschen und der Editor bleiben getrennte, eindeutig beschriftete Aktionen. Neue Notizen werden weiterhin im Reader erstellt.
 - **SCHUTZGRENZE:** Keine Änderung an Privatheit, Zugriffsschutz, Datenmodell, Sync, Quellenbindung, API oder bestehenden Aktionen.
+
+
+## 11.11.2026 – Examiner-Bewertungsarbeitsplatz
+
+- **BESCHLOSSEN AUS SPEZIFIKATION ABGELEITET:** Die bereits definierte geteilte Desktop-Arbeitsfläche wird umgesetzt: Bewertung und Antwortinhalt im Hauptbereich, einklappbarer Kontext mit vorhandenen Vorgangsmetadaten daneben.
+- **BESCHLOSSEN AUS SPEZIFIKATION ABGELEITET:** Auf Tablet und Smartphone wird die Darstellung einspaltig; das Kontextpanel bleibt semantisch und per Tastatur bedienbar.
+- **SCHUTZGRENZE:** Keine neuen Daten, Status, Rechte oder Aktionen. Die Sichtbarkeit vertraulicher Antworten bleibt exakt an die bestehende Claim-Berechtigung gebunden.

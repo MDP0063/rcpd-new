@@ -266,3 +266,9 @@
 
 - Privatsphäre-Hinweis, Notizen-/Lesezeichenliste und Editor visuell an die Academy-Designsprache angepasst.
 - Notizdaten, Quellenbezüge, Zugriffsschutz und bestehende Aktionen unverändert.
+
+
+## 2026-11-11 – Academy-Examiner-Bewertungsarbeitsplatz (PR in Vorbereitung)
+
+- Den Freitext-Bewertungsarbeitsplatz als geteilte Fläche mit einklappbarem Kontextpanel gestaltet.
+- Vorhandene Vorgangsmetadaten werden übersichtlich gebündelt; Bewertung, Claim, Draft-Speicherung, Übergabe und Abschluss bleiben fachlich unverändert.
