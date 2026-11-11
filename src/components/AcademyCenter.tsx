@@ -630,7 +630,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   );
 
   return (
-    <div className="space-y-9">
+    <div className={!isAcademyHome && activeTab === 'overview' ? 'academy-interior-shell space-y-7' : 'space-y-9'}>
       <style>{`
         @keyframes academy-section-enter {
           from { opacity: 0; transform: translateY(5px); }
@@ -641,6 +641,262 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         }
         @media (prefers-reduced-motion: reduce) {
           .academy-content-enter { animation: none; }
+        }
+
+        /* Shared Academy section navigation: one clear active state, no duplicated entry tiles. */
+        .academy-main-nav {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 0.35rem;
+          padding: 0.45rem;
+          border: 1px solid #dce7f6;
+          border-radius: 1rem;
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 5px 18px rgba(31, 69, 119, 0.055);
+        }
+        .academy-main-nav button {
+          min-width: 0;
+          min-height: 2.85rem;
+          padding: 0.65rem 0.75rem;
+          border: 0;
+          border-radius: 0.7rem;
+          color: #53657f;
+          font-size: 0.875rem;
+          font-weight: 600;
+          line-height: 1.25;
+          transition: color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+        }
+        .academy-main-nav button:hover {
+          color: #173f78;
+          background: #f1f6fd;
+        }
+        .academy-main-nav button[aria-current="page"] {
+          color: #174f9e;
+          background: #eaf2ff;
+          box-shadow: inset 0 0 0 1px #d6e6ff;
+        }
+        .academy-main-nav button:focus-visible,
+        .academy-back-link:focus-visible {
+          outline: 3px solid #2864d9;
+          outline-offset: 3px;
+        }
+
+        /* First interior overview prototype: restrained matte blue surfaces and contained wave detail. */
+        .academy-interior-shell {
+          --academy-blue: #2864d9;
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+          padding: clamp(1rem, 2.4vw, 2rem);
+          border: 1px solid #e0eaf7;
+          border-radius: 1.5rem;
+          background:
+            radial-gradient(ellipse at 100% 0%, rgba(207, 226, 252, 0.48), transparent 42%),
+            linear-gradient(145deg, #f5f8fd 0%, #eef4fb 58%, #f4f7fc 100%);
+          color: #15243a;
+        }
+        .academy-overview-content { position: relative; z-index: 1; }
+        .academy-overview-hero {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+          padding: clamp(1.25rem, 3vw, 2.5rem);
+          border: 1px solid #d8e6f8;
+          border-radius: 1.35rem;
+          background: linear-gradient(112deg, #ffffff 0%, #f7faff 56%, #eaf3ff 100%);
+          box-shadow: 0 8px 24px rgba(35, 76, 130, 0.055);
+        }
+        .academy-overview-hero::before,
+        .academy-overview-hero::after {
+          content: "";
+          position: absolute;
+          z-index: -1;
+          pointer-events: none;
+        }
+        .academy-overview-hero::before {
+          width: 48%;
+          height: 145%;
+          right: -8%;
+          top: -58%;
+          border-radius: 0 0 0 100%;
+          background: linear-gradient(145deg, rgba(184, 211, 247, 0.22), rgba(111, 161, 226, 0.08));
+          transform: rotate(-8deg);
+        }
+        .academy-overview-hero::after {
+          width: 58%;
+          height: 105%;
+          right: -12%;
+          bottom: -82%;
+          border: 1px solid rgba(91, 145, 214, 0.18);
+          border-radius: 50%;
+          box-shadow: 0 -14px 0 -13px rgba(91, 145, 214, 0.16), 0 -29px 0 -28px rgba(91, 145, 214, 0.13);
+          transform: rotate(-7deg);
+        }
+        .academy-back-link {
+          position: relative;
+          z-index: 1;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0.45rem 0.7rem;
+          margin: -0.35rem 0 1.35rem -0.7rem;
+          border-radius: 0.65rem;
+          color: #4b6382;
+          font-size: 0.875rem;
+          font-weight: 600;
+          transition: background-color 150ms ease, color 150ms ease;
+        }
+        .academy-back-link:hover { color: #174f9e; background: #edf4ff; }
+        .academy-overview-intro { position: relative; z-index: 1; max-width: 48rem; }
+        .academy-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          margin-bottom: 0.7rem;
+          color: #2864d9;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+        .academy-eyebrow::before { content: ""; width: 1.65rem; height: 2px; border-radius: 2px; background: currentColor; }
+        .academy-page-title {
+          max-width: 42rem;
+          color: #122d52;
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 800;
+          line-height: 1.1;
+          letter-spacing: -0.045em;
+        }
+        .academy-page-lede {
+          max-width: 43rem;
+          margin-top: 0.85rem;
+          color: #506581;
+          font-size: clamp(0.98rem, 1.3vw, 1.08rem);
+          line-height: 1.75;
+        }
+        .academy-learning-path-card {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+          padding: clamp(1.25rem, 2.6vw, 2rem);
+          border: 1px solid #d9e7f8;
+          border-radius: 1.2rem;
+          background: linear-gradient(110deg, rgba(255,255,255,0.96) 0%, rgba(247,250,255,0.96) 62%, rgba(232,242,255,0.94) 100%);
+          box-shadow: 0 7px 20px rgba(35, 76, 130, 0.045);
+        }
+        .academy-learning-path-card::after {
+          content: "";
+          position: absolute;
+          z-index: -1;
+          width: 42%;
+          height: 150%;
+          right: -12%;
+          bottom: -92%;
+          border-radius: 50%;
+          border: 1px solid rgba(92, 145, 211, 0.18);
+          box-shadow: 0 -13px 0 -12px rgba(92, 145, 211, 0.14), 0 -27px 0 -26px rgba(92, 145, 211, 0.1);
+        }
+        .academy-structure-section { padding: 0.25rem 0.1rem; }
+        .academy-structure-heading { color: #18365d; }
+        .academy-structure-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .academy-structure-card {
+          min-width: 0;
+          padding: 1.35rem;
+          border: 1px solid #dce6f2;
+          border-radius: 1rem;
+          background: rgba(255,255,255,0.94);
+          box-shadow: 0 5px 16px rgba(30, 61, 100, 0.045);
+        }
+        .academy-structure-card::before {
+          content: "";
+          display: block;
+          width: 2.25rem;
+          height: 0.24rem;
+          margin-bottom: 1.1rem;
+          border-radius: 99px;
+          background: var(--academy-card-accent, #2864d9);
+        }
+        .academy-structure-card--blue { --academy-card-accent: #2864d9; }
+        .academy-structure-card--teal { --academy-card-accent: #087f8c; }
+        .academy-structure-card--violet { --academy-card-accent: #6841b8; }
+        .academy-structure-label { color: var(--academy-card-accent, #2864d9); }
+        .academy-structure-title { color: #18365d; }
+        .academy-structure-copy { color: #5a6d86; }
+        .academy-overview-notes {
+          padding: 1.25rem 1.35rem;
+          border: 1px solid #dce7f5;
+          border-radius: 1rem;
+          background: rgba(255,255,255,0.62);
+        }
+        .academy-overview-footnote {
+          padding: 0.9rem 1rem;
+          border-left: 3px solid #9aabc1;
+          border-radius: 0 0.6rem 0.6rem 0;
+          background: rgba(229, 237, 247, 0.58);
+          color: #5d6e83;
+        }
+
+        .dark .academy-main-nav {
+          border-color: #263b59;
+          background: rgba(15, 31, 52, 0.94);
+          box-shadow: none;
+        }
+        .dark .academy-main-nav button { color: #b8c7dc; }
+        .dark .academy-main-nav button:hover { color: #eff6ff; background: #1b3556; }
+        .dark .academy-main-nav button[aria-current="page"] {
+          color: #dbeafe;
+          background: #1e416e;
+          box-shadow: inset 0 0 0 1px #315b8c;
+        }
+        .dark .academy-interior-shell {
+          border-color: #263b59;
+          background:
+            radial-gradient(ellipse at 100% 0%, rgba(45, 91, 151, 0.22), transparent 42%),
+            linear-gradient(145deg, #101e32 0%, #12243b 58%, #101d30 100%);
+          color: #e7effb;
+        }
+        .dark .academy-overview-hero {
+          border-color: #2c4567;
+          background: linear-gradient(112deg, #172b45 0%, #192f4d 56%, #1b385d 100%);
+          box-shadow: none;
+        }
+        .dark .academy-overview-hero::before { background: linear-gradient(145deg, rgba(85, 137, 202, 0.2), rgba(56, 103, 163, 0.07)); }
+        .dark .academy-back-link { color: #b7c9e0; }
+        .dark .academy-back-link:hover { color: #eff6ff; background: #203b5e; }
+        .dark .academy-eyebrow { color: #8dbbfa; }
+        .dark .academy-page-title,
+        .dark .academy-structure-heading,
+        .dark .academy-structure-title { color: #edf4ff; }
+        .dark .academy-page-lede,
+        .dark .academy-structure-copy { color: #b6c7dc; }
+        .dark .academy-learning-path-card {
+          border-color: #2b4668;
+          background: linear-gradient(110deg, rgba(23,43,69,0.98) 0%, rgba(25,47,77,0.98) 62%, rgba(29,59,96,0.96) 100%);
+          box-shadow: none;
+        }
+        .dark .academy-structure-card {
+          border-color: #2a405e;
+          background: rgba(20, 38, 61, 0.96);
+          box-shadow: none;
+        }
+        .dark .academy-structure-label { filter: brightness(1.45); }
+        .dark .academy-overview-notes {
+          border-color: #2a405e;
+          background: rgba(20, 38, 61, 0.68);
+        }
+        .dark .academy-overview-footnote {
+          border-color: #647c9b;
+          background: rgba(30, 50, 75, 0.72);
+          color: #b8c7dc;
+        }
+        @media (max-width: 760px) {
+          .academy-main-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .academy-main-nav button:last-child { grid-column: 1 / -1; }
+          .academy-structure-grid { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .academy-main-nav button, .academy-back-link { transition: none; }
         }
       `}</style>
       {(isAcademyHome || activeTab !== 'overview') && (
@@ -680,7 +936,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         className={!isAcademyHome ? 'academy-content-enter' : undefined}
       >
       {!isAcademyHome && (
-        <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
+        <nav aria-label="Academy-Hauptbereiche" className="academy-main-nav flex flex-wrap gap-1">
           {[
             { id: 'overview' as const, label: 'Übersicht' },
             { id: 'courses' as const, label: 'Kurse' },
@@ -764,32 +1020,31 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </section>
       )}
       {!isAcademyHome && activeTab === 'overview' && (
-        <section aria-labelledby="academy-overview-content-heading" className="space-y-8">
-          <div className="space-y-5">
+        <section aria-labelledby="academy-overview-content-heading" className="academy-overview-content space-y-7">
+          <div className="academy-overview-hero">
+
             <button
               type="button"
               onClick={() => setIsAcademyHome(true)}
-              className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-[#2864D9] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
+              className="academy-back-link"
             >
               <span aria-hidden="true">←</span>
               Zurück zur Academy-Übersicht
             </button>
-            <div className="max-w-3xl space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2864D9] dark:text-blue-400">
-                <span aria-hidden="true" className="h-px w-6 bg-[#2864D9]" />
+            <div className="academy-overview-intro space-y-2">
+              <div className="academy-eyebrow">
                 Orientierung
               </div>
-              <h1 id="academy-overview-content-heading" className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+              <h1 id="academy-overview-content-heading" className="academy-page-title">
                 Willkommen in der Academy
               </h1>
-              <p className="max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="academy-page-lede">
                 Hier findest du deine Ausbildungsinhalte an einem Ort. Die Academy verbindet Lehrgänge, einzelne Kurse und Lernmaterialien – damit du dich gezielt informieren, lernen und dein Wissen überprüfen kannst.
               </p>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-[#2864D9]/20 bg-gradient-to-br from-[#2864D9]/[0.09] via-white to-white p-5 dark:from-[#2864D9]/20 dark:via-slate-900 dark:to-slate-900 sm:p-7">
-            <div aria-hidden="true" className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#2864D9]/[0.07] blur-2xl" />
+          <div className="academy-learning-path-card">
             <div className="relative max-w-3xl space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ein Bereich – verschiedene Wege</p>
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lernen ist nicht immer eine gerade Linie.</h2>
@@ -799,42 +1054,39 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="academy-structure-section space-y-4">
             <div className="max-w-2xl space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Wie die Inhalte zusammenhängen</h2>
+              <h2 className="academy-structure-heading text-xl font-semibold tracking-tight">Wie die Inhalte zusammenhängen</h2>
               <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 Diese drei Bestandteile bilden den fachlichen Kern deiner Ausbildung.
               </p>
             </div>
-            <div className="grid gap-3 lg:grid-cols-3">
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#2864D9]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ausbildungsziel</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <div className="academy-structure-grid">
+              <article className="academy-structure-card academy-structure-card--blue">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Ausbildungsziel</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Lehrgänge</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Ein Lehrgang beschreibt ein übergeordnetes Ausbildungsziel und kann mehrere thematisch passende Kurse zusammenfassen.
                 </p>
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#087F8C]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#087F8C] dark:text-teal-300">Lerneinheiten</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Kurse</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <article className="academy-structure-card academy-structure-card--teal">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Lerneinheiten</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Kurse</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Ein Kurs behandelt ein bestimmtes Thema. Er kann Teil eines Lehrgangs sein oder unabhängig davon genutzt werden.
                 </p>
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#6841B8]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6841B8] dark:text-violet-300">Wissensgrundlage</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lernbibliothek</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <article className="academy-structure-card academy-structure-card--violet">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Wissensgrundlage</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Lernbibliothek</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Hier liegen die Lernmaterialien. Du kannst sie aus einem Kurs heraus öffnen oder direkt zum Nachschlagen verwenden.
                 </p>
               </article>
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 md:grid-cols-2">
+          <div className="academy-overview-notes grid gap-5 md:grid-cols-2">
             <div className="flex gap-3">
               <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#A33370]" />
               <div className="space-y-1">
@@ -855,7 +1107,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
           </div>
 
-          <p className="border-l-2 border-slate-300 pl-3 text-xs leading-relaxed text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <p className="academy-overview-footnote text-xs leading-relaxed">
             Ein geöffnetes Material oder ein besuchter Kurs gilt nicht automatisch als abgeschlossen. Ein Abschluss wird nur erfasst, wenn die dafür festgelegten Bedingungen tatsächlich erfüllt sind.
           </p>
         </section>
