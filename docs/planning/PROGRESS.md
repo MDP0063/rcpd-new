@@ -641,7 +641,7 @@ PR #175 wurde am 11.11.2026 gemergt (Merge-Commit 8fe6cc17e5913003ee65b39e8f5383
 PR #177 wurde am 11.11.2026 gemergt (Merge-Commit a724f76265020eeff14c9a5c5822ee07d71ddad7). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Korrektur-/Freigabebereichs steht aus.
 
 
-## 11.11.2026 – Kurs- und Programmverwaltung: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Kurs- und Programmverwaltung: visueller Ausbau (PR #179 gemergt)
 
 - Verwaltungsübersicht für Kurse und Programme als getrennte, gut scannbare Listen gestaltet.
 - Kurs- und Programmeditoren mit konsistenten Grunddaten-, Lernziel-, Kapitel-/Material- und Zuordnungsabschnitten.
@@ -649,3 +649,6 @@ PR #177 wurde am 11.11.2026 gemergt (Merge-Commit a724f76265020eeff14c9a5c5822ee
 - Keine Änderung an Speichern, Veröffentlichen, Validierung, Versionsbindung, Abschlussbedingungen, Materialreferenzen oder Berechtigungen.
 - Responsive Darstellung, Dark Mode und Tastaturfokus berücksichtigt.
 - Browserabnahme steht nach Deployment aus.
+
+
+PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c26c97d72e04). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme der Kurs-/Programmverwaltung steht aus.
