@@ -1,5 +1,12 @@
 # Änderungsverlauf der Planungsdokumentation
 
+## 2026-11-11 – Sortierung abgeschlossener manueller Bewertungen (PR #187)
+
+- Die Liste abgeschlossener manueller Bewertungen wird jetzt nach dem tatsächlichen Bewertungsabschluss (reviewedAtIso) sortiert, nicht nach dem Zeitpunkt der Teilnehmerabgabe.
+- Die ursprüngliche Abgabezeit bleibt unverändert; die Sortierung mutiert die Repository-Ergebnisliste nicht.
+- Ein Regressionstest deckt auseinanderlaufende Abgabe- und Bewertungszeitpunkte ab.
+- TypeScript-Prüfung, Produktionsbuild, Tests und PR-Beschreibungsprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment ist nicht bestätigt.
+
 ## 2026-11-06 – Erste konsolidierte Baseline
 
 - Planungsordner `docs/planning/` angelegt.
