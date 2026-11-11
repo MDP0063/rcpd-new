@@ -245,3 +245,14 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Nachweisbedingungen, Lernziele, Kapitel und erforderliche/empfohlene Kurse bleiben fachlich getrennt und werden als lesbare Inhaltsabschnitte dargestellt.
 - Der echte Programmfortschritt bleibt mit seiner vorhandenen Datenquelle sichtbar; er wird nicht mit einem Academy-Gesamtfortschritt vermischt.
 - Aktionen und Status bleiben textlich eindeutig und tastaturbedienbar. Es werden keine neuen Daten oder Aktionen ergänzt.
+
+
+## 15. Lernbibliothek – erster visueller Ausbau (11.11.2026)
+
+- Die Lernbibliothek erhält den bereits festgelegten violetten Bereichsakzent (#6841B8) in einer zurückhaltenden, wissensorientierten Gestaltung.
+- Katalog, Suche/Sortierung/Filter und Materialreader bleiben als getrennte Nutzungsschritte erkennbar. Der Katalog wird nicht in den Reader hineingezogen.
+- Materialeinträge bleiben kompakt und gut vergleichbar; Code, Titel, Kategorie und Dokumenttyp behalten ihre vorhandenen Bedeutungen.
+- Der Reader erhält eine ruhige, lesefokussierte Oberfläche mit klarer Metadaten- und Aktionszone.
+- Legacy- und versionierte Materialien behalten ihre vorhandenen getrennten Daten-/Renderpfade. Es werden keine PDF-Infrastruktur, Parser, Speicher- oder Abruffunktionen ergänzt.
+- Bestehende Suche, Sortierung, Filter, Zugriffsschutz, externe Quellen, Code-Sandbox und private Notizfunktionen bleiben unverändert.
+- Diese Gestaltung ist ein erster Prototyp und wird nach Deployment auf großen und kleinen Viewports geprüft.
