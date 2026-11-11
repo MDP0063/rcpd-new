@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { sortCompletedManualReviewAttempts } from './examReviewService.ts';
+import type { ExamAttemptRecord } from './examAttemptService.ts';
 
 test('completed manual reviews are sorted by actual review completion time, not submission time', () => {
   const attempts = [
@@ -10,7 +11,7 @@ test('completed manual reviews are sorted by actual review completion time, not 
   ];
 
   assert.deepEqual(
-    sortCompletedManualReviewAttempts(attempts).map(attempt => attempt.id),
+    sortCompletedManualReviewAttempts(attempts as unknown as ExamAttemptRecord[]).map(attempt => attempt.id),
     ['submitted-earlier-reviewed-later', 'submitted-later-reviewed-earlier', 'reviewed-first']
   );
   assert.deepEqual(
