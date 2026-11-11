@@ -221,3 +221,10 @@
 - Sanfte kühle Farbverläufe statt einer zweiten Wellenform; Übergang zur bestehenden inneren Academy-Fläche bleibt zurückhaltend.
 - Bestehende Academy-Inhaltsbreite bleibt begrenzt; globale Portalgestaltung und andere Module sind nicht betroffen.
 - Dark-Mode-Variante ergänzt.
+
+
+## 2026-11-11 – Academy-Kursbereich (PR #164 gemergt)
+
+- Teilnehmer-Kurskatalog mit klarer Überschrift, Suchfläche, Programm-Karten und kompakter Kursliste visuell überarbeitet.
+- Veralteten Hinweis zur angeblich noch fehlenden Prüfungsnachweis-Verknüpfung im Kursdetail korrigiert.
+- Keine Änderung an Kurs-/Programmstatus, Versionierung, Daten, APIs, Berechtigungen oder Verwaltungsfunktionen.
