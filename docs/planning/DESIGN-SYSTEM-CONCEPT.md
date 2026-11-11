@@ -340,3 +340,12 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 
 
 **Umsetzungsstand:** Die versionierte Materialverwaltung (PR #181) sowie Kategorie-/Dokumenttypverwaltung (PR #182) wurden visuell überarbeitet. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
+
+
+## 23. Gesamtstand Academy-Designausbau (11.11.2026)
+
+Die visuelle Gestaltung wurde über alle fünf Teilnehmerbereiche hinaus auf die vorhandenen rollen-/berechtigungsabhängigen Verwaltungsoberflächen ausgeweitet: Examiner-Bewertung, Ergebnisfreigabe/Korrektur, Kurs-/Programmverwaltung, versionierte Materialverwaltung sowie Kategorie-/Dokumenttypverwaltung. Alle diese Änderungen wurden in den genannten PRs gemergt und durch TypeScript-Prüfung, Produktionsbuild und Tests validiert.
+
+Die Gestaltung folgt weiterhin einer gemeinsamen Academy-Grundsprache mit bereichsspezifischen Akzenten. Die fünf Kachel-Einstiege bleiben unverändert. Globale Portalidentität und globale Navigation sind nicht Teil dieses Designs.
+
+**Abnahmehinweis:** Der Code ist gemergt, aber die optionalen Render-Deploy-Hooks wurden übersprungen. Die vollständige Browserabnahme ist daher weiterhin offen. Legacy-Prüfungsansichten werden erst nach dem abschließenden Audit und der Klärung ihrer fachlichen Rolle angefasst.

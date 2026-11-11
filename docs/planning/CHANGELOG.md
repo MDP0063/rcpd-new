@@ -296,3 +296,11 @@
 
 - Verwaltungsoberflächen für Kategorien und Dokumenttypen mit konsistenter Formular-/Listenstruktur gestaltet.
 - Bestehende Status-, Archivierungs-, Lösch- und Berechtigungsregeln unverändert.
+
+
+## 2026-11-11 – Konsolidierter Academy-Designausbau
+
+- Teilnehmerbereiche Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen visuell ausgearbeitet.
+- Rollen-/berechtigungsabhängige Examiner-, Ergebnisfreigabe-/Korrektur-, Kurs-/Programm- und Bibliotheksverwaltungsoberflächen ergänzt.
+- Bestehende Kachel-Startseite, Daten-/Statuslogik, Berechtigungen, APIs und fachliche Abläufe unverändert.
+- Live-Deployment und Browserabnahme stehen noch aus; Legacy-Prüfungsansichten und abschließender Bug-/Fehleraudit bleiben offen.
