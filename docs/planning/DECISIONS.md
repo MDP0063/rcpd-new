@@ -369,3 +369,13 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Es wird kein dauerhaftes Academy-Evidenzduplikat des Prüfungsversuchs angelegt. Der aktuelle Prüfungsstand wird bei Academy-Abschlussprojektionen serverseitig dynamisch aufgelöst. Dadurch werden Korrekturen und erneute Freigaben beim nächsten Lesen wirksam, ohne zwei getrennte Repositories atomar synchronisieren zu müssen.
 - **BESCHLOSSEN:** Wenn die Prüfungsdaten nicht verfügbar, ungültig oder nicht eindeutig verifizierbar sind, gilt der Nachweis als nicht erfüllt (fail-closed). Ein Kurs darf dann nicht als abgeschlossen projiziert werden.
 - **BESCHLOSSEN:** Die dynamische Projektion gilt für Kursdetail, eigene Kursteilnahmen, administrative Kursteilnahmeübersichten und den Fortschritt erforderlicher Lehrgangskurse. Die Teilnehmeransicht zeigt den Freigabezeitpunkt des verifizierten Prüfungsnachweises.
+
+
+
+## Examiner – Revision-Rückgabe und Action Request (11.11.2026)
+
+- **BESCHLOSSEN – Berechtigung Option A:** Jede Person, die aktuell für den konkreten Kurs als Prüfer autorisiert ist, darf eine abgeschlossene Bewertung zur Revision zurückgeben und die dafür vorgesehene Action Request auslösen.
+- Die Berechtigung ist kursbezogen und muss serverseitig anhand der aktuellen Kurs-/Prüferberechtigung geprüft werden. Eine sichtbare UI-Aktion allein begründet keine Berechtigung.
+- Admins und Colonels behalten ihre bereits festgelegten administrativen Befugnisse; diese Entscheidung schränkt sie nicht ein und führt keine neue Rolle ein.
+- Die Revision bleibt eine Weiterbearbeitung desselben Prüfungsversuchs. Gespeicherte Drafts und die vorherige Bewertungshistorie bleiben erhalten. Revisionsgrund und konkretes Feedback zu betroffenen Bewertungsschritten sind verpflichtend.
+- Alle für den Kurs autorisierten Prüfer sind bei der anschließenden Bearbeitung gleichberechtigt; der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber historisch nachvollziehbar.
