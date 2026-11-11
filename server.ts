@@ -2289,6 +2289,10 @@ async function startServer() {
         res.status(400).json({ error: 'Die Teilnehmerkennung ist ungültig.' });
         return;
       }
+      if (req.params.uid === caller.uid) {
+        res.status(403).json({ error: 'Eigene Prüfungsergebnisse sind ausschließlich über die Teilnehmer-Ergebnisansicht verfügbar.' });
+        return;
+      }
       if (await examWorkshopMaintenanceActive()) {
         res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
         return;
