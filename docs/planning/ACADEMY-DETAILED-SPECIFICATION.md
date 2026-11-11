@@ -1360,6 +1360,14 @@ Jede Kachel besitzt genau drei Bestandteile: eine Illustration, einen Titel und 
 - Illustration oberhalb des Textes; Titel und Beschreibung linksbündig.
 - Vorläufige Richtwerte: Illustration 48 px auf Desktop, 44–48 px auf Tablet, 40 px auf Smartphone; Innenabstand 32/28/24 px; Abstand Illustration–Titel 20 px; Titel–Beschreibung 8 px; Kachelzwischenraum 24 px; Eckenradius 8–12 px. Diese Maße werden im responsiven Prototyp mit realen Texten validiert und bei Bedarf angepasst, ohne die Gleichwertigkeit der fünf Kacheln aufzugeben.
 
+### Farbige Kacheloberfläche
+
+- Jede Kachel verwendet eine kräftige, satte, einfarbige Grundfläche in der bereits festgelegten Bereichsfarbe.
+- Die Oberfläche wirkt glatt, hochwertig und leicht glänzend; die Reflexion ist weich weiß und darf kein harter Lichtstreifen sein.
+- Keine Farbverläufe und keine Metallstruktur. Die räumliche Tiefe entsteht durch dezente Schattierung bzw. weiche Schatten.
+- Im Ruhezustand bleibt die Reflexion zurückhaltend. Beim Hover wird sie etwas stärker; die Kachel bewegt sich sanft.
+- Diese Oberflächenwirkung gehört ausschließlich zur Kachel. Die SVG-Illustrationen bleiben schlicht und flächig und erhalten keine Glanzlichter, Verläufe oder künstlichen Schatten.
+
 ### Einheitlicher Illustrationsstil
 
 Alle fünf Motive sind eigens erstellte, lokale SVG-Piktogramme. Sie verwenden eine gemeinsame Zeichenfläche von 128 × 128 Einheiten und werden in gleicher sichtbarer Größe und optischer Gewichtung eingesetzt.
