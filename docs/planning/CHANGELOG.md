@@ -227,3 +227,12 @@
 - Wenige größere Formen und gezielt ausgewählte funktionale Details sind vorgesehen; unnötige dekorative Kleinteile und überladene Motive werden vermieden.
 - Alle fünf Illustrationen sollen eine vergleichbare Detailtiefe besitzen und auch in kleinen Kacheln verständlich bleiben. Die konkrete Lesbarkeit wird im responsiven Kachelprototyp geprüft.
 - Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Weichere und stärker reduzierte Formensprache der Academy-SVGs festgelegt
+
+- Nutzer wünscht eine modernere, weichere und stärker abgerundete Gestaltung mit deutlich weniger Einzelheiten als in den ersten Motiv-Referenzen.
+- Die fünf Illustrationen müssen anhand ihrer Gegenstände und Silhouetten klar unterscheidbar sein; die Bereichsfarben allein reichen dafür nicht aus.
+- „Übersicht“ meint ausschließlich die Academy-Übersicht. Die Kachel darf nicht „Dashboard“ genannt oder als zweites Portal-Dashboard dargestellt werden. Das konkrete Motiv bleibt offen.
+- Die zuvor erwähnten Dashboard-Karten sind ausdrücklich keine verbindliche Motivvorgabe für „Übersicht“.
+- Bestehende Grundregeln – frontale Perspektive, neutrale matte Füllflächen, klare Konturen, dezenter Bereichsfarbakzent und sparsame Überlagerung – bleiben erhalten. Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
