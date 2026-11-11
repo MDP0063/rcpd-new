@@ -327,3 +327,13 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Der Editor gliedert Metadaten, Kurszuständigkeit, Kategorie/Dokumenttyp, Zugriffsvoraussetzung, Inhaltsformat und Inhalt in gut erkennbare Formularabschnitte.
 - Text/Markdown und Code bleiben die unterstützten Formate dieser Stufe. Der Quelltext bleibt nicht ausführbar; PDF-Infrastruktur bleibt zurückgestellt.
 - Entwurf speichern, ausdrückliche Veröffentlichung, Archivierung, Versionshistorie und bestehende Validierung bleiben funktional unverändert.
+
+
+## 22. Kategorien und Dokumenttypen – visuelle Ausarbeitung (11.11.2026)
+
+- Die beiden Taxonomie-Verwaltungsansichten bleiben getrennte, spezialisierte Aufgaben innerhalb der Lernbibliotheksverwaltung.
+- Beide verwenden dasselbe Grundlayout: Formular zum Erstellen/Bearbeiten und daneben die durchsuchbare Bestandsliste.
+- Name, optionale Beschreibung und vorhandener Aktiv-/Archivstatus erhalten eine klare Hierarchie.
+- Bearbeiten, Aktivieren/Archivieren und Löschen bleiben getrennte Aktionen. Vorhandene Statushinweise und Bestätigungen bleiben erhalten.
+- Der violette Bibliotheksakzent #6841B8 wird zurückhaltend eingesetzt; Dark Mode, Tastaturfokus und mobile einspaltige Darstellung werden berücksichtigt.
+- Es werden keine zusätzlichen Taxonomiefelder, Status oder Verwaltungsrechte eingeführt.

@@ -493,3 +493,9 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Materialliste und Editor bleiben getrennte Arbeitszonen; der aktive Materialeintrag wird semantisch als ausgewählt gekennzeichnet.
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Metadaten, Zuständigkeit, Kategorie/Dokumenttyp, Zugriffsvoraussetzung und Text-/Code-Inhalt werden klar gegliedert.
 - **SCHUTZGRENZE:** Keine Änderung an Veröffentlichungsworkflow, Archivierung, Versionierung, Zugriffsschutz, Validierung, Datenmodell oder PDF-Infrastruktur.
+
+
+## 11.11.2026 – Bibliotheks-Taxonomieverwaltung
+
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Kategorie- und Dokumenttypverwaltung verwenden dieselbe Grundstruktur aus Formular und Bestandsliste, bleiben aber eigenständige Aufgaben.
+- **SCHUTZGRENZE:** Keine neuen Felder, Status, Verwaltungsrechte, Lösch-/Archivierungsregeln oder API-Verhalten.

@@ -1,0 +1,141 @@
+.academy-material-taxonomy-manager {
+  --academy-library-accent: #6841b8;
+  --academy-library-line: #e4dcf1;
+  min-width: 0;
+}
+.academy-material-taxonomy-heading {
+  padding: 0.2rem 0 0.45rem;
+}
+.academy-material-taxonomy-heading h2 {
+  color: #39265f;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.academy-material-taxonomy-heading p {
+  max-width: 54rem;
+  line-height: 1.6;
+}
+.academy-material-taxonomy-layout {
+  align-items: start;
+}
+.academy-material-taxonomy-form,
+.academy-material-taxonomy-list {
+  min-width: 0;
+  border-color: var(--academy-library-line) !important;
+  border-radius: 1rem !important;
+  background: rgba(255,255,255,0.96) !important;
+  box-shadow: 0 6px 18px rgba(55,34,91,0.04);
+}
+.academy-material-taxonomy-form {
+  padding: 1.25rem !important;
+}
+.academy-material-taxonomy-form > div:first-child {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #eee8f5;
+}
+.academy-material-taxonomy-form > div:first-child h3,
+.academy-material-taxonomy-list h3 {
+  color: #49326e;
+  font-size: 0.98rem;
+  font-weight: 750;
+}
+.academy-material-taxonomy-form label,
+.academy-material-taxonomy-list label {
+  color: #4b405b;
+  line-height: 1.5;
+}
+.academy-material-taxonomy-form input,
+.academy-material-taxonomy-form textarea,
+.academy-material-taxonomy-list input {
+  border-color: #d8cce9 !important;
+  border-radius: 0.7rem !important;
+  background: #fff !important;
+}
+.academy-material-taxonomy-form input:focus-visible,
+.academy-material-taxonomy-form textarea:focus-visible,
+.academy-material-taxonomy-list input:focus-visible {
+  outline: 3px solid rgba(104,65,184,0.2);
+  outline-offset: 2px;
+  border-color: #6841b8 !important;
+}
+.academy-material-taxonomy-form button,
+.academy-material-taxonomy-list button {
+  min-height: 2.45rem;
+  border-radius: 0.7rem;
+}
+.academy-material-taxonomy-form button:focus-visible,
+.academy-material-taxonomy-list button:focus-visible {
+  outline: 3px solid rgba(104,65,184,0.22);
+  outline-offset: 2px;
+}
+.academy-material-taxonomy-list > div:first-child {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #eee8f5;
+}
+.academy-material-taxonomy-list > div:first-child p {
+  line-height: 1.5;
+}
+.academy-material-taxonomy-item {
+  padding: 0.9rem 0 !important;
+  border-color: #eee8f5;
+}
+.academy-material-taxonomy-item > div:first-child > div:first-child span:first-child {
+  color: #382a52;
+  font-weight: 700;
+}
+.academy-material-taxonomy-item > div:first-child > p {
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+.academy-material-taxonomy-actions button {
+  min-height: 2.3rem;
+}
+.dark .academy-material-taxonomy-heading h2 {
+  color: #e6dcf8;
+}
+.dark .academy-material-taxonomy-form,
+.dark .academy-material-taxonomy-list {
+  border-color: #49395e !important;
+  background: #1b1722 !important;
+  box-shadow: none;
+}
+.dark .academy-material-taxonomy-form > div:first-child,
+.dark .academy-material-taxonomy-list > div:first-child,
+.dark .academy-material-taxonomy-item {
+  border-color: #49395e;
+}
+.dark .academy-material-taxonomy-form > div:first-child h3,
+.dark .academy-material-taxonomy-list h3,
+.dark .academy-material-taxonomy-item > div:first-child > div:first-child span:first-child {
+  color: #e6dcf8;
+}
+.dark .academy-material-taxonomy-form label,
+.dark .academy-material-taxonomy-list label {
+  color: #d4c8e3;
+}
+.dark .academy-material-taxonomy-form input,
+.dark .academy-material-taxonomy-form textarea,
+.dark .academy-material-taxonomy-list input {
+  border-color: #5a496e !important;
+  background: #15111b !important;
+  color: #f6f1fb !important;
+}
+@media (max-width: 640px) {
+  .academy-material-taxonomy-form,
+  .academy-material-taxonomy-list {
+    padding: 1rem !important;
+  }
+  .academy-material-taxonomy-actions {
+    width: 100%;
+  }
+  .academy-material-taxonomy-actions button {
+    flex: 1 1 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-material-taxonomy-manager * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
