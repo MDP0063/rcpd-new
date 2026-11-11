@@ -159,6 +159,13 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   const secondReviewerPermissions = getDefaultGranularPermissions('officer');
   secondReviewerPermissions.canGradeAssignedCourses = true;
   secondReviewerPermissions.assignedCourseCodes = ['SOP-01'];
+  const pendingReviewerPermissions = getDefaultGranularPermissions('officer');
+  pendingReviewerPermissions.canGradeAssignedCourses = true;
+  pendingReviewerPermissions.assignedCourseCodes = ['SOP-01'];
+  const pendingReviewer = makeAccount('http-pending-reviewer', 'HttpPendingReviewer', 'officer', pendingReviewerPermissions);
+  pendingReviewer.publicProfile.whitelistStatus = 'pending';
+  const pendingSupervisor = makeAccount('http-pending-supervisor', 'HttpPendingSupervisor', 'admin');
+  pendingSupervisor.publicProfile.whitelistStatus = 'pending';
   const portalState = {
     version: 3,
     accounts: [
@@ -167,6 +174,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       makeAccount('http-other-course', 'HttpOtherCourse', 'officer', otherCoursePermissions),
       makeAccount('http-course-reviewer', 'HttpCourseReviewer', 'officer', courseReviewerPermissions),
       makeAccount('http-second-reviewer', 'HttpSecondReviewer', 'officer', secondReviewerPermissions),
+      pendingReviewer,
+      pendingSupervisor,
       makeAccount('http-unauthorized', 'HttpUnauthorized', 'officer'),
       makeAccount('http-applicant', 'HttpApplicant', 'officer'),
       makeAccount('http-deleted-account', 'HttpDeletedAccount', 'officer'),
@@ -437,6 +446,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const otherCourse = await login(baseUrl, 'HttpOtherCourse');
     const courseReviewer = await login(baseUrl, 'HttpCourseReviewer');
     const secondReviewer = await login(baseUrl, 'HttpSecondReviewer');
+    const pendingReviewerSession = await login(baseUrl, 'HttpPendingReviewer');
+    const pendingSupervisorSession = await login(baseUrl, 'HttpPendingSupervisor');
     const unauthorized = await login(baseUrl, 'HttpUnauthorized');
     const applicant = await login(baseUrl, 'HttpApplicant');
     const trainee = await login(baseUrl, 'HttpTrainee');
@@ -492,6 +503,12 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     const ownReviewQueue = await jsonRequest('/api/academy/exam-reviews', delegate.token);
     assert.equal(ownReviewQueue.status, 200, JSON.stringify(ownReviewQueue.body));
     assert.deepEqual(ownReviewQueue.body.reviews, [], 'reviewers must not receive their own submitted answers');
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', pendingReviewerSession.token)).status, 403,
+      'pending whitelist accounts must not receive confidential review answers');
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', pendingSupervisorSession.token)).status, 403,
+      'pending supervisor accounts must not receive the review queue');
+    const pendingClaim = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim`, pendingReviewerSession.token, { method: 'POST' });
+    assert.equal(pendingClaim.status, 403, 'pending accounts cannot claim review work');
     const reviewQueue = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
     assert.equal(reviewQueue.status, 200, JSON.stringify(reviewQueue.body));
     assert.equal(reviewQueue.body.reviews.length, 1);
@@ -523,6 +540,32 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(draftResponse.status, 200, JSON.stringify(draftResponse.body));
     assert.equal(draftResponse.body.draftGrades['http-free-text'], 2500);
     assert.equal(draftResponse.body.revision, 1);
+    const pendingDraft = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-draft`, pendingReviewerSession.token, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionId: 'http-free-text', pointsEarnedMilli: 1000 })
+    });
+    assert.equal(pendingDraft.status, 403, 'pending accounts cannot read or write review drafts');
+    const pendingGrade = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/grade`, pendingReviewerSession.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
+    });
+    assert.equal(pendingGrade.status, 403, 'pending accounts cannot submit grades');
+    const pendingTransfer = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/transfer`, pendingReviewerSession.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-second-reviewer', reason: 'Nicht berechtigt' })
+    });
+    assert.equal(pendingTransfer.status, 403, 'pending accounts cannot transfer review work');
+    const pendingRelease = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim`, pendingReviewerSession.token, { method: 'DELETE' });
+    assert.equal(pendingRelease.status, 403, 'pending accounts cannot release another reviewer claim');
+    const pendingActivity = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/activity`, pendingReviewerSession.token, { method: 'POST' });
+    assert.equal(pendingActivity.status, 403, 'pending accounts cannot extend reviewer claims');
+    const pendingDisconnect = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/disconnect`, pendingReviewerSession.token, { method: 'POST' });
+    assert.equal(pendingDisconnect.status, 403, 'pending accounts cannot disconnect reviewer claims');
+    const pendingReassign = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/reassign`, pendingSupervisorSession.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-course-reviewer', reason: 'Nicht berechtigt' })
+    });
+    assert.equal(pendingReassign.status, 403, 'pending supervisors cannot administratively reassign review work');
     const adminQueueDuringClaim = await jsonRequest('/api/academy/exam-reviews', admin.token);
     assert.equal(adminQueueDuringClaim.body.reviews.length, 1);
     assert.deepEqual(adminQueueDuringClaim.body.reviews[0].questions, [], 'claimed answers stay hidden from other reviewers');
