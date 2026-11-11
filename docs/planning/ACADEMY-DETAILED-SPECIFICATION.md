@@ -1414,3 +1414,17 @@ Für alle fünf Bereichskacheln der Academy-Einstiegsseite gilt ein einheitliche
 Die gesamte Kachel ist der einzige primäre Einstiegspunkt in den jeweiligen Bereich. Im Grundentwurf gibt es innerhalb der Kachel keine zusätzlichen Aktionsbuttons, Status-Badges, Kennzahlen oder Fortschrittsbalken. Die Kacheln sollen auf einen Blick verständlich sein und nicht mit Zusatzinformationen überladen werden.
 
 Die Flächen sind groß, farbig und klar voneinander unterscheidbar; die Farbpalette bleibt harmonisch und professionell. Symbole, Titel und Beschreibungen unterstützen die Orientierung auch für jüngere Nutzer, ohne kindliche Illustrationen oder eine ausschließlich auf eine Altersgruppe zugeschnittene Gestaltung. Die konkrete visuelle Ausarbeitung (Farben, Typografie, Größen, Abstände, responsive Anordnung und Interaktionszustände) bleibt Gegenstand der weiteren Recherche und Abstimmung.
+
+### Beschlossenes Farbkonzept der fünf Bereichskacheln (11.11.2026)
+
+Gewählt wurde **Option A: helle, farbige Flächen mit kräftigeren Akzenten**.
+
+- Jede Kachel erhält eine eigene helle Farbfläche aus einer gemeinsamen, harmonischen Palette.
+- Das Symbol kann in einer kräftigeren Akzentfarbe derselben Farbfamilie erscheinen.
+- Titel und Kurzbeschreibung bleiben dunkel und gut lesbar.
+- Die fünf Farben unterscheiden die Bereiche visuell, signalisieren aber keine fachlichen Zustände. Insbesondere dürfen sie nicht mit den portalweit einheitlichen Bedeutungen von Erfolg, Warnung oder Fehler verwechselt werden.
+- Die Gesamtwirkung bleibt professionell, ruhig und institutionell; grelle/neonartige oder spielerisch überladene Farben werden vermieden.
+
+Die konkreten Farbtöne, Kontrastmessungen und Zuordnungen zu den fünf Bereichen sind noch offen und werden später im gemeinsamen Designsystem festgelegt. Bei der Umsetzung sind die einschlägigen Kontrastanforderungen der WCAG zu prüfen.
+
+**Recherchegrundlage:** Khan Academy Wonder Blocks (systematische Farbrollen und zugängliche Farbpaletten: https://wonder-blocks.khanacademy.org/); Duolingo Design/Navigation (visuelle Konsistenz über Bereiche hinweg); W3C WCAG 2.2 (Farbe nicht als einziges Bedeutungsmittel; Kontrastanforderungen: https://www.w3.org/TR/WCAG22/).
