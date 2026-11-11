@@ -531,6 +531,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(gradeWithoutClaim.status, 409, JSON.stringify(gradeWithoutClaim.body));
     const deniedParticipantHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', pendingReviewerSession.token);
     assert.equal(deniedParticipantHistory.status, 403, 'pending whitelist accounts cannot access participant review history');
+    const ownParticipantHistory = await jsonRequest('/api/academy/participants/http-course-reviewer/exam-history', courseReviewer.token);
+    assert.equal(ownParticipantHistory.status, 403, 'reviewers must use the participant-facing released-results projection for themselves');
     const scopedParticipantHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', courseReviewer.token);
     assert.equal(scopedParticipantHistory.status, 200, JSON.stringify(scopedParticipantHistory.body));
     assert.equal(scopedParticipantHistory.body.history.length, 1);
