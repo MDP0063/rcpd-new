@@ -431,3 +431,15 @@ Für die weitere Gestaltung gelten als **Designleitlinien / noch keine vollstän
 - konkrete dynamische persönliche Inhalte erst dann ergänzen, wenn sie eine nachweislich eigene Aufgabe erfüllen und ihre Datenquelle fachlich autoritativ ist.
 
 Die Kursauswahl und die Übersicht wurden hier statisch am Quellcode geprüft. Eine Browser-/Live-Datenabnahme und eine Prüfung archivierter/entfernter Kursteilnahmen sind damit nicht behauptet.
+
+### Umsetzung der Academy-Übersicht (11.11.2026)
+
+Der interne Übersichtsbereich wurde in PR #158 gestalterisch umgesetzt:
+- eigener Seitentitel „Willkommen in der Academy“ und direkter Rücksprung zur Kachelstartseite;
+- kompakte Einführung zum Zweck der Academy;
+- Erklärung des flexiblen Zusammenspiels von Lehrgängen, Kursen und Lernbibliothek;
+- zurückhaltende Einordnung von Prüfungen und privaten Notizen;
+- farbige Bereichsakzente statt einer zweiten Kachel-/Navigationsreihe;
+- keine persönliche Kursliste, keine Kennzahlen-/Aufgaben-Duplikate und keine Dashboard-Projektion.
+
+Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersicht wird der bisherige globale Academy-Header/Breadcrumb nicht wiederholt. Die Änderung ist im PR-Diff enthalten; technische und visuelle Prüfungen stehen noch aus.
