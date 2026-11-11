@@ -445,6 +445,8 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die fünf Kacheln führen zu den vorhandenen Academy-Bereichen. Bestehende Fachlogik, APIs, Datenmodelle und Berechtigungen wurden nicht absichtlich verändert.
 - Die SVGs sind erste technische Entwürfe und müssen noch visuell auf Formtreue, einheitliche Gewichtung, Kachelwirkung und responsive Darstellung geprüft werden.
 - Visuelle Nacharbeit auf dem bestehenden Feature-Branch: Bibliotheks-SVG auf drei kompakt gestaffelte/leicht überlagerte geschlossene Bücher korrigiert; Academy-Kacheln auf einfarbige Bereichsflächen mit weicher, zurückhaltender weißer Reflexion, dezenten Schatten und sanftem Hover-Verhalten umgestellt. Responsives Raster auf 1/2/3 Spalten (Smartphone/Tablet/Desktop) ausgerichtet. Die verbindliche Oberflächenentscheidung wurde in Spezifikation und Entscheidungsregister ergänzt.
+
+- Weitere visuelle Nacharbeit: alle fünf SVG-Motive auf einen gemeinsamen optischen Füllbereich von ungefähr 70–78 % der 128×128-Zeichenfläche zentriert und skaliert; der Richtwert ist in Spezifikation und Entscheidungsregister festgehalten. Kacheltexte nutzen durchgehend Weiß für bessere Lesbarkeit; Hover-Bewegung berücksichtigt `prefers-reduced-motion`.
 - Diese Änderungen sind noch nicht durch Lint, Build, Tests oder Browserprüfung verifiziert. Kein PR, Merge oder Deployment.
 
 - Lint, Build, Tests und Browser-/Live-Abnahme sind für diesen Branch noch nicht ausgeführt. Vor Merge müssen die verpflichtenden Prüfungen aus `AGENTS.md` tatsächlich laufen; nicht ausgeführte Prüfungen dürfen nicht als bestanden markiert werden.
