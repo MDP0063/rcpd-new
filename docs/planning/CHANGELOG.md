@@ -168,3 +168,21 @@
 - Veraltete Academy-Offenpunkte in `OPEN-QUESTIONS.md` mit dem tatsächlichen Stand aus PR #132–#152 abgeglichen. Bereits umgesetzte Draft-Grading-, Claim-, Übergabe- und Ergebnisfreigabefunktionen werden nicht mehr als offen geführt.
 - Revisionsrückgabe-Berechtigung Option A in `DECISIONS.md` festgehalten. Die Umsetzung der Revision/Action Requests bleibt als funktionale Restarbeit gekennzeichnet.
 - `PROGRESS.md` präzisiert den Status: Academy-Fachkonzept weitgehend beschlossen, Kernfunktionen weit fortgeschritten, Examiner-Restarbeiten und Browser-/Live-Firestore-Abnahme offen; visueller Designabschnitt folgt auf Basis der bestehenden Entscheidungen.
+
+
+## 2026-11-11 – Academy-Einstiegskacheln und Illustrationsentwürfe
+
+- Verbindliche Spezifikation für die fünf Academy-Einstiegskacheln, Responsivität, gemeinsame SVG-Stilregeln und alle fünf konkreten Motive ergänzt.
+- Fünf lokale flächige SVG-Entwürfe ergänzt und in `AcademyCenter.tsx` eingebunden.
+- Einstiegsansicht und reguläre Übersicht getrennt; die horizontale Hauptnavigation erscheint erst nach Auswahl eines Bereichs.
+- Keine API-, Datenmodell-, Rollen- oder Berechtigungsänderungen beabsichtigt.
+
+
+## 2026-11-11 – Academy-Einstiegskacheln: visuelle Verfeinerung
+
+- Bibliotheksillustration auf drei kompakt gruppierte, leicht überlagerte geschlossene Bücher mit dezenter Neigung umgestellt.
+- Alle fünf SVGs auf eine gemeinsame optische Motivgröße (Richtwert 70–78 % der 128×128-Zeichenfläche) skaliert und zentriert.
+- Kacheln auf satte einfarbige Bereichsflächen umgestellt; weiche weiße Reflexion, dezente Schatten und leicht verstärkter Hover-Reflex ohne Farbverläufe oder Metallstruktur.
+- Responsive Raster auf Smartphone 1, Tablet 2 und Desktop 3 Spalten abgestimmt; Innenabstände und Textabstände responsiv vereinheitlicht.
+- Beschreibungstexte auf Weiß für ausreichenden Kontrast gesetzt; Hover-Bewegung respektiert reduzierte Bewegungseinstellungen.
+- Umsetzung ausschließlich auf `feature/academy-entry-illustrations`; keine API-/Datenmodell-/Berechtigungsänderung, kein PR, Merge oder Deployment. Lint, Build, Tests und Browserprüfung stehen noch aus.

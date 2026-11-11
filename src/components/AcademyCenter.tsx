@@ -27,6 +27,11 @@ import {
   UserPublicProfile
 } from '../types/portal';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import overviewWayfinder from '../assets/academy/overview-wayfinder.svg';
+import coursesGraduationCap from '../assets/academy/courses-graduation-cap.svg';
+import libraryThreeBooks from '../assets/academy/library-three-books.svg';
+import examsAnswerSheet from '../assets/academy/exams-answer-sheet.svg';
+import notesNotepad from '../assets/academy/notes-notepad.svg';
 import { ExamParticipantRunner } from './ExamParticipantRunner';
 import { ExamReviewCenter } from './ExamReviewCenter';
 import { ExamCorrectionCenter } from './ExamCorrectionCenter';
@@ -69,12 +74,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canEditAcademy = rolePermissions.canEditAcademy || hasScopedCourseRights; // True for Admin, Colonel, or Granular Course Instructor
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
+  const [isAcademyHome, setIsAcademyHome] = useState(true);
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
   useEffect(() => {
     if (!reviewNavigationTarget) return;
+    setIsAcademyHome(false);
     setActiveTab('exam_reviews');
     setInitialReviewAttemptId(reviewNavigationTarget.attemptId);
     onReviewNavigationConsumed?.();
@@ -628,31 +635,33 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Academy</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">Programme, Kurse, Lernbibliothek, Prüfungen und persönliche Notizen.</p>
       </header>
-      <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
-        {[
-          { id: 'overview' as const, label: 'Übersicht' },
-          { id: 'courses' as const, label: 'Kurse' },
-          { id: 'modules' as const, label: 'Lernbibliothek' },
-          { id: 'exam_center' as const, label: 'Prüfungen' },
-          { id: 'notes' as const, label: 'Meine Notizen' }
-        ].map(item => {
-          const selected = item.id === 'exam_center'
-            ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
-            : activeTab === item.id;
-          return <button key={item.id} type="button"
-            onClick={() => {
-              setActiveTab(item.id);
-              if (item.id === 'exam_center') {
-                setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
-              }
-              if (item.id === 'modules') { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }
-            }}
-            aria-current={selected ? 'page' : undefined}
-            className={`px-3 py-2 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${selected ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
-            {item.label}
-          </button>;
-        })}
-      </nav>
+      {!isAcademyHome && (
+        <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
+          {[
+            { id: 'overview' as const, label: 'Übersicht' },
+            { id: 'courses' as const, label: 'Kurse' },
+            { id: 'modules' as const, label: 'Lernbibliothek' },
+            { id: 'exam_center' as const, label: 'Prüfungen' },
+            { id: 'notes' as const, label: 'Meine Notizen' }
+          ].map(item => {
+            const selected = item.id === 'exam_center'
+              ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
+              : activeTab === item.id;
+            return <button key={item.id} type="button"
+              onClick={() => {
+                setActiveTab(item.id);
+                if (item.id === 'exam_center') {
+                  setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
+                }
+                if (item.id === 'modules') { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }
+              }}
+              aria-current={selected ? 'page' : undefined}
+              className={`px-3 py-2 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${selected ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
+              {item.label}
+            </button>;
+          })}
+        </nav>
+      )}
       {['exam_center', 'tests', 'final_exams'].includes(activeTab) && (
         <nav aria-label="Prüfungsbereiche" className="flex flex-wrap gap-2">
           {[
@@ -661,6 +670,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             ...(canAccessFinalExams ? [{ id: 'final_exams' as const, label: `Abschlussprüfungen (${finalExams.length})` }] : [])
           ].map(item => (
             <button key={item.id} type="button" onClick={() => {
+              setIsAcademyHome(false);
               setActiveTab(item.id);
               if (item.id === 'tests') setActiveExamId(practiceTests[0]?.id || null);
               if (item.id === 'final_exams') setActiveExamId(finalExams[0]?.id || null);
@@ -669,37 +679,57 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           ))}
         </nav>
       )}
-      {activeTab === 'overview' && (
-        <section aria-labelledby="academy-overview-heading" className="space-y-5">
+      {isAcademyHome && (
+        <section aria-labelledby="academy-overview-heading" className="space-y-6">
           <div>
             <h2 id="academy-overview-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Deine Academy</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Direkteinstieg in die derzeit verfügbaren Lernmaterialien und Prüfungen.</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Wähle einen Bereich, um deine Ausbildung fortzusetzen.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button type="button" onClick={() => setActiveTab('courses')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
-              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Programme & Kurse</span>
-              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Lernpfade ansehen, Teilnahmen beginnen und Fortschritt nachweisen</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <button type="button" onClick={() => { setActiveTab('overview'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#2864D9] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
+              <img src={overviewWayfinder} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
+              <span className="block text-lg font-semibold">Übersicht</span>
+              <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Deinen Ausbildungsstand und die nächsten Schritte im Blick behalten.</span>
             </button>
-            <button type="button" onClick={() => setActiveTab('notes')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
-              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Meine Notizen</span>
-              <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">Private Notizen und Lesezeichen öffnen</span>
+            <button type="button" onClick={() => { setActiveTab('courses'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#087F8C] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F8C]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
+              <img src={coursesGraduationCap} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
+              <span className="block text-lg font-semibold">Kurse</span>
+              <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Lehrgänge und Kurse entdecken, beginnen und bearbeiten.</span>
             </button>
-            <button type="button" onClick={() => setActiveTab('modules')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
-              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Lernbibliothek</span>
-              <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{modules.length}</span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">Verfügbare Materialien</span>
+            <button type="button" onClick={() => { setActiveTab('modules'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#6841B8] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6841B8]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
+              <img src={libraryThreeBooks} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
+              <span className="block text-lg font-semibold">Lernbibliothek</span>
+              <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Fachliche Materialien finden und als Wissensquelle nutzen.</span>
             </button>
-            <button type="button" onClick={() => setActiveTab('exam_center')} className="text-left border border-slate-300 dark:border-slate-700 rounded-md p-4">
-              <span className="block text-sm font-semibold text-slate-900 dark:text-white">Prüfungen</span>
-              <span className="block mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{practiceTests.length + (canAccessFinalExams ? finalExams.length : 0)}</span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">Für deinen Rang zugängliche Prüfungen</span>
+            <button type="button" onClick={() => { setActiveTab('exam_center'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#A33370] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#A33370]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
+              <img src={examsAnswerSheet} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
+              <span className="block text-lg font-semibold">Prüfungen</span>
+              <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Wissen überprüfen und zugängliche Prüfungen ablegen.</span>
+            </button>
+            <button type="button" onClick={() => { setActiveTab('notes'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#287A45] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#287A45]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
+              <img src={notesNotepad} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
+              <span className="block text-lg font-semibold">Meine Notizen</span>
+              <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Private Notizen und Lesezeichen verwalten.</span>
             </button>
           </div>
-          <section className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dein dokumentierter Lernstand</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">{myProgress.filter(item => (item.targetType === 'test' || item.targetType === 'final_exam') && item.status === 'passed').length} bestandene Prüfungen sind deinem Konto zugeordnet.</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Das Öffnen eines Materials wird nicht als Kursabschluss oder Nachweis gewertet.</p>
-          </section>
+        </section>
+      )}
+      {!isAcademyHome && activeTab === 'overview' && (
+        <section aria-labelledby="academy-overview-content-heading" className="space-y-4">
+          <div>
+            <h2 id="academy-overview-content-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Dein dokumentierter Lernstand</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Hier siehst du die in deinem Konto gespeicherten Ausbildungsnachweise.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{myProgress.filter(item => (item.targetType === 'test' || item.targetType === 'final_exam') && item.status === 'passed').length}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Bestandene Prüfungen</p>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Das Öffnen eines Materials wird nicht als Kursabschluss oder fachlicher Nachweis gewertet.</p>
         </section>
       )}
       {activeTab === 'courses' && (

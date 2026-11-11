@@ -436,3 +436,17 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Der gemeinsame Browser-/Live-Firestore-Abnahmetest für die neueren Academy-Funktionen bleibt offen. CI-Ergebnisse und manuelle Laufzeitabnahme dürfen nicht gleichgesetzt werden.
 - Für das Visual Design verbleiben insbesondere Designsystem/Portalrahmen, konkrete Screen-Kompositionen der bestehenden fünf Bereiche und berechtigungsabhängigen Examiner-Ansichten, responsive Umsetzung, Reader-Toolbar-Anordnung, visuelle Zustände sowie prototypische Validierung. Jede größere Designentscheidung muss mit aktueller Recherche etablierter Produkte/Designsysteme und Accessibility-Standards begründet werden.
 - Nicht erneut zu konzipieren sind die beschlossenen Academy-Regeln zu Kursen/Programmen, Statusdimensionen, Bibliotheksversionen, Reader-/Notizlogik, Prüfungsabläufen, Claims, Ergebnisfreigabe, Korrekturen und Berechtigungen. Änderungen sind nur bei nachgewiesenem Implementierungsfehler, unvollständiger Umsetzung oder ausdrücklich neuem Beschluss zulässig.
+
+
+## 11.11.2026 – Academy-Einstiegskacheln und erste lokale SVG-Entwürfe
+
+- Die freigegebene schlichte, flächige Motivrichtung wurde als fünf lokale SVG-Dateien unter `src/assets/academy/` umgesetzt.
+- `AcademyCenter.tsx` trennt nun die reine Academy-Einstiegsansicht vom regulären Bereich Übersicht. Die Einstiegsansicht enthält fünf Kacheln; die horizontale Hauptnavigation wird erst nach Auswahl eines Bereichs angezeigt.
+- Die fünf Kacheln führen zu den vorhandenen Academy-Bereichen. Bestehende Fachlogik, APIs, Datenmodelle und Berechtigungen wurden nicht absichtlich verändert.
+- Die SVGs sind erste technische Entwürfe und müssen noch visuell auf Formtreue, einheitliche Gewichtung, Kachelwirkung und responsive Darstellung geprüft werden.
+- Visuelle Nacharbeit auf dem bestehenden Feature-Branch: Bibliotheks-SVG auf drei kompakt gestaffelte/leicht überlagerte geschlossene Bücher korrigiert; Academy-Kacheln auf einfarbige Bereichsflächen mit weicher, zurückhaltender weißer Reflexion, dezenten Schatten und sanftem Hover-Verhalten umgestellt. Responsives Raster auf 1/2/3 Spalten (Smartphone/Tablet/Desktop) ausgerichtet. Die verbindliche Oberflächenentscheidung wurde in Spezifikation und Entscheidungsregister ergänzt.
+
+- Weitere visuelle Nacharbeit: alle fünf SVG-Motive auf einen gemeinsamen optischen Füllbereich von ungefähr 70–78 % der 128×128-Zeichenfläche zentriert und skaliert; der Richtwert ist in Spezifikation und Entscheidungsregister festgehalten. Kacheltexte nutzen durchgehend Weiß für bessere Lesbarkeit; Hover-Bewegung berücksichtigt `prefers-reduced-motion`.
+- Diese Änderungen sind noch nicht durch Lint, Build, Tests oder Browserprüfung verifiziert. Kein PR, Merge oder Deployment.
+
+- Lint, Build, Tests und Browser-/Live-Abnahme sind für diesen Branch noch nicht ausgeführt. Vor Merge müssen die verpflichtenden Prüfungen aus `AGENTS.md` tatsächlich laufen; nicht ausgeführte Prüfungen dürfen nicht als bestanden markiert werden.
