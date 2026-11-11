@@ -234,7 +234,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const nextHistory = Array.isArray(next.reviewCorrections) ? next.reviewCorrections : [];
     const allowedMutableFields = new Set([
       'status', 'manuallyEarnedPointsMilli', 'preliminaryScoreBasisPoints',
-      'finalScoreBasisPoints', 'questionGrades', 'reviewedByUid', 'reviewedAtIso',
+      'finalScoreBasisPoints', 'questionGrades',
       'reviewCorrections', 'resultReleaseStatus', 'resultReleaseHistory', 'publishedResultSnapshot'
     ]);
     const stripMutable = (document: ExamDocument) => Object.fromEntries(
@@ -298,8 +298,6 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       !isDeepStrictEqual(appended.previousStatus, existing.status) ||
       !isDeepStrictEqual(appended.previousScoreBasisPoints, existing.finalScoreBasisPoints ?? null) ||
       !isDeepStrictEqual(appended.nextScoreBasisPoints, next.finalScoreBasisPoints ?? null) ||
-      !isDeepStrictEqual(next.reviewedByUid, appended.reviewerUid) ||
-      !isDeepStrictEqual(next.reviewedAtIso, appended.atIso) ||
       !isDeepStrictEqual(appended.previousReviewerUid, existing.reviewedByUid) ||
       !isDeepStrictEqual(appended.previousReviewedAtIso, existing.reviewedAtIso) ||
       !isDeepStrictEqual(appended.previousManualPointsMilli, existing.manuallyEarnedPointsMilli) ||
