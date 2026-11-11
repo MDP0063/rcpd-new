@@ -1628,3 +1628,7 @@ Die zuerst gezeigten Motiv-Referenzen dienen nicht als endgültige Detail- oder 
 Die bisher als Beispiel erwähnten Dashboard-Karten sind keine verbindliche Motivvorgabe und ausdrücklich keine Festlegung für die Illustration „Übersicht“. Die konkrete Motivkomposition wird erst nach gesonderter Abstimmung festgelegt.
 
 Diese Präzisierung ändert nicht die bereits beschlossene gemeinsame Basis: frontale Perspektive, matte neutrale Füllflächen, klare dunkle Konturen, ein zurückhaltender Bereichsfarbakzent, sparsame gegenstandsbezogene Überlagerung und ein vergleichbarer Detailgrad über alle fünf SVGs hinweg.
+
+### Festgelegtes Motiv für „Übersicht“: Wegweiser
+
+Für die Academy-Kachel „Übersicht“ wird Variante A – ein schlichtes Wegweiser-/Orientierungssymbol – verwendet. Ausschlaggebend ist die klare Unterscheidbarkeit von den Papier-, Buch- und Dokumentmotiven der übrigen Bereiche. Das Symbol wird modern, weich und abgerundet sowie mit wenigen prägnanten Formen gestaltet. Dashboard-Karten, ein Papierblatt oder dekorative Zusatzformen sind dafür ausgeschlossen. Die gemeinsame Illustrationssprache (frontal, matte neutrale Füllflächen, klare dunkle Konturen und dezenter blauer Akzent) bleibt bestehen.
