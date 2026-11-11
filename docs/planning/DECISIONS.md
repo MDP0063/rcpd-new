@@ -601,3 +601,14 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Für beide und alle folgenden Motive gelten dieselben weichen Formen, der reduzierte Detailgrad, matte neutrale Füllflächen, klare dunkle Konturen, frontale Perspektive, sparsame gegenstandsbezogene Überlagerung sowie einheitliche Geometrie, Proportionen und Konturwirkung.
 - Für „Kurse“ wird ausschließlich ein zurückhaltender türkiser Akzent aus der zugeordneten Bereichsfarbfamilie verwendet. Die Motive müssen auch ohne ihre Kachelfarben anhand ihrer Silhouette unterscheidbar bleiben.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Lernbibliothek-Motiv und Präzisierung der gemeinsamen SVG-Formensprache
+
+- **BESCHLOSSEN – Variante A:** Die Academy-Kachel „Lernbibliothek“ erhält ein kleines, schlichtes Bücherregal mit zwei bis drei aufrecht stehenden Büchern. Die klare Regal-Silhouette grenzt das Motiv von Wegweiser und Abschlusskappe ab.
+- **BESCHLOSSEN:** Das Bücherregal wird in derselben Illustrationsfamilie wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“ gestaltet. Es entsteht kein eigener Illustrationsstil für die Bibliothek.
+- **BESCHLOSSEN – Präzisierung der gemeinsamen Formensprache für alle fünf Motive:** Die bisherige Richtung „weich und stärker abgerundet“ wird konkretisiert: Die Illustrationen sollen schlichter und geometrischer wirken, weniger kurvig und weniger verspielt. Formen dürfen weiterhin leicht abgerundete Ecken und Übergänge haben, sollen aber klarer und ruhiger aufgebaut sein.
+- **BESCHLOSSEN:** Die dunklen Konturen werden etwas kräftiger und über alle fünf Illustrationen hinweg einheitlich ausgeführt. Das Konturgewicht muss bei kleiner Kachelgröße klar erkennbar bleiben.
+- **BESCHLOSSEN:** Die Motive werden weiter auf wenige prägnante Grundformen und notwendige Erkennungsdetails reduziert. Keine zusätzlichen dekorativen Kurven oder Kleinteile.
+- Die Präzisierung gilt rückwirkend gleichermaßen für Wegweiser und Abschlusskappe und verbindlich für Bücherregal sowie die beiden noch offenen Motive. Die bisher beschlossene frontale Perspektive, neutralen matten Füllflächen, dezenten Bereichsfarbakzente, sparsame gegenstandsbezogene Überlagerung und klare Motivunterscheidung bleiben bestehen.
+- Exakte Strichstärke, Rundungsradien und Proportionen werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und an allen fünf SVGs konsistent angewendet.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
