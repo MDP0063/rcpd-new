@@ -542,3 +542,12 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 - Korrektur eines veralteten UI-Hinweises: Im Kursdetail behauptete ein statischer Warntext, die Verknüpfung mit dem neuen Prüfungsnachweissystem sei noch nicht umgesetzt. Die vorhandene Teilnehmeransicht wertet assessmentProofs bereits aus und markiert den Nachweis dynamisch; der Warntext widersprach daher dem implementierten Stand. Er wurde durch eine sachlich korrekte Erläuterung der automatischen Berücksichtigung nach bestandener und offiziell freigegebener Abschlussprüfung ersetzt.
 - Unverändert: Kurs-/Programmstatus, Versionierung, Nachweislogik, API-Aufrufe, Berechtigungen, Datenmodell, Reader, Notizen, Verwaltungsansicht und die Academy-Kachel-Startseite.
 - PR #164 wurde am 11.11.2026 gemergt (Merge-Commit d3f00605bafa2207e2831ffebdc060229ad7995b). GitHub Actions: TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook im PR-Lauf wurde übersprungen; ein erfolgreiches Render-Deployment ist noch nicht bestätigt. Die Browserabnahme auf Desktop, Tablet und Smartphone steht aus.
+
+
+## 11.11.2026 – Kurs- und Lehrgangsdetails: visueller Ausbau (PR in Vorbereitung)
+
+- Detailansichten für Kurse und Ausbildungsprogramme erhalten dieselbe Petrol-Akzentfarbe und Kartenoberflächen wie der Katalog.
+- Zurücknavigation, Kennung/Version, Titel, Zusammenfassung, Nachweisbedingungen, Lernziele, Kapitel und Programmfortschritt werden visuell klarer gegliedert.
+- Der vorhandene reale Programmfortschritt bleibt erhalten; keine zusätzliche Kennzahl oder neue fachliche Aktion.
+- Keine Änderung an API, Datenmodell, Status-/Nachweislogik, Versionsbindung, Berechtigungen oder Reader-Verhalten.
+- Browserabnahme nach Deployment steht noch aus.
