@@ -529,10 +529,27 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       body: JSON.stringify({ grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3000 }] })
     });
     assert.equal(gradeWithoutClaim.status, 409, JSON.stringify(gradeWithoutClaim.body));
+    const deniedParticipantHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', pendingReviewerSession.token);
+    assert.equal(deniedParticipantHistory.status, 403, 'pending whitelist accounts cannot access participant review history');
+    const scopedParticipantHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', courseReviewer.token);
+    assert.equal(scopedParticipantHistory.status, 200, JSON.stringify(scopedParticipantHistory.body));
+    assert.equal(scopedParticipantHistory.body.history.length, 1);
+    assert.equal(scopedParticipantHistory.body.history[0].detailed, false,
+      'an authorized but uninvolved reviewer receives only status and responsibility');
+    assert.equal('questions' in scopedParticipantHistory.body.history[0], false);
+    const outOfScopeHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', otherCourseReviewer.token);
+    assert.equal(outOfScopeHistory.status, 200);
+    assert.deepEqual(outOfScopeHistory.body.history, [], 'reviewer receives no history outside assigned courses');
+
     const claimResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim`, courseReviewer.token, {
       method: 'POST'
     });
     assert.equal(claimResponse.status, 200, JSON.stringify(claimResponse.body));
+    const detailedParticipantHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', courseReviewer.token);
+    assert.equal(detailedParticipantHistory.status, 200);
+    assert.equal(detailedParticipantHistory.body.history[0].detailed, true);
+    assert.equal(detailedParticipantHistory.body.history[0].questions[0].answer, 'Meine HTTP Antwort');
+
     const draftResponse = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-draft`, courseReviewer.token, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ questionId: 'http-free-text', pointsEarnedMilli: 2500 })
