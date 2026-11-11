@@ -267,3 +267,13 @@
 - Die schlichte geometrische Gestaltung, kräftigeren einheitlichen Konturen, geringe Detaildichte und neutralen Grundflächen mit dezentem Bereichsfarbakzent bleiben erhalten. Die Anpassung gilt rückwirkend für Wegweiser und Abschlusskappe sowie für alle folgenden Motive.
 - Das zuvor festgelegte Bücherregal wird auf Nutzerwunsch ersetzt: „Lernbibliothek“ zeigt nun drei klassische Bücher als Gruppe, eines davon leicht schräg geneigt. Eine Regalstruktur entfällt.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Stilkorrektur: flacher Outline-Stil statt 3D-Motive
+
+- Nutzer hat die zuvor festgehaltene 3D-Anmutung ausdrücklich korrigiert: Die fünf Academy-Illustrationen sollen keine 3D-Motive sein.
+- Aktuelle gemeinsame Stilrichtung ist ein flacher Outline-Stil mit etwas kräftigeren, einheitlichen Konturen, wenigen geometrischen Flächen und geringer Detaildichte.
+- Die leichte Tiefenwirkung entsteht ausschließlich durch sparsame Überlagerung bzw. Staffelung zusammengehöriger Ebenen. Keine räumlichen Seitenflächen, 3D-Modellierung oder 3D-Schattierung.
+- Die Korrektur gilt rückwirkend für Wegweiser, Abschlusskappe und die drei klassischen Bücher sowie für die beiden noch offenen Motive. Die Büchergruppe (drei Bücher, eines leicht geneigt, ohne Regal) bleibt als Motiventscheidung bestehen.
+- Die leichte Glanzreflexion der Kacheloberflächen ist davon unberührt; sie ist eine separate Oberflächenentscheidung und kein Effekt der SVG-Illustrationen.
+- Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
