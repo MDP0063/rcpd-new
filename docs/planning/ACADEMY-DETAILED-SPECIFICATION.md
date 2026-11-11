@@ -1517,3 +1517,19 @@ Die Kacheln sind leicht breitformatig: etwas breiter als hoch, jedoch keine flac
 Die zuvor beschlossene matte, nicht glänzende Gestaltung bezieht sich ausschließlich auf die fünf lokal eingebundenen SVG-Illustrationen. Diese sollen weiterhin ruhig, geometrisch und ohne künstliche Glanz-/3D-Effekte bleiben. Die nun beschlossene Glanzwirkung betrifft die farbige Kacheloberfläche, nicht die Illustration.
 
 Die konkreten Farbwerte, Reflexionsintensität und Schatten-/Hover-Tokens bleiben offen und werden anhand eines echten Prototyps beurteilt. Diese Entscheidung ändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Funktionen.
+
+## Bestätigte Farbpalette der Academy-Einstiegskacheln (11.11.2026)
+
+Der Nutzer hat den vorgeschlagenen Farbentwurf und die vorgeschlagene Zuordnung bestätigt. Für den visuellen Prototyp gelten daher folgende Ausgangsfarben:
+
+| Bereich | Farbe | Hex |
+| --- | --- | --- |
+| Übersicht | Blau | `#2864D9` |
+| Kurse | Türkis | `#087F8C` |
+| Lernbibliothek | Violett | `#6841B8` |
+| Prüfungen | Beere | `#A33370` |
+| Meine Notizen | Grün | `#287A45` |
+
+Die Palette ist kräftig, satt und harmonisch. Die Farben kennzeichnen ausschließlich die Bereiche und dürfen nicht als Erfolgs-, Warn- oder Fehlerstatus verwendet werden. Sie werden mit der bereits beschlossenen glatten, leicht glänzenden, einfarbigen Kacheloberfläche, der weichen weißen Lichtreflexion und den zurückhaltenden matten SVG-Illustrationen kombiniert.
+
+Die Hex-Werte sind als bestätigte Ausgangswerte beschlossen. Vor der finalen Token-Festlegung werden Kontrast und Lesbarkeit auf der tatsächlichen Oberfläche (einschließlich Reflexion und Textposition), Tastaturfokus sowie die Darstellung in responsiven Größen geprüft. Etwaige technische Feinjustierungen müssen die bestätigten Farbfamilien und die Bereichszuordnung erhalten; eine grundsätzliche Änderung bedarf einer erneuten Nutzerentscheidung.
