@@ -5,7 +5,6 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import {
   BookOpen,
-  ChevronRight,
   ExternalLink,
   CheckCircle2,
   Lock,
@@ -641,28 +640,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Academy</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildung, Lehrgänge und Wissen für den Dienst.</p>
-          {!isAcademyHome && (
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 pt-1 text-sm">
-              <button
-                type="button"
-                onClick={() => setIsAcademyHome(true)}
-                className="font-medium text-slate-600 underline-offset-4 transition-colors hover:text-[#2864D9] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
-                aria-label="Zur Academy-Startseite"
-              >
-                Academy
-              </button>
-              <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-slate-400" />
-              <span aria-current="page" className="font-medium text-slate-900 dark:text-white">
-                {activeTab === 'courses' || activeTab === 'instructor_grading'
-                  ? 'Kurse'
-                  : activeTab === 'modules' || activeTab === 'upload_textbook'
-                    ? 'Lernbibliothek'
-                    : activeTab === 'notes'
-                      ? 'Meine Notizen'
-                      : 'Prüfungen'}
-              </span>
-            </nav>
-          )}
+          
         </header>
       )}
       <div
@@ -670,31 +648,43 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         className={!isAcademyHome ? 'academy-content-enter' : undefined}
       >
       {!isAcademyHome && (
-        <nav aria-label="Academy-Hauptbereiche" className="academy-main-nav flex flex-wrap gap-1">
-          {[
-            { id: 'overview' as const, label: 'Übersicht' },
-            { id: 'courses' as const, label: 'Kurse' },
-            { id: 'modules' as const, label: 'Lernbibliothek' },
-            { id: 'exam_center' as const, label: 'Prüfungen' },
-            { id: 'notes' as const, label: 'Meine Notizen' }
-          ].map(item => {
-            const selected = item.id === 'exam_center'
-              ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
-              : activeTab === item.id;
-            return <button key={item.id} type="button"
-              onClick={() => {
-                setActiveTab(item.id);
-                if (item.id === 'exam_center') {
-                  setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
-                }
-                if (item.id === 'modules') { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }
-              }}
-              aria-current={selected ? 'page' : undefined}
-              className={`px-3 py-2 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${selected ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
-              {item.label}
-            </button>;
-          })}
-        </nav>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => { setIsAcademyHome(true); setActiveTab('overview'); }}
+            className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
+            aria-label="Zur Academy-Kachelansicht zurückkehren"
+          >
+            <span aria-hidden="true">←</span>
+            Zur Kachelansicht
+          </button>
+          <nav aria-label="Academy-Hauptbereiche" className="academy-main-nav flex flex-wrap gap-1">
+            {[
+              { id: 'overview' as const, label: 'Übersicht', accent: '#2864D9' },
+              { id: 'courses' as const, label: 'Kurse', accent: '#087F8C' },
+              { id: 'modules' as const, label: 'Lernbibliothek', accent: '#6841B8' },
+              { id: 'exam_center' as const, label: 'Prüfungen', accent: '#A33370' },
+              { id: 'notes' as const, label: 'Meine Notizen', accent: '#287A45' }
+            ].map(item => {
+              const selected = item.id === 'exam_center'
+                ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
+                : activeTab === item.id;
+              return <button key={item.id} type="button"
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'exam_center') {
+                    setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
+                  }
+                  if (item.id === 'modules') { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }
+                }}
+                aria-current={selected ? 'page' : undefined}
+                style={selected ? { color: item.accent, borderBottomColor: item.accent } : undefined}
+                className={`px-3 py-2 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 ${selected ? 'font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}>
+                {item.label}
+              </button>;
+            })}
+          </nav>
+        </div>
       )}
       {['exam_center', 'tests', 'final_exams'].includes(activeTab) && (
         <nav aria-label="Prüfungsbereiche" className="flex flex-wrap gap-2">
@@ -757,14 +747,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         <section aria-labelledby="academy-overview-content-heading" className="academy-overview-content space-y-7">
           <div className="academy-overview-hero">
 
-            <button
-              type="button"
-              onClick={() => setIsAcademyHome(true)}
-              className="academy-back-link"
-            >
-              <span aria-hidden="true">←</span>
-              Zurück zur Academy-Übersicht
-            </button>
             <div className="academy-overview-intro space-y-2">
               <div className="academy-eyebrow">
                 Orientierung
