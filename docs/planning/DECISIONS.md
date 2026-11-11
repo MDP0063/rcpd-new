@@ -479,3 +479,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Ergebnisfreigaben und Korrekturen werden als getrennte Aufgabenblöcke dargestellt; alte und neue Ergebnisstände sowie die Korrekturbegründung bleiben klar unterscheidbar.
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Korrekturhistorie bleibt vollständig sichtbar und nachvollziehbar; Bestanden/Nicht bestanden behalten ihre Statusfarben.
 - **SCHUTZGRENZE:** Keine Änderung an Ergebnisfreigabe, erneuter Freigabe, Korrekturberechtigung, Historienfeldern, API oder Teilnehmerprojektion.
+
+
+## 11.11.2026 – Kurs- und Programmverwaltung
+
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Kurs- und Programmverwaltung bleibt innerhalb des bestehenden Bereichs „Kurse“ und wird nicht zu einem neuen Hauptbereich.
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Die Verwaltungsübersicht trennt Kurs- und Programmlisten; Editoren gliedern vorhandene Felder und Zuordnungen nach ihrer fachlichen Aufgabe.
+- **SCHUTZGRENZE:** Keine Änderung an Veröffentlichungsworkflow, Versionierung, Status, Validierung, Materialbindungen, Abschlussbedingungen, Berechtigungen oder API.
