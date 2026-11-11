@@ -1332,3 +1332,60 @@ Der Prüfungsnachweis wird nicht als eigenständiger Academy-Datensatz kopiert. 
 Ein aktuell gültig freigegebener bestandener Versuch erfüllt die Bedingung. Eine Korrektur, die den Versuch auf `pending_rerelease` setzt, oder eine erneut freigegebene nicht bestandene Bewertung entzieht diesem Versuch die Nachweiswirkung. Andere unabhängige gültige bestandene Versuche bleiben separat gültig. Die Auswahl des angezeigten Nachweises erfolgt deterministisch nach Freigabezeitpunkt.
 
 Die Kurs- und erforderlichen Lehrgangsfortschritte werden in den Teilnehmer- und Verwaltungsansichten dynamisch projiziert. Ein Abschluss wird nicht dauerhaft in der Academy gespeichert, solange eine verpflichtende Abschlussprüfung nicht aktuell verifiziert werden kann. Fehler oder fehlende Daten im Prüfungssystem führen fail-closed zu einem nicht erfüllten Nachweis. Dadurch ist keine transaktionale Kopplung der getrennten Academy- und Prüfungsrepositories erforderlich; eine Korrektur wirkt auf die nächste Statusauflösung.
+
+
+## Visuelles Academy-Einstiegsdesign – fünf Bereichskacheln (11.11.2026)
+
+### Verbindliche Struktur der Einstiegsseite
+
+Die Academy-Einstiegsseite zeigt fünf gleichwertige, großflächige Kacheln als einzige primäre Einstiegspunkte:
+
+1. Übersicht
+2. Kurse
+3. Lernbibliothek
+4. Prüfungen
+5. Meine Notizen
+
+Die Kacheln sind keine zusätzliche Parallel-Navigation: Auf der Einstiegsseite wird die horizontale Academy-Hauptnavigation ausgeblendet. Nach Auswahl eines Bereichs erscheint sie unterhalb des Academy-Headers und ermöglicht den Wechsel zwischen den fünf Bereichen. Der Bereich Übersicht ist selbst ein reguläres Ziel und darf nicht mit der reinen Einstiegsansicht verwechselt werden.
+
+Jede Kachel besitzt genau drei Bestandteile: eine Illustration, einen Titel und eine kurze, selbsterklärende Beschreibung. Die gesamte Kachel ist der klickbare Einstieg. Zusätzliche Aktionsbuttons, Status-Badges, Zähler, Fortschrittsbalken oder zweite Links werden im Grundmuster nicht ergänzt.
+
+### Layout und Responsivität
+
+- Desktop: drei Spalten (Anordnung 3 + 2).
+- Tablet: zwei Spalten.
+- Smartphone: eine Spalte.
+- Alle fünf Kacheln sind gleichwertig und verwenden dieselbe Grundhöhe, Innenabstände, Illustrationsgröße und Typografie.
+- Die Form ist leicht querformatig, etwas breiter als hoch; kein extrem flaches Banner.
+- Illustration oberhalb des Textes; Titel und Beschreibung linksbündig.
+- Vorläufige Richtwerte: Illustration 48 px auf Desktop, 44–48 px auf Tablet, 40 px auf Smartphone; Innenabstand 32/28/24 px; Abstand Illustration–Titel 20 px; Titel–Beschreibung 8 px; Kachelzwischenraum 24 px; Eckenradius 8–12 px. Diese Maße werden im responsiven Prototyp mit realen Texten validiert und bei Bedarf angepasst, ohne die Gleichwertigkeit der fünf Kacheln aufzugeben.
+
+### Einheitlicher Illustrationsstil
+
+Alle fünf Motive sind eigens erstellte, lokale SVG-Piktogramme. Sie verwenden eine gemeinsame Zeichenfläche von 128 × 128 Einheiten und werden in gleicher sichtbarer Größe und optischer Gewichtung eingesetzt.
+
+Verbindliche Stilregeln:
+- schlicht, flächig, geometrisch und ruhig;
+- wenige klare, größere Formen und geringe Detaildichte;
+- leichte Tiefenwirkung ausschließlich durch Überlagerung bzw. Staffelung zusammengehöriger Flächen;
+- keine 3D-Modellierung, Seitenflächen, plastischen Körper, Verläufe, Glanzlichter oder künstlichen Schatten;
+- keine dominanten schweren Konturen; Erkennbarkeit primär durch Silhouette, Farbflächen und wenige funktionale Details;
+- konsistente Geometrie, Formensprache, Proportionen, Linienstärke und visuelles Gewicht über alle fünf Motive;
+- Akzentfarben ausschließlich aus der jeweiligen Kachelfarbfamilie; zurückhaltende hellere Töne derselben Farbfamilie und neutrale Grundflächen sind zulässig;
+- keine zufälligen Zusatzdetails oder dekorativen Symbole.
+
+Der dezente Lichtreflex bzw. Glanz ist ausschließlich eine Eigenschaft der farbigen Kacheloberfläche und darf nicht in die SVG-Illustrationen eingebaut werden.
+
+### Verbindliche Motivdefinitionen
+
+| Bereich | Motiv | Erforderliche Erkennungsmerkmale | Ausdrücklich vermeiden |
+|---|---|---|---|
+| Übersicht | Wegweiser, Blau `#2864D9` | Ein gerader Mittelpfosten und genau zwei klar unterscheidbare Wegweiser-Schilder, die in unterschiedliche Richtungen zeigen | Dashboard-Karten, Papier, Beschriftungen oder zusätzliche Symbole |
+| Kurse | Abschlusskappe, Petrol `#087F8C` | Symmetrische Kappe mit erkennbarer flacher Kappenplatte und kleinem Tassel | Bücher, Papier, Sterne oder weitere Bildungssymbole |
+| Lernbibliothek | Drei geschlossene Bücher, Violett `#6841B8` | Genau drei klassische Bücher, kompakt gruppiert, leicht gestaffelt/überlagert; eines darf leicht geneigt sein | Bücherregal, Ablagen, zusätzliche Dokumente oder ein viertes Buch |
+| Prüfungen | Prüfungs-Antwortbogen, Beerenton `#A33370` | Ein kompakter Bogen mit wenigen Antwortfeldern; genau ein Feld ist mit einem Häkchen markiert | Stoppuhr, zusätzliche Papierlagen, lange Textzeilen oder Siegel |
+| Meine Notizen | Oben gebundener Notizblock, Grün `#287A45` | Klar erkennbare obere Bindung und wenige horizontale Schreiblinien; eine dezente versetzte Rücklage ist optional | Geschlossenes Buch, Antwortkästchen, Häkchen oder Stiftdekoration |
+
+Die Motive Lernbibliothek, Prüfungen und Meine Notizen müssen trotz ihrer gemeinsamen dokumentartigen Grundform eindeutig unterscheidbar bleiben: Bücher über Buchkörper/Rücken und die Dreiergruppe, Prüfungen über Antwortfelder plus ein Häkchen, Notizen über obere Bindung plus Schreiblinien.
+
+Die SVG-Dateien sind eigenständige lokale Ressourcen unter `src/assets/academy/`. Sie werden nicht über einen externen Bilddienst geladen. Die erste Implementierung ist ein technischer Entwurf und muss visuell gemeinsam geprüft werden; sie ist nicht automatisch eine endgültige Designfreigabe.
