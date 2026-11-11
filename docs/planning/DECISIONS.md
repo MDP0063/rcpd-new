@@ -441,3 +441,15 @@ Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare
 - **BESCHLOSSEN:** Keine Mischung mit Emojis, Illustrationen oder anderen Icon-Stilen innerhalb der Kachelgruppe. Keine unnötigen Details oder rein dekorativen Elemente.
 - **BESCHLOSSEN:** Die Bedeutung der Icons wird stets durch den Bereichstitel und die Kurzbeschreibung abgesichert; Farbe oder Symbol allein tragen nicht die gesamte Bedeutung.
 - **OFFEN:** Konkrete Icon-Bibliothek, einzelne Symbole für die fünf Bereiche, exakte Größen und technische Tokens werden im weiteren Designsystem festgelegt.
+
+
+## Academy UI-Redesign – Icon-Bibliothek und Bereichssymbole (11.11.2026)
+
+- **BESCHLOSSEN:** Für die Academy-Bereichskacheln wird **Lucide (lucide-react)** als einheitliche Icon-Bibliothek verwendet. Die Abhängigkeit `lucide-react` ist bereits im Repository vorhanden; eine zusätzliche Bibliothek ist nicht erforderlich.
+- **BESCHLOSSEN:** Die fünf Kachelsymbole sind:
+  - Übersicht: `layout-dashboard`
+  - Kurse: `graduation-cap`
+  - Lernbibliothek: `library` oder `book-open` (beide als passende Lucide-Kandidaten bestätigt; finale Einzelwahl noch offen)
+  - Prüfungen: `clipboard-check`
+  - Meine Notizen: `notebook-pen`
+- **OFFEN:** Für die Lernbibliothek ist zwischen `library` und `book-open` noch die finale Auswahl zu treffen. Größen- und Strichstärken-Tokens werden im Designsystem festgelegt.
