@@ -204,3 +204,12 @@
 - Recherchequellen zu WCAG 2.2, USWDS Design Tokens/Farbe/Abständen/Typografie und Canvas Course Navigation im Konzept mit Übertragbarkeitshinweisen ergänzt.
 - Masterplan, Portal-Redesign-Details, Entscheidungsregister, offene Fragen und Fortschritt aufeinander abgestimmt.
 - Nur Planungsdokumentation geändert; keine Anwendungscode-/Style-/Komponenten-/API-/Datenmodell-/Berechtigungsänderung, kein Merge und kein Deployment.
+
+
+## 2026-11-11 – Erster visueller Academy-Code-Prototyp
+
+- Draft-PR #160 erstellt: erste visuelle Überarbeitung der internen Academy-Übersicht.
+- Scoped Stylesheet `src/components/AcademyCenter.css` ergänzt und in `AcademyCenter.tsx` eingebunden.
+- Bestehende Übersichtsinhalte, Navigation-Aktionen und fachliche Regeln erhalten; keine Änderung an der fertigen Kachel-Startseite.
+- CI: TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich; PR-Vorlagenprüfung erfolgreich.
+- Kein Merge und kein Deployment; Browser-/Responsive-Abnahme noch offen.
