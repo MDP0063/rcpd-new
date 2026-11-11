@@ -337,3 +337,6 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Bearbeiten, Aktivieren/Archivieren und Löschen bleiben getrennte Aktionen. Vorhandene Statushinweise und Bestätigungen bleiben erhalten.
 - Der violette Bibliotheksakzent #6841B8 wird zurückhaltend eingesetzt; Dark Mode, Tastaturfokus und mobile einspaltige Darstellung werden berücksichtigt.
 - Es werden keine zusätzlichen Taxonomiefelder, Status oder Verwaltungsrechte eingeführt.
+
+
+**Umsetzungsstand:** Die versionierte Materialverwaltung (PR #181) sowie Kategorie-/Dokumenttypverwaltung (PR #182) wurden visuell überarbeitet. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
