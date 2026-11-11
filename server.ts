@@ -191,9 +191,12 @@ function computeIsOnline(record: StoredAccountRecord): boolean {
 export { getDefaultGranularPermissions } from './server/rolePermissions.ts';
 import { getDefaultGranularPermissions, normalizeExamWorkshopPermissions, normalizeGranularPermissions } from './server/rolePermissions.ts';
 
+function isEligibleExamReviewerAccount(account: StoredAccountRecord): boolean {
+  return !['pending', 'suspended', 'revoked'].includes(account.publicProfile.whitelistStatus);
+}
+
 function canBeAssignedExamReviewer(account: StoredAccountRecord, courseCode: string): boolean {
-  if (['pending', 'suspended', 'revoked'].includes(account.publicProfile.whitelistStatus)) return false;
-  return canActorEditCourseCode(account, courseCode);
+  return isEligibleExamReviewerAccount(account) && canActorEditCourseCode(account, courseCode);
 }
 
 function canActorEditCourseCode(caller: StoredAccountRecord, courseCode?: string): boolean {
@@ -2023,7 +2026,7 @@ async function startServer() {
       const sessionUid = res.locals.sessionUid as string | undefined;
       const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
-      const canReviewAnyCourse = Boolean(caller && (
+      const canReviewAnyCourse = Boolean(caller && isEligibleExamReviewerAccount(caller) && (
         caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
         (permissions?.canGradeAssignedCourses && permissions.assignedCourseCodes.length > 0)
       ));
@@ -2054,7 +2057,7 @@ async function startServer() {
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id ||
           attempt.userId === caller.uid ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
@@ -2076,7 +2079,7 @@ async function startServer() {
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       const body = req.body;
       if (!caller || !attempt || attempt.examId !== req.params.id ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diese Übergabe fehlt die Berechtigung.' }); return;
       }
       if (!body || typeof body !== 'object' || Array.isArray(body) ||
@@ -2115,7 +2118,8 @@ async function startServer() {
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       const body = req.body;
       if (!caller || !attempt || attempt.examId !== req.params.id ||
-          !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+          (!['admin', 'colonel'].includes(caller.publicProfile.role) ||
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || '')))) {
         res.status(403).json({ error: 'Nur berechtigte Vorgesetzte dürfen Prüfungsvorgänge neu zuweisen.' }); return;
       }
       if (!body || typeof body !== 'object' || Array.isArray(body) ||
@@ -2156,7 +2160,7 @@ async function startServer() {
       const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
       }
       await releaseExamReviewClaim(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
@@ -2172,7 +2176,7 @@ async function startServer() {
       const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
       }
       const claim = await recordExamReviewActivity(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
@@ -2187,7 +2191,7 @@ async function startServer() {
       const caller = peekDatabase().accounts.find(account => account.uid === sessionUid);
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diesen Prüfungsvorgang fehlt die Berechtigung.' }); return;
       }
       await markExamReviewDisconnected(getExamRepository(), req.params.id, req.params.attemptId, caller.uid);
@@ -2203,7 +2207,7 @@ async function startServer() {
       const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
       if (!caller || !attempt || attempt.examId !== req.params.id ||
           attempt.userId === caller.uid ||
-          !canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diesen Bewertungsvorgang fehlt die Berechtigung.' }); return;
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
@@ -2232,7 +2236,7 @@ async function startServer() {
         return;
       }
       if (attempt.userId === caller.uid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
-      if (!canActorEditCourseCode(caller, String(attempt.attemptCourseCode || ''))) {
+      if (!canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
         res.status(403).json({ error: 'Für diese Prüfungsbewertung fehlt die Berechtigung.' });
         return;
       }
