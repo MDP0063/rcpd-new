@@ -432,3 +432,12 @@ Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare
 - **BESCHLOSSEN:** Die Kachelfarben dienen ausschließlich der visuellen Bereichsorientierung. Sie erhalten keine Statusbedeutung wie Erfolg, Warnung oder Fehler. Portalweit verwendete Statusfarben müssen davon unabhängig und konsistent bleiben.
 - **BESCHLOSSEN:** Die Farbpalette soll freundlich und klar unterscheidbar, zugleich professionell und institutionell wirken. Keine grellen/neonartigen oder spielerisch überladenen Flächen.
 - **OFFEN:** Konkrete Farbtöne, Kontrastwerte und Zuordnung der fünf Farben zu den Bereichen werden im Designsystem ausgearbeitet und geprüft.
+
+## Academy UI-Redesign – Icon-Stil der Bereichskacheln (11.11.2026)
+
+- **BESCHLOSSEN – Outline-Icons:** Für die fünf Academy-Bereichskacheln wird ein einheitlicher Outline-Icon-Stil verwendet.
+- **BESCHLOSSEN:** Die Konturlinien dürfen nicht sehr dünn sein. Icons sollen schlicht, klar erkennbar und auch in kleineren Darstellungen gut wahrnehmbar sein.
+- **BESCHLOSSEN:** Die Icons müssen optisch zu den hellen, farbigen Kacheln und deren kräftigeren Akzentfarben passen. Strichstärke, Proportionen und visuelle Größe sind innerhalb der Academy konsistent.
+- **BESCHLOSSEN:** Keine Mischung mit Emojis, Illustrationen oder anderen Icon-Stilen innerhalb der Kachelgruppe. Keine unnötigen Details oder rein dekorativen Elemente.
+- **BESCHLOSSEN:** Die Bedeutung der Icons wird stets durch den Bereichstitel und die Kurzbeschreibung abgesichert; Farbe oder Symbol allein tragen nicht die gesamte Bedeutung.
+- **OFFEN:** Konkrete Icon-Bibliothek, einzelne Symbole für die fünf Bereiche, exakte Größen und technische Tokens werden im weiteren Designsystem festgelegt.
