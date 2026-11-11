@@ -311,3 +311,11 @@
 - Pending-Whitelist-Konten serverseitig von Review-Queue und sämtlichen manuellen Reviewer-Aktionen ausgeschlossen.
 - Admin-Reassignment verlangt ebenfalls ein aktives Reviewer-Konto; pending Zielkonten können keine Prüfungszuweisung erhalten.
 - HTTP-Integrationstests decken Queue, Claim, Draft, Grade, Transfer, Release, Activity, Disconnect und Reassignment ab.
+
+
+## 2026-11-11 – Reviewer-Whitelist-Guard (PR #185)
+
+- Pending Whitelist-Konten serverseitig von manueller Prüfungsbewertung und allen Reviewer-Claim-Aktionen ausgeschlossen.
+- Pending Zuweisungsziele werden abgewiesen.
+- HTTP-Regressionstests ergänzt; TypeScript/Lint, Build und vollständiger Testsatz in CI erfolgreich.
+- PR #185 gemergt; Render-Deploy-Hook übersprungen, Live-Deployment nicht bestätigt.

@@ -713,3 +713,12 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - **Regressionstests:** HTTP-Integrationstests für pending Reviewer und pending Supervisor sowie für alle relevanten Review-Aktionen und die Zuweisung an pending Reviewer ergänzt.
 - Status: Codeänderung und Regressionstests in PR #185; CI und unabhängige Abnahme stehen aus.
 - Weitere Exam-/Academy-Berechtigungs- und Datenflussprüfungen bleiben offen; dieser Befund ist nicht als vollständiger Sicherheitsaudit zu verstehen.
+
+
+### PR #185 – Reviewer-Whitelist-Berechtigung serverseitig abgesichert (11.11.2026)
+
+- PR #185 wurde nach erfolgreicher CI am 11.11.2026 gemergt (Merge-Commit `e7a8f1b0d0dfd6b7b0473e71ea7e6b84785939bd`).
+- Reviewer-Queue und sämtliche manuellen Review-Aktionen prüfen jetzt serverseitig den Whitelist-Status. Pending Reviewer und Supervisor erhalten keinen Zugriff; pending Zielkonten können keine Prüfungszuweisung erhalten.
+- HTTP-Regressionstests decken Queue, Claim, Draft, Grade, Transfer, Release, Activity, Disconnect, Reassignment und Zuweisungsziele ab.
+- TypeScript/Lint, Produktionsbuild und gesamter Testsatz erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment ist nicht bestätigt.
+- Der ursprüngliche Testlauf machte zusätzlich sichtbar, dass ein neu angelegtes Admin-Fixture den bestehenden Last-Admin-Test beeinflusste. Das Fixture wurde auf eine unterstützte Officer-Rolle geändert; der erneute vollständige CI-Lauf war erfolgreich.
