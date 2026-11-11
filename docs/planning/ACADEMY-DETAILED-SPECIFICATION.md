@@ -1397,3 +1397,13 @@ Der dezente Lichtreflex bzw. Glanz ist ausschließlich eine Eigenschaft der farb
 Die Motive Lernbibliothek, Prüfungen und Meine Notizen müssen trotz ihrer gemeinsamen dokumentartigen Grundform eindeutig unterscheidbar bleiben: Bücher über Buchkörper/Rücken und die Dreiergruppe, Prüfungen über Antwortfelder plus ein Häkchen, Notizen über obere Bindung plus Schreiblinien.
 
 Die SVG-Dateien sind eigenständige lokale Ressourcen unter `src/assets/academy/`. Sie werden nicht über einen externen Bilddienst geladen. Die erste Implementierung ist ein technischer Entwurf und muss visuell gemeinsam geprüft werden; sie ist nicht automatisch eine endgültige Designfreigabe.
+
+## Ergänzung 11.11.2026 – Academy-Einstieg, Header und Rücknavigation
+
+**BESCHLOSSEN:** Die fünf Einstiegskacheln bleiben in ihrer nach PR #156 bestätigten Gestaltung unverändert. Die manuelle Browserprüfung bestätigte korrekte Ziele, konsistente Abstände und Bedienbarkeit auf den geprüften Gerätegrößen. Die Kachelansicht benötigt innerhalb des Academy-Moduls einen direkten Rückweg; ein Wechsel zu einem anderen Portalmodul darf dafür nicht erforderlich sein.
+
+**BESCHLOSSEN:** Auf Academy-Unterseiten erscheint im Academy-Kopf eine Breadcrumb „Academy > aktueller Bereich“. „Academy“ ist ein klar erkennbarer, tastaturbedienbarer Rücksprung zur Kachel-Startseite. Die fünf Hauptbereiche und ihre horizontale Navigation bleiben unverändert; es entsteht kein sechster Navigationspunkt.
+
+**BESCHLOSSEN:** Der Academy-Kopf erhält eine zurückhaltende Kombination aus typografischer Hierarchie und kleinem blauen Akzent: dezente Oberzeile „Ausbildungsbereich“, größere prägnante Überschrift „Academy“, kurze Beschreibung und etwas mehr Abstand zum Inhalt. Keine große Header-Fläche und kein Banner. Die Kachelgestaltung wird nicht verändert.
+
+**BESCHLOSSEN:** Beim Aktivieren einer Kachel darf eine sehr kurze, subtile Druckreaktion erfolgen. Der Zielbereich erscheint mit einem kurzen Fade-in und minimaler vertikaler Bewegung (Richtwert ca. 180 ms). Keine auffälligen Zoom-/Ladeeffekte; `prefers-reduced-motion` muss respektiert werden.
