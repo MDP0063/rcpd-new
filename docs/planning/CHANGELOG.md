@@ -186,3 +186,11 @@
 - Responsive Raster auf Smartphone 1, Tablet 2 und Desktop 3 Spalten abgestimmt; Innenabstände und Textabstände responsiv vereinheitlicht.
 - Beschreibungstexte auf Weiß für ausreichenden Kontrast gesetzt; Hover-Bewegung respektiert reduzierte Bewegungseinstellungen.
 - Umsetzung ausschließlich auf `feature/academy-entry-illustrations`; keine API-/Datenmodell-/Berechtigungsänderung, kein PR, Merge oder Deployment. Lint, Build, Tests und Browserprüfung stehen noch aus.
+
+## 2026-11-11 – Academy-Header, Rücknavigation und Seitenübergänge
+
+- Academy-Header typografisch vergrößert und mit dezenter Oberzeile sowie kleinem blauem Akzent versehen.
+- Breadcrumb „Academy > aktueller Bereich“ ergänzt; „Academy“ führt innerhalb des Moduls zurück zur Kachel-Startseite.
+- Abstand zwischen Header und Inhalt leicht vergrößert.
+- Dezente Kachel-Druckreaktion und kurzer Fade-/Vertikalübergang zum Zielbereich ergänzt; `prefers-reduced-motion` deaktiviert die Bewegung.
+- Die fünf Kacheldesigns, Illustrationen, Farben und Beschreibungen bleiben unverändert.

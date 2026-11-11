@@ -378,3 +378,13 @@ Quellen:
 - Typische Material-/Kurs-/Programmanzahlen und tatsächliche Verwaltungsaufgaben ermitteln.
 - Prüfen, ob Suche allein ausreicht oder ob Filter/Sortierung fachlich sinnvoll sind.
 - Materialstamm, Arbeitsentwurf, aktuelle veröffentlichte Version und Historie so darstellen, dass ihre unterschiedlichen Bedeutungen ohne technisches Vorwissen verständlich bleiben.
+
+## 11.11.2026 – Manuelle Browserprüfung der Einstiegsseite
+
+**MANUELLER BEFUND DES PROJEKTINHABERS:** Alle fünf Kacheln öffnen den richtigen Academy-Bereich. Die Abstände und die Bedienbarkeit bleiben auf den geprüften Gerätegrößen konsistent. Die Kachelgestaltung wird als optisch abgeschlossen bewertet und soll nicht verändert werden.
+
+**MANUELLER BEFUND:** Nach dem Öffnen eines Bereichs ist die Kachel-Startseite innerhalb der Academy nicht mehr direkt erreichbar; bisher war ein Modulwechsel außerhalb der Academy und zurück erforderlich.
+
+**BESCHLOSSENE Korrektur:** Breadcrumb „Academy > aktueller Bereich“ im Academy-Header; „Academy“ führt zur Kachel-Startseite zurück. Header typografisch vergrößern, kleinen blauen Akzent ergänzen und Abstand zum Inhalt leicht erhöhen. Kurze, dezente Kachel-Druckreaktion und Seitenübergang von ca. 180 ms; Reduced Motion berücksichtigen. Kachelinhalte und Kachelgestaltung bleiben unverändert.
+
+**ABNAHMESTATUS:** Die manuelle Prüfung bezieht sich auf PR #156 vor dieser Folgeänderung. Die neue Breadcrumb und Animation müssen nach dem nächsten Deployment erneut im Browser geprüft werden.

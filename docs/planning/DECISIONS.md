@@ -391,3 +391,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die Erkennungsmerkmale der drei dokumentartigen Motive dürfen bei der Vereinfachung nicht verloren gehen: Bücher über Buchkörper/Rücken und Dreiergruppe, Prüfungen über Antwortfelder und ein Häkchen, Notizen über obere Bindung und Schreiblinien.
 - **BESCHLOSSEN:** Desktop-Raster 3 Spalten (3+2), Tablet 2 Spalten, Smartphone 1 Spalte.
 - **BESCHLOSSEN:** Kacheloberflächen verwenden kräftige, satte einfarbige Bereichsfarben mit glatter, hochwertiger, leicht glänzender Wirkung. Eine weiche weiße Reflexion bleibt im Ruhezustand zurückhaltend und wird beim Hover etwas stärker; dezente weiche Schatten und eine sanfte Bewegung geben Tiefe. Farbverläufe und Metallstruktur sind ausgeschlossen. Der Glanz bleibt auf die Kacheloberfläche beschränkt, nicht auf die SVG-Symbole. Gleiche Kachel-Grundgestaltung und optische Gewichtung; Illustrationen oben, Titel und Beschreibung linksbündig darunter. Richtmaße werden responsiv mit echten Texten validiert.
+
+## 11.11.2026 – Academy-Einstiegsseite: Header, Rücknavigation und Übergänge
+
+- **BESCHLOSSEN:** Die fünf nach PR #156 bestätigten Einstiegskacheln bleiben optisch unverändert. Die manuelle Prüfung bestätigte korrekte Ziele, konsistente responsive Darstellung und Bedienbarkeit.
+- **BESCHLOSSEN:** Auf Academy-Unterseiten wird „Academy“ als Breadcrumb-Rücksprung zur Kachel-Startseite angeboten; der aktuelle Hauptbereich wird daneben als aktuelle Breadcrumb-Stufe angezeigt. Kein zusätzlicher Hauptnavigationspunkt und keine zweite Kachel-/Bereichsnavigation.
+- **BESCHLOSSEN:** Der Header kombiniert eine dezente Oberzeile „Ausbildungsbereich“, eine größere typografische Überschrift „Academy“, eine kurze Beschreibung und einen kleinen blauen Akzent. Keine große Hintergrundfläche oder Banner.
+- **BESCHLOSSEN:** Der Abstand zwischen Header und Inhalt wird leicht vergrößert, passend zur neuen Header-Hierarchie.
+- **BESCHLOSSEN:** Kachelaktivierung erhält eine minimale kurze Druckreaktion; der Zielbereich erscheint mit einem dezenten Fade-in und sehr leichter vertikaler Bewegung (Richtwert ca. 180 ms). `prefers-reduced-motion` deaktiviert die Bewegung.
