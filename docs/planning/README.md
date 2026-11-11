@@ -20,6 +20,7 @@
 8. [ACADEMY-UX-AUDIT.md](./ACADEMY-UX-AUDIT.md) – ergänzende Implementierungsprüfung und Vorbereitung des visuellen Academy-Redesigns. Die bestehende IA und Fach-/UX-Beschlüsse bleiben verbindlich.
 9. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand, nächste Schritte und Prüfstatus.
 10. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an der Planungsdokumentation.
+11. [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md) – aktueller visueller Arbeitsentwurf, Designprinzipien, Schutzgrenzen und Quellen.
 
 ## Statuskennzeichnungen
 
@@ -55,3 +56,8 @@ Bei Konflikten gelten die verbindlichen Repository-Regeln und die ausdrücklich 
 ## Ergänzung: verbindliches Entwicklungsmodell
 
 Das ab 06.11.2026 beschlossene endproduktorientierte iterative Vorgehen ist in [DEVELOPMENT-MODEL.md](./DEVELOPMENT-MODEL.md) festgehalten. Dieses Dokument ist zusammen mit Masterplan und Detailplanung zu lesen. Es präzisiert, wie Gesamtplanung und vollständige Entwicklungsabschnitte ineinandergreifen, ohne Qualitäts- oder Funktionsumfang zu reduzieren.
+
+
+## Ergänzung vom 11.11.2026 – Visuelle Gestaltungsphase
+
+Der aktuelle visuelle Arbeitsentwurf ist in [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md) dokumentiert. Er ergänzt die bestehende Academy-Spezifikation und das Gesamtportal-Redesign, ohne frühere Beschlüsse zu ersetzen. Objektive UX-/Accessibility-Details werden eigenständig begründet; subjektive Grundsatzentscheidungen bleiben abstimmungspflichtig. Die Academy-Kachel-Startseite und die beschlossene Informationsarchitektur bleiben unverändert.
