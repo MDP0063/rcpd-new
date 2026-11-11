@@ -450,3 +450,11 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Diese Änderungen sind noch nicht durch Lint, Build, Tests oder Browserprüfung verifiziert. Kein PR, Merge oder Deployment.
 
 - Lint, Build, Tests und Browser-/Live-Abnahme sind für diesen Branch noch nicht ausgeführt. Vor Merge müssen die verpflichtenden Prüfungen aus `AGENTS.md` tatsächlich laufen; nicht ausgeführte Prüfungen dürfen nicht als bestanden markiert werden.
+
+## 11.11.2026 – Browserprüfung der Academy-Einstiegsseite und Folgeanpassung
+
+- Projektinhaber hat die nach PR #156 gemergte Kachelansicht im Browser geprüft: alle fünf Kacheln führen in den richtigen Bereich; Abstände und Bedienbarkeit sind auf den geprüften Gerätegrößen konsistent; die visuelle Kachelgestaltung wird ausdrücklich als gelungen bestätigt und bleibt unverändert.
+- Beobachtete Funktionslücke: Nach Auswahl eines Bereichs gab es innerhalb der Academy keinen direkten Rückweg zur Kachel-Startseite. Bisher war dafür ein Wechsel zu einem anderen Portalmodul und zurück erforderlich.
+- Folgeänderung beschlossen: Breadcrumb „Academy > aktueller Bereich“ im Academy-Header, wobei „Academy“ zur Kachel-Startseite zurückführt. Der Header wird typografisch aufgewertet und erhält einen zurückhaltenden blauen Akzent; der Abstand zum Inhalt wird leicht erhöht.
+- Zusätzlich beschlossen: sehr kurze Druckreaktion beim Kachelklick und dezenter Fade-/Vertikalübergang beim Öffnen des Bereichs; Reduced-Motion-Einstellung wird berücksichtigt.
+- Implementierung auf `feature/academy-header-navigation-transitions` begonnen. Lint, Build, Tests und Browserprüfung der Folgeänderung sind noch offen; kein Merge oder Deployment.
