@@ -652,3 +652,13 @@ PR #177 wurde am 11.11.2026 gemergt (Merge-Commit a724f76265020eeff14c9a5c5822ee
 
 
 PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c26c97d72e04). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme der Kurs-/Programmverwaltung steht aus.
+
+
+## 11.11.2026 – Versionierte Materialverwaltung: visueller Ausbau (PR in Vorbereitung)
+
+- Materialliste und Editor als zwei klar getrennte Arbeitszonen gestaltet; auf schmalen Viewports steht die Liste vor dem Editor.
+- Aktive Materialauswahl, Materialkennung, Status, Revision und Versionshistorie besser erkennbar gemacht.
+- Editorfelder und Aktionen in Metadaten, Zuständigkeit, Kategorie/Dokumenttyp, Zugriffsvoraussetzung und Inhalt gegliedert.
+- aria-pressed ergänzt die programmatische Erkennbarkeit der aktiven Materialauswahl.
+- Keine Änderung an Entwurfsspeicherung, Veröffentlichung, Archivierung, Versionierung, Validierung, Zugriffsschutz oder Datenmodell. PDF-Infrastruktur bleibt zurückgestellt.
+- Browserabnahme steht nach Deployment aus.

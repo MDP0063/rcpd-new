@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import './AcademyMaterialManagementCenter.css';
 import type {
   AcademyMaterialCategoryView,
   AcademyMaterialDocumentTypeView,
@@ -377,8 +378,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const courseOptions = assignedCourseCodes.filter(code => code !== '*');
 
   return (
-    <section className="space-y-5" aria-labelledby="academy-material-management-heading">
-      <header className="space-y-2">
+    <section className="academy-material-management space-y-5" aria-labelledby="academy-material-management-heading">
+      <header className="academy-material-management-heading space-y-2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 id="academy-material-management-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Versionierte Materialverwaltung</h2>
@@ -414,14 +415,14 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.5fr)]">
-        <aside className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
+      <div className="academy-material-management-workspace grid grid-cols-1 gap-5 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.5fr)]">
+        <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Vorhandene Materialien</h3>
+            <h3 className="academy-material-list-title font-semibold text-slate-900 dark:text-white">Vorhandene Materialien</h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length}</span>
           </div>
           <label htmlFor="academy-material-search" className="mt-3 block text-sm font-medium text-slate-800 dark:text-slate-200">Materialien durchsuchen</label>
-          <input id="academy-material-search" type="search" className={field + ' mt-1'} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Kurs" />
+          <input id="academy-material-search" type="search" className={field + ' academy-material-search-input mt-1'} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Kurs" />
           {loading ? (
             <p className="py-5 text-sm text-slate-600 dark:text-slate-300" role="status">Materialien werden geladen …</p>
           ) : filteredMaterials.length === 0 ? (
@@ -429,8 +430,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           ) : (
             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
               {filteredMaterials.map(item => (
-                <li key={item.master.id} className="py-3 first:pt-0 last:pb-0">
-                  <button type="button" className="w-full rounded-md p-2 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:hover:bg-slate-800"
+                <li key={item.master.id} className="academy-material-list-entry py-3 first:pt-0 last:pb-0">
+                  <button type="button" aria-pressed={editingMaster?.id === item.master.id} className="academy-material-list-button w-full rounded-md p-2 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:hover:bg-slate-800"
                     onClick={() => void openMaterial(item.master.id)} disabled={busy}>
                     <span className="block break-all text-xs font-semibold text-slate-500 dark:text-slate-400">{item.master.code}</span>
                     <span className="mt-1 block text-sm font-medium text-slate-900 dark:text-white">
@@ -450,9 +451,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           )}
         </aside>
 
-        <div className="space-y-5">
+        <div className="academy-material-management-main space-y-5">
           {editingMaster && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
+            <div className="academy-material-meta rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">{editingMaster.code}</p>
@@ -477,7 +478,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
             </div>
           )}
 
-          <form className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+          <form className="academy-material-form rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
             onSubmit={saveDraft} aria-labelledby="academy-material-form-heading">
             <div className="mb-4">
               <h3 id="academy-material-form-heading" className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -488,7 +489,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="academy-material-form-fields grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-title" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Titel <span className="text-rose-600">*</span></label>
                 <input id="academy-material-title" className={field + (errors.title ? ' ' + fieldError : '')} value={title}
@@ -589,7 +590,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               {errors.general && <p id="academy-material-general" className="md:col-span-2 text-sm text-rose-700 dark:text-rose-300" role="alert">{errors.general}</p>}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="academy-material-form-actions mt-5 flex flex-wrap gap-2">
               <button type="submit" className={primary}
                 disabled={busy || editingMaster?.publicationStatus === 'archived' || (Boolean(editingMaster) && !formDirty)}>
                 {busy ? 'Speichert …' : 'Entwurf speichern'}
@@ -614,7 +615,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           </form>
 
           {currentVersion && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-labelledby="academy-material-current-version-heading">
+            <section className="academy-material-current-version rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-labelledby="academy-material-current-version-heading">
               <h3 id="academy-material-current-version-heading" className="font-semibold text-slate-900 dark:text-white">Aktuell veröffentlichte Fassung · Version {currentVersion.versionNumber}</h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {formatDate(currentVersion.publishedIso)} · Versionskennung {currentVersion.id}</p>
               <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-50 p-3 text-xs leading-5 text-slate-800 dark:bg-slate-950 dark:text-slate-200">{currentVersion.content}</pre>

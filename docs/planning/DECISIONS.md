@@ -486,3 +486,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Kurs- und Programmverwaltung bleibt innerhalb des bestehenden Bereichs „Kurse“ und wird nicht zu einem neuen Hauptbereich.
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Die Verwaltungsübersicht trennt Kurs- und Programmlisten; Editoren gliedern vorhandene Felder und Zuordnungen nach ihrer fachlichen Aufgabe.
 - **SCHUTZGRENZE:** Keine Änderung an Veröffentlichungsworkflow, Versionierung, Status, Validierung, Materialbindungen, Abschlussbedingungen, Berechtigungen oder API.
+
+
+## 11.11.2026 – Versionierte Materialverwaltung
+
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Materialliste und Editor bleiben getrennte Arbeitszonen; der aktive Materialeintrag wird semantisch als ausgewählt gekennzeichnet.
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Metadaten, Zuständigkeit, Kategorie/Dokumenttyp, Zugriffsvoraussetzung und Text-/Code-Inhalt werden klar gegliedert.
+- **SCHUTZGRENZE:** Keine Änderung an Veröffentlichungsworkflow, Archivierung, Versionierung, Zugriffsschutz, Validierung, Datenmodell oder PDF-Infrastruktur.

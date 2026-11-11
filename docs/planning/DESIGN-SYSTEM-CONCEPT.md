@@ -317,3 +317,13 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 
 
 **Umsetzungsstand:** Kurs-/Programmlisten und Editoren wurden in PR #179 visuell überarbeitet. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
+
+
+## 21. Versionierte Materialverwaltung – visueller Ausbau (11.11.2026)
+
+- Die Materialverwaltung bleibt eine administrative Arbeitsansicht innerhalb der Lernbibliothek; sie ist kein zusätzlicher Teilnehmer-Hauptbereich.
+- Die vorhandene Materialliste mit Suche und die Detail-/Editorfläche bleiben als zwei klar getrennte Arbeitszonen angeordnet. Auf schmalen Viewports wird die Materialliste vor dem Editor priorisiert.
+- Materialkennung, Veröffentlichung/Archivstatus, Arbeitsrevision und Versionshistorie erhalten eine klare Hierarchie. Der aktive Listeneintrag wird semantisch mit aria-pressed kenntlich gemacht.
+- Der Editor gliedert Metadaten, Kurszuständigkeit, Kategorie/Dokumenttyp, Zugriffsvoraussetzung, Inhaltsformat und Inhalt in gut erkennbare Formularabschnitte.
+- Text/Markdown und Code bleiben die unterstützten Formate dieser Stufe. Der Quelltext bleibt nicht ausführbar; PDF-Infrastruktur bleibt zurückgestellt.
+- Entwurf speichern, ausdrückliche Veröffentlichung, Archivierung, Versionshistorie und bestehende Validierung bleiben funktional unverändert.
