@@ -643,38 +643,38 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           .academy-content-enter { animation: none; }
         }
       `}</style>
-      <header className="space-y-2.5">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-          <span aria-hidden="true" className="h-px w-6 bg-[#2864D9]" />
-          <span>Ausbildungsbereich</span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Academy</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildung, Lehrgänge und Wissen für den Dienst.</p>
-        {!isAcademyHome && (
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 pt-1 text-sm">
-            <button
-              type="button"
-              onClick={() => setIsAcademyHome(true)}
-              className="font-medium text-slate-600 underline-offset-4 transition-colors hover:text-[#2864D9] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
-              aria-label="Zur Academy-Startseite"
-            >
-              Academy
-            </button>
-            <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-slate-400" />
-            <span aria-current="page" className="font-medium text-slate-900 dark:text-white">
-              {activeTab === 'courses' || activeTab === 'instructor_grading'
-                ? 'Kurse'
-                : activeTab === 'modules' || activeTab === 'upload_textbook'
-                  ? 'Lernbibliothek'
-                  : activeTab === 'notes'
-                    ? 'Meine Notizen'
-                    : activeTab === 'overview'
-                      ? 'Übersicht'
+      {(isAcademyHome || activeTab !== 'overview') && (
+        <header className="space-y-2.5">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <span aria-hidden="true" className="h-px w-6 bg-[#2864D9]" />
+            <span>Ausbildungsbereich</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Academy</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Ausbildung, Lehrgänge und Wissen für den Dienst.</p>
+          {!isAcademyHome && (
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 pt-1 text-sm">
+              <button
+                type="button"
+                onClick={() => setIsAcademyHome(true)}
+                className="font-medium text-slate-600 underline-offset-4 transition-colors hover:text-[#2864D9] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
+                aria-label="Zur Academy-Startseite"
+              >
+                Academy
+              </button>
+              <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-slate-400" />
+              <span aria-current="page" className="font-medium text-slate-900 dark:text-white">
+                {activeTab === 'courses' || activeTab === 'instructor_grading'
+                  ? 'Kurse'
+                  : activeTab === 'modules' || activeTab === 'upload_textbook'
+                    ? 'Lernbibliothek'
+                    : activeTab === 'notes'
+                      ? 'Meine Notizen'
                       : 'Prüfungen'}
-            </span>
-          </nav>
-        )}
-      </header>
+              </span>
+            </nav>
+          )}
+        </header>
+      )}
       <div
         key={isAcademyHome ? 'academy-home' : `academy-${activeTab}`}
         className={!isAcademyHome ? 'academy-content-enter' : undefined}
@@ -764,16 +764,100 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </section>
       )}
       {!isAcademyHome && activeTab === 'overview' && (
-        <section aria-labelledby="academy-overview-content-heading" className="space-y-4">
-          <div>
-            <h2 id="academy-overview-content-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Dein dokumentierter Lernstand</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Hier siehst du die in deinem Konto gespeicherten Ausbildungsnachweise.</p>
+        <section aria-labelledby="academy-overview-content-heading" className="space-y-8">
+          <div className="space-y-5">
+            <button
+              type="button"
+              onClick={() => setIsAcademyHome(true)}
+              className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-[#2864D9] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
+            >
+              <span aria-hidden="true">←</span>
+              Zurück zur Academy-Übersicht
+            </button>
+            <div className="max-w-3xl space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2864D9] dark:text-blue-400">
+                <span aria-hidden="true" className="h-px w-6 bg-[#2864D9]" />
+                Orientierung
+              </div>
+              <h1 id="academy-overview-content-heading" className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                Willkommen in der Academy
+              </h1>
+              <p className="max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                Hier findest du deine Ausbildungsinhalte an einem Ort. Die Academy verbindet Lehrgänge, einzelne Kurse und Lernmaterialien – damit du dich gezielt informieren, lernen und dein Wissen überprüfen kannst.
+              </p>
+            </div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{myProgress.filter(item => (item.targetType === 'test' || item.targetType === 'final_exam') && item.status === 'passed').length}</p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Bestandene Prüfungen</p>
+
+          <div className="relative overflow-hidden rounded-2xl border border-[#2864D9]/20 bg-gradient-to-br from-[#2864D9]/[0.09] via-white to-white p-5 dark:from-[#2864D9]/20 dark:via-slate-900 dark:to-slate-900 sm:p-7">
+            <div aria-hidden="true" className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#2864D9]/[0.07] blur-2xl" />
+            <div className="relative max-w-3xl space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ein Bereich – verschiedene Wege</p>
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lernen ist nicht immer eine gerade Linie.</h2>
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                Ein Lehrgang kann mehrere Kurse bündeln. Du kannst einen Kurs aber auch unabhängig davon bearbeiten und Materialien direkt in der Lernbibliothek nachschlagen. Die Academy gibt dir Orientierung, ohne einen einzigen festen Lernweg vorzuschreiben.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Das Öffnen eines Materials wird nicht als Kursabschluss oder fachlicher Nachweis gewertet.</p>
+
+          <div className="space-y-4">
+            <div className="max-w-2xl space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Wie die Inhalte zusammenhängen</h2>
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                Diese drei Bestandteile bilden den fachlichen Kern deiner Ausbildung.
+              </p>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-4 h-1 w-12 rounded-full bg-[#2864D9]" />
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ausbildungsziel</p>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  Ein Lehrgang beschreibt ein übergeordnetes Ausbildungsziel und kann mehrere thematisch passende Kurse zusammenfassen.
+                </p>
+              </article>
+              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-4 h-1 w-12 rounded-full bg-[#087F8C]" />
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#087F8C] dark:text-teal-300">Lerneinheiten</p>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Kurse</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  Ein Kurs behandelt ein bestimmtes Thema. Er kann Teil eines Lehrgangs sein oder unabhängig davon genutzt werden.
+                </p>
+              </article>
+              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-4 h-1 w-12 rounded-full bg-[#6841B8]" />
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6841B8] dark:text-violet-300">Wissensgrundlage</p>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lernbibliothek</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  Hier liegen die Lernmaterialien. Du kannst sie aus einem Kurs heraus öffnen oder direkt zum Nachschlagen verwenden.
+                </p>
+              </article>
+            </div>
+          </div>
+
+          <div className="grid gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 md:grid-cols-2">
+            <div className="flex gap-3">
+              <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#A33370]" />
+              <div className="space-y-1">
+                <h3 className="font-semibold text-slate-900 dark:text-white">Prüfungen geben Rückmeldung</h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  Übungstests helfen dir, deinen Wissensstand einzuschätzen. Vorgesehene Abschlussprüfungen weisen nach, ob bestimmte Anforderungen erfüllt sind.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#287A45]" />
+              <div className="space-y-1">
+                <h3 className="font-semibold text-slate-900 dark:text-white">Notizen bleiben persönlich</h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  In deinen Notizen kannst du eigene Gedanken festhalten und Materialien als Lesezeichen speichern. Private Notizen sind nur für dich sichtbar.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="border-l-2 border-slate-300 pl-3 text-xs leading-relaxed text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            Ein geöffnetes Material oder ein besuchter Kurs gilt nicht automatisch als abgeschlossen. Ein Abschluss wird nur erfasst, wenn die dafür festgelegten Bedingungen tatsächlich erfüllt sind.
+          </p>
         </section>
       )}
       {activeTab === 'courses' && (

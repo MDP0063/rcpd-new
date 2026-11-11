@@ -388,3 +388,58 @@ Quellen:
 **BESCHLOSSENE Korrektur:** Breadcrumb „Academy > aktueller Bereich“ im Academy-Header; „Academy“ führt zur Kachel-Startseite zurück. Header typografisch vergrößern, kleinen blauen Akzent ergänzen und Abstand zum Inhalt leicht erhöhen. Kurze, dezente Kachel-Druckreaktion und Seitenübergang von ca. 180 ms; Reduced Motion berücksichtigen. Kachelinhalte und Kachelgestaltung bleiben unverändert.
 
 **ABNAHMESTATUS:** Die manuelle Prüfung bezieht sich auf PR #156 vor dieser Folgeänderung. Die neue Breadcrumb und Animation müssen nach dem nächsten Deployment erneut im Browser geprüft werden.
+
+
+## Ergänzende Prüfung der Academy-Übersicht und Kursauswahl (11.11.2026)
+
+### Geprüfte Implementierung
+
+Geprüfte Dateien auf `main`:
+- `src/components/AcademyCenter.tsx`
+- `src/components/AcademyLearningCenter.tsx`
+- `src/components/ProfessionalDevelopmentModule.tsx`
+
+### Kurse und Programme
+
+**TECHNISCHER BEFUND:** Der Kursbereich enthält bereits einen gemeinsamen Katalog mit getrennten Abschnitten „Ausbildungsprogramme“ und „Alle Kurse“. Programmkarten zeigen bei vorhandener Teilnahme deren Status und berechneten Fortschritt. Kurszeilen zeigen den persönlichen Teilnahmestatus (unter anderem „Nicht begonnen“, „In Bearbeitung“, „Abgeschlossen“, „Freiwillig beendet“ oder „Administrativ beendet“). Eine gemeinsame Suche filtert Programme und Kurse.
+
+**Einschränkung:** Begonnene Kurse werden nicht in einer separaten persönlichen Liste dargestellt, sondern bleiben in „Alle Kurse“ mit ihrem Status einsortiert. Der Katalog besitzt aktuell keine eigenen Statusfilter für „Begonnen“, „Nicht begonnen“ oder „Abgeschlossen“. Die Implementierung belegt daher die Anzeige des Status pro Katalogeintrag, aber keine eigenständige „Meine Kurse“-Ansicht und keine vollständige Historienansicht archivierter Kursteilnahmen.
+
+**UX-FOLGERUNG:** Die Academy-Übersicht sollte keine zweite Liste begonnener Kurse und keine Kopie der Programmkarten aufbauen. Programme und Kurse haben im Kursbereich bereits ihren fachlichen Arbeitsort. Ob dort später eine gezielte Statusfilterung oder eine eigene Ansicht „Meine Kurse“ fehlt, ist eine separate Verbesserung des Kursbereichs und kein Grund, diese Funktion auf der Übersicht zu duplizieren.
+
+### Aktuelle Academy-Übersicht
+
+**TECHNISCHER BEFUND:** Der derzeitige JSX-Zweig `activeTab === 'overview'` in `AcademyCenter.tsx` ist sehr klein. Er zeigt „Dein dokumentierter Lernstand“, eine Anzahl bestandener Prüfungen und den Hinweis, dass das bloße Öffnen eines Materials keinen Abschlussnachweis darstellt. Die Prüfungsanzahl wird aus dem älteren `userProgress`-Prop berechnet.
+
+**Korrektur zum früheren Audittext in Abschnitt 3.2:** Die dort beschriebene Übersicht als vierfacher Direkteinstieg mit Material-/Prüfungszählern entspricht nicht mehr dem aktuell geprüften JSX-Zweig. Die fünf Bereichskacheln liegen auf der separaten Academy-Kachelstartseite; sie sind nicht Teil des internen Übersichtsinhalts. Die alte Formulierung darf daher nicht als Beschreibung des aktuellen Stands verwendet werden.
+
+### Abgrenzung zum Portal-Dashboard
+
+**TECHNISCHER BEFUND:** Das Portal-Dashboard rendert `ProfessionalDevelopmentModule`. Diese Komponente baut aus den älteren `modules`-, `exams`- und `userProgress`-Daten eine Fortschrittsdarstellung mit Modul-/Prüfungsdiagramm, Kennzahlen und einem gewichteten Gesamtentwicklungsindex. Die interne Academy-Übersicht verwendet ebenfalls einen Wert aus `userProgress` (bestandene Prüfungen).
+
+**UX-/DATENRISIKO:** Derzeit wird damit zumindest die Zahl bestandener Prüfungen auf zwei Ebenen aus derselben älteren Datenfamilie dargestellt. Zusätzlich bestehen getrennte Projektionen zwischen dem Legacy-Dashboard und dem neuen versionierten Kurs-/Programmfortschritt aus `AcademyLearningCenter.tsx`. Diese Abweichungen müssen bei einer späteren Daten-/Funktionsabnahme berücksichtigt werden. Der bestehende Gesamtentwicklungsindex im Dashboard ist außerdem nicht mit dem beschlossenen Verzicht auf einen künstlichen Academy-Gesamtfortschrittsindex zu verwechseln; für die Academy-Übersicht wird ein solcher Index ausdrücklich nicht empfohlen.
+
+### Konsequenz für die Gestaltung der Academy-Übersicht
+
+Für die weitere Gestaltung gelten als **Designleitlinien / noch keine vollständige Layoutfreigabe**:
+- keine erneute Kursliste und keine doppelte Programmauswahl;
+- keine Kopie der Portal-Dashboard-Aufgaben, Kennzahlen oder Fortschrittsgrafiken;
+- keine Wiederholung der fünf großen Einstiegskacheln;
+- stattdessen primär eine kurze, leicht verständliche Erklärung des Academy-Zwecks und eine nicht-lineare Erklärung des Zusammenspiels von Lehrgängen, Kursen, Lernbibliothek, Prüfungen und privaten Notizen;
+- die vorhandene horizontale Academy-Navigation bleibt der Wechsel zwischen den fünf Bereichen;
+- farbige Bereichsfarben dürfen sparsam als Orientierung/Akzent eingesetzt werden, nicht als zweite Kachel-Navigation;
+- konkrete dynamische persönliche Inhalte erst dann ergänzen, wenn sie eine nachweislich eigene Aufgabe erfüllen und ihre Datenquelle fachlich autoritativ ist.
+
+Die Kursauswahl und die Übersicht wurden hier statisch am Quellcode geprüft. Eine Browser-/Live-Datenabnahme und eine Prüfung archivierter/entfernter Kursteilnahmen sind damit nicht behauptet.
+
+### Umsetzung der Academy-Übersicht (11.11.2026)
+
+Der interne Übersichtsbereich wurde in PR #158 gestalterisch umgesetzt:
+- eigener Seitentitel „Willkommen in der Academy“ und direkter Rücksprung zur Kachelstartseite;
+- kompakte Einführung zum Zweck der Academy;
+- Erklärung des flexiblen Zusammenspiels von Lehrgängen, Kursen und Lernbibliothek;
+- zurückhaltende Einordnung von Prüfungen und privaten Notizen;
+- farbige Bereichsakzente statt einer zweiten Kachel-/Navigationsreihe;
+- keine persönliche Kursliste, keine Kennzahlen-/Aufgaben-Duplikate und keine Dashboard-Projektion.
+
+Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersicht wird der bisherige globale Academy-Header/Breadcrumb nicht wiederholt. Die Änderung ist im PR-Diff enthalten. GitHub Actions `build-and-verify` (TypeScript-Prüfung, Produktionsbuild und Tests) sowie die PR-Beschreibungsprüfung sind erfolgreich. Browser-/Live-Abnahme und Screenshot stehen noch aus.

@@ -43,19 +43,20 @@ Die Entscheidung betrifft die fachlichen Hauptbereiche. Sie legt noch nicht fest
 
 ### 2.1 Academy-Übersicht
 
-Die Übersicht soll dem Nutzer helfen, seinen relevanten Ausbildungsstand und sinnvolle nächste Schritte zu erkennen, ohne die gesamte Academy als überladenes Dashboard zu wiederholen.
+Die interne Academy-Übersicht dient primär der **Orientierung und Erklärung des Academy-Aufbaus**. Sie ist weder ein zweites Portal-Dashboard noch eine zweite Kurs-/Programmübersicht. Persönliche Kursstände, Teilnahmen und Programmdetails gehören in den Kursbereich; portalweite Aufgaben und Handlungsaufforderungen bleiben auf dem Portal-Dashboard.
 
-Bereits festgelegte Leitlinien:
-- Programme stehen als wesentliche Orientierung im Vordergrund.
-- Direkte Zugänge zu Kursen und Bibliothek bleiben möglich; der Nutzer muss nicht zwingend über ein Programm navigieren.
-- Relevante bzw. aktive Programme sollen vor rein verfügbaren oder noch nicht begonnenen Angeboten erkennbar sein.
-- Eine bloße Verfügbarkeit ist keine Teilnahme und kein Fortschritt.
-- Persönliche Favoriten dürfen die Darstellung beeinflussen, aber niemals Zugriffsrechte oder fachliche Voraussetzungen verändern.
-- Empfehlungen und Aufgaben sind Hilfen, keine zusätzliche Zugangsvoraussetzung.
-- Die Oberfläche darf nur tatsächliche Daten und nachvollziehbare Status anzeigen.
+Verbindliche Leitlinien:
+- Die Übersicht erklärt in verständlicher, kurzer Sprache Zweck und Aufbau der Academy.
+- Sie erläutert den Zusammenhang von Lehrgängen, Kursen und Lernbibliothek, ohne einen linearen Pflichtlernweg zu suggerieren.
+- Lehrgänge beschreiben übergeordnete Ausbildungsziele und können Kurse bündeln. Kurse können zugleich unabhängig von einem Lehrgang genutzt werden. Materialien können aus Kursen heraus oder direkt in der Lernbibliothek geöffnet werden.
+- Prüfungen werden als Mittel zur Wissensüberprüfung bzw. zum Nachweis eingeordnet; private Notizen als persönliche Lernhilfe.
+- Die fünf bestehenden Academy-Bereiche werden nicht als zweite Kachel- oder Linknavigation wiederholt. Die horizontale Academy-Hauptnavigation bleibt der Wechsel zwischen den Bereichen.
+- Die Übersicht zeigt keine zweite persönliche Kursliste, keine duplizierten Programmkarten, keine Aufgabenliste des Portals und keine redundanten Fortschritts-/Prüfungskennzahlen.
+- Farben der fünf Academy-Bereiche dürfen sparsam als Orientierung und Akzent eingesetzt werden; keine erneute große Kachelgestaltung.
+- Inhalte müssen für Nutzer ohne Academy-Vorwissen verständlich sein, ohne die Gestaltung kindlich oder ausschließlich auf Jugendliche auszurichten.
 - Das Öffnen eines Dokuments, eines Kurses oder einer Seite darf nicht als Verständnis, erfolgreiche Bearbeitung oder Abschluss ausgegeben werden.
 
-Die genaue Karten-, Listen- oder Widget-Anordnung ist noch nicht entschieden.
+Die frühere Leitlinie, relevante Programme auf der internen Übersicht prominent aufzulisten, wird durch diese Abgrenzung ersetzt: Programme bleiben fachlich wichtig, ihre Auswahl und persönliche Teilnahme werden aber im Kursbereich dargestellt, damit die Übersicht keine Funktionen dupliziert.
 
 ### 2.2 Programmübersicht und Programmdetail
 

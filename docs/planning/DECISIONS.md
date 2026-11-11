@@ -399,3 +399,15 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Der Header kombiniert eine dezente Oberzeile „Ausbildungsbereich“, eine größere typografische Überschrift „Academy“, eine kurze Beschreibung und einen kleinen blauen Akzent. Keine große Hintergrundfläche oder Banner.
 - **BESCHLOSSEN:** Der Abstand zwischen Header und Inhalt wird leicht vergrößert, passend zur neuen Header-Hierarchie.
 - **BESCHLOSSEN:** Kachelaktivierung erhält eine minimale kurze Druckreaktion; der Zielbereich erscheint mit einem dezenten Fade-in und sehr leichter vertikaler Bewegung (Richtwert ca. 180 ms). `prefers-reduced-motion` deaktiviert die Bewegung.
+
+## Academy – Inhalt und Gestaltung der internen Übersicht (11.11.2026)
+
+- **BESCHLOSSEN:** Die interne Academy-Übersicht ist eine Orientierungs- und Erklärseite. Sie ist kein zweites Portal-Dashboard und keine zweite Kurs-/Programmübersicht.
+- **BESCHLOSSEN:** Persönliche Teilnahmen, Kursstatus, Programmwahl und Fortschritt bleiben im Kursbereich. Portalweite Aufgaben bleiben auf dem Portal-Dashboard.
+- **BESCHLOSSEN:** Die Seite erklärt den Zusammenhang: Lehrgänge können Kurse bündeln; Kurse können unabhängig von Lehrgängen genutzt werden; Lernmaterialien können aus Kursen heraus oder direkt über die Lernbibliothek aufgerufen werden. Dies ist kein zwingend linearer Lernweg.
+- **BESCHLOSSEN:** Prüfungen werden als Wissensüberprüfung/Nachweis eingeordnet. Meine Notizen werden als private persönliche Lernhilfe erklärt.
+- **BESCHLOSSEN:** Die fünf Bereiche werden auf der internen Übersicht nicht erneut als Kacheln oder zusätzliche Navigationslinks dargestellt. Die horizontale Academy-Navigation bleibt die Navigation.
+- **BESCHLOSSEN:** Die Bereichsfarben dürfen in zurückhaltenden Akzenten wiederkehren; keine zweite großflächige Kachelgestaltung.
+- **BESCHLOSSEN:** Die Seite soll ohne Vorwissen verständlich sein, auch für jüngere Nutzer, aber professionell und nicht kindlich wirken.
+- **BESCHLOSSEN:** Interne Übersicht erhält einen eigenen Seitentitel und den direkten Rücksprung „Zurück zur Academy-Übersicht“ zur Kachelstartseite. Der globale Academy-Header/Breadcrumb wird auf dieser Übersicht nicht wiederholt.
+- **UMSETZUNG IN PR #158:** Einführungstext, flexible Beziehung Lehrgang/Kurs/Lernbibliothek, kurze Einordnung von Prüfungen und privaten Notizen sowie Hinweis auf tatsächliche Abschlussbedingungen. Keine dynamischen persönlichen Kennzahlen oder Aufgabenlisten.
