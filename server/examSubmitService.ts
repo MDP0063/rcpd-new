@@ -5,7 +5,7 @@
 import type { ExamRepository } from './examRepository.ts';
 import type { ExamDocument } from './examRepositoryTypes.ts';
 import { evaluateExamAnswers, parseAttemptAnswers } from './examRunner.ts';
-import type { ExamAttemptRecord, ExamVersionRecord } from './examAttemptService.ts';
+import type { ExamAttemptRecord, ExamPublishedResultSnapshot, ExamVersionRecord } from './examAttemptService.ts';
 import type { ExamQuestion } from './examTypes.ts';
 import { isValidId } from './examValidate.ts';
 
@@ -69,6 +69,19 @@ export function toParticipantSubmission(
   version: ExamVersionRecord
 ): PublicExamSubmission {
   if (attempt.resultReleaseStatus === 'released') return toPublicSubmission(attempt, version);
+  if (attempt.resultReleaseStatus === 'pending_rerelease' && attempt.publishedResultSnapshot) {
+    return {
+      id: attempt.id,
+      examId: attempt.examId,
+      title: version.title,
+      assessmentStage: version.assessmentStage,
+      attemptCourseCode: attempt.attemptCourseCode,
+      attemptNumber: attempt.attemptNumber,
+      submittedAtIso: String(attempt.submittedAtIso || ''),
+      ...attempt.publishedResultSnapshot,
+      requiresManualReview: false
+    };
+  }
   return {
     id: attempt.id,
     examId: attempt.examId,
@@ -85,6 +98,21 @@ export function toParticipantSubmission(
     finalScoreBasisPoints: null,
     requiresManualReview: false,
     questionResults: []
+  };
+}
+
+export function toPublishedResultSnapshot(submission: PublicExamSubmission): ExamPublishedResultSnapshot {
+  if (submission.status !== 'passed' && submission.status !== 'failed') {
+    throw new Error('EXAM_PUBLISHED_RESULT_SNAPSHOT_INVALID');
+  }
+  return {
+    status: submission.status,
+    totalPossiblePointsMilli: submission.totalPossiblePointsMilli,
+    automaticallyEarnedPointsMilli: submission.automaticallyEarnedPointsMilli,
+    manuallyEarnedPointsMilli: submission.manuallyEarnedPointsMilli,
+    preliminaryScoreBasisPoints: submission.preliminaryScoreBasisPoints,
+    finalScoreBasisPoints: submission.finalScoreBasisPoints,
+    questionResults: submission.questionResults.map(question => ({ ...question }))
   };
 }
 
