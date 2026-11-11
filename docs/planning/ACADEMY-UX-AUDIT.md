@@ -1,12 +1,67 @@
-# Academy – UX-/UI-Bestandsaufnahme und Recherche-Audit
+# Academy – Ergänzende Implementierungsprüfung und Vorbereitung des visuellen Redesigns
 
 **Stand:** 11.11.2026  
 **Prüfgegenstand:** aktueller Repository-Stand `main`, Commit `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`  
-**Status:** Erste technische und konzeptionelle Bestandsaufnahme; kein freigegebenes Redesign-Konzept und keine UI-Entscheidung.  
+**Status:** Ergänzendes Audit zur Vorbereitung der visuellen Gestaltung. Die bestehende Academy-Informationsarchitektur und die fachlichen/UX-Beschlüsse werden nicht neu aufgerollt.  
 **Arbeitsmodus:** Read-only-Audit. Es wurden keine Anwendungsdateien geändert.
 
-> Dieses Dokument beginnt die vollständige Academy-Redesign-Arbeit. Es trennt verifizierte Codebeobachtungen von UX-Hypothesen und offenen Prüfaufträgen. Die vorhandenen Academy-Beschlüsse in `DECISIONS.md` und `ACADEMY-DETAILED-SPECIFICATION.md` bleiben verbindlich. Rechercheergebnisse sind Entscheidungsgrundlagen, keine automatische Übernahme fremder Muster.
+> **Wichtige Einordnung (11.11.2026):** Dieses ergänzende Dokument ersetzt ausdrücklich nicht das bereits umfangreiche Academy-Audit und die ausgearbeitete UX-/Fachspezifikation. Maßgeblich bleiben `ACADEMY-DETAILED-SPECIFICATION.md`, `DECISIONS.md`, `OPEN-QUESTIONS.md`, `PROGRESS.md`, `MASTERPLAN.md` und `PORTAL-REDESIGN-DETAILS.md`. Die fünf Academy-Hauptbereiche, die grundlegenden Nutzeraufgaben, die fachlichen Abläufe und zahlreiche Interaktionsregeln sind bereits beschlossen. Sie werden nicht erneut von Grund auf konzipiert. Die folgenden Codebeobachtungen dienen nur dazu, die vorhandene Umsetzung gegen diese Beschlüsse zu prüfen und echte Lücken/Fehler zu erkennen. Recherche dient der begründeten visuellen Ausgestaltung, nicht dazu, bestehende Beschlüsse durch fremde Produktmuster zu ersetzen.
 
+## 0. Verbindlicher Umfang und bereits erledigte Konzeptarbeit
+
+### Was bereits feststeht und nicht erneut entschieden wird
+
+Die vorhandenen Planungsdokumente enthalten bereits die ausführliche Academy-Konzeption. Insbesondere:
+
+- Die Academy hat fünf gleichberechtigte Hauptbereiche: **Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen**.
+- Examiner ist kein sechster allgemeiner Hauptbereich, sondern wird rollen-/berechtigungsabhängig in die Academy integriert.
+- Programme/Lehrgänge und eigenständige Kurse sind getrennte Ebenen; Programme enthalten erforderliche und empfohlene Kurse, ohne pauschal eine lineare Sperrreihenfolge zu erzwingen.
+- Veröffentlichung, Verfügbarkeit/Zugriff und persönlicher Fortschritt sind getrennte Statusdimensionen.
+- Die Lernbibliothek ist ein eigenständiger, kanonischer Materialbestand. Kursversionen referenzieren exakte veröffentlichte Dokumentversionen.
+- Suche, Relevanzsortierung, kompakte Filter, Dokumentversionierung, Reader-Grundverhalten, vertikales Scrollen, private versionsgebundene Notizen/Lesezeichen, Mehrfachquellen und stabile Markdown-/Code-Textanker sind bereits spezifiziert.
+- Prüfungsstart, Voraussetzungen, Timer, Autosave, Resume, Abgabe, Tastaturverhalten, interne Bewertung, Ergebnisfreigabe, Korrekturen, Examiner-Claims, Übergaben, automatische Freigabe und Revision sind fachlich ausführlich geregelt.
+- Berechtigungsgrenzen und Vertraulichkeit sind verbindlich; insbesondere bleibt die Prüfungswerkstatt Admin-only.
+
+Die ausführlichen Abläufe und Randbedingungen stehen in der Academy-Spezifikation. Diese Punkte sind keine offenen UI-Fragen.
+
+### Was dieses ergänzende Audit leisten soll
+
+1. Prüfen, ob der aktuelle Code die bestehenden Beschlüsse vollständig und korrekt abbildet.
+2. Nur echte Implementierungslücken, Regressionen, widersprüchliche Datenprojektionen oder Accessibility-/Bedienfehler markieren.
+3. Die bereits beschlossene Academy-Struktur und Nutzerwege als Ausgangspunkt der visuellen Gestaltung verwenden.
+4. Für konkrete visuelle Entscheidungen etablierte Produkte, professionelle Designsysteme und Accessibility-Standards recherchieren und die Übertragbarkeit auf RCPD begründen.
+5. Die Academy von Beginn an mit den späteren portalweiten Designgrundlagen abstimmen, ohne alle anderen Module jetzt vollständig neu zu konzipieren.
+
+**Nicht Ziel:** erneute Grundsatzdiskussion über die Academy-IA, neue fachliche Funktionen erfinden, bestehende Status-/Berechtigungsregeln vereinfachen oder nur aus optischen Gründen Geschäftslogik und Datenmodelle ändern.
+
+### Bereits umgesetzte Kernbereiche laut aktuellem Planungsstand
+
+Die Planungs- und Fortschrittsdokumentation weist unter anderem folgende umgesetzte Bereiche aus: versionierte Text-/Code-Materialverwaltung, Kurs-/Materialversionsbindung, Reader und Kursmaterialauswahl, private Reader-Notizen/Lesezeichen mit Mehrfachquellen und Textankern, globale Bibliothekssuche und Filter, Materialaktualisierungs-/Kursprüfungsworkflow, manuelle Ergebnis-Erstfreigabe, dynamischer Kursabschlussnachweis, persistente Examiner-Claims, serverseitige Bewertungs-Drafts, Übergabe und administrative Neuzuweisung samt Benachrichtigungen.
+
+Das bedeutet nicht, dass bereits jede Funktion live im Browser/Firestore abgenommen wurde. CI-/Code-Nachweise und manuelle Laufzeitabnahme sind getrennt zu behandeln.
+
+### Noch bekannte funktionale Restarbeiten – nicht mit Visual Design verwechseln
+
+- Vollständige einsehbare Claim-/Übergabehistorie in der Oberfläche.
+- Die bereits beschlossenen wichtigen Action Requests samt Benachrichtigungen und der Rückgabe abgeschlossener Bewertungen zur Revision.
+- Die zugehörigen Rechte-, Historien- und Sichtbarkeitsprüfungen nach den bestehenden Spezifikationen.
+- Gemeinsame Browser-/Live-Firestore-Abnahme der Academy, einschließlich der neueren Reader-, Prüfungs- und Examiner-Funktionen.
+
+Für die Revisionsberechtigung wurde am 11.11.2026 zusätzlich **Option A** bestätigt: Jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben und die zugehörige Action Request auslösen. Die Revision bleibt derselbe Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten. Der ursprüngliche Prüfer hat keinen Vorrang. Diese Entscheidung ist in `DECISIONS.md` dokumentiert; ihre Umsetzung ist noch nicht durch einen Code-PR belegt.
+
+### Was für das visuelle Redesign tatsächlich noch auszuarbeiten ist
+
+- visuelle Sprache und Design-Tokens des Portals: Farben, Kontrast, Typografie, Abstände, Größen, Flächen, Linien, Icons und Zustandsdarstellung;
+- gemeinsame Komponenten und deren Varianten für Navigation, Buttons, Formulare, Listen, Tabellen, Karten, Dialoge, Status, Feedback und Fehlermeldungen;
+- konkrete Desktop-/Tablet-/Mobile-Komposition der fünf bestehenden Academy-Bereiche und der berechtigungsabhängigen Examiner-Ansichten;
+- visuelle Hierarchie und Dichte der bestehenden Inhalte und Aktionen, ohne Informationen oder Funktionen zu verlieren;
+- konkrete Toolbar-/Werkzeuganordnung im Reader (bereits ausdrücklich als visuell offen dokumentiert);
+- responsive Navigation, Fokusführung, Tastatur- und Screenreader-Verhalten sowie Light-/Dark-Mode im gemeinsamen Portalrahmen;
+- prototypische Prüfung anhand der bereits definierten Nutzeraufgaben.
+
+Die genaue Gestaltung wird nicht aus dem Bauch heraus entschieden. Für jede größere Layout-/Komponentenentscheidung werden passende etablierte Produkte und Designsysteme verglichen, Vorteile/Nachteile dokumentiert und die RCPD-spezifische Begründung festgehalten.
+
+---
 ## 1. Ziel und Abgrenzung
 
 Die Academy wird als erster Bereich des umfassenden RCPD-Portal-Redesigns vollständig konzipiert. Das bedeutet nicht, dass sie ein isoliertes Design erhält: globale Navigation, visuelle Sprache, Komponenten, Typografie, Abstände, Zustände, responsive Verhalten und Accessibility müssen später mit den übrigen Modulen zusammenpassen.
