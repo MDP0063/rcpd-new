@@ -1692,3 +1692,20 @@ Die bereits festgelegten Kachelgrundfarben und deren dezente Oberflächenreflexi
 Für die Academy-Kachel „Prüfungen“ wurde Variante B gewählt: ein kompakter, stark vereinfachter Prüfungsbogen mit wenigen Antwortfeldern und einem klar markierten Häkchen. Die Form soll unmittelbar an Prüfungsfragen bzw. Antworten erinnern, aber nicht als weiteres Buch, Lernmaterial oder Notizblatt gelesen werden. Deshalb werden nur die für die Erkennung notwendigen Flächen verwendet und die Silhouette bleibt kompakt.
 
 Das Motiv folgt verbindlich der bereitgestellten Wegweiser-Referenz: flächiges Piktogramm aus wenigen geometrischen Füllflächen, einfache ruhige Formen und dezente Überlagerung echter Motivbestandteile. Keine dominanten Konturen, keine 3D-Modellierung, keine plastischen Schatten und keine dekorativen Details. Der dezente Beeren-/Pinkakzent entspricht der bereits festgelegten Bereichsfarbe der Prüfungen-Kachel.
+
+
+### Motivrichtung „Meine Notizen“: Notizblock
+
+Für „Meine Notizen“ wird kein geschlossenes Buch verwendet. Das Motiv soll klar als Notizblock lesbar sein: vorzugsweise ein einfacher, oben gebundener Block mit wenigen kurzen Schreiblinien und optional einer dezent versetzten zweiten Ebene. Auf zusätzliche Buch- oder Stiftdekoration wird verzichtet. Die endgültige zeichnerische Ausführung bleibt im Rahmen des gemeinsamen Piktogrammstils zu prüfen.
+
+### Farbregel für die fünf SVG-Illustrationen
+
+Farbige Akzente in jeder Illustration dürfen ausschließlich aus der Farbfamilie der zugehörigen Academy-Kachel stammen. Sie werden gegenüber der kräftigen Kachelgrundfarbe zurückgenommen bzw. aufgehellt, müssen aber eindeutig als derselbe Farbton erkennbar bleiben. Andere, unabhängige Akzentfarben sind nicht zulässig. Neutrale Grund- und Füllflächen bleiben erlaubt.
+
+- Übersicht: Blau
+- Kurse: Türkis
+- Lernbibliothek: Violett
+- Prüfungen: Beere/Pink
+- Meine Notizen: Grün
+
+Diese Regel betrifft die Illustrationen; die bereits festgelegten Kacheloberflächen und Kachelgrundfarben bleiben unverändert. Der schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt für alle fünf Motive maßgeblich.
