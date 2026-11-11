@@ -149,7 +149,7 @@ export const ExamParticipantRecord: React.FC<{
             <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
               {item.reviewCorrections.map((correction, index) => <li key={index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
                 <p className="font-semibold">{String(correction.reason || 'Korrektur')}</p>
-                <p className="mt-1 text-slate-500">{dateLabel(String(correction.atIso || ''))} · Prüferkennung: {String(correction.reviewerUid || 'Nicht dokumentiert')}</p>
+                <p className="mt-1 text-slate-500">{dateLabel(String(correction.atIso || ''))} · Prüfer: {String(correction.reviewerName || 'Nicht dokumentiert')}</p>
               </li>)}
             </ol>
           </div>}
