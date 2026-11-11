@@ -379,3 +379,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Admins und Colonels behalten ihre bereits festgelegten administrativen Befugnisse; diese Entscheidung schränkt sie nicht ein und führt keine neue Rolle ein.
 - Die Revision bleibt eine Weiterbearbeitung desselben Prüfungsversuchs. Gespeicherte Drafts und die vorherige Bewertungshistorie bleiben erhalten. Revisionsgrund und konkretes Feedback zu betroffenen Bewertungsschritten sind verpflichtend.
 - Alle für den Kurs autorisierten Prüfer sind bei der anschließenden Bearbeitung gleichberechtigt; der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber historisch nachvollziehbar.
+
+
+## Academy – Erneute Empfehlung nach Ausblenden (11.11.2026)
+
+- **BESCHLOSSEN:** Eine manuelle Empfehlung gilt als tatsächlich neu, wenn ein berechtigter Ausbilder oder Administrator sie ausdrücklich erneut erstellt.
+- **BESCHLOSSEN:** Eine automatische Empfehlung gilt als tatsächlich neu, wenn ein neuer, eigenständiger fachlicher Auslöser eintritt.
+- **BESCHLOSSEN:** Eine bloße Versionsänderung, ein erneutes Laden/Öffnen oder eine Fortschrittsänderung ohne neuen fachlichen Auslöser erzeugt keine neue Empfehlung.
+- **BESCHLOSSEN:** Eine ausgeblendete Empfehlung bleibt ansonsten ausgeblendet; nur eine nach diesen Kriterien tatsächlich neu erstellte Empfehlung darf erneut erscheinen.
