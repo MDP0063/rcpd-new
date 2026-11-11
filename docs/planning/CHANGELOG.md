@@ -215,7 +215,7 @@
 - PR #160 anschließend am 11.11.2026 gemergt (Merge-Commit `691e679e5fb1f8e087647256f7211130ed6dcee7`). Kein bestätigtes Deployment; Browser-/Responsive-Abnahme noch offen.
 
 
-## 2026-11-11 – Dezenter äußerer Academy-Hintergrund
+## 2026-11-11 – Dezenter äußerer Academy-Hintergrund (PR #162 gemergt)
 
 - Academy-only Hintergrund für die bislang weiße, variable Fläche des Hauptviewports ergänzt.
 - Sanfte kühle Farbverläufe statt einer zweiten Wellenform; Übergang zur bestehenden inneren Academy-Fläche bleibt zurückhaltend.
