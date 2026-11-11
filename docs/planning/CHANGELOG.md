@@ -186,3 +186,11 @@
 - Die Farben dienen ausschließlich der Bereichsorientierung, nicht der Darstellung von Status.
 - Die Ausgangswerte werden im visuellen Prototyp mit der beschlossenen glänzenden Oberfläche, weißen Reflexion, Textkontrasten, Fokuszuständen und responsiven Größen geprüft. Kleinere technische Feinjustierung ist möglich, Farbfamilien und Zuordnung bleiben dabei erhalten.
 - Ausschließlich Planungsdokumentation aktualisiert; keine App-Implementierung, Tests oder Deployment-Änderungen vorgenommen.
+
+## 2026-11-11 – Farbkonzept der Academy-SVG-Illustrationen bestätigt
+
+- Nutzer hat Variante B bestätigt: neutrale, matte Grundpalette mit einem dezenten Akzent aus der jeweiligen Bereichsfarbfamilie.
+- Die fünf Akzente beziehen sich auf die bereits beschlossene Zuordnung: Übersicht Blau, Kurse Türkis, Lernbibliothek Violett, Prüfungen Beere, Meine Notizen Grün.
+- Gemeinsame dunkle Konturen/Details, zurückhaltende neutrale Füllflächen und höchstens drei bis vier bewusst eingesetzte Farben je Illustration als Gestaltungsrichtlinie festgehalten.
+- Exakte Neutralfarben und Akzentabstufungen bleiben für die visuelle Ausarbeitung offen. SVGs bleiben matt und ohne künstliche Glanz-/3D-Effekte.
+- Ausschließlich Planungsdokumentation aktualisiert; keine App-Implementierung, Tests oder Deployment-Änderungen vorgenommen.
