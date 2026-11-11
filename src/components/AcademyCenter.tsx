@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './AcademyCenter.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
@@ -630,19 +631,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   );
 
   return (
-    <div className="space-y-9">
-      <style>{`
-        @keyframes academy-section-enter {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: none; }
-        }
-        .academy-content-enter {
-          animation: academy-section-enter 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .academy-content-enter { animation: none; }
-        }
-      `}</style>
+    <div className={!isAcademyHome && activeTab === 'overview' ? 'academy-interior-shell space-y-7' : 'space-y-9'}>
+
       {(isAcademyHome || activeTab !== 'overview') && (
         <header className="space-y-2.5">
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
@@ -680,7 +670,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         className={!isAcademyHome ? 'academy-content-enter' : undefined}
       >
       {!isAcademyHome && (
-        <nav aria-label="Academy-Hauptbereiche" className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
+        <nav aria-label="Academy-Hauptbereiche" className="academy-main-nav flex flex-wrap gap-1">
           {[
             { id: 'overview' as const, label: 'Übersicht' },
             { id: 'courses' as const, label: 'Kurse' },
@@ -764,32 +754,31 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </section>
       )}
       {!isAcademyHome && activeTab === 'overview' && (
-        <section aria-labelledby="academy-overview-content-heading" className="space-y-8">
-          <div className="space-y-5">
+        <section aria-labelledby="academy-overview-content-heading" className="academy-overview-content space-y-7">
+          <div className="academy-overview-hero">
+
             <button
               type="button"
               onClick={() => setIsAcademyHome(true)}
-              className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-[#2864D9] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9] dark:text-slate-300 dark:hover:text-white"
+              className="academy-back-link"
             >
               <span aria-hidden="true">←</span>
               Zurück zur Academy-Übersicht
             </button>
-            <div className="max-w-3xl space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2864D9] dark:text-blue-400">
-                <span aria-hidden="true" className="h-px w-6 bg-[#2864D9]" />
+            <div className="academy-overview-intro space-y-2">
+              <div className="academy-eyebrow">
                 Orientierung
               </div>
-              <h1 id="academy-overview-content-heading" className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+              <h1 id="academy-overview-content-heading" className="academy-page-title">
                 Willkommen in der Academy
               </h1>
-              <p className="max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="academy-page-lede">
                 Hier findest du deine Ausbildungsinhalte an einem Ort. Die Academy verbindet Lehrgänge, einzelne Kurse und Lernmaterialien – damit du dich gezielt informieren, lernen und dein Wissen überprüfen kannst.
               </p>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-[#2864D9]/20 bg-gradient-to-br from-[#2864D9]/[0.09] via-white to-white p-5 dark:from-[#2864D9]/20 dark:via-slate-900 dark:to-slate-900 sm:p-7">
-            <div aria-hidden="true" className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#2864D9]/[0.07] blur-2xl" />
+          <div className="academy-learning-path-card">
             <div className="relative max-w-3xl space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ein Bereich – verschiedene Wege</p>
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lernen ist nicht immer eine gerade Linie.</h2>
@@ -799,42 +788,39 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="academy-structure-section space-y-4">
             <div className="max-w-2xl space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Wie die Inhalte zusammenhängen</h2>
+              <h2 className="academy-structure-heading text-xl font-semibold tracking-tight">Wie die Inhalte zusammenhängen</h2>
               <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 Diese drei Bestandteile bilden den fachlichen Kern deiner Ausbildung.
               </p>
             </div>
-            <div className="grid gap-3 lg:grid-cols-3">
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#2864D9]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#2864D9] dark:text-blue-300">Ausbildungsziel</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <div className="academy-structure-grid">
+              <article className="academy-structure-card academy-structure-card--blue">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Ausbildungsziel</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Lehrgänge</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Ein Lehrgang beschreibt ein übergeordnetes Ausbildungsziel und kann mehrere thematisch passende Kurse zusammenfassen.
                 </p>
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#087F8C]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#087F8C] dark:text-teal-300">Lerneinheiten</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Kurse</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <article className="academy-structure-card academy-structure-card--teal">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Lerneinheiten</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Kurse</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Ein Kurs behandelt ein bestimmtes Thema. Er kann Teil eines Lehrgangs sein oder unabhängig davon genutzt werden.
                 </p>
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-4 h-1 w-12 rounded-full bg-[#6841B8]" />
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6841B8] dark:text-violet-300">Wissensgrundlage</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lernbibliothek</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <article className="academy-structure-card academy-structure-card--violet">
+                <p className="academy-structure-label mb-1 text-xs font-semibold uppercase tracking-[0.12em]">Wissensgrundlage</p>
+                <h3 className="academy-structure-title text-lg font-semibold">Lernbibliothek</h3>
+                <p className="academy-structure-copy mt-2 text-sm leading-relaxed">
                   Hier liegen die Lernmaterialien. Du kannst sie aus einem Kurs heraus öffnen oder direkt zum Nachschlagen verwenden.
                 </p>
               </article>
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 md:grid-cols-2">
+          <div className="academy-overview-notes grid gap-5 md:grid-cols-2">
             <div className="flex gap-3">
               <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#A33370]" />
               <div className="space-y-1">
@@ -855,7 +841,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </div>
           </div>
 
-          <p className="border-l-2 border-slate-300 pl-3 text-xs leading-relaxed text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <p className="academy-overview-footnote text-xs leading-relaxed">
             Ein geöffnetes Material oder ein besuchter Kurs gilt nicht automatisch als abgeschlossen. Ein Abschluss wird nur erfasst, wenn die dafür festgelegten Bedingungen tatsächlich erfüllt sind.
           </p>
         </section>
