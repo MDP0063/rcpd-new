@@ -472,3 +472,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN AUS SPEZIFIKATION ABGELEITET:** Die bereits definierte geteilte Desktop-Arbeitsfläche wird umgesetzt: Bewertung und Antwortinhalt im Hauptbereich, einklappbarer Kontext mit vorhandenen Vorgangsmetadaten daneben.
 - **BESCHLOSSEN AUS SPEZIFIKATION ABGELEITET:** Auf Tablet und Smartphone wird die Darstellung einspaltig; das Kontextpanel bleibt semantisch und per Tastatur bedienbar.
 - **SCHUTZGRENZE:** Keine neuen Daten, Status, Rechte oder Aktionen. Die Sichtbarkeit vertraulicher Antworten bleibt exakt an die bestehende Claim-Berechtigung gebunden.
+
+
+## 11.11.2026 – Ergebnisfreigabe und Korrekturarbeitsplatz
+
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Ergebnisfreigaben und Korrekturen werden als getrennte Aufgabenblöcke dargestellt; alte und neue Ergebnisstände sowie die Korrekturbegründung bleiben klar unterscheidbar.
+- **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Korrekturhistorie bleibt vollständig sichtbar und nachvollziehbar; Bestanden/Nicht bestanden behalten ihre Statusfarben.
+- **SCHUTZGRENZE:** Keine Änderung an Ergebnisfreigabe, erneuter Freigabe, Korrekturberechtigung, Historienfeldern, API oder Teilnehmerprojektion.
