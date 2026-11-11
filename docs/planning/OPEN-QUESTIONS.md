@@ -224,12 +224,11 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Bei jedem neuen Gesprächsschritt ist vor einer Rückfrage das Entscheidungsregister und die passende Detail-Spezifikation zu prüfen.
 
 
-### Nächster Abschlussabschnitt Lernbibliothek
-- Konkrete kontrollierte Kategorien- und Dokumenttypwerte anhand des tatsächlichen Materialbestands festlegen.
-- Materialcode-/Versionskennung und automatische Lesezeit mit realen Daten/technischer Machbarkeit abgleichen.
-- Technische PDF-Parser-, Scan-/Quarantäne- und Hostinglösung festlegen; OCR/Volltextindexierung separat entscheiden.
-- Manuelle Browserprüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
-- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen) und formale Markierung der Academy-Planung als abgeschlossen; keine automatische Implementierungsfreigabe.
+### Nächster Abschlussabschnitt Academy – Validierung und Abschluss
+- Gemeinsame manuelle Browser-/Live-Firestore-Prüfung der Materialprüfungs- und Kursreaktivierungsaktionen.
+- Examiner-Historienansicht und Action-Request-/Revisionsworkflow gemäß den bereits beschlossenen Regeln abschließen.
+- Danach abschließender Academy-Konsistenzcheck (Kurs ↔ Bibliothek ↔ Reader/Notizen ↔ Empfehlungen/Prüfungen ↔ Examiner) und formale Markierung der fachlichen/technischen Academy-Ausbaustufe als abgeschlossen; dies ist getrennt vom visuellen Redesign zu dokumentieren.
+- PDF-Parser-/Scan-/Quarantäne-/Hostinglösung und OCR bleiben bis zur ausdrücklich beschlossenen Wiederaufnahme der PDF-Infrastruktur zurückgestellt.
 
 
 ### Ergebnisfreigabe und Kursabschlussnachweis – Umsetzung nach Beschluss vom 10.11.2026
