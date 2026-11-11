@@ -515,11 +515,11 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 ### Erster implementierter Academy-Übersichts-Prototyp (11.11.2026)
 
 - Separater Code-Branch: `feat/academy-overview-visual-prototype`.
-- Draft-PR #160: https://github.com/MDP0063/rcpd-new/pull/160.
+- PR #160 wurde am 11.11.2026 gemergt: https://github.com/MDP0063/rcpd-new/pull/160.
 - `src/components/AcademyCenter.tsx`: bestehende interne Übersichtsstruktur und Texte beibehalten; scoped Klassen ergänzt und Stylesheet eingebunden.
 - Neu: `src/components/AcademyCenter.css` mit leicht getöntem blauem Hintergrund, begrenzten matten Wellenakzenten, lesbarer Hierarchie, drei bestehenden Inhaltskarten mit Bereichsakzenten, zurückhaltenden Hinweisen und responsiver horizontaler Hauptnavigation. Light-/Dark-Mode und Tastaturfokus wurden berücksichtigt.
 - Die fünfteilige Kachel-Startseite, globale Portalhülle, Inhalte, Statuslogik, Datenflüsse, Rechte und Funktionen wurden nicht geändert.
 - CI für Code-Commit `69393c2` erfolgreich: TypeScript-Prüfung, Produktionsbuild und Tests; PR-Vorlagenprüfung nach Ergänzung des erforderlichen Labels ebenfalls erfolgreich (Run #893).
 - Der optionale Render-Deploy-Hook wurde übersprungen. Kein Deployment, kein Merge.
 - Noch offen: echte Browser-/Responsive-Abnahme und Screenshots. CI-Erfolg ersetzt keine visuelle Prüfung.
-- PR #160 bleibt Draft bis zur visuellen Abnahme. Die Gestaltung ist ein erster Prototyp, kein finales Academy- oder Portaldesign.
+- PR #160 ist gemergt, aber die Gestaltung bleibt ein erster, noch nicht visuell abgenommener Prototyp und kein finales Academy- oder Portaldesign.
