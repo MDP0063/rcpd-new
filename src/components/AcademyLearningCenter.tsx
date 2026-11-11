@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import './AcademyLearningCenter.css';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { mapWithConcurrency } from '../lib/async';
 import { AcademyMaterialReader } from './AcademyMaterialReader';
@@ -418,7 +419,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${area === 'courses' ? 'academy-learning-center academy-learning-center--courses' : ''}`}>
       {area === 'courses' && (
         <>
           {screen !== 'catalog' && (
@@ -435,14 +436,15 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
             </button>
           )}
           {screen === 'catalog' && (
-            <div className="space-y-6">
-              <header className="space-y-1">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Programme und Kurse</h2>
+            <div className="academy-courses-catalog space-y-6">
+              <header className="academy-courses-heading space-y-2">
+                <p className="academy-courses-eyebrow">DEIN AUSBILDUNGSWEG</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Programme und Kurse</h2>
                 <p className={muted}>Programme geben Ausbildungsziele und erforderliche Lernschritte vor. Kurse können unabhängig davon direkt begonnen werden.</p>
               </header>
-              <label className="block space-y-1">
+              <label className="academy-courses-search block space-y-1">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Programme und Kurse durchsuchen</span>
-                <input className={field} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
+                <input className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
               </label>
               {loading ? <p className={muted} role="status">Programme und Kurse werden geladen …</p> : loadError ? (
                 <div className={`${panel} p-4 space-y-3`} role="alert">
@@ -451,7 +453,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 </div>
               ) : (
                 <>
-                  <section className="space-y-3">
+                  <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Ausbildungsprogramme</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredPrograms.length} Programme</span>
@@ -461,7 +463,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         {filteredPrograms.map(entry => {
                           const detail = programDetails.find(item => item.participation.programId === entry.master.id);
                           return (
-                            <article key={entry.master.id} className={`${panel} p-4 space-y-3`}>
+                            <article key={entry.master.id} className={`${panel} academy-program-card p-5 space-y-3`}>
                               <div className="flex justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Entwurf'}</p>
@@ -475,7 +477,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {detail ? statusLabel(detail.progress.status) : 'Noch keine Teilnahme'}
                                 {entry.version ? ` · ${entry.version.courseReferences.filter(item => item.requirement === 'required').length} Pflichtkurse` : ''}
                               </p>
-                              <button type="button" className={secondary} onClick={() => void openProgram(entry)}>Programm ansehen</button>
+                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openProgram(entry)}>Programm ansehen</button>
                             </article>
                           );
                         })}
@@ -483,25 +485,25 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                   </section>
 
-                  <section className="space-y-3">
+                  <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alle Kurse</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredCourses.length} Kurse</span>
                     </div>
                     {filteredCourses.length === 0 ? <p className={`${panel} p-4 ${muted}`}>Derzeit sind keine veröffentlichten Kurse verfügbar.</p> : (
-                      <div className={`${panel} divide-y divide-slate-200 dark:divide-slate-800`}>
+                      <div className={`${panel} academy-course-list divide-y divide-slate-200 dark:divide-slate-800`}>
                         {filteredCourses.map(entry => {
                           const participation = ownCourseParticipationByCourse.get(entry.master.id);
                           return (
-                            <div key={entry.master.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
+                            <div key={entry.master.id} className="academy-course-row flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
                               <div className="min-w-0">
                                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Keine Veröffentlichung'}</p>
                                 {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                 <h4 className="font-medium text-slate-900 dark:text-white">{entry.version?.title || entry.master.code}</h4>
                                 <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Kursversion.'}</p>
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
+                                <p className="academy-course-status mt-2 text-xs text-slate-600 dark:text-slate-300">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
                               </div>
-                              <button type="button" className={secondary} onClick={() => void openCourse(entry)}>Kurs ansehen</button>
+                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openCourse(entry)}>Kurs ansehen</button>
                             </div>
                           );
                         })}
@@ -554,7 +556,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
                             )}
-                            {requirement.type === 'required_assessment' && <p className="text-xs text-amber-700 dark:text-amber-300">Die Verknüpfung mit dem neuen Prüfungsnachweissystem ist noch nicht umgesetzt.</p>}
+                            {requirement.type === 'required_assessment' && <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird nach bestandener und offiziell freigegebener Abschlussprüfung automatisch berücksichtigt.</p>}
                             {['practical_task', 'instructor_confirmation'].includes(requirement.type) && !matching.length && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Nachweis muss von einem berechtigten Ausbilder erfasst werden.</p>
                             )}

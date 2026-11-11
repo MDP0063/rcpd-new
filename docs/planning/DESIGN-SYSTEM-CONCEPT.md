@@ -225,3 +225,14 @@ Auf Rückmeldung zur Browseransicht wurde die Gestaltung der variablen freien Fl
 - Dark Mode erhält eine entsprechend zurückhaltende dunkle Variante.
 
 Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, keine Festlegung des späteren globalen Portalhintergrunds. Die Umsetzung wurde in PR #162 gemergt. TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. Die Browserabnahme der neuen Außenfläche steht nach dem Deployment noch aus.
+
+
+## 14. Kursbereich – erster visueller Ausbau (11.11.2026)
+
+- Der Kursbereich übernimmt die gemeinsame Academy-Typografie, Abstandslogik, Karten- und Oberflächenbehandlung.
+- Der bestehende Bereichsakzent Petrol (#087F8C) wird als dezenter visueller Anker verwendet; er ersetzt nicht die gemeinsame blaue Academy-Grundsprache.
+- Der Katalog bleibt fachlich in zwei klar getrennte Gruppen gegliedert: Ausbildungsprogramme und alle Kurse. Programme erhalten eigenständige Karten; Kurse bleiben eine kompakte, gut scannbare Liste.
+- Suche bleibt der gemeinsame Einstieg für beide Gruppen. Es werden keine zusätzlichen Filter, Kennzahlen, Empfehlungen oder neuen Statusarten erfunden.
+- Status, Versionsnummern, Verfügbarkeit, Teilnahmefortschritt und Handlungsoptionen stammen weiterhin aus den vorhandenen Daten. Farben unterstützen die Orientierung, ersetzen aber keine Statusbeschriftung.
+- Kurs- und Programm-Detailansichten bleiben im selben Bereichssystem; die fünfteilige Academy-Kachel-Startseite und die horizontale Hauptnavigation werden nicht verändert.
+- Diese Gestaltung ist ein erster Code-Prototyp und wird anhand der Live-Browserdarstellung weiter geprüft. Sie ist keine Festlegung für das spätere globale Portaldesign.

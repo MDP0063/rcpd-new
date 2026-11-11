@@ -433,3 +433,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Dieser äußere Hintergrund unterscheidet sich bewusst von der blauen Wellenform innerhalb der Academy-Fläche: zurückhaltende, großflächige Farbverläufe bzw. diffuse Farbflächen statt einer zweiten Welle oder eines weiteren Motivs.
 - **BESCHLOSSEN:** Der Übergang zur bestehenden Academy-Fläche bleibt weich und kontrastarm. Die innere Wellenform, die Inhaltsfläche und ihre bisherige Gestaltung werden nicht ersetzt.
 - **GELTUNGSBEREICH:** Nur wenn die Academy geöffnet ist. Die globale Portalhülle und die Hintergründe anderer Portalbereiche bleiben unverändert. Die Academy-Inhaltsbreite bleibt auf dem bisherigen Maß begrenzt; nur der äußere Viewport-Hintergrund nutzt die verfügbare Breite.
+
+
+## 11.11.2026 – Kursbereich: visuelle Ausarbeitung
+
+- **BESCHLOSSEN:** Der Kursbereich verwendet die gemeinsame Academy-Designsprache und den bereits festgelegten Petrol-Akzent #087F8C als zurückhaltende Bereichsfarbe.
+- **BESCHLOSSEN:** Die vorhandene inhaltliche Trennung bleibt sichtbar: Ausbildungsprogramme als eigenständige Karten, alle Kurse als kompakte Liste. Die gemeinsame Suche bleibt übergeordnet.
+- **BESCHLOSSEN:** Bestehende Status-, Versions-, Verfügbarkeits- und Fortschrittsinformationen werden ausschließlich aus den vorhandenen Daten angezeigt. Keine künstlichen Kennzahlen, neuen Status oder zusätzlichen Einstiegspunkte.
+- **SCHUTZGRENZE:** Die Kachel-Startseite, horizontale Academy-Navigation, Verwaltungsoberfläche, API-/Berechtigungslogik, Datenmodelle und Kurs-/Prüfungsnachweise bleiben von der visuellen Ausarbeitung unberührt.

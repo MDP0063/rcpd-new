@@ -532,3 +532,13 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 - Äußerer Hintergrund: sehr helle kühle Grundtönung mit zwei diffusen, niedrig kontrastierten Farbverläufen; ausdrücklich keine zweite Welle/Illustration. Dark-Mode-Variante vorhanden.
 - Bestehende innere Wellenform, Kachel-Startseite, globale Portalhülle außerhalb der Academy, Inhalte, Daten, Funktionen und Rechte bleiben unverändert.
 - Die konkrete Umsetzung wurde über PR #162 am 11.11.2026 gemergt (Merge-Commit `dddb79b9e488e53181a7b916c5c2171df3d225c7`). Browserabnahme auf dem breiten Desktop und einem schmalen Viewport steht nach Deployment weiterhin aus.
+
+
+## 11.11.2026 – Kursbereich: erster visueller Ausbau (PR in Vorbereitung)
+
+- Ausgangscode geprüft: AcademyLearningCenter.tsx enthält bereits einen gemeinsamen Katalog mit getrennter Darstellung von Ausbildungsprogrammen und allen Kursen, gemeinsame Suche, persönliche Kursstatus sowie echte Programmfortschrittswerte. Die Detailansichten und Aktionen bleiben fachlich unverändert.
+- Gestaltung umgesetzt: ruhige Kursbereichsüberschrift mit kleinem Petrol-Akzent, klarer Suchfläche, eigenständigen Programm-Karten und kompakter Kursliste. Der Bereichsakzent Petrol ergänzt die Academy-Grundsprache, ohne eine neue Navigationsebene einzuführen.
+- Mobile Bedienung, Tastaturfokus, Dark Mode und Reduced Motion werden berücksichtigt. Es kommen keine externen Assets, Abhängigkeiten oder kostenpflichtigen Dienste hinzu.
+- Korrektur eines veralteten UI-Hinweises: Im Kursdetail behauptete ein statischer Warntext, die Verknüpfung mit dem neuen Prüfungsnachweissystem sei noch nicht umgesetzt. Die vorhandene Teilnehmeransicht wertet assessmentProofs bereits aus und markiert den Nachweis dynamisch; der Warntext widersprach daher dem implementierten Stand. Er wurde durch eine sachlich korrekte Erläuterung der automatischen Berücksichtigung nach bestandener und offiziell freigegebener Abschlussprüfung ersetzt.
+- Unverändert: Kurs-/Programmstatus, Versionierung, Nachweislogik, API-Aufrufe, Berechtigungen, Datenmodell, Reader, Notizen, Verwaltungsansicht und die Academy-Kachel-Startseite.
+- CI und PR-Vorlagenprüfung stehen aus. Die Browserabnahme auf Desktop, Tablet und Smartphone steht nach Deployment aus.
