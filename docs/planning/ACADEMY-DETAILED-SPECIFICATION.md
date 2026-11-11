@@ -1370,7 +1370,7 @@ Jede Kachel besitzt genau drei Bestandteile: eine Illustration, einen Titel und 
 
 ### Einheitlicher Illustrationsstil
 
-Alle fünf Motive sind eigens erstellte, lokale SVG-Piktogramme. Sie verwenden eine gemeinsame Zeichenfläche von 128 × 128 Einheiten und werden in gleicher sichtbarer Größe und optischer Gewichtung eingesetzt.
+Alle fünf Motive sind eigens erstellte, lokale SVG-Piktogramme. Sie verwenden eine gemeinsame Zeichenfläche von 128 × 128 Einheiten und werden in gleicher sichtbarer Größe und optischer Gewichtung eingesetzt. Die sichtbare Motivfläche soll als Richtwert etwa 70–78 % der Zeichenfläche ausfüllen; die Skalierung wird motivabhängig optisch zentriert, damit unterschiedlich proportionierte Symbole gleichwertig wirken.
 
 Verbindliche Stilregeln:
 - schlicht, flächig, geometrisch und ruhig;
