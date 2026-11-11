@@ -1402,3 +1402,15 @@ Nach dem Öffnen eines Bereichs wird die horizontale Hauptnavigation direkt unte
 Die Vermeidung doppelter Einstiegspunkte folgt dem Grundsatz, dass dieselbe Aktion auf derselben Ansicht nicht über mehrere gleichwertige Bedienelemente angeboten werden soll, wenn dadurch zusätzliche Fokusziele und Unklarheit entstehen. Kacheln eignen sich als visuelle Hub-Navigation für eine Einstiegsseite; die horizontale Hauptnavigation eignet sich für den Wechsel zwischen eigenständigen Bereichsansichten. Diese Muster werden kontextuell getrennt eingesetzt.
 
 Jede weitere relevante UI-Entscheidung muss vor der Empfehlung anhand etablierter professioneller Lernplattformen, Websites und anerkannter Designsysteme recherchiert werden. Die Entscheidungsvorlage soll konkrete Muster und Quellen, Vor- und Nachteile sowie die Übertragbarkeit auf die RCPD Academy erklären. Bereits beschlossene Fachlogik und Navigation werden dabei nicht erneut geöffnet.
+
+
+### Verbindliches Kachel-Grundmuster
+
+Für alle fünf Bereichskacheln der Academy-Einstiegsseite gilt ein einheitliches, bewusst reduziertes Muster mit genau drei Bestandteilen:
+- **Symbol:** ein gut erkennbares, zum Bereich passendes Symbol.
+- **Titel:** der eindeutige Name des Bereichs.
+- **Kurzbeschreibung:** ein kurzer, selbsterklärender Satz, der erklärt, was Nutzer dort finden oder erledigen können.
+
+Die gesamte Kachel ist der einzige primäre Einstiegspunkt in den jeweiligen Bereich. Im Grundentwurf gibt es innerhalb der Kachel keine zusätzlichen Aktionsbuttons, Status-Badges, Kennzahlen oder Fortschrittsbalken. Die Kacheln sollen auf einen Blick verständlich sein und nicht mit Zusatzinformationen überladen werden.
+
+Die Flächen sind groß, farbig und klar voneinander unterscheidbar; die Farbpalette bleibt harmonisch und professionell. Symbole, Titel und Beschreibungen unterstützen die Orientierung auch für jüngere Nutzer, ohne kindliche Illustrationen oder eine ausschließlich auf eine Altersgruppe zugeschnittene Gestaltung. Die konkrete visuelle Ausarbeitung (Farben, Typografie, Größen, Abstände, responsive Anordnung und Interaktionszustände) bleibt Gegenstand der weiteren Recherche und Abstimmung.
