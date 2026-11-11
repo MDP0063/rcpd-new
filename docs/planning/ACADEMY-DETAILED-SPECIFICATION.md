@@ -1371,3 +1371,34 @@ Die Recherche ist kein Selbstzweck: Es werden passende, hochwertige Quellen verw
 - ONS empfiehlt, mobile Nutzung gesondert zu berücksichtigen und Tab-Leisten nicht in mehrere Zeilen umbrechen zu lassen.
 
 Daraus folgt für die Academy: Die fünf Hauptbereiche werden als semantisch korrekte, tastaturbedienbare Navigationslinks umgesetzt. Sie erhalten eine eindeutige aktuelle Zustandsmarkierung. Die konkrete mobile Präsentation und das visuelle Styling bleiben Teil der weiteren Recherche und Gestaltung.
+
+## Academy UI-Redesign – Einstiegsseite, Kacheln und eindeutige Navigation (11.11.2026)
+
+### Beschlossene Seiten- und Navigationslogik
+
+Die Academy-Einstiegsseite ist eine visuelle Bereichsübersicht. Sie zeigt die fünf festgelegten Academy-Bereiche als große, farbige Kacheln:
+1. Übersicht
+2. Kurse
+3. Lernbibliothek
+4. Prüfungen
+5. Meine Notizen
+
+Die Kacheln sind auf der Einstiegsseite die einzigen primären Einstiegspunkte zu diesen fünf Zielen. Auf derselben Ansicht wird keine zusätzliche horizontale Navigation mit denselben fünf Zielen angezeigt. Dadurch werden doppelte Einstiegsmöglichkeiten und konkurrierende Navigationsmuster vermieden.
+
+Nach dem Öffnen eines Bereichs wird die horizontale Hauptnavigation direkt unter dem Academy-Kopfbereich angezeigt. Sie ermöglicht den Wechsel zwischen den fünf eigenständigen Bereichsansichten. Die Kacheln der Einstiegsseite und die Navigation innerhalb der Bereiche erfüllen damit unterschiedliche, kontextbezogene Aufgaben und erscheinen nicht als doppelte Steuerung auf derselben Ansicht.
+
+### Gestaltungsanforderungen
+
+- Große, farbige und klar unterscheidbare Kacheln; harmonierende, professionelle Farbpalette.
+- Eindeutige, verständliche Titel und passende Symbole.
+- Kurze Beschreibungen, die erklären, was Nutzer im jeweiligen Bereich tun oder finden können.
+- Professioneller, institutioneller Charakter; keine kindlichen Illustrationen, Spieloptik oder übermäßig verspielte Gestaltung.
+- Verständlichkeit auch für jüngere Nutzer ohne die Oberfläche ausschließlich auf eine Altersgruppe zuzuschneiden.
+- Keine künstlichen Kennzahlen oder Fortschrittswerte. Zusätzliche Status-/Aufgabeninformationen auf der Einstiegsseite sind noch nicht beschlossen.
+- Mobile Kachel-Anordnung, konkrete Farbwerte, Typografie, Größen, Hover-/Fokus-/Aktivzustände und mögliche ergänzende Elemente bleiben offen und müssen recherchiert und separat abgestimmt werden.
+
+### UX-Begründung und Rechercheprinzip
+
+Die Vermeidung doppelter Einstiegspunkte folgt dem Grundsatz, dass dieselbe Aktion auf derselben Ansicht nicht über mehrere gleichwertige Bedienelemente angeboten werden soll, wenn dadurch zusätzliche Fokusziele und Unklarheit entstehen. Kacheln eignen sich als visuelle Hub-Navigation für eine Einstiegsseite; die horizontale Hauptnavigation eignet sich für den Wechsel zwischen eigenständigen Bereichsansichten. Diese Muster werden kontextuell getrennt eingesetzt.
+
+Jede weitere relevante UI-Entscheidung muss vor der Empfehlung anhand etablierter professioneller Lernplattformen, Websites und anerkannter Designsysteme recherchiert werden. Die Entscheidungsvorlage soll konkrete Muster und Quellen, Vor- und Nachteile sowie die Übertragbarkeit auf die RCPD Academy erklären. Bereits beschlossene Fachlogik und Navigation werden dabei nicht erneut geöffnet.
