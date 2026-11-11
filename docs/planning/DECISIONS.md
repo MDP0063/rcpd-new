@@ -537,7 +537,7 @@ Der Nutzer hat **Variante B – neutrale Basis mit Bereichsfarbakzent** ausdrüc
 - Der Akzent wird gegenüber der kräftigen Kachelgrundfarbe visuell zurückgenommen. Er stellt eine erkennbare Verbindung zum Bereich her, darf aber nicht mit der Kacheloberfläche konkurrieren.
 - Dunkle Konturen/Details und neutrale Füllflächen bleiben über alle fünf Illustrationen konsistent.
 - Pro Illustration sind höchstens drei bis vier bewusst eingesetzte Farben vorgesehen. Die genaue neutrale Palette und die konkreten Akzentabstufungen werden im visuellen Entwurf festgelegt.
-- Die SVGs bleiben matt, geometrisch, reduziert und frei von künstlichen Glanzreflexen, dekorativen Schatten und überladenen 3D-Effekten.
+- Die SVGs bleiben geometrisch und reduziert. Die frühere Vorgabe einer vollständig flachen, rein matten Darstellung ohne Schatten/3D wird durch die spätere Entscheidung für eine dezente räumliche Wirkung präzisiert; künstlicher Glanz und überladene 3D-Effekte bleiben ausgeschlossen.
 
 Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen. Motive, Geometrie, Strichstärke, Proportionen und Detailtiefe müssen weiterhin ein kohärentes Set bilden. Die kräftigen Kachelfarben und ihre Zuordnung bleiben unverändert.
 
@@ -546,14 +546,14 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Nutzer hat die Gestaltungsrichtung **B – leicht überlagerte Bestandteile** bestätigt: Die räumliche Wirkung entsteht aus den jeweiligen Gegenständen selbst (z. B. versetzte Dashboard-Karten, leicht gestaffelte Buchseiten oder Dokumente), nicht aus zusätzlichen dekorativen Hintergrundformen.
 - Die Überlagerung bleibt zurückhaltend: wenige klar erkennbare Ebenen, nur teilweise sichtbare hintere Bestandteile und keine unnötige Detailfülle. Das Hauptmotiv muss auf der kleinen Kachelgröße sofort lesbar bleiben.
 - **Harmonisierungsvorbehalt:** Die Illustrationen müssen als Teil der gesamten Academy-Kachel und des späteren Portal-Designsystems funktionieren. Sie dürfen weder mit der kräftigen Kachelgrundfarbe und deren weicher weißer Reflexion noch mit Titel/Beschreibung konkurrieren. Neutrale matte Grundflächen und der bereits beschlossene dezente Bereichsfarbakzent bleiben maßgeblich.
-- Keine künstlichen Schatten, Glanzreflexe, Transparenz-Spielereien oder ausgeprägten 3D-Effekte innerhalb der SVGs. Die konkrete Stärke der Überlagerung wird im Zusammenhang mit den echten Kacheln, Größen, Texten, Kontrasten und responsiven Ansichten prototypisch geprüft und bei Bedarf zurückgenommen.
+- Keine künstlichen Glanzreflexe, Transparenz-Spielereien oder ausgeprägten 3D-Effekte. Eine dezente, gegenstandsbezogene Schattierung und leichte räumliche Hervorhebung sind nach der späteren Präzisierung ausdrücklich erwünscht; die konkrete Stärke wird am Kachelprototyp geprüft.
 - Die Entscheidung legt die gemeinsame Illustrationssprache fest, nicht die endgültige Komposition jedes einzelnen Motivs. Motive und Detailausarbeitung müssen weiterhin als kohärentes Fünfer-Set gestaltet werden.
 
 
 ## Academy-SVG-Illustrationen – frontale Perspektive (11.11.2026)
 
 - Nutzer hat **Variante A – frontale/gerade Ansicht** als gemeinsamen Perspektivstandard für alle fünf Academy-Illustrationen bestätigt.
-- Die Motive werden grundsätzlich frontal und ohne isometrische oder schräge 3D-Perspektive dargestellt. Die bereits beschlossene dezente räumliche Wirkung entsteht ausschließlich durch leicht versetzte bzw. teilweise überlagerte Bestandteile des jeweiligen Gegenstands.
+- Die Motive behalten grundsätzlich eine überwiegend frontale, leicht erfassbare Ausrichtung. Eine dezente räumliche Wirkung durch flache Seitenflächen, leichte Versätze und sanfte Schattierung ist nun ausdrücklich erwünscht; ausgeprägte isometrische oder stark schräge Perspektiven bleiben ausgeschlossen.
 - Blickrichtung, geometrische Formsprache, Proportionen und Ausrichtung müssen über alle fünf Illustrationen konsistent bleiben.
 - Die frontale Darstellung ist zusammen mit den kräftigen, leicht glänzenden Kacheloberflächen zu beurteilen: Die SVGs bleiben matt und visuell zurückhaltend; die Kacheloberfläche liefert die visuelle Präsenz. Die endgültigen Größen und Abstände werden im realen responsiven Kachelprototyp geprüft.
 - Diese Entscheidung ändert weder Motive/Bereichszuordnung noch Farbpalette, Kachelstruktur oder fachliche Funktionen.
@@ -565,7 +565,7 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Die Gegenstände werden überwiegend durch ruhige, matte und neutrale Füllflächen aufgebaut. Dunkle Konturen und gezielte Details definieren die Formen und sichern die Erkennbarkeit.
 - Die jeweilige Bereichsfarbe wird nur als zurückhaltender, gezielter Akzent eingesetzt; sie soll die kräftige Kachelgrundfarbe nicht großflächig wiederholen.
 - Es gelten weiterhin höchstens drei bis vier bewusst eingesetzte Farben pro Illustration, eine konsistente Konturwirkung und eine einheitliche geometrische Formsprache.
-- Keine Glanzreflexe, künstlichen Schatten, Transparenz-Spielereien oder 3D-Effekte innerhalb der SVGs. Der dezente Glanz bleibt ausschließlich Bestandteil der Kacheloberfläche.
+- Die SVGs dürfen eine dezente räumliche Hervorhebung mit sanfter Schattierung und leichten Seitenflächen erhalten. Künstliche Glanzreflexe, Transparenz-Spielereien, starke Schatten und überladene 3D-Effekte bleiben ausgeschlossen. Der Glanz der Kacheloberfläche bleibt davon getrennt.
 - Die hellen neutralen Flächen und Konturen müssen auf allen fünf kräftigen Kachelfarben ausreichend klar und harmonisch wirken. Kontrast, Detailgröße und Lesbarkeit werden im echten Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft.
 - Diese Entscheidung ergänzt die bereits beschlossene frontale Perspektive und dezente gegenstandsbezogene Überlagerung. Sie verändert weder Motive/Bereichszuordnung noch Kachelstruktur oder fachliche Funktionen.
 
@@ -604,11 +604,21 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 
 ## 2026-11-11 – Lernbibliothek-Motiv und Präzisierung der gemeinsamen SVG-Formensprache
 
-- **BESCHLOSSEN – Variante A:** Die Academy-Kachel „Lernbibliothek“ erhält ein kleines, schlichtes Bücherregal mit zwei bis drei aufrecht stehenden Büchern. Die klare Regal-Silhouette grenzt das Motiv von Wegweiser und Abschlusskappe ab.
-- **BESCHLOSSEN:** Das Bücherregal wird in derselben Illustrationsfamilie wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“ gestaltet. Es entsteht kein eigener Illustrationsstil für die Bibliothek.
+- **BESCHLOSSEN – Variante A:** Die Academy-Kachel „Lernbibliothek“ erhält drei klassische Bücher als eigenständiges Motiv, nicht ein Bücherregal. Die Bücher stehen als kleine Gruppe nebeneinander; eines ist leicht schräg geneigt. Die Silhouette grenzt das Motiv von Wegweiser und Abschlusskappe ab.
+- **BESCHLOSSEN:** Die drei Bücher werden in derselben Illustrationsfamilie wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“ gestaltet. Es entsteht kein eigener Illustrationsstil für die Bibliothek.
 - **BESCHLOSSEN – Präzisierung der gemeinsamen Formensprache für alle fünf Motive:** Die bisherige Richtung „weich und stärker abgerundet“ wird konkretisiert: Die Illustrationen sollen schlichter und geometrischer wirken, weniger kurvig und weniger verspielt. Formen dürfen weiterhin leicht abgerundete Ecken und Übergänge haben, sollen aber klarer und ruhiger aufgebaut sein.
 - **BESCHLOSSEN:** Die dunklen Konturen werden etwas kräftiger und über alle fünf Illustrationen hinweg einheitlich ausgeführt. Das Konturgewicht muss bei kleiner Kachelgröße klar erkennbar bleiben.
 - **BESCHLOSSEN:** Die Motive werden weiter auf wenige prägnante Grundformen und notwendige Erkennungsdetails reduziert. Keine zusätzlichen dekorativen Kurven oder Kleinteile.
 - Die Präzisierung gilt rückwirkend gleichermaßen für Wegweiser und Abschlusskappe und verbindlich für Bücherregal sowie die beiden noch offenen Motive. Die bisher beschlossene frontale Perspektive, neutralen matten Füllflächen, dezenten Bereichsfarbakzente, sparsame gegenstandsbezogene Überlagerung und klare Motivunterscheidung bleiben bestehen.
 - Exakte Strichstärke, Rundungsradien und Proportionen werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und an allen fünf SVGs konsistent angewendet.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Räumlichere Illustrationswirkung und klassisches Büchermotiv
+
+- **BESCHLOSSEN:** Die fünf Academy-SVGs sollen wieder etwas stärker räumlich wirken und leicht hervorgehoben erscheinen. Gewünscht ist eine dezente, kontrollierte 3D-Anmutung statt rein flacher Piktogramme.
+- Die räumliche Wirkung entsteht durch flache sichtbare Seitenflächen, leichte Versätze/Überlagerungen und sanfte, zurückhaltende Schattierung. Die Grundausrichtung bleibt überwiegend frontal und gut lesbar.
+- Die bereits beschlossenen klaren, etwas kräftigeren Konturen, geometrischen Grundformen, reduzierte Detaildichte, neutralen Füllflächen und dezenten Bereichsfarbakzente bleiben erhalten. Die leichte Rundung bleibt zurückhaltend.
+- **Nicht gewünscht:** starke/isometrische Perspektive, übertriebene Tiefe, glänzender Plastik-Look, harte oder große Schlagschatten, künstliche Glanzreflexe und dekorative 3D-Effekte.
+- **BESCHLOSSEN – Korrektur des Lernbibliothek-Motivs:** Das zuvor festgelegte Bücherregal wird verworfen. Stattdessen zeigt die Kachel drei klassische Bücher als Gruppe; eines davon ist leicht schräg geneigt. Keine Regalstruktur. Das Motiv erhält dieselbe dezente räumliche Wirkung wie die übrigen Academy-Illustrationen und einen zurückhaltenden violetten Akzent.
+- Die räumlichere Stilpräzisierung gilt rückwirkend für Wegweiser und Abschlusskappe sowie für alle noch offenen Motive. Exakte Seitenflächen, Schattierung und Tiefenwirkung werden bei der gemeinsamen Ausarbeitung aller fünf SVGs aufeinander abgestimmt.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
