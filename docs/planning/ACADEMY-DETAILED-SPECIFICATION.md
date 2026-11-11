@@ -1415,49 +1415,20 @@ Die gesamte Kachel ist der einzige primäre Einstiegspunkt in den jeweiligen Ber
 
 Die Flächen sind groß, farbig und klar voneinander unterscheidbar; die Farbpalette bleibt harmonisch und professionell. Symbole, Titel und Beschreibungen unterstützen die Orientierung auch für jüngere Nutzer, ohne kindliche Illustrationen oder eine ausschließlich auf eine Altersgruppe zugeschnittene Gestaltung. Die konkrete visuelle Ausarbeitung (Farben, Typografie, Größen, Abstände, responsive Anordnung und Interaktionszustände) bleibt Gegenstand der weiteren Recherche und Abstimmung.
 
-### Beschlossenes Farbkonzept der fünf Bereichskacheln (11.11.2026)
+### Früheres Farbkonzept der fünf Bereichskacheln (11.11.2026, ÜBERHOLT)
 
-Gewählt wurde **Option A: helle, farbige Flächen mit kräftigeren Akzenten**.
+Die frühere Variante mit hellen Flächen und kräftigeren Symbolakzenten ist durch die später beschlossene satte, einfarbige und leicht glänzende Kacheloberfläche ersetzt. Historisch bleiben die Grundsätze gültig, dass die fünf Farben harmonisch und klar unterscheidbar sein sollen, keine Statusbedeutung tragen und Textkontraste nach WCAG geprüft werden.
 
-- Jede Kachel erhält eine eigene helle Farbfläche aus einer gemeinsamen, harmonischen Palette.
-- Das Symbol kann in einer kräftigeren Akzentfarbe derselben Farbfamilie erscheinen.
-- Titel und Kurzbeschreibung bleiben dunkel und gut lesbar.
-- Die fünf Farben unterscheiden die Bereiche visuell, signalisieren aber keine fachlichen Zustände. Insbesondere dürfen sie nicht mit den portalweit einheitlichen Bedeutungen von Erfolg, Warnung oder Fehler verwechselt werden.
-- Die Gesamtwirkung bleibt professionell, ruhig und institutionell; grelle/neonartige oder spielerisch überladene Farben werden vermieden.
+Aktueller verbindlicher Stand: siehe „Academy-Einstiegskacheln – aktualisierte Farb-, Oberflächen- und Interaktionsrichtung“ am Ende dieses Dokuments.
 
-Die konkreten Farbtöne, Kontrastmessungen und Zuordnungen zu den fünf Bereichen sind noch offen und werden später im gemeinsamen Designsystem festgelegt. Bei der Umsetzung sind die einschlägigen Kontrastanforderungen der WCAG zu prüfen.
-
-**Recherchegrundlage:** Khan Academy Wonder Blocks (systematische Farbrollen und zugängliche Farbpaletten: https://wonder-blocks.khanacademy.org/); Duolingo Design/Navigation (visuelle Konsistenz über Bereiche hinweg); W3C WCAG 2.2 (Farbe nicht als einziges Bedeutungsmittel; Kontrastanforderungen: https://www.w3.org/TR/WCAG22/).
-
-### Beschlossener Icon-Stil der Bereichskacheln (11.11.2026)
-
-Für die fünf Academy-Kacheln wird ein einheitlicher **Outline-Icon-Stil** verwendet.
-
-Gestaltungsregeln:
-- Schlichte, unmittelbar erkennbare Symbole ohne unnötige Details.
-- Keine sehr dünnen Konturlinien; die Strichstärke muss auch bei kleineren Darstellungen gut wahrnehmbar bleiben.
-- Einheitliche Strichstärke, Proportionen und optische Größe innerhalb der Kachelgruppe.
-- Farblich passend zu den hellen Kachelhintergründen; kräftigere Akzentvarianten aus derselben Farbfamilie sind möglich.
-- Keine Mischung aus Outline-Icons, gefüllten Icons, Emojis oder Illustrationen innerhalb der Kachelgruppe.
-- Das Icon unterstützt die Orientierung, ersetzt aber nicht den eindeutigen Titel und die selbsterklärende Kurzbeschreibung.
-
-Die konkrete Icon-Bibliothek und die Zuordnung einzelner Symbole zu Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen werden später im Designsystem festgelegt. Dabei sind ausreichende optische Größe, Kontrast und Erkennbarkeit zu prüfen.
-
-**Recherchebezug:** Canvas/Instructure und Moodle zeigen den Nutzen wiederverwendbarer, konsistenter Icon-Systeme; Khan Academy und Duolingo verdeutlichen die Bedeutung einfacher, schnell erfassbarer visueller Formen. Die Symbole werden nicht als alleinige Informationsträger eingesetzt.
+**Weiterhin gültige Recherchegrundlage:** Khan Academy Wonder Blocks (systematische Farbrollen und zugängliche Farbpaletten: https://wonder-blocks.khanacademy.org/); Duolingo Design/Navigation (visuelle Konsistenz über Bereiche hinweg); W3C WCAG 2.2 (Farbe nicht als einziges Bedeutungsmittel; Kontrastanforderungen: https://www.w3.org/TR/WCAG22/).
 
 
-### Beschlossene Icon-Bibliothek und Symbole (11.11.2026)
+### Frühere Icon-Festlegungen (11.11.2026, ÜBERHOLT)
 
-Als Icon-Bibliothek für die Academy-Bereichskacheln wird **Lucide mit `lucide-react`** verwendet. Die Abhängigkeit ist bereits in `package.json` vorhanden; es wird keine zusätzliche Icon-Bibliothek benötigt.
+Die frühere Festlegung auf Outline-Icons und die Lucide-Kandidaten (layout-dashboard, graduation-cap, library/book-open, clipboard-check, notebook-pen) werden nicht als Kachelvisuals umgesetzt. Sie wurden durch fünf individuelle, zusammengehörige geometrische SVG-Illustrationen ersetzt. lucide-react bleibt im Projekt verfügbar und kann außerhalb dieser fünf Kachelvisuals weiterhin verwendet werden.
 
-Die bestätigten Symbolzuordnungen lauten:
-- **Übersicht:** `layout-dashboard`
-- **Kurse:** `graduation-cap`
-- **Lernbibliothek:** `library` oder `book-open` – beide wurden als passende Kandidaten akzeptiert; die finale Wahl zwischen ihnen bleibt offen.
-- **Prüfungen:** `clipboard-check`
-- **Meine Notizen:** `notebook-pen`
-
-Die Symbole folgen weiterhin dem beschlossenen Outline-Stil mit ausreichend kräftigen Konturen. Einheitliche Strichstärke, Proportionen, optische Größe und farbliche Abstimmung mit den hellen Kachelflächen bleiben verbindliche Anforderungen. Die exakten Größen-/Strichstärken-Tokens werden später im Designsystem festgelegt.
+Weiterhin gültig sind die Qualitätsprinzipien: klare Erkennbarkeit, einheitliche Proportionen, kontrollierte Detailtiefe und die ergänzende Rolle gegenüber Titel und Kurzbeschreibung.
 
 
 ### Anordnung der Symbole innerhalb der fünf Einstiegskacheln (11.11.2026)
@@ -1501,7 +1472,7 @@ Die fünf Bereichskacheln verwenden eine ruhige, reduzierte und geometrische Ill
 
 ### Visuelle Leitlinien
 
-- Zurückhaltende, harmonische Farbflächen, passend zu den bereits beschlossenen hellen Kachelhintergründen.
+- Die Illustrationen selbst verwenden zurückhaltende, harmonische Farbflächen und werden auf die kräftigeren, satten und einfarbigen Kachelhintergründe abgestimmt.
 - Dezente Überlagerungen und allenfalls leichte räumliche Wirkung; kein ausgeprägter 3D-Look.
 - Wenige, bewusst gewählte Details. Die Darstellung bleibt auch in kleiner Größe verständlich.
 - Einheitliche Geometrie, Proportionen und Detailtiefe über alle fünf Illustrationen; falls Konturen verwendet werden, einheitliche Strichstärke.
@@ -1511,7 +1482,7 @@ Die fünf Bereichskacheln verwenden eine ruhige, reduzierte und geometrische Ill
 
 ### Unverändert geltende Kachelentscheidungen
 
-Die bereits beschlossene Kachelstruktur bleibt erhalten: Illustration oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Ebenso bleiben die fünf Bereiche, die alleinige Kachel-Navigation auf der Academy-Einstiegsseite, die helle harmonische Farbpalette, die ausgewogenen Abstände und die dezente mittlere Eckenrundung unverändert.
+Die bereits beschlossene Kachelstruktur bleibt erhalten: Illustration oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Ebenso bleiben die fünf Bereiche, die alleinige Kachel-Navigation auf der Academy-Einstiegsseite, die nun beschlossene satte einfarbige Farbpalette mit weißer Lichtreflexion, die ausgewogenen Abstände und die dezente mittlere Eckenrundung unverändert.
 
 Die konkrete Ausarbeitung, Größenabstimmung und responsive Prüfung erfolgen später im Designsystem und Prototyp. Diese Stilentscheidung verändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Interaktionen.
 
