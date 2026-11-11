@@ -389,7 +389,7 @@ Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffne
 
 Noch nicht entschieden sind:
 - entfällt: Kriterien für eine tatsächlich neue unabhängige Empfehlung (am 11.11.2026 beschlossen; siehe Entscheidungsregister);
-- Ablauf, Rückzug oder Ungültigkeit, wenn ein Kurs nicht mehr verfügbar oder fachlich veraltet ist;
+- entfällt: Ablauf/Rückzug bei nicht verfügbaren oder fachlich veralteten Inhalten (am 11.11.2026 beschlossen; siehe Regelung unterhalb).
 - Fristen und Erinnerungen;
 - entfällt: Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie (am 11.11.2026 beschlossen; beide Historien sind fachlich getrennt).
 - Verhalten bei manueller Zurücknahme einer Empfehlung.
@@ -401,6 +401,9 @@ Diese Punkte dürfen nicht stillschweigend als bereits beschlossen behandelt wer
 
 
 **Nichtverfügbarkeit und Veraltung – beschlossen am 11.11.2026:** Vorübergehende Nichtverfügbarkeit ändert den fachlichen Status nicht in „erledigt“. Die Empfehlung bleibt historisch erhalten und wird in der aktiven Übersicht mit einem verständlichen Hinweis gezeigt, sofern sie dort weiterhin sinnvoll ist; nach Wiederverfügbarkeit ist die normale Bearbeitung möglich. Bei fachlicher Veraltung oder dauerhaftem Rückzug wird sie zurückgenommen und aus der aktiven Übersicht entfernt. Grund und Historie bleiben erhalten. Ein offiziell zugeordneter Nachfolger darf nur mit nachvollziehbarer fachlicher Zuordnung als neue Empfehlung verknüpft werden.
+
+
+**Manuelle Zurücknahme – beschlossen am 11.11.2026:** Die Person, die eine manuelle Empfehlung erstellt hat, darf sie zurücknehmen; Admins dürfen jede manuelle Empfehlung zurücknehmen. Automatische Empfehlungen enden oder werden grundsätzlich durch ihre fachlichen Regeln zurückgenommen. Admins dürfen automatische Empfehlungen ausnahmsweise manuell zurücknehmen, müssen dafür einen Grund angeben. In allen Fällen wird die Empfehlung aus der aktiven Liste entfernt und bleibt mit Urheber/Herkunft, Zeitpunkt und Zurücknahmegrund historisch nachvollziehbar. Die Zurücknahme ist vom persönlichen Ausblenden durch den Teilnehmer getrennt.
 
 ## 9. Kursmeldungen und Benachrichtigungen
 
