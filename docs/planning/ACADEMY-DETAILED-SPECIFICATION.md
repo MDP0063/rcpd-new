@@ -1458,3 +1458,19 @@ Die bestätigten Symbolzuordnungen lauten:
 - **Meine Notizen:** `notebook-pen`
 
 Die Symbole folgen weiterhin dem beschlossenen Outline-Stil mit ausreichend kräftigen Konturen. Einheitliche Strichstärke, Proportionen, optische Größe und farbliche Abstimmung mit den hellen Kachelflächen bleiben verbindliche Anforderungen. Die exakten Größen-/Strichstärken-Tokens werden später im Designsystem festgelegt.
+
+
+### Anordnung der Symbole innerhalb der fünf Einstiegskacheln (11.11.2026)
+
+Beschlossen ist **Variante A: Symbol oben, Titel und Kurzbeschreibung darunter**.
+
+Alle fünf Kacheln verwenden dasselbe vertikale Grundmuster:
+1. Symbol im oberen Bereich der Kachel.
+2. Bereichstitel darunter.
+3. Kurze selbsterklärende Beschreibung anschließend.
+
+Titel und Beschreibung werden linksbündig ausgerichtet. Die Reihenfolge und Ausrichtung sind über alle fünf Kacheln konsistent. Das Symbol bleibt ein unterstützendes Orientierungselement; Titel und Beschreibung vermitteln weiterhin die eigentliche Bedeutung.
+
+Als vorläufige Größenrichtwerte gelten 48 px auf Desktop, 44–48 px auf Tablet und 40 px auf Smartphones. Diese Werte sind noch keine finalen Design-Tokens. Sie werden im späteren responsiven Prototyp anhand realer Kachelgrößen, Abstände, optischer Balance und Erkennbarkeit überprüft und gegebenenfalls angepasst.
+
+Diese Festlegung verändert keine fachlichen Inhalte, Navigationsziele oder Interaktionen.
