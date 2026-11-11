@@ -468,3 +468,58 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die Bereichsfarben werden nur als schmale Akzente verwendet. Es gibt keine zusätzlichen Bereichskacheln, Navigationslinks, persönlichen Statuskennzahlen oder Aufgabenlisten.
 - Der globale Academy-Header und Breadcrumb werden auf der internen Übersicht nicht erneut angezeigt; die vorhandene horizontale Bereichsnavigation bleibt bestehen. Andere interne Bereiche sind von dieser gezielten Änderung nicht betroffen.
 - Code und Dokumentation liegen gemeinsam auf dem Branch `docs/academy-overview-course-catalog-audit`, PR #158. GitHub Actions `build-and-verify` lief für den aktuellen Commit erfolgreich durch (TypeScript-Prüfung, Produktionsbuild und Tests); die PR-Beschreibungsprüfung ist ebenfalls erfolgreich. Die optionale Render-Deploy-Stufe wurde übersprungen. Browser-/Live-Abnahme und Screenshot stehen noch aus; kein Merge oder Deployment behauptet.
+
+
+## 9. Visuelle Designgrundlagen und Start der Academy-Gestaltungsphase (11.11.2026)
+
+**Arbeitsvereinbarung:** Der Projektinhaber hat ChatGPT die gestalterische Ausarbeitung des Portals übertragen, solange frühere Arbeit und Beschlüsse geschützt bleiben. Objektiv begründbare Detailentscheidungen (Lesbarkeit, Kontrast, Accessibility, Responsive-Verhalten, Konsistenz) darf ChatGPT eigenständig treffen. Prägende subjektive Grundsatzentscheidungen werden vor der Festlegung erneut abgestimmt. Diese Vereinbarung ist im Entscheidungsregister ergänzt.
+
+**Bereits bestätigter visueller Ausgangspunkt für die Academy:**
+- matte, dezente blaue Wellenform statt großflächigem Hintergrundbild;
+- leicht getönter, ruhiger Hintergrund;
+- einladender Kopfbereich und klar gegliederte Inhaltsflächen;
+- gemeinsame Designsprache mit zurückhaltenden bereichsspezifischen Akzenten;
+- die fünfteilige Kachel-Startseite bleibt unverändert und wird auf internen Seiten nicht dupliziert.
+
+**Repository-Arbeit in diesem Schritt:**
+- Neuer Entwurf `docs/planning/DESIGN-SYSTEM-CONCEPT.md` angelegt.
+- Schutzgrenzen, bestätigte Academy-Richtung, bestehende Bereichsfarben, vorläufige Systemprinzipien, Komponenten-Prüfliste, offene subjektive Grundsatzentscheidungen, Vorgehen und aktuelle Referenzquellen dokumentiert.
+- Die Recherche stützt sich u. a. auf WCAG 2.2, USWDS Design Tokens/Color/Spacing/Typesetting und Canvas Course Navigation. Die Übertragbarkeit auf RCPD ist im Konzept jeweils begrenzt und begründet.
+- Ausschließlich Planungsdokumentation; keine Anwendungscode-, Style-, Komponenten-, API-, Datenmodell-, Berechtigungs- oder Deployment-Dateien geändert.
+- Keine bestehenden Beschlüsse ersetzt. Der Entwurf markiert finale Portalidentität, globale Navigation und Theme-Strategie weiterhin als offen.
+- Branch: `docs/portal-academy-design-foundations`. Kein Merge und kein Deployment.
+
+**Nächste Schritte:**
+1. Tatsächlichen Academy-Code und bestehende Styles für die internen Bereiche gegen PR #158 und die beschlossene IA prüfen.
+2. Einen zusammenhängenden visuellen Prototyp der internen Academy-Übersicht entwickeln, ohne die Kachel-Startseite zu verändern.
+3. Repräsentative Screens der übrigen vier Bereiche einbeziehen, damit das System nicht nur auf einer Seite funktioniert.
+4. Desktop-/Tablet-/Mobile- und Accessibility-Verhalten prüfen; subjektive Grundsatzfragen vor Finalisierung abstimmen.
+5. Erst nach Design-/Funktionsabgleich eine getrennte Implementierungsplanung vornehmen.
+
+**Prüfstatus:** Das neue Markdown-Dokument wurde über GitHub angelegt. Ein vollständiger erneuter Abruf/Linkcheck aller aktualisierten Dokumente und ein lokaler Markdown-/Build-/Testlauf stehen noch aus. Da keine Anwendungscodeänderung vorgenommen wurde, wurden Lint, Build und Tests in diesem Dokumentationsschritt nicht ausgeführt.
+
+
+### Technischer Sichtbefund zur Academy-Oberfläche (11.11.2026)
+
+Prüfstand: `main` / Commit `7e19ccbfda3d28a37b7cadb4bac9b3daa9a4ae89` (Basis von PR #159).
+
+- `src/components/AcademyCenter.tsx`, Zeilen 726–765: vorhandene fünfteilige Kachel-Startseite mit den bereits beschlossenen Bereichsfarben und lokalen SVG-Illustrationen. Sie wird ausdrücklich nicht geändert.
+- Dieselbe Datei, Zeilen 682–707: interne horizontale Academy-Hauptnavigation mit Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Sie bleibt die maßgebliche Bereichsnavigation.
+- Dieselbe Datei, Zeilen 766–861: interne Übersicht mit Rückweg, Orientierungstitel, erklärendem Bereich zu flexiblen Lernwegen, drei Informationskarten zu Lehrgängen/Kursen/Lernbibliothek, Hinweisen zu Prüfungen und privaten Notizen sowie einem fachlichen Hinweis zum tatsächlichen Abschlussnachweis.
+- `src/App.tsx`, Zeilen 2468–2479: AcademyCenter wird als bestehender Portalbereich eingebunden. Die globale Portalhülle liegt außerhalb der Academy-Komponente und bleibt in dieser Gestaltungsrunde unberührt.
+- `src/index.css`, Zeilen 4–39: vorhandene globale Typografie-Basis mit Plus Jakarta Sans, globaler Zeilenhöhe und Überschriftenregeln; bestehende Light-/Dark-Styles werden vor Token- oder Theme-Änderungen vollständig geprüft.
+
+Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste neue interne-Übersichts-Mockup ist eine explorative Darstellung dieser Inhalte. Weitere generierte Varianten, die fälschlich die fünf Einstiegskacheln erneut auf einer internen Seite oder nicht belegte Fortschrittskennzahlen zeigen, werden ausdrücklich verworfen und sind keine Designvorschläge.
+
+
+### Erster implementierter Academy-Übersichts-Prototyp (11.11.2026)
+
+- Separater Code-Branch: `feat/academy-overview-visual-prototype`.
+- Draft-PR #160: https://github.com/MDP0063/rcpd-new/pull/160.
+- `src/components/AcademyCenter.tsx`: bestehende interne Übersichtsstruktur und Texte beibehalten; scoped Klassen ergänzt und Stylesheet eingebunden.
+- Neu: `src/components/AcademyCenter.css` mit leicht getöntem blauem Hintergrund, begrenzten matten Wellenakzenten, lesbarer Hierarchie, drei bestehenden Inhaltskarten mit Bereichsakzenten, zurückhaltenden Hinweisen und responsiver horizontaler Hauptnavigation. Light-/Dark-Mode und Tastaturfokus wurden berücksichtigt.
+- Die fünfteilige Kachel-Startseite, globale Portalhülle, Inhalte, Statuslogik, Datenflüsse, Rechte und Funktionen wurden nicht geändert.
+- CI für Code-Commit `69393c2` erfolgreich: TypeScript-Prüfung, Produktionsbuild und Tests; PR-Vorlagenprüfung nach Ergänzung des erforderlichen Labels ebenfalls erfolgreich (Run #893).
+- Der optionale Render-Deploy-Hook wurde übersprungen. Kein Deployment, kein Merge.
+- Noch offen: echte Browser-/Responsive-Abnahme und Screenshots. CI-Erfolg ersetzt keine visuelle Prüfung.
+- PR #160 bleibt Draft bis zur visuellen Abnahme. Die Gestaltung ist ein erster Prototyp, kein finales Academy- oder Portaldesign.

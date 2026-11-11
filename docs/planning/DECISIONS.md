@@ -411,3 +411,17 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die Seite soll ohne Vorwissen verständlich sein, auch für jüngere Nutzer, aber professionell und nicht kindlich wirken.
 - **BESCHLOSSEN:** Interne Übersicht erhält einen eigenen Seitentitel und den direkten Rücksprung „Zurück zur Academy-Übersicht“ zur Kachelstartseite. Der globale Academy-Header/Breadcrumb wird auf dieser Übersicht nicht wiederholt.
 - **UMSETZUNG IN PR #158:** Einführungstext, flexible Beziehung Lehrgang/Kurs/Lernbibliothek, kurze Einordnung von Prüfungen und privaten Notizen sowie Hinweis auf tatsächliche Abschlussbedingungen. Keine dynamischen persönlichen Kennzahlen oder Aufgabenlisten.
+
+
+## D. Visuelle Gestaltung und gestalterische Verantwortung (11.11.2026)
+
+- **BESCHLOSSEN:** ChatGPT übernimmt die eigenständige Ausarbeitung des visuellen Designsystems und der objektiv begründbaren Gestaltungsdetails für das RCPD-Portal. Die Verantwortung umfasst Recherche, Konsistenz, UX-/Accessibility-Begründung, Prototyping und nachvollziehbare Dokumentation.
+- **BESCHLOSSEN – Schutz bestehender Arbeit:** Die gestalterische Freiheit darf frühere Arbeit, bereits getroffene Entscheidungen, implementierte Funktionen, Berechtigungen, Datenlogik oder fertiggestellte Bereiche nicht gefährden, überschreiben oder zunichtemachen. Bestehende Ergebnisse sind Ausgangsbasis und bleiben erhalten, sofern der Projektinhaber keine Änderung ausdrücklich freigibt.
+- **BESCHLOSSEN – Subjektive Grundsatzentscheidungen:** Bei nicht objektiv bewertbaren, prägenden Designfragen (z. B. grundlegende visuelle Identität, Stilrichtung, markante Farb-/Formensprache oder größere konzeptionelle Änderungen) wird der Projektinhaber vor der Festlegung erneut gefragt. Die allgemeine gestalterische Freiheit ersetzt diese Abstimmung nicht.
+- **BESCHLOSSEN – Eigenständige Detailentscheidungen:** Objektiv begründbare Fragen zu Lesbarkeit, Kontrast, Barrierefreiheit, responsivem Verhalten, Abständen, Fokusführung und konsistenter Komponentenverwendung darf ChatGPT selbstständig entscheiden und begründen.
+- **BESCHLOSSEN:** Relevante Änderungen, Beschlüsse, offene Fragen, Plananpassungen und Umsetzungsstände werden weiterhin in den zuständigen Repository-Planungsdokumenten festgehalten.
+- **BESCHLOSSEN:** Die Academy darf als erster visueller Abschnitt eine freundlichere, eigenständige Lernplattform-Anmutung erhalten. Das endgültige globale Portaldesign und seine Markenidentität bleiben offen; die Academy-Gestaltung muss später in ein kohärentes Gesamtsystem integrierbar bleiben.
+- **BESCHLOSSEN:** Die bereits fertiggestellte fünfteilige Academy-Kachel-Startseite bleibt unverändert. Die fünf Bereiche werden innerhalb der geöffneten Academy über die bereits beschlossene horizontale Hauptnavigation erreicht; interne Seiten duplizieren die fünf Kacheleinstiege nicht.
+- **BESCHLOSSEN:** Die am 11.11.2026 bestätigte Grundrichtung für interne Academy-Seiten umfasst eine matte, dezente, begrenzte blaue Wellenform, einen leicht getönten ruhigen Hintergrund, klar gegliederte Flächen und eine gemeinsame Designsprache mit bereichsspezifischen Akzenten. Die konkrete Ausgestaltung wird prototypisch geprüft.
+- **OFFEN:** Finale globale Portalidentität, globale Sidebar-/Header-/Navigationsgestaltung, übergreifende Theme-Strategie und weitere subjektive visuelle Grundsatzfragen. Sie werden nicht aus dem Academy-Mockup abgeleitet.
+- Details und Quellen: [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md).

@@ -363,3 +363,16 @@ Die bisherige lineare Phasenbeschreibung wird durch das ergänzende, verbindlich
 Die Gesamtarchitektur, globale Navigation, Rollen-/Aufgabenbezüge, gemeinsame Muster und technischen Abhängigkeiten werden früh genug geklärt, damit einzelne Abschnitte bereits zum endgültigen Produkt passen. Nicht jedes Detail aller Module muss vor der ersten Implementierung feststehen. Erkenntnisse aus Prototypen und Tests fließen zurück in die Planung. Die Academy wird gezielt fachlich abgeschlossen, aber nicht bis in jede erst bei Umsetzung sinnvolle technische Einzelheit vorweggenommen. Globale Grundlagen und die übrigen Module werden parallel in ihrer Abhängigkeit berücksichtigt.
 
 Diese Aktualisierung präzisiert die Arbeitsreihenfolge der Abschnitte 4–7; sie hebt weder das Gesamtziel noch bestehende Qualitäts-, Recherche-, Sicherheits- oder Freigabeanforderungen auf.
+
+## 10. Ergänzung: Gestalterische Verantwortung und Schutz bestehender Arbeit (11.11.2026)
+
+Der Projektinhaber hat ChatGPT die Ausarbeitung des visuellen Designsystems und der objektiv begründbaren Gestaltungsdetails übertragen. Diese Verantwortung ist an folgende Schutzgrenzen gebunden:
+
+- Bereits erarbeitete fachliche Konzepte, Funktionen, Berechtigungen, Datenlogik und fertiggestellte Oberflächen bleiben erhalten.
+- Die fertige Academy-Kachel-Startseite wird nicht verändert oder auf internen Seiten dupliziert.
+- Die Academy darf als erster visueller Abschnitt eine eigenständige, freundlichere Lernplattform-Anmutung erhalten; das endgültige globale Portaldesign ist weiterhin offen.
+- Objektiv begründbare Detailentscheidungen zu Lesbarkeit, Kontrast, Accessibility, Responsive-Verhalten, Fokusführung und Konsistenz können eigenständig getroffen werden.
+- Subjektive, prägende Grundsatzentscheidungen (visuelle Identität, grundlegende Stilrichtung, markante Farb-/Formensprache oder größere konzeptionelle Änderungen) werden vor Festlegung mit dem Projektinhaber abgestimmt.
+- Relevante Änderungen und Plananpassungen sind in den zuständigen Dokumenten nachzuführen.
+
+Der aktuelle Arbeitsentwurf und seine Quellen stehen in [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md). Diese Ergänzung hebt die bisherigen Architektur-, Funktions-, Audit- und Freigabegrenzen nicht auf.
