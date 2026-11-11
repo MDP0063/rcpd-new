@@ -674,3 +674,33 @@ PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c2
 
 
 PR #181 wurde am 11.11.2026 gemergt (Merge-Commit c7bcf07fae9633a23b4ef03c4424d1b3c4038c01). PR #182 wurde am 11.11.2026 gemergt (Merge-Commit 36de9a71ee99bff508fc92a8cda98491ffbf7d95). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfungen waren erfolgreich. Die optionalen Render-Deploy-Hooks wurden übersprungen; die Browserabnahme beider Verwaltungsansichten steht aus.
+
+
+## 11.11.2026 – Konsolidierter Stand des Academy-Designausbaus (Verwaltung und Examiner ergänzt)
+
+### Zusätzlich visuell umgesetzt und gemergt
+- **Examiner-Bewertungsarbeitsplatz:** geteilte Bewertungsfläche mit einklappbarem Kontextpanel (PR #175).
+- **Ergebnisfreigaben und Korrekturen:** getrennte Darstellung von Freigabewarteschlange, bisheriger Bewertung, Korrektureingabe, Begründung und Historie (PR #177).
+- **Kurs-/Programmverwaltung:** Verwaltungslisten und Editoren (PR #179).
+- **Versionierte Materialverwaltung:** Materialliste, Auswahl, Metadaten, Editor und Versionshistorie (PR #181).
+- **Bibliothekskategorien und Dokumenttypen:** gemeinsame Gestaltung der Taxonomie-Verwaltung (PR #182).
+
+### Gesamtumfang des visuellen Academy-Ausbaus
+- Teilnehmeroberflächen aller fünf Academy-Hauptbereiche: PR #158, #160, #162, #164, #166, #168, #170 und #172.
+- Rollen-/berechtigungsabhängige Verwaltungs- und Examiner-Oberflächen: PR #175, #177, #179, #181 und #182.
+- Relevante Fortschritts-/Design-Dokumentation wurde über PR #174, #176, #178, #180 und #183 nachgeführt.
+
+### Schutzgrenzen
+- Die fertige fünfteilige Kachel-Startseite bleibt unverändert.
+- Die horizontale Academy-Hauptnavigation und die fünf Hauptbereiche bleiben unverändert.
+- Keine der visuellen Erweiterungen hat Kurs-/Prüfungslogik, Datenmodelle, Statusdefinitionen, Versionierung, Ergebnisfreigabe, private Notizen, Berechtigungen oder APIs fachlich umgebaut.
+- Die globale Portalidentität und globale Navigation bleiben offen.
+
+### Noch nicht abgenommen
+- Die optionalen Render-Deploy-Hooks der genannten PR-Läufe wurden übersprungen. Ein bestätigtes Live-Deployment aller letzten Änderungen liegt nicht vor.
+- Gemeinsame Browserabnahme auf großem Desktop, Tablet und Smartphone sowie Light-/Dark-Mode steht noch aus.
+- Legacy-Unteransichten für Übungstests/Abschlussprüfungen und weitere alte Prüfungswege wurden nicht stillschweigend vereinheitlicht. Sie bleiben Gegenstand des abschließenden Funktions-/Fehleraudits.
+- Examiner-Historienansicht, Action-Request-/Revisionsworkflow und weitere fachlich offene Examiner-Punkte bleiben separate Aufgaben gemäß OPEN-QUESTIONS.md.
+
+### Nächster Arbeitsschritt
+Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend wird die vom Projektinhaber gewünschte abschließende Bug-/Fehlerprüfung der tatsächlich implementierten Academy-Funktionen durchgeführt. Erst konkrete, nachgewiesene Probleme führen zu weiteren Codeänderungen.
