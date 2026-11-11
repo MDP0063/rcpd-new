@@ -468,3 +468,32 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - Die Bereichsfarben werden nur als schmale Akzente verwendet. Es gibt keine zusätzlichen Bereichskacheln, Navigationslinks, persönlichen Statuskennzahlen oder Aufgabenlisten.
 - Der globale Academy-Header und Breadcrumb werden auf der internen Übersicht nicht erneut angezeigt; die vorhandene horizontale Bereichsnavigation bleibt bestehen. Andere interne Bereiche sind von dieser gezielten Änderung nicht betroffen.
 - Code und Dokumentation liegen gemeinsam auf dem Branch `docs/academy-overview-course-catalog-audit`, PR #158. GitHub Actions `build-and-verify` lief für den aktuellen Commit erfolgreich durch (TypeScript-Prüfung, Produktionsbuild und Tests); die PR-Beschreibungsprüfung ist ebenfalls erfolgreich. Die optionale Render-Deploy-Stufe wurde übersprungen. Browser-/Live-Abnahme und Screenshot stehen noch aus; kein Merge oder Deployment behauptet.
+
+
+## 9. Visuelle Designgrundlagen und Start der Academy-Gestaltungsphase (11.11.2026)
+
+**Arbeitsvereinbarung:** Der Projektinhaber hat ChatGPT die gestalterische Ausarbeitung des Portals übertragen, solange frühere Arbeit und Beschlüsse geschützt bleiben. Objektiv begründbare Detailentscheidungen (Lesbarkeit, Kontrast, Accessibility, Responsive-Verhalten, Konsistenz) darf ChatGPT eigenständig treffen. Prägende subjektive Grundsatzentscheidungen werden vor der Festlegung erneut abgestimmt. Diese Vereinbarung ist im Entscheidungsregister ergänzt.
+
+**Bereits bestätigter visueller Ausgangspunkt für die Academy:**
+- matte, dezente blaue Wellenform statt großflächigem Hintergrundbild;
+- leicht getönter, ruhiger Hintergrund;
+- einladender Kopfbereich und klar gegliederte Inhaltsflächen;
+- gemeinsame Designsprache mit zurückhaltenden bereichsspezifischen Akzenten;
+- die fünfteilige Kachel-Startseite bleibt unverändert und wird auf internen Seiten nicht dupliziert.
+
+**Repository-Arbeit in diesem Schritt:**
+- Neuer Entwurf `docs/planning/DESIGN-SYSTEM-CONCEPT.md` angelegt.
+- Schutzgrenzen, bestätigte Academy-Richtung, bestehende Bereichsfarben, vorläufige Systemprinzipien, Komponenten-Prüfliste, offene subjektive Grundsatzentscheidungen, Vorgehen und aktuelle Referenzquellen dokumentiert.
+- Die Recherche stützt sich u. a. auf WCAG 2.2, USWDS Design Tokens/Color/Spacing/Typesetting und Canvas Course Navigation. Die Übertragbarkeit auf RCPD ist im Konzept jeweils begrenzt und begründet.
+- Ausschließlich Planungsdokumentation; keine Anwendungscode-, Style-, Komponenten-, API-, Datenmodell-, Berechtigungs- oder Deployment-Dateien geändert.
+- Keine bestehenden Beschlüsse ersetzt. Der Entwurf markiert finale Portalidentität, globale Navigation und Theme-Strategie weiterhin als offen.
+- Branch: `docs/portal-academy-design-foundations`. Kein Merge und kein Deployment.
+
+**Nächste Schritte:**
+1. Tatsächlichen Academy-Code und bestehende Styles für die internen Bereiche gegen PR #158 und die beschlossene IA prüfen.
+2. Einen zusammenhängenden visuellen Prototyp der internen Academy-Übersicht entwickeln, ohne die Kachel-Startseite zu verändern.
+3. Repräsentative Screens der übrigen vier Bereiche einbeziehen, damit das System nicht nur auf einer Seite funktioniert.
+4. Desktop-/Tablet-/Mobile- und Accessibility-Verhalten prüfen; subjektive Grundsatzfragen vor Finalisierung abstimmen.
+5. Erst nach Design-/Funktionsabgleich eine getrennte Implementierungsplanung vornehmen.
+
+**Prüfstatus:** Das neue Markdown-Dokument wurde über GitHub angelegt. Ein vollständiger erneuter Abruf/Linkcheck aller aktualisierten Dokumente und ein lokaler Markdown-/Build-/Testlauf stehen noch aus. Da keine Anwendungscodeänderung vorgenommen wurde, wurden Lint, Build und Tests in diesem Dokumentationsschritt nicht ausgeführt.
