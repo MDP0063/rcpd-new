@@ -1533,3 +1533,23 @@ Der Nutzer hat den vorgeschlagenen Farbentwurf und die vorgeschlagene Zuordnung 
 Die Palette ist kräftig, satt und harmonisch. Die Farben kennzeichnen ausschließlich die Bereiche und dürfen nicht als Erfolgs-, Warn- oder Fehlerstatus verwendet werden. Sie werden mit der bereits beschlossenen glatten, leicht glänzenden, einfarbigen Kacheloberfläche, der weichen weißen Lichtreflexion und den zurückhaltenden matten SVG-Illustrationen kombiniert.
 
 Die Hex-Werte sind als bestätigte Ausgangswerte beschlossen. Vor der finalen Token-Festlegung werden Kontrast und Lesbarkeit auf der tatsächlichen Oberfläche (einschließlich Reflexion und Textposition), Tastaturfokus sowie die Darstellung in responsiven Größen geprüft. Etwaige technische Feinjustierungen müssen die bestätigten Farbfamilien und die Bereichszuordnung erhalten; eine grundsätzliche Änderung bedarf einer erneuten Nutzerentscheidung.
+
+## Farbkonzept der fünf Academy-SVG-Illustrationen (11.11.2026)
+
+**Beschlossen ist Variante B: neutrale Basis mit einem dezenten Akzent aus der jeweiligen Bereichsfarbe.**
+
+Gestaltungsregeln für das zusammengehörige SVG-Set:
+
+- Gemeinsame, matte neutrale Grundfarben für die Hauptobjekte und wiederkehrenden Elemente.
+- Je Illustration ein klar dosierter Bereichsfarbakzent, der die Verbindung zur jeweiligen Kachel herstellt:
+  - Übersicht: Blau (`#2864D9`)
+  - Kurse: Türkis (`#087F8C`)
+  - Lernbibliothek: Violett (`#6841B8`)
+  - Prüfungen: Beere (`#A33370`)
+  - Meine Notizen: Grün (`#287A45`)
+- Die Akzentfarbe wird in der Illustration zurückhaltender eingesetzt als auf der Kacheloberfläche. Keine großflächige Wiederholung der kräftigen Kachelgrundfarbe.
+- Dunkle Konturen und Details sowie neutrale Füllflächen werden über alle fünf Motive hinweg konsistent gehalten.
+- Als Richtwert höchstens drei bis vier bewusst eingesetzte Farben je Illustration. Die exakten Neutralfarben und Akzentabstufungen bleiben Teil der visuellen Ausarbeitung.
+- Keine Glanzreflexe, künstlichen Schatten oder ausgeprägten 3D-Effekte in den SVGs. Der Glanz gehört ausschließlich zur Kacheloberfläche.
+
+Die Variante B verändert nicht die bereits beschlossene ruhige geometrische Illustrationssprache, die Motive/Zuordnung der fünf Bereiche oder die Kachelfarbpalette. Ziel ist ein kohärentes Set, dessen Illustrationen lesbar bleiben und die Kacheloberfläche ergänzen statt mit ihr zu konkurrieren.
