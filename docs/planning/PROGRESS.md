@@ -562,7 +562,7 @@ PR #166 wurde am 11.11.2026 gemergt (Merge-Commit 668b621ffdf8ce8e02f556a00dcb06
 - Versionierte Materialien und Legacy-Materialien verwenden unterschiedliche vorhandene Daten-/Renderpfade. Beide bleiben erhalten; die Bibliothek bleibt ein eigener Einstieg und wird nicht vom Reader verdrängt.
 - Geplante/umgesetzte Gestaltung: zurückhaltender violetter Bereichsakzent, klare Such-/Sortier-/Filterzone, kompakte Materialeinträge und lesefokussierter Reader.
 - Keine Änderung an PDF-Infrastruktur, Materialzugriff, Versionsbindung, Suche/Filterlogik, Datenmodell, API, Berechtigungen, Notizen oder Reader-Aktionen.
-- CI und Browserabnahme stehen aus.
+- TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; die Browserabnahme steht nach Deployment noch aus.
 
 
 PR #168 wurde am 11.11.2026 gemergt (Merge-Commit 5e86ff7bf7a6ab24e4bc4ba28586f883d07de65c). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Bibliothekskatalogs und Readers steht noch aus.
@@ -575,10 +575,7 @@ PR #168 wurde am 11.11.2026 gemergt (Merge-Commit 5e86ff7bf7a6ab24e4bc4ba28586f8
 - Semantische Verbesserung: Auswahlknopf einer Prüfung erhält aria-pressed, damit die aktuelle Auswahl auch programmatisch erkennbar ist.
 - Ergebnisfarben für bestanden, Bewertung offen und nicht bestanden bleiben fachlich getrennt. Keine Änderung an Prüfungsauswahl, Zeit-/Autospeicher-/Abgabelogik, Bewertung, Freigabe, APIs oder Berechtigungen.
 - Die Legacy-Unteransichten Übungstests/Abschlussprüfungen und Examiner-Administration bleiben außerhalb dieses ersten visuellen Schritts.
-- CI und Browserabnahme stehen aus.
-
-
-PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c9c1e8de995). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Prüfungszentrums steht aus.
+- TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; die Browserabnahme steht nach Deployment noch aus.
 
 
 PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c9c1e8de995). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Prüfungszentrums steht aus.
@@ -593,3 +590,26 @@ PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c
 
 
 PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c9083652b304626cd). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme von Meine Notizen steht aus.
+
+
+## 11.11.2026 – Konsolidierter Stand des Academy-Visual-Redesigns
+
+### Visuell umgesetzt und gemergt
+- **Übersicht:** erklärender interner Einstieg mit bestehender Informationsarchitektur (PR #158) und visuellem Prototyp (PR #160).
+- **Äußerer Academy-Hintergrund:** dezente, eigenständige blau-graue Farbfläche um den begrenzten Inhaltsbereich (PR #162).
+- **Kurse:** Programm-Karten, kompakte Kursliste und gestaltete Kurs-/Programmdetails (PR #164 und #166).
+- **Lernbibliothek:** klar getrennter Katalog mit Suche/Sortierung/Filtern und lesefokussierter Readeroberfläche (PR #168).
+- **Prüfungen:** Teilnehmer-Prüfungszentrum mit Katalog, Auswahlpanel, aktivem Versuch und Ergebnisansicht (PR #170).
+- **Meine Notizen:** persönliche Notizen-/Lesezeichenliste, sichtbarer Privatsphäre-Hinweis und Editor (PR #172).
+
+### Schutzgrenzen
+- Die bestätigte fünfteilige Academy-Kachel-Startseite bleibt unverändert.
+- Die horizontale Academy-Hauptnavigation und die fünf Bereiche bleiben unverändert.
+- Kurs-/Programmstatus, Versionierung, Nachweise, Prüfungszeit/Autospeicher/Abgabe/Freigabe, private Notizen, Quellenbindungen, APIs und Berechtigungen wurden durch diese visuellen Schritte nicht fachlich umgebaut.
+- Die globale Portalgestaltung, globale Navigation und spätere Portalidentität bleiben ausdrücklich offen.
+- Examiner-Verwaltungsansichten und Legacy-Prüfungsunteransichten wurden nicht als Teilnehmeroberflächen umgestaltet; ihre fachliche Abgrenzung bleibt separat zu prüfen.
+
+### Prüf- und Abnahmestatus
+- Die GitHub-CI für die jeweiligen Code-PRs hat TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich ausgeführt; die PR-Vorlagenprüfungen waren ebenfalls erfolgreich.
+- Die optionalen Render-Deploy-Hooks in den PR-Läufen wurden übersprungen. Ein erfolgreiches Live-Deployment und die visuelle Browserabnahme des konsolidierten Stands sind noch nicht bestätigt.
+- Nächster sinnvoller Schritt: Browserprüfung der fünf Academy-Bereiche auf großem Desktop, Tablet und Smartphone sowie bei Bedarf Light-/Dark-Mode. Danach werden nur konkret beobachtete Probleme angepasst.
