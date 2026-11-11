@@ -497,3 +497,16 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 5. Erst nach Design-/Funktionsabgleich eine getrennte Implementierungsplanung vornehmen.
 
 **Prüfstatus:** Das neue Markdown-Dokument wurde über GitHub angelegt. Ein vollständiger erneuter Abruf/Linkcheck aller aktualisierten Dokumente und ein lokaler Markdown-/Build-/Testlauf stehen noch aus. Da keine Anwendungscodeänderung vorgenommen wurde, wurden Lint, Build und Tests in diesem Dokumentationsschritt nicht ausgeführt.
+
+
+### Technischer Sichtbefund zur Academy-Oberfläche (11.11.2026)
+
+Prüfstand: `main` / Commit `7e19ccbfda3d28a37b7cadb4bac9b3daa9a4ae89` (Basis von PR #159).
+
+- `src/components/AcademyCenter.tsx`, Zeilen 726–765: vorhandene fünfteilige Kachel-Startseite mit den bereits beschlossenen Bereichsfarben und lokalen SVG-Illustrationen. Sie wird ausdrücklich nicht geändert.
+- Dieselbe Datei, Zeilen 682–707: interne horizontale Academy-Hauptnavigation mit Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Sie bleibt die maßgebliche Bereichsnavigation.
+- Dieselbe Datei, Zeilen 766–861: interne Übersicht mit Rückweg, Orientierungstitel, erklärendem Bereich zu flexiblen Lernwegen, drei Informationskarten zu Lehrgängen/Kursen/Lernbibliothek, Hinweisen zu Prüfungen und privaten Notizen sowie einem fachlichen Hinweis zum tatsächlichen Abschlussnachweis.
+- `src/App.tsx`, Zeilen 2468–2479: AcademyCenter wird als bestehender Portalbereich eingebunden. Die globale Portalhülle liegt außerhalb der Academy-Komponente und bleibt in dieser Gestaltungsrunde unberührt.
+- `src/index.css`, Zeilen 4–39: vorhandene globale Typografie-Basis mit Plus Jakarta Sans, globaler Zeilenhöhe und Überschriftenregeln; bestehende Light-/Dark-Styles werden vor Token- oder Theme-Änderungen vollständig geprüft.
+
+Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste neue interne-Übersichts-Mockup ist eine explorative Darstellung dieser Inhalte. Weitere generierte Varianten, die fälschlich die fünf Einstiegskacheln erneut auf einer internen Seite oder nicht belegte Fortschrittskennzahlen zeigen, werden ausdrücklich verworfen und sind keine Designvorschläge.
