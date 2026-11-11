@@ -548,3 +548,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - **Harmonisierungsvorbehalt:** Die Illustrationen müssen als Teil der gesamten Academy-Kachel und des späteren Portal-Designsystems funktionieren. Sie dürfen weder mit der kräftigen Kachelgrundfarbe und deren weicher weißer Reflexion noch mit Titel/Beschreibung konkurrieren. Neutrale matte Grundflächen und der bereits beschlossene dezente Bereichsfarbakzent bleiben maßgeblich.
 - Keine künstlichen Schatten, Glanzreflexe, Transparenz-Spielereien oder ausgeprägten 3D-Effekte innerhalb der SVGs. Die konkrete Stärke der Überlagerung wird im Zusammenhang mit den echten Kacheln, Größen, Texten, Kontrasten und responsiven Ansichten prototypisch geprüft und bei Bedarf zurückgenommen.
 - Die Entscheidung legt die gemeinsame Illustrationssprache fest, nicht die endgültige Komposition jedes einzelnen Motivs. Motive und Detailausarbeitung müssen weiterhin als kohärentes Fünfer-Set gestaltet werden.
+
+
+## Academy-SVG-Illustrationen – frontale Perspektive (11.11.2026)
+
+- Nutzer hat **Variante A – frontale/gerade Ansicht** als gemeinsamen Perspektivstandard für alle fünf Academy-Illustrationen bestätigt.
+- Die Motive werden grundsätzlich frontal und ohne isometrische oder schräge 3D-Perspektive dargestellt. Die bereits beschlossene dezente räumliche Wirkung entsteht ausschließlich durch leicht versetzte bzw. teilweise überlagerte Bestandteile des jeweiligen Gegenstands.
+- Blickrichtung, geometrische Formsprache, Proportionen und Ausrichtung müssen über alle fünf Illustrationen konsistent bleiben.
+- Die frontale Darstellung ist zusammen mit den kräftigen, leicht glänzenden Kacheloberflächen zu beurteilen: Die SVGs bleiben matt und visuell zurückhaltend; die Kacheloberfläche liefert die visuelle Präsenz. Die endgültigen Größen und Abstände werden im realen responsiven Kachelprototyp geprüft.
+- Diese Entscheidung ändert weder Motive/Bereichszuordnung noch Farbpalette, Kachelstruktur oder fachliche Funktionen.
