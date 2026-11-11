@@ -1514,7 +1514,7 @@ Die Kacheln sind leicht breitformatig: etwas breiter als hoch, jedoch keine flac
 
 ### Abgrenzung zu den Illustrationen
 
-Die zuvor beschlossene matte, nicht glänzende Gestaltung bezieht sich ausschließlich auf die fünf lokal eingebundenen SVG-Illustrationen. Diese sollen weiterhin ruhig, geometrisch und ohne künstliche Glanz-/3D-Effekte bleiben. Die nun beschlossene Glanzwirkung betrifft die farbige Kacheloberfläche, nicht die Illustration.
+Die zuvor beschlossene matte, nicht glänzende Gestaltung bezieht sich ausschließlich auf die fünf lokal eingebundenen SVG-Illustrationen. Diese sollen ruhig und geometrisch bleiben. Die spätere Nutzerentscheidung erlaubt ausdrücklich eine dezente räumliche Hervorhebung mit sanfter Schattierung und flachen Seitenflächen; künstlicher Glanz und überladene 3D-Effekte bleiben ausgeschlossen. Die nun beschlossene Glanzwirkung betrifft die farbige Kacheloberfläche, nicht die Illustration.
 
 Die konkreten Farbwerte, Reflexionsintensität und Schatten-/Hover-Tokens bleiben offen und werden anhand eines echten Prototyps beurteilt. Diese Entscheidung ändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Funktionen.
 
@@ -1563,7 +1563,7 @@ Verbindliche Gestaltungsleitplanken:
 - Pro Motiv nur wenige, klar lesbare Ebenen; hintere Bestandteile werden nur teilweise sichtbar. Die Überlagerung unterstützt die Erkennbarkeit des Gegenstands und darf das Symbol nicht unnötig komplex machen.
 - Die Illustrationen müssen mit den kräftigen einfarbigen Kachelflächen, der weichen weißen Kachelreflexion, der Text-Hierarchie und dem übrigen Academy-/Portaldesign harmonieren. Sie sind Teil der Kachelkomposition und kein eigenständiges, konkurrierendes Gestaltungselement.
 - Die bereits beschlossene matte neutrale SVG-Grundpalette und der zurückhaltende Akzent der jeweiligen Bereichsfarbe bleiben bestehen. Die kräftige Kachelgrundfarbe wird nicht großflächig in der Illustration wiederholt.
-- Keine künstlichen SVG-Glanzreflexe, dekorativen Schatten, Transparenz-Spielereien oder ausgeprägten 3D-Effekte. Der Oberflächenglanz gehört ausschließlich zur Kachel.
+- Dezente, gegenstandsbezogene Schattierung und leichte räumliche Hervorhebung sind zulässig und erwünscht. Keine künstlichen Glanzreflexe, Transparenz-Spielereien, starken Schatten oder ausgeprägten 3D-Effekte.
 - Die endgültige Überlagerungsstärke und Motivkomposition werden erst im visuellen Prototyp anhand der realen Kacheloberflächen, Symbolgrößen, Texte, Kontraste sowie Desktop-/Tablet-/Mobile-Darstellung validiert. Wenn die Überlagerung mit Kachel oder Text konkurriert oder in kleiner Darstellung unklar wird, ist sie zu reduzieren.
 
 Diese Festlegung verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
@@ -1575,10 +1575,10 @@ Diese Festlegung verändert weder die fünf Motive/Bereichszuordnungen noch Kach
 
 Verbindliche Gestaltungsregeln:
 
-- Keine isometrische, schräge oder ausgeprägt räumliche 3D-Perspektive. Die Gegenstände werden grundsätzlich frontal und leicht erfassbar dargestellt.
+- Die Gegenstände bleiben grundsätzlich frontal und leicht erfassbar ausgerichtet. Eine dezente räumliche Wirkung durch flache Seitenflächen, leichte Versätze und sanfte Schattierung ist erwünscht; ausgeprägte isometrische oder stark schräge Perspektiven bleiben ausgeschlossen.
 - Die bereits beschlossene räumliche Wirkung entsteht ausschließlich durch dezente, gegenstandsbezogene Überlagerung: beispielsweise leicht versetzte Dashboard-Karten, gestaffelte Buchseiten oder teilweise hervorschauende Dokumente.
 - Blickrichtung, Ausrichtung, geometrische Formsprache, Proportionen und Detailtiefe müssen über alle fünf SVGs konsistent sein.
-- Die Illustrationen bleiben matt und zurückhaltend. Die kräftige, leicht glänzende Kacheloberfläche liefert bereits die visuelle Präsenz; die Symbole dürfen nicht mit Kachelreflexion, Titel oder Beschreibung konkurrieren.
+- Die Illustrationen bleiben überwiegend matt und zurückhaltend, dürfen aber ein leichtes Volumen durch flache Seitenflächen und sanfte Schattierung erhalten. Sie dürfen nicht mit Kachelreflexion, Titel oder Beschreibung konkurrieren.
 - Die endgültige Symbolgröße, Freifläche und Überlagerungsstärke werden im tatsächlichen Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft. Bei visueller Konkurrenz oder schlechter Lesbarkeit wird die Überlagerung reduziert.
 
 Diese Perspektiventscheidung ergänzt die bereits beschlossene neutrale SVG-Grundpalette mit Bereichsfarbakzent und die leichte Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
@@ -1594,7 +1594,7 @@ Verbindliche Gestaltungsregeln:
 - Dunkle Konturen und wenige gezielte Details grenzen die Formen klar ab und unterstützen die Erkennbarkeit. Konturstärke und -charakter müssen über alle fünf SVGs konsistent sein.
 - Die jeweilige Bereichsfarbe erscheint nur als zurückhaltender Akzent. Die kräftige Kachelgrundfarbe wird nicht großflächig innerhalb der Illustration wiederholt.
 - Die gemeinsame neutrale Grundpalette, maximal drei bis vier bewusst eingesetzte Farben je Illustration sowie die einheitliche geometrische Formsprache bleiben verbindlich.
-- Die SVGs bleiben vollständig matt: keine eigenen Glanzreflexe, künstlichen Schatten, Transparenz-Spielereien oder 3D-Effekte. Der leichte Glanz ist ausschließlich Teil der Kacheloberfläche.
+- Die SVGs bleiben überwiegend matt, dürfen jedoch dezente Schattierung, flache Seitenflächen und eine leichte räumliche Hervorhebung einsetzen. Keine künstlichen Glanzreflexe, Transparenz-Spielereien, starken Schatten oder überladenen 3D-Effekte.
 - Die hellen neutralen Flächen und dunklen Konturen müssen auf allen fünf kräftigen Kachelfarben klar erkennbar bleiben. Kontrast, Detailgröße, Symbolgröße und Gesamtwirkung werden im tatsächlichen Kachelprototyp einschließlich Desktop-, Tablet- und Mobilansicht validiert. Falls Konturen oder Flächen mit Kachelreflexion, Titel oder Beschreibung konkurrieren, werden sie angepasst, ohne die beschlossene Stilrichtung zu verlassen.
 
 Diese Entscheidung ergänzt die frontale Perspektive und die dezente, gegenstandsbezogene Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
@@ -1643,9 +1643,9 @@ Für „Kurse“ wird nur ein dezenter türkiser Akzent aus der Bereichsfarbfami
 
 ## Lernbibliothek-Motiv und Präzisierung der gemeinsamen Illustrationssprache (11.11.2026)
 
-Für die Kachel „Lernbibliothek“ wird Variante A – ein kleines Bücherregal mit zwei bis drei aufrecht stehenden Büchern – verwendet. Das Regal erhält eine klare, eigenständige Silhouette und soll nicht wie ein einzelnes Dokument, Notizblatt oder aufgeschlagenes Buch wirken. Der Bereichsakzent bleibt dezent violett.
+Für die Kachel „Lernbibliothek“ wird das zuvor vorgesehene Bücherregal verworfen. Stattdessen werden drei klassische Bücher als kleine Gruppe dargestellt; eines davon ist leicht schräg geneigt. Es gibt keine Regalstruktur. Die Gruppe erhält eine eigenständige Silhouette und soll nicht wie ein einzelnes Dokument, Notizblatt oder aufgeschlagenes Buch wirken. Der Bereichsakzent bleibt dezent violett.
 
-Das Bücherregal gehört exakt derselben Illustrationsfamilie an wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“. Die Nutzerpräzisierung vom 11.11.2026 konkretisiert zugleich die Formensprache aller fünf Motive und gilt auch rückwirkend für die beiden bereits festgelegten Symbole:
+Die drei Bücher gehören exakt derselben Illustrationsfamilie an wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“. Die Nutzerpräzisierung vom 11.11.2026 konkretisiert zugleich die Formensprache aller fünf Motive und gilt auch rückwirkend für die beiden bereits festgelegten Symbole:
 
 - Schlichter und geometrischer statt stark kurvig oder verspielt; klare, ruhige Grundformen.
 - Weiterhin leicht abgerundete Ecken und Übergänge, jedoch weniger ausgeprägte Rundungen und weniger organisch-verspielte Linienführungen.
@@ -1654,3 +1654,17 @@ Das Bücherregal gehört exakt derselben Illustrationsfamilie an wie der Wegweis
 - Einheitliche Strichstärke, Geometrie, Proportionen und Detaildichte über Wegweiser, Abschlusskappe, Bücherregal sowie die beiden noch offenen Motive.
 
 Diese Präzisierung ersetzt nicht die gemeinsame Basis: frontale Perspektive, matte neutrale Füllflächen, zurückhaltender Bereichsfarbakzent, sparsame gegenstandsbezogene Überlagerung und klare Unterscheidbarkeit anhand der Silhouette bleiben bestehen. Exakte Strichstärke und Rundungsradien werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und anschließend konsistent auf alle fünf SVGs angewendet.
+
+## Räumlichere Illustrationswirkung und klassisches Motiv für die Lernbibliothek (11.11.2026)
+
+Die fünf Academy-SVGs sollen etwas stärker räumlich wirken und leicht hervorgehoben erscheinen. Damit wird die frühere Festlegung auf vollständig flache, schattenlose SVGs präzisiert und teilweise ersetzt:
+
+- Dezente 3D-Anmutung durch flache sichtbare Seitenflächen, leichte Versätze/Überlagerungen und sanfte, zurückhaltende Schattierung.
+- Die Grundausrichtung bleibt überwiegend frontal und unmittelbar lesbar. Keine ausgeprägte isometrische oder stark schräge Perspektive.
+- Die schlichte geometrische Gestaltung, etwas kräftigere einheitliche Konturen, geringe Detaildichte, neutrale Grundflächen und zurückhaltende Bereichsfarbakzente bleiben bestehen.
+- Kein glänzender Plastik-Look, keine künstlichen Glanzreflexe, keine harten/großen Schlagschatten und keine überladene 3D-Tiefe. Die Illustrationen bleiben überwiegend matt.
+- Die räumliche Wirkung muss bei allen fünf Motiven vergleichbar sein und mit den glänzenden Kacheloberflächen sowie der Text-Hierarchie harmonieren.
+
+### Korrigiertes Motiv für „Lernbibliothek“: drei klassische Bücher
+
+Das zuvor festgelegte Bücherregal wird durch drei klassische Bücher ersetzt. Die drei Bücher stehen als kleine Gruppe nebeneinander; eines davon ist leicht schräg geneigt. Es wird keine Regalstruktur dargestellt. Das Motiv bleibt reduziert, gut erkennbar und erhält einen dezenten violetten Akzent. Die Bücher werden mit derselben leichten räumlichen Hervorhebung wie Wegweiser und Abschlusskappe ausgearbeitet.
