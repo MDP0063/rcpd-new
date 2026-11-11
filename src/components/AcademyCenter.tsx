@@ -634,7 +634,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       <style>{`
         @keyframes academy-section-enter {
           from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
+          to { opacity: 1; transform: none; }
         }
         .academy-content-enter {
           animation: academy-section-enter 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
