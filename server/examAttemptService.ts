@@ -96,6 +96,7 @@ export interface ExamAttemptRecord extends ExamDocument {
   reviewDraftUpdatedAtIso?: string;
   reviewDraftUpdatedByUid?: string;
   resultReleaseStatus?: 'unreleased' | 'released' | 'pending_rerelease';
+  /** Last participant-visible result, retained unchanged while a correction awaits rerelease. */
   publishedResultSnapshot?: ExamPublishedResultSnapshot;
   resultReleaseHistory?: Array<{
     releasedByUid: string;
