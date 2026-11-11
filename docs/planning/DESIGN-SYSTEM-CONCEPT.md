@@ -287,3 +287,6 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Der Beerenton #A33370 dient als zurückhaltender Arbeitsbereichsakzent. Warnungen, Fehler und Erfolg behalten ihre eigenen Statusfarben.
 - Anspruchs-/Claim-, Übergabe-, Freigabe-, Draft-Speicher- und Abschlussaktionen bleiben in ihrer bestehenden Position/Funktion und werden nicht fachlich verändert.
 - Die Examiner-Historienansicht, Revisionen und weitere noch offene Examiner-Funktionen werden nicht durch diese visuelle Änderung vorweggenommen.
+
+
+**Umsetzungsstand:** Die geteilte Bewertungsfläche und das einklappbare Kontextpanel wurden in PR #175 gemergt. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich. Die Browserabnahme steht nach Deployment aus.

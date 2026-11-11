@@ -615,7 +615,7 @@ PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c908365
 - Nächster sinnvoller Schritt: Browserprüfung der fünf Academy-Bereiche auf großem Desktop, Tablet und Smartphone sowie bei Bedarf Light-/Dark-Mode. Danach werden nur konkret beobachtete Probleme angepasst.
 
 
-## 11.11.2026 – Examiner-Bewertungsarbeitsplatz: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Examiner-Bewertungsarbeitsplatz: visueller Ausbau (PR #175 gemergt)
 
 - Der vorhandene Freitext-Bewertungsarbeitsplatz wird gemäß der beschlossenen Split-View-Vorgabe strukturiert: Bewertung links, einklappbarer Kontext rechts.
 - Der Kontext verwendet ausschließlich bereits geladene Metadaten; vertrauliche Antwort- und Bewertungsinhalte bleiben weiterhin nur für den zuständigen Prüfer sichtbar.
@@ -623,3 +623,6 @@ PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c908365
 - Keine Änderung an Claim, Disconnect, Übergabe, administrativer Neuzuweisung, Draft-Speicherung, Bewertung, Abschluss oder Berechtigungen.
 - Examiner-Historie, Revision-Workflow und weitere offene Funktionen bleiben außerhalb dieses visuellen PRs.
 - Browserabnahme steht nach Deployment aus.
+
+
+PR #175 wurde am 11.11.2026 gemergt (Merge-Commit 8fe6cc17e5913003ee65b39e8f5383e6602ff821). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Examiner-Arbeitsplatzes steht aus.
