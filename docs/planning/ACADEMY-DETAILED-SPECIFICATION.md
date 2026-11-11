@@ -1632,3 +1632,11 @@ Diese Präzisierung ändert nicht die bereits beschlossene gemeinsame Basis: fro
 ### Festgelegtes Motiv für „Übersicht“: Wegweiser
 
 Für die Academy-Kachel „Übersicht“ wird Variante A – ein schlichtes Wegweiser-/Orientierungssymbol – verwendet. Ausschlaggebend ist die klare Unterscheidbarkeit von den Papier-, Buch- und Dokumentmotiven der übrigen Bereiche. Das Symbol wird modern, weich und abgerundet sowie mit wenigen prägnanten Formen gestaltet. Dashboard-Karten, ein Papierblatt oder dekorative Zusatzformen sind dafür ausgeschlossen. Die gemeinsame Illustrationssprache (frontal, matte neutrale Füllflächen, klare dunkle Konturen und dezenter blauer Akzent) bleibt bestehen.
+
+### Festgelegtes Motiv für „Kurse“: Abschlusskappe
+
+Die Kachel „Kurse“ erhält eine reduzierte, weich abgerundete Abschlusskappe (Variante B). Das Motiv steht für Ausbildung und Lehrgänge und vermeidet ein weiteres Buch- oder Dokumentmotiv.
+
+Die Abschlusskappe muss dieselbe Designart wie der bereits festgelegte Wegweiser der Kachel „Übersicht“ verwenden. Sie ist kein stilistischer Sonderfall. Verbindlich sind daher dieselben weichen, abgerundeten Formen, der geringe Detailgrad, matte neutrale Füllflächen, klare dunkle Konturen, frontale Perspektive und sparsame, gegenstandsbezogene Überlagerung. Geometrie, Proportionen, Konturgewicht und Detaildichte müssen über alle fünf Illustrationen hinweg konsistent sein.
+
+Für „Kurse“ wird nur ein dezenter türkiser Akzent aus der Bereichsfarbfamilie eingesetzt. Die Abschlusskappe muss als Motiv auch unabhängig von der Kachelfarbe klar von Wegweiser, Lernbibliotheks-, Prüfungs- und Notizmotive unterscheidbar bleiben.
