@@ -710,7 +710,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         .academy-overview-hero::after {
           content: "";
           position: absolute;
-          z-index: -1;
+          z-index: 0;
           pointer-events: none;
         }
         .academy-overview-hero::before {
@@ -788,7 +788,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         .academy-learning-path-card::after {
           content: "";
           position: absolute;
-          z-index: -1;
+          z-index: 0;
           width: 42%;
           height: 150%;
           right: -12%;
@@ -797,6 +797,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           border: 1px solid rgba(92, 145, 211, 0.18);
           box-shadow: 0 -13px 0 -12px rgba(92, 145, 211, 0.14), 0 -27px 0 -26px rgba(92, 145, 211, 0.1);
         }
+        .academy-learning-path-card > div { position: relative; z-index: 1; }
         .academy-structure-section { padding: 0.25rem 0.1rem; }
         .academy-structure-heading { color: #18365d; }
         .academy-structure-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
