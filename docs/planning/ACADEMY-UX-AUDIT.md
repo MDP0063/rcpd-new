@@ -291,3 +291,14 @@ Quellen im Repository: `src/types/portal.ts`, `server/rolePermissions.ts`, `serv
 
 **Prüfauftrag:** Vollständige Ende-zu-Ende-Prüfung, ob diese Darstellungen dieselben Prüfungen bzw. Ergebnisse abbilden, ob eine der Oberflächen Legacy ist und welche davon für Teilnehmer tatsächlich maßgeblich ist. Die Nutzerführung darf nicht zwei scheinbar gleichwertige Prüfungswege anbieten, die unterschiedliche Status- oder Ergebnisquellen haben.
 
+
+
+### 5.7 DWP Design System – interne Verwaltungsoberflächen
+
+Das britische Department for Work and Pensions stellt ein eigenes Designsystem für interne Services bereit. Seine Side-Navigation ist ausdrücklich als sekundäre Navigation für zusammengehörige Seiten innerhalb eines internen Dienstes vorgesehen, nicht als Hauptnavigation des gesamten Dienstes. Die Accessibility-Guidance beschreibt eine mobile, per Button ein-/ausklappbare Navigation und nennt unter anderem Link Purpose, konsistente Navigation sowie Name/Role/Value als relevante WCAG-Prüfpunkte.
+
+**Relevanz für RCPD:** ein besonders passender Vergleich für die spätere Abgrenzung zwischen globaler Portalnavigation und lokaler Academy-Unterstruktur. Die Quelle spricht gegen die vorschnelle Annahme, eine einzelne Sidebar müsse alle Navigationsebenen lösen. Das konkrete Muster muss dennoch anhand unserer fünf Academy-Bereiche, Kurs-/Reader-Kontexte und mobilen Nutzung getestet werden.
+
+Quellen:
+- [DWP Design System – Side navigation](https://design-system.dwp.gov.uk/components/side-navigation) (Seitenstand: 17. Januar 2024)
+- [DWP Design System – Side navigation accessibility](https://design-system.dwp.gov.uk/components/side-navigation/accessibility) (Seitenstand: 17. Januar 2024)
