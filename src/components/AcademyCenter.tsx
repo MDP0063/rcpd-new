@@ -662,9 +662,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </button>
             <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-slate-400" />
             <span aria-current="page" className="font-medium text-slate-900 dark:text-white">
-              {activeTab === 'courses'
+              {activeTab === 'courses' || activeTab === 'instructor_grading'
                 ? 'Kurse'
-                : activeTab === 'modules'
+                : activeTab === 'modules' || activeTab === 'upload_textbook'
                   ? 'Lernbibliothek'
                   : activeTab === 'notes'
                     ? 'Meine Notizen'
