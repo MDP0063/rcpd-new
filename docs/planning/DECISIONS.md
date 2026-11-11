@@ -503,3 +503,21 @@ Verbindliche Gestaltungsregeln:
 Die bisher beschlossene Platzierung bleibt bestehen: Symbol oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Diese Stilentscheidung ersetzt nur die bisherige Festlegung des visuellen Icon-Stils bzw. der Icon-Bibliothek. Sie ändert weder die fünf Bereiche noch Navigation, Kachelstruktur, Abstände oder fachliche Funktionen.
 
 Die konkrete Ausarbeitung und Prüfung im responsiven Prototyp erfolgt später im Rahmen des Designsystems.
+
+## Academy-Einstiegskacheln – aktualisierte Farb- und Oberflächenrichtung (11.11.2026)
+
+Diese spätere Nutzerentscheidung präzisiert und ersetzt widersprechende frühere Aussagen zur Kachelfarbigkeit und Oberflächenwirkung:
+
+- **Farbigkeit:** Die fünf Kacheln erhalten jeweils eine eigene, klar unterscheidbare, kräftigere und satte einfarbige Grundfarbe. Die Farben sollen lebendig und harmonisch aufeinander abgestimmt sein, dabei professionell bleiben. Die frühere Vorgabe, ausschließlich sehr helle/zurückhaltende Kachelflächen zu verwenden, ist insoweit überholt. Konkrete Farbtöne und Kontrastwerte bleiben offen.
+- **Einfarbigkeit:** Keine sichtbaren Farbverläufe. Die Grundfläche jeder Kachel bleibt einfarbig.
+- **Oberfläche:** Glatt, hochwertig und leicht glänzend – eher wie eine glatte, lackierte/acrylartige Oberfläche als Papier oder Metall. Keine gebürstete Metalloptik, keine erkennbare Metallstruktur und keine Spiegel-/Chromwirkung.
+- **Reflexion:** Eine weiche, dezente weiße Lichtreflexion liegt auf der farbigen Oberfläche. Sie soll wie eine sanfte Lichtquelle wirken, nicht wie ein harter Streifen. Die Reflexion erzeugt die Glanzwirkung; sie ist kein Farbverlauf.
+- **Tiefe:** Dezente Schattierung und weiche Schatten geben den Kacheln etwas räumliche Tiefe, ohne ausgeprägten 3D- oder Glaseffekt.
+- **Interaktion:** Die Kacheln dürfen beim Hover sanft reagieren. Der weiße Reflex kann etwas deutlicher werden; eine minimale Anhebung und ein weicher Schatten sind als Gestaltungsrichtung vorgesehen. Exakte Bewegung, Intensität und Dauer werden erst am Prototyp festgelegt. Tastaturfokus muss unabhängig vom Glanzeffekt klar erkennbar sein; reduzierte Bewegung ist zu berücksichtigen.
+- **Touch:** Die Oberfläche muss auch ohne Hover vollständig und hochwertig wirken; Hover darf keine Information oder Funktion voraussetzen.
+
+Die frühere Aussage „keine glänzenden Oberflächen“ in der Illustrationsentscheidung gilt weiterhin ausschließlich für die fünf SVG-Illustrationen selbst: Die Illustrationen sollen nicht künstlich glänzen oder wie 3D-Objekte wirken. Sie schließt ausdrücklich **nicht** die nun beschlossene leichte Glanzwirkung der Kacheloberflächen aus.
+
+Die Kacheln bleiben leicht breitformatig (Breite etwas größer als Höhe), nicht bannerartig. Ein exaktes Seitenverhältnis ist noch nicht beschlossen und wird mit realen Texten und responsiven Ansichten geprüft.
+
+Diese Oberflächenentscheidung verändert weder die fünf Academy-Bereiche noch Kachel-Inhalte, Navigation oder fachliche Funktionen.
