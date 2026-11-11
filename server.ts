@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -2266,6 +2266,57 @@ async function startServer() {
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       res.json({ reviews: await listCompletedManualReviews(getExamRepository()) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  // Zentrale Prüferhistorie eines Teilnehmers. Kursrechte und Detail-Sichtbarkeit werden serverseitig begrenzt.
+  app.get('/api/academy/participants/:uid/exam-history', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const state = peekDatabase();
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
+      const canReviewAnyCourse = Boolean(caller && isEligibleExamReviewerAccount(caller) && (
+        caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
+        (permissions?.canGradeAssignedCourses && permissions.assignedCourseCodes.length > 0)
+      ));
+      if (!caller || !canReviewAnyCourse) {
+        res.status(403).json({ error: 'Für die Teilnehmer-Prüferhistorie fehlt die Berechtigung.' });
+        return;
+      }
+      if (typeof req.params.uid !== 'string' || !req.params.uid.trim() || req.params.uid.length > 128) {
+        res.status(400).json({ error: 'Die Teilnehmerkennung ist ungültig.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
+        return;
+      }
+      const isSupervisor = caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel';
+      const allowed = isSupervisor ? ['*'] : permissions!.assignedCourseCodes;
+      const history = await listExamParticipantReviewHistory(
+        getExamRepository(), req.params.uid, allowed, caller.uid, isSupervisor
+      );
+      const reviewerName = (uid: string | null) => {
+        if (!uid) return null;
+        const account = state.accounts.find(item => item.uid === uid);
+        return account?.publicProfile.displayName || account?.username || uid;
+      };
+      res.json({
+        history: history.map(item => ({
+          ...item,
+          responsibleReviewerName: item.responsibleReviewerName || reviewerName(item.responsibleReviewerUid),
+          ...(item.detailed && item.claimHistory ? {
+            claimHistory: item.claimHistory.map(event => ({
+              ...event,
+              actorName: reviewerName(event.actorUid),
+              targetName: reviewerName(event.targetUid || null),
+              previousName: reviewerName(event.previousUid || null)
+            }))
+          } : {})
+        }))
+      });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
