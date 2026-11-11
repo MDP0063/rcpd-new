@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Search } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { parseManualReviewGrades } from '../lib/examReviewGrades';
 import type { UserPublicProfile } from '../types/portal';
 import './ExamReviewCenter.css';
+import { ExamParticipantRecord } from './ExamParticipantRecord';
 
 interface ReviewQuestion { questionId: string; question: string; answer: string; pointsMilli: number; gradingRubric: string }
 interface ReviewClaim {
@@ -50,6 +51,8 @@ export const ExamReviewCenter: React.FC<{
   const [transferDialog, setTransferDialog] = useState<{ review: ReviewItem; mode: 'transfer' | 'reassign' } | null>(null);
   const [transferTargetUid, setTransferTargetUid] = useState('');
   const [transferReason, setTransferReason] = useState('');
+  const [participantQuery, setParticipantQuery] = useState('');
+  const [selectedParticipant, setSelectedParticipant] = useState<UserPublicProfile | null>(null);
   const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
@@ -302,7 +305,40 @@ export const ExamReviewCenter: React.FC<{
     await load();
   };
 
+  const normalizedParticipantQuery = participantQuery.trim().toLocaleLowerCase('de-DE');
+  const participantMatches = normalizedParticipantQuery.length < 2 || selectedParticipant
+    ? []
+    : roster.filter(member => [
+        member.displayName, member.badgeNumber, member.callsign, member.rank
+      ].some(value => value.toLocaleLowerCase('de-DE').includes(normalizedParticipantQuery))).slice(0, 8);
+
   return <section className="exam-review-center space-y-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center gap-2">
+        <Search size={17} className="shrink-0 text-slate-400"/>
+        <label htmlFor="exam-participant-search" className="text-sm font-semibold text-slate-800 dark:text-slate-200">Teilnehmerakte öffnen</label>
+      </div>
+      <input
+        id="exam-participant-search"
+        type="search"
+        value={participantQuery}
+        onChange={event => { setParticipantQuery(event.target.value); setSelectedParticipant(null); }}
+        placeholder="Name, Badge oder Callsign suchen …"
+        autoComplete="off"
+        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+      />
+      {participantMatches.length > 0 && <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
+        {participantMatches.map(member => <li key={member.uid}>
+          <button type="button" onClick={() => { setSelectedParticipant(member); setParticipantQuery(member.displayName); }} className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
+            <span className="font-medium text-slate-800 dark:text-slate-200">{member.displayName}</span>
+            <span className="text-xs text-slate-500">{member.badgeNumber} · {member.callsign}</span>
+          </button>
+        </li>)}
+      </ul>}
+      {normalizedParticipantQuery.length >= 2 && !selectedParticipant && participantMatches.length === 0 && <p className="mt-2 text-xs text-slate-500">Keine passenden Teilnehmer im Verzeichnis gefunden.</p>}
+    </div>
+    {selectedParticipant && <ExamParticipantRecord participant={selectedParticipant} onClose={() => { setSelectedParticipant(null); setParticipantQuery(''); }}/>}
+
     <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">Aktualisieren</button></div>
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
