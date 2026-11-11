@@ -444,4 +444,7 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - `AcademyCenter.tsx` trennt nun die reine Academy-Einstiegsansicht vom regulären Bereich Übersicht. Die Einstiegsansicht enthält fünf Kacheln; die horizontale Hauptnavigation wird erst nach Auswahl eines Bereichs angezeigt.
 - Die fünf Kacheln führen zu den vorhandenen Academy-Bereichen. Bestehende Fachlogik, APIs, Datenmodelle und Berechtigungen wurden nicht absichtlich verändert.
 - Die SVGs sind erste technische Entwürfe und müssen noch visuell auf Formtreue, einheitliche Gewichtung, Kachelwirkung und responsive Darstellung geprüft werden.
+- Visuelle Nacharbeit auf dem bestehenden Feature-Branch: Bibliotheks-SVG auf drei kompakt gestaffelte/leicht überlagerte geschlossene Bücher korrigiert; Academy-Kacheln auf einfarbige Bereichsflächen mit weicher, zurückhaltender weißer Reflexion, dezenten Schatten und sanftem Hover-Verhalten umgestellt. Responsives Raster auf 1/2/3 Spalten (Smartphone/Tablet/Desktop) ausgerichtet. Die verbindliche Oberflächenentscheidung wurde in Spezifikation und Entscheidungsregister ergänzt.
+- Diese Änderungen sind noch nicht durch Lint, Build, Tests oder Browserprüfung verifiziert. Kein PR, Merge oder Deployment.
+
 - Lint, Build, Tests und Browser-/Live-Abnahme sind für diesen Branch noch nicht ausgeführt. Vor Merge müssen die verpflichtenden Prüfungen aus `AGENTS.md` tatsächlich laufen; nicht ausgeführte Prüfungen dürfen nicht als bestanden markiert werden.
