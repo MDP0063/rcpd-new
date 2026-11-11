@@ -499,3 +499,13 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Kategorie- und Dokumenttypverwaltung verwenden dieselbe Grundstruktur aus Formular und Bestandsliste, bleiben aber eigenständige Aufgaben.
 - **SCHUTZGRENZE:** Keine neuen Felder, Status, Verwaltungsrechte, Lösch-/Archivierungsregeln oder API-Verhalten.
+
+
+## 11.11.2026 – Ergänzende verbindliche Academy-Navigations- und Akzentregeln
+
+- **BESCHLOSSEN:** Aus jedem internen Academy-Untermodul muss eine klar erkennbare, konsistente Aktion zurück zur fünfteiligen Academy-Kachelstartseite führen. Dafür wird der bereits besprochene Rückkehr-Button verwendet. Ein dateipfadartiger Header, Breadcrumb oder Zurück-Link innerhalb der Modulhierarchie ersetzt diese Aktion nicht.
+- **BESCHLOSSEN:** Die Rückkehraktion ist in allen relevanten Untermodulen und deren tieferen Ansichten verfügbar, soweit ein Nutzer dort regulär navigieren kann. Sie führt direkt zur Kachelstartseite und nicht nur zur vorherigen Unteransicht.
+- **BESCHLOSSEN:** Die bereichsspezifische Akzentfarbe muss nach dem Öffnen einer Kachel auch in der horizontalen Academy-Hauptnavigation eindeutig wiedererkennbar sein. Der aktive Bereichszustand wird sichtbar und konsistent mit seinem Bereichsakzent markiert.
+- **BESCHLOSSEN:** Akzentfarben werden rollenbasiert und zurückhaltend eingesetzt. Sie dienen der Bereichszuordnung und Orientierung, nicht als pauschale Rahmen-, Warn- oder Statusfarbe. Insbesondere darf der Beerenton der Prüfungen keine flächige rote Umrandung oder einen Warnzustand suggerieren.
+- **BESCHLOSSEN:** Fachliche Statusfarben (z. B. Erfolg, Warnung, Fehler, bestanden/nicht bestanden) behalten ihre eigenständige semantische Bedeutung und werden nicht durch Bereichsakzente ersetzt. Bereichsakzent und Statusfarbe sind visuell klar unterscheidbar.
+- **SCHUTZGRENZE:** Die fünfteilige Kachelstartseite, ihre Kachelfarben, Inhalte und Illustrationen bleiben unverändert. Diese Ergänzung betrifft die Navigation und die Gestaltung der internen Untermodule.
