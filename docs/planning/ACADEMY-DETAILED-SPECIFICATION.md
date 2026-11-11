@@ -1582,3 +1582,19 @@ Verbindliche Gestaltungsregeln:
 - Die endgültige Symbolgröße, Freifläche und Überlagerungsstärke werden im tatsächlichen Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft. Bei visueller Konkurrenz oder schlechter Lesbarkeit wird die Überlagerung reduziert.
 
 Diese Perspektiventscheidung ergänzt die bereits beschlossene neutrale SVG-Grundpalette mit Bereichsfarbakzent und die leichte Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
+
+
+## Konturen und Farbflächen der fünf Academy-SVG-Illustrationen (11.11.2026)
+
+**Beschlossen ist Variante B: flächenbetonte, matte Illustrationen mit klaren Konturen.**
+
+Verbindliche Gestaltungsregeln:
+
+- Die Gegenstände werden überwiegend aus ruhigen, matten und neutralen Füllflächen aufgebaut. Die Füllflächen bilden die Hauptmasse der Motive.
+- Dunkle Konturen und wenige gezielte Details grenzen die Formen klar ab und unterstützen die Erkennbarkeit. Konturstärke und -charakter müssen über alle fünf SVGs konsistent sein.
+- Die jeweilige Bereichsfarbe erscheint nur als zurückhaltender Akzent. Die kräftige Kachelgrundfarbe wird nicht großflächig innerhalb der Illustration wiederholt.
+- Die gemeinsame neutrale Grundpalette, maximal drei bis vier bewusst eingesetzte Farben je Illustration sowie die einheitliche geometrische Formsprache bleiben verbindlich.
+- Die SVGs bleiben vollständig matt: keine eigenen Glanzreflexe, künstlichen Schatten, Transparenz-Spielereien oder 3D-Effekte. Der leichte Glanz ist ausschließlich Teil der Kacheloberfläche.
+- Die hellen neutralen Flächen und dunklen Konturen müssen auf allen fünf kräftigen Kachelfarben klar erkennbar bleiben. Kontrast, Detailgröße, Symbolgröße und Gesamtwirkung werden im tatsächlichen Kachelprototyp einschließlich Desktop-, Tablet- und Mobilansicht validiert. Falls Konturen oder Flächen mit Kachelreflexion, Titel oder Beschreibung konkurrieren, werden sie angepasst, ohne die beschlossene Stilrichtung zu verlassen.
+
+Diese Entscheidung ergänzt die frontale Perspektive und die dezente, gegenstandsbezogene Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
