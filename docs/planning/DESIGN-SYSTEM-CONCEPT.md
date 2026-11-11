@@ -290,3 +290,14 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 
 
 **Umsetzungsstand:** Die geteilte Bewertungsfläche und das einklappbare Kontextpanel wurden in PR #175 gemergt. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich. Die Browserabnahme steht nach Deployment aus.
+
+
+## 19. Ergebnisfreigabe und Korrekturarbeitsplatz – visuelle Ausarbeitung (11.11.2026)
+
+- Ausstehende Ergebnisfreigaben und die Korrektur abgeschlossener Bewertungen bleiben als getrennte Aufgabenabschnitte erkennbar.
+- Freigabeeinträge zeigen Prüfung, Kurskennung, Teilnehmer, Prüfungsart, Abgabezeitpunkt, aktuelles Ergebnis und vorhandene Freigabehistorie. Es werden keine neuen Kennzahlen oder Status erzeugt.
+- Korrekturansichten stellen Prüfungs-/Teilnehmerkontext, bisherigen Ergebnisstand, Antwort und Bewertungsrubrik sowie neue Punkteingabe klar getrennt dar.
+- Die Begründung bleibt als verpflichtender, eigenständiger Schritt deutlich sichtbar. Die bestehende Mindest-/Maximallänge und Validierung bleiben unverändert.
+- Die Korrekturhistorie wird als chronologisch lesbarer Auditbereich mit altem/neuem Ergebnis, Verantwortlichen und Begründung gestaltet. Bestehende Historienfelder bleiben erhalten.
+- Der Beerenton #A33370 ist der Arbeitsbereichsakzent; Bestanden/Nicht bestanden behalten ihre fachlichen Statusfarben.
+- Ergebnisfreigabe, erneute Freigabe nach Korrektur, Berechtigungen, Auditdaten und Teilnehmerprojektion werden funktional nicht verändert.

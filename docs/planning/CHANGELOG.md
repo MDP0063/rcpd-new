@@ -272,3 +272,9 @@
 
 - Den Freitext-Bewertungsarbeitsplatz als geteilte Fläche mit einklappbarem Kontextpanel gestaltet.
 - Vorhandene Vorgangsmetadaten werden übersichtlich gebündelt; Bewertung, Claim, Draft-Speicherung, Übergabe und Abschluss bleiben fachlich unverändert.
+
+
+## 2026-11-11 – Academy-Ergebnisfreigabe und Korrekturarbeitsplatz (PR in Vorbereitung)
+
+- Ergebnisfreigabe-Einträge, Korrektureingaben, Begründung und Korrekturhistorie visuell klarer gegliedert.
+- Ergebnisstatusfarben, Freigabeablauf, Berechtigungen und Auditdaten unverändert.
