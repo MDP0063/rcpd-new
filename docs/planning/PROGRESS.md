@@ -584,9 +584,12 @@ PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c
 PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c9c1e8de995). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Prüfungszentrums steht aus.
 
 
-## 11.11.2026 – Meine Notizen: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Meine Notizen: visueller Ausbau (PR #172 gemergt)
 
 - Der bestehende Notizenbereich wurde geprüft: private Notizen und Lesezeichen mit Suche, Quellenanzeige, Bearbeiten/Löschen sowie separatem Editor sind vorhanden. Neue Notizen werden weiterhin im Reader angelegt.
 - Gestaltung: ruhiger grüner Bereichsakzent, klarer Privatsphäre-Hinweis, gut scannbare Notizkarten und eigenständige Editorfläche.
 - Keine Änderung an Privatheit, Datenmodell, Quellenbindungen, Sync, API oder Aktionen.
 - Browserabnahme steht nach Deployment aus.
+
+
+PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c9083652b304626cd). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme von Meine Notizen steht aus.

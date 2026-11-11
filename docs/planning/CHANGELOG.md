@@ -260,3 +260,9 @@
 
 - Notizen-/Lesezeichenliste, Privatsphäre-Hinweis und Editor visuell an die Academy-Designsprache angepasst.
 - Private Daten, Quellenbezüge und bestehende Bearbeitungs-/Löschaktionen unverändert.
+
+
+## 2026-11-11 – Academy-Bereich Meine Notizen (PR #172 gemergt)
+
+- Privatsphäre-Hinweis, Notizen-/Lesezeichenliste und Editor visuell an die Academy-Designsprache angepasst.
+- Notizdaten, Quellenbezüge, Zugriffsschutz und bestehende Aktionen unverändert.
