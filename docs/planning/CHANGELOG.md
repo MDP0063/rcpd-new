@@ -178,3 +178,11 @@
 - Frühere Outline-/Lucide-Icon-Festlegungen wurden als überholt gekennzeichnet. Verbindlich bleiben fünf individuelle, ruhige geometrische SVG-Illustrationen; diese bleiben selbst matt und zurückhaltend und werden auf die kräftigeren Kachelfarben abgestimmt.
 - Widersprüche zwischen älteren und neueren Festlegungen in DECISIONS.md und ACADEMY-DETAILED-SPECIFICATION.md bereinigt. Fachliche Bereiche, Navigation, Kachel-Inhalte, responsive Spaltenlogik, Abstände und Eckenradius wurden nicht verändert.
 - Ausschließlich Planungsdokumentation aktualisiert; keine Anwendungsdateien, Tests, Berechtigungen oder Deployment-Einstellungen geändert. Änderungen bleiben auf dem bestehenden Draft-PR #155 und sind nicht gemergt/deployed.
+
+## 2026-11-11 – Academy-Farbpalette und Bereichszuordnung bestätigt
+
+- Nutzer hat den vorgeschlagenen Farbentwurf und die vorgeschlagene Zuordnung ausdrücklich bestätigt.
+- Beschlossene Ausgangspalette: Übersicht Blau `#2864D9`; Kurse Türkis `#087F8C`; Lernbibliothek Violett `#6841B8`; Prüfungen Beere `#A33370`; Meine Notizen Grün `#287A45`.
+- Die Farben dienen ausschließlich der Bereichsorientierung, nicht der Darstellung von Status.
+- Die Ausgangswerte werden im visuellen Prototyp mit der beschlossenen glänzenden Oberfläche, weißen Reflexion, Textkontrasten, Fokuszuständen und responsiven Größen geprüft. Kleinere technische Feinjustierung ist möglich, Farbfamilien und Zuordnung bleiben dabei erhalten.
+- Ausschließlich Planungsdokumentation aktualisiert; keine App-Implementierung, Tests oder Deployment-Änderungen vorgenommen.
