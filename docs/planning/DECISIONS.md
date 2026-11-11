@@ -568,3 +568,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Keine Glanzreflexe, künstlichen Schatten, Transparenz-Spielereien oder 3D-Effekte innerhalb der SVGs. Der dezente Glanz bleibt ausschließlich Bestandteil der Kacheloberfläche.
 - Die hellen neutralen Flächen und Konturen müssen auf allen fünf kräftigen Kachelfarben ausreichend klar und harmonisch wirken. Kontrast, Detailgröße und Lesbarkeit werden im echten Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft.
 - Diese Entscheidung ergänzt die bereits beschlossene frontale Perspektive und dezente gegenstandsbezogene Überlagerung. Sie verändert weder Motive/Bereichszuordnung noch Kachelstruktur oder fachliche Funktionen.
+
+
+## Academy-SVG-Illustrationen – Detailgrad bestätigt (11.11.2026)
+
+- **BESCHLOSSEN:** Die fünf Illustrationen werden schlicht, klar und auf den ersten Blick gegenständlich erkennbar gestaltet. Sie sollen unmittelbar visualisieren, wofür der jeweilige Academy-Bereich steht.
+- **BESCHLOSSEN:** Als gemeinsamer Detailgrad gilt eine reduzierte Gestaltung mit wenigen größeren, gut lesbaren Formen und nur gezielt ausgewählten funktionalen Einzelheiten. Die Motive dürfen weder überladen noch so stark vereinfacht sein, dass ihre Bedeutung unklar oder beliebig wird.
+- **BESCHLOSSEN:** Details wie Dokumentzeilen, einzelne Dashboard-Karten oder angedeutete Buchseiten sind zulässig, wenn sie die Erkennbarkeit des jeweiligen Motivs unterstützen. Dekorative Kleinteile ohne inhaltlichen Nutzen werden vermieden.
+- **BESCHLOSSEN:** Alle fünf Illustrationen erhalten eine vergleichbare Detailtiefe und müssen auch in der vorgesehenen kleinen Kachelgröße verständlich bleiben. Die konkrete Ausarbeitung wird im responsiven Kachelprototyp geprüft.
+- Diese Festlegung ergänzt die bereits beschlossenen neutralen Füllflächen mit klaren Konturen, den dezenten Bereichsfarbakzent, die frontale Perspektive und die sparsame gegenstandsbezogene Überlagerung.
