@@ -176,3 +176,13 @@
 - Fünf lokale flächige SVG-Entwürfe ergänzt und in `AcademyCenter.tsx` eingebunden.
 - Einstiegsansicht und reguläre Übersicht getrennt; die horizontale Hauptnavigation erscheint erst nach Auswahl eines Bereichs.
 - Keine API-, Datenmodell-, Rollen- oder Berechtigungsänderungen beabsichtigt.
+
+
+## 2026-11-11 – Academy-Einstiegskacheln: visuelle Verfeinerung
+
+- Bibliotheksillustration auf drei kompakt gruppierte, leicht überlagerte geschlossene Bücher mit dezenter Neigung umgestellt.
+- Alle fünf SVGs auf eine gemeinsame optische Motivgröße (Richtwert 70–78 % der 128×128-Zeichenfläche) skaliert und zentriert.
+- Kacheln auf satte einfarbige Bereichsflächen umgestellt; weiche weiße Reflexion, dezente Schatten und leicht verstärkter Hover-Reflex ohne Farbverläufe oder Metallstruktur.
+- Responsive Raster auf Smartphone 1, Tablet 2 und Desktop 3 Spalten abgestimmt; Innenabstände und Textabstände responsiv vereinheitlicht.
+- Beschreibungstexte auf Weiß für ausreichenden Kontrast gesetzt; Hover-Bewegung respektiert reduzierte Bewegungseinstellungen.
+- Umsetzung ausschließlich auf `feature/academy-entry-illustrations`; keine API-/Datenmodell-/Berechtigungsänderung, kein PR, Merge oder Deployment. Lint, Build, Tests und Browserprüfung stehen noch aus.
