@@ -349,3 +349,40 @@ Die visuelle Gestaltung wurde über alle fünf Teilnehmerbereiche hinaus auf die
 Die Gestaltung folgt weiterhin einer gemeinsamen Academy-Grundsprache mit bereichsspezifischen Akzenten. Die fünf Kachel-Einstiege bleiben unverändert. Globale Portalidentität und globale Navigation sind nicht Teil dieses Designs.
 
 **Abnahmehinweis:** Der Code ist gemergt, aber die optionalen Render-Deploy-Hooks wurden übersprungen. Die vollständige Browserabnahme ist daher weiterhin offen. Legacy-Prüfungsansichten werden erst nach dem abschließenden Audit und der Klärung ihrer fachlichen Rolle angefasst.
+
+
+## 24. Ergänzende Navigations- und Akzentregeln (11.11.2026)
+
+### 24.1 Verlässlicher Rückweg zur Kachelstartseite
+
+Jedes Academy-Untermodul stellt den bereits beschlossenen, eindeutig beschrifteten Rückkehr-Button zur Academy-Kachelstartseite bereit. Das gilt auch für tieferliegende Ansichten wie Reader, Kurs-/Programmdetails, Verwaltungseditoren, Prüfungsansichten und Examiner-Arbeitsflächen, sofern sie innerhalb der Academy geöffnet werden. Der Button führt direkt zur Kachelstartseite. Ein dateipfadartiger Header, Breadcrumb oder ein kontextueller Zurück-Link ist kein Ersatz dafür und darf den Rückweg nicht verstecken.
+
+Die konkrete Platzierung folgt der gemeinsamen Layout-Hierarchie und bleibt auf Desktop, Tablet und Mobilgeräten erreichbar. Der Button wird als Navigation und nicht als fachliche Aktion gestaltet; Tastaturfokus und zugänglicher Name sind sicherzustellen.
+
+### 24.2 Bereichsfarbe in der horizontalen Academy-Navigation
+
+Die horizontale Hauptnavigation muss die Akzentfarbe des jeweils aktiven Untermoduls sichtbar aufnehmen. Die Zuordnung bleibt eindeutig:
+- Übersicht: Blau
+- Kurse: Petrol `#087F8C`
+- Lernbibliothek: Violett `#6841B8`
+- Prüfungen: Beerenton `#A33370`
+- Meine Notizen: Grün `#287A45`
+
+Der aktive Navigationspunkt erhält eine klar erkennbare, aber ruhige Bereichsmarkierung. Die Farbe muss auch ohne alleinige Farberkennung durch Form, Gewicht, Unterstreichung, Fläche oder einen anderen geeigneten aktiven Zustand verständlich bleiben. Inaktive Punkte bleiben visuell zurückhaltend. Kontrast und Fokusindikatoren bleiben eigenständig gewährleistet.
+
+### 24.3 Semantisch kontrollierter Akzenteinsatz
+
+Bereichsfarben sind Orientierungs- und Identitätsakzente. Sie werden nicht automatisch auf sämtliche Rahmen, Kartenumrandungen, Eingabefelder oder Hintergründe übertragen. Primärflächen und neutrale Oberflächen bleiben Teil des gemeinsamen Academy-Designsystems. Akzentfarbe wird gezielt an wenigen geeigneten Stellen eingesetzt, etwa aktiver Navigation, kleinen Markierungen, ausgewählten Icon-/Textdetails oder sparsam dosierten Flächen.
+
+Insbesondere gilt für Prüfungen: Der Beerenton `#A33370` ist kein Warnrot. Eine flächige oder durchgängige rote Umrandung von Prüfungsseiten, Karten oder Eingabebereichen ist zu vermeiden. Ergebnis- und Systemzustände behalten ihre eigenen semantischen Farben (Erfolg, Warnung, Fehler sowie bestanden/nicht bestanden). Bereichsakzent und Statusfarbe dürfen nicht verwechselt werden.
+
+### 24.4 Umsetzung und Prüfung
+
+Bei der Überarbeitung jedes Untermoduls wird explizit geprüft:
+- Ist der Rückkehr-Button zur Kachelstartseite vorhanden und direkt erreichbar?
+- Ist der aktive Bereich in der horizontalen Navigation mit seinem korrekten Akzent erkennbar?
+- Ist die Bereichsfarbe zurückhaltend und konsistent eingesetzt, ohne neutrale Flächen unnötig einzufärben?
+- Sind Statusfarben weiterhin semantisch korrekt und unabhängig vom Bereichsakzent?
+- Bleiben Tastaturfokus, Kontrast, responsive Darstellung und Dark Mode erhalten?
+
+Diese Regeln ändern weder Funktionen noch Berechtigungen, Datenmodelle oder fachliche Statuslogik.
