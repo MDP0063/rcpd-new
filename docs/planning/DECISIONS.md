@@ -404,3 +404,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die fünf Hauptbereiche bleiben gleichberechtigt. Rollen-/Examiner-Unteransichten werden kontextbezogen innerhalb der bestehenden Bereiche geführt und erzeugen keinen zusätzlichen allgemeinen Hauptnavigationspunkt.
 - **GESTALTUNGSDETAILS NOCH OFFEN:** exakte visuelle Ausprägung, Abstände, aktive Markierung, Icons, Breakpoints und mobile Darstellung. Diese werden nach Recherche und anhand der bestehenden Portalstruktur festgelegt.
 - **RECHERCHEHINWEISE:** USWDS Header Guidance (horizontale Navigation bei überschaubarer Anzahl von Hauptbereichen, kurze Labels, aktuelle Position sichtbar, Tastaturbedienbarkeit); GOV.UK Tabs Guidance (Tabs nicht als Seitennavigation verwenden); NICE Design System (Horizontal Navigation für eigenständige Seiten, Tabs für Ansichten im selben Kontext); ONS Design System (mobile Darstellung ohne mehrzeiliges Umbrechen der Tabs).
+
+### Ergänzung: Academy-Redesign – Einstiegsseite und Vermeidung doppelter Einstiegspunkte (11.11.2026)
+
+- **BESCHLOSSEN:** Die fünf Academy-Hauptbereiche werden horizontal direkt unter dem Academy-Kopfbereich navigiert, sobald sich der Nutzer innerhalb einer Bereichsansicht befindet.
+- **BESCHLOSSEN:** Die Academy-Einstiegsseite verwendet stattdessen große, farbige, selbsterklärende Bereichskacheln als jeweils einzige Einstiegspunkte zu den Academy-Bereichen.
+- **BESCHLOSSEN:** Auf derselben Ansicht werden dieselben Ziele/Funktionen nicht zusätzlich noch einmal über eine zweite gleichwertige Navigationsform angeboten. Insbesondere gibt es auf der Einstiegsseite nicht gleichzeitig die fünf Bereichskacheln und eine identische horizontale Fünf-Punkte-Navigation.
+- **BESCHLOSSEN:** Nach dem Öffnen eines Bereichs übernimmt die horizontale Hauptnavigation den Wechsel zwischen Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen.
+- **BESCHLOSSEN:** Kacheln sollen professionell und institutionell wirken, mit klaren Titeln, passenden Symbolen, harmonierenden Farben und kurzen verständlichen Beschreibungen. Die Oberfläche soll auch für jüngere RP-Nutzer selbsterklärend sein, ohne kindlich oder ausschließlich auf eine Altersgruppe zugeschnitten zu wirken.
+- **OFFEN:** Konkrete Kachelgestaltung, Farbpalette, Größe/Anordnung, ergänzende Inhalte der Einstiegsseite und responsive/mobile Darstellung werden nach weiterer Recherche einzeln ausgearbeitet.
