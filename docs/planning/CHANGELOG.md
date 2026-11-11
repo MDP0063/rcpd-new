@@ -146,3 +146,12 @@
 - Idempotente In-App-Benachrichtigungen für bisherigen und neuen Verantwortlichen, bevorstehende automatische Freigabe und automatische Freigabe; Direktnavigation zum konkreten Examiner-Vorgang.
 - PR #152: GitHub-CI erfolgreich – TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung. Optionaler Render-Deploy-Hook übersprungen; Produktionsdeployment und manuelle Browser-/Live-Firestore-Prüfung nicht verifiziert.
 - Squash-Merge PR #152: `465c55ab92164e5f47e30b041ac80ef678c718ec`.
+
+
+## 2026-11-11 – Start des Academy-UX-/UI-Audits
+
+- Neue Datei `ACADEMY-UX-AUDIT.md` mit erster read-only Bestandsaufnahme am Main-Commit `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`.
+- Tatsächliche Academy-Struktur, Komponenten, globale Portalnavigation, erste UX-Hypothesen und offene technische/visuelle Prüfaufträge dokumentiert.
+- Erste Recherche etablierter Produkte und Standards aufgenommen: Canvas, Open edX, Moodle, GOV.UK Design System, WAI-ARIA APG, WCAG 2.2 und Nielsen Norman Group.
+- README und PROGRESS um den neuen Audit-Einstieg und den tatsächlichen Main-Basisstand ergänzt.
+- Keine Anwendungslogik, UI-Komponenten, API, Datenmodelle, Berechtigungen oder Deployment-Konfiguration geändert. Keine UX-/UI-Entscheidung vorweggenommen.
