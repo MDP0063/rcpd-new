@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import './AcademyMaterialTaxonomyManager.css';
 import type { AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeView } from '../types/academy';
 
 interface Props {
@@ -184,16 +185,16 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   );
 
   return (
-    <section className="space-y-5" aria-labelledby="academy-document-type-heading">
-      <header className="space-y-1">
+    <section className="academy-material-taxonomy-manager space-y-5" aria-labelledby="academy-document-type-heading">
+      <header className="academy-material-taxonomy-heading space-y-1">
         <h2 id="academy-document-type-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Dokumenttypen verwalten</h2>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Dokumenttypen können hier erstellt, umbenannt, archiviert, reaktiviert und – solange kein Material darauf verweist – endgültig gelöscht werden. Die Kennung bleibt bei einer Umbenennung stabil.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5 items-start">
-        <form onSubmit={save} className="rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="academy-material-taxonomy-layout grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5 items-start">
+        <form onSubmit={save} className="academy-material-taxonomy-form rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{editing ? 'Dokumenttyp bearbeiten' : 'Dokumenttyp hinzufügen'}</h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -243,7 +244,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           </div>
         </form>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="academy-material-taxonomy-list rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">Vorhandene Dokumenttypen</h3>
@@ -273,7 +274,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           ) : (
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
               {visibleDocumentTypes.map(documentType => (
-                <li key={documentType.id} className="py-3 first:pt-0 last:pb-0">
+                <li key={documentType.id} className="academy-material-taxonomy-item py-3 first:pt-0 last:pb-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -286,7 +287,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
                       </div>
                       {documentType.description && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{documentType.description}</p>}
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="academy-material-taxonomy-actions flex shrink-0 flex-wrap gap-2">
                       <button type="button" className={secondaryButton} onClick={() => beginEdit(documentType)} disabled={busy}>Bearbeiten</button>
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(documentType)} disabled={busy}>
                         {documentType.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
