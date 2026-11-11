@@ -1494,3 +1494,23 @@ Die Kacheln sollen dadurch großzügig und klar gegliedert wirken, ohne übermä
 Für die fünf Academy-Einstiegskacheln wird eine **dezente mittlere Abrundung** verwendet: sichtbar abgerundet, aber deutlich näher an einer sachlich/fast eckigen Form als an stark gerundeten, pillenartigen Karten.
 
 Als vorläufiger Richtwert für den visuellen Prototyp gelten **8–12 px Eckenradius**. Der endgültige Wert wird im responsiven Layout anhand der tatsächlichen Kachelgrößen und der Gesamtwirkung überprüft. Die Abrundung soll den professionellen, cleanen Charakter unterstützen und nicht verspielt wirken.
+
+## Academy-Einstiegskacheln – beschlossene Illustrationssprache (11.11.2026)
+
+Die fünf Bereichskacheln verwenden eine ruhige, reduzierte und geometrische Illustrationssprache. Diese Entscheidung ersetzt die frühere vorläufige Festlegung klassischer Outline-Icons als Kachelvisuals.
+
+### Visuelle Leitlinien
+
+- Zurückhaltende, harmonische Farbflächen, passend zu den bereits beschlossenen hellen Kachelhintergründen.
+- Dezente Überlagerungen und allenfalls leichte räumliche Wirkung; kein ausgeprägter 3D-Look.
+- Wenige, bewusst gewählte Details. Die Darstellung bleibt auch in kleiner Größe verständlich.
+- Einheitliche Geometrie, Proportionen und Detailtiefe über alle fünf Illustrationen; falls Konturen verwendet werden, einheitliche Strichstärke.
+- Keine glänzenden Oberflächen, künstlich wirkenden Schatten, zufälligen Details, übertriebene Perspektiven oder überladene/typisch KI-generierte Bildästhetik.
+- Die Illustrationen unterstützen die Orientierung, dominieren aber nicht die Kacheln oder die Benutzeroberfläche. Bereichstitel und Kurzbeschreibungen bleiben die primären Informationsträger.
+- Die fünf Motive werden als konsistentes Set individuell gestaltet und lokal als SVG-Dateien eingebunden; keine externen Bilddienste zur Laufzeit.
+
+### Unverändert geltende Kachelentscheidungen
+
+Die bereits beschlossene Kachelstruktur bleibt erhalten: Illustration oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Ebenso bleiben die fünf Bereiche, die alleinige Kachel-Navigation auf der Academy-Einstiegsseite, die helle harmonische Farbpalette, die ausgewogenen Abstände und die dezente mittlere Eckenrundung unverändert.
+
+Die konkrete Ausarbeitung, Größenabstimmung und responsive Prüfung erfolgen später im Designsystem und Prototyp. Diese Stilentscheidung verändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Interaktionen.
