@@ -240,3 +240,54 @@ Die nächste Bestandsaufnahme wird die folgenden Punkte vollständig und evidenz
 8. **Konzept und Entscheidungsreview:** erst danach konkrete IA-/UX-Optionen, UI-Richtung, Alternativen, Auswirkungen und Empfehlungen ausarbeiten.
 
 **Erst nach diesen Schritten** werden wir die Academy-UX verbindlich ausarbeiten und anschließend die visuelle Gestaltung mit den portalweiten Designgrundlagen abstimmen. Bis dahin bleiben konkrete Layouts, Farben, Karten-/Listenentscheidungen und Navigationsvarianten offen.
+
+
+## 8. Ergänzende Befunde aus Rollen-, Dashboard- und Einstiegspfaden
+
+### 8.1 Bestehende Rollen- und Rechtebasis
+
+**TECHNISCHER BEFUND:** `OfficerRole` kennt die Rollen Admin, Colonel, Officer, Rookie und Trainee. `ROLE_HIERARCHY` legt unter anderem fest:
+
+| Rolle | Academy-Bearbeitung | Abschlussprüfungen | Benutzerverwaltung | Technische Pipeline |
+|---|---:|---:|---:|---:|
+| Admin | Ja | Ja | Ja | Ja |
+| Colonel | Ja | Ja | Nein | Nein |
+| Officer | Nein | Ja | Nein | Nein |
+| Rookie | Nein | Ja | Nein | Nein |
+| Trainee | Nein | Nein | Nein | Nein |
+
+Zusätzlich existieren granulare Kursrechte über `canGradeAssignedCourses` und `assignedCourseCodes`. Die Academy-UI leitet daraus unter anderem `canEditAcademy` ab. Der Material-API-Zugriff prüft die Kurskennung serverseitig; Archivierung bleibt Admin/Colonel vorbehalten. Kurs-/Programmentwürfe werden über die vorhandene Admin-/Colonel-Eigentümerlogik verwaltet.
+
+**Prüfaufträge:**
+- Die Matrix muss für jede Academy-Funktion einzeln mit den serverseitigen Prüfungen abgeglichen werden; eine globale Rolle allein beschreibt nicht alle Kurszuständigkeiten.
+- Für jede Ansicht muss klar sein, ob sie Teilnehmer-, Kursverantwortlichen-, Prüfer-, Aufsichts- oder Admin-Aufgaben unterstützt.
+- Keine neue Rolle, kein neues Recht und keine implizite Gleichsetzung von „Academy bearbeiten“, „Material verwalten“, „Prüfen“ und „Prüfungswerkstatt öffnen“ einführen.
+
+Quellen im Repository: `src/types/portal.ts`, `server/rolePermissions.ts`, `server/academyApi.ts`, `src/components/AcademyCenter.tsx`. Die Admin-only-Prüfungswerkstatt bleibt zusätzlich durch ihre bestehende Berechtigungsarchitektur begrenzt.
+
+### 8.2 Academy und Dashboard – doppelte Fortschrittsprojektionen
+
+**TECHNISCHER BEFUND:** Das Dashboard rendert in `src/App.tsx` die Komponente `ProfessionalDevelopmentModule` und übergibt ihr `modules`, `exams` und `userProgress`. Die Komponente erstellt daraus eine gemeinsame Diagramm-/Statusprojektion für Legacy-Lehrmaterialien und Prüfungen sowie Zusammenfassungswerte. Die Academy-Übersicht verwendet dieselben Legacy-Props für Material-/Prüfungszähler und bestandene Prüfungen. Die neueren Kurs-/Programmoberflächen in `AcademyLearningCenter.tsx` laden dagegen Kurs-, Programm- und Teilnahmeinformationen über die neue Academy-API.
+
+**UX-/Datenintegritätsrisiko:** Es gibt damit mindestens zwei fachliche Daten-/Statusprojektionen: den bisherigen Professional-Development-/Legacy-Fortschritt und den neuen versionierten Kurs-/Programmfortschritt. Das kann zu doppelten, unvollständigen oder unterschiedlich interpretierten Fortschrittsanzeigen führen, falls die Datenquellen nicht ausdrücklich zusammengeführt bzw. abgegrenzt werden.
+
+**Verbindliche Leitlinie:** Dashboard und Academy verwenden dieselben maßgeblichen Statusdefinitionen und eine autoritative Datenbasis. Das Dashboard bleibt kompakter; die Academy darf den detaillierten Ausbildungsfortschritt darstellen. Es darf kein künstlicher Gesamtfortschrittsindex entstehen.
+
+**Prüfaufträge:**
+- Alle Felder und Statuswerte der Legacy-Fortschrittsdaten den neuen Kurs-/Programm-/Prüfungsnachweisen gegenüberstellen.
+- Prüfen, welche Legacy-Anzeigen noch fachlich gültig sind und welche nur aus Kompatibilitätsgründen bestehen.
+- Zähler und Diagramme mit realen Datenfällen vergleichen: nicht begonnen, begonnen, freiwillig beendet, administrativ beendet, abgeschlossen, bestanden, nicht bestanden, korrigiert und Ergebnis noch nicht freigegeben.
+- Festlegen, welche Ansicht welche Informationstiefe braucht, ohne dieselbe Kennzahl mehrfach oder widersprüchlich darzustellen.
+
+### 8.3 Erreichbarkeit alter und rollenabhängiger Academy-Unterbereiche
+
+**TECHNISCHER BEFUND:** Im untersuchten `AcademyCenter.tsx` wird `exam_reviews` durch ein eingehendes `reviewNavigationTarget` aktiviert; `App.tsx` setzt dieses Ziel beim Öffnen einer Benachrichtigung mit `linkTarget.type === 'exam_review'`. Für `exam_corrections` wurde in dieser Komponente kein entsprechender normaler `setActiveTab`-Einstieg gefunden. Auch die älteren Zustände `instructor_grading`, `upload_textbook` und `add_code_test` besitzen im untersuchten Komponenten-Code keine erkennbare reguläre Navigationsaktion, die sie aktiviert.
+
+**Prüfauftrag:** Repo-weit und im Live-Rollentest klären, ob diese Zweige bewusst Legacy-/Kompatibilitätscode sind, ob andere Deep-Links existieren oder ob berechtigte Aufgabenbereiche derzeit keinen normalen Einstieg besitzen. Bis zur Klärung weder löschen noch neue Menüeinträge erfinden.
+
+### 8.4 Zwei Prüfungsdarstellungen
+
+**TECHNISCHER BEFUND:** `activeTab === 'exam_center'` rendert `ExamParticipantRunner`; `tests` und `final_exams` rendern daneben eine ältere Liste und einen älteren Prüfungsablauf auf Basis der `exams`- und `userProgress`-Props. Der neue Runner lädt seinen Prüfungskatalog über eigene API-Endpunkte.
+
+**Prüfauftrag:** Vollständige Ende-zu-Ende-Prüfung, ob diese Darstellungen dieselben Prüfungen bzw. Ergebnisse abbilden, ob eine der Oberflächen Legacy ist und welche davon für Teilnehmer tatsächlich maßgeblich ist. Die Nutzerführung darf nicht zwei scheinbar gleichwertige Prüfungswege anbieten, die unterschiedliche Status- oder Ergebnisquellen haben.
+
