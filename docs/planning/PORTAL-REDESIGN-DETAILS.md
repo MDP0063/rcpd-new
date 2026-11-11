@@ -596,3 +596,16 @@ Für das gesamte Redesign gilt ab jetzt das detaillierte Modell in [`DEVELOPMENT
 **Endproduktorientierung:** Globale Navigation, Rollen-/Aufgabenlogik, Designsystem, gemeinsame Komponenten, Datenverantwortung und Modulübergänge werden frühzeitig so weit geplant, dass die erste Umsetzung nicht in eine Sackgasse führt. Bereits erarbeitete Konzepte und Komponenten werden wiederverwendet. Überarbeitung bleibt erlaubt und erwünscht, wenn Tests oder belastbare Erkenntnisse tatsächliche Verbesserungen nahelegen.
 
 **Academy im aktuellen Ablauf:** Die Academy ist weit fortgeschritten. Wir schließen ihre offenen fachlichen Punkte und prüfen die Konsistenz, ohne technische Implementierungsdetails zu erfinden, die erst nach Architektur-/Machbarkeitsprüfung entschieden werden können. Gleichzeitig werden globale Grundlagen und Abhängigkeiten des Gesamtportals weiter ausgearbeitet. Die Academy wird nicht als isoliertes Produkt behandelt und ihr Abschluss bedeutet nicht, dass die übrigen Module warten müssen.
+
+## 21. Ergänzung: visuelle Gestaltungsverantwortung und Academy-Startabschnitt (11.11.2026)
+
+Die am 11.11.2026 getroffene Arbeitsvereinbarung überträgt ChatGPT die eigenständige visuelle Ausarbeitung, nicht jedoch die Befugnis, frühere Arbeit oder fachliche Beschlüsse zu ersetzen.
+
+- Objektiv begründbare Details werden auf Basis aktueller UX-/Accessibility-Standards, tatsächlicher RCPD-Aufgaben und technischer Machbarkeit entschieden.
+- Prägende subjektive Grundsatzentscheidungen werden vor der Festlegung erneut mit dem Projektinhaber abgestimmt.
+- Bestehende Funktionen, Rechte, Datenflüsse, Statusdefinitionen, freigegebene Informationsarchitektur und fertige Oberflächen sind zu schützen.
+- Die Academy ist der erste visuelle Arbeitsabschnitt mit der bestätigten matten, dezenten blauen Wellenform, leicht getöntem Hintergrund, klaren Inhaltsflächen und gemeinsamen, bereichsspezifisch akzentuierten Gestaltungsmustern.
+- Die fertige fünfteilige Academy-Kachel-Startseite bleibt unverändert. Die internen Bereiche nutzen die bestehende horizontale Hauptnavigation; die fünf Einstiege werden nicht erneut als Kacheln dargestellt.
+- Die globale visuelle Identität, globale Navigation und Theme-Strategie des Portals bleiben offen und werden nicht allein aus der Academy abgeleitet.
+
+Die ausführliche Arbeitsgrundlage einschließlich Referenzen und Qualitäts-Gates ist [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md). Diese Ergänzung ersetzt keine der bestehenden fachlichen Modulregeln oder den Auditablauf.
