@@ -540,3 +540,11 @@ Der Nutzer hat **Variante B – neutrale Basis mit Bereichsfarbakzent** ausdrüc
 - Die SVGs bleiben matt, geometrisch, reduziert und frei von künstlichen Glanzreflexen, dekorativen Schatten und überladenen 3D-Effekten.
 
 Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen. Motive, Geometrie, Strichstärke, Proportionen und Detailtiefe müssen weiterhin ein kohärentes Set bilden. Die kräftigen Kachelfarben und ihre Zuordnung bleiben unverändert.
+
+## Academy-SVG-Illustrationen – dezente Überlagerung der Motivbestandteile (11.11.2026)
+
+- Nutzer hat die Gestaltungsrichtung **B – leicht überlagerte Bestandteile** bestätigt: Die räumliche Wirkung entsteht aus den jeweiligen Gegenständen selbst (z. B. versetzte Dashboard-Karten, leicht gestaffelte Buchseiten oder Dokumente), nicht aus zusätzlichen dekorativen Hintergrundformen.
+- Die Überlagerung bleibt zurückhaltend: wenige klar erkennbare Ebenen, nur teilweise sichtbare hintere Bestandteile und keine unnötige Detailfülle. Das Hauptmotiv muss auf der kleinen Kachelgröße sofort lesbar bleiben.
+- **Harmonisierungsvorbehalt:** Die Illustrationen müssen als Teil der gesamten Academy-Kachel und des späteren Portal-Designsystems funktionieren. Sie dürfen weder mit der kräftigen Kachelgrundfarbe und deren weicher weißer Reflexion noch mit Titel/Beschreibung konkurrieren. Neutrale matte Grundflächen und der bereits beschlossene dezente Bereichsfarbakzent bleiben maßgeblich.
+- Keine künstlichen Schatten, Glanzreflexe, Transparenz-Spielereien oder ausgeprägten 3D-Effekte innerhalb der SVGs. Die konkrete Stärke der Überlagerung wird im Zusammenhang mit den echten Kacheln, Größen, Texten, Kontrasten und responsiven Ansichten prototypisch geprüft und bei Bedarf zurückgenommen.
+- Die Entscheidung legt die gemeinsame Illustrationssprache fest, nicht die endgültige Komposition jedes einzelnen Motivs. Motive und Detailausarbeitung müssen weiterhin als kohärentes Fünfer-Set gestaltet werden.
