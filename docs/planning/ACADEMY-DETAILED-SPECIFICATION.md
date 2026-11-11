@@ -1640,3 +1640,17 @@ Die Kachel „Kurse“ erhält eine reduzierte, weich abgerundete Abschlusskappe
 Die Abschlusskappe muss dieselbe Designart wie der bereits festgelegte Wegweiser der Kachel „Übersicht“ verwenden. Sie ist kein stilistischer Sonderfall. Verbindlich sind daher dieselben weichen, abgerundeten Formen, der geringe Detailgrad, matte neutrale Füllflächen, klare dunkle Konturen, frontale Perspektive und sparsame, gegenstandsbezogene Überlagerung. Geometrie, Proportionen, Konturgewicht und Detaildichte müssen über alle fünf Illustrationen hinweg konsistent sein.
 
 Für „Kurse“ wird nur ein dezenter türkiser Akzent aus der Bereichsfarbfamilie eingesetzt. Die Abschlusskappe muss als Motiv auch unabhängig von der Kachelfarbe klar von Wegweiser, Lernbibliotheks-, Prüfungs- und Notizmotive unterscheidbar bleiben.
+
+## Lernbibliothek-Motiv und Präzisierung der gemeinsamen Illustrationssprache (11.11.2026)
+
+Für die Kachel „Lernbibliothek“ wird Variante A – ein kleines Bücherregal mit zwei bis drei aufrecht stehenden Büchern – verwendet. Das Regal erhält eine klare, eigenständige Silhouette und soll nicht wie ein einzelnes Dokument, Notizblatt oder aufgeschlagenes Buch wirken. Der Bereichsakzent bleibt dezent violett.
+
+Das Bücherregal gehört exakt derselben Illustrationsfamilie an wie der Wegweiser für „Übersicht“ und die Abschlusskappe für „Kurse“. Die Nutzerpräzisierung vom 11.11.2026 konkretisiert zugleich die Formensprache aller fünf Motive und gilt auch rückwirkend für die beiden bereits festgelegten Symbole:
+
+- Schlichter und geometrischer statt stark kurvig oder verspielt; klare, ruhige Grundformen.
+- Weiterhin leicht abgerundete Ecken und Übergänge, jedoch weniger ausgeprägte Rundungen und weniger organisch-verspielte Linienführungen.
+- Etwas kräftigere, klare und über alle fünf Motive einheitliche dunkle Konturen. Das Konturgewicht muss auch in kleiner Kachelgröße gut erkennbar bleiben.
+- Wenige prägnante Flächen und nur notwendige Erkennungsdetails; keine dekorativen Kurven oder unnötigen Kleinteile.
+- Einheitliche Strichstärke, Geometrie, Proportionen und Detaildichte über Wegweiser, Abschlusskappe, Bücherregal sowie die beiden noch offenen Motive.
+
+Diese Präzisierung ersetzt nicht die gemeinsame Basis: frontale Perspektive, matte neutrale Füllflächen, zurückhaltender Bereichsfarbakzent, sparsame gegenstandsbezogene Überlagerung und klare Unterscheidbarkeit anhand der Silhouette bleiben bestehen. Exakte Strichstärke und Rundungsradien werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und anschließend konsistent auf alle fünf SVGs angewendet.
