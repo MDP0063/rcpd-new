@@ -1709,3 +1709,20 @@ Farbige Akzente in jeder Illustration dürfen ausschließlich aus der Farbfamili
 - Meine Notizen: Grün
 
 Diese Regel betrifft die Illustrationen; die bereits festgelegten Kacheloberflächen und Kachelgrundfarben bleiben unverändert. Der schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt für alle fünf Motive maßgeblich.
+
+
+### Einheitliche Größe und optische Gewichtung
+
+Alle fünf Kachelillustrationen verwenden dieselbe Zeichenflächengröße und identische äußere Abmessungen. Die Motive werden zentral ausgerichtet und müssen eine vergleichbare optische Größe und Flächendichte besitzen. Kein Motiv soll durch seine Silhouette oder die Menge seiner Füllflächen dominanter wirken. Unterschiedliche Gegenstandsformen sind innerhalb derselben Gestaltungsgrenzen optisch auszugleichen.
+
+### Erste konkrete Formausarbeitung – Entwurfsstand
+
+Die folgenden Formbeschreibungen dienen als gemeinsamer Arbeitsentwurf und sind noch keine endgültige SVG-Freigabe:
+
+- **Übersicht:** gerader Mittelpfosten mit zwei klaren Richtungsschildern; keine zusätzlichen Symbole oder Beschriftungen.
+- **Kurse:** klare, möglichst symmetrische Abschlusskappe mit kleiner Quaste; keine Buchform.
+- **Lernbibliothek:** drei geschlossene klassische Bücher, leicht versetzt gruppiert, eines dezent geneigt; keine Regalstruktur.
+- **Prüfungen:** kompakter einzelner Prüfungsbogen mit wenigen Antwortfeldern und einer klaren Markierung; keine langen Textzeilen.
+- **Meine Notizen:** oben gebundener Notizblock mit wenigen kurzen Schreiblinien; keine Häkchen oder Antwortkästchen.
+
+Prüfungsbogen und Notizblock müssen trotz ähnlicher Grundform sofort unterscheidbar bleiben: Antwortfelder/Markierung stehen für Prüfungen, einfache Schreiblinien und obere Bindung für persönliche Notizen. Alle fünf Entwürfe folgen dem schlichten flächigen Piktogrammstil der Nutzerreferenz, mit wenigen geometrischen Füllflächen und ausschließlich dem jeweiligen Kachelfarbton als zurückgenommenem Akzent. Die Entwürfe sind vor finaler SVG-Umsetzung gemeinsam visuell zu prüfen.
