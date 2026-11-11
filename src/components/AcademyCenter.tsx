@@ -897,8 +897,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
             </div>
           ) : !currentModule && !activeVersionedMaterialId ? (
-            <section aria-labelledby="academy-library-heading" className="space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <section aria-labelledby="academy-library-heading" className="academy-library-catalog space-y-5">
+              <div className="academy-library-heading flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div>
                   <h2 id="academy-library-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Lernbibliothek</h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Alle für dich zugänglichen veröffentlichten Materialien an einem Ort.</p>
@@ -907,12 +907,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
-                <div>
+              <div className="academy-library-toolbar grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
+                <div className="academy-library-search">
                   <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
                   <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Beschreibung" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
                 </div>
-                <div>
+                <div className="academy-library-sort">
                   <label htmlFor="academy-library-sort" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sortieren</label>
                   <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
                     <option value="relevance">Relevanz</option>
@@ -921,7 +921,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   </select>
                 </div>
               </div>
-              <details className="rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
+              <details className="academy-library-filters rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
                 <summary className="cursor-pointer select-none text-sm font-medium text-slate-700 dark:text-slate-200">
                   Filter {hasActiveLibraryFilters ? '· aktiv' : ''}
                 </summary>
@@ -962,7 +962,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
                 )
               ) : (
-                <div className="border-y border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800" aria-label="Bibliotheksmaterialien">
+                <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
                   {sortedLibraryEntries.map(entry => (
                     <button key={entry.kind + ':' + entry.id} type="button" onClick={() => {
                       if (entry.kind === 'legacy') {
@@ -973,7 +973,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         setActiveVersionedMaterialId(entry.id);
                       }
                       setIsLibraryNavigationOpen(false);
-                    }} className="w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
+                    }} className="academy-library-result w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
                       <span className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                         <span className="font-medium text-sm text-slate-900 dark:text-white">{entry.title}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">{entry.code}</span>
@@ -985,9 +985,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               )}
             </section>
           ) : (
-            <div className={`grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
+            <div className={`academy-library-reader-layout grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
               {isLibraryNavigationOpen && (
-                <aside id="academy-material-navigation" aria-label="Materialnavigation" className="lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
+                <aside id="academy-material-navigation" aria-label="Materialnavigation" className="academy-library-sidebar lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
                   <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
@@ -1021,8 +1021,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   versionedMaterialLoading ? (
                     <p role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300">Material wird geladen …</p>
                   ) : currentVersionedMaterial ? (
-                    <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                    <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+                      <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
                             <span>{currentVersionedMaterial.code}</span>
@@ -1076,8 +1076,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </p>
                     </div>
                   ) : (
-                  <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                  <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+                    <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
                           <span>{currentModule.code}</span>
