@@ -247,3 +247,10 @@
 - Bibliothekskatalog mit klarer Such-/Sortier-/Filterzone und kompakten Materialeinträgen visuell überarbeitet.
 - Readeroberfläche mit ruhiger Lesefläche und klarer Metadaten-/Aktionszone ergänzt.
 - Legacy- und versionierte Materialien sowie alle Zugriffs-/Readerfunktionen unverändert gelassen.
+
+
+## 2026-11-11 – Academy-Teilnehmer-Prüfungszentrum (PR #170 gemergt)
+
+- Prüfungskatalog, Auswahlpanel, aktiver Prüfungsversuch und Ergebnisansicht visuell überarbeitet.
+- Auswahlzustand der Prüfungen semantisch über aria-pressed ergänzt.
+- Bestehende Status-, Zeit-, Autospeicher-, Bewertungs- und Freigabelogik unverändert.
