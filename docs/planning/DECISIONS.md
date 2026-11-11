@@ -413,3 +413,15 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Nach dem Öffnen eines Bereichs übernimmt die horizontale Hauptnavigation den Wechsel zwischen Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen.
 - **BESCHLOSSEN:** Kacheln sollen professionell und institutionell wirken, mit klaren Titeln, passenden Symbolen, harmonierenden Farben und kurzen verständlichen Beschreibungen. Die Oberfläche soll auch für jüngere RP-Nutzer selbsterklärend sein, ohne kindlich oder ausschließlich auf eine Altersgruppe zugeschnitten zu wirken.
 - **OFFEN:** Konkrete Kachelgestaltung, Farbpalette, Größe/Anordnung, ergänzende Inhalte der Einstiegsseite und responsive/mobile Darstellung werden nach weiterer Recherche einzeln ausgearbeitet.
+
+
+## Academy UI-Redesign – Kachel-Inhalte der Einstiegsseite (11.11.2026)
+
+**BESCHLOSSEN:** Jede der fünf großen Bereichskacheln auf der Academy-Einstiegsseite enthält genau drei inhaltliche Bestandteile:
+1. Ein gut erkennbares, passendes Symbol.
+2. Einen eindeutigen Bereichsnamen.
+3. Einen kurzen, selbsterklärenden Satz, der beschreibt, was Nutzer in diesem Bereich finden oder erledigen können.
+
+Die Kachel ist als Ganzes der eindeutige Einstiegspunkt in den jeweiligen Bereich. Keine zusätzlichen Aktionsbuttons, Status-Badges, Kennzahlen oder Fortschrittsbalken innerhalb der Kacheln im Grundentwurf. Zusätzliche Inhalte dürfen nur später nach belegtem Nutzwert und separater Entscheidung ergänzt werden.
+
+Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare Flächen mit professionellem institutionellem Charakter. Sie soll auch für jüngere Nutzer verständlich sein, ohne kindlich oder ausschließlich auf eine Altersgruppe zugeschnitten zu wirken. Konkrete Farbwerte, Symbolstil, Typografie, Kachelmaße und responsive Anordnung bleiben Teil der weiteren Recherche und Gestaltung.
