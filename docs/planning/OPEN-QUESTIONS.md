@@ -245,3 +245,18 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - Die manuelle Erstfreigabe ohne explizite Konfiguration ist umgesetzt (PR #144). Eine explizite automatische Freigabekonfiguration ist derzeit im Datenmodell/Workshop nicht vorhanden und bleibt eine spätere offene Erweiterung; bis dahin darf kein automatischer Modus angenommen werden.
 - Die dynamische serverseitige `required_assessment`-Verifikation ist mit PR #146 umgesetzt und gemergt: nur aktuell freigegebene bestandene `final_exam`-Versuche mit passender Teilnehmer- und Kurskennung zählen. Es wird kein persistentes Academy-Duplikat des Prüfungsnachweises erzeugt. CI und Diff-Review waren erfolgreich; die Browser-/Live-Firestore-Abnahme bleibt offen.
 - Noch zu prüfen: CI, unabhängiger Diff-Review und die anschließende Produktions-/Browserprüfung. Die manuelle Browser-/Live-Firestore-Prüfung bleibt bis zum gemeinsamen Academy-Abnahmetest zurückgestellt.
+
+
+## Ergänzung vom 11.11.2026 – Visuelles Designsystem
+
+Die gestalterische Ausarbeitung wurde an ChatGPT übertragen, mit der verbindlichen Einschränkung, frühere Arbeit und Beschlüsse nicht zu gefährden. Objektive UX-/Accessibility-Entscheidungen dürfen eigenständig getroffen werden; subjektive, prägende Grundsatzentscheidungen müssen vor einer Festlegung erneut abgestimmt werden. Siehe `DECISIONS.md` Abschnitt D und `DESIGN-SYSTEM-CONCEPT.md`.
+
+Weiterhin offen und nicht aus dem ersten Academy-Mockup abzuleiten:
+- finale visuelle Identität des Gesamtportals;
+- endgültige globale Sidebar-, Header- und Navigationsgestaltung;
+- Light-/Dark-Mode-Strategie;
+- ob die globale Portalgestaltung künftig stärker an die Academy-Farbigkeit angelehnt wird oder bewusst neutraler bleibt;
+- endgültige Formensprache und dekorative Gestaltung außerhalb der bereits beschlossenen Academy-Kachelillustrationen;
+- genaue Intensität und Position der blauen Wellenform nach Prototyp- und Responsive-Prüfung.
+
+Diese Fragen blockieren nicht die objektive Ausarbeitung und prototypische Validierung der internen Academy-Seiten innerhalb der bestätigten visuellen Richtung. Sie werden aber vor einer prägenden Festlegung erneut abgestimmt.
