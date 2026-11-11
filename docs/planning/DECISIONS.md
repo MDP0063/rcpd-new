@@ -634,3 +634,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Alle fünf Motive müssen dieselbe visuelle Einfachheit, Formensprache, Ebenentechnik und Detaildichte besitzen. Die bestehende Motivwahl bleibt: Übersicht – Wegweiser; Kurse – Abschlusskappe; Lernbibliothek – drei klassische Bücher, eines leicht geneigt, ohne Regal. Prüfungen und Meine Notizen bleiben motivisch offen.
 - Die Bereichsfarbzuordnung und die Kacheloberflächen bleiben separate Entscheidungen; die Illustrationen werden in diesem neuen Stil darauf abgestimmt.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Motiv der Academy-Kachel „Prüfungen“ festgelegt
+
+- **BESCHLOSSEN – Variante B:** Die Kachel „Prüfungen“ erhält einen stark reduzierten Prüfungsbogen mit wenigen Antwortfeldern und einem klar markierten Häkchen.
+- Das Motiv soll den Prüfungs-/Antwortcharakter unmittelbar vermitteln, aber nicht wie ein weiteres Buch, eine Lernunterlage oder ein Notizblatt wirken. Dafür bleibt die Silhouette kompakt und die Anzahl der Elemente sehr gering.
+- Das Motiv wird exakt im gemeinsamen flächigen Piktogrammstil der vom Nutzer bereitgestellten Wegweiser-Referenz ausgeführt: wenige geometrische Füllflächen, einfache Formen und dezente Überlagerung echter Motivbestandteile. Keine dominanten Konturen, 3D-Effekte oder dekorativen Details.
+- Der Bereichsakzent bleibt Beere/Pink gemäß der bereits festgelegten Kachelfarbzuordnung. Die Motivwahl legt keine zusätzliche Statusfarbe fest.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
