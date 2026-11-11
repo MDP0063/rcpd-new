@@ -314,3 +314,14 @@
 - Prüfungsbogen und Notizblock werden über Antwortfelder/Markierung gegenüber Schreiblinien/Bindung klar differenziert.
 - Die Formbeschreibungen sind noch nicht als finale SVG-Entwürfe freigegeben; gemeinsame Sichtprüfung steht aus.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Reproduzierbare Ausführungsspezifikation für alle fünf Academy-Illustrationen
+
+- Projektinhaber hat die gemeinsame Vorschau aller fünf Motive als richtige visuelle Richtung bestätigt.
+- Auf ausdrücklichen Wunsch wurde die Dokumentation von einer bloßen Motivliste zu einer reproduzierbaren Ausführungsspezifikation erweitert: gemeinsame SVG-Zeichenfläche/Größenregeln, Zentrierung, gleiche optische Gewichtung, Stil, Ebenenlogik, Farbregeln, Einzelaufbau jedes Symbols, Ausschlüsse, Unterscheidbarkeit und Abnahmekriterien sind explizit beschrieben.
+- Einzelmotive präzisiert: Wegweiser mit senkrechtem Pfosten und zwei Richtungsschildern; Abschlusskappe mit symmetrischer Kappenplatte und Quaste; genau drei klassische geschlossene Bücher, eines leicht geneigt; ein Prüfungsbogen mit wenigen Antwortfeldern und genau einem Häkchen; oben gebundener Notizblock mit Schreiblinien.
+- Farbregel: Akzent ausschließlich aus der Farbfamilie der jeweiligen Kachel, gegenüber der Kachelgrundfarbe zurückgenommen, aber erkennbar; neutrale Grundflächen erlaubt; keine fremden Akzentfarben.
+- Gemeinsame Vorschau ist Richtungsreferenz, nicht pixelgenaue finale SVG-Vorlage. Finale Pfade, Neutralwerte und Akzentabstufungen bleiben bis zur gemeinsamen SVG-Sichtprüfung offen.
+- Bei nicht entschiedenen Details nicht improvisieren; vor Umsetzung Rückfrage. Finale SVG-Implementierung erst nach ausdrücklicher Freigabe der gemeinsamen Entwürfe.
+- Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 geändert. Keine App-Dateien, Tests, Berechtigungen, Datenmodelle, Merge oder Deployment geändert.
+
