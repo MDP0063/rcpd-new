@@ -164,7 +164,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
   pendingReviewerPermissions.assignedCourseCodes = ['SOP-01'];
   const pendingReviewer = makeAccount('http-pending-reviewer', 'HttpPendingReviewer', 'officer', pendingReviewerPermissions);
   pendingReviewer.publicProfile.whitelistStatus = 'pending';
-  const pendingSupervisor = makeAccount('http-pending-supervisor', 'HttpPendingSupervisor', 'admin');
+  const pendingSupervisor = makeAccount('http-pending-supervisor', 'HttpPendingSupervisor', 'colonel');
   pendingSupervisor.publicProfile.whitelistStatus = 'pending';
   const portalState = {
     version: 3,
