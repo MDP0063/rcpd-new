@@ -357,7 +357,7 @@ Die Gestaltung folgt weiterhin einer gemeinsamen Academy-Grundsprache mit bereic
 
 Jedes Academy-Untermodul stellt den bereits beschlossenen, eindeutig beschrifteten Rückkehr-Button zur Academy-Kachelstartseite bereit. Das gilt auch für tieferliegende Ansichten wie Reader, Kurs-/Programmdetails, Verwaltungseditoren, Prüfungsansichten und Examiner-Arbeitsflächen, sofern sie innerhalb der Academy geöffnet werden. Der Button führt direkt zur Kachelstartseite. Ein dateipfadartiger Header, Breadcrumb oder ein kontextueller Zurück-Link ist kein Ersatz dafür und darf den Rückweg nicht verstecken.
 
-Die konkrete Platzierung folgt der gemeinsamen Layout-Hierarchie und bleibt auf Desktop, Tablet und Mobilgeräten erreichbar. Der Button wird als Navigation und nicht als fachliche Aktion gestaltet; Tastaturfokus und zugänglicher Name sind sicherzustellen.
+Die konkrete Platzierung folgt der gemeinsamen Layout-Hierarchie und bleibt auf Desktop, Tablet und Mobilgeräten erreichbar. Der Button wird als Navigation und nicht als fachliche Aktion gestaltet; Tastaturfokus und zugänglicher Name sind sicherzustellen. Der Wechsel zur Kachelstartseite darf serverseitig gespeicherte Entwürfe nicht verwerfen; für noch ungespeicherte Eingaben gelten weiterhin die jeweiligen fachlichen Autosave- und Bestätigungsregeln.
 
 ### 24.2 Bereichsfarbe in der horizontalen Academy-Navigation
 
