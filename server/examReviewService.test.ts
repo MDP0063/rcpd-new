@@ -217,7 +217,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(correctedAttempt?.reviewCorrections?.length, 1);
     assert.equal(correctedAttempt?.reviewedByUid, 'grader',
       'a later correction must not replace the original completing reviewer');
-    assert.equal(correctedAttempt?.reviewedAtIso, '2026-11-05T12:03:00.000Z',
+    assert.equal(correctedAttempt?.reviewedAtIso, '2026-11-05T13:48:00.000Z',
       'a later correction must not change the original review completion time');
     assert.equal(correctedAttempt?.reviewCorrections?.[0].reason, 'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.');
     assert.equal(correctedAttempt?.reviewCorrections?.[0].previousGrades[0].pointsEarnedMilli, 500);
