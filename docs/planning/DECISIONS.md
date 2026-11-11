@@ -379,3 +379,14 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Admins und Colonels behalten ihre bereits festgelegten administrativen Befugnisse; diese Entscheidung schränkt sie nicht ein und führt keine neue Rolle ein.
 - Die Revision bleibt eine Weiterbearbeitung desselben Prüfungsversuchs. Gespeicherte Drafts und die vorherige Bewertungshistorie bleiben erhalten. Revisionsgrund und konkretes Feedback zu betroffenen Bewertungsschritten sind verpflichtend.
 - Alle für den Kurs autorisierten Prüfer sind bei der anschließenden Bearbeitung gleichberechtigt; der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber historisch nachvollziehbar.
+
+
+## Academy – visuelles Einstiegsdesign (11.11.2026)
+
+- **BESCHLOSSEN:** Die Academy-Startansicht zeigt fünf gleichwertige farbige Kacheln als einzige primäre Einstiegspunkte: Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen.
+- **BESCHLOSSEN:** Auf der Einstiegsansicht wird die horizontale Academy-Hauptnavigation nicht zusätzlich angezeigt. Nach dem Öffnen eines Bereichs erscheint die horizontale Hauptnavigation unterhalb des Academy-Headers. Übersicht bleibt ein reguläres Ziel innerhalb dieser Navigation.
+- **BESCHLOSSEN:** Jede Kachel enthält genau Illustration, Titel und kurze selbsterklärende Beschreibung. Die ganze Kachel ist der einzige primäre Einstieg; keine zusätzlichen Aktionsbuttons, Status-Badges, Zähler oder Fortschrittsanzeigen im Grundmuster.
+- **BESCHLOSSEN:** Alle fünf Illustrationen verwenden eine gemeinsame 128×128-SVG-Zeichenfläche, gleiche sichtbare Größe und optische Gewichtung sowie einen einheitlichen schlichten, flächigen, geometrischen Stil. Keine 3D-Optik, Verläufe, Glanzlichter oder künstlichen Schatten innerhalb der SVGs. Dezente Reflexionen dürfen ausschließlich Teil der farbigen Kacheloberfläche sein.
+- **BESCHLOSSEN:** Motive und Farbfamilien: Übersicht – Wegweiser/Blau `#2864D9`; Kurse – Abschlusskappe/Petrol `#087F8C`; Lernbibliothek – exakt drei geschlossene Bücher/Violett `#6841B8`; Prüfungen – Antwortbogen mit genau einem markierten Feld/Beerenton `#A33370`; Meine Notizen – oben gebundener Notizblock mit Schreiblinien/Grün `#287A45`.
+- **BESCHLOSSEN:** Die Erkennungsmerkmale der drei dokumentartigen Motive dürfen bei der Vereinfachung nicht verloren gehen: Bücher über Buchkörper/Rücken und Dreiergruppe, Prüfungen über Antwortfelder und ein Häkchen, Notizen über obere Bindung und Schreiblinien.
+- **BESCHLOSSEN:** Desktop-Raster 3 Spalten (3+2), Tablet 2 Spalten, Smartphone 1 Spalte. Gleiche Kachel-Grundgestaltung und optische Gewichtung; Illustrationen oben, Titel und Beschreibung linksbündig darunter. Richtmaße werden responsiv mit echten Texten validiert.
