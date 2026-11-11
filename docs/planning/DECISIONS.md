@@ -425,3 +425,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 Die Kachel ist als Ganzes der eindeutige Einstiegspunkt in den jeweiligen Bereich. Keine zusätzlichen Aktionsbuttons, Status-Badges, Kennzahlen oder Fortschrittsbalken innerhalb der Kacheln im Grundentwurf. Zusätzliche Inhalte dürfen nur später nach belegtem Nutzwert und separater Entscheidung ergänzt werden.
 
 Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare Flächen mit professionellem institutionellem Charakter. Sie soll auch für jüngere Nutzer verständlich sein, ohne kindlich oder ausschließlich auf eine Altersgruppe zugeschnitten zu wirken. Konkrete Farbwerte, Symbolstil, Typografie, Kachelmaße und responsive Anordnung bleiben Teil der weiteren Recherche und Gestaltung.
+
+## Academy UI-Redesign – Farbgestaltung der Bereichskacheln (11.11.2026)
+
+- **BESCHLOSSEN – Farbkonzept Option A:** Jede der fünf Academy-Bereichskacheln erhält eine eigene helle, harmonisch abgestimmte Farbfläche. Das zugehörige Symbol darf in einer kräftigeren Akzentvariante derselben Farbfamilie erscheinen; Titel und Kurzbeschreibung bleiben dunkel und kontrastreich.
+- **BESCHLOSSEN:** Die Kachelfarben dienen ausschließlich der visuellen Bereichsorientierung. Sie erhalten keine Statusbedeutung wie Erfolg, Warnung oder Fehler. Portalweit verwendete Statusfarben müssen davon unabhängig und konsistent bleiben.
+- **BESCHLOSSEN:** Die Farbpalette soll freundlich und klar unterscheidbar, zugleich professionell und institutionell wirken. Keine grellen/neonartigen oder spielerisch überladenen Flächen.
+- **OFFEN:** Konkrete Farbtöne, Kontrastwerte und Zuordnung der fünf Farben zu den Bereichen werden im Designsystem ausgearbeitet und geprüft.
