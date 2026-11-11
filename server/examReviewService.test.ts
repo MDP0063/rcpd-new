@@ -229,6 +229,10 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal((await listPendingExamResultReleases(repository)).length, 1);
     const rereleased = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:11:00.000Z');
     assert.equal(rereleased.status, 'passed');
+    const participantAfterRerelease = (await listOwnExamResults(repository, 'student-1'))[0];
+    assert.equal(participantAfterRerelease.status, 'passed');
+    assert.equal(participantAfterRerelease.finalScoreBasisPoints, 9500);
+    assert.equal(participantAfterRerelease.questionResults[0].pointsEarnedMilli, 900);
     const rereleasedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
     assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
