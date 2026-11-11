@@ -1474,3 +1474,16 @@ Titel und Beschreibung werden linksbündig ausgerichtet. Die Reihenfolge und Aus
 Als vorläufige Größenrichtwerte gelten 48 px auf Desktop, 44–48 px auf Tablet und 40 px auf Smartphones. Diese Werte sind noch keine finalen Design-Tokens. Sie werden im späteren responsiven Prototyp anhand realer Kachelgrößen, Abstände, optischer Balance und Erkennbarkeit überprüft und gegebenenfalls angepasst.
 
 Diese Festlegung verändert keine fachlichen Inhalte, Navigationsziele oder Interaktionen.
+
+
+### Beschlossene Abstände und gewünschte Gesamtwirkung der Academy-Einstiegskacheln (11.11.2026)
+
+Gewählt wurde **Variante A – ausgewogen**. Die Einstiegsseite soll eine übersichtliche, cleane, aber dennoch farbige Auswahl der fünf Academy-Bereiche sein. Die Farben dienen der schnellen Bereichsorientierung; die Gestaltung bleibt ruhig, professionell und frei von unnötiger Dekoration.
+
+Vorläufige Abstandsrichtwerte für den Prototyp:
+- Innenabstand der Kacheln: Desktop 32 px, Tablet 28 px, Smartphone 24 px.
+- Symbol bis Titel: 20 px.
+- Titel bis Kurzbeschreibung: 8 px.
+- Abstand zwischen den Kacheln: 24 px.
+
+Die Kacheln sollen dadurch großzügig und klar gegliedert wirken, ohne übermäßig viel Platz einzunehmen. Alle fünf Kacheln bleiben gleichwertig. Die genannten Werte sind noch keine finalen Design-Tokens und werden im responsiven Prototyp mit realen Texten und Bildschirmgrößen überprüft.
