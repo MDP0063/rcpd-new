@@ -419,7 +419,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   return (
-    <div className={`space-y-6 ${area === 'courses' ? 'academy-learning-center academy-learning-center--courses' : ''}`}>
+    <div className={`space-y-6 ${area === 'courses' ? 'academy-learning-center academy-learning-center--courses' : area === 'notes' ? 'academy-learning-center academy-learning-center--notes' : ''}`}>
       {area === 'courses' && (
         <>
           {screen !== 'catalog' && (
@@ -699,8 +699,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       )}
 
       {area === 'notes' && (
-        <section className="space-y-5">
-          <header className="space-y-1">
+        <section className="academy-notes-area space-y-5">
+          <header className="academy-notes-heading space-y-2">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Meine Notizen</h2>
             <p className={muted}>Deine Notizen und Lesezeichen sind privat und werden nur deinem Konto zugeordnet. Andere Nutzer und Administratoren erhalten über diese Ansicht keinen Zugriff.</p>
           </header>
@@ -711,14 +711,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
             </div>
           ) : (
             <>
-              <label className="block space-y-1">
+              <label className="academy-notes-search block space-y-1">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Notizen durchsuchen</span>
                 <input className={field} value={noteSearch} onChange={event => setNoteSearch(event.target.value)} placeholder="Titel, Inhalt oder Schlagwort" />
               </label>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className={`${panel} divide-y divide-slate-200 dark:divide-slate-800`}>
+              <div className="academy-notes-layout grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className={`${panel} academy-notes-list divide-y divide-slate-200 dark:divide-slate-800`}>
                   {filteredNotes.length === 0 ? <p className={`p-4 ${muted}`}>{notes.length ? 'Keine Notiz passt zu deiner Suche.' : 'Du hast noch keine Notizen oder Lesezeichen gespeichert.'}</p> : filteredNotes.map(note => (
-                    <article key={note.id} className="p-4 space-y-2">
+                    <article key={note.id} className="academy-note-card p-4 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="font-medium text-slate-900 dark:text-white">{note.title || (note.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel')}</p>
@@ -739,7 +739,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   ))}
                 </div>
                 {editingNote ? (
-                  <form className={`${panel} p-4 space-y-3`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
+                  <form className={`${panel} academy-note-editor p-4 space-y-3`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h3>
                     <label className="block space-y-1"><span className="text-sm font-medium">Titel</span><input className={field} value={noteTitle} onChange={event => setNoteTitle(event.target.value)} maxLength={200} /></label>
                     <label className="block space-y-1"><span className="text-sm font-medium">Inhalt</span><textarea className={field} rows={8} value={noteContent} onChange={event => setNoteContent(event.target.value)} maxLength={20000} /></label>
@@ -747,7 +747,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <div className="flex flex-wrap gap-2"><button type="submit" className={primary} disabled={saving}>{saving ? 'Speichert …' : 'Änderungen speichern'}</button><button type="button" className={secondary} onClick={() => setEditingNote(null)}>Abbrechen</button></div>
                   </form>
                 ) : (
-                  <div className={`${panel} p-4 space-y-2`}>
+                  <div className={`${panel} academy-notes-reader-hint p-4 space-y-2`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Notizen aus dem Reader</h3>
                     <p className={muted}>Neue Notizen und Lesezeichen werden direkt im Dokument-Reader angelegt. Die aktuelle Bibliothek verwendet noch das ältere Materialmodell ohne stabile Dokumentversions-IDs; deshalb kann eine neue Notiz hier nicht sicher an eine konkrete Materialfassung gebunden werden.</p>
                   </div>
