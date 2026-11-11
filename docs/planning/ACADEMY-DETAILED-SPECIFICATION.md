@@ -1514,3 +1514,35 @@ Die fünf Bereichskacheln verwenden eine ruhige, reduzierte und geometrische Ill
 Die bereits beschlossene Kachelstruktur bleibt erhalten: Illustration oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Ebenso bleiben die fünf Bereiche, die alleinige Kachel-Navigation auf der Academy-Einstiegsseite, die helle harmonische Farbpalette, die ausgewogenen Abstände und die dezente mittlere Eckenrundung unverändert.
 
 Die konkrete Ausarbeitung, Größenabstimmung und responsive Prüfung erfolgen später im Designsystem und Prototyp. Diese Stilentscheidung verändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Interaktionen.
+
+## Academy-Einstiegskacheln – aktualisierte Farb-, Oberflächen- und Interaktionsrichtung (11.11.2026)
+
+Diese Entscheidung präzisiert die bisherige Farbgestaltung und ersetzt frühere Vorgaben zu ausschließlich hellen/matten Kachelflächen.
+
+### Farb- und Oberflächenwirkung
+
+- Jede der fünf Kacheln erhält eine eigene, kräftigere, satte und harmonisch abgestimmte **einfarbige** Grundfläche.
+- Keine sichtbaren Farbverläufe; die Grundfarbe bleibt innerhalb jeder Kachel einfarbig.
+- Die Oberfläche wirkt sehr glatt, hochwertig und leicht glänzend – eher wie eine glatte, lackierte/acrylartige Fläche als wie Papier.
+- Eine weiche, dezente **weiße Lichtreflexion** liegt über der farbigen Fläche. Sie darf weich auslaufen und soll wie reflektiertes Licht wirken, nicht wie ein harter Lichtstreifen.
+- Die Lichtreflexion ist der wesentliche Glanzeffekt; sie ist kein Farbverlauf.
+- Dezente Schattierung und weiche Schatten geben der Kachel Tiefe. Kein starker 3D-, Glas-, Chrom- oder Spiegel-Look.
+- Keine erkennbare Metallstruktur, keine gebürstete Metalloptik.
+
+### Hover und weitere Zustände
+
+- Im Ruhezustand bleibt der Glanz dezent sichtbar.
+- Beim Hover darf die weiße Reflexion etwas stärker hervortreten; eine minimale Anhebung und ein weicherer/etwas stärkerer Schatten sind als Richtung vorgesehen.
+- Exakte Reflexionsstärke, Schatten, Bewegung und Dauer werden am visuellen Prototyp abgestimmt, nicht vorab als starre Tokens festgelegt.
+- Tastaturfokus erhält eine eigenständige, gut erkennbare Fokusdarstellung und darf nicht allein durch den Glanz kommuniziert werden.
+- Die Kacheln müssen auf Touch-Geräten ohne Hover vollständig wirken. Bewegung ist bei aktivierter Einstellung für reduzierte Bewegung entsprechend zu reduzieren.
+
+### Form und Proportion
+
+Die Kacheln sind leicht breitformatig: etwas breiter als hoch, jedoch keine flachen Banner. Ein exaktes Seitenverhältnis ist noch offen und wird im Prototyp mit den tatsächlichen Texten und responsiven Breakpoints validiert.
+
+### Abgrenzung zu den Illustrationen
+
+Die zuvor beschlossene matte, nicht glänzende Gestaltung bezieht sich ausschließlich auf die fünf lokal eingebundenen SVG-Illustrationen. Diese sollen weiterhin ruhig, geometrisch und ohne künstliche Glanz-/3D-Effekte bleiben. Die nun beschlossene Glanzwirkung betrifft die farbige Kacheloberfläche, nicht die Illustration.
+
+Die konkreten Farbwerte, Reflexionsintensität und Schatten-/Hover-Tokens bleiben offen und werden anhand eines echten Prototyps beurteilt. Diese Entscheidung ändert keine fachlichen Inhalte, Navigationsziele, Berechtigungen oder Funktionen.
