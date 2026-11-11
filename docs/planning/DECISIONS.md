@@ -387,3 +387,5 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Eine automatische Empfehlung gilt als tatsächlich neu, wenn ein neuer, eigenständiger fachlicher Auslöser eintritt.
 - **BESCHLOSSEN:** Eine bloße Versionsänderung, ein erneutes Laden/Öffnen oder eine Fortschrittsänderung ohne neuen fachlichen Auslöser erzeugt keine neue Empfehlung.
 - **BESCHLOSSEN:** Eine ausgeblendete Empfehlung bleibt ansonsten ausgeblendet; nur eine nach diesen Kriterien tatsächlich neu erstellte Empfehlung darf erneut erscheinen.
+
+- **BESCHLOSSEN – Empfehlungshistorie vs. Benachrichtigungshistorie (11.11.2026):** Beide Historien sind fachlich getrennt. Die Empfehlungshistorie dokumentiert Erstellung, Zusammenführung, Ausblenden, Erledigung und Zurücknahme einer Empfehlung einschließlich Herkunft/Grund. Die Benachrichtigungshistorie dokumentiert Versand/Zustellung, Lesezustand und Ziel einer Benachrichtigung. Eine bestehende Empfehlung erzeugt nicht bei jeder Änderung automatisch eine neue Benachrichtigung. Bereits versendete Benachrichtigungen bleiben nachvollziehbar, auch wenn die zugrunde liegende Empfehlung später zurückgenommen wird.
