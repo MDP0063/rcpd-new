@@ -304,3 +304,13 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 
 
 **Umsetzungsstand:** Die visuelle Gliederung der Ergebnisfreigaben, Korrektureingaben und Historie wurde in PR #177 gemergt. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
+
+
+## 20. Kurs- und Programmverwaltung – visueller Ausbau (11.11.2026)
+
+- Der Verwaltungsbereich verwendet dieselbe Academy-Grundsprache und den Petrol-Akzent #087F8C wie der Kursbereich, bleibt aber als Arbeitsoberfläche klar von der Teilnehmeransicht unterscheidbar.
+- Die Verwaltungsübersicht stellt Kurse und Programme als zwei getrennte, gut scannbare Listen dar. Kennung, Veröffentlichung, Version/Revision und vorhandene Verfügbarkeits-/Materialprüfhinweise bleiben in der bestehenden Bedeutung erhalten.
+- Kurs- und Programmeditoren erhalten eine konsistente Formularhierarchie: Grunddaten, Lernziele, Kapitel/Materialbindungen bzw. Kurszuordnungen und Abschlussbedingungen.
+- Kapitel, Lernziele und Zuordnungen werden als eigenständige, visuell getrennte Bearbeitungseinheiten dargestellt.
+- Warnungen zu Materialrevision, fehlenden Abschlussbedingungen und ungespeicherten Änderungen bleiben in ihren vorhandenen Statusfarben und mit ihrem bestehenden Text erhalten.
+- Speichern, Veröffentlichen, Verlassen mit ungespeicherten Änderungen, Versionsbindung und alle Validierungen bleiben funktional unverändert.
