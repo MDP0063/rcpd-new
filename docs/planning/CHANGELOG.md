@@ -274,7 +274,7 @@
 - Vorhandene Vorgangsmetadaten werden übersichtlich gebündelt; Bewertung, Claim, Draft-Speicherung, Übergabe und Abschluss bleiben fachlich unverändert.
 
 
-## 2026-11-11 – Academy-Ergebnisfreigabe und Korrekturarbeitsplatz (PR in Vorbereitung)
+## 2026-11-11 – Academy-Ergebnisfreigabe und Korrekturarbeitsplatz (PR #177 gemergt)
 
 - Ergebnisfreigabe-Einträge, Korrektureingaben, Begründung und Korrekturhistorie visuell klarer gegliedert.
 - Ergebnisstatusfarben, Freigabeablauf, Berechtigungen und Auditdaten unverändert.

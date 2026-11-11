@@ -628,7 +628,7 @@ PR #172 wurde am 11.11.2026 gemergt (Merge-Commit 94e25ae18594fb9387684d2c908365
 PR #175 wurde am 11.11.2026 gemergt (Merge-Commit 8fe6cc17e5913003ee65b39e8f5383e6602ff821). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Examiner-Arbeitsplatzes steht aus.
 
 
-## 11.11.2026 – Ergebnisfreigabe und Korrekturarbeitsplatz: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Ergebnisfreigabe und Korrekturarbeitsplatz: visueller Ausbau (PR #177 gemergt)
 
 - Ausstehende Ergebnisfreigaben als klar getrennte, kompakte Einträge gestaltet.
 - Korrekturansicht mit deutlicher Trennung zwischen bisheriger Bewertung, neuer Punkteingabe, Begründung und Korrekturhistorie.
@@ -636,3 +636,6 @@ PR #175 wurde am 11.11.2026 gemergt (Merge-Commit 8fe6cc17e5913003ee65b39e8f5383
 - Keine Änderung an Ergebnisfreigabe, erneuter Freigabe, Korrekturberechtigung, Auditdaten, API oder Teilnehmerdatenschutz.
 - Responsive Darstellung, Dark Mode und Tastaturfokus berücksichtigt.
 - Browserabnahme steht nach Deployment aus.
+
+
+PR #177 wurde am 11.11.2026 gemergt (Merge-Commit a724f76265020eeff14c9a5c5822ee07d71ddad7). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Korrektur-/Freigabebereichs steht aus.

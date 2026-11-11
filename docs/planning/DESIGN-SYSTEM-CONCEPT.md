@@ -301,3 +301,6 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Die Korrekturhistorie wird als chronologisch lesbarer Auditbereich mit altem/neuem Ergebnis, Verantwortlichen und Begründung gestaltet. Bestehende Historienfelder bleiben erhalten.
 - Der Beerenton #A33370 ist der Arbeitsbereichsakzent; Bestanden/Nicht bestanden behalten ihre fachlichen Statusfarben.
 - Ergebnisfreigabe, erneute Freigabe nach Korrektur, Berechtigungen, Auditdaten und Teilnehmerprojektion werden funktional nicht verändert.
+
+
+**Umsetzungsstand:** Die visuelle Gliederung der Ergebnisfreigaben, Korrektureingaben und Historie wurde in PR #177 gemergt. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
