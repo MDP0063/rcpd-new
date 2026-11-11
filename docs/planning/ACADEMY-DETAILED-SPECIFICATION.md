@@ -1607,9 +1607,24 @@ Die fünf individuellen SVG-Illustrationen werden bewusst schlicht, klar und geg
 Gestaltungsregeln:
 - Wenige größere, gut lesbare Formen bilden das Motiv.
 - Der Detailgrad bleibt reduziert, aber nicht übermäßig abstrakt: Das dargestellte Objekt und seine Bedeutung müssen ohne Rätselraten erkennbar sein.
-- Einzelne funktionale Details sind ausdrücklich möglich, wenn sie die Zuordnung erleichtern, beispielsweise Dokumentzeilen, wenige Dashboard-Karten oder angedeutete Buchseiten.
+- Einzelne funktionale Details sind ausdrücklich möglich, wenn sie die Zuordnung erleichtern, beispielsweise Dokumentzeilen, wenige klar gegliederte Inhaltsbereiche oder angedeutete Buchseiten.
 - Kleinteilige Dekoration und Details ohne erkennbare inhaltliche Funktion werden vermieden.
 - Alle fünf Illustrationen erhalten eine vergleichbare Detailtiefe und müssen auch bei der vorgesehenen kleinen Kachelgröße verständlich bleiben.
 - Symbolgröße, Detaildichte und Lesbarkeit werden im tatsächlichen responsiven Kachelprototyp (Desktop, Tablet und Mobil) überprüft und bei Bedarf angepasst.
 
 Der Detailgrad ist gemeinsam mit den bereits festgelegten Gestaltungsmerkmalen umzusetzen: matte neutrale Füllflächen, klare dunkle Konturen, ein zurückhaltender Akzent aus der jeweiligen Bereichsfarbe, frontale Perspektive und wenige gegenstandsbezogen überlagerte Bestandteile.
+
+
+## Weichere Formensprache und klare Motivunterscheidung (11.11.2026)
+
+Die zuerst gezeigten Motiv-Referenzen dienen nicht als endgültige Detail- oder Formvorgabe. Die fünf Academy-SVGs werden moderner, weicher und stärker reduziert ausgearbeitet:
+
+- Abgerundete, ruhige Grundformen und weiche Ecken statt überwiegend kantiger oder technisch-harter Formen.
+- Weniger Einzelheiten als in den ersten Motiv-Referenzen; wenige prägnante Formen und nur Details, die für die Erkennbarkeit wirklich nötig sind.
+- Klare Unterscheidbarkeit anhand der jeweiligen Gegenstände und Silhouetten – nicht nur anhand der Kachelfarbe.
+- Die Illustrationen bleiben gegenständlich verständlich und dürfen nicht so weit vereinfacht werden, dass ihre Bedeutung unklar wird.
+- Die Kachel „Übersicht“ meint ausschließlich die Übersicht innerhalb der Academy. Sie wird weder als „Dashboard“ bezeichnet noch als zweites Dashboard des Gesamtportals dargestellt. Das konkrete Motiv für diesen Bereich bleibt offen und muss sich klar von Kursbuch, Bibliotheksmaterial, Prüfungsbogen und Notizbuch unterscheiden.
+
+Die bisher als Beispiel erwähnten Dashboard-Karten sind keine verbindliche Motivvorgabe und ausdrücklich keine Festlegung für die Illustration „Übersicht“. Die konkrete Motivkomposition wird erst nach gesonderter Abstimmung festgelegt.
+
+Diese Präzisierung ändert nicht die bereits beschlossene gemeinsame Basis: frontale Perspektive, matte neutrale Füllflächen, klare dunkle Konturen, ein zurückhaltender Bereichsfarbakzent, sparsame gegenstandsbezogene Überlagerung und ein vergleichbarer Detailgrad über alle fünf SVGs hinweg.
