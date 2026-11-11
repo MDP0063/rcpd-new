@@ -234,3 +234,9 @@
 
 - Detailansichten für Kurs und Programm visuell an den bereits überarbeiteten Kurskatalog angepasst.
 - Vorhandene Nachweisbedingungen, Lernziele, Kapitel, Kursreferenzen und echte Fortschrittsdaten bleiben unverändert.
+
+
+## 2026-11-11 – Academy-Kurs- und Lehrgangsdetails (PR #166 gemergt)
+
+- Detailansichten für Kurse und Programme an den Kurskatalog angepasst.
+- Vorhandene Lernziele, Kapitel, Nachweisbedingungen, Programmreferenzen und echte Fortschrittsdaten bleiben erhalten.
