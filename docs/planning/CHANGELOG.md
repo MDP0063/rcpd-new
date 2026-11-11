@@ -250,3 +250,12 @@
 - Ausdrücklich festgehalten, dass die Abschlusskappe dieselbe Designart wie der Wegweiser der Academy-Übersicht verwenden muss. Unterschiedliche Motive, aber eine gemeinsame Illustrationsfamilie.
 - Einheitliche weiche Formensprache, Detaildichte, matte neutrale Füllflächen, dunkle Konturen, frontale Perspektive, Geometrie, Proportionen und sparsame gegenstandsbezogene Überlagerung gelten als Set-Regeln. Türkiser Akzent für „Kurse“ bleibt zurückhaltend.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Lernbibliothek-Motiv und SVG-Stil präzisiert
+
+- Nutzer hat Variante A bestätigt: Die Kachel „Lernbibliothek“ erhält ein kleines Bücherregal mit zwei bis drei aufrecht stehenden Büchern.
+- Das Regal bekommt eine eigenständige Silhouette und wird im selben Illustrationsstil wie Wegweiser und Abschlusskappe ausgeführt; der Bereichsakzent bleibt dezent violett.
+- Die gemeinsame Formensprache aller fünf SVGs wurde auf Nutzerwunsch präzisiert: schlichter und geometrischer, weniger kurvig/verspielt, mit etwas kräftigeren und einheitlichen dunklen Konturen.
+- Leicht abgerundete Ecken bleiben erwünscht, aber ohne übertriebene Rundungen. Wenige prägnante Grundformen und nur notwendige Erkennungsdetails; keine dekorativen Kurven oder unnötigen Kleinteile.
+- Die Stilpräzisierung gilt rückwirkend auch für Wegweiser und Abschlusskappe sowie für die zwei noch offenen Motive. Exakte Strichstärke und Rundungsradien werden bei der gemeinsamen Ausarbeitung festgelegt.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
