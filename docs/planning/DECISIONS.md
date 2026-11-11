@@ -613,12 +613,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Exakte Strichstärke, Rundungsradien und Proportionen werden bei der gemeinsamen visuellen Ausarbeitung festgelegt und an allen fünf SVGs konsistent angewendet.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
 
-## 2026-11-11 – Räumlichere Illustrationswirkung und klassisches Büchermotiv
+## 2026-11-11 – Outline-Stil mit flacher Ebenenwirkung und klassischem Büchermotiv (aktuelle Korrektur)
 
-- **BESCHLOSSEN:** Die fünf Academy-SVGs sollen wieder etwas stärker räumlich wirken und leicht hervorgehoben erscheinen. Gewünscht ist eine dezente, kontrollierte 3D-Anmutung statt rein flacher Piktogramme.
-- Die räumliche Wirkung entsteht durch flache sichtbare Seitenflächen, leichte Versätze/Überlagerungen und sanfte, zurückhaltende Schattierung. Die Grundausrichtung bleibt überwiegend frontal und gut lesbar.
-- Die bereits beschlossenen klaren, etwas kräftigeren Konturen, geometrischen Grundformen, reduzierte Detaildichte, neutralen Füllflächen und dezenten Bereichsfarbakzente bleiben erhalten. Die leichte Rundung bleibt zurückhaltend.
-- **Nicht gewünscht:** starke/isometrische Perspektive, übertriebene Tiefe, glänzender Plastik-Look, harte oder große Schlagschatten, künstliche Glanzreflexe und dekorative 3D-Effekte.
-- **BESCHLOSSEN – Korrektur des Lernbibliothek-Motivs:** Das zuvor festgelegte Bücherregal wird verworfen. Stattdessen zeigt die Kachel drei klassische Bücher als Gruppe; eines davon ist leicht schräg geneigt. Keine Regalstruktur. Das Motiv erhält dieselbe dezente räumliche Wirkung wie die übrigen Academy-Illustrationen und einen zurückhaltenden violetten Akzent.
-- Die räumlichere Stilpräzisierung gilt rückwirkend für Wegweiser und Abschlusskappe sowie für alle noch offenen Motive. Exakte Seitenflächen, Schattierung und Tiefenwirkung werden bei der gemeinsamen Ausarbeitung aller fünf SVGs aufeinander abgestimmt.
-- Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
+- **BESCHLOSSEN – aktuelle Stilkorrektur:** Die Academy-SVGs werden nicht als 3D-Motive gestaltet. Die zuvor dokumentierte räumliche 3D-Anmutung mit Seitenflächen und Schattierung ist verworfen.
+- Verbindlich ist wieder ein flacher, klarer Outline-Stil: etwas kräftigere, einheitliche dunkle Konturen, wenige einfache geometrische Formen und nur notwendige Erkennungsdetails.
+- Die gewünschte leichte Tiefenwirkung entsteht ausschließlich durch sparsame, gegenstandsbezogene Ebenen: zusammengehörige Bestandteile dürfen sich überlagern oder leicht versetzt hintereinanderliegen. Keine räumlichen Seitenflächen, keine 3D-Modellierung und keine 3D-Schattierung.
+- Die Motive bleiben detailarm, frontal, ruhig und auf kleine Kachelgrößen gut erkennbar. Neutrale Füllflächen und der jeweils dezente Bereichsfarbakzent bleiben bestehen.
+- **BESCHLOSSEN – Lernbibliothek:** Drei klassische Bücher als kleine Gruppe, eines leicht schräg geneigt; keine Regalstruktur. Das Motiv wird ebenfalls im flachen Outline-/Ebenenstil ausgeführt.
+- Diese Korrektur gilt rückwirkend für Wegweiser, Abschlusskappe und Büchergruppe sowie für die beiden noch offenen Motive. Sie ersetzt die unmittelbar vorherige Festlegung einer 3D-Anmutung.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
