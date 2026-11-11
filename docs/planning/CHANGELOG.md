@@ -284,3 +284,9 @@
 
 - Kurs-/Programmlisten und Editoren visuell an die Academy-Designsprache angepasst.
 - Versionierung, Veröffentlichung, Validierung, Materialbindungen und Berechtigungen unverändert.
+
+
+## 2026-11-11 – Academy-Versionierte Materialverwaltung (PR in Vorbereitung)
+
+- Materialkatalog, Auswahl, Metadaten, Editor und Versionshistorie visuell klarer gegliedert.
+- Entwurfs-/Veröffentlichungs-/Archivierungsworkflow, Datenmodell, Zugriffsschutz und PDF-Aufschub unverändert.
