@@ -453,3 +453,16 @@ Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare
   - Prüfungen: `clipboard-check`
   - Meine Notizen: `notebook-pen`
 - **OFFEN:** Für die Lernbibliothek ist zwischen `library` und `book-open` noch die finale Auswahl zu treffen. Größen- und Strichstärken-Tokens werden im Designsystem festgelegt.
+
+
+### Beschlossene Anordnung und vorläufige Icon-Größen der Academy-Kacheln (11.11.2026)
+
+Für alle fünf Bereichskacheln wird **Variante A: Symbol oben, Titel und Kurzbeschreibung darunter** verwendet.
+
+- Einheitliche vertikale Reihenfolge: Symbol, Titel, Kurzbeschreibung.
+- Die Textinhalte werden linksbündig ausgerichtet.
+- Das Muster gilt einheitlich für alle fünf Kacheln.
+- Vorläufige Richtwerte für die optische Icon-Größe: Desktop 48 px, Tablet 44–48 px, Smartphone 40 px.
+- Die Größen sind Startwerte für den späteren visuellen Prototyp und keine endgültigen Design-Tokens. Die endgültige Größe und Strichwirkung werden im responsiven Designsystem anhand der tatsächlichen Kachelabmessungen und Lesbarkeit überprüft.
+
+Die Entscheidung betrifft ausschließlich die visuelle Anordnung. Sie ändert weder Kachel-Inhalte noch Navigation oder Verhalten.
