@@ -302,3 +302,24 @@ Das britische Department for Work and Pensions stellt ein eigenes Designsystem f
 Quellen:
 - [DWP Design System – Side navigation](https://design-system.dwp.gov.uk/components/side-navigation) (Seitenstand: 17. Januar 2024)
 - [DWP Design System – Side navigation accessibility](https://design-system.dwp.gov.uk/components/side-navigation/accessibility) (Seitenstand: 17. Januar 2024)
+
+
+### 8.5 Prüfungswarteschlangen und Verwaltungslisten
+
+**TECHNISCHER BEFUND:** `ExamReviewCenter` lädt offene Freitextbewertungen und aktualisiert sie automatisch im 60-Sekunden-Intervall. Die Komponente zeigt Claims, Zuständigkeit, Bewertungsentwürfe, Übergabe und Freigabe. Im untersuchten Komponenten-State sind keine Such-, Filter- oder Sortierzustände erkennbar; die geladene Review-Liste wird direkt gerendert. `ExamCorrectionCenter` zeigt ausstehende Ergebnisfreigaben und abgeschlossene manuelle Bewertungen einschließlich Korrekturhistorie. Auch dort sind im untersuchten UI keine Such-/Filter-/Sortierzustände erkennbar. Der Teilnehmer-Runner zeigt den verfügbaren Prüfungskatalog als Liste mit Detailbereich und Ergebnisverlauf.
+
+**Prüfaufträge:**
+- Reale und erwartete Warteschlangengrößen ermitteln, bevor Filter/Sortierung empfohlen werden.
+- Bei größeren Listen prüfen: Auffindbarkeit, Priorisierung nach tatsächlicher fachlicher Dringlichkeit, Status-/Verantwortlichkeitsanzeige und mobile Lesbarkeit.
+- Keine künstlichen Prioritätswerte oder Dringlichkeiten einführen, wenn sie nicht durch reale Daten und Beschlüsse gedeckt sind.
+- Prüfen, ob Aktualisierung im 60-Sekunden-Takt, Ladefeedback und lokale Eingaben bei Aktualisierung verständlich und störungsfrei zusammenspielen.
+- Die Teilnehmerprüfung auf Auffindbarkeit und Verständlichkeit bei vielen veröffentlichten Prüfungen prüfen; Such-/Filterbedarf anhand realer Kataloggröße belegen.
+
+### 8.6 Verwaltungslisten und Materialpflege
+
+**TECHNISCHER BEFUND:** Die versionierte Materialverwaltung hat eine Suchfunktion und getrennte Materialliste/Editor-/Versionsdarstellung. In der untersuchten Komponente sind keine eigenständigen Sortier- oder Filterzustände für die Verwaltungsliste erkennbar. Die Kurs-/Programmverwaltung trennt Listen von Editoren und stellt Veröffentlichung, Version und Materialprüfungszustände dar.
+
+**Prüfaufträge:**
+- Typische Material-/Kurs-/Programmanzahlen und tatsächliche Verwaltungsaufgaben ermitteln.
+- Prüfen, ob Suche allein ausreicht oder ob Filter/Sortierung fachlich sinnvoll sind.
+- Materialstamm, Arbeitsentwurf, aktuelle veröffentlichte Version und Historie so darstellen, dass ihre unterschiedlichen Bedeutungen ohne technisches Vorwissen verständlich bleiben.
