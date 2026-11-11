@@ -280,7 +280,7 @@
 - Ergebnisstatusfarben, Freigabeablauf, Berechtigungen und Auditdaten unverändert.
 
 
-## 2026-11-11 – Academy-Kurs- und Programmverwaltung (PR in Vorbereitung)
+## 2026-11-11 – Academy-Kurs- und Programmverwaltung (PR #179 gemergt)
 
 - Kurs-/Programmlisten und Editoren visuell an die Academy-Designsprache angepasst.
 - Versionierung, Veröffentlichung, Validierung, Materialbindungen und Berechtigungen unverändert.
