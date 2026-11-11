@@ -479,3 +479,10 @@ Vorläufige Abstandsrichtwerte:
 - Abstand zwischen Kacheln: 24 px.
 
 Die Werte sind Ausgangswerte für den responsiven Prototyp und noch keine endgültigen globalen Design-Tokens. Sie werden später anhand der tatsächlichen Kachelmaße, Textlängen und verfügbaren Bildschirmfläche überprüft. Die fünf Kacheln bleiben gleichwertig und verwenden weiterhin das beschlossene helle, harmonische Farbkonzept.
+
+
+### Beschlossener Eckenradius der Academy-Einstiegskacheln (11.11.2026)
+
+Für die fünf Academy-Einstiegskacheln wird eine **dezente mittlere Abrundung** verwendet: sichtbar abgerundet, aber deutlich näher an einer sachlich/fast eckigen Form als an stark gerundeten, pillenartigen Karten.
+
+Als vorläufiger Richtwert für den visuellen Prototyp gelten **8–12 px Eckenradius**. Der endgültige Wert wird im responsiven Layout anhand der tatsächlichen Kachelgrößen und der Gesamtwirkung überprüft. Die Abrundung soll den professionellen, cleanen Charakter unterstützen und nicht verspielt wirken.
