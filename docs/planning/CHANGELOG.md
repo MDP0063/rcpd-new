@@ -201,3 +201,12 @@
 - Als verbindliche Einschränkung ergänzt: Die SVGs müssen mit den kräftigen Kachelflächen, der weichen weißen Reflexion, Text-Hierarchie und dem späteren portalweiten Designsystem harmonieren und dürfen nicht mit diesen Elementen konkurrieren.
 - Überlagerung bleibt sparsam, matt und auf kleine Kachelgrößen lesbar; die konkrete Stärke wird im realen Kachelprototyp einschließlich Kontrast und responsiver Darstellung validiert.
 - Nur Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Frontale Perspektive der Academy-SVG-Illustrationen bestätigt
+
+- Nutzer hat Variante A bestätigt: Alle fünf Academy-Illustrationen werden grundsätzlich frontal und gerade ausgerichtet dargestellt; isometrische oder schräge 3D-Perspektiven werden nicht verwendet.
+- Die dezente räumliche Wirkung entsteht weiterhin ausschließlich durch wenige, gegenstandsbezogen überlagerte bzw. versetzte Bestandteile.
+- Einheitliche Blickrichtung, Ausrichtung, Geometrie und Proportionen werden als gemeinsame Set-Regeln festgehalten.
+- Die Illustrationen bleiben matt und zurückhaltend, damit sie mit den kräftigen, leicht glänzenden Kacheloberflächen, deren Reflexion sowie Titel und Beschreibung harmonieren. Die endgültige Wirkung wird im responsiven Kachelprototyp validiert.
+- Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
