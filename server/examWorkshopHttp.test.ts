@@ -574,6 +574,11 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal('reviewerUid' in adminQueueDuringClaim.body.reviews[0].reviewClaim, false);
     assert.equal((await jsonRequest('/api/academy/exam-reviews', delegate.token)).body.reviews.length, 0);
 
+    const pendingTargetTransfer = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/transfer`, courseReviewer.token, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUid: 'http-pending-reviewer', reason: 'Nicht berechtigt' })
+    });
+    assert.equal(pendingTargetTransfer.status, 400, 'pending accounts cannot receive review assignments');
     const invalidTargetTransfer = await jsonRequest(`/api/academy/exams/${TEST_EXAM_ID}/attempts/http-review-attempt/review-claim/transfer`, courseReviewer.token, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetUid: 'http-other-course', reason: 'Fachliche Übergabe' })
