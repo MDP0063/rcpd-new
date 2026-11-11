@@ -714,8 +714,6 @@ export async function correctCompletedExamReview(
       preliminaryScoreBasisPoints: result.preliminaryScoreBasisPoints,
       finalScoreBasisPoints: result.finalScoreBasisPoints,
       questionGrades,
-      reviewedByUid: reviewerUid,
-      reviewedAtIso: nowIso,
       reviewCorrections: [...previousCorrectionHistory, correction],
       ...(attempt.resultReleaseStatus === 'released' ? {
         resultReleaseStatus: 'pending_rerelease' as const,
