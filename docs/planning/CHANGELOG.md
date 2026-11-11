@@ -333,3 +333,12 @@
 - Pending Zuweisungsziele werden abgewiesen.
 - HTTP-Regressionstests ergänzt; TypeScript/Lint, Build und vollständiger Testsatz in CI erfolgreich.
 - PR #185 gemergt; Render-Deploy-Hook übersprungen, Live-Deployment nicht bestätigt.
+
+
+## 2026-11-11 – Academy-Rücknavigation und Bereichsakzente (PR #192/#193)
+
+- Verbindliche Regeln für einen separaten Rückkehr-Button zur Kachelansicht, die Bereichsfarbe in der horizontalen Navigation und den gezielten Akzenteinsatz dokumentiert.
+- In allen internen Academy-Ansichten einen eigenständigen Rückweg zur Kachelansicht ergänzt; den Breadcrumb nicht länger als Rücknavigation verwendet.
+- Aktive Hauptnavigation markiert Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen mit dem jeweiligen Bereichsakzent. Verschachtelte Ansichten ordnen sich dem zugehörigen Bereich zu.
+- Kachelstartseite, Statusfarben und fachliche Logik unverändert.
+- PR #193: TypeScript/Build, Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Live-/Browserabnahme steht aus.
