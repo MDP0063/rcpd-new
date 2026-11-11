@@ -586,3 +586,10 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - **BESCHLOSSEN:** Die fünf Motive müssen sich durch ihre Gegenstände und Silhouetten klar voneinander unterscheiden. Die Bereichsfarben allein dürfen nicht die Unterscheidung tragen.
 - **BESCHLOSSEN:** Die Kachel „Übersicht“ bezeichnet ausschließlich die Übersicht innerhalb der Academy. Sie darf weder „Dashboard“ genannt noch als zweites Dashboard des Gesamtportals visualisiert werden. Das konkrete Motiv für „Übersicht“ bleibt offen und muss sich sichtbar von den übrigen vier Motiven unterscheiden.
 - Diese Präzisierung verfeinert den bereits beschlossenen reduzierten Detailgrad. Die bisherigen Beispiele mit Dashboard-Karten sind keine verbindliche Motivvorgabe und gelten für die Kachel „Übersicht“ ausdrücklich nicht. Die frontale Perspektive, neutralen Füllflächen, klaren Konturen, dezenten Bereichsfarbakzente und sparsame gegenstandsbezogene Überlagerung bleiben bestehen.
+
+### Academy-SVG-Motiv „Übersicht“ – Wegweiser (11.11.2026)
+
+- **BESCHLOSSEN – Variante A:** Die Illustration der Academy-Kachel „Übersicht“ verwendet ein schlichtes Wegweiser-/Orientierungssymbol.
+- Das Wegweiser-Motiv wurde gewählt, um eine eigenständige Silhouette zu schaffen und die Verwechslung mit den bereits ähnlichen Papier-, Buch- und Dokumentmotiven der anderen Bereiche zu vermeiden.
+- Die Darstellung bleibt modern, weich und abgerundet sowie bewusst detailarm. Keine Dashboard-Karten, kein Papierblatt und keine dekorativen Zusatzformen.
+- Die gemeinsamen SVG-Regeln bleiben unverändert: frontale Perspektive, matte neutrale Füllflächen, klare dunkle Konturen, dezenter blauer Bereichsfarbakzent und sparsame gegenstandsbezogene Überlagerung.
