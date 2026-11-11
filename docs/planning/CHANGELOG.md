@@ -304,3 +304,10 @@
 - Rollen-/berechtigungsabhängige Examiner-, Ergebnisfreigabe-/Korrektur-, Kurs-/Programm- und Bibliotheksverwaltungsoberflächen ergänzt.
 - Bestehende Kachel-Startseite, Daten-/Statuslogik, Berechtigungen, APIs und fachliche Abläufe unverändert.
 - Live-Deployment und Browserabnahme stehen noch aus; Legacy-Prüfungsansichten und abschließender Bug-/Fehleraudit bleiben offen.
+
+
+## 2026-11-11 – Sicherheitskorrektur: Reviewer-Whitelist-Guard (PR in Vorbereitung)
+
+- Pending-Whitelist-Konten serverseitig von Review-Queue und sämtlichen manuellen Reviewer-Aktionen ausgeschlossen.
+- Admin-Reassignment verlangt ebenfalls ein aktives Reviewer-Konto; pending Zielkonten können keine Prüfungszuweisung erhalten.
+- HTTP-Integrationstests decken Queue, Claim, Draft, Grade, Transfer, Release, Activity, Disconnect und Reassignment ab.

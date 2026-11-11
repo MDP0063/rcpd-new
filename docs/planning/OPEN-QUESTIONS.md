@@ -274,3 +274,10 @@ Die visuelle Ausarbeitung umfasst inzwischen neben den fünf Teilnehmerbereichen
 - globale Portalidentität, globale Navigation und Theme-Strategie.
 
 Die visuellen PRs ändern keine der bestehenden fachlichen Schutzgrenzen. Nicht bestätigte Browser-/Live-Zustände werden nicht als abgenommen markiert.
+
+
+## 11.11.2026 – Bugaudit: Reviewer-Whitelist-Berechtigung
+
+- **Bestätigt und in PR #185 korrigiert:** Der Whitelist-Status `pending` wurde in der UI für Reviewer gesperrt, aber nicht durchgehend in den serverseitigen Endpunkten für die manuelle Prüfungsbewertung erzwungen. Die globale Session-Middleware blockiert nur `suspended` und `revoked`; `pending` konnte deshalb bei vorhandenen Kursrechten die UI-Sperre umgehen.
+- PR #185 vereinheitlicht die serverseitige Reviewer-Eignungsprüfung und ergänzt HTTP-Regressionstests.
+- **Weiter offen:** Vollständiger Audit der übrigen Teilnehmer-, Workshop-, Ergebnisfreigabe-, Korrektur- und Academy-Berechtigungswege sowie gemeinsame Browser-/Live-Firestore-Abnahme.
