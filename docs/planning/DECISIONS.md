@@ -426,33 +426,23 @@ Die Kachel ist als Ganzes der eindeutige Einstiegspunkt in den jeweiligen Bereic
 
 Die Gestaltung verwendet große, farbige, harmonierende und klar unterscheidbare Flächen mit professionellem institutionellem Charakter. Sie soll auch für jüngere Nutzer verständlich sein, ohne kindlich oder ausschließlich auf eine Altersgruppe zugeschnitten zu wirken. Konkrete Farbwerte, Symbolstil, Typografie, Kachelmaße und responsive Anordnung bleiben Teil der weiteren Recherche und Gestaltung.
 
-## Academy UI-Redesign – Farbgestaltung der Bereichskacheln (11.11.2026)
+## Academy UI-Redesign – frühere Farbgestaltung der Bereichskacheln (11.11.2026, ÜBERHOLT)
 
-- **BESCHLOSSEN – Farbkonzept Option A:** Jede der fünf Academy-Bereichskacheln erhält eine eigene helle, harmonisch abgestimmte Farbfläche. Das zugehörige Symbol darf in einer kräftigeren Akzentvariante derselben Farbfamilie erscheinen; Titel und Kurzbeschreibung bleiben dunkel und kontrastreich.
-- **BESCHLOSSEN:** Die Kachelfarben dienen ausschließlich der visuellen Bereichsorientierung. Sie erhalten keine Statusbedeutung wie Erfolg, Warnung oder Fehler. Portalweit verwendete Statusfarben müssen davon unabhängig und konsistent bleiben.
-- **BESCHLOSSEN:** Die Farbpalette soll freundlich und klar unterscheidbar, zugleich professionell und institutionell wirken. Keine grellen/neonartigen oder spielerisch überladenen Flächen.
-- **OFFEN:** Konkrete Farbtöne, Kontrastwerte und Zuordnung der fünf Farben zu den Bereichen werden im Designsystem ausgearbeitet und geprüft.
+Die damalige Entscheidung für helle Kachelflächen mit kräftigeren Symbolakzenten wurde durch die spätere, ausdrücklich bestätigte Oberflächenrichtung ersetzt. Sie ist nur noch als Entscheidungshistorie relevant.
 
-## Academy UI-Redesign – Icon-Stil der Bereichskacheln (11.11.2026)
+Weiterhin gültig bleiben:
+- Die fünf Kachelfarben dienen ausschließlich der visuellen Bereichsorientierung und erhalten keine Statusbedeutung wie Erfolg, Warnung oder Fehler.
+- Die Farbpalette muss harmonisch, klar unterscheidbar und professionell wirken; grelle/neonartige oder spielerisch überladene Gestaltung bleibt ausgeschlossen.
+- Konkrete Farbtöne, Kontrastwerte und die Zuordnung der fünf Farben zu den Bereichen bleiben offen und werden im Designsystem geprüft.
 
-- **BESCHLOSSEN – Outline-Icons:** Für die fünf Academy-Bereichskacheln wird ein einheitlicher Outline-Icon-Stil verwendet.
-- **BESCHLOSSEN:** Die Konturlinien dürfen nicht sehr dünn sein. Icons sollen schlicht, klar erkennbar und auch in kleineren Darstellungen gut wahrnehmbar sein.
-- **BESCHLOSSEN:** Die Icons müssen optisch zu den hellen, farbigen Kacheln und deren kräftigeren Akzentfarben passen. Strichstärke, Proportionen und visuelle Größe sind innerhalb der Academy konsistent.
-- **BESCHLOSSEN:** Keine Mischung mit Emojis, Illustrationen oder anderen Icon-Stilen innerhalb der Kachelgruppe. Keine unnötigen Details oder rein dekorativen Elemente.
-- **BESCHLOSSEN:** Die Bedeutung der Icons wird stets durch den Bereichstitel und die Kurzbeschreibung abgesichert; Farbe oder Symbol allein tragen nicht die gesamte Bedeutung.
-- **OFFEN:** Konkrete Icon-Bibliothek, einzelne Symbole für die fünf Bereiche, exakte Größen und technische Tokens werden im weiteren Designsystem festgelegt.
+Aktueller verbindlicher Stand: siehe „Academy-Einstiegskacheln – aktualisierte Farb- und Oberflächenrichtung“ am Ende dieses Dokuments.
 
 
-## Academy UI-Redesign – Icon-Bibliothek und Bereichssymbole (11.11.2026)
+## Academy UI-Redesign – frühere Icon-Festlegungen (11.11.2026, ÜBERHOLT)
 
-- **BESCHLOSSEN:** Für die Academy-Bereichskacheln wird **Lucide (lucide-react)** als einheitliche Icon-Bibliothek verwendet. Die Abhängigkeit `lucide-react` ist bereits im Repository vorhanden; eine zusätzliche Bibliothek ist nicht erforderlich.
-- **BESCHLOSSEN:** Die fünf Kachelsymbole sind:
-  - Übersicht: `layout-dashboard`
-  - Kurse: `graduation-cap`
-  - Lernbibliothek: `library` oder `book-open` (beide als passende Lucide-Kandidaten bestätigt; finale Einzelwahl noch offen)
-  - Prüfungen: `clipboard-check`
-  - Meine Notizen: `notebook-pen`
-- **OFFEN:** Für die Lernbibliothek ist zwischen `library` und `book-open` noch die finale Auswahl zu treffen. Größen- und Strichstärken-Tokens werden im Designsystem festgelegt.
+Die damalige Festlegung auf klassische Outline-Icons als Kachelvisuals und die spätere Zuordnung konkreter Lucide-Icons wurden durch die Entscheidung für fünf individuelle, ruhige geometrische SVG-Illustrationen ersetzt. Die alten Lucide-Kandidaten werden nicht als Kachelvisuals umgesetzt. Die vorhandene lucide-react-Abhängigkeit bleibt davon unberührt und kann an anderen Stellen der Anwendung weiterhin verwendet werden.
+
+Weiterhin gültig sind die Qualitätsprinzipien: gute Erkennbarkeit, einheitliche Proportionen, kontrollierte Detailtiefe und die unterstützende Rolle gegenüber Titel und Kurzbeschreibung.
 
 
 ### Beschlossene Anordnung und vorläufige Icon-Größen der Academy-Kacheln (11.11.2026)
@@ -497,7 +487,7 @@ Verbindliche Gestaltungsregeln:
 - Einheitliche Geometrie, Proportionen, Strichstärken (wo Konturen verwendet werden) und Detailtiefe über alle fünf Kacheln.
 - Keine glänzenden Oberflächen, künstlich wirkenden Schatten, zufälligen Details, übertriebene Perspektiven oder typische überladene KI-Bildgenerator-Optik.
 - Die Illustrationen ergänzen die Benutzeroberfläche und unterstützen die Bereichsorientierung; sie dominieren weder Kacheln noch Inhalte. Titel und Kurzbeschreibung bleiben die primären Informationsträger.
-- Die Farbgebung wird auf die bereits beschlossene helle, harmonische Kachelfarbpalette abgestimmt.
+- Die Illustrationen bleiben selbst farblich zurückhaltend und werden harmonisch auf die nun beschlossene kräftigere, satte und einfarbige Kachelfarbpalette abgestimmt. Sie sollen nicht mit deren weißer Lichtreflexion konkurrieren.
 - Die fünf Illustrationen werden als zusammengehöriges Set individuell gestaltet und lokal als SVG-Dateien eingebunden. Keine externen Bilddienste zur Laufzeit.
 
 Die bisher beschlossene Platzierung bleibt bestehen: Symbol oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Diese Stilentscheidung ersetzt nur die bisherige Festlegung des visuellen Icon-Stils bzw. der Icon-Bibliothek. Sie ändert weder die fünf Bereiche noch Navigation, Kachelstruktur, Abstände oder fachliche Funktionen.
