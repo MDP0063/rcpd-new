@@ -64,7 +64,7 @@ Die genaue Gestaltung wird nicht aus dem Bauch heraus entschieden. Für jede gr�
 ---
 ## 1. Ziel und Abgrenzung
 
-Die Academy wird als erster Bereich des umfassenden RCPD-Portal-Redesigns vollständig konzipiert. Das bedeutet nicht, dass sie ein isoliertes Design erhält: globale Navigation, visuelle Sprache, Komponenten, Typografie, Abstände, Zustände, responsive Verhalten und Accessibility müssen später mit den übrigen Modulen zusammenpassen.
+Die Academy ist der erste vollständig auszuarbeitende visuelle Redesign-Abschnitt des Gesamtportals. Ihre Informationsarchitektur und wesentlichen fachlichen/UX-Abläufe sind bereits dokumentiert und beschlossen. Die Arbeit hier konzentriert sich deshalb auf den Abgleich der Implementierung mit diesen Beschlüssen sowie auf die visuelle Gestaltung der vorhandenen Funktionen. Globale Navigation, visuelle Sprache, Komponenten, Typografie, Abstände, Zustände, Responsive-Verhalten und Accessibility müssen dabei von Anfang an mit dem späteren Gesamtportal zusammenpassen.
 
 Für die Academy werden insbesondere untersucht:
 
@@ -92,7 +92,7 @@ Jede Feststellung erhält in der weiteren Arbeit eine dieser Kennzeichnungen:
 - **BESCHLOSSEN:** bereits ausdrücklich vom Projektinhaber festgelegt; wird nicht stillschweigend geändert.
 - **VORSCHLAG:** mögliche Lösung, noch nicht beschlossen.
 
-### Grenzen dieser ersten Prüfung
+### Grenzen dieser ergänzenden Prüfung
 
 Die Prüfung erfolgte anhand von Repository-Dateien und offiziellen öffentlichen Produkt-/Accessibility-Dokumentationen. Es fand noch keine authentifizierte Live-Browserprüfung, kein visuelles Screenshot-Audit und kein vollständiger Tastatur-/Screenreader-Test statt. Insbesondere mobile Layouts, tatsächliche Datenmengen, Ladezeiten, Interaktionsverhalten und Live-Rollenansichten müssen später in der laufenden Anwendung geprüft werden. Aus Tailwind-Klassen allein wird kein abschließendes visuelles Urteil abgeleitet.
 
