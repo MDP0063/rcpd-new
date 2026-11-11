@@ -213,7 +213,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     );
     assert.equal(corrected.status, 'passed');
     assert.equal(corrected.finalScoreBasisPoints, 9500);
-    const correctedAttempt = await repository.get<{ id: string; reviewCorrections?: Array<{ reason: string; previousGrades: Array<{ pointsEarnedMilli: number }>; nextGrades: Array<{ pointsEarnedMilli: number }> }> }>('exam_attempts', 'review-attempt');
+    const correctedAttempt = await repository.get<{ id: string; reviewedByUid?: string; reviewedAtIso?: string; reviewCorrections?: Array<{ reason: string; previousGrades: Array<{ pointsEarnedMilli: number }>; nextGrades: Array<{ pointsEarnedMilli: number }> }> }>('exam_attempts', 'review-attempt');
     assert.equal(correctedAttempt?.reviewCorrections?.length, 1);
     assert.equal(correctedAttempt?.reviewedByUid, 'grader',
       'a later correction must not replace the original completing reviewer');
