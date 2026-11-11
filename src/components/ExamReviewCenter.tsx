@@ -308,7 +308,7 @@ export const ExamReviewCenter: React.FC<{
   const normalizedParticipantQuery = participantQuery.trim().toLocaleLowerCase('de-DE');
   const participantMatches = normalizedParticipantQuery.length < 2 || selectedParticipant
     ? []
-    : roster.filter(member => [
+    : roster.filter(member => member.uid !== currentUser.uid && [
         member.displayName, member.badgeNumber, member.callsign, member.rank
       ].some(value => value.toLocaleLowerCase('de-DE').includes(normalizedParticipantQuery))).slice(0, 8);
 
