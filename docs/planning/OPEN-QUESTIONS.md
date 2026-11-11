@@ -260,3 +260,17 @@ Weiterhin offen und nicht aus dem ersten Academy-Mockup abzuleiten:
 - genaue Intensität und Position der blauen Wellenform nach Prototyp- und Responsive-Prüfung.
 
 Diese Fragen blockieren nicht die objektive Ausarbeitung und prototypische Validierung der internen Academy-Seiten innerhalb der bestätigten visuellen Richtung. Sie werden aber vor einer prägenden Festlegung erneut abgestimmt.
+
+
+## 11.11.2026 – Academy-Designausbau: Verwaltungsoberflächen ergänzt
+
+Die visuelle Ausarbeitung umfasst inzwischen neben den fünf Teilnehmerbereichen auch die vorhandenen rollen-/berechtigungsabhängigen Verwaltungsoberflächen: Examiner-Bewertung (PR #175), Ergebnisfreigabe/Korrektur (PR #177), Kurs-/Programmverwaltung (PR #179), versionierte Materialverwaltung (PR #181) sowie Kategorie-/Dokumenttypverwaltung (PR #182).
+
+**Noch offen:**
+- bestätigtes Live-Deployment und Browserabnahme der zusammenhängenden Academy auf Desktop, Tablet und Smartphone sowie Light-/Dark-Mode;
+- abschließender Funktions-/Fehleraudit der implementierten Academy-Funktionen;
+- gesonderte Klärung der Legacy-Prüfungsunteransichten und parallelen Prüfungswege, bevor diese visuell weiter vereinheitlicht werden;
+- Examiner-Historienansicht, Action-Request-/Revisionsworkflow gemäß bestehender Spezifikation;
+- globale Portalidentität, globale Navigation und Theme-Strategie.
+
+Die visuellen PRs ändern keine der bestehenden fachlichen Schutzgrenzen. Nicht bestätigte Browser-/Live-Zustände werden nicht als abgenommen markiert.
