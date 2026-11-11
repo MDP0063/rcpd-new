@@ -643,3 +643,13 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Das Motiv wird exakt im gemeinsamen flächigen Piktogrammstil der vom Nutzer bereitgestellten Wegweiser-Referenz ausgeführt: wenige geometrische Füllflächen, einfache Formen und dezente Überlagerung echter Motivbestandteile. Keine dominanten Konturen, 3D-Effekte oder dekorativen Details.
 - Der Bereichsakzent bleibt Beere/Pink gemäß der bereits festgelegten Kachelfarbzuordnung. Die Motivwahl legt keine zusätzliche Statusfarbe fest.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Notizmotiv und ausschließliche Kachel-Farbakzente
+
+- **MOTIVRICHTUNG BESCHLOSSEN – Meine Notizen:** Statt eines geschlossenen Buches wird ein klar als Notizblock erkennbares Motiv verfolgt. Vorzugsrichtung: einfacher, oben gebundener Notizblock mit wenigen kurzen Schreiblinien und optional einer dezent versetzten zweiten Ebene. Keine zusätzliche Buch- oder Stiftdekoration. Die genaue zeichnerische Ausführung wird bei der Motivgestaltung geprüft.
+- **BESCHLOSSEN – Farbakzente für alle fünf Illustrationen:** Jeder SVG-Farbakzent darf ausschließlich aus der Farbfamilie der zugehörigen Kachel stammen. Der Akzent wird gegenüber der kräftigen Kachelfarbe deutlich zurückgenommen bzw. aufgehellt, muss aber als derselbe Farbton erkennbar bleiben. Keine zusätzlichen, unabhängigen Akzentfarben.
+- Neutrale Grund- und Füllflächen bleiben erlaubt. Die Regel betrifft die farbigen Akzente der Illustrationen, nicht die neutrale Grundpalette.
+- Zuordnung: Übersicht Blau, Kurse Türkis, Lernbibliothek Violett, Prüfungen Beere/Pink, Meine Notizen Grün. Die bereits festgelegten Kachelgrundfarben bleiben unverändert.
+- Der gemeinsame schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt verbindlich.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
