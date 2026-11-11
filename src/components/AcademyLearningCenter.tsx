@@ -423,7 +423,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       {area === 'courses' && (
         <>
           {screen !== 'catalog' && (
-            <button type="button" className={secondary} onClick={() => {
+            <button type="button" className={`${secondary} academy-course-back`} onClick={() => {
               detailRequestIdRef.current += 1;
               setDetailLoading(false);
               setCourseDetail(null);
@@ -516,15 +516,15 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
           )}
 
           {screen === 'course' && selectedCourse && (
-            <section className="space-y-5">
-              <header className="space-y-1">
+            <section className="academy-course-detail space-y-5">
+              <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedCourse.master.code} · {courseDetail?.version ? `Version ${courseDetail.version.versionNumber}` : 'Noch keine Teilnahme'}</p>
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
                 <p className={muted}>{courseDetail?.version.summary || selectedCourse.version?.summary}</p>
               </header>
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
-                <div className={`${panel} p-4 space-y-3`}>
+                <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-sm font-semibold">{statusLabel(courseDetail.participation.status)}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400">Begonnen: {dateLabel(courseDetail.participation.startedIso)}</span>
@@ -541,7 +541,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         const satisfied = requirement.type === 'required_assessment' ? Boolean(assessmentProof) : matching.length > 0;
                         const selfConfirmable = ['required_chapter', 'required_material', 'accepted_self_confirmation'].includes(requirement.type);
                         return (
-                          <div key={requirement.id} className="border-t border-slate-200 pt-3 dark:border-slate-800 space-y-2">
+                          <div key={requirement.id} className="academy-course-requirement border-t border-slate-200 pt-3 dark:border-slate-800 space-y-2">
                             <div className="flex flex-wrap items-start justify-between gap-2">
                               <div>
                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{requirement.description || requirement.targetId}</p>
@@ -570,13 +570,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <AcademyMaterialReader participationId={courseDetail.participation.id} materials={courseDetail.materials || []} />
                 </>
               ) : ownCourseParticipationByCourse.has(selectedCourse.master.id) ? (
-                <div className={`${panel} p-4 space-y-3`}>
+                <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                   <p className={muted}>Eine bestehende Kursteilnahme ist vorhanden, ihre Details konnten aber noch nicht geladen werden.</p>
                   <button type="button" className={secondary} onClick={() => void openCourse(selectedCourse)}>Teilnahme erneut laden</button>
                 </div>
               ) : (
                 <>
-                  <div className={`${panel} p-4 space-y-3`}>
+                  <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
                     {selectedCourse.version?.learningObjectives.length ? (
                       <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
@@ -585,7 +585,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     ) : <p className={muted}>Für diesen Kurs wurden noch keine veröffentlichten Lernziele bereitgestellt.</p>}
                   </div>
                   {selectedCourse.version?.chapters.length ? (
-                    <div className={`${panel} p-4 space-y-3`}>
+                    <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3>
                       {selectedCourse.version.chapters.slice().sort((a,b) => a.order - b.order).map(chapter => (
                         <div key={chapter.id} className="border-t border-slate-200 pt-3 dark:border-slate-800">
@@ -596,7 +596,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       ))}
                     </div>
                   ) : null}
-                  <div className={`${panel} p-4 space-y-2`}>
+                  <div className={`${panel} academy-course-panel p-4 space-y-2`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme</h3>
                     {programPinByCourse.get(selectedCourse.master.id)?.length &&
                       new Set(programPinByCourse.get(selectedCourse.master.id)!.map(item => item.pin.courseVersionId)).size > 1 ? (
@@ -617,8 +617,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
           )}
 
           {screen === 'program' && selectedProgram && (
-            <section className="space-y-5">
-              <header className="space-y-1">
+            <section className="academy-program-detail space-y-5">
+              <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedProgram.master.code} · {programDetail ? `Version ${programDetail.version.versionNumber}` : selectedProgram.version ? `Version ${selectedProgram.version.versionNumber}` : 'Entwurf'}</p>
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{programDetail?.version.title || selectedProgram.version?.title || selectedProgram.master.code}</h2>
                 <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary}</p>
@@ -629,24 +629,24 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 return (
                   <>
                     {progress && (
-                      <div className={`${panel} p-4 space-y-2`}>
+                      <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="font-semibold">Dein Programmfortschritt</h3>
                           <span className="text-sm font-semibold tabular-nums">{progress.completionPercentage}%</span>
                         </div>
-                        <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.completionPercentage} aria-label="Programmfortschritt">
+                        <div className="academy-program-progress-track h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.completionPercentage} aria-label="Programmfortschritt">
                           <div className="h-full bg-sky-700 dark:bg-sky-400" style={{ width: `${progress.completionPercentage}%` }} />
                         </div>
                         <p className={muted}>{progress.completedRequiredCourseCount} von {progress.requiredCourseCount} Pflichtkursen abgeschlossen · {progress.startedRequiredCourseCount} begonnen</p>
                       </div>
                     )}
-                    <div className={`${panel} p-4 space-y-3`}>
+                    <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
                       <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
                         {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
                       </ul>
                     </div>
-                    <div className={`${panel} p-4 space-y-3`}>
+                    <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Erforderliche Kurse</h3>
                       {version.courseReferences.filter(item => item.requirement === 'required').sort((a,b) => a.order-b.order).map(reference => {
                         const progressItem = programDetail?.requiredCourses.find(item => item.pin.courseId === reference.courseId);
@@ -667,7 +667,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       {version.courseReferences.filter(item => item.requirement === 'required').length === 0 && <p className={muted}>Diese Programmversion hat keine Pflichtkurse.</p>}
                     </div>
                     {version.courseReferences.some(item => item.requirement === 'recommended') && (
-                      <div className={`${panel} p-4 space-y-3`}>
+                      <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                         <h3 className="font-semibold text-slate-900 dark:text-white">Empfohlene Kurse</h3>
                         {version.courseReferences.filter(item => item.requirement === 'recommended').sort((a,b) => a.order-b.order).map(reference => {
                           const courseEntry = courses.find(item => item.master.id === reference.courseId);
@@ -677,13 +677,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                     {detailLoading && !programDetail && <p className={muted} role="status">Deine Programmteilnahme wird geladen …</p>}
                     {!programDetail && !detailLoading && programParticipations.some(item => item.programId === selectedProgram.master.id) && (
-                      <div className={`${panel} p-4 space-y-2`}>
+                      <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <p className={muted}>Eine bestehende Programmteilnahme ist vorhanden, ihr Fortschritt konnte aber noch nicht geladen werden.</p>
                         <button type="button" className={secondary} onClick={() => void openProgram(selectedProgram)}>Fortschritt erneut laden</button>
                       </div>
                     )}
                     {!programDetail && !detailLoading && !programParticipations.some(item => item.programId === selectedProgram.master.id) && (
-                      <div className={`${panel} p-4 space-y-2`}>
+                      <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <p className={muted}>Beim Programmstart werden die konkreten Versionen aller Pflichtkurse festgehalten. Die einzelnen Kurse beginnen erst, wenn du sie selbst startest.</p>
                         <button type="button" className={primary} disabled={saving || selectedProgram.master.publicationStatus !== 'published' || selectedProgram.master.availability !== 'available'} onClick={() => void startProgram()}>
                           {saving ? 'Wird gestartet …' : 'Programm beginnen'}
