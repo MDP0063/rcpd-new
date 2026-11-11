@@ -236,3 +236,10 @@
 - „Übersicht“ meint ausschließlich die Academy-Übersicht. Die Kachel darf nicht „Dashboard“ genannt oder als zweites Portal-Dashboard dargestellt werden. Das konkrete Motiv bleibt offen.
 - Die zuvor erwähnten Dashboard-Karten sind ausdrücklich keine verbindliche Motivvorgabe für „Übersicht“.
 - Bestehende Grundregeln – frontale Perspektive, neutrale matte Füllflächen, klare Konturen, dezenter Bereichsfarbakzent und sparsame Überlagerung – bleiben erhalten. Ausschließlich Planungsdokumentation auf Draft-PR #155; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Motiv der Academy-Übersicht festgelegt
+
+- Nutzer hat Variante A bestätigt: Die Academy-Kachel „Übersicht“ erhält ein schlichtes Wegweiser-/Orientierungssymbol.
+- Die eigenständige Silhouette vermeidet zusätzliche Ähnlichkeit zu den Papier-, Buch- und Dokumentmotiven der anderen Bereiche.
+- Das Motiv bleibt weich abgerundet und detailarm; Dashboard-Karten, Papierblatt und dekorative Zusatzformen sind ausgeschlossen.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
