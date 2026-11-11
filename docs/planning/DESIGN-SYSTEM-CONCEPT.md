@@ -196,3 +196,18 @@ Prüfstand: `main` / Commit `7e19ccbfda3d28a37b7cadb4bac9b3daa9a4ae89`.
 - `src/index.css` verwendet bereits Plus Jakarta Sans und globale Zeilen-/Überschriftenregeln. Bestehende globale und Dark-Mode-Styles sind vor einer späteren Implementierung zu berücksichtigen, nicht zu überschreiben.
 
 **Konsequenz für den Prototyp:** Der interne Übersichtsbildschirm wird visuell verbessert, ohne Inhalte, fachliche Aussagen, Navigation, Kacheleinstiege oder Kennzahlen zu erfinden. Die fünf Kacheln gehören nicht in diesen Screen. Ein generierter Bildentwurf, der sie dort wiederholt oder Fortschrittsmetriken ergänzt, gilt als verworfen.
+
+
+## 12. Erster Code-Prototyp der internen Übersicht (11.11.2026)
+
+Der erste interne Übersichts-Prototyp ist in Draft-PR #160 umgesetzt: https://github.com/MDP0063/rcpd-new/pull/160.
+
+Die Implementierung bleibt eng auf die bereits vorhandene Übersicht aus PR #158 begrenzt:
+- Die vorhandenen Erklärtexte, Karteninhalte und Hinweise bleiben erhalten.
+- Die Kachel-Startseite wird nicht geändert und auf der internen Übersicht nicht wiederholt.
+- Der neue Stil verwendet einen leicht getönten blauen Seitenhintergrund, matte und räumlich begrenzte Wellenakzente, klare Typografie, drei bestehende Inhaltskarten mit den vorhandenen Bereichsfarben und einen ruhigen Hinweisbereich.
+- Die horizontale Academy-Navigation erhält eine klare aktive Fläche und ein responsives Raster.
+- Styles liegen lokal in `src/components/AcademyCenter.css`; die Komponente bindet sie ein. Es wurden keine globalen Styles, Funktionen, Datenmodelle, APIs oder Berechtigungen verändert.
+- Light-/Dark-Mode, Tastaturfokus und reduzierte Bewegung wurden im Stylesheet berücksichtigt.
+
+**Prüfstand:** GitHub Actions für den Code-Commit meldet TypeScript-Prüfung, Produktionsbuild und Tests als erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Eine echte Browser-/Responsive-Abnahme mit Screenshots steht noch aus; deshalb bleibt der PR Draft und der Prototyp unverbindlich.
