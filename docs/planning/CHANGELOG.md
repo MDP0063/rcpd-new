@@ -158,3 +158,13 @@
 - DWP Design System als zusätzliche Referenz für interne Verwaltungsnavigation und deren Accessibility-Anforderungen aufgenommen.
 - Prüfungswarteschlangen, Korrektur-/Freigabelisten, Teilnehmer-Prüfungskatalog und Materialverwaltung auf Such-/Filter-/Sortiermöglichkeiten sowie Volumenabhängigkeiten geprüft.
 - Keine Anwendungslogik, UI-Komponenten, API, Datenmodelle, Berechtigungen oder Deployment-Konfiguration geändert. Keine UX-/UI-Entscheidung vorweggenommen.
+
+
+## 2026-11-11 – Academy-Redesign-Scope klargestellt und Planungsstand abgeglichen
+
+- Nach Hinweis des Projektinhabers klargestellt: Das umfangreiche Academy-Konzept und die Informationsarchitektur liegen bereits vor. Es wird keine erneute Grundsatz-UX-Konzeption begonnen.
+- Die fünf beschlossenen Hauptbereiche und die Integration des Examiner-Bereichs bleiben unverändert. Die bestehenden Detailentscheidungen zu Kursen/Programmen, Bibliothek, Reader/Notizen, Prüfungen, Claims, Ergebnisfreigabe, Korrekturen und Berechtigungen bleiben maßgeblich.
+- `ACADEMY-UX-AUDIT.md` neu eingeordnet: ergänzende Prüfung der Umsetzung gegen vorhandene Beschlüsse und Vorbereitung des visuellen Redesigns, kein Ersatz für die frühere Spezifikation.
+- Veraltete Academy-Offenpunkte in `OPEN-QUESTIONS.md` mit dem tatsächlichen Stand aus PR #132–#152 abgeglichen. Bereits umgesetzte Draft-Grading-, Claim-, Übergabe- und Ergebnisfreigabefunktionen werden nicht mehr als offen geführt.
+- Revisionsrückgabe-Berechtigung Option A in `DECISIONS.md` festgehalten. Die Umsetzung der Revision/Action Requests bleibt als funktionale Restarbeit gekennzeichnet.
+- `PROGRESS.md` präzisiert den Status: Academy-Fachkonzept weitgehend beschlossen, Kernfunktionen weit fortgeschritten, Examiner-Restarbeiten und Browser-/Live-Firestore-Abnahme offen; visueller Designabschnitt folgt auf Basis der bestehenden Entscheidungen.
