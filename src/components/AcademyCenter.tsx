@@ -688,35 +688,48 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             <button type="button" onClick={() => { setActiveTab('overview'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-gradient-to-br from-[#2864D9] to-[#1749AE] p-6 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9]">
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-              <img src={overviewWayfinder} alt="" aria-hidden="true" className="mb-5 h-16 w-16 object-contain" />
+              <img src={overviewWayfinder} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Übersicht</span>
               <span className="mt-1 block max-w-xs text-sm leading-relaxed text-white/90">Deinen Ausbildungsstand und die nächsten Schritte im Blick behalten.</span>
             </button>
             <button type="button" onClick={() => { setActiveTab('courses'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-gradient-to-br from-[#087F8C] to-[#075E69] p-6 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F8C]">
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-              <img src={coursesGraduationCap} alt="" aria-hidden="true" className="mb-5 h-16 w-16 object-contain" />
+              <img src={coursesGraduationCap} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Kurse</span>
               <span className="mt-1 block max-w-xs text-sm leading-relaxed text-white/90">Lehrgänge und Kurse entdecken, beginnen und bearbeiten.</span>
             </button>
             <button type="button" onClick={() => { setActiveTab('modules'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-gradient-to-br from-[#6841B8] to-[#4C2D91] p-6 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6841B8]">
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-              <img src={libraryThreeBooks} alt="" aria-hidden="true" className="mb-5 h-16 w-16 object-contain" />
+              <img src={libraryThreeBooks} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Lernbibliothek</span>
               <span className="mt-1 block max-w-xs text-sm leading-relaxed text-white/90">Fachliche Materialien finden und als Wissensquelle nutzen.</span>
             </button>
             <button type="button" onClick={() => { setActiveTab('exam_center'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-gradient-to-br from-[#A33370] to-[#7E2455] p-6 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#A33370]">
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-              <img src={examsAnswerSheet} alt="" aria-hidden="true" className="mb-5 h-16 w-16 object-contain" />
+              <img src={examsAnswerSheet} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Prüfungen</span>
               <span className="mt-1 block max-w-xs text-sm leading-relaxed text-white/90">Wissen überprüfen und zugängliche Prüfungen ablegen.</span>
             </button>
             <button type="button" onClick={() => { setActiveTab('notes'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-gradient-to-br from-[#287A45] to-[#1D5D34] p-6 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#287A45]">
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-              <img src={notesNotepad} alt="" aria-hidden="true" className="mb-5 h-16 w-16 object-contain" />
+              <img src={notesNotepad} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Meine Notizen</span>
               <span className="mt-1 block max-w-xs text-sm leading-relaxed text-white/90">Private Notizen und Lesezeichen verwalten.</span>
             </button>
           </div>
+        </section>
+      )}
+      {!isAcademyHome && activeTab === 'overview' && (
+        <section aria-labelledby="academy-overview-content-heading" className="space-y-4">
+          <div>
+            <h2 id="academy-overview-content-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Dein dokumentierter Lernstand</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Hier siehst du die in deinem Konto gespeicherten Ausbildungsnachweise.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{myProgress.filter(item => (item.targetType === 'test' || item.targetType === 'final_exam') && item.status === 'passed').length}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Bestandene Prüfungen</p>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Das Öffnen eines Materials wird nicht als Kursabschluss oder fachlicher Nachweis gewertet.</p>
         </section>
       )}
       {activeTab === 'courses' && (
