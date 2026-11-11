@@ -511,3 +511,19 @@ Die frühere Aussage „keine glänzenden Oberflächen“ in der Illustrationsen
 Die Kacheln bleiben leicht breitformatig (Breite etwas größer als Höhe), nicht bannerartig. Ein exaktes Seitenverhältnis ist noch nicht beschlossen und wird mit realen Texten und responsiven Ansichten geprüft.
 
 Diese Oberflächenentscheidung verändert weder die fünf Academy-Bereiche noch Kachel-Inhalte, Navigation oder fachliche Funktionen.
+
+## Academy-Einstiegskacheln – bestätigte Farbpalette und Bereichszuordnung (11.11.2026)
+
+Der Nutzer hat den vorgeschlagenen Farbentwurf ausdrücklich bestätigt (Auswahl „proposed“, Zuordnung „same“). Damit sind die folgenden fünf Farbfamilien, ihre Zuordnung und die angegebenen Hex-Werte als **beschlossene Ausgangspalette** festgelegt:
+
+| Academy-Bereich | Farbfamilie | Ausgangsfarbe |
+| --- | --- | --- |
+| Übersicht | Blau | `#2864D9` |
+| Kurse | Türkis | `#087F8C` |
+| Lernbibliothek | Violett | `#6841B8` |
+| Prüfungen | Beere | `#A33370` |
+| Meine Notizen | Grün | `#287A45` |
+
+Die Farben dienen ausschließlich der visuellen Orientierung der fünf Academy-Bereiche. Sie erhalten keine Statusbedeutung (z. B. Erfolg, Warnung oder Fehler). Die fünf Farbfamilien sollen kräftig, satt, lebendig und untereinander harmonisch wirken und den professionellen Charakter des Portals bewahren.
+
+Die Werte sind die bestätigten Ausgangsfarben für den visuellen Prototyp. Eine abschließende technische Freigabe der Design-Tokens erfolgt nach Prüfung der tatsächlichen Kacheloberfläche einschließlich weißer Lichtreflexion, Textpositionen, Kontrast, Fokusdarstellung und responsiver Darstellung. Falls dabei eine kleine Farbwertkorrektur für Lesbarkeit oder Oberflächenwirkung nötig wird, ist sie auf diese Palette zurückzuführen und darf die beschlossene Farbfamilie oder Bereichszuordnung nicht ohne erneute Nutzerentscheidung ändern.
