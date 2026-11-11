@@ -858,7 +858,7 @@ export async function listExamParticipantReviewHistory(
       status: attempt.status as ExamParticipantReviewHistoryItem['status'],
       responsibleReviewerUid: attempt.reviewClaim?.reviewerUid || attempt.reviewedByUid || null,
       responsibleReviewerName: attempt.reviewClaim?.reviewerName || null,
-      reviewedAtIso: detailed && attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
+      reviewedAtIso: attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
       detailed,
       ...(detailed ? {
         claimHistory: claimHistory.map(event => ({ ...event })),
@@ -868,7 +868,7 @@ export async function listExamParticipantReviewHistory(
     });
   }
   return results.sort((left, right) =>
-    right.submittedAtIso.localeCompare(left.submittedAtIso) || right.id.localeCompare(left.id)
+    String(right.reviewedAtIso || right.submittedAtIso).localeCompare(String(left.reviewedAtIso || left.submittedAtIso)) || right.id.localeCompare(left.id)
   );
 }
 
