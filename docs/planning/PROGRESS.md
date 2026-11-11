@@ -544,10 +544,13 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 - PR #164 wurde am 11.11.2026 gemergt (Merge-Commit d3f00605bafa2207e2831ffebdc060229ad7995b). GitHub Actions: TypeScript-Prüfung, Produktionsbuild und Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook im PR-Lauf wurde übersprungen; ein erfolgreiches Render-Deployment ist noch nicht bestätigt. Die Browserabnahme auf Desktop, Tablet und Smartphone steht aus.
 
 
-## 11.11.2026 – Kurs- und Lehrgangsdetails: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Kurs- und Lehrgangsdetails: visueller Ausbau (PR #166 gemergt)
 
 - Detailansichten für Kurse und Ausbildungsprogramme erhalten dieselbe Petrol-Akzentfarbe und Kartenoberflächen wie der Katalog.
 - Zurücknavigation, Kennung/Version, Titel, Zusammenfassung, Nachweisbedingungen, Lernziele, Kapitel und Programmfortschritt werden visuell klarer gegliedert.
 - Der vorhandene reale Programmfortschritt bleibt erhalten; keine zusätzliche Kennzahl oder neue fachliche Aktion.
 - Keine Änderung an API, Datenmodell, Status-/Nachweislogik, Versionsbindung, Berechtigungen oder Reader-Verhalten.
 - Browserabnahme nach Deployment steht noch aus.
+
+
+PR #166 wurde am 11.11.2026 gemergt (Merge-Commit 668b621ffdf8ce8e02f556a00dcb067ef65fbb1f). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme der Kursübersicht und Detailansichten steht noch aus.
