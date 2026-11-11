@@ -194,3 +194,13 @@
 - Abstand zwischen Header und Inhalt leicht vergrößert.
 - Dezente Kachel-Druckreaktion und kurzer Fade-/Vertikalübergang zum Zielbereich ergänzt; `prefers-reduced-motion` deaktiviert die Bewegung.
 - Die fünf Kacheldesigns, Illustrationen, Farben und Beschreibungen bleiben unverändert.
+
+
+## 2026-11-11 – Visuelle Gestaltungsgrundlagen und Arbeitsvereinbarung
+
+- Neue Datei `DESIGN-SYSTEM-CONCEPT.md` als Arbeitskonzept für das visuelle Gesamtsystem und den ersten Academy-Gestaltungsabschnitt angelegt.
+- Die neue Vereinbarung zur gestalterischen Verantwortung dokumentiert: eigenständige objektiv begründbare Detailentscheidungen; erneute Abstimmung bei subjektiven, prägenden Grundsatzentscheidungen; Schutz bereits erarbeiteter Funktionen, Beschlüsse und fertiger Oberflächen.
+- Bestätigte Academy-Richtung und Schutz der fünfteiligen Kachel-Startseite festgehalten; globale Portalidentität, globale Navigation und Theme-Strategie ausdrücklich offen gelassen.
+- Recherchequellen zu WCAG 2.2, USWDS Design Tokens/Farbe/Abständen/Typografie und Canvas Course Navigation im Konzept mit Übertragbarkeitshinweisen ergänzt.
+- Masterplan, Portal-Redesign-Details, Entscheidungsregister, offene Fragen und Fortschritt aufeinander abgestimmt.
+- Nur Planungsdokumentation geändert; keine Anwendungscode-/Style-/Komponenten-/API-/Datenmodell-/Berechtigungsänderung, kein Merge und kein Deployment.
