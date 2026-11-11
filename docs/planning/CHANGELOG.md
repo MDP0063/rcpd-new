@@ -243,3 +243,10 @@
 - Die eigenständige Silhouette vermeidet zusätzliche Ähnlichkeit zu den Papier-, Buch- und Dokumentmotiven der anderen Bereiche.
 - Das Motiv bleibt weich abgerundet und detailarm; Dashboard-Karten, Papierblatt und dekorative Zusatzformen sind ausgeschlossen.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+## 2026-11-11 – Motiv der Academy-Kachel „Kurse“ festgelegt
+
+- Nutzer hat Variante B bestätigt: reduzierte, weich abgerundete Abschlusskappe als Motiv für „Kurse“.
+- Ausdrücklich festgehalten, dass die Abschlusskappe dieselbe Designart wie der Wegweiser der Academy-Übersicht verwenden muss. Unterschiedliche Motive, aber eine gemeinsame Illustrationsfamilie.
+- Einheitliche weiche Formensprache, Detaildichte, matte neutrale Füllflächen, dunkle Konturen, frontale Perspektive, Geometrie, Proportionen und sparsame gegenstandsbezogene Überlagerung gelten als Set-Regeln. Türkiser Akzent für „Kurse“ bleibt zurückhaltend.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
