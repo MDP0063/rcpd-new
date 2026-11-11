@@ -266,3 +266,13 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Autospeicherstatus, Zeitlimit, Abgabe, offizielle Ergebnisfreigabe und manuelle Bewertung bleiben inhaltlich unverändert und sichtbar.
 - Die Auswahl einer Prüfung erhält zusätzlich den semantischen Zustand aria-pressed; dies verbessert die programmatische Erkennbarkeit für assistive Technologien.
 - Die Gestaltung betrifft zunächst das Teilnehmer-Prüfungszentrum. Die Legacy-Ansichten Übungstests/Abschlussprüfungen und die Examiner-Verwaltungsansichten werden nicht stillschweigend vereinheitlicht; ihre fachliche Abgrenzung bleibt Gegenstand des bestehenden Audits.
+
+
+## 17. Meine Notizen – persönlicher Arbeitsbereich (11.11.2026)
+
+- Der Bereich verwendet den bereits festgelegten grünen Akzent (#287A45) in einer ruhigen, persönlichen und zurückhaltenden Gestaltung.
+- Privatsphäre wird in der Informationshierarchie klar, aber unaufdringlich erklärt: Notizen und Lesezeichen gehören ausschließlich zum eigenen Konto.
+- Gespeicherte Notizen und Lesezeichen bleiben als kompakte Einträge mit Titel, Typ, Änderungsdatum, Inhalt, Schlagwörtern und Quellenbezug erkennbar.
+- Bearbeiten und Löschen bleiben klar getrennte Aktionen; der Editor wird als eigener Arbeitsbereich dargestellt.
+- Neue Notizen werden weiterhin im Reader angelegt. Es wird keine neue Erstellungsfunktion oder ein neues Datenmodell erfunden.
+- Private Notizdaten, Quellenverknüpfung, Zugriffsschutz, Synchronisierung und API-Verhalten bleiben unverändert.
