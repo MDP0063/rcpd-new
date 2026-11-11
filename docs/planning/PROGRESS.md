@@ -654,7 +654,7 @@ PR #177 wurde am 11.11.2026 gemergt (Merge-Commit a724f76265020eeff14c9a5c5822ee
 PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c26c97d72e04). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme der Kurs-/Programmverwaltung steht aus.
 
 
-## 11.11.2026 – Versionierte Materialverwaltung: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Versionierte Materialverwaltung: visueller Ausbau (PR #181 gemergt)
 
 - Materialliste und Editor als zwei klar getrennte Arbeitszonen gestaltet; auf schmalen Viewports steht die Liste vor dem Editor.
 - Aktive Materialauswahl, Materialkennung, Status, Revision und Versionshistorie besser erkennbar gemacht.
@@ -664,10 +664,13 @@ PR #179 wurde am 11.11.2026 gemergt (Merge-Commit 82a73e3a0fe41a4a5bd56205bc74c2
 - Browserabnahme steht nach Deployment aus.
 
 
-## 11.11.2026 – Kategorien und Dokumenttypen: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Kategorien und Dokumenttypen: visueller Ausbau (PR #182 gemergt)
 
 - Kategorie- und Dokumenttypverwaltung mit gemeinsamem, konsistentem Layout für Formular und durchsuchbare Bestandsliste gestaltet.
 - Status, Bearbeiten, Aktivieren/Archivieren, Löschen und vorhandene Bestätigungsabläufe bleiben unverändert.
 - Keine neuen Taxonomiefelder, Status, Berechtigungen oder API-Änderungen.
 - Responsive Darstellung, Dark Mode und Tastaturfokus berücksichtigt.
 - Browserabnahme steht nach Deployment aus.
+
+
+PR #181 wurde am 11.11.2026 gemergt (Merge-Commit c7bcf07fae9633a23b4ef03c4424d1b3c4038c01). PR #182 wurde am 11.11.2026 gemergt (Merge-Commit 36de9a71ee99bff508fc92a8cda98491ffbf7d95). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfungen waren erfolgreich. Die optionalen Render-Deploy-Hooks wurden übersprungen; die Browserabnahme beider Verwaltungsansichten steht aus.

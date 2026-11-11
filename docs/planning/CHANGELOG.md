@@ -286,13 +286,13 @@
 - Versionierung, Veröffentlichung, Validierung, Materialbindungen und Berechtigungen unverändert.
 
 
-## 2026-11-11 – Academy-Versionierte Materialverwaltung (PR in Vorbereitung)
+## 2026-11-11 – Academy-Versionierte Materialverwaltung (PR #181 gemergt)
 
 - Materialkatalog, Auswahl, Metadaten, Editor und Versionshistorie visuell klarer gegliedert.
 - Entwurfs-/Veröffentlichungs-/Archivierungsworkflow, Datenmodell, Zugriffsschutz und PDF-Aufschub unverändert.
 
 
-## 2026-11-11 – Academy-Kategorien und Dokumenttypen (PR in Vorbereitung)
+## 2026-11-11 – Academy-Kategorien und Dokumenttypen (PR #182 gemergt)
 
 - Verwaltungsoberflächen für Kategorien und Dokumenttypen mit konsistenter Formular-/Listenstruktur gestaltet.
 - Bestehende Status-, Archivierungs-, Lösch- und Berechtigungsregeln unverändert.
