@@ -240,3 +240,10 @@
 
 - Detailansichten für Kurse und Programme an den Kurskatalog angepasst.
 - Vorhandene Lernziele, Kapitel, Nachweisbedingungen, Programmreferenzen und echte Fortschrittsdaten bleiben erhalten.
+
+
+## 2026-11-11 – Academy-Lernbibliothek (PR #168 gemergt)
+
+- Bibliothekskatalog mit klarer Such-/Sortier-/Filterzone und kompakten Materialeinträgen visuell überarbeitet.
+- Readeroberfläche mit ruhiger Lesefläche und klarer Metadaten-/Aktionszone ergänzt.
+- Legacy- und versionierte Materialien sowie alle Zugriffs-/Readerfunktionen unverändert gelassen.
