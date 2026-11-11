@@ -537,7 +537,7 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(scopedParticipantHistory.body.history[0].detailed, false,
       'an authorized but uninvolved reviewer receives only status and responsibility');
     assert.equal('questions' in scopedParticipantHistory.body.history[0], false);
-    const outOfScopeHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', otherCourseReviewer.token);
+    const outOfScopeHistory = await jsonRequest('/api/academy/participants/http-delegate/exam-history', otherCourse.token);
     assert.equal(outOfScopeHistory.status, 200);
     assert.deepEqual(outOfScopeHistory.body.history, [], 'reviewer receives no history outside assigned courses');
 
