@@ -509,3 +509,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Akzentfarben werden rollenbasiert und zurückhaltend eingesetzt. Sie dienen der Bereichszuordnung und Orientierung, nicht als pauschale Rahmen-, Warn- oder Statusfarbe. Insbesondere darf der Beerenton der Prüfungen keine flächige rote Umrandung oder einen Warnzustand suggerieren.
 - **BESCHLOSSEN:** Fachliche Statusfarben (z. B. Erfolg, Warnung, Fehler, bestanden/nicht bestanden) behalten ihre eigenständige semantische Bedeutung und werden nicht durch Bereichsakzente ersetzt. Bereichsakzent und Statusfarbe sind visuell klar unterscheidbar.
 - **SCHUTZGRENZE:** Die fünfteilige Kachelstartseite, ihre Kachelfarben, Inhalte und Illustrationen bleiben unverändert. Diese Ergänzung betrifft die Navigation und die Gestaltung der internen Untermodule.
+
+
+## 11.11.2026 – Zuständigkeit für Action Requests bei Revisionsrückgabe
+
+- **BESCHLOSSEN:** Jeder Nutzer, der aktuell serverseitig als Prüfer für den betroffenen Kurs berechtigt ist, darf eine abgeschlossene manuelle Bewertung mit verpflichtender Begründung und konkretem Feedback zu den betroffenen Bewertungsschritten zur Revision zurückgeben.
+- **BESCHLOSSEN:** Die durch diese Revisionsrückgabe ausgelöste Action Request wird ausschließlich an Admins und Colonels zur weiteren Entscheidung und Bearbeitung gerichtet. Die Zuständigkeit verbleibt damit bei der Leitung und wird nicht automatisch dem ursprünglichen oder einem anderen Prüfer übertragen.
+- **BESCHLOSSEN:** Der ursprüngliche Prüfer bleibt als Teil der Vorgangs- und Bewertungshistorie nachvollziehbar. Daraus entsteht weder ein Bearbeitungsvorrang noch eine bevorzugte Zuweisung bei der erneuten Bewertung.
+- **SCHUTZGRENZE:** Die Revisionsrückgabe erzeugt keinen neuen Prüfungsversuch. Bereits gespeicherte Bewertungsstände und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Die erneute Bewertung erfolgt durch einen beliebigen aktuell kursberechtigten Prüfer nach den bestehenden Claim-Regeln.
