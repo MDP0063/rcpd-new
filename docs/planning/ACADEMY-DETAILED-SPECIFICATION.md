@@ -1567,3 +1567,18 @@ Verbindliche Gestaltungsleitplanken:
 - Die endgültige Überlagerungsstärke und Motivkomposition werden erst im visuellen Prototyp anhand der realen Kacheloberflächen, Symbolgrößen, Texte, Kontraste sowie Desktop-/Tablet-/Mobile-Darstellung validiert. Wenn die Überlagerung mit Kachel oder Text konkurriert oder in kleiner Darstellung unklar wird, ist sie zu reduzieren.
 
 Diese Festlegung verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
+
+
+## Perspektive der fünf Academy-SVG-Illustrationen (11.11.2026)
+
+**Beschlossen ist Variante A: eine frontale, gerade Ansicht für alle fünf Motive.**
+
+Verbindliche Gestaltungsregeln:
+
+- Keine isometrische, schräge oder ausgeprägt räumliche 3D-Perspektive. Die Gegenstände werden grundsätzlich frontal und leicht erfassbar dargestellt.
+- Die bereits beschlossene räumliche Wirkung entsteht ausschließlich durch dezente, gegenstandsbezogene Überlagerung: beispielsweise leicht versetzte Dashboard-Karten, gestaffelte Buchseiten oder teilweise hervorschauende Dokumente.
+- Blickrichtung, Ausrichtung, geometrische Formsprache, Proportionen und Detailtiefe müssen über alle fünf SVGs konsistent sein.
+- Die Illustrationen bleiben matt und zurückhaltend. Die kräftige, leicht glänzende Kacheloberfläche liefert bereits die visuelle Präsenz; die Symbole dürfen nicht mit Kachelreflexion, Titel oder Beschreibung konkurrieren.
+- Die endgültige Symbolgröße, Freifläche und Überlagerungsstärke werden im tatsächlichen Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft. Bei visueller Konkurrenz oder schlechter Lesbarkeit wird die Überlagerung reduziert.
+
+Diese Perspektiventscheidung ergänzt die bereits beschlossene neutrale SVG-Grundpalette mit Bereichsfarbakzent und die leichte Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
