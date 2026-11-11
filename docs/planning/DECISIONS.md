@@ -499,3 +499,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 
 - **BESCHLOSSEN AUS BESTEHENDER SPEZIFIKATION ABGELEITET:** Kategorie- und Dokumenttypverwaltung verwenden dieselbe Grundstruktur aus Formular und Bestandsliste, bleiben aber eigenständige Aufgaben.
 - **SCHUTZGRENZE:** Keine neuen Felder, Status, Verwaltungsrechte, Lösch-/Archivierungsregeln oder API-Verhalten.
+
+## Ergänzung: Einsicht für begründete Revisionsrückgaben (2026-11-11)
+
+- Ein aktuell für den betroffenen Kurs autorisierter Prüfer darf vor dem Auslösen einer Revisionsrückgabe die vollständigen Bewertungsdetails des konkreten Prüfungsversuchs einsehen.
+- Diese Einsicht ist zweckgebunden auf die Prüfung und Begründung der konkreten Revisionsrückgabe beschränkt. Sie begründet keinen allgemeinen Zugriff auf fremde Prüferakten oder andere Prüfungsversuche.
+- Die Rückgabe muss einen nachvollziehbaren Gesamtgrund sowie konkretes Feedback zu jedem beanstandeten Bewertungsschritt enthalten.
+- Die Freigabe der Detailansicht ändert nicht die Zuständigkeit: Die daraus entstehende Action Request wird ausschließlich Admins und Colonels zur Entscheidung und Bearbeitung vorgelegt.
+- Nach der Rückgabe kann jeder aktuell für den Kurs autorisierte Prüfer die erneute Bewertung unter den normalen Claim-Regeln übernehmen. Der ursprüngliche Prüfer erhält keinen Vorrang.
+- Die Teilnehmeransicht bleibt auf das zuletzt freigegebene Ergebnis beschränkt, bis die erneute Bewertung abgeschlossen und gegebenenfalls erneut freigegeben wurde.
