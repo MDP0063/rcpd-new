@@ -391,10 +391,13 @@ Noch nicht entschieden sind:
 - entfällt: Kriterien für eine tatsächlich neue unabhängige Empfehlung (am 11.11.2026 beschlossen; siehe Entscheidungsregister);
 - Ablauf, Rückzug oder Ungültigkeit, wenn ein Kurs nicht mehr verfügbar oder fachlich veraltet ist;
 - Fristen und Erinnerungen;
-- Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie;
+- entfällt: Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie (am 11.11.2026 beschlossen; beide Historien sind fachlich getrennt).
 - Verhalten bei manueller Zurücknahme einer Empfehlung.
 
 Diese Punkte dürfen nicht stillschweigend als bereits beschlossen behandelt werden.
+
+
+**Historienabgrenzung – beschlossen am 11.11.2026:** Die Empfehlungshistorie dokumentiert den fachlichen Lebenszyklus (Erstellung, Zusammenführung, Ausblenden, Erledigung und Zurücknahme einschließlich Herkunft/Grund). Die Benachrichtigungshistorie dokumentiert Versand/Zustellung, Lesezustand und Ziel der Benachrichtigung. Eine Änderung einer bestehenden Empfehlung erzeugt nicht automatisch eine neue Benachrichtigung. Bereits versendete Benachrichtigungen bleiben nachvollziehbar, wenn die Empfehlung später zurückgenommen wird.
 
 ## 9. Kursmeldungen und Benachrichtigungen
 
