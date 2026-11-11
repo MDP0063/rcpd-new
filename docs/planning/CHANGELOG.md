@@ -305,3 +305,12 @@
 - Zuordnung bleibt: Übersicht Blau, Kurse Türkis, Lernbibliothek Violett, Prüfungen Beere/Pink, Meine Notizen Grün.
 - Der gemeinsame schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt verbindlich.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Einheitliche Motivgröße und erste Formausarbeitung
+
+- Nutzer hat festgelegt, dass alle fünf Illustrationen exakt dieselbe Größe erhalten und gleichwertig wirken sollen.
+- Erste Formbeschreibungen für alle fünf Motive wurden als Arbeitsentwurf festgehalten: Wegweiser mit zwei Richtungsschildern, Abschlusskappe mit Quaste, drei leicht versetzte Bücher (eines geneigt), kompakter Prüfungsbogen mit Antwortfeldern/Markierung und oben gebundener Notizblock mit Schreiblinien.
+- Prüfungsbogen und Notizblock werden über Antwortfelder/Markierung gegenüber Schreiblinien/Bindung klar differenziert.
+- Die Formbeschreibungen sind noch nicht als finale SVG-Entwürfe freigegeben; gemeinsame Sichtprüfung steht aus.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
