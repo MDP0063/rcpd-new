@@ -653,3 +653,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Zuordnung: Übersicht Blau, Kurse Türkis, Lernbibliothek Violett, Prüfungen Beere/Pink, Meine Notizen Grün. Die bereits festgelegten Kachelgrundfarben bleiben unverändert.
 - Der gemeinsame schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt verbindlich.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Einheitliche Größe und visuelle Gewichtung der Academy-Motive
+
+- **BESCHLOSSEN:** Alle fünf Academy-Kachelillustrationen erhalten dieselbe Zeichenflächengröße und dieselben äußeren Abmessungen. Sie werden zentral und mit vergleichbarer optischer Größe sowie visueller Gewichtung gestaltet.
+- Kein Motiv darf durch seine Silhouette oder Flächendichte größer bzw. dominanter wirken als die anderen. Unterschiedliche Formen werden innerhalb derselben Gestaltungsgrenzen ausgeglichen.
+- **ENTWURFSSTAND, noch nicht endgültig freigegeben:** Erste konkrete Formausarbeitung: Wegweiser mit Mittelpfosten und zwei Richtungsschildern; Abschlusskappe mit klarer symmetrischer Kappenform und kleiner Quaste; drei geschlossene, leicht versetzte Bücher, eines dezent geneigt; kompakter Prüfungsbogen mit wenigen Antwortfeldern und einer Markierung; oben gebundener Notizblock mit wenigen Schreiblinien.
+- Bei Prüfungsbogen und Notizblock werden Antwortkästchen/Häkchen klar von einfachen Schreiblinien getrennt, damit die Motive nicht verwechselt werden.
+- Die Entwürfe folgen weiterhin dem schlichten flächigen Piktogrammstil der Nutzerreferenz und der festgelegten Kachel-Farbakzentregel. Die endgültige Ausarbeitung wird erst nach gemeinsamer Sichtprüfung festgelegt.
