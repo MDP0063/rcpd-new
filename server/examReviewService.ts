@@ -604,6 +604,12 @@ function completedFreeTextQuestions(attempt: ExamAttemptRecord, version: ExamVer
   });
 }
 
+export function sortCompletedManualReviewAttempts<T extends ExamAttemptRecord>(attempts: T[]): T[] {
+  return [...attempts].sort((a, b) =>
+    String(b.reviewedAtIso || '').localeCompare(String(a.reviewedAtIso || ''))
+  );
+}
+
 export async function listCompletedManualReviews(repository: ExamRepository): Promise<CompletedManualReviewItem[]> {
   const passed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'passed' }], limit: HISTORY_LIMIT
@@ -611,9 +617,7 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
   const failed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'failed' }], limit: HISTORY_LIMIT
   }));
-  const attempts = [...passed, ...failed].sort((a, b) =>
-    String(b.submittedAtIso || '').localeCompare(String(a.submittedAtIso || ''))
-  );
+  const attempts = sortCompletedManualReviewAttempts([...passed, ...failed]);
   const results: CompletedManualReviewItem[] = [];
   for (const attempt of attempts) {
     if (!attempt.reviewedByUid || !attempt.reviewedAtIso) continue;
