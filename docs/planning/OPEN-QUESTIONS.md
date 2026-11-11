@@ -287,4 +287,6 @@ Die visuellen PRs ändern keine der bestehenden fachlichen Schutzgrenzen. Nicht 
 
 Die serverseitige Berechtigungsprüfung für den manuellen Examiner-Workflow wurde vereinheitlicht und am 11.11.2026 gemergt. Pending Konten sind von Review-Queue, Claim, Draft, Bewertung und Claim-Verwaltung ausgeschlossen. Der vollständige CI-Lauf einschließlich Tests war erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment bleibt unbestätigt.
 
+Die Ergebnisprojektion wurde gemäß Abschnitt 15.3 korrigiert: PR #189 erhält den zuletzt freigegebenen Snapshot während `pending_rerelease`; PR #190 erhält ursprünglichen Prüfer und ursprünglichen Bewertungsabschlusszeitpunkt bei späteren Korrekturen. CI einschließlich Tests war erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Die gemeinsame Browser-/Live-Firestore-Abnahme bleibt offen.
+
 Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offen und wird getrennt fortgesetzt.
