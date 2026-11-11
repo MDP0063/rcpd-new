@@ -219,7 +219,13 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(correctedAttempt?.reviewCorrections?.[0].previousGrades[0].pointsEarnedMilli, 500);
     assert.equal(correctedAttempt?.reviewCorrections?.[0].nextGrades[0].pointsEarnedMilli, 900);
     assert.equal((correctedAttempt as any)?.resultReleaseStatus, 'pending_rerelease');
-    assert.equal((await listOwnExamResults(repository, 'student-1'))[0].status, 'awaiting_release');
+    const participantDuringCorrection = (await listOwnExamResults(repository, 'student-1'))[0];
+    assert.equal(participantDuringCorrection.status, 'passed',
+      'the previously released result remains visible while a corrected result awaits rerelease');
+    assert.equal(participantDuringCorrection.finalScoreBasisPoints, 7500,
+      'the participant continues to see the last published score, not the new internal score');
+    assert.equal(participantDuringCorrection.questionResults[0].pointsEarnedMilli, 500,
+      'the participant continues to see the last published question score');
     assert.equal((await listPendingExamResultReleases(repository)).length, 1);
     const rereleased = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:11:00.000Z');
     assert.equal(rereleased.status, 'passed');
