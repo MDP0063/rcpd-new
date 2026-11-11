@@ -622,3 +622,15 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - **BESCHLOSSEN – Lernbibliothek:** Drei klassische Bücher als kleine Gruppe, eines leicht schräg geneigt; keine Regalstruktur. Das Motiv wird ebenfalls im flachen Outline-/Ebenenstil ausgeführt.
 - Diese Korrektur gilt rückwirkend für Wegweiser, Abschlusskappe und Büchergruppe sowie für die beiden noch offenen Motive. Sie ersetzt die unmittelbar vorherige Festlegung einer 3D-Anmutung.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Gemeinsamer Illustrationsstil nach neuer Bildreferenz festgelegt (aktuell)
+
+- **BESCHLOSSEN:** Alle fünf Academy-Kachelmotive verwenden den schlichten, flächigen Piktogrammstil der vom Nutzer bereitgestellten Wegweiser-Referenz. Diese Referenz ist die maßgebliche Stilvorlage für das gesamte Set.
+- Die Motive bestehen aus wenigen klaren, geometrischen, überwiegend gefüllten Formen mit einfachen Silhouetten. Die Formen dürfen leicht abgerundet sein, bleiben aber ruhig, sachlich und stark reduziert.
+- Eine dezente Ebenenwirkung entsteht durch wenige überlagerte bzw. leicht versetzte Bestandteile des eigentlichen Gegenstands – wie beim Wegweiser durch Pfosten und Richtungsschilder. Keine räumliche Modellierung.
+- **Nicht Teil des Zielstils:** ausgeprägte Outline-/Linienillustrationen mit dominanten Konturen, 3D-Motive, Seitenflächen, plastische Schattierung, Glanzreflexe innerhalb der SVGs, starke Schatten, feine Details oder dekorative Zusatzformen.
+- Die vorherige Festlegung auf einen kräftigen Outline-Stil wird durch diese Bildreferenz ersetzt. Ebenso bleibt die zwischenzeitliche 3D-Richtung verworfen.
+- Alle fünf Motive müssen dieselbe visuelle Einfachheit, Formensprache, Ebenentechnik und Detaildichte besitzen. Die bestehende Motivwahl bleibt: Übersicht – Wegweiser; Kurse – Abschlusskappe; Lernbibliothek – drei klassische Bücher, eines leicht geneigt, ohne Regal. Prüfungen und Meine Notizen bleiben motivisch offen.
+- Die Bereichsfarbzuordnung und die Kacheloberflächen bleiben separate Entscheidungen; die Illustrationen werden in diesem neuen Stil darauf abgestimmt.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
