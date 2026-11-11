@@ -47,6 +47,23 @@ export interface ExamReviewClaimHistoryEntry {
   atIso: string;
 }
 
+export interface ExamPublishedResultSnapshot {
+  status: 'passed' | 'failed';
+  totalPossiblePointsMilli: number;
+  automaticallyEarnedPointsMilli: number;
+  manuallyEarnedPointsMilli: number;
+  preliminaryScoreBasisPoints: number;
+  finalScoreBasisPoints: number | null;
+  questionResults: Array<{
+    questionId: string;
+    pointsEarnedMilli: number;
+    maxPointsMilli: number;
+    requiresManualReview: boolean;
+    correct?: boolean;
+    explanation?: string;
+  }>;
+}
+
 export interface ExamAttemptRecord extends ExamDocument {
   userId: string;
   userName: string;
@@ -79,6 +96,7 @@ export interface ExamAttemptRecord extends ExamDocument {
   reviewDraftUpdatedAtIso?: string;
   reviewDraftUpdatedByUid?: string;
   resultReleaseStatus?: 'unreleased' | 'released' | 'pending_rerelease';
+  publishedResultSnapshot?: ExamPublishedResultSnapshot;
   resultReleaseHistory?: Array<{
     releasedByUid: string;
     releasedAtIso: string;
