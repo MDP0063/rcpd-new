@@ -1598,3 +1598,18 @@ Verbindliche Gestaltungsregeln:
 - Die hellen neutralen Flächen und dunklen Konturen müssen auf allen fünf kräftigen Kachelfarben klar erkennbar bleiben. Kontrast, Detailgröße, Symbolgröße und Gesamtwirkung werden im tatsächlichen Kachelprototyp einschließlich Desktop-, Tablet- und Mobilansicht validiert. Falls Konturen oder Flächen mit Kachelreflexion, Titel oder Beschreibung konkurrieren, werden sie angepasst, ohne die beschlossene Stilrichtung zu verlassen.
 
 Diese Entscheidung ergänzt die frontale Perspektive und die dezente, gegenstandsbezogene Überlagerung. Sie verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
+
+
+## Detailgrad der fünf Academy-SVG-Illustrationen (11.11.2026)
+
+Die fünf individuellen SVG-Illustrationen werden bewusst schlicht, klar und gegenständlich erkennbar ausgearbeitet. Ihre Aufgabe ist es, den jeweiligen Academy-Bereich unmittelbar zu visualisieren – nicht, die Kachel dekorativ zu füllen oder mit dem Titel um Aufmerksamkeit zu konkurrieren.
+
+Gestaltungsregeln:
+- Wenige größere, gut lesbare Formen bilden das Motiv.
+- Der Detailgrad bleibt reduziert, aber nicht übermäßig abstrakt: Das dargestellte Objekt und seine Bedeutung müssen ohne Rätselraten erkennbar sein.
+- Einzelne funktionale Details sind ausdrücklich möglich, wenn sie die Zuordnung erleichtern, beispielsweise Dokumentzeilen, wenige Dashboard-Karten oder angedeutete Buchseiten.
+- Kleinteilige Dekoration und Details ohne erkennbare inhaltliche Funktion werden vermieden.
+- Alle fünf Illustrationen erhalten eine vergleichbare Detailtiefe und müssen auch bei der vorgesehenen kleinen Kachelgröße verständlich bleiben.
+- Symbolgröße, Detaildichte und Lesbarkeit werden im tatsächlichen responsiven Kachelprototyp (Desktop, Tablet und Mobil) überprüft und bei Bedarf angepasst.
+
+Der Detailgrad ist gemeinsam mit den bereits festgelegten Gestaltungsmerkmalen umzusetzen: matte neutrale Füllflächen, klare dunkle Konturen, ein zurückhaltender Akzent aus der jeweiligen Bereichsfarbe, frontale Perspektive und wenige gegenstandsbezogen überlagerte Bestandteile.
