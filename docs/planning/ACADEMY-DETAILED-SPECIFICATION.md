@@ -1553,3 +1553,17 @@ Gestaltungsregeln für das zusammengehörige SVG-Set:
 - Keine Glanzreflexe, künstlichen Schatten oder ausgeprägten 3D-Effekte in den SVGs. Der Glanz gehört ausschließlich zur Kacheloberfläche.
 
 Die Variante B verändert nicht die bereits beschlossene ruhige geometrische Illustrationssprache, die Motive/Zuordnung der fünf Bereiche oder die Kachelfarbpalette. Ziel ist ein kohärentes Set, dessen Illustrationen lesbar bleiben und die Kacheloberfläche ergänzen statt mit ihr zu konkurrieren.
+
+## Überlagerung und Einbettung der fünf Academy-SVG-Illustrationen (11.11.2026)
+
+Der Nutzer hat die Richtung **B – leicht überlagerte Motivbestandteile** bestätigt. Die Überlagerung ist gegenstandsbezogen und kein zusätzlicher Dekorationslayer: Sie entsteht beispielsweise durch leicht versetzte Dashboard-Karten, gestaffelte Buchseiten, teilweise hervorschauende Dokumente oder einen vor dem Notizbuch liegenden Stift.
+
+Verbindliche Gestaltungsleitplanken:
+
+- Pro Motiv nur wenige, klar lesbare Ebenen; hintere Bestandteile werden nur teilweise sichtbar. Die Überlagerung unterstützt die Erkennbarkeit des Gegenstands und darf das Symbol nicht unnötig komplex machen.
+- Die Illustrationen müssen mit den kräftigen einfarbigen Kachelflächen, der weichen weißen Kachelreflexion, der Text-Hierarchie und dem übrigen Academy-/Portaldesign harmonieren. Sie sind Teil der Kachelkomposition und kein eigenständiges, konkurrierendes Gestaltungselement.
+- Die bereits beschlossene matte neutrale SVG-Grundpalette und der zurückhaltende Akzent der jeweiligen Bereichsfarbe bleiben bestehen. Die kräftige Kachelgrundfarbe wird nicht großflächig in der Illustration wiederholt.
+- Keine künstlichen SVG-Glanzreflexe, dekorativen Schatten, Transparenz-Spielereien oder ausgeprägten 3D-Effekte. Der Oberflächenglanz gehört ausschließlich zur Kachel.
+- Die endgültige Überlagerungsstärke und Motivkomposition werden erst im visuellen Prototyp anhand der realen Kacheloberflächen, Symbolgrößen, Texte, Kontraste sowie Desktop-/Tablet-/Mobile-Darstellung validiert. Wenn die Überlagerung mit Kachel oder Text konkurriert oder in kleiner Darstellung unklar wird, ist sie zu reduzieren.
+
+Diese Festlegung verändert weder die fünf Motive/Bereichszuordnungen noch Kachelstruktur, Navigation oder fachliche Funktionen.
