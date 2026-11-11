@@ -154,4 +154,5 @@
 - Tatsächliche Academy-Struktur, Komponenten, globale Portalnavigation, erste UX-Hypothesen und offene technische/visuelle Prüfaufträge dokumentiert.
 - Erste Recherche etablierter Produkte und Standards aufgenommen: Canvas, Open edX, Moodle, GOV.UK Design System, WAI-ARIA APG, WCAG 2.2 und Nielsen Norman Group.
 - README und PROGRESS um den neuen Audit-Einstieg und den tatsächlichen Main-Basisstand ergänzt.
+- Rollenmatrix, granulare Kursrechte, Dashboard-Fortschrittsprojektion und tatsächliche Einstiege zu Examiner-/Legacy-Bereichen zusätzlich untersucht; offene Cross-Module- und Erreichbarkeitsrisiken dokumentiert.
 - Keine Anwendungslogik, UI-Komponenten, API, Datenmodelle, Berechtigungen oder Deployment-Konfiguration geändert. Keine UX-/UI-Entscheidung vorweggenommen.
