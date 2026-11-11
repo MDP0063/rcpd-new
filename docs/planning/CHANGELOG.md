@@ -296,3 +296,12 @@
 - Umsetzung im verbindlichen schlichten, flächigen Piktogrammstil der Wegweiser-Referenz; wenige geometrische Flächen, geringe Detaildichte und sparsame Ebenenüberlagerung. Keine 3D-Effekte oder dominanten Konturen.
 - Der Beeren-/Pinkakzent der Prüfungen-Kachel bleibt bestehen.
 - Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Notizblockrichtung und Kachel-Farbakzente
+
+- Für „Meine Notizen“ wird statt eines geschlossenen Buches ein klar erkennbarer, einfacher Notizblock verfolgt: oben gebunden, wenige Schreiblinien, optional eine dezent versetzte zweite Ebene; keine zusätzliche Buch- oder Stiftdekoration.
+- Für alle fünf SVG-Illustrationen gilt: farbige Akzente ausschließlich in der Farbfamilie der zugehörigen Kachel, gegenüber der Kachelgrundfarbe dezenter/heller, aber eindeutig erkennbar. Neutrale Grundflächen bleiben erlaubt; keine zusätzlichen unabhängigen Akzentfarben.
+- Zuordnung bleibt: Übersicht Blau, Kurse Türkis, Lernbibliothek Violett, Prüfungen Beere/Pink, Meine Notizen Grün.
+- Der gemeinsame schlichte, flächige Piktogrammstil der Wegweiser-Referenz bleibt verbindlich.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
