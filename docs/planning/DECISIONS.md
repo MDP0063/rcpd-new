@@ -466,3 +466,16 @@ Für alle fünf Bereichskacheln wird **Variante A: Symbol oben, Titel und Kurzbe
 - Die Größen sind Startwerte für den späteren visuellen Prototyp und keine endgültigen Design-Tokens. Die endgültige Größe und Strichwirkung werden im responsiven Designsystem anhand der tatsächlichen Kachelabmessungen und Lesbarkeit überprüft.
 
 Die Entscheidung betrifft ausschließlich die visuelle Anordnung. Sie ändert weder Kachel-Inhalte noch Navigation oder Verhalten.
+
+
+### Beschlossene Abstände der Academy-Einstiegskacheln (11.11.2026)
+
+Gewählt wurde **Variante A – ausgewogen**. Ziel ist eine übersichtliche, cleane und zugleich farbige Bereichsauswahl: Die Kacheln sollen klar unterscheidbar und angenehm luftig wirken, ohne übermäßig groß oder dekorativ zu werden.
+
+Vorläufige Abstandsrichtwerte:
+- Innenabstand: Desktop 32 px, Tablet 28 px, Smartphone 24 px.
+- Abstand zwischen Symbol und Titel: 20 px.
+- Abstand zwischen Titel und Kurzbeschreibung: 8 px.
+- Abstand zwischen Kacheln: 24 px.
+
+Die Werte sind Ausgangswerte für den responsiven Prototyp und noch keine endgültigen globalen Design-Tokens. Sie werden später anhand der tatsächlichen Kachelmaße, Textlängen und verfügbaren Bildschirmfläche überprüft. Die fünf Kacheln bleiben gleichwertig und verwenden weiterhin das beschlossene helle, harmonische Farbkonzept.
