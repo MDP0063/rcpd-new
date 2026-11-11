@@ -557,3 +557,14 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - Blickrichtung, geometrische Formsprache, Proportionen und Ausrichtung müssen über alle fünf Illustrationen konsistent bleiben.
 - Die frontale Darstellung ist zusammen mit den kräftigen, leicht glänzenden Kacheloberflächen zu beurteilen: Die SVGs bleiben matt und visuell zurückhaltend; die Kacheloberfläche liefert die visuelle Präsenz. Die endgültigen Größen und Abstände werden im realen responsiven Kachelprototyp geprüft.
 - Diese Entscheidung ändert weder Motive/Bereichszuordnung noch Farbpalette, Kachelstruktur oder fachliche Funktionen.
+
+
+## Academy-SVG-Illustrationen – flächenbetonte Gestaltung mit Konturen (11.11.2026)
+
+- Nutzer hat **Variante B – flächenbetonte Gestaltung mit Konturen** als gemeinsamen Standard für alle fünf Academy-Illustrationen bestätigt.
+- Die Gegenstände werden überwiegend durch ruhige, matte und neutrale Füllflächen aufgebaut. Dunkle Konturen und gezielte Details definieren die Formen und sichern die Erkennbarkeit.
+- Die jeweilige Bereichsfarbe wird nur als zurückhaltender, gezielter Akzent eingesetzt; sie soll die kräftige Kachelgrundfarbe nicht großflächig wiederholen.
+- Es gelten weiterhin höchstens drei bis vier bewusst eingesetzte Farben pro Illustration, eine konsistente Konturwirkung und eine einheitliche geometrische Formsprache.
+- Keine Glanzreflexe, künstlichen Schatten, Transparenz-Spielereien oder 3D-Effekte innerhalb der SVGs. Der dezente Glanz bleibt ausschließlich Bestandteil der Kacheloberfläche.
+- Die hellen neutralen Flächen und Konturen müssen auf allen fünf kräftigen Kachelfarben ausreichend klar und harmonisch wirken. Kontrast, Detailgröße und Lesbarkeit werden im echten Kachelprototyp auf Desktop, Tablet und Mobilgeräten geprüft.
+- Diese Entscheidung ergänzt die bereits beschlossene frontale Perspektive und dezente gegenstandsbezogene Überlagerung. Sie verändert weder Motive/Bereichszuordnung noch Kachelstruktur oder fachliche Funktionen.
