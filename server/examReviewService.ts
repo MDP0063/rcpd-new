@@ -786,6 +786,96 @@ export async function getReleasedPassingFinalExam(
   return proofs.sort((left, right) => right.releasedAtIso.localeCompare(left.releasedAtIso))[0] ?? null;
 }
 
+export interface ExamParticipantReviewHistoryItem {
+  id: string;
+  examId: string;
+  examTitle: string;
+  courseCode: string;
+  submittedAtIso: string;
+  assessmentStage: 'test' | 'final_exam';
+  status: 'pending_review' | 'passed' | 'failed' | 'invalidated_by_admin';
+  responsibleReviewerUid: string | null;
+  responsibleReviewerName: string | null;
+  reviewedAtIso: string | null;
+  detailed: boolean;
+  claimHistory?: ExamReviewClaimHistoryEntry[];
+  reviewCorrections?: NonNullable<ExamAttemptRecord['reviewCorrections']>;
+  questions?: Array<{
+    questionId: string;
+    question: string;
+    answer: string;
+    pointsMilli: number;
+    gradingRubric: string;
+    pointsEarnedMilli?: number;
+  }>;
+}
+
+/**
+ * Builds the examiner-facing participant record. Course scope is supplied by the
+ * authenticated HTTP layer; this function further limits confidential review
+ * details to supervisors and reviewers who actually participated in the attempt.
+ */
+export async function listExamParticipantReviewHistory(
+  repository: ExamRepository,
+  participantUid: string,
+  allowedCourseCodes: readonly string[],
+  reviewerUid: string,
+  isSupervisor: boolean
+): Promise<ExamParticipantReviewHistoryItem[]> {
+  if (!participantUid.trim() || !reviewerUid.trim()) throw new Error('EXAM_PARTICIPANT_HISTORY_ACTOR_INVALID');
+  const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [{ field: 'userId', value: participantUid }], limit: HISTORY_LIMIT
+  }));
+  const allowed = new Set(allowedCourseCodes.map(code => code.trim().toUpperCase()));
+  const results: ExamParticipantReviewHistoryItem[] = [];
+  for (const attempt of attempts) {
+    if (!['pending_review', 'passed', 'failed', 'invalidated_by_admin'].includes(attempt.status)) continue;
+    if (!allowed.has('*') && !allowed.has(String(attempt.attemptCourseCode || '').toUpperCase())) continue;
+    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber) {
+      throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    }
+    const claimHistory = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    const wasInvolved = attempt.reviewedByUid === reviewerUid ||
+      attempt.reviewClaim?.reviewerUid === reviewerUid ||
+      claimHistory.some(event =>
+        event.actorUid === reviewerUid || event.targetUid === reviewerUid || event.previousUid === reviewerUid
+      );
+    const detailed = isSupervisor || wasInvolved;
+    const grades = new Map(
+      (Array.isArray(attempt.questionGrades) ? attempt.questionGrades : [])
+        .map((grade: any) => [String(grade?.questionId || ''), grade])
+    );
+    const questions = attempt.status === 'pending_review'
+      ? pendingFreeTextQuestions(attempt, version)
+      : completedFreeTextQuestions(attempt, version).map(question => ({
+          ...question,
+          pointsEarnedMilli: question.pointsEarnedMilli
+        }));
+    results.push({
+      id: attempt.id,
+      examId: attempt.examId,
+      examTitle: version.title,
+      courseCode: attempt.attemptCourseCode,
+      submittedAtIso: String(attempt.submittedAtIso || ''),
+      assessmentStage: version.assessmentStage,
+      status: attempt.status as ExamParticipantReviewHistoryItem['status'],
+      responsibleReviewerUid: attempt.reviewClaim?.reviewerUid || attempt.reviewedByUid || null,
+      responsibleReviewerName: attempt.reviewClaim?.reviewerName || null,
+      reviewedAtIso: detailed && attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
+      detailed,
+      ...(detailed ? {
+        claimHistory: claimHistory.map(event => ({ ...event })),
+        reviewCorrections: Array.isArray(attempt.reviewCorrections) ? attempt.reviewCorrections : [],
+        questions
+      } : {})
+    });
+  }
+  return results.sort((left, right) =>
+    right.submittedAtIso.localeCompare(left.submittedAtIso) || right.id.localeCompare(left.id)
+  );
+}
+
 export async function listOwnExamResults(repository: ExamRepository, uid: string): Promise<PublicExamSubmission[]> {
   const attempts = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'userId', value: uid }], limit: HISTORY_LIMIT
