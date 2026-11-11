@@ -2,8 +2,8 @@
 
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`. Sie enthält nicht nur kurze Beschlusslisten, sondern auch ausführliche Ablaufregeln, Randbedingungen, Audit-Aufträge und nachvollziehbare offene Punkte.
 
-**Stand:** 10.11.2026  
-**Letzter verifizierter `main`-Stand:** `465c55ab92164e5f47e30b041ac80ef678c718ec`  
+**Stand:** 11.11.2026  
+**Letzter verifizierter `main`-Stand:** `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`  
 **Letzte Fortschrittsaktualisierung:** Examiner-Claims, serverseitige Bewertungs-Drafts, Übergabe und administrative Neuzuweisung (PR #149/#150/#152).  
 **Laufender Umsetzungs- und Abnahmestand:** siehe [PROGRESS.md](./PROGRESS.md).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
@@ -17,8 +17,9 @@
 5. [MODULE-INVENTORY.md](./MODULE-INVENTORY.md) – alle Portalmodule und ihr tatsächlicher Audit-/Konzeptstatus.
 6. [OPEN-QUESTIONS.md](./OPEN-QUESTIONS.md) – noch offene Entscheidungen, technische Prüffelder und nicht genehmigte Vorschläge.
 7. [RECONSTRUCTION-NOTES.md](./RECONSTRUCTION-NOTES.md) – Herkunft, Umfang und Grenzen der Rekonstruktion sowie Regeln gegen erneuten Detailverlust.
-8. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand, nächste Schritte und Prüfstatus.
-9. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an der Planungsdokumentation.
+8. [ACADEMY-UX-AUDIT.md](./ACADEMY-UX-AUDIT.md) – technische Academy-Bestandsaufnahme, erste Recherche etablierter Plattformen und offene UX-/UI-Prüfaufträge. Noch kein freigegebenes Redesign-Konzept.
+9. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand, nächste Schritte und Prüfstatus.
+10. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an der Planungsdokumentation.
 
 ## Statuskennzeichnungen
 
