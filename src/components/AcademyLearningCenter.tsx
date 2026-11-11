@@ -453,7 +453,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 </div>
               ) : (
                 <>
-                  <section className="space-y-3">
+                  <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Ausbildungsprogramme</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredPrograms.length} Programme</span>
@@ -485,7 +485,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                   </section>
 
-                  <section className="space-y-3">
+                  <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alle Kurse</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredCourses.length} Kurse</span>
