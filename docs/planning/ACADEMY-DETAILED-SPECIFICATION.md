@@ -399,6 +399,9 @@ Diese Punkte dürfen nicht stillschweigend als bereits beschlossen behandelt wer
 
 **Historienabgrenzung – beschlossen am 11.11.2026:** Die Empfehlungshistorie dokumentiert den fachlichen Lebenszyklus (Erstellung, Zusammenführung, Ausblenden, Erledigung und Zurücknahme einschließlich Herkunft/Grund). Die Benachrichtigungshistorie dokumentiert Versand/Zustellung, Lesezustand und Ziel der Benachrichtigung. Eine Änderung einer bestehenden Empfehlung erzeugt nicht automatisch eine neue Benachrichtigung. Bereits versendete Benachrichtigungen bleiben nachvollziehbar, wenn die Empfehlung später zurückgenommen wird.
 
+
+**Nichtverfügbarkeit und Veraltung – beschlossen am 11.11.2026:** Vorübergehende Nichtverfügbarkeit ändert den fachlichen Status nicht in „erledigt“. Die Empfehlung bleibt historisch erhalten und wird in der aktiven Übersicht mit einem verständlichen Hinweis gezeigt, sofern sie dort weiterhin sinnvoll ist; nach Wiederverfügbarkeit ist die normale Bearbeitung möglich. Bei fachlicher Veraltung oder dauerhaftem Rückzug wird sie zurückgenommen und aus der aktiven Übersicht entfernt. Grund und Historie bleiben erhalten. Ein offiziell zugeordneter Nachfolger darf nur mit nachvollziehbarer fachlicher Zuordnung als neue Empfehlung verknüpft werden.
+
 ## 9. Kursmeldungen und Benachrichtigungen
 
 Für Meldungen innerhalb eines Kurses gilt Option C:
