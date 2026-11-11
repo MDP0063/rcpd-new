@@ -1444,3 +1444,17 @@ Gestaltungsregeln:
 Die konkrete Icon-Bibliothek und die Zuordnung einzelner Symbole zu Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen werden später im Designsystem festgelegt. Dabei sind ausreichende optische Größe, Kontrast und Erkennbarkeit zu prüfen.
 
 **Recherchebezug:** Canvas/Instructure und Moodle zeigen den Nutzen wiederverwendbarer, konsistenter Icon-Systeme; Khan Academy und Duolingo verdeutlichen die Bedeutung einfacher, schnell erfassbarer visueller Formen. Die Symbole werden nicht als alleinige Informationsträger eingesetzt.
+
+
+### Beschlossene Icon-Bibliothek und Symbole (11.11.2026)
+
+Als Icon-Bibliothek für die Academy-Bereichskacheln wird **Lucide mit `lucide-react`** verwendet. Die Abhängigkeit ist bereits in `package.json` vorhanden; es wird keine zusätzliche Icon-Bibliothek benötigt.
+
+Die bestätigten Symbolzuordnungen lauten:
+- **Übersicht:** `layout-dashboard`
+- **Kurse:** `graduation-cap`
+- **Lernbibliothek:** `library` oder `book-open` – beide wurden als passende Kandidaten akzeptiert; die finale Wahl zwischen ihnen bleibt offen.
+- **Prüfungen:** `clipboard-check`
+- **Meine Notizen:** `notebook-pen`
+
+Die Symbole folgen weiterhin dem beschlossenen Outline-Stil mit ausreichend kräftigen Konturen. Einheitliche Strichstärke, Proportionen, optische Größe und farbliche Abstimmung mit den hellen Kachelflächen bleiben verbindliche Anforderungen. Die exakten Größen-/Strichstärken-Tokens werden später im Designsystem festgelegt.
