@@ -277,3 +277,13 @@
 - Die Korrektur gilt rückwirkend für Wegweiser, Abschlusskappe und die drei klassischen Bücher sowie für die beiden noch offenen Motive. Die Büchergruppe (drei Bücher, eines leicht geneigt, ohne Regal) bleibt als Motiventscheidung bestehen.
 - Die leichte Glanzreflexion der Kacheloberflächen ist davon unberührt; sie ist eine separate Oberflächenentscheidung und kein Effekt der SVG-Illustrationen.
 - Ausschließlich Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
+
+
+## 2026-11-11 – Neue gemeinsame Bildreferenz für Academy-Kachelmotive
+
+- Nutzer hat eine konkrete Wegweiser-Abbildung als bevorzugten Stil bestätigt und ausdrücklich festgelegt, dass alle fünf Motive diesem Stil folgen sollen.
+- Die Stilrichtung ist nun ein sehr schlichtes, flächiges Piktogramm aus wenigen geometrischen, überwiegend gefüllten Formen. Dezente Tiefe entsteht nur durch Überlagerung/Staffelung echter Motivbestandteile.
+- Die vorherige Outline-Richtung mit dominanten Konturen wird ersetzt; die zuvor verworfene 3D-Richtung bleibt ausgeschlossen. Keine plastische Schattierung, Seitenflächen, SVG-Glanzreflexe, starken Schatten oder unnötigen Details.
+- Die Motiventscheidungen Übersicht (Wegweiser), Kurse (Abschlusskappe) und Lernbibliothek (drei Bücher, eines leicht geneigt, ohne Regal) bleiben bestehen. Prüfungen und Meine Notizen bleiben motivisch offen.
+- Die neue Referenz gilt als gemeinsamer Stilmaßstab für alle fünf Illustrationen; Kacheloberflächen und Bereichsfarben bleiben separate Gestaltungsentscheidungen.
+- Ausschließlich Planungsdokumentation auf Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
