@@ -3,7 +3,7 @@
 **Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150/#152 sowie #185/#186/#187 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
 **Aktueller Basisstand:** `main` nach PR #187; die ältere nach PR #152 festgehaltene Commit-ID ist historisch und nicht mehr der aktuelle HEAD.  
-**Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts) sowie PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
+**Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung) und PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
