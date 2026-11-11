@@ -457,3 +457,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Der Prüfungsablauf erhält eine konzentrierte, sachliche Oberfläche mit klarer Trennung zwischen Katalog, aktivem Versuch und Ergebnis.
 - **BESCHLOSSEN:** Ergebniszustände behalten ihre eigenen Bedeutungsfarben und werden immer textlich benannt; der Beerenton ersetzt keine Erfolgs-/Warn-/Fehlerstatusfarbe.
 - **SCHUTZGRENZE:** Zeitlimit, Autospeicher, Versuchsversion, Abgabe, Bewertung, Freigabe, API und Berechtigungen bleiben unverändert. Legacy-Prüfungsansichten und Examiner-Administration werden separat geprüft.
+
+
+## 11.11.2026 – Meine Notizen: visuelle Ausarbeitung
+
+- **BESCHLOSSEN:** Der Bereich verwendet den festgelegten grünen Akzent #287A45 und bleibt eine ruhige, persönliche Arbeitsfläche.
+- **BESCHLOSSEN:** Die Erklärung zur Privatsphäre bleibt sichtbar. Notizen und Lesezeichen werden mit ihren vorhandenen Quellenbezügen dargestellt.
+- **BESCHLOSSEN:** Bearbeiten/Löschen und der Editor bleiben getrennte, eindeutig beschriftete Aktionen. Neue Notizen werden weiterhin im Reader erstellt.
+- **SCHUTZGRENZE:** Keine Änderung an Privatheit, Zugriffsschutz, Datenmodell, Sync, Quellenbindung, API oder bestehenden Aktionen.
