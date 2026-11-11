@@ -568,7 +568,7 @@ PR #166 wurde am 11.11.2026 gemergt (Merge-Commit 668b621ffdf8ce8e02f556a00dcb06
 PR #168 wurde am 11.11.2026 gemergt (Merge-Commit 5e86ff7bf7a6ab24e4bc4ba28586f883d07de65c). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Bibliothekskatalogs und Readers steht noch aus.
 
 
-## 11.11.2026 – Teilnehmer-Prüfungszentrum: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Teilnehmer-Prüfungszentrum: visueller Ausbau (PR #170 gemergt)
 
 - Bestehende Zustände geprüft: Prüfungskatalog mit Auswahl-/Startpanel, aktiver Prüfungsversuch mit serverzeitbasierter Deadline und Autospeicherstatus sowie Ergebnisansicht mit offizieller Freigabebehandlung.
 - Gestaltung mit zurückhaltendem Beerenton als Bereichsakzent, klarer Katalog-/Detailhierarchie, gut erkennbarer Fragenübersicht und lesefokussierter Antwortfläche.
@@ -576,3 +576,6 @@ PR #168 wurde am 11.11.2026 gemergt (Merge-Commit 5e86ff7bf7a6ab24e4bc4ba28586f8
 - Ergebnisfarben für bestanden, Bewertung offen und nicht bestanden bleiben fachlich getrennt. Keine Änderung an Prüfungsauswahl, Zeit-/Autospeicher-/Abgabelogik, Bewertung, Freigabe, APIs oder Berechtigungen.
 - Die Legacy-Unteransichten Übungstests/Abschlussprüfungen und Examiner-Administration bleiben außerhalb dieses ersten visuellen Schritts.
 - CI und Browserabnahme stehen aus.
+
+
+PR #170 wurde am 11.11.2026 gemergt (Merge-Commit 2d55cf6878d3c86191e83ec585984c9c1e8de995). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Prüfungszentrums steht aus.
