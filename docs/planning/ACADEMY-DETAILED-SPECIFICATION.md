@@ -1428,3 +1428,19 @@ Gewählt wurde **Option A: helle, farbige Flächen mit kräftigeren Akzenten**.
 Die konkreten Farbtöne, Kontrastmessungen und Zuordnungen zu den fünf Bereichen sind noch offen und werden später im gemeinsamen Designsystem festgelegt. Bei der Umsetzung sind die einschlägigen Kontrastanforderungen der WCAG zu prüfen.
 
 **Recherchegrundlage:** Khan Academy Wonder Blocks (systematische Farbrollen und zugängliche Farbpaletten: https://wonder-blocks.khanacademy.org/); Duolingo Design/Navigation (visuelle Konsistenz über Bereiche hinweg); W3C WCAG 2.2 (Farbe nicht als einziges Bedeutungsmittel; Kontrastanforderungen: https://www.w3.org/TR/WCAG22/).
+
+### Beschlossener Icon-Stil der Bereichskacheln (11.11.2026)
+
+Für die fünf Academy-Kacheln wird ein einheitlicher **Outline-Icon-Stil** verwendet.
+
+Gestaltungsregeln:
+- Schlichte, unmittelbar erkennbare Symbole ohne unnötige Details.
+- Keine sehr dünnen Konturlinien; die Strichstärke muss auch bei kleineren Darstellungen gut wahrnehmbar bleiben.
+- Einheitliche Strichstärke, Proportionen und optische Größe innerhalb der Kachelgruppe.
+- Farblich passend zu den hellen Kachelhintergründen; kräftigere Akzentvarianten aus derselben Farbfamilie sind möglich.
+- Keine Mischung aus Outline-Icons, gefüllten Icons, Emojis oder Illustrationen innerhalb der Kachelgruppe.
+- Das Icon unterstützt die Orientierung, ersetzt aber nicht den eindeutigen Titel und die selbsterklärende Kurzbeschreibung.
+
+Die konkrete Icon-Bibliothek und die Zuordnung einzelner Symbole zu Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen werden später im Designsystem festgelegt. Dabei sind ausreichende optische Größe, Kontrast und Erkennbarkeit zu prüfen.
+
+**Recherchebezug:** Canvas/Instructure und Moodle zeigen den Nutzen wiederverwendbarer, konsistenter Icon-Systeme; Khan Academy und Duolingo verdeutlichen die Bedeutung einfacher, schnell erfassbarer visueller Formen. Die Symbole werden nicht als alleinige Informationsträger eingesetzt.
