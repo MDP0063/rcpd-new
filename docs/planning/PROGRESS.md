@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 10.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#149/#150 und #152 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `99d7694abaa0be0254ce10f910c103a8d0db3d2b` (Squash-Merge von PR #150).  
+**Aktueller Basisstand:** `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408` (Squash-Merge von PR #150).  
 **Aktueller Umsetzungsstand:** PR #149 und PR #150 wurden nach erfolgreicher GitHub-CI gemergt. PR #150: TypeScript-Prüfung und Produktionsbuild erfolgreich, 453/453 Tests bestanden, PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde im PR-Lauf übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine manuelle Browserprüfung und eine Live-Firestore-Abnahme stehen weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -414,3 +414,14 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - In-App-Benachrichtigungen informieren neuen und bisherigen Verantwortlichen über den Wechsel, den aktuellen Prüfer über die bevorstehende automatische Freigabe und den bisherigen Prüfer über die automatische Freigabe einschließlich Hinweis auf den zuletzt gespeicherten Draft-Stand. Benachrichtigungen enthalten einen Direktlink zum konkreten Examiner-Vorgang in der Academy.
 - PR #152: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
 - Noch offen: vollständige UI-Einsicht in die Claim-/Übergabehistorie sowie die beschlossenen wichtigen Aktionsanfragen und deren Benachrichtigungen. Zusätzliche Vorgesetzten-Benachrichtigungen für auffällige automatische Freigaben bleiben bis zur Klärung der offenen Schwellenwerte zurückgestellt.
+
+
+## 11.11.2026 – Start des vollständigen Academy-UX-/UI-Audits
+
+- Der Projektinhaber hat bestätigt, dass die Academy als erster Teil des vollständigen Portal-Redesigns gründlich und recherchegestützt konzipiert wird. Das Gesamtportal bleibt das Ziel; globale Design- und Navigationsgrundlagen müssen deshalb von Beginn an berücksichtigt werden.
+- Neue Planungsdatei `ACADEMY-UX-AUDIT.md`: erste read-only Bestandsaufnahme von `main` bei `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`, erste technische Befunde, UX-Hypothesen, offene Prüfpunkte und Recherche etablierter Plattformen/Designsysteme.
+- Erste Codebereiche geprüft: `src/App.tsx`, `src/components/AcademyCenter.tsx`, `AcademyLearningCenter.tsx`, `AcademyAuthoringCenter.tsx`, Materialverwaltung/Reader/Notizen sowie Prüfungs- und Examiner-Komponenten.
+- Erste Recherche: Canvas, Open edX, Moodle, GOV.UK Design System, WAI-ARIA APG, WCAG 2.2 und Nielsen Norman Group. Quellen und RCPD-spezifische Prüfimplikationen sind im Audit dokumentiert.
+- Vorläufige technische Prüfpunkte: lokaler Academy-Navigationsstate ohne URL-Abbildung; parallele neue und ältere Prüfungsdarstellungen; mögliche fehlende normale Einstiege zu Examiner-/Korrekturbereichen; Übersicht nutzt teilweise Legacy-Props, während neue Lernbereiche eigene API-Daten laden; Legacy- und versionierte Materialien werden in einer Bibliotheksliste zusammengeführt.
+- Diese Punkte sind noch keine freigegebenen UX-Entscheidungen. Die Live-Browser-, Responsive-, Tastatur- und Screenreader-Prüfung steht aus. Es wurden keine Anwendungsdateien verändert.
+- Nächster Schritt: Rollen-/Rechte- und Aufgabenmatrix aus tatsächlichem Client- und Servercode ableiten; danach sämtliche Academy-Nutzerwege, Datenquellen, Statusanzeigen und Einstiege lückenlos verfolgen.
