@@ -1337,3 +1337,37 @@ Der Prüfungsnachweis wird nicht als eigenständiger Academy-Datensatz kopiert. 
 Ein aktuell gültig freigegebener bestandener Versuch erfüllt die Bedingung. Eine Korrektur, die den Versuch auf `pending_rerelease` setzt, oder eine erneut freigegebene nicht bestandene Bewertung entzieht diesem Versuch die Nachweiswirkung. Andere unabhängige gültige bestandene Versuche bleiben separat gültig. Die Auswahl des angezeigten Nachweises erfolgt deterministisch nach Freigabezeitpunkt.
 
 Die Kurs- und erforderlichen Lehrgangsfortschritte werden in den Teilnehmer- und Verwaltungsansichten dynamisch projiziert. Ein Abschluss wird nicht dauerhaft in der Academy gespeichert, solange eine verpflichtende Abschlussprüfung nicht aktuell verifiziert werden kann. Fehler oder fehlende Daten im Prüfungssystem führen fail-closed zu einem nicht erfüllten Nachweis. Dadurch ist keine transaktionale Kopplung der getrennten Academy- und Prüfungsrepositories erforderlich; eine Korrektur wirkt auf die nächste Statusauflösung.
+
+
+## Academy UI-Redesign – Navigation und evidenzbasierte Gestaltungsentscheidungen (11.11.2026)
+
+### Beschlossene Hauptnavigation
+Die fünf gleichberechtigten Hauptbereiche werden horizontal direkt unter dem Academy-Kopfbereich navigiert:
+1. Übersicht
+2. Kurse
+3. Lernbibliothek
+4. Prüfungen
+5. Meine Notizen
+
+Es handelt sich um echte Navigation zu eigenständigen Academy-Ansichten, nicht um Tabs, die mehrere Inhaltsbereiche derselben Seite ein- und ausblenden. Examiner- und andere rollenabhängige Arbeitsansichten bleiben in den passenden bestehenden Bereichen integriert. Es entsteht kein sechster allgemeiner Hauptbereich.
+
+### Übergreifendes UX-Ziel
+Die Academy muss über alle fünf Bereiche hinweg besonders übersichtlich und leicht verständlich sein. Nutzer sollen ihren aktuellen Ort, die Zugehörigkeit von Inhalten, deren Priorität und die nächste sinnvolle Aktion klar erkennen können. Keine redundante zweite Portal-Sidebar, keine unnötigen gleichrangigen Einstiegspunkte und keine zusätzliche Verschachtelung ohne nachgewiesenen Nutzen. Bestehende fachliche Regeln, Datenzustände, Berechtigungen und Workflows bleiben unverändert, sofern keine separate Entscheidung getroffen wird.
+
+### Recherchepflicht für jede relevante UI-Entscheidung
+Vor jeder neuen relevanten Layout-, Navigations-, Informationsarchitektur- oder Interaktionsentscheidung werden etablierte professionelle Websites/Designsysteme und maßgebliche UX-/Accessibility-Standards recherchiert. Die Entscheidungsvorlage nennt:
+- konkrete Quellen und das dort beschriebene Muster;
+- wann das Muster laut Quelle geeignet bzw. ungeeignet ist;
+- Vorteile, Nachteile und mögliche Risiken der betrachteten Optionen;
+- Übertragbarkeit auf den tatsächlichen Academy-Arbeitsablauf und die bereits beschlossene Fachlogik;
+- eine begründete Empfehlung, ohne Nutzerentscheidung vorwegzunehmen.
+
+Die Recherche ist kein Selbstzweck: Es werden passende, hochwertige Quellen verwendet; nicht jede kleine Styling- oder Implementierungsdetailfrage benötigt eine separate Literaturübersicht. Keine bloßen Geschmacksurteile.
+
+### Erste Recherchebefunde zur Hauptnavigation
+- USWDS empfiehlt horizontale Navigation für eine überschaubare Zahl wichtiger Hauptbereiche, kurze klare Labels, eine sichtbare Kennzeichnung des aktuellen Bereichs und eine auf Nutzerbedarf ausgerichtete Reihenfolge.
+- GOV.UK weist ausdrücklich darauf hin, Tabs nicht als Seitennavigation einzusetzen, weil sie Inhalte verbergen und für eng verwandte Ansichten desselben Kontexts gedacht sind.
+- NICE unterscheidet ebenfalls zwischen horizontaler Navigation zu eigenständigen Seiten und Tabs zum Wechsel zwischen Ansichten innerhalb desselben Kontexts.
+- ONS empfiehlt, mobile Nutzung gesondert zu berücksichtigen und Tab-Leisten nicht in mehrere Zeilen umbrechen zu lassen.
+
+Daraus folgt für die Academy: Die fünf Hauptbereiche werden als semantisch korrekte, tastaturbedienbare Navigationslinks umgesetzt. Sie erhalten eine eindeutige aktuelle Zustandsmarkierung. Die konkrete mobile Präsentation und das visuelle Styling bleiben Teil der weiteren Recherche und Gestaltung.
