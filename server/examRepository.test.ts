@@ -666,11 +666,12 @@ test('JSON-Repository: abgeschlossene manuelle Bewertung erlaubt nur eine konsis
       questionGrades: [{ questionId: 'q1', pointsEarnedMilli: 800, requiresManualReview: false }],
       manuallyEarnedPointsMilli: 800,
       finalScoreBasisPoints: 8000,
-      reviewedByUid: 'colonel-1',
-      reviewedAtIso: audit.atIso,
       reviewCorrections: [audit]
     });
-    assert.equal((await repository.get('exam_attempts', 'attempt-correction'))?.finalScoreBasisPoints, 8000);
+    const corrected = await repository.get<any>('exam_attempts', 'attempt-correction');
+    assert.equal(corrected?.finalScoreBasisPoints, 8000);
+    assert.equal(corrected?.reviewedByUid, 'grader-1');
+    assert.equal(corrected?.reviewedAtIso, '2026-11-05T12:00:00.000Z');
   });
 });
 
