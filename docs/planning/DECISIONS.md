@@ -577,3 +577,12 @@ Die Entscheidung betrifft ausschließlich die Farbgestaltung der Illustrationen.
 - **BESCHLOSSEN:** Details wie Dokumentzeilen, einzelne Dashboard-Karten oder angedeutete Buchseiten sind zulässig, wenn sie die Erkennbarkeit des jeweiligen Motivs unterstützen. Dekorative Kleinteile ohne inhaltlichen Nutzen werden vermieden.
 - **BESCHLOSSEN:** Alle fünf Illustrationen erhalten eine vergleichbare Detailtiefe und müssen auch in der vorgesehenen kleinen Kachelgröße verständlich bleiben. Die konkrete Ausarbeitung wird im responsiven Kachelprototyp geprüft.
 - Diese Festlegung ergänzt die bereits beschlossenen neutralen Füllflächen mit klaren Konturen, den dezenten Bereichsfarbakzent, die frontale Perspektive und die sparsame gegenstandsbezogene Überlagerung.
+
+
+## Academy-SVG-Illustrationen – weichere, stärker reduzierte Formensprache (11.11.2026)
+
+- **BESCHLOSSEN:** Die fünf Illustrationen erhalten eine moderne, weichere und stärker abgerundete Formensprache. Ecken, Übergänge und Grundformen sollen freundlich und ruhig wirken, nicht kantig oder technisch-hart.
+- **BESCHLOSSEN:** Die Motive werden weiter vereinfacht und enthalten weniger Einzelheiten als die zuerst gezeigten Motiv-Referenzen. Wenige prägnante Formen und nur notwendige Details sollen die Bedeutung vermitteln.
+- **BESCHLOSSEN:** Die fünf Motive müssen sich durch ihre Gegenstände und Silhouetten klar voneinander unterscheiden. Die Bereichsfarben allein dürfen nicht die Unterscheidung tragen.
+- **BESCHLOSSEN:** Die Kachel „Übersicht“ bezeichnet ausschließlich die Übersicht innerhalb der Academy. Sie darf weder „Dashboard“ genannt noch als zweites Dashboard des Gesamtportals visualisiert werden. Das konkrete Motiv für „Übersicht“ bleibt offen und muss sich sichtbar von den übrigen vier Motiven unterscheiden.
+- Diese Präzisierung verfeinert den bereits beschlossenen reduzierten Detailgrad. Die bisherigen Beispiele mit Dashboard-Karten sind keine verbindliche Motivvorgabe und gelten für die Kachel „Übersicht“ ausdrücklich nicht. Die frontale Perspektive, neutralen Füllflächen, klaren Konturen, dezenten Bereichsfarbakzente und sparsame gegenstandsbezogene Überlagerung bleiben bestehen.
