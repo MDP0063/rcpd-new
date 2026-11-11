@@ -228,3 +228,9 @@
 - Teilnehmer-Kurskatalog mit klarer Überschrift, Suchfläche, Programm-Karten und kompakter Kursliste visuell überarbeitet.
 - Veralteten Hinweis zur angeblich noch fehlenden Prüfungsnachweis-Verknüpfung im Kursdetail korrigiert.
 - Keine Änderung an Kurs-/Programmstatus, Versionierung, Daten, APIs, Berechtigungen oder Verwaltungsfunktionen.
+
+
+## 2026-11-11 – Academy-Kurs- und Lehrgangsdetails
+
+- Detailansichten für Kurs und Programm visuell an den bereits überarbeiteten Kurskatalog angepasst.
+- Vorhandene Nachweisbedingungen, Lernziele, Kapitel, Kursreferenzen und echte Fortschrittsdaten bleiben unverändert.
