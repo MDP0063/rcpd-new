@@ -556,10 +556,13 @@ Die Codeprüfung bestätigt die vorhandene Informationsarchitektur. Der erste ne
 PR #166 wurde am 11.11.2026 gemergt (Merge-Commit 668b621ffdf8ce8e02f556a00dcb067ef65fbb1f). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme der Kursübersicht und Detailansichten steht noch aus.
 
 
-## 11.11.2026 – Lernbibliothek: visueller Ausbau (PR in Vorbereitung)
+## 11.11.2026 – Lernbibliothek: visueller Ausbau (PR #168 gemergt)
 
 - Ausgangsbestand geprüft: Der Katalog besitzt bereits Suche, Relevanz-/Alphabetisch-/Aktualisierungs-Sortierung, Kategorie- und Dokumenttypfilter sowie getrennte Auswahl- und Readeransicht.
 - Versionierte Materialien und Legacy-Materialien verwenden unterschiedliche vorhandene Daten-/Renderpfade. Beide bleiben erhalten; die Bibliothek bleibt ein eigener Einstieg und wird nicht vom Reader verdrängt.
 - Geplante/umgesetzte Gestaltung: zurückhaltender violetter Bereichsakzent, klare Such-/Sortier-/Filterzone, kompakte Materialeinträge und lesefokussierter Reader.
 - Keine Änderung an PDF-Infrastruktur, Materialzugriff, Versionsbindung, Suche/Filterlogik, Datenmodell, API, Berechtigungen, Notizen oder Reader-Aktionen.
 - CI und Browserabnahme stehen aus.
+
+
+PR #168 wurde am 11.11.2026 gemergt (Merge-Commit 5e86ff7bf7a6ab24e4bc4ba28586f883d07de65c). TypeScript-Prüfung, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; die Browserabnahme des Bibliothekskatalogs und Readers steht noch aus.
