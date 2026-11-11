@@ -194,3 +194,10 @@
 - Gemeinsame dunkle Konturen/Details, zurückhaltende neutrale Füllflächen und höchstens drei bis vier bewusst eingesetzte Farben je Illustration als Gestaltungsrichtlinie festgehalten.
 - Exakte Neutralfarben und Akzentabstufungen bleiben für die visuelle Ausarbeitung offen. SVGs bleiben matt und ohne künstliche Glanz-/3D-Effekte.
 - Ausschließlich Planungsdokumentation aktualisiert; keine App-Implementierung, Tests oder Deployment-Änderungen vorgenommen.
+
+## 2026-11-11 – Dezente Überlagerung der Academy-SVG-Motive bestätigt
+
+- Nutzer hat Variante B bestätigt: Die Bestandteile der fünf Gegenstandsmotive dürfen sich leicht überlagern bzw. versetzt voreinander liegen; die räumliche Wirkung entsteht aus dem Motiv selbst, nicht aus zusätzlichen Dekorationsformen.
+- Als verbindliche Einschränkung ergänzt: Die SVGs müssen mit den kräftigen Kachelflächen, der weichen weißen Reflexion, Text-Hierarchie und dem späteren portalweiten Designsystem harmonieren und dürfen nicht mit diesen Elementen konkurrieren.
+- Überlagerung bleibt sparsam, matt und auf kleine Kachelgrößen lesbar; die konkrete Stärke wird im realen Kachelprototyp einschließlich Kontrast und responsiver Darstellung validiert.
+- Nur Planungsdokumentation auf dem bestehenden Draft-PR #155 aktualisiert; keine App-Implementierung, Tests, Merge oder Deployment.
