@@ -441,3 +441,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die vorhandene inhaltliche Trennung bleibt sichtbar: Ausbildungsprogramme als eigenständige Karten, alle Kurse als kompakte Liste. Die gemeinsame Suche bleibt übergeordnet.
 - **BESCHLOSSEN:** Bestehende Status-, Versions-, Verfügbarkeits- und Fortschrittsinformationen werden ausschließlich aus den vorhandenen Daten angezeigt. Keine künstlichen Kennzahlen, neuen Status oder zusätzlichen Einstiegspunkte.
 - **SCHUTZGRENZE:** Die Kachel-Startseite, horizontale Academy-Navigation, Verwaltungsoberfläche, API-/Berechtigungslogik, Datenmodelle und Kurs-/Prüfungsnachweise bleiben von der visuellen Ausarbeitung unberührt.
+
+
+## 11.11.2026 – Lernbibliothek: visuelle Ausarbeitung
+
+- **BESCHLOSSEN:** Die Lernbibliothek verwendet den festgelegten violetten Bereichsakzent #6841B8 als ruhige, wissensorientierte Bereichsfarbe.
+- **BESCHLOSSEN:** Katalog und Reader bleiben klar getrennte Ansichten. Der Reader ersetzt nicht die Bibliotheksübersicht; die Rückkehr zur Bibliothek und die Materialliste bleiben klar erreichbar.
+- **BESCHLOSSEN:** Suche, Sortierung und bestehende Filter bleiben an der Bibliotheksübersicht gebündelt. Materialeinträge zeigen weiterhin die vorhandenen Metadaten.
+- **SCHUTZGRENZE:** Legacy-/versionierte Materialien, PDF-Bestand, Zugriffsschutz, Versionsbindung, Reader, Notizen, Code-Sandbox und APIs werden funktional nicht verändert.
