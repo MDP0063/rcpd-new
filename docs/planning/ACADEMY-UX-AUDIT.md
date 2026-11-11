@@ -442,4 +442,4 @@ Der interne Übersichtsbereich wurde in PR #158 gestalterisch umgesetzt:
 - farbige Bereichsakzente statt einer zweiten Kachel-/Navigationsreihe;
 - keine persönliche Kursliste, keine Kennzahlen-/Aufgaben-Duplikate und keine Dashboard-Projektion.
 
-Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersicht wird der bisherige globale Academy-Header/Breadcrumb nicht wiederholt. Die Änderung ist im PR-Diff enthalten; technische und visuelle Prüfungen stehen noch aus.
+Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersicht wird der bisherige globale Academy-Header/Breadcrumb nicht wiederholt. Die Änderung ist im PR-Diff enthalten. GitHub Actions `build-and-verify` (TypeScript-Prüfung, Produktionsbuild und Tests) sowie die PR-Beschreibungsprüfung sind erfolgreich. Browser-/Live-Abnahme und Screenshot stehen noch aus.
