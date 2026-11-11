@@ -1726,3 +1726,92 @@ Die folgenden Formbeschreibungen dienen als gemeinsamer Arbeitsentwurf und sind 
 - **Meine Notizen:** oben gebundener Notizblock mit wenigen kurzen Schreiblinien; keine Häkchen oder Antwortkästchen.
 
 Prüfungsbogen und Notizblock müssen trotz ähnlicher Grundform sofort unterscheidbar bleiben: Antwortfelder/Markierung stehen für Prüfungen, einfache Schreiblinien und obere Bindung für persönliche Notizen. Alle fünf Entwürfe folgen dem schlichten flächigen Piktogrammstil der Nutzerreferenz, mit wenigen geometrischen Füllflächen und ausschließlich dem jeweiligen Kachelfarbton als zurückgenommenem Akzent. Die Entwürfe sind vor finaler SVG-Umsetzung gemeinsam visuell zu prüfen.
+
+## Academy-Kachelillustrationen – reproduzierbare Ausführungsspezifikation
+
+Diese Spezifikation konkretisiert die vom Projektinhaber bestätigte gemeinsame Vorschau vom 11.11.2026. Sie ist zusammen mit dem Entscheidungsregister maßgeblich. Ziel ist eine reproduzierbare Umsetzung ohne Rückgriff auf Chatverläufe. Die Vorschau bestätigt die gemeinsame Bildsprache und das Verhältnis der Motive zueinander; sie ist keine pixelgenaue finale SVG-Datei.
+
+### 1. Gemeinsames SVG-Raster und Größenregeln
+
+- Alle fünf Motive verwenden dieselbe SVG-ViewBox und dieselben gerenderten Layout-Abmessungen. Für die erste SVG-Ausarbeitung ist ein gemeinsames Raster 128 × 128 vorgesehen; abweichende ViewBoxen pro Motiv sind nicht zulässig.
+- Jedes Motiv wird innerhalb derselben zentralen optischen Arbeitszone angeordnet. Als Entwurfsziel soll die sichtbare Illustration ungefähr 70–78 % der Zeichenflächenbreite bzw. -höhe nutzen, abhängig von der Silhouette. Dieser Bereich ist ein Prüfziel, kein Anlass, einzelne Motive größer wirken zu lassen.
+- Einheitliche Zentrierung, keine individuellen Größenklassen und keine abweichenden Icon-Container. Die optische Masse und visuelle Dominanz müssen im direkten Vergleich gleichwertig sein.
+- Die Kachelkomponente skaliert alle fünf SVGs über dieselbe Regel. Keine Sonderbehandlung pro Bereich.
+
+### 2. Gemeinsame Bildsprache
+
+- Sehr schlichtes, flächiges, geometrisches Piktogramm; wenige größere, klar erkennbare Formen.
+- Leichte Überlagerung/Staffelung nur zwischen Bestandteilen, die tatsächlich zum dargestellten Gegenstand gehören. Die Ebenen erzeugen eine zurückhaltende Tiefenwirkung, keine 3D-Optik.
+- Keine räumlichen Seitenflächen, keine isometrische oder schräge Perspektive, keine plastischen Schattierungen, keine künstlichen Glanzlichter, keine Drop-Shadows und keine dekorativen Hintergrundkreise/-flächen.
+- Keine dominanten dunklen Outline-Konturen. Die Erkennbarkeit entsteht primär durch klare Silhouette, Flächenaufteilung und wenige funktionale Details.
+- Leicht gerundete Ecken sind zulässig, aber die Geometrie bleibt ruhig und sachlich; keine verspielten, stark organischen oder übermäßig weichen Formen.
+- Alle fünf Illustrationen müssen denselben Abstraktionsgrad, dieselbe Formensprache und eine vergleichbare Detaildichte aufweisen.
+
+### 3. Farbe
+
+| Bereich | Kachel-Grundfarbe | SVG-Akzentfamilie |
+|---|---|---|
+| Übersicht | Blau #2864D9 | ausschließlich zurückgenommenes/helleres Blau |
+| Kurse | Türkis #087F8C | ausschließlich zurückgenommenes/helleres Türkis |
+| Lernbibliothek | Violett #6841B8 | ausschließlich zurückgenommenes/helleres Violett |
+| Prüfungen | Beere #A33370 | ausschließlich zurückgenommenes/helleres Beere/Pink |
+| Meine Notizen | Grün #287A45 | ausschließlich zurückgenommenes/helleres Grün |
+
+- Neutrale Grundflächen dürfen verwendet werden und sollen die farbige Akzentfläche unterstützen.
+- Keine zusätzlichen unabhängigen Akzentfarben. Farbige Bestandteile müssen eindeutig zur Farbfamilie der zugehörigen Kachel gehören.
+- Exakte neutrale Füllwerte und Akzentabstufungen sind noch im gemeinsamen SVG-Entwurf festzulegen; sie dürfen nicht ohne Sichtprüfung als endgültige Tokens ausgegeben werden.
+- SVGs bleiben matt. Der leichte Glanz/Reflex der Kacheloberfläche ist ein separater Effekt der Kachel und darf nicht in die SVG übertragen werden.
+
+### 4. Verbindliche Motivdefinitionen
+
+**4.1 Übersicht – Wegweiser (Blau)**
+- Ein einzelner Wegweiser: gerader, senkrechter Mittelpfosten; daran genau zwei Richtungsschilder, die in unterschiedliche Richtungen weisen.
+- Klare Pfosten-/Schilder-Silhouette; die Schilder müssen als Wegweiser-Schilder lesbar sein, nicht als Dokumente.
+- Keine Dashboard-Karten, kein Papierblatt, keine Beschriftung, keine zusätzlichen Symbole oder dekorativen Formen.
+- Zweck: Orientierung innerhalb der Academy-Übersicht, nicht Darstellung des Portal-Dashboards.
+
+**4.2 Kurse – Abschlusskappe (Türkis)**
+- Eine klassische Abschlusskappe: symmetrische, flache Kappen-Silhouette mit klar erkennbarer Kappenplatte und kleiner Quaste.
+- Auch bei Kachelgröße eindeutig als Abschlusskappe erkennbar.
+- Keine Bücher, Papierblätter, zusätzlichen Sterne oder andere Bildungssymbole.
+
+**4.3 Lernbibliothek – drei klassische Bücher (Violett)**
+- Genau drei klassische geschlossene Bücher als kompakte Gruppe.
+- Bücher leicht gegeneinander versetzt/überlagert; eines der drei Bücher ist dezent geneigt.
+- Buchkörper/Buchrücken müssen die Gruppe als Bücher erkennbar machen; die Gruppe bleibt kompakt und hat dieselbe optische Gesamtgröße wie die anderen Motive.
+- Kein Regal, keine Regalböden, keine zusätzlichen losen Dokumente oder viertes Buch.
+
+**4.4 Prüfungen – Prüfungsbogen (Beere/Pink)**
+- Genau ein kompakter Prüfungsbogen.
+- Wenige klar erkennbare Antwortfelder; genau eines ist durch ein Häkchen markiert.
+- Antwortfelder und Häkchen sind das primäre Erkennungsmerkmal. Keine langen Textzeilen oder kleinteilige Frageinhalte.
+- Keine Stoppuhr, keine zusätzliche Papierlage, keine dekorativen Prüfsiegel.
+
+**4.5 Meine Notizen – Notizblock (Grün)**
+- Ein oben gebundener Notizblock, ausdrücklich kein geschlossenes Buch.
+- Obere Bindung und wenige waagerechte Schreiblinien; optional eine zurückhaltend versetzte zweite Blockebene, wenn die Hauptsilhouette klar bleibt.
+- Obere Bindung plus Schreiblinien müssen die Notizblock-Funktion auf den ersten Blick vermitteln.
+- Keine Häkchen oder Antwortkästchen, kein geschlossenes Buch, keine zusätzliche Stiftdekoration.
+
+### 5. Unterscheidbarkeit und gemeinsame Komposition
+
+- Büchergruppe: drei Buchkörper/Buchrücken; Prüfungsbogen: Antwortfelder plus ein Häkchen; Notizblock: obere Bindung plus Schreiblinien.
+- Diese Merkmale sind Pflicht und dürfen zugunsten stärkerer Vereinfachung nicht entfernt werden.
+- Wegweiser und Abschlusskappe behalten eigenständige, sofort unterscheidbare Silhouetten.
+- Alle fünf Motive sind gleich groß, gleich zentral ausgerichtet und visuell gleich gewichtet. Kein Motiv darf durch mehr Fläche, stärkere Farbe oder mehr Details dominieren.
+- Die bestätigte gemeinsame Vorschau ist die Referenz für Gesamtanmutung und Gleichwertigkeit. Bei Abweichungen haben die verbindlichen Einzelmotivdefinitionen und gemeinsamen Stilregeln dieses Abschnitts Vorrang vor zufälligen Details einer generierten Vorschau.
+
+### 6. Abnahme vor Implementierung
+
+1. Alle fünf Entwürfe als gemeinsames Set auf derselben 128 × 128-Zeichenfläche erstellen.
+2. Auf neutralem Hintergrund nebeneinander vergleichen: gleiche optische Größe, gleiche visuelle Gewichtung, ähnliche Detaildichte und konsistente Flächen-/Ebenensprache.
+3. Jedes Motiv einzeln ohne Farbakzent prüfen: Silhouette und funktionale Details müssen den Gegenstand weiterhin erkennen lassen.
+4. Farbakzente gegen die jeweilige Kachelgrundfarbe prüfen: gleiche Farbfamilie, sichtbar zurückgenommen, keine fremde Akzentfarbe.
+5. Besonders Bücher, Prüfungsbogen und Notizblock auf Verwechslung prüfen.
+6. In echten Academy-Kacheln bei Desktop, Tablet und Mobil testen; Kontrast, Skalierung und Lesbarkeit dürfen nicht durch Kachelreflexion, Titel oder Beschreibung beeinträchtigt werden.
+7. Erst nach gemeinsamer Sichtprüfung und ausdrücklicher Freigabe als finale SVGs implementieren.
+
+### 7. Änderungsregel
+
+Die Motive, Größenregeln und Stilmerkmale sind verbindliche Vorgaben. Keine anderen Symbole, zusätzlichen Gegenstände, abweichenden Akzentfarben, 3D-Effekte oder individuellen Größenverhältnisse einsetzen. Jede notwendige Abweichung oder bislang offene Detailentscheidung muss vor Umsetzung zur Freigabe vorgelegt werden.
+
