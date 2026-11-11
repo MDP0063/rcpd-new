@@ -414,3 +414,12 @@ Die konkreten kontrollierten Werte für Kategorien und Dokumenttypen sind noch o
 - In-App-Benachrichtigungen informieren neuen und bisherigen Verantwortlichen über den Wechsel, den aktuellen Prüfer über die bevorstehende automatische Freigabe und den bisherigen Prüfer über die automatische Freigabe einschließlich Hinweis auf den zuletzt gespeicherten Draft-Stand. Benachrichtigungen enthalten einen Direktlink zum konkreten Examiner-Vorgang in der Academy.
 - PR #152: TypeScript-Prüfung und Produktionsbuild erfolgreich; **453/453 Tests bestanden**; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Kein bestätigter Produktionsdeploy und keine manuelle Browser-/Live-Firestore-Prüfung.
 - Noch offen: vollständige UI-Einsicht in die Claim-/Übergabehistorie sowie die beschlossenen wichtigen Aktionsanfragen und deren Benachrichtigungen. Zusätzliche Vorgesetzten-Benachrichtigungen für auffällige automatische Freigaben bleiben bis zur Klärung der offenen Schwellenwerte zurückgestellt.
+
+
+## 11.11.2026 – Examiner-Revision: Berechtigung entschieden
+
+- Der Projektinhaber hat **Option A** bestätigt: Alle für den konkreten Kurs autorisierten Prüfer dürfen eine Bewertung zur Revision zurückgeben und die entsprechende Action Request auslösen.
+- Die Berechtigung ist serverseitig kursbezogen zu prüfen; UI-Sichtbarkeit ersetzt keine Autorisierung. Bestehende administrative Befugnisse von Admins und Colonels bleiben unberührt.
+- Die fachlichen Revisionsregeln aus Abschnitt 14.14 der Academy-Spezifikation bleiben verbindlich: gleicher Prüfungsversuch, Erhalt gespeicherter Drafts und Historie, verpflichtender Revisionsgrund sowie konkretes Feedback zu betroffenen Bewertungsschritten; alle autorisierten Prüfer sind bei der erneuten Bearbeitung gleichberechtigt.
+- Neuer Umsetzungsbranch: `feature/examiner-revision-workflow`, erstellt von `main` auf Basis des dokumentierten Commits `465c55ab92164e5f47e30b041ac80ef678c718ec`.
+- Nächster Schritt: aktuellen Code auf diesem Main-Stand gegen die bestehende Examiner-/Notification-/Action-Request-Architektur prüfen, anschließend Historienansicht und Revision/Action-Request in getrennten, testbaren Änderungen umsetzen. Keine Änderung an Rollenmodell, Ergebnisfreigabe oder Prüfungswerkstatt.
