@@ -168,3 +168,13 @@
 - Veraltete Academy-Offenpunkte in `OPEN-QUESTIONS.md` mit dem tatsächlichen Stand aus PR #132–#152 abgeglichen. Bereits umgesetzte Draft-Grading-, Claim-, Übergabe- und Ergebnisfreigabefunktionen werden nicht mehr als offen geführt.
 - Revisionsrückgabe-Berechtigung Option A in `DECISIONS.md` festgehalten. Die Umsetzung der Revision/Action Requests bleibt als funktionale Restarbeit gekennzeichnet.
 - `PROGRESS.md` präzisiert den Status: Academy-Fachkonzept weitgehend beschlossen, Kernfunktionen weit fortgeschritten, Examiner-Restarbeiten und Browser-/Live-Firestore-Abnahme offen; visueller Designabschnitt folgt auf Basis der bestehenden Entscheidungen.
+
+## 2026-11-11 – Academy-Einstiegskacheln: Farb-, Oberflächen- und Illustrationsentscheidungen abgeglichen
+
+- Die frühere Festlegung auf helle, matte Kachelflächen wurde als überholt markiert und durch kräftigere, satte, harmonische und jeweils einfarbige Kachelgrundflächen ersetzt.
+- Neue verbindliche Oberflächenrichtung: sehr glatt und leicht glänzend, mit weicher weißer Lichtreflexion, dezenter Schattierung und weichen Schatten. Keine sichtbaren Farbverläufe, keine gebürstete Metallstruktur, kein Chrom-/Spiegellook.
+- Die Reflexion darf beim Hover etwas deutlicher werden; minimale Anhebung und weiche Schatten sind als Richtung vorgesehen. Exakte Intensität und Bewegungswerte bleiben bis zum Prototyp offen. Fokusdarstellung und reduzierte Bewegung sind zu berücksichtigen.
+- Die Kacheln sind leicht breitformatig, aber keine Banner; das genaue Seitenverhältnis bleibt prototypabhängig.
+- Frühere Outline-/Lucide-Icon-Festlegungen wurden als überholt gekennzeichnet. Verbindlich bleiben fünf individuelle, ruhige geometrische SVG-Illustrationen; diese bleiben selbst matt und zurückhaltend und werden auf die kräftigeren Kachelfarben abgestimmt.
+- Widersprüche zwischen älteren und neueren Festlegungen in DECISIONS.md und ACADEMY-DETAILED-SPECIFICATION.md bereinigt. Fachliche Bereiche, Navigation, Kachel-Inhalte, responsive Spaltenlogik, Abstände und Eckenradius wurden nicht verändert.
+- Ausschließlich Planungsdokumentation aktualisiert; keine Anwendungsdateien, Tests, Berechtigungen oder Deployment-Einstellungen geändert. Änderungen bleiben auf dem bestehenden Draft-PR #155 und sind nicht gemergt/deployed.
