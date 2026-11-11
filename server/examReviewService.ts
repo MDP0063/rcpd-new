@@ -638,6 +638,7 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
   return results;
 }
 
+/** Corrections are appended to reviewCorrections; the original review completion identity/time remains stable for history ordering. */
 export async function correctCompletedExamReview(
   repository: ExamRepository,
   examId: string,
