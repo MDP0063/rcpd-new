@@ -183,3 +183,16 @@ Objektiv prüfbare Fragen wie Kontrast, Lesbarkeit, responsive Reflow, Fokusfüh
 - Instructure Canvas, Course Navigation Menu: https://community.instructure.com/en/kb/articles/664370-how-do-i-use-the-course-navigation-menu-as-a-student – Beispiel für bereichsbezogene Navigation und sichtbaren aktiven Zustand.
 
 Die Quellen sind Referenzen, keine vollständigen Designvorlagen. Konkrete Muster werden nur übernommen, wenn sie zu den bestehenden RCPD-Aufgaben, Rollen, Beschlüssen und technischen Grenzen passen.
+
+
+## 11. Verifizierter Ausgangsbestand der Academy (11.11.2026)
+
+Prüfstand: `main` / Commit `7e19ccbfda3d28a37b7cadb4bac9b3daa9a4ae89`.
+
+- Die Kachel-Startseite befindet sich in `src/components/AcademyCenter.tsx` (Zeilen 726–765) und enthält bereits fünf farbige, interaktiv verknüpfte Einstiege mit den bekannten lokalen SVG-Illustrationen.
+- Die horizontale Hauptnavigation für interne Academy-Bereiche steht in derselben Datei (Zeilen 682–707).
+- Die interne Übersicht (Zeilen 766–861) besitzt bereits die verbindliche Erklärstruktur: Orientierung, flexible Lernwege, Lehrgänge/Kurse/Lernbibliothek, Prüfungen, private Notizen und der Hinweis, dass bloßes Öffnen keinen Abschluss erzeugt.
+- Die Academy wird in `src/App.tsx` (Zeilen 2468–2479) als bestehender Portalbereich eingebunden. Die globale Portalhülle wird in diesem Konzept nicht neu gestaltet.
+- `src/index.css` verwendet bereits Plus Jakarta Sans und globale Zeilen-/Überschriftenregeln. Bestehende globale und Dark-Mode-Styles sind vor einer späteren Implementierung zu berücksichtigen, nicht zu überschreiben.
+
+**Konsequenz für den Prototyp:** Der interne Übersichtsbildschirm wird visuell verbessert, ohne Inhalte, fachliche Aussagen, Navigation, Kacheleinstiege oder Kennzahlen zu erfinden. Die fünf Kacheln gehören nicht in diesen Screen. Ein generierter Bildentwurf, der sie dort wiederholt oder Fortschrittsmetriken ergänzt, gilt als verworfen.
