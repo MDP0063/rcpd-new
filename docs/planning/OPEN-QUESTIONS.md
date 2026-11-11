@@ -215,7 +215,8 @@ Frühere Hinweise zu App.tsx, Sidebar/Header, mobilen Tabs, Ctrl+K und Theme-CSS
 - PDF-Infrastruktur, PDF-Upload/-Abruf, Parser-/Malwareprüfung, Quarantäne, OCR und neue Speicherinfrastruktur bleiben ausdrücklich zurückgestellt. Bereits vorhandene Legacy-PDFs werden als Bestand behandelt.
 - Die erste Materialausbaustufe (Text/Markdown und Code ohne Codeausführung), versionierte Materialien, Kursversionsbindung, Entwurfs-/Veröffentlichungsworkflow, Metadaten- und Berechtigungsmodell sind umgesetzt; Details und verbleibende technische Abnahme siehe `PROGRESS.md`.
 - Reader, private Notizen/Lesezeichen, Mehrfachquellen, Textanker und lokale Leseposition sind umgesetzt. Die genaue Toolbar-/Werkzeuganordnung ist eine visuelle Designfrage; Sync-/Fehlerzustände und mobile Bedienung sind im Abnahmetest zu prüfen.
-- Noch offen sind die Examiner-Historienansicht, wichtige Action Requests/Benachrichtigungen und die Umsetzung der beschlossenen Revisionsrückgabe.
+- **In Implementierung / PR ausstehend:** zentrale Examiner-Teilnehmerakte mit serverseitiger Kurs- und Detailvertraulichkeit (Branch `feature/academy-exam-participant-record`). Bis zum Merge gilt sie nicht als in `main` verfügbar.
+- Weiter offen: wichtige Action Requests/Benachrichtigungen und die Umsetzung der beschlossenen Revisionsrückgabe.
 - Empfehlungen: Regeln für Rückzug/Verfall/Obsoleszenz, unabhängige neue Empfehlungen, Fristen und Erinnerungen bleiben nur dort offen, wo sie in Abschnitt 8.6 der Academy-Spezifikation nicht bereits festgelegt sind.
 - Die manuelle Erstfreigabe ohne Konfiguration (PR #144) und der dynamische `required_assessment`-Nachweis (PR #146) sind umgesetzt; automatische Erstfreigabe bleibt mangels Konfigurationsmöglichkeit nicht verfügbar.
 - Noch offen: gemeinsame Browser-/Live-Firestore-Abnahme der aktuellen Academy-Implementierung und prototypische Validierung der visuellen Neugestaltung.
