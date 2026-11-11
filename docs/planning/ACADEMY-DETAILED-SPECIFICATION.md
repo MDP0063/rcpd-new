@@ -383,12 +383,12 @@ Das Ausblenden:
 - liefert keine zusätzliche Feedback-/Ratingfunktion;
 - soll kein komplexes Empfehlungsmodell durch Nutzerbewertungen erzeugen.
 
-Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffnen wieder erscheinen. Nur eine tatsächlich neue, eigenständige Empfehlung kann die gleiche Lernressource erneut in die persönliche Übersicht bringen. Was genau als „neue eigenständige Empfehlung“ gilt, ist noch zu konkretisieren; bloße Versions-, Fortschritts- oder Reload-Ereignisse reichen nicht.
+Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffnen wieder erscheinen. Nur eine tatsächlich neue, eigenständige Empfehlung kann die gleiche Lernressource erneut in die persönliche Übersicht bringen. **Beschlossen am 11.11.2026:** Eine manuelle Empfehlung gilt als neu, wenn ein berechtigter Ausbilder oder Administrator sie ausdrücklich erneut erstellt. Eine automatische Empfehlung gilt als neu, wenn ein neuer, eigenständiger fachlicher Auslöser eintritt. Bloße Versionsänderungen, erneutes Laden/Öffnen oder Fortschrittsänderungen ohne neuen fachlichen Auslöser reichen nicht.
 
 ### 8.6 Noch offene Empfehlungsregeln
 
 Noch nicht entschieden sind:
-- präzise Kriterien für eine tatsächlich neue unabhängige Empfehlung;
+- entfällt: Kriterien für eine tatsächlich neue unabhängige Empfehlung (am 11.11.2026 beschlossen; siehe Entscheidungsregister);
 - Ablauf, Rückzug oder Ungültigkeit, wenn ein Kurs nicht mehr verfügbar oder fachlich veraltet ist;
 - Fristen und Erinnerungen;
 - Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie;
