@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 11.11.2026 – PR #132/#134/#135/#136/#137/#138/#141/#142/#144/#146/#149/#150/#152 sowie #185/#186/#187 sind gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 11.11.2026 – zusätzlich PR #189/#190/#191/#192/#193 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #187; die ältere nach PR #152 festgehaltene Commit-ID ist historisch und nicht mehr der aktuelle HEAD.  
+**Aktueller Basisstand:** `main` nach PR #193 (Merge-Commit `6f9e54bfaa02ae9530e745487cdbc4037c31cca0`).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -722,3 +722,19 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - HTTP-Regressionstests decken Queue, Claim, Draft, Grade, Transfer, Release, Activity, Disconnect, Reassignment und Zuweisungsziele ab.
 - TypeScript/Lint, Produktionsbuild und gesamter Testsatz erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment ist nicht bestätigt.
 - Der ursprüngliche Testlauf machte zusätzlich sichtbar, dass ein neu angelegtes Admin-Fixture den bestehenden Last-Admin-Test beeinflusste. Das Fixture wurde auf eine unterstützte Officer-Rolle geändert; der erneute vollständige CI-Lauf war erfolgreich.
+
+
+## 11.11.2026 – Academy-Navigation: Rückweg und Bereichsakzente
+
+- PR #192 hat die verbindlichen Regeln für einen eigenständigen Rückkehr-Button zur fünfteiligen Kachelstartseite, die Akzentfarbe in der horizontalen Bereichsnavigation und den semantisch zurückhaltenden Farbeinsatz in `DECISIONS.md` und `DESIGN-SYSTEM-CONCEPT.md` festgehalten.
+- PR #193 ist gemergt: In allen internen Academy-Ansichten steht nun oberhalb der horizontalen Navigation ein eigenständiger Button „Zur Kachelansicht“ bereit. Der dateipfadartige Breadcrumb wurde als Rücknavigation entfernt.
+- Die aktive Hauptnavigation übernimmt den Bereichsakzent: Übersicht Blau, Kurse Petrol, Lernbibliothek Violett, Prüfungen Beerenton, Meine Notizen Grün. Verschachtelte Ansichten werden dem richtigen Hauptbereich zugeordnet.
+- Die fünfteilige Kachelstartseite und ihre Illustrationen blieben unverändert. Die Akzentfarbe wird nur für den aktiven Navigationszustand eingesetzt; Statusfarben und Prüfungswarnungen bleiben davon getrennt.
+- TypeScript/Build, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Live-Deployment und manuelle Browserabnahme stehen noch aus.
+
+### Nächster fachlicher Schritt: Examiner-Historie und Revision
+
+- Die Claim-/Übergabehistorie ist serverseitig vorhanden, aber noch nicht in der Oberfläche verfügbar.
+- Eine zentrale Teilnehmerakte, wie sie Abschnitt 15.7 vorsieht, ist in der aktuellen UI noch nicht vorhanden. Historie wird deshalb nicht redundant in Prüferwarteschlange und Korrekturcenter eingeführt.
+- Als nächster zusammenhängender Funktionsblock ist die zentrale Teilnehmerakte bzw. deren Academy-Integration zu untersuchen und umzusetzen. Darauf aufbauend folgen berechtigungsgesteuerte Historienprojektion, Revisionsrückgabe mit Pflichtfeedback pro betroffenem Bewertungsschritt und passende Action-Request-Benachrichtigungen.
+- Vor Revisionsimplementierung müssen Ergebnis-Snapshot, bestehende Bewertungs-Drafts, Claim-Übergänge und Repository-Validierungsregeln gemeinsam regressionsgesichert werden. Kein neuer Prüfungsversuch darf entstehen.
