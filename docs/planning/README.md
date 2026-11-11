@@ -17,7 +17,7 @@
 5. [MODULE-INVENTORY.md](./MODULE-INVENTORY.md) – alle Portalmodule und ihr tatsächlicher Audit-/Konzeptstatus.
 6. [OPEN-QUESTIONS.md](./OPEN-QUESTIONS.md) – noch offene Entscheidungen, technische Prüffelder und nicht genehmigte Vorschläge.
 7. [RECONSTRUCTION-NOTES.md](./RECONSTRUCTION-NOTES.md) – Herkunft, Umfang und Grenzen der Rekonstruktion sowie Regeln gegen erneuten Detailverlust.
-8. [ACADEMY-UX-AUDIT.md](./ACADEMY-UX-AUDIT.md) – technische Academy-Bestandsaufnahme, erste Recherche etablierter Plattformen und offene UX-/UI-Prüfaufträge. Noch kein freigegebenes Redesign-Konzept.
+8. [ACADEMY-UX-AUDIT.md](./ACADEMY-UX-AUDIT.md) – ergänzende Implementierungsprüfung und Vorbereitung des visuellen Academy-Redesigns. Die bestehende IA und Fach-/UX-Beschlüsse bleiben verbindlich.
 9. [PROGRESS.md](./PROGRESS.md) – aktueller Arbeitsstand, nächste Schritte und Prüfstatus.
 10. [CHANGELOG.md](./CHANGELOG.md) – Änderungen an der Planungsdokumentation.
 
