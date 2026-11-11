@@ -236,3 +236,12 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Status, Versionsnummern, Verfügbarkeit, Teilnahmefortschritt und Handlungsoptionen stammen weiterhin aus den vorhandenen Daten. Farben unterstützen die Orientierung, ersetzen aber keine Statusbeschriftung.
 - Kurs- und Programm-Detailansichten bleiben im selben Bereichssystem; die fünfteilige Academy-Kachel-Startseite und die horizontale Hauptnavigation werden nicht verändert.
 - Diese Gestaltung ist ein erster Code-Prototyp und wird anhand der Live-Browserdarstellung weiter geprüft. Sie ist keine Festlegung für das spätere globale Portaldesign.
+
+
+### Ergänzung 11.11.2026 – Kurs- und Lehrgangsdetails
+
+- Kurs- und Programmdetails verwenden dieselbe ruhige Petrol-Akzentfarbe und Oberflächenbehandlung wie der Katalog.
+- Überschriften, Kennung/Version und erklärende Zusammenfassung erhalten eine klarere Hierarchie.
+- Nachweisbedingungen, Lernziele, Kapitel und erforderliche/empfohlene Kurse bleiben fachlich getrennt und werden als lesbare Inhaltsabschnitte dargestellt.
+- Der echte Programmfortschritt bleibt mit seiner vorhandenen Datenquelle sichtbar; er wird nicht mit einem Academy-Gesamtfortschritt vermischt.
+- Aktionen und Status bleiben textlich eindeutig und tastaturbedienbar. Es werden keine neuen Daten oder Aktionen ergänzt.
