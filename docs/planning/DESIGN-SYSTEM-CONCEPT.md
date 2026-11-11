@@ -314,3 +314,6 @@ Dies ist eine konkret abgestimmte Detailentscheidung aus der Browserprüfung, ke
 - Kapitel, Lernziele und Zuordnungen werden als eigenständige, visuell getrennte Bearbeitungseinheiten dargestellt.
 - Warnungen zu Materialrevision, fehlenden Abschlussbedingungen und ungespeicherten Änderungen bleiben in ihren vorhandenen Statusfarben und mit ihrem bestehenden Text erhalten.
 - Speichern, Veröffentlichen, Verlassen mit ungespeicherten Änderungen, Versionsbindung und alle Validierungen bleiben funktional unverändert.
+
+
+**Umsetzungsstand:** Kurs-/Programmlisten und Editoren wurden in PR #179 visuell überarbeitet. TypeScript-Prüfung, Produktionsbuild und Tests waren erfolgreich; die Browserabnahme steht aus.
