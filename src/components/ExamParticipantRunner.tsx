@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import './ExamParticipantRunner.css';
 import {
   AlertCircle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock3,
   Cloud, CloudOff, Loader2, LockKeyhole, Send, ShieldCheck
@@ -84,7 +85,7 @@ type SubmitResponse = { submission: PublicSubmission; expired: boolean; alreadyS
 
 const cardClass = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
 const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
-const primaryButton = buttonClass + ' bg-sky-600 text-white hover:bg-sky-500';
+const primaryButton = buttonClass + ' academy-exam-primary-button bg-sky-600 text-white hover:bg-sky-500';
 const secondaryButton = buttonClass + ' border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 
 function formatDuration(seconds: number): string {
@@ -360,9 +361,9 @@ export const ExamParticipantRunner: React.FC = () => {
   if (attempt) {
     const progressPercent = Math.round((answeredCount / Math.max(1, attempt.questions.length)) * 100);
     return (
-      <div className="space-y-5">
-        <div className={cardClass + ' overflow-hidden'}>
-          <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <div className="academy-exam-runner academy-exam-runner--attempt space-y-5">
+        <div className={cardClass + ' academy-exam-attempt-card overflow-hidden'}>
+          <div className="academy-exam-attempt-header flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">
                 {attempt.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {attempt.attemptCourseCode}
@@ -388,7 +389,7 @@ export const ExamParticipantRunner: React.FC = () => {
             <div className="h-full bg-sky-600 transition-all" style={{ width: `${progressPercent}%` }} />
           </div>
           <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="space-y-3">
+            <aside className="academy-exam-question-nav space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div>
               <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
                 {attempt.questions.map((question, index) => {
@@ -415,7 +416,7 @@ export const ExamParticipantRunner: React.FC = () => {
                 </div>
               </div>
             </aside>
-            <section className="min-w-0 space-y-5">
+            <section className="academy-exam-question-panel min-w-0 space-y-5">
               {activeQuestion && (
                 <>
                   <div className="flex items-start justify-between gap-3">
@@ -515,7 +516,7 @@ export const ExamParticipantRunner: React.FC = () => {
     const pending = submission.status === 'pending_review';
     const awaitingRelease = submission.status === 'awaiting_release';
     return (
-      <div className={cardClass + ' space-y-5 p-5 sm:p-7'}>
+      <div className={cardClass + ' academy-exam-runner academy-exam-runner--result academy-exam-result-card space-y-5 p-5 sm:p-7'}>
         <div className="flex items-start gap-3">
           <div className={`rounded-xl p-3 ${pending || awaitingRelease ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}`}>
             {pending || awaitingRelease ? <Clock3 className="h-6 w-6" /> : passed ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
@@ -555,8 +556,8 @@ export const ExamParticipantRunner: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div className="academy-exam-runner academy-exam-runner--catalog space-y-5">
+      <div className="academy-exam-heading flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Academy · Prüfungszentrum</div>
           <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Verfügbare Prüfungen</h2>
@@ -565,11 +566,11 @@ export const ExamParticipantRunner: React.FC = () => {
         <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
-      {resultHistory.length > 0 && <section className={cardClass + ' space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
+      {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
       {loadingCatalog ? (
         <div className={cardClass + ' flex items-center justify-center gap-3 p-12 text-sm text-slate-500'}><Loader2 className="h-5 w-5 animate-spin" />Prüfungen werden geladen …</div>
       ) : catalog.length === 0 ? (
-        <div className={cardClass + ' space-y-2 p-10 text-center'}>
+        <div className={cardClass + ' academy-exam-empty space-y-2 p-10 text-center'}>
           <ShieldCheck className="mx-auto h-9 w-9 text-sky-600" />
           <h3 className="font-semibold text-slate-900 dark:text-white">Derzeit keine Prüfungen verfügbar</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">Sobald eine Prüfung veröffentlicht und für deine Freigabestufe verfügbar ist, erscheint sie hier.</p>
@@ -582,7 +583,8 @@ export const ExamParticipantRunner: React.FC = () => {
                 setSelectedExamId(exam.id);
                 setSelectedCourseCode(exam.assignedCourseCodes[0] || '');
                 setRunnerError('');
-              }} className={`w-full rounded-xl border p-4 text-left transition-colors ${selectedExamId === exam.id ? 'border-sky-500 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'}`}>
+              }} aria-pressed={selectedExamId === exam.id}
+                className={`academy-exam-option w-full rounded-xl border p-4 text-left transition-colors ${selectedExamId === exam.id ? 'border-sky-500 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · Version {exam.versionNumber}</div>
@@ -595,7 +597,7 @@ export const ExamParticipantRunner: React.FC = () => {
               </button>
             ))}
           </div>
-          <aside className={cardClass + ' h-fit space-y-4 p-5'}>
+          <aside className={cardClass + ' academy-exam-selection-panel h-fit space-y-4 p-5'}>
             {selectedExam ? (
               <>
                 <div>
