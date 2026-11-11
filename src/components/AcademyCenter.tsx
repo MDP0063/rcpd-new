@@ -667,8 +667,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               { id: 'notes' as const, label: 'Meine Notizen', accent: '#287A45' }
             ].map(item => {
               const selected = item.id === 'exam_center'
-                ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
-                : activeTab === item.id;
+                ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections', 'add_code_test'].includes(activeTab)
+                : item.id === 'courses'
+                  ? ['courses', 'instructor_grading'].includes(activeTab)
+                  : item.id === 'modules'
+                    ? ['modules', 'upload_textbook'].includes(activeTab)
+                    : activeTab === item.id;
               return <button key={item.id} type="button"
                 onClick={() => {
                   setActiveTab(item.id);
