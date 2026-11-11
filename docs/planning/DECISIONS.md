@@ -486,3 +486,20 @@ Die Werte sind Ausgangswerte für den responsiven Prototyp und noch keine endgü
 Für die fünf Academy-Einstiegskacheln wird eine **dezente mittlere Abrundung** verwendet: sichtbar abgerundet, aber deutlich näher an einer sachlich/fast eckigen Form als an stark gerundeten, pillenartigen Karten.
 
 Als vorläufiger Richtwert für den visuellen Prototyp gelten **8–12 px Eckenradius**. Der endgültige Wert wird im responsiven Layout anhand der tatsächlichen Kachelgrößen und der Gesamtwirkung überprüft. Die Abrundung soll den professionellen, cleanen Charakter unterstützen und nicht verspielt wirken.
+
+### Beschlossene Illustrationssprache der Academy-Einstiegskacheln (11.11.2026)
+
+Die zuvor festgehaltene vorläufige Entscheidung für klassische Lucide-Outline-Icons als Kachelvisuals wird durch diese spätere Nutzerentscheidung ersetzt. Für die fünf Academy-Einstiegskacheln wird eine **ruhige, reduzierte, geometrische Illustrationssprache** verwendet.
+
+Verbindliche Gestaltungsregeln:
+- Illustrationen mit zurückhaltenden Farbflächen und dezenter Überlagerung; eine leichte räumliche Wirkung ist möglich, aber kein ausgeprägter 3D-Effekt.
+- Wenige, bewusst gewählte Details; die Symbole müssen auch in kleiner Darstellung verständlich bleiben.
+- Einheitliche Geometrie, Proportionen, Strichstärken (wo Konturen verwendet werden) und Detailtiefe über alle fünf Kacheln.
+- Keine glänzenden Oberflächen, künstlich wirkenden Schatten, zufälligen Details, übertriebene Perspektiven oder typische überladene KI-Bildgenerator-Optik.
+- Die Illustrationen ergänzen die Benutzeroberfläche und unterstützen die Bereichsorientierung; sie dominieren weder Kacheln noch Inhalte. Titel und Kurzbeschreibung bleiben die primären Informationsträger.
+- Die Farbgebung wird auf die bereits beschlossene helle, harmonische Kachelfarbpalette abgestimmt.
+- Die fünf Illustrationen werden als zusammengehöriges Set individuell gestaltet und lokal als SVG-Dateien eingebunden. Keine externen Bilddienste zur Laufzeit.
+
+Die bisher beschlossene Platzierung bleibt bestehen: Symbol oben, Titel und Kurzbeschreibung darunter; Titel und Beschreibung linksbündig. Diese Stilentscheidung ersetzt nur die bisherige Festlegung des visuellen Icon-Stils bzw. der Icon-Bibliothek. Sie ändert weder die fünf Bereiche noch Navigation, Kachelstruktur, Abstände oder fachliche Funktionen.
+
+Die konkrete Ausarbeitung und Prüfung im responsiven Prototyp erfolgt später im Rahmen des Designsystems.
