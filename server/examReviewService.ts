@@ -638,6 +638,7 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
   return results;
 }
 
+/** Corrections are appended to reviewCorrections; the original review completion identity/time remains stable for history ordering. */
 export async function correctCompletedExamReview(
   repository: ExamRepository,
   examId: string,
@@ -714,8 +715,6 @@ export async function correctCompletedExamReview(
       preliminaryScoreBasisPoints: result.preliminaryScoreBasisPoints,
       finalScoreBasisPoints: result.finalScoreBasisPoints,
       questionGrades,
-      reviewedByUid: reviewerUid,
-      reviewedAtIso: nowIso,
       reviewCorrections: [...previousCorrectionHistory, correction],
       ...(attempt.resultReleaseStatus === 'released' ? {
         resultReleaseStatus: 'pending_rerelease' as const,
