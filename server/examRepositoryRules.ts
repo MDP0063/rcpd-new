@@ -647,7 +647,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       if (!completion) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_MISSING');
       if (Object.keys(completion).sort().join(',') !==
           'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid') {
-        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_KEYS_INVALID');
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_KEYS_INVALID:' + Object.keys(completion).sort().join(','));
       }
       if (completion.action !== 'revision_completed') throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_ACTION_INVALID');
       if (completion.revisionRequestIndex !== revisionRequestIndex) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_INDEX_INVALID');
