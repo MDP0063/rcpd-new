@@ -200,7 +200,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
         </div>
         {rejectingId === request.id && <div>
           <label htmlFor={`exam-revision-reject-reason-${request.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Ablehnung</label>
-          <textarea id={`exam-revision-reject-reason-${request.id}`} className={fieldClass} rows={3} minLength={10} maxLength={1000}
+          <textarea id={`exam-revision-reject-reason-${request.id}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
             value={rejectionReasons[request.id] || ''}
             onChange={event => setRejectionReasons(current => ({ ...current, [request.id]: event.target.value }))}
             aria-describedby={`exam-revision-reject-help-${request.id}`}
