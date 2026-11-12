@@ -2338,7 +2338,7 @@ async function startServer() {
               ...(Array.isArray(event.feedback) ? {
                 feedback: event.feedback.map(entry => ({
                   ...entry,
-                  label: `Frage ${Math.max(1, (history.find(item => item.id === item.id)?.questions || []).findIndex(question => question.questionId === entry.questionId) + 1)}`
+                  label: `Frage ${Math.max(1, (item.questions || []).findIndex(question => question.questionId === entry.questionId) + 1)}`
                 }))
               } : {})
             }))
