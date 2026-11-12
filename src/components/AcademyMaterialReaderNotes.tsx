@@ -87,7 +87,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const savingRef = useRef(false);
   const savingDraftIdRef = useRef<string | null>(null);
   const saveErrorsByIdRef = useRef(new Map<string, string>());
-  const lastSavedByIdRef = useRef(new Map<string, string>());
+  const lastSavedByIdRef = useRef(new Map<string, NoteDraft>());
   const lastSavedRef = useRef('');
   const currentDraftRef = useRef<NoteDraft | null>(null);
   const persistPendingRef = useRef<() => Promise<void>>(async () => {});
@@ -179,7 +179,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         saveErrorsByIdRef.current.delete(id);
         blockedSaveIdsRef.current.delete(id);
         revisionByIdRef.current.set(saved.id, saved.revision ?? expectedRevision + 1);
-        lastSavedByIdRef.current.set(saved.id, savedSnapshot);
+        lastSavedByIdRef.current.set(saved.id, draft);
         setNotes(previous => previous.map(note => note.id === saved.id ? saved : note));
 
         const queuedDraft = pendingSavesRef.current.get(id);
@@ -252,9 +252,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         const ownNotes = response.data.notes;
         for (const note of ownNotes) {
           revisionByIdRef.current.set(note.id, note.revision ?? 1);
-          lastSavedByIdRef.current.set(note.id, serializeDraft({
+          lastSavedByIdRef.current.set(note.id, {
             id: note.id, title: note.title || '', content: note.content || '', tags: note.tags
-          }));
+          });
         }
         setNotes(ownNotes);
         setNotesLoaded(true);
@@ -275,7 +275,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       // The debounce timer is cleaned up separately, so relying on it here could lose edits.
       const current = draftsBySourceRef.current.get(sourceKey) || null;
       draftsBySourceRef.current.delete(sourceKey);
-      const savedSnapshot = current ? lastSavedByIdRef.current.get(current.id) || '' : '';
+      const savedDraft = current ? lastSavedByIdRef.current.get(current.id) || null : null;
+      const savedSnapshot = savedDraft ? serializeDraft(savedDraft) : '';
       if (current && serializeDraft(current) !== savedSnapshot) {
         pendingSavesRef.current.set(current.id, current);
         void persistPendingRef.current();
@@ -318,7 +319,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
-    if (savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+    if (savingRef.current || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
       setAnchorNotice('Diese Notiz wird gerade gespeichert oder aktualisiert. Bitte warte kurz und wähle sie dann erneut aus.');
       return;
     }
@@ -338,13 +339,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       tags: note.tags
     };
     const pendingDraft = pendingSavesRef.current.get(note.id) || null;
-    const selectedDraft = pendingDraft || serverDraft;
+    const savedDraft = lastSavedByIdRef.current.get(note.id) || serverDraft;
+    const selectedDraft = pendingDraft || savedDraft;
     setSelectedNoteId(note.id);
     setTitle(selectedDraft.title);
     setContent(selectedDraft.content);
     setTags(selectedDraft.tags.join(', '));
-    lastSavedRef.current = serializeDraft(serverDraft);
-    lastSavedByIdRef.current.set(note.id, lastSavedRef.current);
+    lastSavedRef.current = serializeDraft(savedDraft);
+    lastSavedByIdRef.current.set(note.id, savedDraft);
     setSaveStatus(pendingDraft ? 'error' : 'saved');
     setSaveError(pendingDraft
       ? saveErrorsByIdRef.current.get(note.id) || 'Deine letzte Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.'
@@ -388,7 +390,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     setContent('');
     setTags('');
     lastSavedRef.current = serializeDraft({ id: note.id, title: '', content: '', tags: [] });
-    lastSavedByIdRef.current.set(note.id, lastSavedRef.current);
+    lastSavedByIdRef.current.set(note.id, { id: note.id, title: '', content: '', tags: [] });
     setSaveStatus('saved');
     setSaveError('');
     setLoadError('');
@@ -586,7 +588,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     blockedSaveIdsRef.current.delete(noteId);
     revisionByIdRef.current.set(latest.id, latest.revision ?? 1);
     saveErrorsByIdRef.current.delete(latest.id);
-    lastSavedByIdRef.current.set(latest.id, serializeDraft(latestDraft));
+    lastSavedByIdRef.current.set(latest.id, latestDraft);
     setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
     setTitle(latestDraft.title);
     setContent(latestDraft.content);
