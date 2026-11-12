@@ -160,6 +160,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     );
     if (!response.ok || !response.data) {
       onStatusToast(errorMessage(response.error));
+      await load();
       setBusy(false);
       return;
     }
