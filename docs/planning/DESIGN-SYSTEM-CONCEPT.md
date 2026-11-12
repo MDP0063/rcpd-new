@@ -414,7 +414,7 @@ Die sichtbare Academy-Terminologie verwendet nun durchgehend „Lehrgang“ für
 
 Die Beschreibung der Übersichtskachel wurde an die beschlossene Funktion angepasst: Sie verspricht Orientierung über Aufbau und Zusammenspiel von Lehrgängen, Kursen und Lernbibliothek. Persönliche Fortschritts-/Nächste-Schritte-Funktionen werden nicht mehr suggeriert.
 
-**Status:** PR #251 offen; CI erfolgreich (455/455 Tests), manuelle Browser-/Accessibility-Abnahme noch offen.
+**Status:** PR #251 gemergt; CI erfolgreich (455/455 Tests), manuelle Browser-/Accessibility-Abnahme noch offen.
 
 
 ## 28. Kursdetail nach Teilnahmestart und Überschriftenhierarchie (PR #252, 12.11.2026)
@@ -423,4 +423,13 @@ Die Kursdetailansicht behält Lernziele und Kapitel auch nach dem Start einer Te
 
 Die Academy-Übersicht verwendet unter der globalen h1 „Academy“ eine h2 „Willkommen in der Academy“. Kataloge unterscheiden echte leere Bestände von Suchergebnissen ohne Treffer; fehlende Kurzbeschreibungen werden nicht als fehlende Veröffentlichung ausgegeben.
 
-**Status:** PR #252 offen; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
+**Status:** PR #252 gemergt; CI erfolgreich (455/455 Tests), manuelle Browser-/Accessibility-Abnahme steht noch aus.
+
+
+## 29. Prüfungsstart – explizite Bestätigung (PR #253, 12.11.2026)
+
+Die Prüfungsdetailansicht wechselt nach dem ersten Klick in eine kompakte Bestätigungsstufe. Sie zeigt nur die tatsächlichen Konsequenzen: Startzeitpunkt des Limits, ob ein neuer Versuch gezählt wird oder ein vorhandener Versuch fortgesetzt wird, und ob eine bestehende Deadline weiterläuft. Die finale Aktion ist visuell eindeutig primär; „Zurück“ bleibt sekundär. Der Fokus wird beim Öffnen auf die Bestätigungsüberschrift gesetzt und beim Abbruch zur Startaktion zurückgeführt.
+
+Die interne numerische Clearance-Stufe wird nicht mehr angezeigt oder im öffentlichen Teilnehmerkatalog übertragen. Die serverseitige Zugriffsfilterung bleibt unverändert.
+
+**Status:** PR #253 am 12.11.2026 gemergt; CI erfolgreich (455/455 Tests), manuelle Accessibility-Abnahme bleibt offen.

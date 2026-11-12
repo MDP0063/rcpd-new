@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248 und #250 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252 und #253 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #250 (Merge-Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit und den fokussierten Notizeditor). PR #246–#248 sind ebenfalls enthalten.
+**Aktueller Basisstand:** `main` nach PR #253 (Merge-Commit `8df61a5d1e04df91126955aa76825c818b7bc00f`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, den fokussierten Notizeditor, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen und die informierte Prüfungsstartbestätigung). PR #246–#248 sind ebenfalls enthalten.
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1102,4 +1102,14 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Katalog-Leerzustände unterscheiden nun „keine veröffentlichten Lehrgänge/Kurse vorhanden“ von „keine Treffer für die Suche“.
 - Ein vorhandener Kurs-/Lehrgangsversionseintrag ohne Zusammenfassung wird nicht mehr fälschlich als „keine veröffentlichte Version“ dargestellt; stattdessen wird die fehlende Kurzbeschreibung benannt.
 - Keine API-, Datenmodell-, Status-, Berechtigungs- oder Nachweisänderung.
-- PR #252 ist als eigenständiger PR vorbereitet; CI und manuelle Browserabnahme stehen aus.
+- PR #252 wurde am 12.11.2026 gemergt (Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0`). TypeScript, Produktionsbuild und 455/455 Tests waren erfolgreich; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+
+### PR #253 – Prüfungsstart absichern und interne Clearance verbergen (12.11.2026)
+
+- PR #253 wurde am 12.11.2026 mit Commit `8df61a5d1e04df91126955aa76825c818b7bc00f` gemergt.
+- Der erste Klick auf „Prüfung starten / fortsetzen“ legt keinen Versuch an. Er prüft zunächst, ob ein aktiver Versuch im selben Prüfung-/Kurskontext besteht und öffnet eine informierte Bestätigungsstufe.
+- Ein neuer Versuch wird erst nach „Prüfung verbindlich starten“ angelegt. Ein aktiver Versuch wird über „Laufenden Versuch fortsetzen“ idempotent fortgesetzt; kein zusätzlicher Versuch wird verbraucht und die Deadline wird nicht zurückgesetzt.
+- Die Bestätigung zeigt tatsächliche Zeitlimit- und Versuchslimitregeln. 0/null bei maxAttempts bedeutet unbegrenzt; 0 bei timeLimitMinutes bedeutet kein Zeitlimit.
+- Numerische interne Clearance-Werte werden nicht mehr an Teilnehmer übertragen oder in der UI gezeigt. Die serverseitige Filterung bleibt erhalten.
+- CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Tastatur-/Screenreader-Abnahme bleibt offen.
