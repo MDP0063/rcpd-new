@@ -405,4 +405,12 @@
 - Die Kurs-/Lehrgangsverwaltung und die Academy-Startkachel verwenden konsistente, verständliche Bezeichnungen.
 - Die Übersichts-Kachel beschreibt nun den tatsächlichen Zweck der Übersicht (Aufbau/Beziehungen erklären), statt persönliche Fortschrittsfunktionen anzukündigen.
 - Veraltete PR-#250-Statusangaben in den Planungsdokumenten wurden berichtigt.
-- PR #251 offen, nicht gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+- PR #251 am 12.11.2026 mit Commit `611f701df54ecb302a4fcf84005544beee4485a1` gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+## 2026-11-12 – PR #252: Kursdetail-Kontext und Katalogzustände
+
+- Die Academy-Übersicht hat nur noch eine globale h1; die interne Überschrift ist eine h2.
+- Lernziele und Kapitel bleiben nach Kursstart sichtbar und stammen weiterhin aus derselben gepinnten Kursversion.
+- Suchergebnislosigkeit wird von einem tatsächlich leeren veröffentlichten Katalog unterschieden.
+- Vorhandene Versionen ohne Kurzbeschreibung werden nicht mehr als fehlende Veröffentlichung missverstanden.
+- Keine Änderungen an Daten, APIs, Berechtigungen, Status- oder Abschlusslogik. PR #252 in Vorbereitung; CI und manuelle Browser-/Accessibility-Abnahme offen.
