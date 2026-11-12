@@ -1885,6 +1885,7 @@ async function startServer() {
       EXAM_REVIEW_REVISION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die zur Revision zurückgegeben werden kann.' },
       EXAM_REVIEW_REVISION_INVALID: { status: 409, message: 'Die Revisionsrückgabe ist mit dem gespeicherten Bewertungsstand nicht konsistent.' },
       EXAM_REVIEW_REVISION_COMPLETION_INVALID: { status: 409, message: 'Die erneute Bewertung konnte nicht sicher mit der Revisionshistorie verknüpft werden.' },
+      EXAM_REVIEW_REVISION_NOT_ACCEPTED: { status: 409, message: 'Die Revisionsanfrage wurde noch nicht durch Admin oder Colonel angenommen.' },
       EXAM_REVIEW_REVISION_ALREADY_PENDING: { status: 409, message: 'Für diese Bewertung liegt bereits eine offene Revisionsanfrage vor.' },
       EXAM_REVIEW_REVISION_DECISION_INVALID: { status: 400, message: 'Die Entscheidung zur Revisionsanfrage ist ungültig.' },
       EXAM_REVIEW_REVISION_DECISION_REASON_INVALID: { status: 400, message: 'Bitte gib für eine Ablehnung eine nachvollziehbare Begründung mit mindestens 10 Zeichen ein.' },
