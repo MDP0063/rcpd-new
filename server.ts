@@ -2258,6 +2258,9 @@ async function startServer() {
       const isSupervisor = caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel';
       const allowed = isSupervisor ? ['*'] : permissions!.assignedCourseCodes;
       const summaries = await listCompletedManualReviewSummaries(getExamRepository(), allowed);
+      try { await deliverPendingExamReviewNotifications(summaries.map(item => item.id)); } catch (notificationError) {
+        console.error('Completed review notification delivery will be retried:', notificationError);
+      }
       res.json({ reviews: summaries.map(({ reviewedByUid, ...item }) => ({
         ...item,
         reviewedByName: state.accounts.find(account => account.uid === reviewedByUid)?.publicProfile.displayName || 'Unbekannt'
@@ -2265,7 +2268,7 @@ async function startServer() {
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 
-  // Jede aktuell kursberechtigte prüfende Person kann eine abgeschlossene manuelle Bewertung zur Revision zurückgeben.
+  // Jede aktuell kursberechtigte prüfende Person kann eine abgeschlossene manuelle Bewertung als Revisionsanfrage an Admins und Colonels richten.
   app.post('/api/academy/exams/:id/attempts/:attemptId/request-revision', async (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
@@ -2318,6 +2321,9 @@ async function startServer() {
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const requests = await listPendingExamReviewRevisionRequests(getExamRepository());
+      try { await deliverPendingExamReviewNotifications(requests.map(item => item.id)); } catch (notificationError) {
+        console.error('Pending revision request notification delivery will be retried:', notificationError);
+      }
       const displayName = (uid: string) => state.accounts.find(account => account.uid === uid)?.publicProfile.displayName || 'Unbekannt';
       res.json({ requests: requests.map(({ reviewedByUid, requestedByUid, ...item }) => ({
         ...item,
