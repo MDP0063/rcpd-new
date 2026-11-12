@@ -436,7 +436,7 @@ export const ExamParticipantRunner: React.FC = () => {
           <div className="academy-exam-attempt-header flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">
-                {attempt.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {attempt.attemptCourseCode}
+                {attempt.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · {attempt.attemptCourseCode}
               </div>
               <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{attempt.title}</h2>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -657,7 +657,7 @@ export const ExamParticipantRunner: React.FC = () => {
                 className={`academy-exam-option w-full rounded-xl border p-4 text-left transition-colors ${selectedExamId === exam.id ? 'border-sky-500 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · Version {exam.versionNumber}</div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{exam.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · Version {exam.versionNumber}</div>
                     <h3 className="mt-1 font-semibold text-slate-900 dark:text-white">{exam.title}</h3>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{exam.assignedCourseCodes.join(' · ')} · {exam.timeLimitMinutes === 0 ? 'Ohne Zeitlimit' : `${exam.timeLimitMinutes} Minuten`} · Bestehensgrenze {(exam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</p>
                   </div>
@@ -673,7 +673,7 @@ export const ExamParticipantRunner: React.FC = () => {
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Ausgewählte Prüfung</div>
                   <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{selectedExam.title}</h3>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'}</p>
                 </div>
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                   <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0 ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
