@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './AcademyCenter.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -42,7 +42,8 @@ import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
-import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
+import type { AcademyPrivateNoteTextAnchor, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
+import { createTextAnchorFromRange, resolveTextAnchorInElement } from '../lib/academyTextAnchors';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
 
 interface AcademyCenterProps {
@@ -123,7 +124,33 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [versionedMaterialError, setVersionedMaterialError] = useState('');
   const [versionedMaterialRetryable, setVersionedMaterialRetryable] = useState(false);
   const [versionedMaterialLoadAttempt, setVersionedMaterialLoadAttempt] = useState(0);
+  const [selectedVersionedMaterialAnchor, setSelectedVersionedMaterialAnchor] = useState<AcademyPrivateNoteTextAnchor | null>(null);
+  const versionedMaterialMarkdownRef = useRef<HTMLDivElement | null>(null);
+  const versionedMaterialCodeRef = useRef<HTMLPreElement | null>(null);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedVersionedMaterialAnchor(null);
+  }, [activeVersionedMaterialId, currentVersionedMaterial?.versionId]);
+
+  const captureVersionedMaterialAnchor = (event: React.MouseEvent<HTMLElement>, kind: 'markdown' | 'code') => {
+    setSelectedVersionedMaterialAnchor(null);
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+    setSelectedVersionedMaterialAnchor(createTextAnchorFromRange(event.currentTarget, kind, selection.getRangeAt(0)));
+  };
+
+  const jumpToVersionedMaterialAnchor = (anchor: AcademyPrivateNoteTextAnchor): 'resolved' | 'missing' | 'ambiguous' => {
+    const root = anchor.kind === 'markdown' ? versionedMaterialMarkdownRef.current : versionedMaterialCodeRef.current;
+    if (!root) return 'missing';
+    const result = resolveTextAnchorInElement(root, anchor);
+    if (result.status !== 'resolved') return result.status;
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(result.range);
+    result.range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return 'resolved';
+  };
 
   // Interactive Test/Exam Runner State
   const [examAnswers, setExamAnswers] = useState<Record<string, number>>({});
@@ -1053,14 +1080,23 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
                       {currentVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{currentVersionedMaterial.description}</p>}
                       {currentVersionedMaterial.contentFormat === 'markdown'
-                        ? renderVersionedMaterialMarkdown(currentVersionedMaterial.content)
+                        ? (
+                          <div ref={versionedMaterialMarkdownRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
+                            {renderVersionedMaterialMarkdown(currentVersionedMaterial.content)}
+                          </div>
+                        )
                         : (
                           <div className="space-y-2">
                             <p className="text-xs font-mono text-slate-500 dark:text-slate-400">QUELLCODE · WIRD NICHT AUSGEFÜHRT</p>
-                            <pre className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
+                            <pre ref={versionedMaterialCodeRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
                           </div>
                         )}
-                      <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} />
+                      <AcademyMaterialReaderNotes
+                        materialId={currentVersionedMaterial.id}
+                        materialVersionId={currentVersionedMaterial.versionId}
+                        selectedAnchor={selectedVersionedMaterialAnchor}
+                        onJumpToAnchor={jumpToVersionedMaterialAnchor}
+                      />
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
