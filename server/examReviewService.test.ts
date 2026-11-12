@@ -309,6 +309,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       [{ questionId: 'text', feedback: 'Bitte den zweiten Begründungsschritt erneut prüfen.' }],
       ['admin'], '2026-11-05T12:12:01.000Z'
     ), /EXAM_REVIEW_REVISION_ALREADY_PENDING/);
+    const pendingAttemptSnapshot = await repository.get<any>('exam_attempts', 'review-attempt');
+    const pendingHistory = pendingAttemptSnapshot.reviewClaimHistory;
+    const forgedDuplicateRequest = {
+      ...pendingHistory[pendingHistory.length - 1],
+      actorUid: 'grader3', revisionRequestIndex: pendingHistory.length,
+      atIso: '2026-11-05T12:12:02.000Z'
+    };
+    await assert.rejects(repository.update('exam_attempts', 'review-attempt', {
+      ...pendingAttemptSnapshot, reviewClaimHistory: [...pendingHistory, forgedDuplicateRequest]
+    }), /EXAM_REVIEW_REVISION_ALREADY_PENDING/,
+    'the repository boundary independently rejects a second open request even if service validation is bypassed');
     const revisionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
       .filter(item => item.event.action === 'revision_requested');
     assert.deepEqual(revisionNotifications.map(item => item.recipientUid).sort(), ['admin', 'colonel']);
