@@ -10,6 +10,7 @@ interface Props {
 const inputClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const primaryButton = 'inline-flex items-center justify-center rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const secondaryButton = 'inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const dangerButton = 'inline-flex items-center justify-center rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600';
 
 function errorMessage(code?: string): string {
   switch (code) {
@@ -70,13 +71,13 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   };
 
   const beginCreate = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue dokumenttyp beginnen?')) return;
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue Dokumenttyp beginnen?')) return;
     resetForm();
     setFormOpen(true);
   };
 
   const beginEdit = (documentType: AcademyMaterialDocumentTypeView) => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere dokumenttyp bearbeiten?')) return;
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere Dokumenttyp bearbeiten?')) return;
     setEditing(documentType);
     setName(documentType.name);
     setDescription(documentType.description || '');
@@ -310,7 +311,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(documentType)} disabled={busy}>
                         {documentType.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
                       </button>
-                      <button type="button" className={secondaryButton} onClick={() => void deleteDocumentType(documentType)} disabled={busy}>
+                      <button type="button" className={dangerButton} onClick={() => void deleteDocumentType(documentType)} disabled={busy}>
                         Endgültig löschen
                       </button>
                     </div>
