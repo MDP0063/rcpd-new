@@ -540,6 +540,26 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               </header>
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
+                {courseDetail.version.learningObjectives.length > 0 && (
+                  <section className={`${panel} academy-course-panel p-4 space-y-3`}>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
+                    <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
+                      {courseDetail.version.learningObjectives.map(objective => <li key={objective.id}>{objective.description}</li>)}
+                    </ul>
+                  </section>
+                )}
+                {courseDetail.version.chapters.length > 0 && (
+                  <section className={`${panel} academy-course-panel p-4 space-y-3`}>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3>
+                    {courseDetail.version.chapters.slice().sort((a, b) => a.order - b.order).map(chapter => (
+                      <div key={chapter.id} className="border-t border-slate-200 pt-3 first:border-t-0 first:pt-0 dark:border-slate-800">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">{chapter.title}</p>
+                        {chapter.description && <p className={muted}>{chapter.description}</p>}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{chapter.required ? 'Erforderliches Kapitel' : 'Optionales Kapitel'}</p>
+                      </div>
+                    ))}
+                  </section>
+                )}
                 <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-sm font-semibold">{statusLabel(courseDetail.participation.status)}</span>
