@@ -84,8 +84,15 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   >('overview');
   const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?');
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
+  const processedReviewNavigationRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!reviewNavigationTarget) return;
+    if (!reviewNavigationTarget) {
+      processedReviewNavigationRef.current = null;
+      return;
+    }
+    const targetKey = `${reviewNavigationTarget.examId}:${reviewNavigationTarget.attemptId}`;
+    if (processedReviewNavigationRef.current === targetKey) return;
+    processedReviewNavigationRef.current = targetKey;
     if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
       onReviewNavigationConsumed?.();
       return;
