@@ -722,10 +722,17 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <div className="space-y-1">
                   <p className="academy-notes-eyebrow">PERSÖNLICHER ARBEITSBEREICH</p>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h2>
-                  <p className={muted}>Nur du kannst diese Notiz und ihre verknüpften Quellen sehen.</p>
+                  <p className={muted}>Nur du kannst den Inhalt dieser Notiz und ihre privaten Quellenverknüpfungen sehen.</p>
                 </div>
                 <button type="button" className={`${secondary} academy-note-cancel`} onClick={cancelNoteEdit} disabled={saving}>← Zurück zu meinen Notizen</button>
               </header>
+              <div className={`${panel} academy-note-source-context p-4 space-y-2`}>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Verknüpfte Quellen</h3>
+                <AcademyPrivateNoteSources
+                  noteId={editingNote.id}
+                  sources={editingNote.sources?.length ? editingNote.sources : [{ materialId: editingNote.materialId, materialVersionId: editingNote.materialVersionId }]}
+                />
+              </div>
               <form className={`${panel} academy-note-editor p-5 space-y-4`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
