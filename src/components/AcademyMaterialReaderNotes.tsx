@@ -443,7 +443,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
-    noteMutationVersionRef.current += 1;
+      noteMutationVersionRef.current += 1;
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
     } finally {
@@ -478,6 +478,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      noteMutationVersionRef.current += 1;
       setAnchorNotice('Textanker wurde an dieser Materialquelle gespeichert.');
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Der Textanker konnte nicht gespeichert werden.');
@@ -520,6 +521,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      noteMutationVersionRef.current += 1;
       if (selectedNoteId === note.id) setSelectedNoteId('');
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
@@ -540,6 +542,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         return;
       }
       setNotes(previous => previous.filter(note => note.id !== existing.id));
+      noteMutationVersionRef.current += 1;
       return;
     }
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES, {
@@ -562,6 +565,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     const note = response.data.note;
     revisionByIdRef.current.set(note.id, note.revision ?? 1);
     setNotes(previous => [...previous, note]);
+    noteMutationVersionRef.current += 1;
     setLoadError('');
   };
 
