@@ -415,3 +415,12 @@ Die sichtbare Academy-Terminologie verwendet nun durchgehend „Lehrgang“ für
 Die Beschreibung der Übersichtskachel wurde an die beschlossene Funktion angepasst: Sie verspricht Orientierung über Aufbau und Zusammenspiel von Lehrgängen, Kursen und Lernbibliothek. Persönliche Fortschritts-/Nächste-Schritte-Funktionen werden nicht mehr suggeriert.
 
 **Status:** PR #251 offen; CI erfolgreich (455/455 Tests), manuelle Browser-/Accessibility-Abnahme noch offen.
+
+
+## 28. Kursdetail nach Teilnahmestart und Überschriftenhierarchie (PR #252, 12.11.2026)
+
+Die Kursdetailansicht behält Lernziele und Kapitel auch nach dem Start einer Teilnahme sichtbar. Diese Inhalte stammen aus derselben veröffentlichten Kursversion wie der aktive Fortschritts-/Nachweiskontext und werden nicht neu berechnet. Der aktive Ablauf ergänzt die Kursbeschreibung um Nachweise und Materialreader, statt die fachliche Orientierung zu ersetzen.
+
+Die Academy-Übersicht verwendet unter der globalen h1 „Academy“ eine h2 „Willkommen in der Academy“. Kataloge unterscheiden echte leere Bestände von Suchergebnissen ohne Treffer; fehlende Kurzbeschreibungen werden nicht als fehlende Veröffentlichung ausgegeben.
+
+**Status:** PR #252 offen; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
