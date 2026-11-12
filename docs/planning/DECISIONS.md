@@ -509,3 +509,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Akzentfarben werden rollenbasiert und zurückhaltend eingesetzt. Sie dienen der Bereichszuordnung und Orientierung, nicht als pauschale Rahmen-, Warn- oder Statusfarbe. Insbesondere darf der Beerenton der Prüfungen keine flächige rote Umrandung oder einen Warnzustand suggerieren.
 - **BESCHLOSSEN:** Fachliche Statusfarben (z. B. Erfolg, Warnung, Fehler, bestanden/nicht bestanden) behalten ihre eigenständige semantische Bedeutung und werden nicht durch Bereichsakzente ersetzt. Bereichsakzent und Statusfarbe sind visuell klar unterscheidbar.
 - **SCHUTZGRENZE:** Die fünfteilige Kachelstartseite, ihre Kachelfarben, Inhalte und Illustrationen bleiben unverändert. Diese Ergänzung betrifft die Navigation und die Gestaltung der internen Untermodule.
+
+## Ergänzung: Revisionsantrag und zweckgebundene Einsicht (12.11.2026)
+
+- Ein aktuell für den betroffenen Kurs autorisierter Prüfer darf die vollständigen Bewertungsdetails ausschließlich für den konkreten abgeschlossenen Prüfungsversuch einsehen, um eine begründete Revisionsrückgabe vorzubereiten.
+- Diese Einsicht ist zweckgebunden. Sie begründet keinen allgemeinen Zugriff auf fremde Prüferakten, andere Prüfungsversuche oder private Notizen.
+- Eine Revisionsrückgabe muss einen nachvollziehbaren Gesamtgrund und konkretes Feedback für jeden beanstandeten Bewertungsschritt enthalten.
+- Der daraus entstehende Action Request wird ausschließlich Admins und Colonels zur Entscheidung und Bearbeitung vorgelegt. Kursprüfer erhalten dadurch keine Berechtigung, den Action Request selbst zu bearbeiten oder zu entscheiden.
+- Nach einer genehmigten Revisionsrückgabe wird derselbe Prüfungsversuch wieder in die gemeinsame Examiner-Aufgabenliste aufgenommen. Alle aktuell für den Kurs autorisierten Prüfer sind gleichberechtigt; der ursprüngliche Prüfer erhält keinen Vorrang.
+- Der ursprüngliche Bewertungsabschluss und sämtliche vorherigen Bewertungen bleiben historisch erhalten. Der Teilnehmer sieht während einer erneuten Bewertung weiterhin ausschließlich den zuletzt freigegebenen Ergebnisstand; eine neue Fassung wird erst nach erneuter Freigabe sichtbar.
