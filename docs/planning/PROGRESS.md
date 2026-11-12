@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247 und #248 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248 und #250 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #249 (Merge-Commit `749719e8a86abe41b8ef41011fb715250b2f533c`; enthält die dokumentierte Academy-Autonomie und den vollständigen Unterseiten-Redesign-Audit). Die Fehlerkorrekturen #246–#248 sind ebenfalls enthalten.
+**Aktueller Basisstand:** `main` nach PR #250 (Merge-Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit und den fokussierten Notizeditor). PR #246–#248 sind ebenfalls enthalten.
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1071,3 +1071,16 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Ungespeicherte Änderungen und laufende Speicheraktionen lösen beim Verlassen über Academy-Hauptnavigation, Kachel-Rückweg oder Examiner-Deep-Link eine Bestätigung aus. Während eines laufenden Speichervorgangs sind Zurück/Verwerfen gesperrt.
 - Keine Änderung an API, Datenmodell, Revision, Owner-Isolation, Berechtigungen oder Quellenbindung.
 - PR #250 ist offen; TypeScript-/Produktionsbuild-/Test- und PR-Vorlagenprüfungen stehen für den aktuellen Head noch aus. Manuelle Browser-/Screenreader-Abnahme bleibt offen.
+
+### PR #250 – Meine Notizen als fokussierter Arbeitsbereich (12.11.2026)
+
+- PR #250 wurde am 12.11.2026 gemergt (Merge-Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`).
+- Notizenübersicht und Editor sind getrennte Ansichten; Quellenverknüpfungen bleiben im Editor sichtbar. Speichern, Verwerfen und Löschen haben eine klare visuelle Hierarchie.
+- Ungespeicherte Änderungen und laufende Speicheraktionen schützen den Wechsel über Hauptnavigation, Kachel-Rückweg und Examiner-Deep-Link. Unveränderte Notizen lösen keinen unnötigen PUT aus.
+- TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme bleibt offen.
+
+### PR #251 – Lehrgang-Terminologie und Kursbereich (12.11.2026)
+
+- Die deutschsprachige UI verwendet für die übergeordnete Ausbildungseinheit jetzt durchgehend „Lehrgang“ statt „Programm“ – im Teilnehmerkatalog, in Kurs-/Lehrgangsdetails, Fortschritt, Teilnahme, Verwaltung, Editoren, Fehlertexten und Bestätigungen.
+- Die technische Program-Entität, API, Datenfelder, Typen und internen Variablennamen bleiben unverändert. Keine Datenmigration oder Änderung der Kurs-/Lehrgangslogik.
+- PR #251 ist in Vorbereitung; CI und manuelle Browserabnahme stehen aus.
