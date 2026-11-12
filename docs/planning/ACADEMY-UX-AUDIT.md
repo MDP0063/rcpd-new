@@ -500,7 +500,7 @@ Der Notizbereich wird in PR #250 als eigener Arbeitsbereich umgesetzt:
 - **Responsive Navigation:** Die Fünf-Bereiche-Navigation wechselt unter 760 px in ein zweispaltiges Raster mit einer vollbreiten letzten Zeile. CSS vermeidet enge fünf Spalten; tatsächliche 320/375/768-Pixel-Abnahme bleibt offen.
 - **Materialverwaltung:** Die Editoransicht ersetzt die Liste, zeigt Versionshistorie und Formular im eigenen Arbeitsmodus. Dieses fokussierte Muster ist sinnvoll und soll beibehalten werden.
 
-Diese Befunde werden in ACADEMY-SUBPAGE-REDESIGN.md ausführlicher dokumentiert. Die Übersichtskachel wurde in PR #251 korrigiert. Die doppelte h1 und der fehlende Lernziel-/Kapitelkontext im aktiven Kursdetail werden in PR #252 korrigiert. Die Prüfungs-/Legacy-Fragen bleiben getrennte technische Prüfblöcke.
+Diese Befunde werden in ACADEMY-SUBPAGE-REDESIGN.md ausführlicher dokumentiert. Die Übersichtskachel wurde in PR #251 korrigiert. Die doppelte h1 und der fehlende Lernziel-/Kapitelkontext im aktiven Kursdetail wurden in PR #252 korrigiert. Die Prüfungs-/Legacy-Fragen bleiben getrennte technische Prüfblöcke.
 
 
 ## 13. PR #252 – Kurskontext und verständliche Leerzustände
