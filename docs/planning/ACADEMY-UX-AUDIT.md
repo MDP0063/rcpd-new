@@ -451,3 +451,28 @@ Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersi
 **AUSWIRKUNG:** Ohne passenden Benachrichtigungslink war die offene Bewertungswarteschlange nicht direkt auffindbar; Korrekturen und Ergebnisfreigaben hatten keinen regulären sichtbaren Einstieg innerhalb der Academy.
 
 **KORREKTUR IN ARBEIT:** Branch `fix/academy-exam-review-navigation` erweitert die vorhandene Prüfungs-Unter-Navigation um rollenabhängige Einstiege. „Offene Bewertungen“ wird bei bestehender `canEditAcademy`-Berechtigung gezeigt; „Korrekturen & Freigaben“ nur für Admin und Colonel. Die Hauptnavigation und die fünf Academy-Bereiche bleiben unverändert. CI und Browser-/Rollenprüfung stehen noch aus.
+
+## 10. Gesamtprüfung der Academy-Unterseiten am 12.11.2026
+
+**Prüfgrundlage:** main nach PR #248; Komponenten und Styles der Academy-Hülle, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner und Meine Notizen wurden erneut geprüft.
+
+Die vollständige, seitenweise Bestandsaufnahme, Recherche, Redesign-Richtung, gemeinsame Seitenmuster, responsive-/Accessibility-Anforderungen und Umsetzungsreihenfolge stehen in [ACADEMY-SUBPAGE-REDESIGN.md](./ACADEMY-SUBPAGE-REDESIGN.md). Dieses Dokument ergänzt das frühere Audit; es ersetzt keine fachlichen Beschlüsse.
+
+### Neue technische/UX-Befunde aus dem Codeabgleich
+
+- Die gemeinsame Academy-Navigation wird aktuell als fünfspaltiges CSS-Raster umgesetzt. Die Desktop-Hierarchie ist nachvollziehbar; die Lesbarkeit und Erreichbarkeit aller fünf Punkte auf schmalen Viewports muss anhand realer Browsergrößen überprüft werden.
+- Die Kursansicht zeigt Lehrgänge als eigenständige Karten und Kurse als kompakte Liste. Die gemeinsame Suche filtert beide Gruppen. Kurs-/Programm-Details enthalten bereits die fachlich relevanten Lernziele, Kapitel, Materialbindungen, Pflicht-/Empfehlungskurse, Nachweise und echten Teilnahmefortschritt. Die Überarbeitung soll diese Trennung visuell stärken, nicht neue Status-/Filterlogik erfinden.
+- Die Lernbibliothek besitzt nach PR #202 eine eigenständige Katalog-/Reader-Trennung, Themenbereiche, Suche, Sortierung, optionale Filter und private Reader-Notizen. Weitere Änderungen sollen gezielt konsolidieren und keine Regression der gemergten Arbeit verursachen.
+- Die Prüfungsnavigation enthält mehrere Teilnehmer- und rollenabhängige Ansichten. Der Code enthält sowohl den neueren Prüfungsablauf als auch ältere Übungstest-/Abschlussprüfungsansichten sowie Examiner-/Korrekturkomponenten. Diese Pfade dürfen nicht allein aus visuellen Gründen zusammengelegt oder entfernt werden; die tatsächliche Workflow-/Datenquellen-Überlappung ist vor einer funktionalen Entscheidung zu untersuchen.
+- Meine Notizen zeigen Suche, Liste und Bearbeitung derzeit teilweise gleichzeitig. Ein fokussierter Editor als eigene Arbeitsansicht ist ein UX-Vorschlag, der die bestehende Bearbeitungsfunktion beibehält. Erstellung bleibt ausschließlich im Reader; private Notizen bleiben eigentümerisoliert.
+- Verwaltungsansichten und Teilnehmeransichten brauchen eine deutlichere visuelle Trennung. Rollenabhängige Verwaltungswerkzeuge dürfen nicht als gleichrangige Teilnehmeraktionen erscheinen.
+
+### Recherche und Qualitätsmaßstab
+
+Die Recherche vom 12.11.2026 ist in der Unterseitenspezifikation mit URLs und RCPD-spezifischer Übertragung dokumentiert. Maßgeblich sind insbesondere WCAG 2.2 AA, die WAI-ARIA-APG-Muster für tatsächliche Tabs/Keyboard-Verhalten, Home Office-/DWP-Patterns für interne Services und Suche/Filter sowie NN/g zur progressiven Offenlegung.
+
+### Umsetzungsstatus
+
+- **BESCHLOSSENE Schutzgrenzen:** Kachelstartseite, SVG-Illustrationen, Fünf-Bereiche-Navigation, Bereichsfarben, matte blaue Wellenform, private Notizregeln, Versions-/Veröffentlichungslogik, Prüfungs-/Ergebnisregeln.
+- **REDESIGN-KONZEPT:** Die inneren Unterseiten und tieferen Arbeitsansichten werden in einem gemeinsamen System neu gegliedert. Konkrete Vorschläge und Umsetzungsreihenfolge sind in ACADEMY-SUBPAGE-REDESIGN.md dokumentiert.
+- **NOCH NICHT MANUELL ABGENOMMEN:** Browserdarstellung nach aktuellem Render-Deployment, responsive Viewports, Tastatur-/Screenreader-Verhalten und Live-Firestore-Szenarien.
