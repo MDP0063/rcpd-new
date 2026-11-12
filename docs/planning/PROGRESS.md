@@ -2,7 +2,7 @@
 
 **Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `e328ecbd1f7133e7f58f39b090de6ecaef12935a`).  
+**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -856,3 +856,17 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Recherchegrundlage: W3C WAI Technique ARIA22 beschreibt `role="status"` für dynamische Suchergebnis-Meldungen und empfiehlt bei Bedarf ein explizites `aria-atomic="true"`; das W3C-Suchbeispiel demonstriert die Ansage einer Ergebniszahl durch Screenreader.
 - PR #206 wurde am 12.11.2026 nach erfolgreicher TypeScript-Prüfung, Produktionsbuild, vollständigem Testsatz und PR-Vorlagenprüfung gemergt (Squash-Merge `e328ecbd1f7133e7f58f39b090de6ecaef12935a`).
 - Der optionale Render-Deploy-Hook wurde übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test; die tatsächliche Ansage bleibt Teil der späteren Accessibility-Abnahme.
+
+
+### PR #207 – Wiederholungsaktionen für öffentliche Bibliotheksabrufe (12.11.2026)
+
+- Die öffentliche Lernbibliothek bietet bei vorübergehenden Ladefehlern eine direkte Wiederholungsaktion sowohl für den Materialkatalog als auch für ein einzelnes versioniertes Material.
+- Wiederholung wird bei Netzwerkfehlern (Status 0), HTTP 429 und Serverfehlern ab 500 angeboten. Dauerhafte Zugriff-/Berechtigungs-/Nichtgefunden-Antworten werden nicht als vorübergehende Fehler ausgegeben und erhalten keinen Retry-Button.
+- Fehlermeldung und Retry-Aktion sind semantisch getrennt; der interaktive Button liegt außerhalb der `role="alert"`-Meldung.
+- PR #207 wurde am 12.11.2026 gemergt (Commit `f90a51b7d09e35b85d2238b10b54843be578c662`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung waren laut GitHub Actions erfolgreich; Render-Deploy-Hook übersprungen. Kein Browser-/Live-Firestore-Test.
+
+### PR #208 – Planungsindex und Fortschritt nach PR #206 (12.11.2026)
+
+- Der verifizierte Main-Basisstand und die jüngste Fortschrittsaktualisierung wurden im Planungsindex nachgeführt.
+- PR #208 wurde am 12.11.2026 gemergt (Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`). Es wurden nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` geändert.
+- Die älteren Audit-Dokumente behalten ihre historischen Prüfstände; die Dokumentationspflege behauptet keine nachträgliche Vollprüfung dieser Befunde.
