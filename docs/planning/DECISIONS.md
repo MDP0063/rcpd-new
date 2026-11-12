@@ -605,3 +605,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die daraus entstehende Action Request wird ausschließlich an Admins und Colonels zur weiteren Entscheidung und Bearbeitung gerichtet. Sie wird nicht automatisch dem ursprünglichen Prüfer oder einem anderen Prüfer zur Bearbeitung zugewiesen.
 - **BESCHLOSSEN:** Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie nachvollziehbar. Daraus entstehen weder Bearbeitungsvorrang noch bevorzugte Zuweisung bei der erneuten Bewertung.
 - **SCHUTZGRENZE:** Die Revisionsrückgabe erzeugt keinen neuen Prüfungsversuch. Bereits gespeicherte Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Die erneute Bewertung erfolgt durch einen beliebigen aktuell kursberechtigten Prüfer nach den bestehenden Claim-Regeln.
+
+## Academy – Zweistufige Entscheidung über Revisionsanfragen (12.11.2026)
+
+- **BESCHLOSSEN:** Das Einreichen einer Revisionsanfrage startet noch keine erneute Bewertung. Der abgeschlossene Bewertungsstatus und ein bereits freigegebenes Ergebnis bleiben bis zur Entscheidung unverändert; der Vorgang erscheint währenddessen nicht in der gemeinsamen Prüferliste.
+- **BESCHLOSSEN:** Admin oder Colonel muss die Anfrage ausdrücklich annehmen oder begründet ablehnen. Eine Ablehnung erfordert eine nachvollziehbare Begründung und lässt Bewertung, Ergebnisfreigabe und Kursabschlussnachweis unverändert.
+- **BESCHLOSSEN:** Erst nach Annahme wird derselbe Prüfungsversuch wieder auf „Bewertung ausstehend“ gesetzt und der gemeinsamen Liste für alle aktuell kursberechtigten Prüfer zur Verfügung gestellt. Es erfolgt keine automatische Einzelzuweisung.
+- **BESCHLOSSEN:** Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, ist während der erneuten Bewertung aber kein aktueller Kursabschlussnachweis; erst die erneute Ergebnisfreigabe entscheidet über den neuen Nachweisstand.
+- **SCHUTZGRENZE:** Pro Versuch darf nur eine Revisionsanfrage gleichzeitig offen sein. Annahme oder Ablehnung wird genau einmal als zusätzliches, historisch erhaltenes Ereignis gespeichert; konkurrierende Entscheidungen dürfen den Vorgang nicht doppelt auflösen.
