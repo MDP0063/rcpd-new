@@ -57,11 +57,11 @@ function apiErrorMessage(value?: string): string {
     case 'ACADEMY_WORKING_REVISION_CONFLICT': return 'Dieser Entwurf wurde zwischenzeitlich geändert. Lade die Liste neu und öffne den Entwurf erneut, bevor du weiterarbeitest.';
     case 'ACADEMY_DRAFT_VERSION_MISMATCH': return 'Der gespeicherte Entwurf entspricht nicht mehr der aktuellen Revision. Öffne ihn erneut und prüfe deine Änderungen.';
     case 'ACADEMY_DRAFT_ALREADY_PUBLISHED': return 'Dieser unveränderte Entwurf wurde bereits veröffentlicht. Speichere zuerst eine tatsächliche Änderung, bevor du eine neue Version veröffentlichst.';
-    case 'ACADEMY_PROGRAM_OBJECTIVES_COUNT': return 'Ein Programm benötigt mindestens drei und höchstens sechs Lernziele.';
-    case 'ACADEMY_PROGRAM_DUPLICATE_COURSE': return 'Ein Kurs darf einem Programm nur einmal zugeordnet sein.';
+    case 'ACADEMY_PROGRAM_OBJECTIVES_COUNT': return 'Ein Lehrgang benötigt mindestens drei und höchstens sechs Lernziele.';
+    case 'ACADEMY_PROGRAM_DUPLICATE_COURSE': return 'Ein Kurs darf einem Lehrgang nur einmal zugeordnet sein.';
     case 'ACADEMY_PROGRAM_COURSE_REFERENCE_INVALID': return 'Prüfe die Kurszuordnungen und ihre Reihenfolge.';
     case 'ACADEMY_COURSE_TITLE_INVALID': return 'Gib einen Kurstitel mit höchstens 200 Zeichen ein.';
-    case 'ACADEMY_PROGRAM_TITLE_INVALID': return 'Gib einen Programmtitel mit höchstens 200 Zeichen ein.';
+    case 'ACADEMY_PROGRAM_TITLE_INVALID': return 'Gib einen Lehrgangstitel mit höchstens 200 Zeichen ein.';
     case 'ACADEMY_COURSE_CHAPTER_INVALID': return 'Prüfe für jedes Kapitel Titel, Reihenfolge und Pflichtstatus.';
     case 'ACADEMY_COURSE_COMPLETION_TARGET_MISSING': return 'Eine Abschlussbedingung verweist auf ein Kapitel oder Material, das nicht mehr im Kurs enthalten ist.';
     case 'ACADEMY_COURSE_MATERIAL_REVIEW_PENDING': return 'Der Kurs bleibt gesperrt, bis alle betroffenen Materialfassungen geprüft wurden.';
@@ -83,13 +83,13 @@ function courseValidation(code: string, title: string, objectives: AcademyLearni
 }
 function programValidation(code: string, title: string, objectives: AcademyLearningObjective[], references: AcademyProgramCourseReference[]): string[] {
   const errors: string[] = [];
-  if (!/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(code.trim().toUpperCase())) errors.push('Die Programmkennung benötigt 2 bis 40 Zeichen und darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten.');
-  if (!title.trim()) errors.push('Gib einen Programmtitel ein.');
-  if (title.trim().length > 200) errors.push('Der Programmtitel darf höchstens 200 Zeichen enthalten.');
-  if (objectives.length < 3 || objectives.length > 6) errors.push('Ein Programm benötigt drei bis sechs Lernziele.');
+  if (!/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(code.trim().toUpperCase())) errors.push('Die Lehrgangskennung benötigt 2 bis 40 Zeichen und darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten.');
+  if (!title.trim()) errors.push('Gib einen Lehrgangtitel ein.');
+  if (title.trim().length > 200) errors.push('Der Lehrgangstitel darf höchstens 200 Zeichen enthalten.');
+  if (objectives.length < 3 || objectives.length > 6) errors.push('Ein Lehrgang benötigt drei bis sechs Lernziele.');
   if (objectives.some(item => !item.description.trim() || item.description.trim().length > 500)) errors.push('Jedes Lernziel benötigt eine Beschreibung mit höchstens 500 Zeichen.');
   if (new Set(objectives.map(item => item.id)).size !== objectives.length) errors.push('Die Kennungen der Lernziele müssen eindeutig sein.');
-  if (new Set(references.map(item => item.courseId)).size !== references.length) errors.push('Ein Kurs darf nur einmal in einem Programm vorkommen.');
+  if (new Set(references.map(item => item.courseId)).size !== references.length) errors.push('Ein Kurs darf nur einmal in einem Lehrgang vorkommen.');
   return errors;
 }
 
@@ -293,10 +293,10 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
       setProgramMaster(response.data.master); setProgramDraft(response.data.draft); setProgramCode(response.data.master.code);
       setProgramDirty(false); setMode('program'); await load();
-      onStatusToast('Programmentwurf wurde angelegt. Er ist noch nicht veröffentlicht.');
+      onStatusToast('Lehrgangsentwurf wurde angelegt. Er ist noch nicht veröffentlicht.');
       return;
     }
-    if (!programDraft) { setBusy(false); setFormError(['Der Programmentwurf konnte nicht geladen werden. Öffne das Programm erneut.']); return; }
+    if (!programDraft) { setBusy(false); setFormError(['Der Lehrgangsentwurf konnte nicht geladen werden. Öffne das Lehrgang erneut.']); return; }
     const response = await apiFetch<{ draft: AcademyProgramDraftDoc }>(API_ENDPOINTS.ACADEMY_PROGRAM(programMaster.id) + '/draft', {
       method: 'PUT',
       body: JSON.stringify({ expectedRevision: programDraft.workingRevision, draft: draftPayload })
@@ -304,14 +304,14 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setBusy(false);
     if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
     setProgramDraft(response.data.draft); setProgramDirty(false); await load();
-    onStatusToast('Programmentwurf wurde gespeichert. Die veröffentlichte Version bleibt unverändert.');
+    onStatusToast('Lehrgangsentwurf wurde gespeichert. Die veröffentlichte Version bleibt unverändert.');
   };
 
   const publishProgram = async () => {
     if (!programMaster || !programDraft || programDirty || busy || !programHasUnpublishedChanges) return;
     const errors = programValidation(programCode, programTitle, programObjectives, programReferences);
     if (errors.length) { setFormError(errors); return; }
-    if (!window.confirm('Möchtest du den gespeicherten Programmentwurf jetzt als neue Programmversion veröffentlichen? Bei einer Teilnahme werden die Pflichtkursversionen zu diesem Zeitpunkt fest zugeordnet.')) return;
+    if (!window.confirm('Möchtest du den gespeicherten Lehrgangsentwurf jetzt als neue Lehrgangsversion veröffentlichen? Bei einer Teilnahme werden die Pflichtkursversionen zu diesem Zeitpunkt fest zugeordnet.')) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyProgramMasterDoc; version: AcademyProgramVersionDoc }>(API_ENDPOINTS.ACADEMY_PROGRAM(programMaster.id) + '/publish', {
       method: 'POST',
@@ -321,7 +321,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
     await load();
     setMode('list');
-    onStatusToast('Programmversion ' + response.data.version.versionNumber + ' wurde veröffentlicht.');
+    onStatusToast('Lehrgangsversion ' + response.data.version.versionNumber + ' wurde veröffentlicht.');
   };
 
   const addCourseObjective = () => { setCourseObjectives(items => [...items, { id: newId('objective'), description: '' }]); setCourseDirty(true); };
@@ -388,7 +388,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   if (loading && mode === 'list') {
-    return <section className={panel} aria-live="polite"><p className="text-sm text-slate-600 dark:text-slate-300">Kurs- und Programmdaten werden geladen …</p></section>;
+    return <section className={panel} aria-live="polite"><p className="text-sm text-slate-600 dark:text-slate-300">Kurs- und Lehrgangsdaten werden geladen …</p></section>;
   }
 
   return (
@@ -397,12 +397,12 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
         <>
           <header className="academy-authoring-heading flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Kurse und Programme verwalten</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Kurse und Lehrgänge verwalten</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Entwürfe bearbeiten, neue Versionen vorbereiten und Veröffentlichungen bewusst auslösen.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={secondary} onClick={openNewCourse}>Neuen Kurs anlegen</button>
-              <button type="button" className={primary} onClick={openNewProgram}>Neues Programm anlegen</button>
+              <button type="button" className={primary} onClick={openNewProgram}>Neuen Lehrgang anlegen</button>
             </div>
           </header>
           {loadError && <div role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">{loadError} <button type="button" className="underline" onClick={() => void load()}>Erneut laden</button></div>}
@@ -442,10 +442,10 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
           </section>
           <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-programs-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Programme</h3>
+              <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Lehrgange</h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">{listedPrograms.length} Einträge</span>
             </div>
-            {listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Programme vorhanden.</p> : (
+            {listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lehrgänge vorhanden.</p> : (
               <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                 {listedPrograms.map(entry => (
                   <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -529,25 +529,25 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       {isProgramEditor && (
         <section className="academy-authoring-editor academy-authoring-editor--program mx-auto max-w-3xl space-y-5">
           <header className="academy-authoring-editor-heading flex items-start justify-between gap-3">
-            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Programmverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{programMaster ? 'Programmentwurf bearbeiten' : 'Neues Programm anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neues Programm beginnt als unveröffentlichter Entwurf.'}</p></div>
+            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Lehrgangsverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{programMaster ? 'Lehrgangsentwurf bearbeiten' : 'Neuen Lehrgang anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neuer Lehrgang beginnt als unveröffentlichter Entwurf.'}</p></div>
             <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
           <form className="space-y-5" noValidate onSubmit={saveProgram}>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Grunddaten</h3>
-              <div><label htmlFor="academy-program-code" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Programmkennung</label><input id="academy-program-code" className={field} value={programCode} onChange={event => { setProgramCode(event.target.value.toUpperCase()); setProgramDirty(true); }} disabled={Boolean(programMaster)} maxLength={40} autoComplete="off" /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">2 bis 40 Zeichen, eindeutig im Academy-Bereich</p></div>
-              <div><label htmlFor="academy-program-title" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Programmname</label><input id="academy-program-title" className={field} value={programTitle} onChange={event => { setProgramTitle(event.target.value); setProgramDirty(true); }} maxLength={200} /></div>
+              <div><label htmlFor="academy-program-code" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Lehrgangskennung</label><input id="academy-program-code" className={field} value={programCode} onChange={event => { setProgramCode(event.target.value.toUpperCase()); setProgramDirty(true); }} disabled={Boolean(programMaster)} maxLength={40} autoComplete="off" /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">2 bis 40 Zeichen, eindeutig im Academy-Bereich</p></div>
+              <div><label htmlFor="academy-program-title" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Lehrgangsname</label><input id="academy-program-title" className={field} value={programTitle} onChange={event => { setProgramTitle(event.target.value); setProgramDirty(true); }} maxLength={200} /></div>
               <div><label htmlFor="academy-program-summary" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Zusammenfassung</label><textarea id="academy-program-summary" className={field} value={programSummary} onChange={event => { setProgramSummary(event.target.value); setProgramDirty(true); }} maxLength={2000} rows={4} /></div>
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button type="button" className={secondary} onClick={addProgramObjective} disabled={programObjectives.length >= 6}>Lernziel hinzufügen</button></div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Ein Programm benötigt drei bis sechs konkrete Lernziele.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Ein Lehrgang benötigt drei bis sechs konkrete Lernziele.</p>
               {programObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-program-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-program-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setProgramObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setProgramDirty(true); }} /><button type="button" className={danger} onClick={() => { setProgramObjectives(items => items.filter(current => current.id !== item.id)); setProgramDirty(true); }}>Lernziel entfernen</button></div>)}
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Kurszuordnung</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Du kannst veröffentlichte, verfügbare Kurse als Pflicht- oder Empfehlungskurse aufnehmen. Die genaue Kursversion wird bei einer Programmteilnahme fest zugeordnet.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Du kannst veröffentlichte, verfügbare Kurse als Pflicht- oder Empfehlungskurse aufnehmen. Die genaue Kursversion wird bei einer Lehrgangsteilnahme fest zugeordnet.</p>
               <div className="flex flex-col gap-2 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="academy-program-course-select" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurs auswählen</label><select id="academy-program-course-select" className={field} value={programCourseToAdd} onChange={event => setProgramCourseToAdd(event.target.value)}><option value="">Kurs auswählen</option>{selectableCourses.filter(item => !programReferences.some(reference => reference.courseId === item.master.id)).map(item => <option key={item.master.id} value={item.master.id}>{item.master.code} · {item.version?.title || item.master.code}</option>)}</select></div><button type="button" className={secondary + ' self-end'} onClick={addProgramCourse} disabled={!programCourseToAdd}>Kurs hinzufügen</button></div>
               {programReferences.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kurse zugeordnet.</p> : <ul className="divide-y divide-slate-200 dark:divide-slate-800">{programReferences.map(reference => {
                 const course = courses.find(item => item.master.id === reference.courseId);
@@ -555,9 +555,9 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               })}</ul>}
               {selectableCourses.length === 0 && <p className="text-sm text-amber-700 dark:text-amber-300">Es gibt noch keine veröffentlichten und verfügbaren Kurse, die zugeordnet werden können.</p>}
             </section>
-            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Programmentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft || !programHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
+            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Lehrgangentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft || !programHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
             {programDirty && programMaster && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">Es gibt ungespeicherte Änderungen. Speichere den Entwurf, bevor du eine neue Version veröffentlichst.</p>}
-            {programMaster && <p className="text-xs text-slate-500 dark:text-slate-400">Veröffentlichungsstatus: {statusName(programMaster.publicationStatus)}. Erforderliche Kurse bestimmen den Programmabschluss; empfohlene Kurse sind kein Abschlusskriterium.</p>}
+            {programMaster && <p className="text-xs text-slate-500 dark:text-slate-400">Veröffentlichungsstatus: {statusName(programMaster.publicationStatus)}. Erforderliche Kurse bestimmen den Lehrgangsabschluss; empfohlene Kurse sind kein Abschlusskriterium.</p>}
           </form>
         </section>
       )}
