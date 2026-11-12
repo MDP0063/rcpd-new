@@ -21,7 +21,6 @@ interface CatalogEntry {
   passingScoreBasisPoints: number;
   maxAttempts: number | null;
   prerequisites: Array<{ examId: string; mode: 'completed' | 'passed'; minScoreBasisPoints?: number }>;
-  minClearance: number;
 }
 
 interface PublicQuestionBase {
@@ -124,6 +123,10 @@ export const ExamParticipantRunner: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [starting, setStarting] = useState(false);
+  const [startConfirmationOpen, setStartConfirmationOpen] = useState(false);
+  const [startConfirmationState, setStartConfirmationState] = useState<'idle' | 'checking' | 'new' | 'resume' | 'error'>('idle');
+  const [startConfirmationError, setStartConfirmationError] = useState('');
+  const [activeAttemptPreview, setActiveAttemptPreview] = useState<PublicAttempt | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
   const [runnerError, setRunnerError] = useState('');
@@ -137,6 +140,22 @@ export const ExamParticipantRunner: React.FC = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
   const autoSubmitRef = useRef(false);
+  const startCheckRequestIdRef = useRef(0);
+  const startButtonRef = useRef<HTMLButtonElement | null>(null);
+  const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const wasStartConfirmationOpenRef = useRef(false);
+  const restoreStartFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (startConfirmationOpen) {
+      wasStartConfirmationOpenRef.current = true;
+      startConfirmationHeadingRef.current?.focus();
+    } else if (wasStartConfirmationOpenRef.current) {
+      wasStartConfirmationOpenRef.current = false;
+      if (restoreStartFocusRef.current) startButtonRef.current?.focus();
+      restoreStartFocusRef.current = false;
+    }
+  }, [startConfirmationOpen]);
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
@@ -203,8 +222,50 @@ export const ExamParticipantRunner: React.FC = () => {
     setRunnerError('');
   }, []);
 
-  const startOrResume = async () => {
+  const checkActiveAttemptBeforeStart = async () => {
     if (!selectedExam || !selectedCourseCode || starting) return;
+    const requestId = ++startCheckRequestIdRef.current;
+    const examId = selectedExam.id;
+    const courseCode = selectedCourseCode;
+    setStartConfirmationOpen(true);
+    setStartConfirmationState('checking');
+    setStartConfirmationError('');
+    setActiveAttemptPreview(null);
+    const response = await apiFetch<{ attempt: PublicAttempt }>(
+      `${API_ENDPOINTS.ACADEMY_EXAM_ATTEMPT(examId)}?attemptCourseCode=${encodeURIComponent(courseCode)}`,
+      { cache: 'no-store' }
+    );
+    if (requestId !== startCheckRequestIdRef.current) return;
+    if (response.ok && response.data?.attempt) {
+      setActiveAttemptPreview(response.data.attempt);
+      setStartConfirmationState('resume');
+      return;
+    }
+    if (response.status === 404) {
+      setStartConfirmationState('new');
+      return;
+    }
+    setStartConfirmationError(response.error || 'Der aktuelle Prüfungsversuch konnte nicht geprüft werden.');
+    setStartConfirmationState('error');
+  };
+
+  const cancelStartConfirmation = () => {
+    startCheckRequestIdRef.current += 1;
+    restoreStartFocusRef.current = true;
+    setStartConfirmationOpen(false);
+    setStartConfirmationState('idle');
+    setStartConfirmationError('');
+    setActiveAttemptPreview(null);
+  };
+
+  const startOrResume = async () => {
+    if (
+      !selectedExam ||
+      !selectedCourseCode ||
+      starting ||
+      !startConfirmationOpen ||
+      (startConfirmationState !== 'new' && startConfirmationState !== 'resume')
+    ) return;
     setStarting(true);
     setRunnerError('');
     const response = await apiFetch<{ attempt: PublicAttempt }>(
@@ -212,8 +273,17 @@ export const ExamParticipantRunner: React.FC = () => {
       { method: 'POST', body: JSON.stringify({ attemptCourseCode: selectedCourseCode }) }
     );
     if (response.ok && response.data?.attempt) {
+      restoreStartFocusRef.current = false;
+      setStartConfirmationOpen(false);
+      setStartConfirmationState('idle');
+      setStartConfirmationError('');
+      setActiveAttemptPreview(null);
       applyAttempt(response.data.attempt);
     } else {
+      restoreStartFocusRef.current = false;
+      setStartConfirmationOpen(false);
+      setStartConfirmationState('idle');
+      setActiveAttemptPreview(null);
       setRunnerError(response.error || 'Die Prüfung konnte nicht gestartet werden.');
     }
     setStarting(false);
@@ -563,7 +633,7 @@ export const ExamParticipantRunner: React.FC = () => {
           <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Verfügbare Prüfungen</h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-300">Starte eine Prüfung oder setze einen begonnenen Versuch fort. Deine Antworten werden automatisch und revisionsgesichert gespeichert.</p>
         </div>
-        <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
+        <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog || startConfirmationOpen} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
       {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
@@ -573,13 +643,13 @@ export const ExamParticipantRunner: React.FC = () => {
         <div className={cardClass + ' academy-exam-empty space-y-2 p-10 text-center'}>
           <ShieldCheck className="mx-auto h-9 w-9 text-sky-600" />
           <h3 className="font-semibold text-slate-900 dark:text-white">Derzeit keine Prüfungen verfügbar</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Sobald eine Prüfung veröffentlicht und für deine Freigabestufe verfügbar ist, erscheint sie hier.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Sobald eine Prüfung veröffentlicht und für dich freigegeben ist, erscheint sie hier.</p>
         </div>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-3">
             {catalog.map(exam => (
-              <button key={exam.id} type="button" onClick={() => {
+              <button key={exam.id} type="button" disabled={startConfirmationOpen} onClick={() => {
                 setSelectedExamId(exam.id);
                 setSelectedCourseCode(exam.assignedCourseCodes[0] || '');
                 setRunnerError('');
@@ -606,18 +676,77 @@ export const ExamParticipantRunner: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</p>
                 </div>
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
+                  <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0 ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
                   <div className="flex justify-between gap-2"><span>Bestehensgrenze</span><strong>{(selectedExam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</strong></div>
-                  <div className="flex justify-between gap-2"><span>Freigabestufe</span><strong>{selectedExam.minClearance}</strong></div>
                 </div>
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
-                  <select value={selectedCourseCode} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                  <select value={selectedCourseCode} disabled={startConfirmationOpen} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     {selectedExam.assignedCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
                 </label>
-                <button type="button" disabled={!canStart} onClick={() => void startOrResume()} className={primaryButton + ' w-full'}>{starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}{starting ? 'Wird vorbereitet …' : 'Prüfung starten / fortsetzen'}</button>
-                <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Voraussetzungen, tatsächliche Startberechtigung und verbleibende Versuche werden bei jedem Start verbindlich auf dem Server geprüft.</p>
+                {!startConfirmationOpen ? (
+                  <>
+                    <button ref={startButtonRef} type="button" disabled={!canStart} onClick={() => void checkActiveAttemptBeforeStart()} className={primaryButton + ' w-full'}>
+                      <ArrowRight className="h-4 w-4" />Prüfung starten / fortsetzen
+                    </button>
+                    <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Vor dem Start werden der aktuelle Versuch und die für diese Prüfung geltenden Folgen geprüft. Noch wird kein Versuch begonnen.</p>
+                  </>
+                ) : (
+                  <section className="academy-exam-start-confirmation space-y-3 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/30" aria-labelledby="academy-exam-start-confirmation-heading">
+                    <div>
+                      <h4 ref={startConfirmationHeadingRef} tabIndex={-1} id="academy-exam-start-confirmation-heading" className="font-bold text-slate-900 outline-none dark:text-white">Verbindliche Startbestätigung</h4>
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Es wird erst gestartet oder fortgesetzt, wenn du die abschließende Aktion bestätigst.</p>
+                    </div>
+                    {startConfirmationState === 'checking' && (
+                      <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Wir prüfen, ob bereits ein laufender Versuch besteht. Es wird noch nichts gestartet.</p>
+                    )}
+                    {startConfirmationState === 'error' && (
+                      <div role="alert" className="space-y-2 text-sm text-rose-700 dark:text-rose-300">
+                        <p>{startConfirmationError}</p>
+                        <button type="button" className={secondaryButton} onClick={() => void checkActiveAttemptBeforeStart()} disabled={starting}>Erneut prüfen</button>
+                      </div>
+                    )}
+                    {startConfirmationState === 'new' && (
+                      <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                        <p className="font-semibold">Du startest diese Prüfung jetzt verbindlich.</p>
+                        {selectedExam.timeLimitMinutes > 0
+                          ? <p>Das Zeitlimit von {selectedExam.timeLimitMinutes} Minuten beginnt unmittelbar mit dem Start.</p>
+                          : <p>Für diese Prüfung ist kein Zeitlimit festgelegt.</p>}
+                        {selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0
+                          ? <p>Es gibt keine feste Begrenzung der Versuche. Ein neuer Versuch wird dennoch als eigener Versuch gespeichert.</p>
+                          : <p>Dieser Start legt einen neuen Versuch an und zählt auf das Limit von {selectedExam.maxAttempts} Versuchen. Ob noch ein Versuch verfügbar ist, prüft der Server beim verbindlichen Start.</p>}
+                        <p>Wenn du die Seite verlässt, wird der Versuch nicht zurückgesetzt. Du kannst ihn im selben Kurskontext fortsetzen; ein vorhandenes Zeitlimit läuft währenddessen weiter. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                      </div>
+                    )}
+                    {startConfirmationState === 'resume' && activeAttemptPreview && (
+                      <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                        <p className="font-semibold">Du setzt einen bereits laufenden Versuch fort.</p>
+                        <p>Versuch {activeAttemptPreview.attemptNumber} · Kurskontext {activeAttemptPreview.attemptCourseCode} · begonnen am {new Date(activeAttemptPreview.startedAtIso).toLocaleString('de-DE')}.</p>
+                        <p>Es wird kein zusätzlicher Versuch angelegt oder verbraucht.</p>
+                        {activeAttemptPreview.deadlineIso
+                          ? <p>Das Zeitlimit läuft weiter und endet am {new Date(activeAttemptPreview.deadlineIso).toLocaleString('de-DE')}. Das Fortsetzen setzt die Frist nicht zurück.</p>
+                          : <p>Für diesen laufenden Versuch ist kein Zeitlimit festgelegt.</p>}
+                        <p>Der Versuch bleibt im selben Kurskontext fortsetzbar. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className={secondaryButton} onClick={cancelStartConfirmation} disabled={starting}>Zurück</button>
+                      {startConfirmationState === 'new' && (
+                        <button type="button" className={primaryButton} onClick={() => void startOrResume()} disabled={starting}>
+                          {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                          {starting ? 'Wird gestartet …' : 'Prüfung verbindlich starten'}
+                        </button>
+                      )}
+                      {startConfirmationState === 'resume' && (
+                        <button type="button" className={primaryButton} onClick={() => void startOrResume()} disabled={starting}>
+                          {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                          {starting ? 'Wird fortgesetzt …' : 'Laufenden Versuch fortsetzen'}
+                        </button>
+                      )}
+                    </div>
+                  </section>
+                )}
               </>
             ) : <p className="text-sm text-slate-500">Wähle eine Prüfung aus der Liste.</p>}
           </aside>
