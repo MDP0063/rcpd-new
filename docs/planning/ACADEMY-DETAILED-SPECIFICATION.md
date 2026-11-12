@@ -1410,3 +1410,10 @@ Die SVG-Dateien sind eigenständige lokale Ressourcen unter `src/assets/academy/
 **BESCHLOSSEN:** Der Academy-Kopf erhält eine zurückhaltende Kombination aus typografischer Hierarchie und kleinem blauen Akzent: dezente Oberzeile „Ausbildungsbereich“, größere prägnante Überschrift „Academy“, kurze Beschreibung und etwas mehr Abstand zum Inhalt. Keine große Header-Fläche und kein Banner. Die Kachelgestaltung wird nicht verändert.
 
 **BESCHLOSSEN:** Beim Aktivieren einer Kachel darf eine sehr kurze, subtile Druckreaktion erfolgen. Der Zielbereich erscheint mit einem kurzen Fade-in und minimaler vertikaler Bewegung (Richtwert ca. 180 ms). Keine auffälligen Zoom-/Ladeeffekte; `prefers-reduced-motion` muss respektiert werden.
+
+
+## Verbindliche UI-Terminologie – Lehrgang statt Programm (12.11.2026)
+
+In sämtlichen deutschsprachigen Academy-Teilnehmer- und Verwaltungsoberflächen heißt die übergeordnete Ausbildungseinheit **Lehrgang**. Die eigenständige Lerneinheit bleibt **Kurs**. Dies gilt für Kataloge, Detailansichten, Lernziele, Pflicht-/Empfehlungskurse, Fortschritt, Teilnahme, Versionen, Verwaltung, Fehlermeldungen und Bestätigungen.
+
+Die technische Entität heißt weiterhin `Program`. API-Endpunkte, technische Typen, Felder, Variablen und persistierte IDs bleiben unverändert. Die UI-Bezeichnung ist eine sprachliche Klarstellung bereits bestehender Fachlogik, keine Änderung an Datenmodell, Ablauf, Status oder Berechtigungen.
