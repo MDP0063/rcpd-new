@@ -272,3 +272,14 @@ GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/T
 **PR #252 – offen am 12.11.2026:** Die doppelte h1 auf der Academy-Übersicht wird behoben, indem die interne Überschrift auf h2 herabgestuft wird. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
 
 Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweisbedingungen oder Versionierung. Build, Tests, CI und manuelle Browser-/Accessibility-Abnahme stehen für PR #252 noch aus.
+
+## 13. Umsetzungsprotokoll – Prüfungsstart und Berechtigungsprojektion (PR #253)
+
+**PR #253 – offen am 12.11.2026:** Der erste Klick auf „Prüfung starten / fortsetzen“ legt keinen Versuch mehr an. Der Runner fragt zunächst den aktiven Versuch für genau diesen Prüfung-/Kurskontext ab. Die Bestätigung unterscheidet einen neuen Start von der Fortsetzung eines bestehenden Versuchs.
+
+- Neuer Versuch: tatsächlicher Zeitlimitbeginn und echte Versuchslimitierung werden angezeigt; 0/null werden gemäß Datenmodell als unbegrenzt interpretiert.
+- Fortsetzung: Versuchnummer, Kurskontext, Startzeit und vorhandene Deadline werden angezeigt; kein zusätzlicher Versuch wird gezählt und die Frist wird nicht zurückgesetzt.
+- „Zurück“ schließt die Bestätigung, „Prüfung verbindlich starten“ legt erst dann einen neuen Versuch an; „Laufenden Versuch fortsetzen“ setzt den aktiven Versuch idempotent fort.
+- Numerische minClearance-Werte werden aus der öffentlichen Katalogprojektion entfernt. Die serverseitige Filterung nach Freigabestufe bleibt unverändert; sichtbare Texte sagen nur „für dich freigegeben“.
+
+Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. Der PR ändert keine Bewertungs-, Fragen-, Timer- oder Berechtigungslogik. CI und manuelle Browser-/Tastatur-/Screenreader-Abnahme stehen aus.
