@@ -915,8 +915,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && (
-                <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-rose-700 dark:text-rose-300">
-                  <p>{versionedMaterialsError}</p>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-rose-700 dark:text-rose-300">
+                  <p role="alert">{versionedMaterialsError}</p>
                   {versionedMaterialsRetryable && (
                     <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>
                       Erneut versuchen
@@ -1063,8 +1063,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
-                    <div role="alert" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
+                      <p role="alert" className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
                       {versionedMaterialRetryable && (
                         <button type="button" onClick={() => setVersionedMaterialLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialLoading} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
                           Erneut versuchen
