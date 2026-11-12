@@ -262,7 +262,7 @@
   padding:1.2rem 1.35rem;
   border:1px solid #dce3eb;
   border-radius:.85rem;
-  background:linear-gradient(145deg,#fff,#f6f8fa);
+  background:#f7f9fb;
 }
 .academy-material-management-heading h2 { color:#26384d; font-size:1.35rem; font-weight:750; letter-spacing:-.02em; }
 .academy-material-management-workspace { align-items:start; }
@@ -288,7 +288,7 @@
 .academy-material-management .academy-material-form-actions button[type="submit"] { background:#526b83; color:#fff; }
 .academy-material-management .academy-material-form-actions button[type="submit"]:hover { background:#405970; }
 .academy-material-management .academy-material-form-actions button:not([type="submit"]) { border-radius:.55rem; }
-.dark .academy-material-management-heading { border-color:#354355; background:linear-gradient(145deg,#1c2939,#202d3d); }
+.dark .academy-material-management-heading { border-color:#354355; background:#1c2939; }
 .dark .academy-material-management-heading h2 { color:#e6edf5; }
 .dark .academy-material-management .academy-material-list,
 .dark .academy-material-management .academy-material-form,
