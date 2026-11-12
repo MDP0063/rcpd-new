@@ -626,6 +626,32 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(legacyModule.body!.module.authorUid, 'academy-admin');
     const legacyModuleId = legacyModule.body!.module.id as string;
 
+    // A scoped instructor cannot take over an out-of-scope legacy module by
+    // changing its course code to an assigned code in the same update.
+    const outOfScopeModule = await request('/api/academy/modules', admin, {
+      method: 'POST',
+      ...json({
+        title: 'Out-of-scope legacy module', code: 'SOP-LEGACY-02',
+        category: 'SOP & Policy', requiredRole: 'trainee', embedType: 'document',
+        contentMarkdown: 'Original content', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 15
+      })
+    });
+    assert.equal(outOfScopeModule.status, 200, JSON.stringify(outOfScopeModule.body));
+    const outOfScopeModuleId = outOfScopeModule.body!.module.id as string;
+    const crossScopeModuleTakeover = await request(`/api/academy/modules/${outOfScopeModuleId}`, scopedOfficer, {
+      method: 'PUT',
+      ...json({ code: 'SCOPE-OPS-01', title: 'Unauthorized takeover' })
+    });
+    assert.equal(crossScopeModuleTakeover.status, 403, JSON.stringify(crossScopeModuleTakeover.body));
+    const originalModuleAfterBlockedTakeover = await request(`/api/academy/modules/${outOfScopeModuleId}`, admin, {
+      method: 'PUT',
+      ...json({ title: 'Out-of-scope legacy module unchanged' })
+    });
+    assert.equal(originalModuleAfterBlockedTakeover.status, 200, JSON.stringify(originalModuleAfterBlockedTakeover.body));
+    assert.equal(originalModuleAfterBlockedTakeover.body!.module.code, 'SOP-LEGACY-02');
+    assert.equal(originalModuleAfterBlockedTakeover.body!.module.contentMarkdown, 'Original content');
+
     const spoofedModuleUpdate = await request(`/api/academy/modules/${legacyModuleId}`, admin, {
       method: 'PUT',
       ...json({ actorUid: 'academy-officer', title: 'Spoofed update' })

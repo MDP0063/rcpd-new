@@ -366,3 +366,9 @@
 - „Offene Bewertungen“ wird für Admins, Colonels und berechtigte Kursausbilder angeboten; „Korrekturen & Freigaben“ nur für Admins und Colonels.
 - Die bestehende serverseitige Zugriffskontrolle und die vorhandenen Examiner-/Korrekturkomponenten bleiben unverändert. Es wird keine sechste Academy-Hauptrubrik eingeführt.
 - Branch `fix/academy-exam-review-navigation`; CI/Review und spätere Browserprüfung stehen noch aus.
+
+## 2026-11-12 – Legacy-Materialroute: Kursbereichsprüfung (Folge-PR)
+
+- Die PUT-Route für Legacy-Material prüft jetzt die Berechtigung sowohl für den gespeicherten Quell-Kurscode als auch für den Ziel-Kurscode einer Änderung. Damit kann ein scoped Kursausbilder kein fremdes Material per Codewechsel übernehmen.
+- Ein HTTP-Regressionstest deckt den Cross-Scope-Takeover ab und prüft, dass abgewiesene Änderungen keine Materialdaten verändern.
+- Implementierung auf Branch `fix/academy-legacy-module-scope-authorization`; CI/Review noch ausstehend. Keine Browser-/Live-Firestore-Prüfung behauptet.
