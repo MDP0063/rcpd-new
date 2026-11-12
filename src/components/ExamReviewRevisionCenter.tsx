@@ -87,8 +87,8 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
       API_ENDPOINTS.ACADEMY_EXAM_REVIEW_RESOLVE_REVISION(request.examId, request.id),
       { method: 'POST', body: JSON.stringify({ decision, ...(decision === 'reject' ? { reason } : {}) }) }
     );
-    setDecisionSavingId('');
     if (!response.ok) {
+      setDecisionSavingId('');
       setError(response.error || 'Die Revisionsanfrage konnte nicht entschieden werden.');
       return;
     }
@@ -98,6 +98,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
       ? 'Die Revisionsanfrage wurde angenommen. Der Vorgang ist jetzt wieder in der gemeinsamen Prüferliste.'
       : 'Die Revisionsanfrage wurde begründet abgelehnt. Die bisherige Bewertung bleibt unverändert.');
     await load();
+    setDecisionSavingId('');
   };
 
   const toggleStep = (reviewId: string, questionId: string, checked: boolean) => {
