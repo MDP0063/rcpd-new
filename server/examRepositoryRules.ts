@@ -640,25 +640,30 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         );
       const draft = next.reviewDraft && typeof next.reviewDraft === 'object' && !Array.isArray(next.reviewDraft)
         ? next.reviewDraft as Record<string, unknown> : null;
-      if (
-        nextHistory.length !== previousHistory.length + 1 ||
-        !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory) ||
-        !completion ||
-        Object.keys(completion).sort().join(',') !==
-          'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid' ||
-        completion.action !== 'revision_completed' ||
-        completion.revisionRequestIndex !== revisionRequestIndex ||
-        completion.revisionRequestedAtIso !== request.atIso ||
-        completion.previousUid !== request.previousUid ||
-        completion.targetUid !== request.actorUid ||
-        typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid ||
-        typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso ||
-        Number.isNaN(Date.parse(completion.atIso)) ||
-        next.reviewClaim !== null ||
-        !draft || Object.keys(draft).length !== 0 ||
-        !validNextGrades ||
-        !isDeepStrictEqual(strip(existing), strip(next))
-      ) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_INVALID');
+      if (nextHistory.length !== previousHistory.length + 1 ||
+          !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory)) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_HISTORY_INVALID');
+      }
+      if (!completion ||
+          Object.keys(completion).sort().join(',') !==
+            'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid' ||
+          completion.action !== 'revision_completed' ||
+          completion.revisionRequestIndex !== revisionRequestIndex ||
+          completion.revisionRequestedAtIso !== request.atIso ||
+          completion.previousUid !== request.previousUid ||
+          completion.targetUid !== request.actorUid ||
+          typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid ||
+          typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso ||
+          Number.isNaN(Date.parse(completion.atIso))) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_INVALID');
+      }
+      if (next.reviewClaim !== null || !draft || Object.keys(draft).length !== 0) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_DRAFT_INVALID');
+      }
+      if (!validNextGrades) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_GRADES_INVALID');
+      if (!isDeepStrictEqual(strip(existing), strip(next))) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_ATTEMPT_INVALID');
+      }
       return;
     }
   }
