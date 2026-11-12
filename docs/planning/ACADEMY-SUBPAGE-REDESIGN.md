@@ -229,7 +229,7 @@ Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision
 
 ### 10.1 Übersicht – Semantik und Inhalt
 
-- Die Academy-Hülle rendert auf Unterseiten bereits eine globale h1 „Academy“. Die interne Übersichtsseite rendert zusätzlich eine zweite h1 „Willkommen in der Academy“. Das ist eine unnötige doppelte Hauptüberschrift im selben Dokument. **Korrektur vorgesehen:** die interne Überschrift wird zur h2; die globale Academy-Überschrift bleibt die eine h1.
+- Die Academy-Hülle rendert auf Unterseiten bereits eine globale h1 „Academy“. Die interne Übersichtsseite rendert zusätzlich eine zweite h1 „Willkommen in der Academy“. Das ist eine unnötige doppelte Hauptüberschrift im selben Dokument. **In PR #252 umgesetzt:** die interne Überschrift ist jetzt h2; die globale Academy-Überschrift bleibt die eine h1.
 - Die Beschreibung der Übersichtskachel versprach zuvor „Ausbildungsstand und nächste Schritte“, obwohl die beschlossene Übersicht keine persönliche Fortschritts- oder Aufgabenliste ist. **In PR #251 korrigiert:** die Kachel beschreibt jetzt die Orientierung über Aufbau und Zusammenspiel der Academy-Bereiche.
 - Die eigentliche Übersichtsseite entspricht inhaltlich bereits dem Beschluss: nicht-linearer Lernweg, Lehrgänge/Kurse/Bibliothek, kurze Einordnung von Prüfungen und privaten Notizen, keine duplizierten persönlichen Kennzahlen oder Bereichslinks. Die Grundstruktur muss nicht neu erfunden werden.
 
@@ -238,7 +238,7 @@ Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision
 - Vor dem Kursstart zeigt die Detailansicht Lernziele und Kapitel.
 - Nach Beginn einer Teilnahme zeigt der aktive Detailpfad Abschlussbedingungen/Nachweise und den versionierten Materialreader, blendet aber Lernziele und Kapitel aus derselben Kursversion aus.
 - Das ist ein konkreter Informationsverlust für bereits gestartete Teilnehmer: die fachliche Zielsetzung und Kapitelstruktur bleiben relevant, auch wenn die Teilnahme begonnen hat.
-- **Korrektur vorgesehen:** dieselben veröffentlichten Lernziele und Kapitel auch im aktiven Detailpfad anzeigen, in kompakter Hierarchie und ohne neue Daten/Status/Funktionen. Abschlussnachweise und Materialreader bleiben zentral.
+- **In PR #252 umgesetzt:** dieselben veröffentlichten Lernziele und Kapitel werden auch im aktiven Detailpfad angezeigt, in kompakter Hierarchie und ohne neue Daten/Status/Funktionen. Abschlussnachweise und Materialreader bleiben zentral.
 
 ### 10.3 Prüfungen – zwei unterschiedliche Daten-/Workflow-Familien
 
@@ -262,6 +262,13 @@ Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision
 
 ## 11. Umsetzungsprotokoll – Terminologie (PR #251)
 
-**PR #251 – offen am 12.11.2026:** Teilnehmerkatalog, Kurs-/Lehrgangsdetails, Fortschritt, Teilnahme, Versionsbindungen, Verwaltungslisten, Editorbeschriftungen, Fehlermeldungen, Bestätigungen und Kursbereich-Navigation verwenden sichtbar „Lehrgang“ statt „Programm“. Die Academy-Übersichtskachel beschreibt nun den tatsächlichen Orientierungszweck. Technische Program-Namen und Datenverträge bleiben unverändert.
+**PR #251 – am 12.11.2026 gemergt (Commit `611f701df54ecb302a4fcf84005544beee4485a1`):** Teilnehmerkatalog, Kurs-/Lehrgangsdetails, Fortschritt, Teilnahme, Versionsbindungen, Verwaltungslisten, Editorbeschriftungen, Fehlermeldungen, Bestätigungen und Kursbereich-Navigation verwenden sichtbar „Lehrgang“ statt „Programm“. Die Academy-Übersichtskachel beschreibt nun den tatsächlichen Orientierungszweck. Technische Program-Namen und Datenverträge bleiben unverändert.
 
-GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/Testworkflow erfolgreich, 455/455 Tests. Optionaler Render-Deploy-Hook übersprungen. PR #251 ist noch nicht gemergt; manuelle Browser-/Screenreader-Abnahme steht aus.
+GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/Testworkflow erfolgreich, 455/455 Tests. Optionaler Render-Deploy-Hook übersprungen. PR #251 ist gemergt; manuelle Browser-/Screenreader-Abnahme steht aus.
+
+
+## 12. Umsetzungsprotokoll – Kursdetail und Katalogzustände (PR #252)
+
+**PR #252 – offen am 12.11.2026:** Die doppelte h1 auf der Academy-Übersicht wird behoben, indem die interne Überschrift auf h2 herabgestuft wird. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
+
+Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweisbedingungen oder Versionierung. Build, Tests, CI und manuelle Browser-/Accessibility-Abnahme stehen für PR #252 noch aus.

@@ -500,4 +500,13 @@ Der Notizbereich wird in PR #250 als eigener Arbeitsbereich umgesetzt:
 - **Responsive Navigation:** Die Fünf-Bereiche-Navigation wechselt unter 760 px in ein zweispaltiges Raster mit einer vollbreiten letzten Zeile. CSS vermeidet enge fünf Spalten; tatsächliche 320/375/768-Pixel-Abnahme bleibt offen.
 - **Materialverwaltung:** Die Editoransicht ersetzt die Liste, zeigt Versionshistorie und Formular im eigenen Arbeitsmodus. Dieses fokussierte Muster ist sinnvoll und soll beibehalten werden.
 
-Diese Befunde werden in ACADEMY-SUBPAGE-REDESIGN.md ausführlicher dokumentiert. Die ersten beiden UI-Korrekturen sind kleine, objektiv begründbare Verbesserungen; die Prüfungs-/Legacy-Fragen bleiben getrennte technische Prüfblöcke.
+Diese Befunde werden in ACADEMY-SUBPAGE-REDESIGN.md ausführlicher dokumentiert. Die Übersichtskachel wurde in PR #251 korrigiert. Die doppelte h1 und der fehlende Lernziel-/Kapitelkontext im aktiven Kursdetail werden in PR #252 korrigiert. Die Prüfungs-/Legacy-Fragen bleiben getrennte technische Prüfblöcke.
+
+
+## 13. PR #252 – Kurskontext und verständliche Leerzustände
+
+- Eine einzige h1 bleibt auf der Academy-Seite erhalten; die interne Überschrift der Übersichtsseite ist h2.
+- Der aktive Kurspfad zeigt jetzt die veröffentlichten Lernziele und Kapitel derselben Kursversion weiter an. Das hält den Lernkontext nach dem Start sichtbar, ohne neue Daten oder fachliche Fortschrittsregeln zu erzeugen.
+- Kataloge unterscheiden leere veröffentlichte Bestände von Suchanfragen ohne Treffer.
+- Ein vorhandener Kurs-/Lehrgangsversionseintrag ohne Zusammenfassung erhält einen passenden Hinweis statt einer irreführenden Aussage, dass keine veröffentlichte Version existiert.
+- **Status:** PR #252 offen; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.

@@ -85,6 +85,8 @@ Ein Kurs kann enthalten:
 
 Kapitel, Materialien und freiwillige Checks sind optionale Strukturmittel. Nicht jeder Kurs muss dieselbe Struktur besitzen. Die Abschlussprüfung liegt außerhalb der normalen Kapitelstruktur und ist kein zwingender Bestandteil jedes Kurses.
 
+Die veröffentlichten Lernziele und die Kapitelübersicht gehören zur fachlichen Kursbeschreibung und sollen auch nach Beginn einer Teilnahme erreichbar bleiben. Der Start einer Teilnahme darf diese Orientierung nicht aus der Detailansicht entfernen. Die aktive Ansicht ergänzt diese Inhalte um den persönlichen Nachweis-/Fortschrittsstand und den versionsgebundenen Materialreader; sie ersetzt die Kursbeschreibung nicht.
+
 Freiwillige Wissenschecks sind nicht automatisch eine Abschlussvoraussetzung. Ein freiwilliger Test darf einen Kursabschluss nicht blockieren, nur weil er nicht bestanden oder gar nicht absolviert wurde.
 
 ## 3. Drei voneinander getrennte Statusdimensionen

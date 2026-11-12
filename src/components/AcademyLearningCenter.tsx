@@ -474,7 +474,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredPrograms.length} Lehrgänge</span>
                     </div>
-                    {filteredPrograms.length === 0 ? <p className={`${panel} p-4 ${muted}`}>Derzeit sind keine veröffentlichten Lehrgänge verfügbar.</p> : (
+                    {filteredPrograms.length === 0 ? <p className={`${panel} p-4 ${muted}`}>{search.trim() ? 'Keine Lehrgänge entsprechen deiner Suche.' : 'Derzeit sind keine veröffentlichten Lehrgänge verfügbar.'}</p> : (
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                         {filteredPrograms.map(entry => {
                           const detail = programDetails.find(item => item.participation.programId === entry.master.id);
@@ -485,7 +485,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Entwurf'}</p>
                                   {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                   <h4 className="mt-1 font-semibold text-slate-900 dark:text-white">{entry.version?.title || entry.draft?.title || entry.master.code}</h4>
-                                  <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Lehrgangsversion.'}</p>
+                                  <p className={`mt-1 ${muted}`}>{entry.version ? (entry.version.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Noch keine veröffentlichte Lehrgangsversion.'}</p>
                                 </div>
                                 {detail && <span className="shrink-0 text-xs font-semibold text-sky-700 dark:text-sky-300" aria-label={`Fortschritt: ${detail.progress.completionPercentage} Prozent`}>Fortschritt {detail.progress.completionPercentage}%</span>}
                               </div>
@@ -506,7 +506,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alle Kurse</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">{filteredCourses.length} Kurse</span>
                     </div>
-                    {filteredCourses.length === 0 ? <p className={`${panel} p-4 ${muted}`}>Derzeit sind keine veröffentlichten Kurse verfügbar.</p> : (
+                    {filteredCourses.length === 0 ? <p className={`${panel} p-4 ${muted}`}>{search.trim() ? 'Keine Kurse entsprechen deiner Suche.' : 'Derzeit sind keine veröffentlichten Kurse verfügbar.'}</p> : (
                       <div className={`${panel} academy-course-list divide-y divide-slate-200 dark:divide-slate-800`}>
                         {filteredCourses.map(entry => {
                           const participation = ownCourseParticipationByCourse.get(entry.master.id);
@@ -516,7 +516,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Keine Veröffentlichung'}</p>
                                 {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                 <h4 className="font-medium text-slate-900 dark:text-white">{entry.version?.title || entry.master.code}</h4>
-                                <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Kursversion.'}</p>
+                                <p className={`mt-1 ${muted}`}>{entry.version ? (entry.version.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Noch keine veröffentlichte Kursversion.'}</p>
                                 <p className="academy-course-status mt-2 text-xs text-slate-600 dark:text-slate-300">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
                               </div>
                               <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openCourse(entry)}>Kurs ansehen</button>
@@ -540,6 +540,26 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               </header>
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
+                {courseDetail.version.learningObjectives.length > 0 && (
+                  <section className={`${panel} academy-course-panel p-4 space-y-3`}>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
+                    <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
+                      {courseDetail.version.learningObjectives.map(objective => <li key={objective.id}>{objective.description}</li>)}
+                    </ul>
+                  </section>
+                )}
+                {courseDetail.version.chapters.length > 0 && (
+                  <section className={`${panel} academy-course-panel p-4 space-y-3`}>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3>
+                    {courseDetail.version.chapters.slice().sort((a, b) => a.order - b.order).map(chapter => (
+                      <div key={chapter.id} className="border-t border-slate-200 pt-3 first:border-t-0 first:pt-0 dark:border-slate-800">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">{chapter.title}</p>
+                        {chapter.description && <p className={muted}>{chapter.description}</p>}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{chapter.required ? 'Erforderliches Kapitel' : 'Optionales Kapitel'}</p>
+                      </div>
+                    ))}
+                  </section>
+                )}
                 <div className={`${panel} academy-course-panel p-4 space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-2">
                     <span className="text-sm font-semibold">{statusLabel(courseDetail.participation.status)}</span>
