@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Lernbibliothekskorrektur #243 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247 und #248 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #243 (Merge-Commit `5e146dafa4fc389b2ac46c607cda61871e798548`).
+**Aktueller Basisstand:** `main` nach PR #248 (Merge-Commit `39345ec1179ec41a2d03308aa102572783825150`; PR #246 `6552dc0f5ac527c5da87f900b6ef0b720e694969`, PR #247 `007ce82f99f55d7e9a3be67a056d24c5afa13d3e`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1035,3 +1035,30 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Reader-/Notiz-End-to-End-Verhalten: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus.
 - Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
 - Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
+
+
+## 12.11.2026 – Academy-Autonomie, drei Fehlerkorrekturen und Unterseiten-Redesign
+
+### Arbeits- und Merge-Berechtigung
+
+- Der Projektinhaber hat ChatGPT am 12.11.2026 ausdrücklich zur eigenständigen Arbeit innerhalb der gesamten Academy autorisiert: Recherche, Bestandsaufnahme, UX-/Designüberarbeitung, Implementierung, Tests, Dokumentation, PR-Erstellung, Review und Merge.
+- Die frühere Freigabe nur für das Academy-Redesign wurde damit erweitert. Der genaue Geltungsbereich (Academy-Komponenten, Academy-spezifische Libraries/Typen, API/Domain/Repository/Tests und Academy-Dokumentation), Ausschlüsse (portalweite/andere Module, direkte `main`-Commits, Force-Push, kostenpflichtige Dienste) und Merge-Gates sind in `DECISIONS.md`, `AGENTS.md` und `CONTRIBUTOR_ROLES.md` verbindlich dokumentiert.
+- Academy-PRs dürfen ohne erneute Einzelbestätigung gemergt werden, wenn Diff/Scope, Sicherheit, Regressionen und erforderliche CI-Prüfungen bestanden sind. Kritische Auth-/Berechtigungs-/Datenmigrationsthemen und Auswirkungen außerhalb der Academy benötigen unabhängiges Review.
+
+### Fehlerkorrekturen in main
+
+| PR | Ergebnis | Merge-Commit |
+|---|---|---|
+| #246 | Taxonomielisten nach Bearbeitungskonflikten aktualisieren | `6552dc0f5ac527c5da87f900b6ef0b720e694969` |
+| #247 | Veröffentlichte Materialversion sofort in der Versionshistorie anzeigen | `007ce82f99f55d7e9a3be67a056d24c5afa13d3e` |
+| #248 | Ausstehenden Autosave beim bestätigten Verwerfen abbrechen | `39345ec1179ec41a2d03308aa102572783825150` |
+
+- Für alle drei PRs waren GitHub Actions TypeScript-/Produktionsbuild-/Testjobs und PR-Vorlagenprüfungen erfolgreich. Die optionalen Render-Deploy-Hooks wurden übersprungen. Keine manuelle Browser-/Screenreader-/Live-Firestore-Abnahme und kein verifiziertes Render-Deployment durch diese Läufe.
+
+### Neues Unterseiten-Redesign-Audit
+
+- Der aktuelle Code der fünf Hauptbereiche und der tieferen Verwaltungs-/Reader-/Prüfungsansichten wurde erneut gegen die bestehende Spezifikation geprüft.
+- Erste dokumentierte Ansatzpunkte: konsistente Seitenköpfe und Rückkehrnavigation; klare responsive Darstellung der fünf Hauptbereiche; weniger konkurrierende sekundäre Navigation; klare Trennung von Teilnehmer- und Verwaltungsaufgaben; einheitliche Katalog-/Detail-/Editor-Muster; lesefokussierter Reader; ruhiger persönlicher Notizbereich; fokussierte Prüfungs- und Examiner-Arbeitsflächen.
+- Die fünf Academy-Kacheln, ihre Illustrationen/Farben, die horizontale Hauptnavigation, bestehende Funktionen und alle fachlichen Status-/Berechtigungs-/Datenschutzregeln bleiben erhalten.
+- Recherchegrundlage und vollständige Seitenkonzepte stehen in `ACADEMY-SUBPAGE-REDESIGN.md`; die dortigen Designvorschläge sind keine neuen fachlichen Funktionen.
+- Nächster Schritt: die Seitenkonzepte mit den tatsächlichen Komponenten/Interaktionen abgleichen, ein konsistentes wiederverwendbares Academy-Seitenmuster entwickeln und die Unterseiten schrittweise auf eigenen Branches umsetzen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separates Qualitäts-Gate.

@@ -12,6 +12,8 @@ Der Projektinhaber hat ChatGPT die eigenständige Ausarbeitung objektiv begründ
 
 Prägende, nicht objektiv entscheidbare Grundsatzfragen – insbesondere visuelle Identität, grundlegende Stilrichtung, starke Farb-/Formensprache oder konzeptionelle Änderungen – werden vor einer Festlegung erneut mit dem Projektinhaber abgestimmt. Bereits bestätigte Grundrichtungen müssen nicht erneut grundsätzlich zur Wahl gestellt werden; ihre konkrete Ausarbeitung darf aber nicht stillschweigend zu einer anderen Identität führen.
 
+**Erweiterung der Freigabe vom 12.11.2026:** Der Projektinhaber hat ausdrücklich beauftragt, das Design sämtlicher noch nicht abschließend überarbeiteter Academy-Unterseiten gründlich neu zu durchdenken und innerhalb der bestätigten Academy-Identität eigenständig anzupassen. ChatGPT muss daher nicht für jede einzelne Layout-, Hierarchie-, Kompositions-, Komponenten- oder Interaktionsdarstellung erneut um Zustimmung bitten. Eigenständige Anpassungen sind zulässig, solange Kachelstartseite, fünfteilige Hauptnavigation, Bereichsfarben, matte blaue Wellenform, bestätigte Informationsarchitektur und sämtliche fachlichen Schutzregeln erhalten bleiben. Eine erneute Abstimmung ist nur erforderlich, wenn eine Änderung diese bestätigte Identität oder Navigation grundsätzlich ersetzt, neue fachliche Funktionen/Status/Berechtigungen einführt oder den Geltungsbereich auf andere Portalmodule ausweitet.
+
 ## 2. Unveränderliche Grundlagen und Schutzgrenzen
 
 - Das Redesign betrifft langfristig das gesamte RCPD-Portal; die endgültige globale Portalgestaltung ist noch nicht beschlossen.
@@ -386,3 +388,13 @@ Bei der Überarbeitung jedes Untermoduls wird explizit geprüft:
 - Bleiben Tastaturfokus, Kontrast, responsive Darstellung und Dark Mode erhalten?
 
 Diese Regeln ändern weder Funktionen noch Berechtigungen, Datenmodelle oder fachliche Statuslogik.
+
+## 25. Vollständige Unterseitenprüfung und Redesign-Konzept (12.11.2026)
+
+Die eigenständige Recherche und Neukonzeption der internen Academy-Unterseiten ist in [ACADEMY-SUBPAGE-REDESIGN.md](./ACADEMY-SUBPAGE-REDESIGN.md) dokumentiert. Sie umfasst Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner, Meine Notizen sowie gemeinsame Seitenmuster und Accessibility-Anforderungen.
+
+Die neue Ausarbeitung verändert nicht die bestätigte visuelle Identität: Kachelstartseite und SVG-Illustrationen bleiben unverändert; die horizontale Fünf-Bereiche-Navigation, Bereichsfarben, matte blaue Wellenform und freundliche Lernplattform-Anmutung bleiben erhalten. Neu bewertet werden die Komposition der inneren Seiten, die Hierarchie von Teilnehmer- und Verwaltungsaufgaben, sekundäre Navigation, responsive Darstellung sowie Katalog-/Detail-/Editor-/Reader-Muster.
+
+Die Recherche stützt sich u. a. auf Home Office Design System, DWP Design System, Nielsen Norman Group Progressive Disclosure, W3C WCAG 2.2, WAI-ARIA APG und GOV.UK Service Design Patterns. Die Quellen und die konkrete Übertragung auf RCPD sind in der Unterseitenspezifikation einzeln dokumentiert.
+
+Die Umsetzungsreihenfolge und offenen technischen Prüfungen sind dort ausgewiesen. Bestehende Fachregeln, Datenmodelle, Berechtigungen, private Notizen, Prüfungsabläufe und Versionierung bleiben Schutzgrenzen. Die visuelle Neukonzeption ist innerhalb der am 12.11.2026 erweiterten Academy-Arbeitsfreigabe zur eigenständigen Umsetzung freigegeben; neue fachliche Funktionen oder portalweite Änderungen sind davon nicht umfasst.

@@ -61,3 +61,7 @@ Das ab 06.11.2026 beschlossene endproduktorientierte iterative Vorgehen ist in [
 ## Ergänzung vom 11.11.2026 – Visuelle Gestaltungsphase
 
 Der aktuelle visuelle Arbeitsentwurf ist in [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md) dokumentiert. Er ergänzt die bestehende Academy-Spezifikation und das Gesamtportal-Redesign, ohne frühere Beschlüsse zu ersetzen. Objektive UX-/Accessibility-Details werden eigenständig begründet; subjektive Grundsatzentscheidungen bleiben abstimmungspflichtig. Die Academy-Kachel-Startseite und die beschlossene Informationsarchitektur bleiben unverändert.
+
+## Ergänzung vom 12.11.2026 – Academy-Arbeits- und Merge-Ermächtigung sowie Unterseiten-Redesign
+
+Der Projektinhaber hat ChatGPT ausdrücklich zur eigenständigen Umsetzung, Prüfung, Dokumentation und zum Merge Academy-bezogener PRs ermächtigt. Der genaue Geltungsbereich und die Schutzgrenzen stehen in [DECISIONS.md](./DECISIONS.md) sowie `AGENTS.md` und `CONTRIBUTOR_ROLES.md`. Die Ermächtigung gilt nicht für portalweite oder andere Moduländerungen. Die neue [ACADEMY-SUBPAGE-REDESIGN.md](./ACADEMY-SUBPAGE-REDESIGN.md) dokumentiert den recherchierten Bestandsaudit und die konzeptionelle Überarbeitung aller Academy-Unterseiten. Die fünf Kachel-Einstiege und die horizontale Fünf-Bereiche-Navigation bleiben verbindlich.
