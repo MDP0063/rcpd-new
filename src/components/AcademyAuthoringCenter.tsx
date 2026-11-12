@@ -417,7 +417,8 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                   <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 dark:text-white">{entry.draft?.title || entry.version?.title || entry.master.code}</p>
-                      <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      {/* Labeled key-value pairs remain scannable when metadata wraps on narrow screens. */}
+                       <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                          <div className="flex flex-wrap gap-x-1"><dt className="text-slate-500 dark:text-slate-400">Kennung</dt><dd className="font-mono text-slate-700 dark:text-slate-300">{entry.master.code}</dd></div>
                          <div className="flex flex-wrap gap-x-1"><dt className="text-slate-500 dark:text-slate-400">Veröffentlichung</dt><dd className="text-slate-700 dark:text-slate-300">{statusName(entry.master.publicationStatus)}</dd></div>
                          <div className="flex flex-wrap gap-x-1"><dt className="text-slate-500 dark:text-slate-400">Version</dt><dd className="text-slate-700 dark:text-slate-300">{entry.master.latestVersionNumber > 0 ? 'v' + entry.master.latestVersionNumber : 'Keine veröffentlichte Version'}</dd></div>
