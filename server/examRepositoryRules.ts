@@ -259,6 +259,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           typeof uid === 'string' && uid.trim() && uid.length <= 128 && recipients.indexOf(uid) === index
         );
       if (
+        (existing.reviewClaim !== null && existing.reviewClaim !== undefined) ||
         !isDeepStrictEqual(stripHistory(existing), stripHistory(next)) ||
         !validQuestionIds || !validFeedback || !validPreviousGrades || !validRecipients ||
         !revisionEvent || Object.keys(revisionEvent).sort().join(',') !==
