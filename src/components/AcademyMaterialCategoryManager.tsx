@@ -211,6 +211,11 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
         </p>
       </header>
 
+      <div className={loadError ? "space-y-3" : "sr-only"}>
+        <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+        {loadError ? <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button> : null}
+      </div>
+
       <div className="academy-material-taxonomy-layout">
         {formOpen ? (
         <form onSubmit={save} className="academy-material-taxonomy-form rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
@@ -279,10 +284,6 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             <input id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
           </div>
 
-          <div className={loadError ? "space-y-3" : "sr-only"}>
-            <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
-            {loadError ? <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button> : null}
-          </div>
           {loading ? (
             <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Kategorien werden geladen …</p>
           ) : loadError ? null : visibleCategories.length === 0 ? (
