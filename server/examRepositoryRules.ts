@@ -271,7 +271,8 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         !releaseStateValid ||
         !revisionEvent ||
         Object.keys(revisionEvent).sort().join(',') !==
-          'action,actorUid,atIso,feedback,notificationRequired,previousUid,questionIds,reason,recipientUids' ||
+          'action,actorUid,atIso,feedback,notificationRequired,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
+        !Number.isSafeInteger(revisionEvent.revisionRequestIndex) || revisionEvent.revisionRequestIndex !== previousClaimHistory.length ||
         typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
         revisionEvent.previousUid !== existing.reviewedByUid ||
         typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 ||
