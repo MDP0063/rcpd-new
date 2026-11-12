@@ -870,8 +870,10 @@ export async function requestExamReviewRevision(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
-    if (typeof attempt.reviewedByUid !== 'string' || !attempt.reviewedByUid.trim() ||
-        typeof attempt.reviewedAtIso !== 'string' || !attempt.reviewedAtIso.trim()) {
+    if ((attempt.reviewClaim !== null && attempt.reviewClaim !== undefined) ||
+        typeof attempt.reviewedByUid !== 'string' || !attempt.reviewedByUid.trim() ||
+        typeof attempt.reviewedAtIso !== 'string' || !attempt.reviewedAtIso.trim() ||
+        Number.isNaN(Date.parse(attempt.reviewedAtIso))) {
       throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
     }
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
