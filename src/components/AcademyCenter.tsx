@@ -961,7 +961,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               ) : (
                 <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
 {sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
-<div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
+<div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
 <button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); } else { setActiveModuleId(null); setActiveVersionedMaterialId(entry.id); } setIsLibraryNavigationOpen(true); }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
 </article>)}
 </div>
