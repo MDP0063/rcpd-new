@@ -625,14 +625,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     );
   };
 
-  const captureLibraryTextAnchor = (event: React.MouseEvent<HTMLElement>, kind: 'markdown' | 'code') => {
-    setSelectedLibraryAnchor(captureTextAnchorFromSelection(event.currentTarget, kind));
+  const captureLibraryTextAnchor = (root: HTMLElement, kind: 'markdown' | 'code') => {
+    setSelectedLibraryAnchor(captureTextAnchorFromSelection(root, kind));
   };
   const jumpToLibraryTextAnchor = (anchor: AcademyPrivateNoteTextAnchor): 'resolved' | 'missing' | 'ambiguous' =>
     jumpToTextAnchor(anchor.kind === 'markdown' ? libraryMarkdownContentRef.current : libraryCodeContentRef.current, anchor);
 
   const renderVersionedMaterialMarkdown = (markdown: string) => (
-    <article ref={libraryMarkdownContentRef} onMouseUp={event => captureLibraryTextAnchor(event, 'markdown')} className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
+    <article ref={libraryMarkdownContentRef} onMouseUp={event => captureLibraryTextAnchor(event.currentTarget, 'markdown')} onTouchEnd={event => captureLibraryTextAnchor(event.currentTarget, 'markdown')} className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
@@ -1001,7 +1001,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
 {sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
 <div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
-<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); } else { setActiveModuleId(null); setActiveVersionedMaterialId(entry.id); } setIsLibraryNavigationOpen(true); }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
+<button type="button" onClick={() => { setSelectedLibraryAnchor(null); if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); } else { setActiveModuleId(null); setActiveVersionedMaterialId(entry.id); } setIsLibraryNavigationOpen(true); }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
 </article>)}
 </div>
               )}
@@ -1021,6 +1021,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           ? currentModule?.id === entry.id
                           : activeVersionedMaterialId === entry.id;
                         return <button key={entry.kind + ':' + entry.id} type="button" onClick={() => {
+                          setSelectedLibraryAnchor(null);
                           if (entry.kind === 'legacy') {
                             setActiveVersionedMaterialId(null);
                             setActiveModuleId(entry.id);
@@ -1058,7 +1059,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {currentVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {currentVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                          <button type="button" onClick={() => { setSelectedLibraryAnchor(null); setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                             {isLibraryNavigationOpen ? 'Navigation ausblenden' : 'Materialnavigation anzeigen'}
                           </button>
@@ -1070,7 +1071,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         : (
                           <div className="space-y-2">
                             <p className="text-xs font-mono text-slate-500 dark:text-slate-400">QUELLCODE · WIRD NICHT AUSGEFÜHRT</p>
-                            <pre ref={libraryCodeContentRef} onMouseUp={event => captureLibraryTextAnchor(event, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
+                            <pre ref={libraryCodeContentRef} onMouseUp={event => captureLibraryTextAnchor(event.currentTarget, 'code')} onTouchEnd={event => captureLibraryTextAnchor(event.currentTarget, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
                           </div>
                         )}
                       <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} selectedAnchor={selectedLibraryAnchor} onJumpToAnchor={jumpToLibraryTextAnchor} />
@@ -1084,7 +1085,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           Erneut versuchen
                         </button>
                       )}
-                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                      <button type="button" onClick={() => { setSelectedLibraryAnchor(null); setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                     </div>
                   )
                 ) : currentModule && (
