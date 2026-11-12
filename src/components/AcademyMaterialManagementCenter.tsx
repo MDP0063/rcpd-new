@@ -504,6 +504,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               </p>
             </div>
 
+            <div className="academy-material-form-section"><h4>Grunddaten und Zuordnung</h4><p>Lege fest, wie das Material heißt, eingeordnet und welchem Kurs es zugeordnet wird.</p></div>
             <div className="academy-material-form-fields grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-title" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Titel <span className="text-rose-600">*</span></label>
@@ -571,6 +572,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                   rows={2} maxLength={2000} disabled={busy || editingMaster?.publicationStatus === 'archived'} />
                 {errors.description && <p className="text-xs text-rose-700 dark:text-rose-300">{errors.description}</p>}
               </div>
+              <div className="academy-material-form-section md:col-span-2"><h4>Inhalt und Darstellung</h4><p>Wähle das Format und pflege den eigentlichen Lerninhalt. Die Vorschau dient nur der Kontrolle und führt keinen Code aus.</p></div>
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-format" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Inhaltsformat <span className="text-rose-600">*</span></label>
                 <select id="academy-material-format" className={field} value={contentFormat}
