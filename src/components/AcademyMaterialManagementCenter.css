@@ -250,3 +250,54 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Materialverwaltung: calm administrative workspace and consistent controls. */
+.academy-material-management {
+  --material-ink:#26384d;
+  --material-muted:#65758a;
+  --material-line:#dce3eb;
+}
+.academy-material-management-heading {
+  padding:1.2rem 1.35rem;
+  border:1px solid #dce3eb;
+  border-radius:.85rem;
+  background:linear-gradient(145deg,#fff,#f6f8fa);
+}
+.academy-material-management-heading h2 { color:#26384d; font-size:1.35rem; font-weight:750; letter-spacing:-.02em; }
+.academy-material-management-workspace { align-items:start; }
+.academy-material-management .academy-material-list,
+.academy-material-management .academy-material-form,
+.academy-material-management .academy-material-meta,
+.academy-material-management .academy-material-current-version {
+  border-color:#dce3eb;
+  border-radius:.85rem;
+  box-shadow:0 1px 2px rgba(31,47,65,.035);
+}
+.academy-material-management .academy-material-list { padding:1.15rem; }
+.academy-material-management .academy-material-list-button { padding:.85rem; border:1px solid transparent; border-radius:.6rem; }
+.academy-material-management .academy-material-list-button[aria-pressed="true"] { border-color:#cbd5df; background:#f2f5f8; }
+.academy-material-management .academy-material-form { padding:clamp(1.1rem,2.5vw,1.75rem); }
+.academy-material-management .academy-material-form h3 { font-size:1.15rem; letter-spacing:-.015em; }
+.academy-material-management input:focus-visible,
+.academy-material-management textarea:focus-visible,
+.academy-material-management select:focus-visible,
+.academy-material-management button:focus-visible { outline:3px solid #526b83; outline-offset:3px; }
+.academy-material-management .academy-material-form-actions { padding-top:1rem; border-top:1px solid #e5eaf0; }
+.academy-material-management .academy-material-form-actions button { min-height:2.65rem; border-radius:.55rem; padding:.65rem .95rem; font-weight:650; box-shadow:none; }
+.academy-material-management .academy-material-form-actions button[type="submit"] { background:#526b83; color:#fff; }
+.academy-material-management .academy-material-form-actions button[type="submit"]:hover { background:#405970; }
+.academy-material-management .academy-material-form-actions button:not([type="submit"]) { border-radius:.55rem; }
+.dark .academy-material-management-heading { border-color:#354355; background:linear-gradient(145deg,#1c2939,#202d3d); }
+.dark .academy-material-management-heading h2 { color:#e6edf5; }
+.dark .academy-material-management .academy-material-list,
+.dark .academy-material-management .academy-material-form,
+.dark .academy-material-management .academy-material-meta,
+.dark .academy-material-management .academy-material-current-version { border-color:#354355; }
+.dark .academy-material-management .academy-material-list-button[aria-pressed="true"] { border-color:#53677f; background:#29384a; }
+.dark .academy-material-management .academy-material-form-actions { border-color:#354355; }
+.dark .academy-material-management .academy-material-form-actions button[type="submit"] { background:#526b83; color:#fff; }
+@media(max-width:900px) {
+  .academy-material-management-workspace { grid-template-columns:minmax(0,1fr) !important; }
+  .academy-material-management .academy-material-list { max-height:28rem; overflow:auto; }
+}
