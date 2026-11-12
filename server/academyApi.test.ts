@@ -699,6 +699,14 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const retiredExampleIds = ['mod_default_sop01', 'mod_default_pc102'];
     const stateAfterRetirement = await request('/api/portal/state?uid=academy-admin', admin);
     assert.equal(stateAfterRetirement.status, 200, JSON.stringify(stateAfterRetirement.body));
+    assert.equal(
+      stateAfterRetirement.body!.recentPublicActivity.some((item: { title: string }) =>
+        item.title.includes('Streifendienst, Eigensicherung & Funkdisziplin') ||
+        item.title.includes('California Penal Code & Eingriffsrecht im Vollzugsdienst')
+      ),
+      false,
+      'retired sample materials must not reappear in the public activity feed'
+    );
     for (const retiredId of retiredExampleIds) {
       assert.equal(
         stateAfterRetirement.body!.modules.some((module: { id: string }) => module.id === retiredId),
