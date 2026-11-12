@@ -2,7 +2,7 @@
 
 **Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247 und #248 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #248 (Merge-Commit `39345ec1179ec41a2d03308aa102572783825150`; PR #246 `6552dc0f5ac527c5da87f900b6ef0b720e694969`, PR #247 `007ce82f99f55d7e9a3be67a056d24c5afa13d3e`).
+**Aktueller Basisstand:** `main` nach PR #249 (Merge-Commit `749719e8a86abe41b8ef41011fb715250b2f533c`; enthält die dokumentierte Academy-Autonomie und den vollständigen Unterseiten-Redesign-Audit). Die Fehlerkorrekturen #246–#248 sind ebenfalls enthalten.
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1062,3 +1062,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Die fünf Academy-Kacheln, ihre Illustrationen/Farben, die horizontale Hauptnavigation, bestehende Funktionen und alle fachlichen Status-/Berechtigungs-/Datenschutzregeln bleiben erhalten.
 - Recherchegrundlage und vollständige Seitenkonzepte stehen in `ACADEMY-SUBPAGE-REDESIGN.md`; die dortigen Designvorschläge sind keine neuen fachlichen Funktionen.
 - Nächster Schritt: die Seitenkonzepte mit den tatsächlichen Komponenten/Interaktionen abgleichen, ein konsistentes wiederverwendbares Academy-Seitenmuster entwickeln und die Unterseiten schrittweise auf eigenen Branches umsetzen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separates Qualitäts-Gate.
+
+### PR #250 – Meine Notizen als fokussierter Arbeitsbereich (12.11.2026)
+
+- PR #250 auf Branch `redesign/academy-notes-focused-editor` gliedert den Notizbereich in eine eigenständige Übersicht und einen fokussierten Editor statt Liste und Formular gleichzeitig anzuzeigen.
+- Quellenverknüpfungen und deren Status bleiben während der Bearbeitung sichtbar. Neue Notizen/Lesezeichen entstehen weiterhin ausschließlich im Reader; keine neue Erstellungsfunktion.
+- Speichern ist visuell die Primäraktion, Verwerfen sekundär und Löschen destruktiv gekennzeichnet. Leerbestand und Suchtrefferlosigkeit erhalten getrennte Texte.
+- Ungespeicherte Änderungen und laufende Speicheraktionen lösen beim Verlassen über Academy-Hauptnavigation, Kachel-Rückweg oder Examiner-Deep-Link eine Bestätigung aus. Während eines laufenden Speichervorgangs sind Zurück/Verwerfen gesperrt.
+- Keine Änderung an API, Datenmodell, Revision, Owner-Isolation, Berechtigungen oder Quellenbindung.
+- PR #250 ist offen; TypeScript-/Produktionsbuild-/Test- und PR-Vorlagenprüfungen stehen für den aktuellen Head noch aus. Manuelle Browser-/Screenreader-Abnahme bleibt offen.

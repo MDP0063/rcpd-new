@@ -404,3 +404,106 @@
   .academy-learning-center--courses *,
   .academy-learning-center--notes * { scroll-behavior: auto; }
 }
+
+
+/* Private notes use a focused list-to-editor flow; edit controls have explicit action hierarchy. */
+.academy-notes-eyebrow {
+  color: #287a45;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+.academy-notes-editor-view {
+  width: 100%;
+  max-width: 58rem;
+  margin-inline: auto;
+}
+.academy-notes-editor-heading {
+  padding: 0.25rem 0 0.9rem;
+  border-bottom: 1px solid #dce9df;
+}
+.academy-note-editor {
+  padding: clamp(1rem, 2.4vw, 1.75rem) !important;
+}
+.academy-note-editor-actions {
+  margin-top: 0.25rem;
+}
+.academy-note-editor-actions .academy-note-save {
+  min-width: 12rem;
+  border: 1px solid #287a45 !important;
+  background: #287a45 !important;
+  color: #fff !important;
+}
+.academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
+  border-color: #1e6036 !important;
+  background: #1e6036 !important;
+}
+.academy-note-editor-actions .academy-note-cancel {
+  border: 1px solid #cbd5cf !important;
+  background: #fff !important;
+  color: #46564b !important;
+}
+.academy-note-editor-actions .academy-note-cancel:hover {
+  border-color: #aabbb0 !important;
+  background: #f5f8f5 !important;
+}
+.academy-note-card .academy-note-delete {
+  border: 1px solid #e5c9c9 !important;
+  background: #fff !important;
+  color: #a12f2f !important;
+}
+.academy-note-card .academy-note-delete:hover:not(:disabled) {
+  border-color: #d99c9c !important;
+  background: #fff5f5 !important;
+}
+.academy-notes-empty {
+  min-height: 8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.academy-notes-empty h3 {
+  color: #264a32;
+}
+.dark .academy-notes-eyebrow { color: #8ac49a; }
+.dark .academy-notes-editor-heading { border-color: #34513b; }
+.dark .academy-note-editor-actions .academy-note-save {
+  border-color: #398451 !important;
+  background: #398451 !important;
+  color: #fff !important;
+}
+.dark .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
+  border-color: #4b9b64 !important;
+  background: #4b9b64 !important;
+}
+.dark .academy-note-editor-actions .academy-note-cancel {
+  border-color: #4d6653 !important;
+  background: #1c3322 !important;
+  color: #d3e7d7 !important;
+}
+.dark .academy-note-card .academy-note-delete {
+  border-color: #754343 !important;
+  background: #2a1c1c !important;
+  color: #f0b6b6 !important;
+}
+.dark .academy-note-card .academy-note-delete:hover:not(:disabled) {
+  border-color: #995252 !important;
+  background: #3a2222 !important;
+}
+.dark .academy-notes-empty h3 { color: #e1f0e4; }
+@media (max-width: 640px) {
+  .academy-note-editor-actions .academy-note-save { width: 100%; }
+  .academy-note-editor-actions .academy-note-cancel { width: 100%; }
+}
+
+.academy-note-source-context {
+  border-color: #dce9df !important;
+  border-radius: 0.9rem !important;
+  background: rgba(248,252,248,0.9) !important;
+}
+.academy-note-source-context h3 { color: #365a40; }
+.dark .academy-note-source-context {
+  border-color: #34513b !important;
+  background: rgba(20,39,26,0.94) !important;
+}
+.dark .academy-note-source-context h3 { color: #c7dfcb; }

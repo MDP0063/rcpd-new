@@ -398,3 +398,11 @@ Die neue Ausarbeitung verändert nicht die bestätigte visuelle Identität: Kach
 Die Recherche stützt sich u. a. auf Home Office Design System, DWP Design System, Nielsen Norman Group Progressive Disclosure, W3C WCAG 2.2, WAI-ARIA APG und GOV.UK Service Design Patterns. Die Quellen und die konkrete Übertragung auf RCPD sind in der Unterseitenspezifikation einzeln dokumentiert.
 
 Die Umsetzungsreihenfolge und offenen technischen Prüfungen sind dort ausgewiesen. Bestehende Fachregeln, Datenmodelle, Berechtigungen, private Notizen, Prüfungsabläufe und Versionierung bleiben Schutzgrenzen. Die visuelle Neukonzeption ist innerhalb der am 12.11.2026 erweiterten Academy-Arbeitsfreigabe zur eigenständigen Umsetzung freigegeben; neue fachliche Funktionen oder portalweite Änderungen sind davon nicht umfasst.
+
+## 26. Meine Notizen – fokussierter Editor (PR #250, 12.11.2026)
+
+Der Notizbereich wird als klarer Zweischritt gestaltet: Übersicht mit Suche, kompakten Einträgen und Quellenstatus; separate fokussierte Bearbeitungsansicht mit sichtbarem Quellenkontext. Speichern ist die primäre Aktion, Verwerfen sekundär und Löschen destruktiv. Die Editoransicht nutzt eine begrenzte Inhaltsbreite und eine ruhige grüne Akzentführung.
+
+Ungespeicherte Änderungen und laufende Speicheraktionen werden an die Academy-Hülle gemeldet. Ein Bereichswechsel oder der direkte Rückweg zur Kachelstartseite fragt nach, bevor nicht abgeschlossene Änderungen verlassen werden. Die Änderung lässt private Daten ausschließlich beim Eigentümer und ändert keine serverseitige Regel.
+
+**Umsetzungsstatus:** PR #250 offen; Build/Test und manuelle Browser-/Screenreader-Abnahme noch nicht abgeschlossen.

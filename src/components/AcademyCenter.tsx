@@ -78,17 +78,31 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const canAccessFinalExams = rolePermissions.canAccessFinalExams; // False for Trainee, True for Rookie/Officer/Colonel/Admin
 
   const [isAcademyHome, setIsAcademyHome] = useState(true);
+  const [hasUnsavedNoteChanges, setHasUnsavedNoteChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
+  const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?');
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
+  const processedReviewNavigationRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!reviewNavigationTarget) return;
+    if (!reviewNavigationTarget) {
+      processedReviewNavigationRef.current = null;
+      return;
+    }
+    const targetKey = `${reviewNavigationTarget.examId}:${reviewNavigationTarget.attemptId}`;
+    if (processedReviewNavigationRef.current === targetKey) return;
+    processedReviewNavigationRef.current = targetKey;
+    if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
+      onReviewNavigationConsumed?.();
+      return;
+    }
+    setHasUnsavedNoteChanges(false);
     setIsAcademyHome(false);
     setActiveTab('exam_reviews');
     setInitialReviewAttemptId(reviewNavigationTarget.attemptId);
     onReviewNavigationConsumed?.();
-  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId]);
+  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId, activeTab, hasUnsavedNoteChanges, onReviewNavigationConsumed]);
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
   const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
@@ -729,7 +743,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => { setIsAcademyHome(true); setActiveTab('overview'); }}
+            onClick={() => {
+              if (!canLeaveNotes()) return;
+              setHasUnsavedNoteChanges(false);
+              setIsAcademyHome(true);
+              setActiveTab('overview');
+            }}
             className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
             aria-label="Zur Academy-Kachelansicht zurückkehren"
           >
@@ -753,6 +772,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     : activeTab === item.id;
               return <button key={item.id} type="button"
                 onClick={() => {
+                  if (!canLeaveNotes()) return;
+                  setHasUnsavedNoteChanges(false);
                   setActiveTab(item.id);
                   if (item.id === 'exam_center') {
                     setActiveExamId(null); setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
@@ -927,7 +948,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
         </section>
       )}
-      {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} />}
+      {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} onUnsavedChangesChange={setHasUnsavedNoteChanges} />}
 
       {/* TAB 1: LEHRBÜCHER & LEHRMATERIALIEN */}
       {activeTab === 'modules' && (
