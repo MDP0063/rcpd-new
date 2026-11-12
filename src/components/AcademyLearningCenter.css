@@ -495,3 +495,15 @@
   .academy-note-editor-actions .academy-note-save { width: 100%; }
   .academy-note-editor-actions .academy-note-cancel { width: 100%; }
 }
+
+.academy-note-source-context {
+  border-color: #dce9df !important;
+  border-radius: 0.9rem !important;
+  background: rgba(248,252,248,0.9) !important;
+}
+.academy-note-source-context h3 { color: #365a40; }
+.dark .academy-note-source-context {
+  border-color: #34513b !important;
+  background: rgba(20,39,26,0.94) !important;
+}
+.dark .academy-note-source-context h3 { color: #c7dfcb; }
