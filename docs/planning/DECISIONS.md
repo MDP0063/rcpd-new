@@ -557,3 +557,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Die Bezeichnung gilt konsistent für Kataloge, Detailansichten, Fortschritt, Teilnahme, Versionen, Verwaltungslisten, Editoren, Fehlermeldungen und Bestätigungsdialoge.
 - **TECHNISCHE AUSNAHME:** Die bestehende Datenmodell-/API-Entität heißt weiterhin Program; technische Typen, Endpunkte, Felder, Variablen und persistierte IDs werden nicht umbenannt. „Programm“ ist damit ein interner technischer Begriff, kein bevorzugter UI-Begriff.
 - **SCHUTZGRENZE:** Keine Datenmigration, API-Änderung, neue Fachregel oder Änderung an Lehrgangs-/Kurslebenszyklen. Es handelt sich um eine verbindliche sprachliche und UX-konsistente Darstellung bereits bestehender Konzepte.
+
+### Präzisierung – informierte Prüfungsstartbestätigung und interne Clearance (12.11.2026)
+
+- Der erste Klick auf „Prüfung starten / fortsetzen“ darf keinen Versuch anlegen. Er öffnet die Bestätigungsstufe und prüft zunächst, ob ein aktiver Versuch für denselben Prüfung-/Kurskontext existiert.
+- Bei einem neuen Versuch zeigt die Bestätigung nur reale Regeln: ob ein Zeitlimit besteht und wann es beginnt; ob eine begrenzte Versuchszahl gilt; dass ein neuer Versuch beim verbindlichen Start gezählt/gespeichert wird; sowie die tatsächliche Fortsetzungsregel.
+- Bei einem aktiven Versuch zeigt die Bestätigung den vorhandenen Versuch und seine tatsächliche Frist. Das Fortsetzen verbraucht keinen weiteren Versuch; die bestehende Zeit läuft weiter.
+- Aktionen: „Zurück“ bricht die Bestätigung ab; „Prüfung verbindlich starten“ legt einen neuen Versuch an; „Laufenden Versuch fortsetzen“ setzt einen bereits aktiven Versuch fort.
+- timeLimitMinutes = 0 bedeutet kein Zeitlimit. maxAttempts = null oder 0 bedeutet keine feste Versuchsbeschränkung. Keine andere Folge aus einem fehlenden Wert ableiten.
+- Numerische Clearance-/Berechtigungsstufen sind interne Autorisierungsdaten. Sie werden ausschließlich serverseitig zur Filterung/Prüfung verwendet und weder im Teilnehmerkatalog noch in sichtbaren UI-Texten ausgegeben. Teilnehmer sehen nur, dass eine Prüfung für sie freigegeben ist.
