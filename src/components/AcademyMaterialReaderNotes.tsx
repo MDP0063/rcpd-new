@@ -62,6 +62,7 @@ const markdownComponents = {
 export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor, onJumpToAnchor }) => {
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notesLoaded, setNotesLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [loadRetryable, setLoadRetryable] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -165,6 +166,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setNotesLoaded(false);
     setLoadError('');
     setLoadRetryable(false);
     setNotes([]);
@@ -186,6 +188,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         const ownNotes = response.data.notes;
         for (const note of ownNotes) revisionByIdRef.current.set(note.id, note.revision ?? 1);
         setNotes(ownNotes);
+        setNotesLoaded(true);
         setLoadRetryable(false);
       })
       .catch(error => {
@@ -494,7 +497,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             ) : null}
           </div>
         ) : null}
-        {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
+        {notesLoaded && !loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
         {bookmarks.map(note => {
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
           return <div key={note.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
