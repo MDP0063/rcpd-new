@@ -729,6 +729,64 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(releaseResponse.status, 200, JSON.stringify(releaseResponse.body));
     assert.equal((await jsonRequest('/api/academy/exam-results', delegate.token)).body.results.find((item: any) => item.id === attemptToGrade.id).status, 'passed');
 
+    const revisionRequestResponse = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/request-revision`, secondReviewer.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        reason: 'Die ursprüngliche Bewertung soll unabhängig geprüft werden.',
+        feedback: [{ questionId: 'http-free-text', feedback: 'Bitte die vollständige fachliche Herleitung erneut prüfen.' }]
+      }) }
+    );
+    assert.equal(revisionRequestResponse.status, 200, JSON.stringify(revisionRequestResponse.body));
+    assert.equal((await jsonRequest('/api/academy/exam-reviews', courseReviewer.token)).body.reviews.length, 0,
+      'a submitted request must not enter the common examiner queue before supervisor approval');
+    assert.equal((await jsonRequest('/api/academy/exam-review-revision-requests', courseReviewer.token)).status, 403,
+      'course reviewers cannot read the supervisor-only revision request inbox');
+    const supervisorRequestInbox = await jsonRequest('/api/academy/exam-review-revision-requests', admin.token);
+    assert.equal(supervisorRequestInbox.status, 200, JSON.stringify(supervisorRequestInbox.body));
+    assert.equal(supervisorRequestInbox.body.requests.length, 1);
+    assert.equal(supervisorRequestInbox.body.requests[0].requestedByName, 'HttpSecondReviewer');
+    const requestNotificationState = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
+    assert.equal(requestNotificationState.body.notifications.some((item: Record<string, any>) =>
+      item.title === 'Neue Revisionsanfrage' && item.linkTarget?.attemptId === attemptToGrade.id
+    ), true, 'Admins receive an actionable notification for a pending revision request');
+    const forbiddenRevisionDecision = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/resolve-revision-request`, courseReviewer.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'accept' }) }
+    );
+    assert.equal(forbiddenRevisionDecision.status, 403,
+      'course reviewers cannot accept or reject revision requests');
+    const acceptedRevisionResponse = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/resolve-revision-request`, admin.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'accept' }) }
+    );
+    assert.equal(acceptedRevisionResponse.status, 200, JSON.stringify(acceptedRevisionResponse.body));
+    const requesterDecisionState = await jsonRequest('/api/portal/state?uid=http-second-reviewer', secondReviewer.token);
+    assert.equal(requesterDecisionState.body.notifications.some((item: Record<string, any>) =>
+      item.title === 'Revisionsanfrage angenommen' && item.linkTarget?.attemptId === attemptToGrade.id
+    ), true, 'the requester receives the supervisor decision');
+    const acceptedRevisionQueue = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
+    assert.equal(acceptedRevisionQueue.status, 200);
+    assert.equal(acceptedRevisionQueue.body.reviews.length, 1,
+      'only acceptance returns the attempt to the shared examiner queue');
+    const acceptedRevisionClaim = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/review-claim`, courseReviewer.token,
+      { method: 'POST' }
+    );
+    assert.equal(acceptedRevisionClaim.status, 200, JSON.stringify(acceptedRevisionClaim.body));
+    const acceptedRevisionGrade = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/grade`, courseReviewer.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        grades: [{ questionId: 'http-free-text', pointsEarnedMilli: 3500 }]
+      }) }
+    );
+    assert.equal(acceptedRevisionGrade.status, 200, JSON.stringify(acceptedRevisionGrade.body));
+    assert.equal(acceptedRevisionGrade.body.submission.status, 'passed');
+    const revisionReleaseResponse = await jsonRequest(
+      `/api/admin/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/release-result`, admin.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }
+    );
+    assert.equal(revisionReleaseResponse.status, 200, JSON.stringify(revisionReleaseResponse.body));
+
     const assertDelegatedProjection = (exam: Record<string, any>) => {
       assert.deepEqual(exam.questions.map((question: { id: string }) => question.id), master.questions.map(question => question.id));
       const serialized = JSON.stringify(exam);
