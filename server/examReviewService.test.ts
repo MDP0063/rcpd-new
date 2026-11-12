@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listCompletedManualReviewSummaries, requestExamReviewRevision, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listCompletedManualReviewSummaries, listPendingExamReviewRevisionRequests, requestExamReviewRevision, resolveExamReviewRevisionRequest, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -282,25 +282,57 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       ['admin', 'colonel'],
       '2026-11-05T12:12:00.000Z'
     );
-    assert.equal(revisionRequest.status, 'pending_review');
-    assert.equal(revisionRequest.reviewClaim, null);
+    assert.equal(revisionRequest.status, 'passed',
+      'requesting a revision must not put the attempt into the shared examiner queue');
     assert.equal(revisionRequest.reviewedByUid, 'grader',
-      'the original reviewer remains in the attempt until the revision is completed');
-    assert.equal(revisionRequest.reviewClaimHistory?.at(-1)?.previousReviewedAtIso, rereleasedAttempt.reviewedAtIso,
-      'the original review timestamp is retained in the revision history');
-    assert.equal(revisionRequest.resultReleaseStatus, 'pending_rerelease');
-    assert.equal(revisionRequest.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
-      'the last published participant result is retained during revision');
-    assert.equal((revisionRequest.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
-    assert.equal(revisionRequest.reviewClaimHistory?.at(-1)?.previousGrades?.[0]?.pointsEarnedMilli, 900,
-      'the prior internal grade is retained in the revision audit event');
+      'the original reviewer remains in the attempt until the revision is accepted and completed');
+    assert.equal(revisionRequest.resultReleaseStatus, 'released',
+      'the published result remains current while the request awaits a supervisor decision');
+    assert.equal(revisionRequest.reviewClaimHistory?.at(-1)?.previousReviewedAtIso, rereleasedAttempt.reviewedAtIso);
+    assert.equal((revisionRequest.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, false,
+      'a pending request must not reopen grading before supervisor approval');
+    assert.equal((await listExamReviews(repository, ['PC-101'], 'grader2')).length, 0);
+    assert.equal((await listCompletedManualReviewSummaries(repository, ['PC-101'])).length, 0,
+      'a completed review with an open revision request is hidden from the request-again list');
+    const pendingRequests = await listPendingExamReviewRevisionRequests(repository);
+    assert.equal(pendingRequests.length, 1);
+    assert.equal(pendingRequests[0].requestedByUid, 'grader2');
+    assert.equal(pendingRequests[0].feedback[0].questionId, 'text');
+    assert.equal(pendingRequests[0].previousGrades[0].pointsEarnedMilli, 900);
+    const participantWhilePending = (await listOwnExamResults(repository, 'student-1'))[0];
+    assert.equal(participantWhilePending.finalScoreBasisPoints, 9500);
+    assert.equal(participantWhilePending.reviewInProgress, false,
+      'the review is not in progress until an Admin or Colonel accepts the request');
+    await assert.rejects(requestExamReviewRevision(
+      repository, 'review-exam', 'review-attempt', 'grader3',
+      'Eine zweite Anfrage darf nicht parallel offen sein.',
+      [{ questionId: 'text', feedback: 'Bitte den zweiten Begründungsschritt erneut prüfen.' }],
+      ['admin'], '2026-11-05T12:12:01.000Z'
+    ), /EXAM_REVIEW_REVISION_ALREADY_PENDING/);
+    const revisionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+      .filter(item => item.event.action === 'revision_requested');
+    assert.deepEqual(revisionNotifications.map(item => item.recipientUid).sort(), ['admin', 'colonel']);
+    await assert.rejects(
+      resolveExamReviewRevisionRequest(repository, 'review-exam', 'review-attempt', 'admin', 'reject', '', '2026-11-05T12:12:10.000Z'),
+      /EXAM_REVIEW_REVISION_DECISION_REASON_INVALID/
+    );
+
+    const acceptedRevision = await resolveExamReviewRevisionRequest(
+      repository, 'review-exam', 'review-attempt', 'admin', 'accept', '', '2026-11-05T12:12:20.000Z'
+    );
+    assert.equal(acceptedRevision.status, 'pending_review');
+    assert.equal(acceptedRevision.resultReleaseStatus, 'pending_rerelease');
+    assert.equal(acceptedRevision.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
+      'acceptance snapshots the last released result before the new review begins');
+    assert.equal((acceptedRevision.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
+    assert.equal((await listPendingExamReviewRevisionRequests(repository)).length, 0);
     const revisionQueue = await listExamReviews(repository, ['PC-101'], 'grader2');
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
     assert.equal(revisionQueue[0].revisionRequest?.feedback[0].questionId, 'text');
-    const revisionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
-      .filter(item => item.event.action === 'revision_requested');
-    assert.deepEqual(revisionNotifications.map(item => item.recipientUid).sort(), ['admin', 'colonel']);
+    const acceptanceNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+      .filter(item => item.event.action === 'revision_accepted');
+    assert.deepEqual(acceptanceNotifications.map(item => item.recipientUid), ['grader2']);
     const revisionClaim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader2', 'Zweiter Prüfer', '2026-11-05T12:12:30.000Z');
     assert.equal(revisionClaim.reviewerUid, 'grader2');
     await gradeExamAttempt(
@@ -346,9 +378,22 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     );
     const secondRevisionIndex = secondRevision.reviewClaimHistory!.length - 1;
     assert.equal(secondRevision.reviewClaimHistory![secondRevisionIndex].revisionRequestIndex, secondRevisionIndex);
-    const secondRevisionQueue = await listExamReviews(repository, ['PC-101'], 'grader3');
-    assert.equal(secondRevisionQueue[0].revisionRequest?.reason, 'Auch die erneute Bewertung benötigt eine unabhängige Prüfung.',
-      'a later revision request remains open even if its timestamp matches an earlier request');
+    assert.equal((await listExamReviews(repository, ['PC-101'], 'grader3')).length, 0,
+      'a second revision request also waits for supervisor approval');
+    const rejectedRevision = await resolveExamReviewRevisionRequest(
+      repository, 'review-exam', 'review-attempt', 'colonel', 'reject',
+      'Die angeführten Gründe rechtfertigen keine erneute Bewertung.',
+      '2026-11-05T12:15:00.000Z'
+    );
+    assert.equal(rejectedRevision.status, 'passed');
+    assert.equal(rejectedRevision.resultReleaseStatus, 'released');
+    assert.equal(rejectedRevision.finalScoreBasisPoints, 9000);
+    assert.equal((await listPendingExamReviewRevisionRequests(repository)).length, 0);
+    assert.equal((await listCompletedManualReviewSummaries(repository, ['PC-101'])).length, 1,
+      'after rejection the unchanged completed review can be requested again if needed');
+    const rejectionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+      .filter(item => item.event.action === 'revision_rejected');
+    assert.deepEqual(rejectionNotifications.map(item => item.recipientUid), ['grader3']);
 
   } finally {
     await rm(directory, { recursive: true, force: true });
