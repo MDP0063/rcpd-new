@@ -1083,7 +1083,7 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 - Die deutschsprachige UI verwendet für die übergeordnete Ausbildungseinheit jetzt durchgehend „Lehrgang“ statt „Programm“ – im Teilnehmerkatalog, in Kurs-/Lehrgangsdetails, Fortschritt, Teilnahme, Verwaltung, Editoren, Fehlertexten und Bestätigungen.
 - Die technische Program-Entität, API, Datenfelder, Typen und internen Variablennamen bleiben unverändert. Keine Datenmigration oder Änderung der Kurs-/Lehrgangslogik.
-- PR #251 ist offen. PR-Vorlagenprüfung und TypeScript-/Produktionsbuild-/Testworkflow sind erfolgreich (455/455 Tests, 0 Fehler); optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-Abnahme steht aus.
+- PR #251 wurde am 12.11.2026 gemergt (Commit `611f701df54ecb302a4fcf84005544beee4485a1`). PR-Vorlagenprüfung und TypeScript-/Produktionsbuild-/Testworkflow waren erfolgreich (455/455 Tests, 0 Fehler); optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-Abnahme steht aus.
 
 
 ### PR #251 – Lehrgang-Terminologie und Übersichtstext (12.11.2026)
@@ -1092,4 +1092,23 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Zusätzlich wurde die Beschreibung der Academy-Übersicht korrigiert. Die Kachel verspricht nun Orientierung über Aufbau und Zusammenhang der Academy-Bereiche, nicht persönliche Fortschritts-/Nächste-Schritte-Funktionen, die die Übersichtsseite nicht bereitstellt.
 - Die technische `Program`-Entität, API, Felder, Typen, Variablen, persistierte IDs und alle Fachregeln bleiben unverändert.
 - GitHub Actions für den aktuellen PR-Head: PR-Vorlagenprüfung erfolgreich; TypeScript/Produktionsbuild/Testworkflow erfolgreich; 455 Tests bestanden, 0 fehlgeschlagen. Optionaler Render-Deploy-Hook übersprungen. Keine manuelle Browser-/Screenreader-/Live-Firestore-Abnahme.
-- PR #251 ist offen und nicht gemergt.
+- PR #251 wurde am 12.11.2026 mit Commit `611f701df54ecb302a4fcf84005544beee4485a1` gemergt.
+
+
+### PR #252 – Kursdetail-Kontext und klare Katalogzustände (12.11.2026)
+
+- Die interne Academy-Übersicht verwendet unter der globalen Academy-h1 jetzt eine h2. Damit besitzt die Seite eine klare Hauptüberschrift statt zwei gleichrangiger h1.
+- Im aktiven Kursdetail bleiben die Lernziele und Kapitel der tatsächlich gestarteten, versionierten Kursfassung sichtbar. Vorher wurden sie nur vor Kursbeginn angezeigt; nach Start waren sie nicht mehr erreichbar.
+- Katalog-Leerzustände unterscheiden nun „keine veröffentlichten Lehrgänge/Kurse vorhanden“ von „keine Treffer für die Suche“.
+- Ein vorhandener Kurs-/Lehrgangsversionseintrag ohne Zusammenfassung wird nicht mehr fälschlich als „keine veröffentlichte Version“ dargestellt; stattdessen wird die fehlende Kurzbeschreibung benannt.
+- Keine API-, Datenmodell-, Status-, Berechtigungs- oder Nachweisänderung.
+- PR #252 wurde am 12.11.2026 gemergt (Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0`). TypeScript, Produktionsbuild und 455/455 Tests waren erfolgreich; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+
+### PR #253 – Prüfungsstart absichern und interne Clearance verbergen (12.11.2026)
+
+- Die beschlossene informierte Startbestätigung ist im aktuellen Prüfungsrunner noch nicht umgesetzt gewesen. PR #253 führt vor dem Start eine Abfrage des aktiven Versuchs ein; erst die abschließende Aktion startet oder setzt fort.
+- Neuer Start: Zeitlimit beginnt nur, wenn ein Limit gesetzt ist; Versuchverbrauch wird nur entsprechend der tatsächlichen Begrenzung angezeigt. 0 und null bedeuten unbegrenzt.
+- Laufender Versuch: Fortsetzen im selben Kurskontext, kein zusätzlicher Versuch; vorhandene Frist läuft weiter.
+- Die interne numerische Clearance-Stufe wird aus dem Teilnehmerkatalog und der UI-Projektion entfernt. Die serverseitige Filterung bleibt erhalten.
+- PR #253 ist offen; CI und manuelle Browser-/Tastatur-/Screenreader-Abnahme stehen aus.
