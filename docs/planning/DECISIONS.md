@@ -568,3 +568,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - `timeLimitMinutes = 0` bedeutet kein Zeitlimit. `maxAttempts = null` oder `0` bedeutet keine feste Versuchsbeschränkung. Keine andere Folge aus einem fehlenden Wert ableiten.
 - Numerische Clearance-/Berechtigungsstufen sind interne Autorisierungsdaten. Sie werden ausschließlich serverseitig zur Filterung/Prüfung verwendet und weder im Teilnehmerkatalog noch in sichtbaren UI-Texten ausgegeben. Teilnehmer sehen nur, dass eine Prüfung für sie freigegeben ist.
 - **Umsetzungsstatus:** PR #253 am 12.11.2026 gemergt. Die öffentliche Teilnehmerprojektion enthält kein `minClearance`; die serverseitige Filterung bleibt maßgeblich.
+
+### Accessibility-Regel – Inline-Aktionspanels sind keine modalen Dialoge (12.11.2026)
+
+- Panels, die im normalen Dokumentfluss erscheinen und den restlichen Bildschirm nicht blockieren, werden als beschriftete Regionen/Abschnitte ausgezeichnet, nicht als role="dialog" aria-modal="true".
+- Beim Öffnen wird der Fokus auf die Panelüberschrift gesetzt; beim Abbrechen kehrt er zum auslösenden Button zurück.
+- Ein echtes Modal ist nur dann zulässig, wenn Hintergrundinteraktion tatsächlich blockiert wird und die vollständige Modal-Fokusführung (Einschluss, Escape-/Abbruchverhalten, Rückgabe des Fokus) umgesetzt ist.
+- Sekundärer Kontext und Historien dürfen standardmäßig eingeklappt sein, müssen aber ohne zusätzliche Navigationsebene direkt erreichbar bleiben.
