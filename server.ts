@@ -2319,10 +2319,10 @@ async function startServer() {
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       const requests = await listPendingExamReviewRevisionRequests(getExamRepository());
       const displayName = (uid: string) => state.accounts.find(account => account.uid === uid)?.publicProfile.displayName || 'Unbekannt';
-      res.json({ requests: requests.map(item => ({
+      res.json({ requests: requests.map(({ reviewedByUid, requestedByUid, ...item }) => ({
         ...item,
-        reviewedByName: displayName(item.reviewedByUid),
-        requestedByName: displayName(item.requestedByUid)
+        reviewedByName: displayName(reviewedByUid),
+        requestedByName: displayName(requestedByUid)
       })) });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
