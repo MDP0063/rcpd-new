@@ -1,7 +1,7 @@
 # Academy – vollständiges Unterseiten-Redesign und UX-Bestandsaudit
 
 **Stand:** 12.11.2026  
-**Prüfgrundlage:** main nach PR #250, einschließlich PRs #246–#248 und dem fokussierten Notizeditor aus #250; zusätzlicher Codeabgleich der Kurs-/Lehrgangs-Terminologie und Übersichtstexte auf PR-#251-Branch  
+**Prüfgrundlage:** main nach PR #253, einschließlich PRs #246–#253; zusätzlicher Codeabgleich der Teilnehmerprüfungen, Kursdetails, Notizen, Lernbibliothek und Verwaltungsansichten  
 **Status:** Recherchegestütztes Redesign-Konzept; bestehende Fachregeln bleiben verbindlich. Die vorgeschlagenen Layout-/Kompositionsmuster dürfen innerhalb der bestätigten Academy-Designfreigabe eigenständig umgesetzt werden.  
 **Geltungsbereich:** interne Academy-Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner sowie Meine Notizen.
 
@@ -269,6 +269,18 @@ GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/T
 
 ## 12. Umsetzungsprotokoll – Kursdetail und Katalogzustände (PR #252)
 
-**PR #252 – offen am 12.11.2026:** Die doppelte h1 auf der Academy-Übersicht wird behoben, indem die interne Überschrift auf h2 herabgestuft wird. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
+**PR #252 – am 12.11.2026 gemergt (Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0`):** Die doppelte h1 auf der Academy-Übersicht wird behoben, indem die interne Überschrift auf h2 herabgestuft wird. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
 
-Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweisbedingungen oder Versionierung. Build, Tests, CI und manuelle Browser-/Accessibility-Abnahme stehen für PR #252 noch aus.
+Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweisbedingungen oder Versionierung. TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung waren erfolgreich; manuelle Browser-/Accessibility-Abnahme steht noch aus.
+
+
+## 13. Umsetzungsprotokoll – Prüfungsstart und Berechtigungsprojektion (PR #253)
+
+**PR #253 – am 12.11.2026 gemergt (Commit `8df61a5d1e04df91126955aa76825c818b7bc00f`):** Der erste Klick auf „Prüfung starten / fortsetzen“ legt keinen Versuch mehr an. Der Runner fragt zunächst den aktiven Versuch für genau diesen Prüfung-/Kurskontext ab. Die Bestätigung unterscheidet einen neuen Start von der Fortsetzung eines bestehenden Versuchs.
+
+- Neuer Versuch: tatsächlicher Zeitlimitbeginn und echte Versuchslimitierung werden angezeigt; 0/null werden gemäß Datenmodell als unbegrenzt interpretiert.
+- Fortsetzung: Versuchnummer, Kurskontext, Startzeit und vorhandene Deadline werden angezeigt; kein zusätzlicher Versuch wird gezählt und die Frist wird nicht zurückgesetzt.
+- „Zurück“ schließt die Bestätigung, „Prüfung verbindlich starten“ legt erst dann einen neuen Versuch an; „Laufenden Versuch fortsetzen“ setzt den aktiven Versuch idempotent fort.
+- Numerische minClearance-Werte werden aus der öffentlichen Katalogprojektion entfernt. Die serverseitige Filterung nach Freigabestufe bleibt unverändert; sichtbare Texte sagen nur „für dich freigegeben“.
+
+Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. Der PR änderte keine Bewertungs-, Fragen-, Timer- oder Berechtigungslogik. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Browser-/Tastatur-/Screenreader-Abnahme bleibt offen.
