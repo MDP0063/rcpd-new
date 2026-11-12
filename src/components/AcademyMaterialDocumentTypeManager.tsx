@@ -160,6 +160,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     );
     if (!response.ok || !response.data) {
       onStatusToast(errorMessage(response.error));
+      await load();
       setBusy(false);
       return;
     }
