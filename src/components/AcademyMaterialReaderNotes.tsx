@@ -487,6 +487,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       return;
     }
     revisionByIdRef.current.set(latest.id, latest.revision ?? 1);
+    saveErrorsByIdRef.current.delete(latest.id);
     setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
     setTitle(latest.title || '');
     setContent(latest.content || '');
