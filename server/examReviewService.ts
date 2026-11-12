@@ -785,7 +785,7 @@ export async function listPendingExamReviewRevisionRequests(repository: ExamRepo
       }))
     });
   }
-  return results;
+  return results.sort((left, right) => right.requestedAtIso.localeCompare(left.requestedAtIso));
 }
 
 export async function requestExamReviewRevision(
