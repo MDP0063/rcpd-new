@@ -462,9 +462,7 @@ export interface ExamReviewItem {
   draftGrades: Record<string, number>;
   draftRevision: number;
   revisionRequest: {
-    requestedByUid: string;
     requestedAtIso: string;
-    previousReviewerUid: string | null;
     reason: string;
     feedback: Array<{ questionId: string; feedback: string }>;
   } | null;
@@ -516,9 +514,7 @@ export async function listExamReviews(
       ? history.some(event => event.action === 'revision_completed' && event.revisionRequestIndex === latestRevisionRequestIndex)
       : false;
     const revisionRequest = latestRevisionRequest && !revisionCompleted ? {
-      requestedByUid: latestRevisionRequest.actorUid,
       requestedAtIso: latestRevisionRequest.atIso,
-      previousReviewerUid: latestRevisionRequest.previousUid || null,
       reason: latestRevisionRequest.reason || '',
       feedback: (latestRevisionRequest.feedback || []).map(item => ({
         ...item,
@@ -1184,7 +1180,7 @@ export async function listExamParticipantReviewHistory(
       detailed,
       ...(detailed ? {
         claimHistory: claimHistory.map((event): ExamParticipantReviewHistoryEvent => {
-          const { feedback, previousGrades, nextGrades, ...baseEvent } = event;
+          const { feedback, previousGrades, nextGrades, recipientUids, notificationDeliveredTo, notificationRequired, ...baseEvent } = event;
           return {
             ...baseEvent,
             ...(Array.isArray(feedback) ? {
