@@ -20,7 +20,7 @@ Deployment: Render, automatisch bei jedem Push auf `main`. Ein Merge nach `main`
 - Nie direkt auf `main` oder `master` committen oder pushen. Kein Force-Push auf gemeinsame Branches.
 - Vor jeder Änderung einen eigenen Branch anlegen, z. B. `feature/…`, `fix/…`, `security/…`, `docs/…`, `chore/…`.
 - Ein Branch, ein Thema. Keine unabhängigen Änderungen mitnehmen, kein Umformatieren fremder Dateien.
-- Danach Branch pushen und einen Pull Request nach `.github/PULL_REQUEST_TEMPLATE.md` öffnen. Den PR nicht selbst mergen.
+- Danach Branch pushen und einen Pull Request nach `.github/PULL_REQUEST_TEMPLATE.md` öffnen. **Ausnahme Academy:** Für klar Academy-bezogene Änderungen gilt die in `docs/planning/DECISIONS.md` dokumentierte ausdrückliche Merge-Ermächtigung des Projektinhabers. ChatGPT darf solche Academy-PRs nach vollständiger Prüfung selbst mergen. Diese Ausnahme gilt nicht für direkte Commits auf `main`, nicht für allgemeine Portal-/Nicht-Academy-Änderungen und nicht zum Umgehen von Branch Protection oder erforderlichen Checks.
 - Commit-Nachrichten kurz und konkret (was und warum), auf Deutsch oder Englisch.
 
 ## Vor jedem Pull Request (zwingend)
