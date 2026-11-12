@@ -63,6 +63,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [loadRetryable, setLoadRetryable] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [selectedNoteId, setSelectedNoteId] = useState('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -164,6 +166,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     let active = true;
     setLoading(true);
     setLoadError('');
+    setLoadRetryable(false);
     setNotes([]);
     setSelectedNoteId('');
     setTitle('');
@@ -177,14 +180,19 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         if (!active) return;
         if (!response.ok || !response.data) {
           setLoadError(response.error || 'Deine privaten Notizen konnten nicht geladen werden.');
+          setLoadRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
           return;
         }
         const ownNotes = response.data.notes;
         for (const note of ownNotes) revisionByIdRef.current.set(note.id, note.revision ?? 1);
         setNotes(ownNotes);
+        setLoadRetryable(false);
       })
       .catch(error => {
-        if (active) setLoadError(error instanceof Error ? error.message : 'Deine privaten Notizen konnten nicht geladen werden.');
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : 'Deine privaten Notizen konnten nicht geladen werden.');
+          setLoadRetryable(true);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -199,7 +207,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         void persistPendingRef.current();
       }
     };
-  }, [materialId, materialVersionId]);
+  }, [materialId, materialVersionId, loadAttempt]);
 
   const draft = useMemo<NoteDraft | null>(() => selectedNote ? ({
     id: selectedNote.id,
@@ -476,7 +484,16 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           </button>
         </div>
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
-        {loadError ? <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p> : null}
+        {loadError ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p>
+            {loadRetryable ? (
+              <button type="button" className={secondary} onClick={() => setLoadAttempt(attempt => attempt + 1)} disabled={loading || savingAction}>
+                Erneut versuchen
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {!loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
         {bookmarks.map(note => {
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
