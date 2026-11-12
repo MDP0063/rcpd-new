@@ -634,6 +634,7 @@ export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewC
     nextGrades: Array<{ questionId: string; pointsEarnedMilli: number }>;
   }>;
   questions: Array<ReturnType<typeof pendingFreeTextQuestions>[number] & { pointsEarnedMilli: number }>;
+  questionSteps: Array<{ questionId: string; label: string }>;
 }
 
 function completedFreeTextQuestions(attempt: ExamAttemptRecord, version: ExamVersionRecord) {
@@ -686,7 +687,12 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
       assessmentStage: version.assessmentStage, status: attempt.status as 'passed' | 'failed',
       finalScoreBasisPoints: Number.isSafeInteger(attempt.finalScoreBasisPoints) ? Number(attempt.finalScoreBasisPoints) : null,
       reviewedAtIso: String(attempt.reviewedAtIso), reviewedByUid: String(attempt.reviewedByUid),
-      reviewCorrections: Array.isArray(attempt.reviewCorrections) ? attempt.reviewCorrections as CompletedManualReviewItem['reviewCorrections'] : [], questions
+      reviewCorrections: Array.isArray(attempt.reviewCorrections) ? attempt.reviewCorrections as CompletedManualReviewItem['reviewCorrections'] : [],
+      questions,
+      questionSteps: questions.map(question => ({
+        questionId: question.questionId,
+        label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(candidate => candidate.id === question.questionId) + 1)}`
+      }))
     });
   }
   return results;
@@ -716,19 +722,11 @@ export async function listCompletedManualReviewSummaries(
   const summaries: CompletedManualReviewSummary[] = [];
   for (const item of completed) {
     if (!allowed.has('*') && !allowed.has(item.attemptCourseCode.trim().toUpperCase())) continue;
-    const attempt = await repository.get<ExamAttemptRecord>('exam_attempts', item.id);
-    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
-    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
-    if (!version || version.examId !== item.examId) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     summaries.push({
       id: item.id, examId: item.examId, examTitle: item.examTitle, userName: item.userName,
       attemptCourseCode: item.attemptCourseCode, submittedAtIso: item.submittedAtIso,
       assessmentStage: item.assessmentStage, status: item.status, reviewedAtIso: item.reviewedAtIso,
-      reviewedByUid: item.reviewedByUid,
-      questionSteps: item.questions.map(question => ({
-        questionId: question.questionId,
-        label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(candidate => candidate.id === question.questionId) + 1)}`
-      }))
+      reviewedByUid: item.reviewedByUid, questionSteps: item.questionSteps
     });
   }
   return summaries;
