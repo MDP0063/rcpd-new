@@ -518,3 +518,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Der daraus entstehende Action Request wird ausschließlich Admins und Colonels zur Entscheidung und Bearbeitung vorgelegt. Kursprüfer erhalten dadurch keine Berechtigung, den Action Request selbst zu bearbeiten oder zu entscheiden.
 - Nach einer genehmigten Revisionsrückgabe wird derselbe Prüfungsversuch wieder in die gemeinsame Examiner-Aufgabenliste aufgenommen. Alle aktuell für den Kurs autorisierten Prüfer sind gleichberechtigt; der ursprüngliche Prüfer erhält keinen Vorrang.
 - Der ursprüngliche Bewertungsabschluss und sämtliche vorherigen Bewertungen bleiben historisch erhalten. Der Teilnehmer sieht während einer erneuten Bewertung weiterhin ausschließlich den zuletzt freigegebenen Ergebnisstand; eine neue Fassung wird erst nach erneuter Freigabe sichtbar.
+
+
+### Ergänzung vom 12.11.2026 – Entscheidung über Revisionsanträge
+
+- **BESCHLOSSEN:** Admins und Colonels entscheiden ausdrücklich über jeden eingereichten Revisionsantrag. Die Entscheidungsmöglichkeiten sind „Annehmen“ und „Ablehnen“.
+- **BESCHLOSSEN:** Bei Annahme wird derselbe Prüfungsversuch kontrolliert für eine erneute Bewertung in die gemeinsame Examiner-Aufgabenliste überführt. Es wird kein neuer Versuch angelegt.
+- **BESCHLOSSEN:** Bei Ablehnung bleibt der zuletzt freigegebene Teilnehmer-Ergebnisstand unverändert. Die Ablehnung wird mit einer nachvollziehbaren Begründung und entscheidender Person/Zeitpunkt in der Revisionshistorie festgehalten.
+- **SCHUTZGRENZE:** Ein eingereichter Antrag allein verändert weder den abgeschlossenen Prüfungsstatus noch den veröffentlichten Ergebnisstand. Erst die bestätigte Annahme durch Admin/Colonel darf den gesondert validierten Revisionsübergang auslösen.
