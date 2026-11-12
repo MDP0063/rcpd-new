@@ -315,12 +315,13 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
-    if (savingDraftIdRef.current === note.id) {
-      setAnchorNotice('Diese Notiz wird gerade gespeichert. Bitte warte kurz und wähle sie dann erneut aus.');
+    if (savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Diese Notiz wird gerade gespeichert oder aktualisiert. Bitte warte kurz und wähle sie dann erneut aus.');
       return;
     }
-    if (pendingSaveRef.current && pendingSaveRef.current.id !== note.id) {
-      setAnchorNotice('Eine vorherige Notizänderung muss zuerst gespeichert werden. Öffne die betroffene Notiz erneut, um den Speicherversuch fortzusetzen.');
+    const pendingOtherId = Array.from(pendingSavesRef.current.keys()).find(id => id !== note.id);
+    if (pendingOtherId) {
+      setAnchorNotice('Eine vorherige Notizänderung muss zuerst gespeichert oder wiederhergestellt werden. Öffne die betroffene Notiz erneut.');
       return;
     }
     if (hasUnsavedChanges && draft) {
@@ -333,13 +334,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       content: note.content || '',
       tags: note.tags
     };
-    const pendingDraft = pendingSaveRef.current?.id === note.id ? pendingSaveRef.current : null;
+    const pendingDraft = pendingSavesRef.current.get(note.id) || null;
     const selectedDraft = pendingDraft || serverDraft;
     setSelectedNoteId(note.id);
     setTitle(selectedDraft.title);
     setContent(selectedDraft.content);
     setTags(selectedDraft.tags.join(', '));
     lastSavedRef.current = serializeDraft(serverDraft);
+    lastSavedByIdRef.current.set(note.id, lastSavedRef.current);
     setSaveStatus(pendingDraft ? 'error' : 'saved');
     setSaveError(pendingDraft
       ? saveErrorsByIdRef.current.get(note.id) || 'Deine letzte Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.'
@@ -349,7 +351,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   const createNote = async () => {
     if (!notesLoaded || loading || savingAction) return;
-    if (pendingSaveRef.current) {
+    if (pendingSavesRef.current.size > 0) {
       setAnchorNotice('Speichere zuerst die vorherige Notizänderung, bevor du einen neuen Eintrag anlegst.');
       return;
     }
@@ -383,14 +385,20 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     setContent('');
     setTags('');
     lastSavedRef.current = serializeDraft({ id: note.id, title: '', content: '', tags: [] });
+    lastSavedByIdRef.current.set(note.id, lastSavedRef.current);
     setSaveStatus('saved');
     setSaveError('');
     setLoadError('');
   };
 
   const addCurrentSourceToNote = async (note: AcademyPrivateNoteDoc) => {
-    if (pendingSaveRef.current?.id === note.id || savingDraftIdRef.current === note.id) {
-      setAnchorNotice('Speichere zuerst die Änderungen dieser Notiz, bevor du eine weitere Quelle hinzufügst.');
+    if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Speichere oder lade zuerst die Änderungen dieser Notiz, bevor du eine weitere Quelle hinzufügst.');
+      return;
+    }
+    if (selectedNoteId === note.id && (hasUnsavedChanges || saveStatus !== 'saved')) {
+      if (hasUnsavedChanges && draft) queueSave(draft);
+      setAnchorNotice('Speichere zuerst die aktuellen Notizänderungen, bevor du eine weitere Quelle hinzufügst.');
       return;
     }
     const sources = noteSources(note);
@@ -450,8 +458,13 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const removeCurrentSourceFromNote = async (note: AcademyPrivateNoteDoc) => {
+    if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Speichere oder lade zuerst die Änderungen dieser Notiz, bevor du die Quelle entfernst.');
+      return;
+    }
     if (selectedNoteId === note.id && (hasUnsavedChanges || saveStatus !== 'saved')) {
       if (hasUnsavedChanges && draft) queueSave(draft);
+      setAnchorNotice('Speichere zuerst die aktuellen Notizänderungen, bevor du die Quelle entfernst.');
       return;
     }
     const sources = noteSources(note);
