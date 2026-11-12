@@ -238,6 +238,19 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(correctedAttempt?.reviewCorrections?.[0].reason, 'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.');
     assert.equal(correctedAttempt?.reviewCorrections?.[0].previousGrades[0].pointsEarnedMilli, 500);
     assert.equal(correctedAttempt?.reviewCorrections?.[0].nextGrades[0].pointsEarnedMilli, 900);
+    const correctionReviewerHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'colonel', false
+    );
+    assert.equal(correctionReviewerHistory[0].detailed, true,
+      'a reviewer who performed a correction is directly involved and may inspect that correction history');
+    assert.equal(correctionReviewerHistory[0].reviewCorrections?.[0].reason,
+      'Ursprüngliche Punktevergabe anhand der Rubrik überprüft.');
+    const unrelatedReviewerHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'unrelated-grader', false
+    );
+    assert.equal(unrelatedReviewerHistory[0].detailed, false,
+      'course authorization alone must not expose confidential correction details');
+    assert.equal('reviewCorrections' in unrelatedReviewerHistory[0], false);
     assert.equal((correctedAttempt as any)?.resultReleaseStatus, 'pending_rerelease');
     const participantDuringCorrection = (await listOwnExamResults(repository, 'student-1'))[0];
     assert.equal(participantDuringCorrection.status, 'passed',
