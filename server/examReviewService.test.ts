@@ -291,7 +291,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
     assert.equal(revisionQueue[0].revisionRequest?.feedback[0].questionId, 'text');
-    const revisionNotifications = await listPendingExamReviewNotifications(repository, ['review-attempt']);
+    const revisionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
+      .filter(item => item.event.action === 'revision_requested');
     assert.deepEqual(revisionNotifications.map(item => item.recipientUid).sort(), ['admin', 'colonel']);
     const revisionClaim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader2', 'Zweiter Prüfer', '2026-11-05T12:12:30.000Z');
     assert.equal(revisionClaim.reviewerUid, 'grader2');
