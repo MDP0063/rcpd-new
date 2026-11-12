@@ -807,6 +807,7 @@ export async function requestExamReviewRevision(
       action: 'revision_requested' as const,
       actorUid: reviewerUid,
       previousUid: attempt.reviewedByUid,
+      previousReviewedAtIso: attempt.reviewedAtIso,
       reason,
       feedback,
       previousGrades: questions.map(question => ({
