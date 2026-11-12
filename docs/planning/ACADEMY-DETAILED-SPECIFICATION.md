@@ -388,18 +388,22 @@ Das Ausblenden:
 - liefert keine zusätzliche Feedback-/Ratingfunktion;
 - soll kein komplexes Empfehlungsmodell durch Nutzerbewertungen erzeugen.
 
-Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffnen wieder erscheinen. Nur eine tatsächlich neue, eigenständige Empfehlung kann die gleiche Lernressource erneut in die persönliche Übersicht bringen. Was genau als „neue eigenständige Empfehlung“ gilt, ist noch zu konkretisieren; bloße Versions-, Fortschritts- oder Reload-Ereignisse reichen nicht.
+Eine ausgeblendete Empfehlung darf nicht sofort nach Reload oder erneutem Öffnen wieder erscheinen. Nur eine tatsächlich neue, eigenständige Empfehlung kann die gleiche Lernressource erneut in die persönliche Übersicht bringen.
+
+**Beschlossen am 11.11.2026:** Eine manuelle Empfehlung gilt als neu, wenn ein berechtigter Ausbilder oder Administrator sie ausdrücklich erneut erstellt. Eine automatische Empfehlung gilt als neu, wenn ein neuer, eigenständiger fachlicher Auslöser eintritt. Bloße Versionsänderungen, erneutes Laden/Öffnen oder Fortschrittsänderungen ohne neuen fachlichen Auslöser reichen nicht.
 
 ### 8.6 Noch offene Empfehlungsregeln
 
-Noch nicht entschieden sind:
-- präzise Kriterien für eine tatsächlich neue unabhängige Empfehlung;
-- Ablauf, Rückzug oder Ungültigkeit, wenn ein Kurs nicht mehr verfügbar oder fachlich veraltet ist;
-- Fristen und Erinnerungen;
-- Abgrenzung der Empfehlungshistorie zur Benachrichtigungshistorie;
-- Verhalten bei manueller Zurücknahme einer Empfehlung.
+Für die visuelle Überarbeitung noch nicht festgelegt und daher bewusst zurückgestellt:
+- konkrete Fristen- und Erinnerungsregeln.
 
-Diese Punkte dürfen nicht stillschweigend als bereits beschlossen behandelt werden.
+Die übrigen Empfehlungsregeln wurden am 11.11.2026 entschieden und sind nachfolgend dokumentiert.
+
+**Historienabgrenzung:** Die Empfehlungshistorie dokumentiert Erstellung, Zusammenführung, Ausblenden, Erledigung und Zurücknahme einschließlich Herkunft/Grund. Die Benachrichtigungshistorie dokumentiert Versand/Zustellung, Lesezustand und Ziel. Eine Änderung einer bestehenden Empfehlung erzeugt nicht automatisch eine neue Benachrichtigung. Bereits versendete Benachrichtigungen bleiben nachvollziehbar, wenn die Empfehlung später zurückgenommen wird.
+
+**Nichtverfügbarkeit und Veraltung:** Vorübergehende Nichtverfügbarkeit ändert den fachlichen Status nicht in „erledigt“. Die Empfehlung bleibt historisch erhalten und wird in der aktiven Übersicht mit einem verständlichen Hinweis gezeigt, sofern sie dort weiterhin sinnvoll ist; nach Wiederverfügbarkeit ist die normale Bearbeitung möglich. Bei fachlicher Veraltung oder dauerhaftem Rückzug wird sie zurückgenommen und aus der aktiven Übersicht entfernt. Grund und Historie bleiben erhalten. Ein offiziell zugeordneter Nachfolger darf nur mit nachvollziehbarer fachlicher Zuordnung als neue Empfehlung verknüpft werden.
+
+**Manuelle Zurücknahme:** Die Person, die eine manuelle Empfehlung erstellt hat, darf sie zurücknehmen; Admins dürfen jede manuelle Empfehlung zurücknehmen. Automatische Empfehlungen enden oder werden grundsätzlich durch ihre fachlichen Regeln zurückgenommen. Admins dürfen automatische Empfehlungen ausnahmsweise manuell zurücknehmen, müssen dafür einen Grund angeben. Die Zurücknahme bleibt mit Urheber/Herkunft, Zeitpunkt und Grund historisch nachvollziehbar und ist vom persönlichen Ausblenden getrennt.
 
 ## 9. Kursmeldungen und Benachrichtigungen
 
@@ -1419,3 +1423,12 @@ Die SVG-Dateien sind eigenständige lokale Ressourcen unter `src/assets/academy/
 In sämtlichen deutschsprachigen Academy-Teilnehmer- und Verwaltungsoberflächen heißt die übergeordnete Ausbildungseinheit **Lehrgang**. Die eigenständige Lerneinheit bleibt **Kurs**. Dies gilt für Kataloge, Detailansichten, Lernziele, Pflicht-/Empfehlungskurse, Fortschritt, Teilnahme, Versionen, Verwaltung, Fehlermeldungen und Bestätigungen.
 
 Die technische Entität heißt weiterhin `Program`. API-Endpunkte, technische Typen, Felder, Variablen und persistierte IDs bleiben unverändert. Die UI-Bezeichnung ist eine sprachliche Klarstellung bereits bestehender Fachlogik, keine Änderung an Datenmodell, Ablauf, Status oder Berechtigungen.
+
+
+## Ergänzung 12.11.2026 – Recherche- und Entscheidungsmodus
+
+Objektiv begründbare UX-/Accessibility-/Konsistenzdetails dürfen innerhalb bestehender Leitplanken eigenständig entschieden werden. Auch kritischere fachliche oder technische Fragen dürfen eigenständig entschieden werden, wenn zuvor geeignete Primärquellen, aktuelle Standards und belastbare Vergleichslösungen recherchiert sowie Alternativen, Risiken, Abhängigkeiten und Auswirkungen nachvollziehbar abgewogen wurden.
+
+Kritischere Entscheidungen werden nach der Analyse mit Fragestellung, Quellen, Optionen, Vor-/Nachteilen, Risiken, Empfehlung/Entscheidung, Auswirkungen und Änderungsmöglichkeiten vorgestellt. Bei größeren Design-/UX-Arbeitsschritten erfolgen gebündelte Zwischenstände.
+
+Bestehende Nutzerentscheidungen, Sicherheits-/Datenschutzgrenzen, Datenintegrität, Kostenlimit und Architektur bleiben Schutzgrenzen. Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur benötigen weiterhin vorherige Zustimmung.
