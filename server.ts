@@ -2295,8 +2295,8 @@ async function startServer() {
         getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
         req.body.reason, req.body.feedback, recipients
       );
-      recordExamWorkshopAudit(caller.uid, 'Prüfungsbewertung zur Revision zurückgegeben', req.params.id,
-        `Versuch ${req.params.attemptId} zur Revision zurückgegeben. Grund: ${String(req.body.reason).trim().slice(0, 700)}`);
+      recordExamWorkshopAudit(caller.uid, 'Revisionsanfrage gestellt', req.params.id,
+        `Versuch ${req.params.attemptId}: Revisionsanfrage an Admins und Colonels gestellt. Grund: ${String(req.body.reason).trim().slice(0, 700)}`);
       try { await deliverPendingExamReviewNotifications([updated.id]); } catch (notificationError) {
         console.error('Exam revision request notification delivery will be retried:', notificationError);
       }
