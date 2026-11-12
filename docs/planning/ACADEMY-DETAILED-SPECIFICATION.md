@@ -1012,16 +1012,18 @@ Abgeschlossene Vorgänge verschwinden aus der offenen Aufgabenliste, bleiben abe
 
 ### 14.14 Revision und erneute Bewertung
 
-Eine zurückgegebene Bewertung wird wieder in die gemeinsame Aufgabenliste aufgenommen und als „Revision“ kenntlich gemacht.
+Die Revisionsrückgabe ist ein zweistufiger Vorgang. Das Einreichen erzeugt zunächst ausschließlich eine offene Action Request an Admins und Colonels. Bis zu deren Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch wird noch nicht in die gemeinsame Prüferliste aufgenommen.
 
-- Ein neuer Claim kann erforderlich sein.
-- Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
-- Bereits gespeicherte Bewertungsschritte bleiben erhalten.
-- Alle autorisierten Prüfer sind gleichberechtigt.
+- Admin oder Colonel muss die Anfrage ausdrücklich annehmen oder begründet ablehnen. Eine Ablehnung erfordert eine nachvollziehbare Begründung.
+- Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert.
+- Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen.
+- Es erfolgt keine automatische Einzelzuweisung. Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
 - Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
+- Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, zählt während der erneuten Bewertung aber nicht als aktueller Kursabschlussnachweis. Erst die erneute Ergebnisfreigabe stellt den neuen Nachweisstand her.
+- Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
+- Bereits gespeicherte Bewertungsschritte bleiben erhalten. Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
 - Konkretes Feedback zu betroffenen Bewertungsschritten und der Grund der Revision sind erforderlich.
-- Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
-- Sämtliche Änderungen und Übergaben werden protokolliert.
+- Sämtliche Anfragen, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert. Pro Versuch ist nur eine offene Revisionsanfrage zulässig.
 
 Die Revision darf nicht dazu führen, dass die vorherige Bewertungshistorie unsichtbar wird.
 
@@ -1441,6 +1443,9 @@ Bei der Rückgabe einer abgeschlossenen manuellen Bewertung zur Revision gilt:
 2. Die Rückgabe erfordert einen nachvollziehbaren Revisionsgrund und konkretes Feedback zu den betroffenen Bewertungsschritten.
 3. Die dadurch erzeugte Action Request geht ausschließlich an Admins und Colonels. Sie wird nicht automatisch dem ursprünglichen Prüfer oder einem anderen Prüfer zur Bearbeitung zugewiesen.
 4. Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie sichtbar, erhält daraus aber weder Bearbeitungsvorrang noch eine bevorzugte Zuweisung.
-5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Nach der Entscheidung erfolgt die erneute Bewertung durch einen beliebigen aktuell kursberechtigten Prüfer gemäß den bestehenden Claim-Regeln.
+5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten.
+6. Das Einreichen startet noch keine erneute Bewertung und nimmt den Versuch noch nicht in die gemeinsame Prüferliste auf. Admin oder Colonel muss die Action Request ausdrücklich annehmen oder begründet ablehnen. Bei Ablehnung bleiben Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert.
+7. Erst nach Annahme erfolgt die Rückkehr desselben Versuchs in die gemeinsame Prüferliste. Die erneute Bewertung ist keiner einzelnen Person automatisch zugewiesen; jeder aktuell kursberechtigte Prüfer kann den Vorgang nach den bestehenden Claim-Regeln übernehmen.
+8. Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, ist bis zur erneuten Ergebnisfreigabe aber kein aktueller Kursabschlussnachweis.
 
 Diese Empfängerregel ändert weder die bestehende Kursberechtigung noch die Claim-/Reassignment-Regeln. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung als auch die Zuständigkeit der Action-Request-Empfänger durchsetzen.
