@@ -12,7 +12,8 @@
 /* Shared Academy section navigation: one clear active state, no duplicated entry tiles. */
 .academy-main-nav {
   display: grid;
-  width: 100%;
+  flex: 1 1 34rem;
+  min-width: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: stretch;
   gap: 0.35rem;
