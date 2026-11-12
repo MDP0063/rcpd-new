@@ -52,6 +52,25 @@ function latestPendingRevisionRequest(history: readonly ExamReviewClaimHistoryEn
   return resolved ? null : { event: history[index], index };
 }
 
+function revisionRequestMatchesCompletedReview(
+  attempt: ExamAttemptRecord,
+  request: ExamReviewClaimHistoryEntry
+): boolean {
+  if (attempt.reviewClaim !== null && attempt.reviewClaim !== undefined) return false;
+  if (request.previousUid !== attempt.reviewedByUid || request.previousReviewedAtIso !== attempt.reviewedAtIso) return false;
+  const questionIds = request.questionIds || [];
+  const previousGrades = request.previousGrades || [];
+  const currentGrades = Array.isArray(attempt.questionGrades) ? attempt.questionGrades as Array<Record<string, unknown>> : [];
+  return questionIds.length > 0 && previousGrades.length === questionIds.length &&
+    new Set(questionIds).size === questionIds.length &&
+    previousGrades.every(previous => questionIds.includes(previous.questionId) && currentGrades.some(current =>
+      current.questionId === previous.questionId &&
+      current.pointsEarnedMilli === previous.pointsEarnedMilli &&
+      current.maxPointsMilli === previous.maxPointsMilli &&
+      current.requiresManualReview === false
+    ));
+}
+
 async function refreshReviewClaim(
   transaction: Parameters<Parameters<ExamRepository['runTransaction']>[0]>[0],
   attemptId: string,
@@ -779,7 +798,8 @@ export async function listPendingExamReviewRevisionRequests(repository: ExamRepo
     const pending = latestPendingRevisionRequest(attempt.reviewClaimHistory || []);
     if (!pending) continue;
     if (typeof attempt.reviewedByUid !== 'string' || !attempt.reviewedByUid.trim() ||
-        typeof attempt.reviewedAtIso !== 'string' || Number.isNaN(Date.parse(attempt.reviewedAtIso))) {
+        typeof attempt.reviewedAtIso !== 'string' || Number.isNaN(Date.parse(attempt.reviewedAtIso)) ||
+        !revisionRequestMatchesCompletedReview(attempt, pending.event)) {
       throw new Error('EXAM_REVIEW_REVISION_STALE');
     }
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
@@ -914,9 +934,7 @@ export async function resolveExamReviewRevisionRequest(
     const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
     const pending = latestPendingRevisionRequest(history);
     if (!pending) throw new Error('EXAM_REVIEW_REVISION_NOT_PENDING');
-    if (pending.event.previousUid !== attempt.reviewedByUid || pending.event.previousReviewedAtIso !== attempt.reviewedAtIso) {
-      throw new Error('EXAM_REVIEW_REVISION_STALE');
-    }
+    if (!revisionRequestMatchesCompletedReview(attempt, pending.event)) throw new Error('EXAM_REVIEW_REVISION_STALE');
     if (history.length >= REVIEW_CLAIM_HISTORY_LIMIT) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_LIMIT');
 
     if (decisionInput === 'reject') {
@@ -938,12 +956,6 @@ export async function resolveExamReviewRevisionRequest(
         questions.some(question => !questionIds.includes(question.questionId))) {
       throw new Error('EXAM_REVIEW_REVISION_STALE');
     }
-    const previousGrades = pending.event.previousGrades || [];
-    if (previousGrades.length !== questionIds.length || previousGrades.some(previous => {
-      const current = questions.find(question => question.questionId === previous.questionId);
-      return !current || current.pointsEarnedMilli !== previous.pointsEarnedMilli || current.pointsMilli !== previous.maxPointsMilli;
-    })) throw new Error('EXAM_REVIEW_REVISION_STALE');
-
     let resultReleaseStatus = attempt.resultReleaseStatus;
     let publishedResultSnapshot = attempt.publishedResultSnapshot;
     if (attempt.resultReleaseStatus === 'released') {
