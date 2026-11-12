@@ -21,6 +21,26 @@ interface ReviewQuestion {
   pointsEarnedMilli?: number;
 }
 
+interface CorrectionGrade {
+  questionId: string;
+  pointsEarnedMilli: number;
+}
+
+interface ReviewCorrectionHistoryEntry {
+  reviewerUid: string;
+  reviewerName?: string;
+  atIso: string;
+  reason: string;
+  previousReviewerUid: string;
+  previousReviewedAtIso: string;
+  previousStatus: 'passed' | 'failed';
+  nextStatus: 'passed' | 'failed';
+  previousScoreBasisPoints: number | null;
+  nextScoreBasisPoints: number | null;
+  previousGrades: CorrectionGrade[];
+  nextGrades: CorrectionGrade[];
+}
+
 interface ParticipantHistoryItem {
   id: string;
   examId: string;
@@ -34,7 +54,7 @@ interface ParticipantHistoryItem {
   reviewedAtIso: string | null;
   detailed: boolean;
   claimHistory?: ClaimHistoryEvent[];
-  reviewCorrections?: Array<Record<string, unknown>>;
+  reviewCorrections?: ReviewCorrectionHistoryEntry[];
   questions?: ReviewQuestion[];
 }
 
@@ -42,6 +62,11 @@ const dateLabel = (value: string | null | undefined) => {
   if (!value || !Number.isFinite(Date.parse(value))) return 'Nicht dokumentiert';
   return new Date(value).toLocaleString('de-DE');
 };
+
+const pointsLabel = (value: number) => (value / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
+const scoreLabel = (value: number | null) => value === null
+  ? '–'
+  : `${(value / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`;
 
 const statusLabel: Record<ParticipantHistoryItem['status'], string> = {
   pending_review: 'Bewertung ausstehend',
@@ -146,11 +171,38 @@ export const ExamParticipantRecord: React.FC<{
 
           {item.detailed && item.reviewCorrections && item.reviewCorrections.length > 0 && <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
             <h5 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Nachträgliche Korrekturen</h5>
-            <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-              {item.reviewCorrections.map((correction, index) => <li key={index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
-                <p className="font-semibold">{String(correction.reason || 'Korrektur')}</p>
-                <p className="mt-1 text-slate-500">{dateLabel(String(correction.atIso || ''))} · Prüfer: {String(correction.reviewerName || 'Nicht dokumentiert')}</p>
-              </li>)}
+            <ol className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+              {item.reviewCorrections.map((correction, index) => {
+                const previousByQuestion = new Map(correction.previousGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli]));
+                const nextByQuestion = new Map(correction.nextGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli]));
+                const changedQuestionIds = [...new Set([...previousByQuestion.keys(), ...nextByQuestion.keys()])];
+                return <li key={index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                  <p className="font-semibold">{correction.reason || 'Korrektur'}</p>
+                  <p className="mt-1 text-slate-500">
+                    {dateLabel(correction.atIso)} · Prüfer: {correction.reviewerName || 'Nicht dokumentiert'}
+                  </p>
+                  <p className="mt-1">
+                    Ergebnis: {correction.previousStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({scoreLabel(correction.previousScoreBasisPoints)}) → {correction.nextStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({scoreLabel(correction.nextScoreBasisPoints)})
+                  </p>
+                  {changedQuestionIds.length > 0 && <ul className="mt-2 space-y-2 border-t border-slate-200 pt-2 dark:border-slate-800">
+                    {changedQuestionIds.map(questionId => {
+                      const questionIndex = item.questions?.findIndex(question => question.questionId === questionId) ?? -1;
+                      const question = questionIndex >= 0 ? item.questions?.[questionIndex] : undefined;
+                      const previousPoints = previousByQuestion.get(questionId);
+                      const nextPoints = nextByQuestion.get(questionId);
+                      return <li key={questionId}>
+                        <p className="font-medium text-slate-700 dark:text-slate-200">
+                          {question ? `Frage ${questionIndex + 1}: ${question.question}` : 'Bewertungsschritt'}
+                        </p>
+                        <p className="mt-0.5 text-slate-500">
+                          {previousPoints === undefined ? '–' : pointsLabel(previousPoints)} → {nextPoints === undefined ? '–' : pointsLabel(nextPoints)} Punkte
+                          {question ? ` / ${pointsLabel(question.pointsMilli)}` : ''}
+                        </p>
+                      </li>;
+                    })}
+                  </ul>}
+                </li>;
+              })}
             </ol>
           </div>}
         </article>)}
