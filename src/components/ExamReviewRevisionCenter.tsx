@@ -29,7 +29,8 @@ interface ReviewSummary {
 const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
 
 export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile }> = ({ currentUser }) => {
-  const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
+  const isSupervisor = (currentUser.role === 'admin' || currentUser.role === 'colonel') &&
+    !['pending', 'suspended', 'revoked'].includes(currentUser.whitelistStatus);
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
   const [requests, setRequests] = useState<PendingRevisionRequest[]>([]);
   const [requestLoadError, setRequestLoadError] = useState('');
