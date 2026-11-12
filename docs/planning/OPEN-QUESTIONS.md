@@ -307,3 +307,9 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - Reload, erneutes Öffnen, Versionsänderung und Fortschrittsänderung ohne neuen fachlichen Auslöser lösen keine neue Empfehlung aus.
 - Empfehlungshistorie und Benachrichtigungshistorie sind getrennt; Regeln für vorübergehende Nichtverfügbarkeit, fachliche Veraltung und manuelle Zurücknahme sind festgelegt.
 - **Weiterhin offen:** konkrete Fristen und Erinnerungsregeln.
+
+## Revisions-Action-Request – Empfängerregel nach Beschluss
+
+- **Entschieden:** Revisionsrückgaben dürfen von jeder aktuell kursberechtigten prüfenden Person ausgelöst werden; die resultierende Action Request geht ausschließlich an Admins und Colonels.
+- **Entschieden:** Der ursprüngliche Prüfer bleibt historisch sichtbar, erhält aber keinen Bearbeitungsvorrang. Es entsteht kein neuer Prüfungsversuch; Drafts und zuletzt freigegebener Ergebnis-Snapshot bleiben erhalten.
+- **Weiter offen:** Umsetzung der Revisionsrückgabe, Empfängerzustellung/Benachrichtigung und vollständige Browser-/Live-Firestore-Abnahme gemäß Academy-Spezifikation.
