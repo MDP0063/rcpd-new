@@ -2,7 +2,7 @@
 
 **Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`).  
+**Aktueller Basisstand:** `main` nach PR #215 (Merge-Commit `3bc3b50997a3a0d9499ae705239b5d277a7029d7`).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -882,3 +882,19 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - **Aktueller Audit-Befund (noch nicht umgesetzt):** Der direkte Bibliotheks-Reader rendert `AcademyMaterialReaderNotes` ohne `selectedAnchor` und `onJumpToAnchor`. Die stabile Textanker-Interaktion ist dadurch im Kurs-Reader verfügbar, aber im direkten Bibliotheks-Reader nicht angebunden. Vor einer Umsetzung wird geprüft, wie sich die bestehende Ankerlogik ohne Duplizierung und ohne Änderung der Versionsbindung wiederverwenden lässt; die fachliche Spezifikation bleibt maßgeblich.
 
 - **Nächster Prüffokus:** Reader-/Notiz-Parität zwischen Kursansicht und direkter Bibliotheksansicht; danach Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt separat offen.
+
+
+### PR #211 – Fehler-/Retry-Semantik in der Materialverwaltung (12.11.2026)
+
+- Der `role="alert"`-Container in `AcademyMaterialManagementCenter.tsx` enthält nur noch die Fehlermeldung. Der interaktive Button „Erneut versuchen“ ist ein separates Element außerhalb der Alert-Live-Region.
+- Bestehendes Retry-Verhalten, Datenabrufe, Berechtigungen, APIs und visuelle Darstellung wurden nicht verändert.
+- PR #211 wurde am 12.11.2026 gemergt (Commit `3a177d6adf704851c57500cc17f606ed6121f49a`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung waren laut GitHub Actions erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+
+### PR #215 – Gemeinsame Textanker für beide Reader (12.11.2026)
+
+- Die DOM-Helfer zum Erfassen und eindeutigen Wiederfinden von Textankern sind jetzt zentral in `src/lib/academyTextAnchors.ts` definiert und werden von Kurs-Reader und direktem Bibliotheks-Reader gemeinsam genutzt.
+- Die direkte Bibliotheksansicht übergibt nun ausgewählte Markdown-/Code-Textstellen an `AcademyMaterialReaderNotes` und kann gespeicherte Anker in der aktuell geöffneten Materialfassung wiederfinden.
+- Material-/Versionsbindung, private Notizrechte und serverseitige Materialzugriffsprüfung bleiben unverändert. Mehrknoten-Auswahl wird weiterhin abgelehnt; fehlende oder mehrdeutige Anker werden nicht automatisch angenähert.
+- PR #215 wurde am 12.11.2026 gemergt (Commit `3bc3b50997a3a0d9499ae705239b5d277a7029d7`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+
+- **Nächster Prüffokus:** Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Die manuelle Reader-/Notiz-End-to-End-Abnahme bleibt separat offen.
