@@ -41,6 +41,7 @@ import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
 import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager';
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
+import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
 
@@ -1032,6 +1033,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             <pre className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
                           </div>
                         )}
+                      <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} />
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
