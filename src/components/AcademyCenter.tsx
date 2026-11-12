@@ -80,7 +80,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [isAcademyHome, setIsAcademyHome] = useState(true);
   const [hasUnsavedNoteChanges, setHasUnsavedNoteChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
+    'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams'
   >('overview');
   const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?');
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
@@ -107,19 +107,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const canManageVersionedMaterials = canAuthorCourses || hasScopedCourseRights;
-
-  // Granular Instructor Grading Form State
-  const [gradeTargetUserUid, setGradeTargetUserUid] = useState<string>('');
-  const [gradeCourseCode, setGradeCourseCode] = useState<string>(
-    assignedCourses[0] && assignedCourses[0] !== '*' ? assignedCourses[0] : 'SOP-01'
-  );
-  const [gradeCourseTitle, setGradeCourseTitle] = useState<string>(
-    'Praxis- & Lehrgangsbewertung'
-  );
-  const [gradeScorePercent, setGradeScorePercent] = useState<number>(92);
-  const [gradeStatus, setGradeStatus] = useState<'passed' | 'completed' | 'failed'>('passed');
-  const [gradeFeedback, setGradeFeedback] = useState<string>('');
-  const [submittingGrade, setSubmittingGrade] = useState(false);
 
   const [moduleSearchQuery, setModuleSearchQuery] = useState('');
   const [moduleSortOrder, setModuleSortOrder] = useState<'relevance' | 'alphabetical' | 'updated'>('relevance');
@@ -185,46 +172,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     passed: boolean;
   } | null>(null);
   const [examExplanations, setExamExplanations] = useState<Record<string, string>>({});
-
-  // Admin / Colonel: Upload PDF / Textbook State
-  const [modTitle, setModTitle] = useState('');
-  const [modCode, setModCode] = useState('SOP-101');
-  const [modCategory, setModCategory] = useState<ModuleCategory>('SOP & Policy');
-  const [modRequiredRole, setModRequiredRole] = useState<OfficerRole>('trainee');
-  const [modEmbedType, setModEmbedType] = useState<ModuleEmbedType>('document');
-  const [modMarkdown, setModMarkdown] = useState('');
-  const [modExternalUrl, setModExternalUrl] = useState('');
-  const [modInteractiveCode, setModInteractiveCode] = useState('');
-  const [modMinutes, setModMinutes] = useState<number>(25);
-
-  // Admin / Colonel: Add Test or Final Exam as Code State
-  const [examTitle, setExamTitle] = useState('');
-  const [examModuleCode, setExamModuleCode] = useState('TEST-101');
-  const [examStage, setExamStage] = useState<AssessmentStage>('test');
-  const [examPassingScore, setExamPassingScore] = useState<number>(75);
-  const [examTimeLimit, setExamTimeLimit] = useState<number>(20);
-  const [examFormat, setExamFormat] = useState<'interactive_code' | 'structured_quiz'>('interactive_code');
-  const [examWidgetCode, setExamWidgetCode] = useState(
-    `<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8" />
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #0f172a; padding: 20px; margin: 0; }
-  .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; }
-  h3 { margin-top: 0; color: #0f172a; }
-  button { background: #0284c7; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-</style>
-</head>
-<body>
-  <div class="card">
-    <h3>Interaktives Prüfungs- / Testmodul</h3>
-    <p>Füge hier deinen gewünschten HTML/JS Prüfungs-Code oder dein interaktives Szenario ein.</p>
-  </div>
-</body>
-</html>`
-  );
-  const [examQuestionsJson, setExamQuestionsJson] = useState('[]');
 
   useEffect(() => {
     if (activeTab !== 'modules' || libraryAreaMode !== 'materials') return;
