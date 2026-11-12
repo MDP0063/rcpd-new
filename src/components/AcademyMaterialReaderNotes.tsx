@@ -484,7 +484,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || !notesLoaded || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {selectedAnchor ? 'Notiz zur Textstelle hinzufügen' : 'Notiz hinzufügen'}
           </button>
-          <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
+          <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || !notesLoaded || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {bookmarks.length ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
           </button>
         </div>
