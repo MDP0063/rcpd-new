@@ -271,7 +271,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                 {categories.filter(item => item.status === 'active').length} aktiv · {categories.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={secondaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
+            <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
           </div>
 
           <div className="space-y-1.5">
