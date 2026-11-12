@@ -223,9 +223,9 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       const strip = (document: ExamDocument) => Object.fromEntries(
         Object.entries(document).filter(([key]) => !allowedMutable.has(key))
       );
-      const questionIds = Array.isArray(revisionEvent.questionIds) ? revisionEvent.questionIds : [];
-      const feedback = Array.isArray(revisionEvent.feedback) ? revisionEvent.feedback : [];
-      const recipients = Array.isArray(revisionEvent.recipientUids) ? revisionEvent.recipientUids : [];
+      const questionIds = Array.isArray(revisionEvent?.questionIds) ? revisionEvent.questionIds : [];
+      const feedback = Array.isArray(revisionEvent?.feedback) ? revisionEvent.feedback : [];
+      const recipients = Array.isArray(revisionEvent?.recipientUids) ? revisionEvent.recipientUids : [];
       const previousGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
       const nextGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
       const validQuestionIds = questionIds.length > 0 && questionIds.length <= 50 &&
