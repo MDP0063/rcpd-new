@@ -300,6 +300,10 @@ export async function listPendingExamReviewNotifications(
     const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
     history.forEach((event, eventIndex) => {
       if (!event.notificationRequired) return;
+      if (event.action === 'revision_requested' && history.some(candidate =>
+        candidate.revisionRequestIndex === eventIndex &&
+        (candidate.action === 'revision_accepted' || candidate.action === 'revision_rejected' || candidate.action === 'revision_completed')
+      )) return;
       const recipients = event.action === 'revision_requested'
         ? (event.recipientUids || [])
         : event.action === 'transferred' || event.action === 'reassigned'
@@ -470,8 +474,12 @@ export interface ExamReviewItem {
 
 function hasPendingExamReviewNotification(attempt: ExamAttemptRecord): boolean {
   const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
-  return history.some(event => {
+  return history.some((event, eventIndex) => {
     if (!event.notificationRequired) return false;
+    if (event.action === 'revision_requested' && history.some(candidate =>
+      candidate.revisionRequestIndex === eventIndex &&
+      (candidate.action === 'revision_accepted' || candidate.action === 'revision_rejected' || candidate.action === 'revision_completed')
+    )) return false;
     const recipients = event.action === 'revision_requested'
       ? (event.recipientUids || [])
       : event.action === 'transferred' || event.action === 'reassigned'
