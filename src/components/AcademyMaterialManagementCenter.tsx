@@ -92,6 +92,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [categories, setCategories] = useState<AcademyMaterialCategoryView[]>([]);
   const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [catalogsLoaded, setCatalogsLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
@@ -120,6 +121,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
   const loadCatalogsAndMaterials = useCallback(async () => {
     setLoading(true);
+    setCatalogsLoaded(false);
     setLoadError('');
     const [materialResponse, categoryResponse, typeResponse] = await Promise.all([
       apiFetch<{ materials: AcademyMaterialListItem[] }>(API_ENDPOINTS.ACADEMY_MATERIALS),
@@ -136,6 +138,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setMaterials(materialResponse.data.materials);
     setCategories(categoryResponse.data.categories);
     setDocumentTypes(typeResponse.data.documentTypes);
+    setCatalogsLoaded(true);
     setLoading(false);
   }, []);
 
@@ -441,15 +444,17 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           <p className="sr-only" role="status" aria-atomic="true">
             {loading
               ? 'Materialien werden geladen.'
-              : filteredMaterials.length === 0
-                ? materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'
-                : filteredMaterials.length + (filteredMaterials.length === 1 ? ' Material gefunden.' : ' Materialien gefunden.')}
+              : !catalogsLoaded
+                ? ''
+                : filteredMaterials.length === 0
+                  ? materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'
+                  : filteredMaterials.length + (filteredMaterials.length === 1 ? ' Material gefunden.' : ' Materialien gefunden.')}
           </p>
           <label htmlFor="academy-material-search" className="mt-3 block text-sm font-medium text-slate-800 dark:text-slate-200">Materialien durchsuchen</label>
           <input id="academy-material-search" type="search" className={field + ' academy-material-search-input mt-1'} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Kurs" />
           {loading ? (
             <p className="py-5 text-sm text-slate-600 dark:text-slate-300">Materialien werden geladen …</p>
-          ) : filteredMaterials.length === 0 ? (
+          ) : !catalogsLoaded ? null : filteredMaterials.length === 0 ? (
             <p className="py-5 text-sm text-slate-600 dark:text-slate-300">{materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'}</p>
           ) : (
             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
