@@ -382,15 +382,15 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       <header className="academy-material-management-heading space-y-2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 id="academy-material-management-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Versionierte Materialverwaltung</h2>
+            <h2 id="academy-material-management-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Materialverwaltung</h2>
             <p className="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-              Neue Academy-Materialien werden zunächst als Entwurf gespeichert. Erst die ausdrückliche Veröffentlichung macht eine konkrete Fassung verfügbar. Text/Markdown und Code werden als Inhalt gespeichert; Code wird nicht ausgeführt.
+              Hier pflegst du Materialien zentral: Entwürfe vorbereiten, veröffentlichte Fassungen nachvollziehen und Änderungen bewusst freigeben. Text und Markdown sowie Quelltext werden unterstützt.
             </p>
           </div>
           <button type="button" className={secondary} onClick={startNew} disabled={busy}>Neues Material</button>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Materialkennung und Versionskennung werden automatisch vergeben. Kategorie und Dokumenttyp sind Pflichtfelder; Beschreibung und erforderlicher Rang sind optional. PDF-Dateien gehören nicht zu dieser Ausbaustufe.
+          Kennungen und Versionsnummern werden automatisch vergeben. Kategorie und Dokumenttyp sind erforderlich. Beschreibung und erforderlicher Rang sind optional.
         </p>
       </header>
 
