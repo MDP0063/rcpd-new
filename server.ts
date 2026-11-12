@@ -2241,9 +2241,9 @@ async function startServer() {
       const isSupervisor = caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel';
       const allowed = isSupervisor ? ['*'] : permissions!.assignedCourseCodes;
       const summaries = await listCompletedManualReviewSummaries(getExamRepository(), allowed);
-      res.json({ reviews: summaries.map(item => ({
+      res.json({ reviews: summaries.map(({ reviewedByUid, ...item }) => ({
         ...item,
-        reviewedByName: state.accounts.find(account => account.uid === item.reviewedByUid)?.publicProfile.displayName || item.reviewedByUid
+        reviewedByName: state.accounts.find(account => account.uid === reviewedByUid)?.publicProfile.displayName || 'Unbekannt'
       })) });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
