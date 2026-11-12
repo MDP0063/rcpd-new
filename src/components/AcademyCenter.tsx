@@ -124,6 +124,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [versionedMaterialError, setVersionedMaterialError] = useState('');
   const [versionedMaterialRetryable, setVersionedMaterialRetryable] = useState(false);
   const [versionedMaterialLoadAttempt, setVersionedMaterialLoadAttempt] = useState(0);
+  const [loadedVersionedMaterialAccessKey, setLoadedVersionedMaterialAccessKey] = useState('');
+  const versionedMaterialRequestIdRef = useRef(0);
+  const versionedMaterialAccessKey = activeVersionedMaterialId
+    ? activeVersionedMaterialId + ':' + currentUser.uid + ':' + currentUser.role
+    : '';
+  const displayedVersionedMaterial = currentVersionedMaterial &&
+    loadedVersionedMaterialAccessKey === versionedMaterialAccessKey
+      ? currentVersionedMaterial
+      : null;
+  const isVersionedMaterialLoading = Boolean(activeVersionedMaterialId) &&
+    !displayedVersionedMaterial && !versionedMaterialError;
   const [selectedVersionedMaterialAnchor, setSelectedVersionedMaterialAnchor] = useState<AcademyPrivateNoteTextAnchor | null>(null);
   const versionedMaterialMarkdownRef = useRef<HTMLDivElement | null>(null);
   const versionedMaterialCodeRef = useRef<HTMLPreElement | null>(null);
@@ -232,15 +243,19 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   }, [activeTab, libraryAreaMode, currentUser.uid, currentUser.role, versionedMaterialsLoadAttempt]);
 
   useEffect(() => {
+    const requestId = ++versionedMaterialRequestIdRef.current;
     if (!activeVersionedMaterialId) {
       setCurrentVersionedMaterial(null);
+      setLoadedVersionedMaterialAccessKey('');
       setVersionedMaterialLoading(false);
       setVersionedMaterialError('');
       setVersionedMaterialRetryable(false);
       return;
     }
     let cancelled = false;
+    const accessKey = activeVersionedMaterialId + ':' + currentUser.uid + ':' + currentUser.role;
     setCurrentVersionedMaterial(null);
+    setLoadedVersionedMaterialAccessKey('');
     setVersionedMaterialLoading(true);
     setVersionedMaterialError('');
     setVersionedMaterialRetryable(false);
@@ -248,23 +263,24 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       API_ENDPOINTS.ACADEMY_MATERIAL_CATALOG_ITEM(activeVersionedMaterialId)
     )
       .then(response => {
-        if (cancelled) return;
+        if (cancelled || requestId !== versionedMaterialRequestIdRef.current) return;
         if (!response.ok || !response.data) {
           setVersionedMaterialError(response.error || 'Dieses Material ist nicht mehr verfügbar.');
           setVersionedMaterialRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
           return;
         }
         setCurrentVersionedMaterial(response.data.material);
+        setLoadedVersionedMaterialAccessKey(accessKey);
         setVersionedMaterialRetryable(false);
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!cancelled && requestId === versionedMaterialRequestIdRef.current) {
           setVersionedMaterialError('Dieses Material konnte nicht geladen werden.');
           setVersionedMaterialRetryable(true);
         }
       })
       .finally(() => {
-        if (!cancelled) setVersionedMaterialLoading(false);
+        if (!cancelled && requestId === versionedMaterialRequestIdRef.current) setVersionedMaterialLoading(false);
       });
     return () => { cancelled = true; };
   }, [activeVersionedMaterialId, currentUser.uid, currentUser.role, versionedMaterialLoadAttempt]);
@@ -327,8 +343,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       setIsLibraryNavigationOpen(true);
       return;
     }
+    versionedMaterialRequestIdRef.current += 1;
     setActiveModuleId(null);
     setCurrentVersionedMaterial(null);
+    setLoadedVersionedMaterialAccessKey('');
     setVersionedMaterialLoading(true);
     setVersionedMaterialError('');
     setVersionedMaterialRetryable(false);
@@ -1082,21 +1100,21 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <p role="alert" className="sr-only">{versionedMaterialsError}</p>
                 <p role="alert" className="sr-only">{versionedMaterialError}</p>
                 {activeVersionedMaterialId ? (
-                  versionedMaterialLoading ? (
+                  isVersionedMaterialLoading ? (
                     <p role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300">Material wird geladen …</p>
-                  ) : currentVersionedMaterial ? (
+                  ) : displayedVersionedMaterial ? (
                     <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
                       <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
-                            <span>{currentVersionedMaterial.code}</span>
+                            <span>{displayedVersionedMaterial.code}</span>
                             <span>·</span>
-                            <span>{currentVersionedMaterial.categoryName}</span>
+                            <span>{displayedVersionedMaterial.categoryName}</span>
                             <span>·</span>
-                            <span>{currentVersionedMaterial.documentTypeName}</span>
+                            <span>{displayedVersionedMaterial.documentTypeName}</span>
                           </div>
-                          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{currentVersionedMaterial.title}</h2>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {currentVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {currentVersionedMaterial.versionNumber}</p>
+                          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{displayedVersionedMaterial.title}</h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {displayedVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {displayedVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
                           <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
@@ -1105,26 +1123,26 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           </button>
                         </div>
                       </div>
-                      {currentVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{currentVersionedMaterial.description}</p>}
-                      {currentVersionedMaterial.contentFormat === 'markdown'
+                      {displayedVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{displayedVersionedMaterial.description}</p>}
+                      {displayedVersionedMaterial.contentFormat === 'markdown'
                         ? (
                           <div ref={versionedMaterialMarkdownRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
-                            {renderVersionedMaterialMarkdown(currentVersionedMaterial.content)}
+                            {renderVersionedMaterialMarkdown(displayedVersionedMaterial.content)}
                           </div>
                         )
                         : (
                           <div className="space-y-2">
                             <p className="text-xs font-mono text-slate-500 dark:text-slate-400">QUELLCODE · WIRD NICHT AUSGEFÜHRT</p>
-                            <pre ref={versionedMaterialCodeRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
+                            <pre ref={versionedMaterialCodeRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{displayedVersionedMaterial.content}</code></pre>
                           </div>
                         )}
                       <AcademyMaterialReaderNotes
-                        materialId={currentVersionedMaterial.id}
-                        materialVersionId={currentVersionedMaterial.versionId}
+                        materialId={displayedVersionedMaterial.id}
+                        materialVersionId={displayedVersionedMaterial.versionId}
                         selectedAnchor={selectedVersionedMaterialAnchor}
                         onJumpToAnchor={jumpToVersionedMaterialAnchor}
                       />
-                      <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
+                      <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(displayedVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
