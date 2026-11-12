@@ -632,7 +632,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 {editingMaster && (
                   <button type="button" className={secondary} onClick={() => void publishDraft()}
                     disabled={busy || editingMaster.publicationStatus === 'archived' || !hasUnpublishedChanges || formDirty}>
-                    {busy ? 'Veröffentlicht …' : 'Entwurf veröffentlichen'}
+                    {busy ? 'Wird verarbeitet …' : 'Entwurf veröffentlichen'}
                   </button>
                 )}
                 {formDirty && <button type="button" className="academy-material-tertiary-action" onClick={() => editingMaster ? void openMaterial(editingMaster.id) : resetEditor()} disabled={busy}>Änderungen verwerfen</button>}
