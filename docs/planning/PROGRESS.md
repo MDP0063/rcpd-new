@@ -799,3 +799,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Die API-Regressionstests prüfen die Unsichtbarkeit sowie die blockierten Update-/Delete-Versuche; ein zusätzlicher Fresh-Database-Test prüft, dass die Beispielmaterialien nicht erneut angelegt werden.
 - Keine Firestore-Produktivdaten wurden im Rahmen dieser Codeänderung gelesen oder verändert. Die endgültige Datenbereinigung bleibt nach einer gesonderten Referenzprüfung offen.
 - **Status 12.11.2026:** PR #201 wurde nach erfolgreicher CI-Prüfung gemergt (Squash-Merge `59183857c41a31e1d352ffc57c9d21a9749997ea`). TypeScript-Prüfung, Produktionsbuild und vollständige Teststufe waren in GitHub Actions erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Produktionsbereitstellung und Browserabnahme sind daher nicht bestätigt.
+
+## 12.11.2026 – Lernbibliothek-Redesign begonnen
+- Nutzer hat das neue Bibliothekskonzept bestätigt und direkte Umsetzung freigegeben.
+- Umfang: Nutzeransicht, Navigation, Materialkarten/Reader, Verwaltungsabläufe und vollständiges Redesign der Schaltflächen.
+- Farbakzente bleiben grundsätzlich geeignet; entscheidend ist ihr kontextbezogener, zurückhaltender Einsatz. Normale Kategorien und Navigation dürfen nicht wie Warn-/Fehlersignale wirken.
+- Recherche zu Buttons: klare Hierarchie (primär/sekundär/tertiär), kurze handlungsorientierte Labels, sparsame Anzahl, Links für Navigation statt Aktionsbuttons, sichtbare Fokus- und Zustände, destruktive Aktionen getrennt. Quellen: USWDS https://designsystem.digital.gov/components/buttons/ ; GOV.UK https://design-system.service.gov.uk/components/button/ ; KERN UX-Standard https://www.designsystem.gov.de/komponenten/button/ ; NN/g https://www.nngroup.com/articles/button-states-communicate-interaction/ ; WCAG 2.2 https://www.w3.org/TR/WCAG22/.
+- Erster Implementierungsschritt auf Branch `redesign/academy-library-experience`: dynamische Themenbereich-Kacheln mit realen Kategorien/Materialanzahlen, größere Materialkarten, ruhige Verwaltungsnavigation und konsistentere Fokus-/Aktionsstile.
+- Noch offen: vollständige Überarbeitung der Materialverwaltung und Bearbeitungsformulare, private Notizen im zentralen Reader, Vereinheitlichung alter und versionierter Materialansichten, Tests und mobile QA.
+- Keine Datenmodell-, API-, Berechtigungs- oder Veröffentlichungslogik geändert.
