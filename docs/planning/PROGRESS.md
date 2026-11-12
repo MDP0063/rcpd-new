@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Materialverwaltungs-Korrekturen #237/#239 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Lernbibliothekskorrektur #243 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #239 (Merge-Commit `7f3fb3f1a30d0c8de7e6cf69ba16e987b10444a9`).
+**Aktueller Basisstand:** `main` nach PR #243 (Merge-Commit `5e146dafa4fc389b2ac46c607cda61871e798548`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1014,5 +1014,24 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 - Materialverwaltung: Veröffentlichungs-/Archivierungs-Revisionskonflikte, Versionen-Historie und Kursreferenzen in realen Abläufen.
 - Private Notizen: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus.
+- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+- Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
+
+
+### PR #241 – Fortschrittsdokumentation nach PR #239 (12.11.2026)
+
+- Der Planungsindex wurde nach den Metadaten-Konfliktkorrekturen #237/#239 aktualisiert. PR #241 wurde am 12.11.2026 gemergt (Commit `30de33adc123edbe991e82bc65ffc8ce0605b316`). Nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` wurden geändert.
+
+### PR #243 – Teilfehler im Bibliothekskatalog und sichere Materialwechsel (12.11.2026)
+
+- Wenn der Abruf versionierter Materialien fehlschlug, konnte die Lernbibliothek eine unvollständige Trefferzahl oder eine erfolgreiche Suche ohne Treffer darstellen. Jetzt wird die Trefferzahl als unvollständig gekennzeichnet; die leere Suchansicht wird bei Lade-/Katalogfehlern unterdrückt. Verfügbare Legacy-Materialien bleiben nutzbar; die Fehlerursache und Retry-Aktion bleiben auch in der Reader-Navigation sichtbar.
+- Beim Wechsel zwischen versionierten Materialien wurde der vorherige Detailinhalt erst im nachgelagerten `useEffect` entfernt. Der Reader leert den Detailzustand jetzt synchron beim Wechsel. Zusätzlich sind geladene Inhalte an Material-ID sowie aktuelle Benutzer-/Rollenkennung gebunden; verspätete Antworten älterer Abrufgenerationen werden verworfen.
+- Die Änderung verhindert, dass die vorherige Materialfassung oder deren private Notizen während eines Material-/Rollenwechsels im Detailbereich weitergerendert werden. Serverseitige Zugriffskontrollen und Datenmodell bleiben unverändert.
+- PR #243 wurde am 12.11.2026 gemergt (Commit `5e146dafa4fc389b2ac46c607cda61871e798548`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+
+### Nächster Auditfokus
+
+- Materialverwaltung: Veröffentlichungs-/Archivierungs-Revisionskonflikte, Versionshistorie und Kursreferenzen.
+- Reader-/Notiz-End-to-End-Verhalten: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus.
 - Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
 - Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
