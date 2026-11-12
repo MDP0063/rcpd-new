@@ -353,11 +353,12 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       setBusy(false);
       return;
     }
+    const publishedVersion = response.data.version;
     setEditingMaster(response.data.master);
-    setCurrentVersion(response.data.version);
+    setCurrentVersion(publishedVersion);
     setVersions(current => [
-      response.data!.version,
-      ...current.filter(version => version.id !== response.data!.version.id)
+      publishedVersion,
+      ...current.filter(version => version.id !== publishedVersion.id)
     ]);
     setDraft(current => current ? { ...current } : current);
     setFormDirty(false);
