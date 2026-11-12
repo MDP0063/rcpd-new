@@ -144,7 +144,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           saveErrorsByIdRef.current.set(draft.id, message);
           const pendingDraft = pendingSaveRef.current || draft;
           pendingSaveRef.current = pendingDraft;
-          resumePendingAfterRequest = pendingDraft.id !== draft.id;
+          resumePendingAfterRequest = pendingDraft.id !== draft.id ||
+            (serializeDraft(pendingDraft) !== serializeDraft(draft) && response.status !== 409);
           if (currentDraftRef.current?.id === draft.id) {
             setSaveStatus('error');
             setSaveError(message);
