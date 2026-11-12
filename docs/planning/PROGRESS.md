@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Korrekturen #215/#216/#219/#221 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Bibliotheks-/Reader-Korrekturen #224/#225 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #221 (Merge-Commit `ee5df95e5c83c1e1466f466249cc0b01dc30c008`).
+**Aktueller Basisstand:** `main` nach PR #225 (Merge-Commit `51114f3ba171855711a50a583a192908e43014f2`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -923,3 +923,31 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Reader-/Notiz-Verhalten in Kurs-Reader und direktem Bibliotheks-Reader auf Parität, Textanker, Auswahlrücksetzung und Fehler-/Speicherzustände prüfen.
 - Danach Materialverwaltung und Taxonomie auf konkrete Lade-, Speichern-, Versions- und Berechtigungsfehler prüfen; keine zusätzlichen Verwaltungsfunktionen ohne Beschluss.
 - Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen Spezifikation und tatsächliche Datenflüsse prüfen.
+
+
+### PR #222 – Fortschrittsdokumentation nach PR #221 (12.11.2026)
+
+- Der Planungsindex wurde auf den Main-Stand nach PR #221 aktualisiert; die erledigte Textanker-Parität wurde als abgeschlossen markiert und veraltete offene Prüfpunkte wurden als historisch/abgelöst gekennzeichnet.
+- PR #222 wurde am 12.11.2026 gemergt (Commit `566fbb79e378920ffb84f4ab21cc1fcf64703f79`). Nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` wurden geändert.
+
+### PR #224 – Materialverwaltungs-Leerzustand nur nach erfolgreichem Laden (12.11.2026)
+
+- Wenn der Abruf von Materialien, Kategorien oder Dokumenttypen fehlschlug, konnte die Materialverwaltung trotz sichtbarem Fehler fälschlich „Noch keine Materialien angelegt.“ darstellen. Die Screenreader-Statusregion aus PR #219 konnte ebenfalls einen leeren Bestand melden.
+- Ein eigener `catalogsLoaded`-Status wird zu Beginn jedes gemeinsamen Abrufs zurückgesetzt und erst gesetzt, wenn alle drei Datenquellen erfolgreich geladen wurden. Sichtbare Leeransicht und Treffer-/Leerstatus werden bis dahin unterdrückt; der bestehende Fehlerhinweis mit Retry bleibt maßgeblich.
+- Keine Änderung an Suchlogik, Datenprojektion, API, Datenmodell, Berechtigungen oder Materialzugriff.
+- PR #224 wurde am 12.11.2026 gemergt (Commit `c350f3cbf5f774323fdafb8e880cfff1ac97fdab`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+
+### PR #225 – Kurs-Reader: Retry nur für vorübergehende Fehler (12.11.2026)
+
+- Der Kurs-Material-Reader enthielt bisher den interaktiven Retry-Button innerhalb des `role="alert"`-Elements und zeigte ihn auch bei dauerhaften fachlichen Antworten (z. B. 403/404).
+- Der Alert enthält nun ausschließlich die Fehlermeldung. Eine Wiederholungsaktion wird nur bei Netzwerkfehlern (Status 0), HTTP 429 und Serverfehlern ab 500 angeboten; unerwartete Fetch-Ausnahmen bleiben wiederholbar.
+- Kurs-/Materialberechtigung, exakte Materialversionsbindung und Notizzuordnung bleiben unverändert.
+- PR #225 wurde am 12.11.2026 gemergt (Commit `51114f3ba171855711a50a583a192908e43014f2`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+- Recherchegrundlage für die Alert-Trennung: MDN ARIA Alert Role, https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/alert_role (interaktive Elemente wie Links/Buttons gehören nicht in eine Alert-Live-Region).
+
+### Aktualisierter nächster Auditfokus
+
+- Reader-/Notiz-End-to-End-Verhalten: Speichern, Wiederherstellen, Versionswechsel, Textanker und Quellenstatus in Kurs-Reader und direktem Bibliotheks-Reader.
+- Materialverwaltung: Speichern, Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen einschließlich Konflikt-/Fehlerfällen.
+- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+- Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
