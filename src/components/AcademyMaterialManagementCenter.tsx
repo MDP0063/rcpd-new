@@ -1,4 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialManagementCenter.css';
 import type {
@@ -107,6 +110,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [requiredRole, setRequiredRole] = useState<'' | OfficerRole>('');
   const [contentFormat, setContentFormat] = useState<'markdown' | 'code'>('markdown');
   const [content, setContent] = useState('');
+  const [contentPreview, setContentPreview] = useState(false);
   const [codeLanguage, setCodeLanguage] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [formDirty, setFormDirty] = useState(false);
@@ -154,6 +158,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setRequiredRole('');
     setContentFormat('markdown');
     setContent('');
+    setContentPreview(false);
     setCodeLanguage('');
     setErrors({});
     setFormDirty(false);
@@ -216,9 +221,13 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       item.master.code,
       item.master.responsibleCourseCode || '',
       item.draft?.title || '',
-      item.currentVersion?.title || ''
+      item.currentVersion?.title || '',
+      item.draft?.description || '',
+      item.currentVersion?.description || '',
+      categories.find(category => category.id === (item.draft?.categoryId || item.currentVersion?.categoryId))?.name || '',
+      documentTypes.find(type => type.id === (item.draft?.documentTypeId || item.currentVersion?.documentTypeId))?.name || ''
     ].some(value => value.toLocaleLowerCase('de-DE').includes(query));
-  }), [materials, search]);
+  }), [materials, search, categories, documentTypes]);
 
   const hasUnpublishedChanges = Boolean(
     editingMaster && draft && editingMaster.publicationStatus !== 'archived' &&
@@ -559,7 +568,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-format" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Inhaltsformat <span className="text-rose-600">*</span></label>
                 <select id="academy-material-format" className={field} value={contentFormat}
-                  onChange={event => { setContentFormat(event.target.value as 'markdown' | 'code'); setFormDirty(true); }}
+                  onChange={event => { setContentFormat(event.target.value as 'markdown' | 'code'); setContentPreview(false); setFormDirty(true); }}
                   disabled={busy || editingMaster?.publicationStatus === 'archived'}>
                   <option value="markdown">Text / Markdown</option>
                   <option value="code">Code (Quelltext)</option>
@@ -574,37 +583,56 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 </div>
               )}
               <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="academy-material-content" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
-                  {contentFormat === 'code' ? 'Quelltext' : 'Inhalt (Markdown)'} <span className="text-rose-600">*</span>
-                </label>
-                <textarea id="academy-material-content"
-                  className={field + ' min-h-[22rem] resize-y font-mono text-sm leading-6'}
-                  value={content} onChange={event => { setContent(event.target.value); setFormDirty(true); }}
-                  rows={18} required disabled={busy || editingMaster?.publicationStatus === 'archived'}
-                  aria-invalid={Boolean(errors.content)} aria-describedby={errors.content ? 'academy-material-content-error academy-material-content-hint' : 'academy-material-content-hint'} />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <label htmlFor="academy-material-content" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {contentFormat === 'code' ? 'Quelltext' : 'Inhalt (Markdown)'} <span className="text-rose-600">*</span>
+                  </label>
+                  <div className="academy-material-content-view" role="group" aria-label="Inhaltsansicht">
+                    <button type="button" className={contentPreview ? '' : 'is-active'} aria-pressed={!contentPreview} onClick={() => setContentPreview(false)}>Bearbeiten</button>
+                    <button type="button" className={contentPreview ? 'is-active' : ''} aria-pressed={contentPreview} onClick={() => setContentPreview(true)}>Vorschau</button>
+                  </div>
+                </div>
+                {!contentPreview ? (
+                  <textarea id="academy-material-content"
+                    className={field + ' min-h-[22rem] resize-y font-mono text-sm leading-6'}
+                    value={content} onChange={event => { setContent(event.target.value); setFormDirty(true); }}
+                    rows={18} required disabled={busy || editingMaster?.publicationStatus === 'archived'}
+                    aria-invalid={Boolean(errors.content)} aria-describedby={errors.content ? 'academy-material-content-error academy-material-content-hint' : 'academy-material-content-hint'} />
+                ) : (
+                  <div className="academy-material-content-preview min-h-[22rem]" aria-label="Vorschau des Materialinhalts">
+                    {!content.trim() ? <p className="text-sm text-slate-500">Noch kein Inhalt vorhanden.</p> : contentFormat === 'code'
+                      ? <pre><code>{content}</code></pre>
+                      : <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>}
+                  </div>
+                )}
                 <p id="academy-material-content-hint" className="text-xs text-slate-500 dark:text-slate-400">
-                  Maximal 200.000 Zeichen. {contentFormat === 'code' ? 'Der Quelltext wird gespeichert und angezeigt, nicht im Portal ausgeführt.' : 'Markdown wird als Textinhalt gespeichert; die sichere Darstellung erfolgt im späteren Reader.'}
+                  Maximal 200.000 Zeichen. {contentFormat === 'code' ? 'Quelltext wird nur angezeigt und niemals im Portal ausgeführt.' : 'Die Vorschau verwendet eine sichere Markdown-Darstellung.'}
                 </p>
                 {errors.content && <p id="academy-material-content-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.content}</p>}
               </div>
               {errors.general && <p id="academy-material-general" className="md:col-span-2 text-sm text-rose-700 dark:text-rose-300" role="alert">{errors.general}</p>}
             </div>
 
-            <div className="academy-material-form-actions mt-5 flex flex-wrap gap-2">
-              <button type="submit" className={primary}
-                disabled={busy || editingMaster?.publicationStatus === 'archived' || (Boolean(editingMaster) && !formDirty)}>
-                {busy ? 'Speichert …' : 'Entwurf speichern'}
-              </button>
-              {editingMaster && (
-                <button type="button" className={primary} onClick={() => void publishDraft()}
-                  disabled={busy || editingMaster.publicationStatus === 'archived' || !hasUnpublishedChanges || formDirty}>
-                  {busy ? 'Veröffentlicht …' : 'Entwurf ausdrücklich veröffentlichen'}
+            <div className="academy-material-form-actions mt-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="submit" className={primary}
+                  disabled={busy || editingMaster?.publicationStatus === 'archived' || (Boolean(editingMaster) && !formDirty)}>
+                  {busy ? 'Speichert …' : 'Entwurf speichern'}
                 </button>
-              )}
+                {editingMaster && (
+                  <button type="button" className={secondary} onClick={() => void publishDraft()}
+                    disabled={busy || editingMaster.publicationStatus === 'archived' || !hasUnpublishedChanges || formDirty}>
+                    {busy ? 'Veröffentlicht …' : 'Entwurf veröffentlichen'}
+                  </button>
+                )}
+                {formDirty && <button type="button" className="academy-material-tertiary-action" onClick={() => editingMaster ? void openMaterial(editingMaster.id) : resetEditor()} disabled={busy}>Änderungen verwerfen</button>}
+              </div>
               {editingMaster && globalManager && editingMaster.publicationStatus !== 'archived' && (
-                <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
+                <div className="academy-material-form-destructive-actions">
+                  <div><strong>Material stilllegen</strong><p>Das Material wird archiviert und nicht mehr neu angeboten. Historische Kursreferenzen bleiben erhalten.</p></div>
+                  <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
+                </div>
               )}
-              <button type="button" className={secondary} onClick={startNew} disabled={busy}>Formular zurücksetzen</button>
             </div>
             {editingMaster && !hasUnpublishedChanges && editingMaster.publicationStatus === 'published' && (
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Es gibt keine unveröffentlichte Änderung. Bearbeite und speichere den Entwurf, bevor du eine neue Version veröffentlichen kannst.</p>
