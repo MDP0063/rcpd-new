@@ -898,7 +898,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
-              {!moduleSearchQuery.trim() && !moduleCategoryFilter && libraryCategories.length > 0 && (
+              {!moduleSearchQuery.trim() && !moduleCategoryFilter && !moduleDocumentTypeFilter && libraryCategories.length > 0 && (
 <section className="academy-library-topics space-y-3" aria-labelledby="academy-library-topics-heading">
 <div className="flex flex-wrap items-end justify-between gap-2"><div><h3 id="academy-library-topics-heading" className="text-base font-semibold text-slate-900 dark:text-white">Themenbereiche</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Wähle einen Bereich, um die zugehörigen Materialien zu entdecken.</p></div><button type="button" className="academy-library-text-action" onClick={() => { setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }}>Alle Materialien anzeigen</button></div>
 <div className="academy-library-topic-grid">
