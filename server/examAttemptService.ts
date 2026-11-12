@@ -37,11 +37,15 @@ export interface ExamReviewClaim {
 }
 
 export interface ExamReviewClaimHistoryEntry {
-  action: 'claimed' | 'reclaimed' | 'released' | 'auto_released' | 'warning_started' | 'transferred' | 'reassigned';
+  action: 'claimed' | 'reclaimed' | 'released' | 'auto_released' | 'warning_started' | 'transferred' | 'reassigned' | 'revision_requested' | 'revision_completed';
   actorUid: string;
   targetUid?: string;
   previousUid?: string;
   reason?: string;
+  feedback?: Array<{ questionId: string; feedback: string }>;
+  questionIds?: string[];
+  recipientUids?: string[];
+  revisionRequestedAtIso?: string;
   notificationRequired?: true;
   notificationDeliveredTo?: string[];
   atIso: string;
