@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Reader-/Taxonomiekorrekturen #233/#235 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Materialverwaltungs-Korrekturen #237/#239 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #235 (Merge-Commit `fb8b5e8bf3aca351de6f2cbc0dacc47ac5829aaf`).
+**Aktueller Basisstand:** `main` nach PR #239 (Merge-Commit `7f3fb3f1a30d0c8de7e6cf69ba16e987b10444a9`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -994,5 +994,25 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 - Reader-/Notiz-End-to-End-Verhalten: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus in Kurs-Reader und direktem Bibliotheks-Reader.
 - Materialverwaltung: Speichern, Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen einschließlich Revisions-/Konfliktfällen.
+- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+- Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
+
+
+### PR #237 – Katalogoptionen nach inaktiven Metadaten aktualisieren (12.11.2026)
+
+- Wenn eine andere berechtigte Person die ausgewählte Kategorie oder den Dokumenttyp während der Bearbeitung archiviert, lehnt die serverseitige Draft-Validierung das Speichern mit `ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE` bzw. `ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE` ab.
+- Die Materialverwaltung lädt bei diesen beiden Fehlercodes die Katalogdaten erneut, ohne Formulareingaben oder Entwurf zu verwerfen.
+- PR #237 wurde am 12.11.2026 gemergt (Commit `d39bee057de5ea1e4e629a6be8406fc98ddbb23d`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen.
+
+### PR #239 – Entfernte Kategorie-/Dokumenttypreferenzen behandeln (12.11.2026)
+
+- Die Repository-Validierung unterscheidet neben NOT_ACTIVE auch `ACADEMY_MATERIAL_CATEGORY_NOT_FOUND` und `ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND`, etwa wenn ein noch nicht gespeichertes Material eine zwischenzeitlich gelöschte Taxonomieoption auswählt.
+- Die Materialverwaltung zeigt für beide Fälle jetzt verständliche Meldungen und lädt die aktuellen Katalogdaten erneut. Während des Refreshs bleiben Formularaktionen gesperrt; vorhandene Eingaben bleiben erhalten.
+- PR #239 wurde am 12.11.2026 gemergt (Commit `7f3fb3f1a30d0c8de7e6cf69ba16e987b10444a9`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Live-Firestore-Test.
+
+### Nächster Auditfokus
+
+- Materialverwaltung: Veröffentlichungs-/Archivierungs-Revisionskonflikte, Versionen-Historie und Kursreferenzen in realen Abläufen.
+- Private Notizen: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus.
 - Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
 - Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
