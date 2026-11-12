@@ -135,7 +135,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         savingDraftIdRef.current = id;
         if (currentDraftRef.current?.id === id) setSaveStatus('saving');
 
-        let response: { ok: boolean; data?: { note: AcademyPrivateNoteDoc }; status: number; error?: string };
+        let response: { ok: boolean; data?: { note: AcademyPrivateNoteDoc } | null; status: number; error?: string };
         try {
           response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
             API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(id),
@@ -569,7 +569,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     }
     operationLockedIdsRef.current.add(noteId);
     setSavingAction(true);
-    let response: { ok: boolean; data?: { notes: AcademyPrivateNoteDoc[] }; error?: string };
+    let response: { ok: boolean; data?: { notes: AcademyPrivateNoteDoc[] } | null; error?: string };
     try {
       response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
     } catch (error) {
