@@ -355,6 +355,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     }
     setEditingMaster(response.data.master);
     setCurrentVersion(response.data.version);
+    setVersions(current => [
+      response.data!.version,
+      ...current.filter(version => version.id !== response.data!.version.id)
+    ]);
     setDraft(current => current ? { ...current } : current);
     setFormDirty(false);
     await loadCatalogsAndMaterials();
