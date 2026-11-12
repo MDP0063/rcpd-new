@@ -448,7 +448,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               setSelectedCourse(null);
               setSelectedProgram(null);
             }}>
-              ← Zurück zu Programmen und Kursen
+              ← Zurück zu Lehrgängen und Kursen
             </button>
           )}
           {screen === 'catalog' && (
@@ -456,7 +456,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <header className="academy-courses-heading space-y-2">
                 <p className="academy-courses-eyebrow">DEIN AUSBILDUNGSWEG</p>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Lehrgänge und Kurse</h2>
-                <p className={muted}>Programme geben Ausbildungsziele und erforderliche Lernschritte vor. Kurse können unabhängig davon direkt begonnen werden.</p>
+                <p className={muted}>Lehrgänge geben Ausbildungsziele und erforderliche Lernschritte vor. Kurse können unabhängig davon direkt begonnen werden.</p>
               </header>
               <label className="academy-courses-search block space-y-1">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</span>
@@ -687,20 +687,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <h3 className="font-semibold text-slate-900 dark:text-white">Empfohlene Kurse</h3>
                         {version.courseReferences.filter(item => item.requirement === 'recommended').sort((a,b) => a.order-b.order).map(reference => {
                           const courseEntry = courses.find(item => item.master.id === reference.courseId);
-                          return <div key={reference.courseId} className="border-t border-slate-200 pt-3 dark:border-slate-800"><p className="text-sm font-medium">{courseEntry?.version?.title || courseEntry?.master.code || reference.courseId}</p><p className="text-xs text-slate-500 dark:text-slate-400">Freiwillige Ergänzung – blockiert den Programmabschluss nicht.</p></div>;
+                          return <div key={reference.courseId} className="border-t border-slate-200 pt-3 dark:border-slate-800"><p className="text-sm font-medium">{courseEntry?.version?.title || courseEntry?.master.code || reference.courseId}</p><p className="text-xs text-slate-500 dark:text-slate-400">Freiwillige Ergänzung – blockiert den Lehrgangsabschluss nicht.</p></div>;
                         })}
                       </div>
                     )}
                     {detailLoading && !programDetail && <p className={muted} role="status">Deine Lehrgangsteilnahme wird geladen …</p>}
                     {!programDetail && !detailLoading && programParticipations.some(item => item.programId === selectedProgram.master.id) && (
                       <div className={`${panel} academy-program-panel p-4 space-y-2`}>
-                        <p className={muted}>Eine bestehende Programmteilnahme ist vorhanden, ihr Fortschritt konnte aber noch nicht geladen werden.</p>
+                        <p className={muted}>Eine bestehende Lehrgangsteilnahme ist vorhanden, ihr Fortschritt konnte aber noch nicht geladen werden.</p>
                         <button type="button" className={secondary} onClick={() => void openProgram(selectedProgram)}>Fortschritt erneut laden</button>
                       </div>
                     )}
                     {!programDetail && !detailLoading && !programParticipations.some(item => item.programId === selectedProgram.master.id) && (
                       <div className={`${panel} academy-program-panel p-4 space-y-2`}>
-                        <p className={muted}>Beim Programmstart werden die konkreten Versionen aller Pflichtkurse festgehalten. Die einzelnen Kurse beginnen erst, wenn du sie selbst startest.</p>
+                        <p className={muted}>Beim Lehrgangsstart werden die konkreten Versionen aller Pflichtkurse festgehalten. Die einzelnen Kurse beginnen erst, wenn du sie selbst startest.</p>
                         <button type="button" className={primary} disabled={saving || selectedProgram.master.publicationStatus !== 'published' || selectedProgram.master.availability !== 'available'} onClick={() => void startProgram()}>
                           {saving ? 'Wird gestartet …' : 'Lehrgang beginnen'}
                         </button>
