@@ -770,7 +770,10 @@ export async function listPendingExamReviewRevisionRequests(repository: ExamRepo
   for (const attempt of attempts) {
     const pending = latestPendingRevisionRequest(attempt.reviewClaimHistory || []);
     if (!pending) continue;
-    if (!attempt.reviewedByUid || !attempt.reviewedAtIso) throw new Error('EXAM_REVIEW_REVISION_STALE');
+    if (typeof attempt.reviewedByUid !== 'string' || !attempt.reviewedByUid.trim() ||
+        typeof attempt.reviewedAtIso !== 'string' || Number.isNaN(Date.parse(attempt.reviewedAtIso))) {
+      throw new Error('EXAM_REVIEW_REVISION_STALE');
+    }
     const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber ||
         !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
