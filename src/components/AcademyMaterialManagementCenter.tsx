@@ -221,13 +221,18 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const filteredMaterials = useMemo(() => materials.filter(item => {
     const query = search.trim().toLocaleLowerCase('de-DE');
     if (!query) return true;
+    const categoryId = item.draft?.categoryId || item.currentVersion?.categoryId || '';
+    const documentTypeId = item.draft?.documentTypeId || item.currentVersion?.documentTypeId || '';
     return [
       item.master.code,
       item.master.responsibleCourseCode || '',
       item.draft?.title || '',
       item.currentVersion?.title || '',
-      categories.find(category => category.id === item.draft?.categoryId)?.name || '',
-      documentTypes.find(type => type.id === item.draft?.documentTypeId)?.name || ''
+      item.draft?.description || '',
+      item.currentVersion?.description || '',
+      categories.find(category => category.id === categoryId)?.name || '',
+      documentTypes.find(type => type.id === documentTypeId)?.name || '',
+      statusLabel(item.master, item.draft)
     ].some(value => value.toLocaleLowerCase('de-DE').includes(query));
   }), [materials, search, categories, documentTypes]);
 
