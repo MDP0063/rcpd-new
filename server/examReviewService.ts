@@ -590,6 +590,13 @@ export async function gradeExamAttempt(
           targetUid: latestRevisionRequest.actorUid,
           revisionRequestedAtIso: latestRevisionRequest.atIso,
           revisionRequestIndex: latestRevisionRequestIndex,
+          nextGrades: questionGrades
+            .filter((grade: any) => (latestRevisionRequest.questionIds || []).includes(String(grade?.questionId || '')))
+            .map((grade: any) => ({
+              questionId: String(grade.questionId),
+              pointsEarnedMilli: Number(grade.pointsEarnedMilli),
+              maxPointsMilli: Number(grade.maxPointsMilli)
+            })),
           atIso: nowIso
         }]
       : claimHistory;
@@ -804,6 +811,11 @@ export async function requestExamReviewRevision(
       previousUid: attempt.reviewedByUid,
       reason,
       feedback,
+      previousGrades: questions.map(question => ({
+        questionId: question.questionId,
+        pointsEarnedMilli: question.pointsEarnedMilli,
+        maxPointsMilli: question.maxPointsMilli
+      })),
       questionIds,
       revisionRequestIndex: history.length,
       recipientUids: recipients,
