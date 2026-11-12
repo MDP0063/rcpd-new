@@ -738,3 +738,28 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - Eine zentrale Teilnehmerakte, wie sie Abschnitt 15.7 vorsieht, ist in der aktuellen UI noch nicht vorhanden. Historie wird deshalb nicht redundant in Prüferwarteschlange und Korrekturcenter eingeführt.
 - Als nächster zusammenhängender Funktionsblock ist die zentrale Teilnehmerakte bzw. deren Academy-Integration zu untersuchen und umzusetzen. Darauf aufbauend folgen berechtigungsgesteuerte Historienprojektion, Revisionsrückgabe mit Pflichtfeedback pro betroffenem Bewertungsschritt und passende Action-Request-Benachrichtigungen.
 - Vor Revisionsimplementierung müssen Ergebnis-Snapshot, bestehende Bewertungs-Drafts, Claim-Übergänge und Repository-Validierungsregeln gemeinsam regressionsgesichert werden. Kein neuer Prüfungsversuch darf entstehen.
+
+
+## 2026-11-12 – Academy-Unterbereiche: visuelle und bedienbezogene Überarbeitung
+
+**Branch:** `feat/academy-submodules-ux-redesign`  
+**Basis:** `main` bei `5697e5d1b5d7e3b1108137db53e71beec043d8e2`
+
+Die bestehende Academy-Startseite und die beschlossene Informationsarchitektur wurden beibehalten. Die frühere Festlegung zum Kachelreflex in Abschnitt „Visuelles Academy-Einstiegsdesign – fünf Bereichskacheln“ der `ACADEMY-DETAILED-SPECIFICATION.md` wurde erneut geprüft und umgesetzt:
+- weiche weiße Reflexion auf der einfarbigen Kacheloberfläche;
+- im Ruhezustand dezent, bei Hover etwas stärker;
+- keine Glanz-/Verlaufseffekte in den SVG-Illustrationen;
+- reduzierte Bewegung bei `prefers-reduced-motion`.
+
+Die internen Bereiche wurden visuell aufeinander abgestimmt, ohne fachliche Abläufe, Berechtigungen, APIs oder Datenmodelle zu ändern:
+- **Kurse:** klare, bereichsbezogene Umschaltung zwischen Lernen und Verwaltung; Programmfortschritt im Katalog jetzt ausdrücklich als solcher beschriftet; vorhandene Kurs-/Programmdetails und Verwaltung bleiben erhalten.
+- **Lernbibliothek:** Materialsuche, Sortierung und Filter bleiben unverändert; Verwaltungsumschaltung, Materialliste, Versionsverwaltung sowie Kategorie-/Dokumenttypverwaltung erhalten eine konsistentere violette Hierarchie und klarere Fokuszustände.
+- **Prüfungen:** vorhandene Prüfungsübersicht, Versuchsauswahl, Ergebnis-/Freigabe- und Examiner-Abläufe bleiben erhalten; der ältere Prüfungslistenpfad wurde zusätzlich tastaturbedienbar gemacht, indem der klickbare Container ein natives Button-Element mit `aria-pressed` wurde. Begriffe „Kurskontext“ und „Maximale Versuche“ präzisieren die angezeigten Daten.
+- **Meine Notizen:** bestehende private Notiz-/Lesezeichenfunktionen bleiben erhalten; Such-, Listen- und Editorflächen sowie mobile Aktionsanordnung wurden visuell vereinheitlicht.
+- Dark Mode, sichtbare Tastaturfokusse und reduzierte Bewegung wurden in den ergänzten Styles berücksichtigt.
+
+Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-Bewertung und Ergebnis-Korrektur wurden nicht ersetzt, da sie bereits eigene responsive Layouts, Fokuszustände und Bereichsakzente besitzen.
+
+**Recherchegrundlage:** WCAG 2.2 (W3C), insbesondere Fokus, Zielgrößen und Animation aus Interaktionen: https://www.w3.org/TR/WCAG22/ . Ergänzend Nielsen Norman Group, „Progressive Disclosure“: https://www.nngroup.com/articles/progressive-disclosure/ sowie die zehn Usability-Heuristiken: https://www.nngroup.com/articles/ten-usability-heuristics/ . Die Prinzipien wurden auf die vorhandenen Academy-Aufgaben angewandt; es wurden keine neuen Funktionen eingeführt.
+
+**Prüfstatus:** statische Codeprüfung der geänderten Komponenten und Styles. Noch keine echte Browser-/Geräteprüfung, kein Live-Firestore-Test und kein Deployment. CI wird über den Draft-PR geprüft. Die fünf Kacheln und alle bestehenden fachlichen Funktionen müssen vor Merge zusätzlich visuell und responsiv abgenommen werden.

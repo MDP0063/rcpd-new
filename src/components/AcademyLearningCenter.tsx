@@ -471,7 +471,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                   <h4 className="mt-1 font-semibold text-slate-900 dark:text-white">{entry.version?.title || entry.draft?.title || entry.master.code}</h4>
                                   <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Programmversion.'}</p>
                                 </div>
-                                {detail && <span className="shrink-0 text-xs font-semibold text-sky-700 dark:text-sky-300">{detail.progress.completionPercentage}%</span>}
+                                {detail && <span className="shrink-0 text-xs font-semibold text-sky-700 dark:text-sky-300" aria-label={`Fortschritt: ${detail.progress.completionPercentage} Prozent`}>Fortschritt {detail.progress.completionPercentage}%</span>}
                               </div>
                               <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {detail ? statusLabel(detail.progress.status) : 'Noch keine Teilnahme'}

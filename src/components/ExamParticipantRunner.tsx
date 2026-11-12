@@ -606,12 +606,12 @@ export const ExamParticipantRunner: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</p>
                 </div>
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between gap-2"><span>Versuche</span><strong>{selectedExam.maxAttempts === null ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
+                  <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
                   <div className="flex justify-between gap-2"><span>Bestehensgrenze</span><strong>{(selectedExam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</strong></div>
                   <div className="flex justify-between gap-2"><span>Freigabestufe</span><strong>{selectedExam.minClearance}</strong></div>
                 </div>
                 <label className="block space-y-1.5">
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Lehrgangskontext</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
                   <select value={selectedCourseCode} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     {selectedExam.assignedCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>

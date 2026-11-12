@@ -346,3 +346,61 @@
   .academy-note-card button,
   .academy-note-editor button { transition: none; }
 }
+
+
+/* Consistent, predictable interaction surfaces across course and personal-note views. */
+.academy-learning-center--courses :is(button, input, select, textarea):focus-visible,
+.academy-learning-center--notes :is(button, input, select, textarea):focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+.academy-courses-section > div:first-child {
+  min-height: 2.4rem;
+  align-items: center;
+}
+.academy-courses-section > div:first-child > span {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(8,127,140,0.08);
+  color: #42666d;
+  font-variant-numeric: tabular-nums;
+}
+.academy-program-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.academy-program-card > button { align-self: flex-start; margin-top: auto; }
+.academy-course-row {
+  gap: 1rem;
+}
+.academy-course-row > div:first-child { flex: 1 1 auto; }
+.academy-course-action { min-width: 9.5rem; min-height: 2.75rem; }
+.academy-course-status { font-variant-numeric: tabular-nums; }
+.academy-course-detail,
+.academy-program-detail { min-width: 0; }
+.academy-course-panel,
+.academy-program-panel { padding: clamp(1rem, 2vw, 1.35rem) !important; }
+.academy-course-requirement > div:first-child { gap: 0.75rem; }
+.academy-notes-layout { align-items: start; }
+.academy-note-card { min-width: 0; overflow-wrap: anywhere; }
+.academy-note-card button,
+.academy-note-editor button { min-height: 2.75rem; }
+.academy-note-editor label { display: block; }
+.academy-note-editor input,
+.academy-note-editor textarea { width: 100%; }
+.academy-note-editor textarea { line-height: 1.6; }
+.academy-notes-search input { width: 100%; }
+.dark .academy-courses-section > div:first-child > span {
+  background: rgba(117,200,203,0.12);
+  color: #b7d8da;
+}
+@media (max-width: 640px) {
+  .academy-program-card > button { width: 100%; align-self: stretch; }
+  .academy-course-action { min-width: 0; }
+  .academy-notes-layout { grid-template-columns: minmax(0,1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-learning-center--courses *,
+  .academy-learning-center--notes * { scroll-behavior: auto; }
+}
