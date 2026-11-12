@@ -785,3 +785,12 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 3. Race Conditions / optimistic concurrency / Revision-Checks sowie Repository-Transitionen und Fehlerbehandlung prüfen.
 4. Exam/Reviewer/Teilnehmerstatus, Notiz-Owner-Isolation, Progress-API und alle Datenprojektionen auf Datenleck/IDOR prüfen.
 5. Danach Tests lokal/CI ausführen und Browser-/Responsive-/Live-Firestore-Prüfung getrennt dokumentieren.
+
+
+### Ergänzung zum Audit – Notizschutz und Teilnahmezugriffe
+
+- **Private Notizen:** Die API verwendet für Lesen, Abrufen, Bearbeiten, Löschen und Quellenstatus jeweils owner-gebundene Repository-Methoden. Die HTTP-Tests prüfen ausdrücklich, dass Admins und Colonels fremde private Notizen nicht lesen, bearbeiten, löschen oder deren Quellenstatus abfragen können. Das entspricht der beschlossenen Privatheit – Adminstatus gewährt keinen Notizzugriff.
+- **Nebenläufigkeit:** Notizänderungen prüfen die erwartete Revision innerhalb einer Repository-Transaktion; Materialentwürfe und Veröffentlichungen prüfen Arbeitsrevisionen ebenfalls transaktional. Diese Schutzmechanismen sind statisch nachvollzogen und durch Tests teilweise abgedeckt; konkrete Firestore-Concurrency-/Emulator- und Live-Verhaltenstests bleiben gesondert zu verifizieren.
+- **Teilnahmezugriffe:** Die Teilnehmerdetailroute erlaubt den betroffenen Teilnehmer oder den zuständigen Kursmanager; fremde Teilnahmen werden nicht offengelegt. Der Materialreader verlangt zusätzlich eine konkrete Referenz auf die gepinnte Kursversion und prüft die Materialversion sowie den erforderlichen Rang. Die bestehenden HTTP-Tests decken fremde Teilnehmer, nicht gepinnte Materialversionen und interne UID-Projektionen ab.
+- **Aktueller CI-Befund:** Der letzte GitHub Actions Check für den geprüften `main`-Commit `5697e5d1b5d7e3b1108137db53e71beec043d8e2` (`build-and-verify`, 11.11.2026) steht auf `success`. Das bestätigt den damaligen automatisierten Workflow, nicht die neuen Audit-Regressionstests oder manuelle Live-Prüfungen.
+- **Abgrenzung:** Das im älteren Protokoll vom 10.11.2026 vermerkte Review bezog sich auf den damaligen Code-/Teststand. Dieser Audit ist ein erneuter Nachaudit der danach hinzugekommenen Academy-Funktionen und der aktuellen Gesamtintegration.
