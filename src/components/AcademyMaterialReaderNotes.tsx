@@ -336,13 +336,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
-    if (savingRef.current || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
-      setAnchorNotice('Ein Notiz-Speichervorgang läuft gerade. Bitte warte kurz und wähle die Notiz dann erneut aus.');
-      return;
-    }
-    const pendingOtherId = Array.from(pendingSavesRef.current.keys()).find(id => id !== note.id);
-    if (pendingOtherId) {
-      setAnchorNotice('Eine vorherige Notizänderung muss zuerst gespeichert oder wiederhergestellt werden. Öffne die betroffene Notiz erneut.');
+    if (savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Diese Notiz wird gerade gespeichert oder aktualisiert. Bitte warte kurz und wähle sie dann erneut aus.');
       return;
     }
     if (hasUnsavedChanges && draft) {
@@ -373,10 +368,6 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   const createNote = async () => {
     if (!notesLoaded || loading || savingAction) return;
-    if (pendingSavesRef.current.size > 0) {
-      setAnchorNotice('Speichere zuerst die vorherige Notizänderung, bevor du einen neuen Eintrag anlegst.');
-      return;
-    }
     if (hasUnsavedChanges && draft) {
       queueSave(draft);
       return;
