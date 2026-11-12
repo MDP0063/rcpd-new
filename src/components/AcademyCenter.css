@@ -770,3 +770,87 @@ main.academy-main-viewport {
   .academy-library-mode-nav button { flex: 1 1 100%; text-align: left; }
   .academy-material-form { padding: 1rem !important; }
 }
+
+
+/* Course authoring mode and material taxonomy controls stay visually grouped
+   without competing with the five Academy main areas. */
+.academy-course-mode-nav {
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  border: 1px solid #d8e9e9;
+  border-radius: 0.9rem;
+  background: rgba(255,255,255,0.7);
+}
+.academy-course-mode-nav button {
+  min-height: 2.7rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  color: #45636a;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+.academy-course-mode-nav button[aria-pressed="true"] {
+  border-color: #c4dddd;
+  background: #eaf5f5;
+  color: #086b76;
+}
+.academy-course-mode-nav button:focus-visible {
+  outline: 3px solid rgba(8,127,140,0.28);
+  outline-offset: 2px;
+}
+.academy-material-taxonomy-manager { min-width: 0; }
+.academy-material-taxonomy-heading { padding: 0.35rem 0 0.4rem; }
+.academy-material-taxonomy-heading h2 {
+  color: #30244b;
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.academy-material-taxonomy-form,
+.academy-material-taxonomy-list {
+  border-color: #e2daf2 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 5px 18px rgba(67,47,108,0.035);
+}
+.academy-material-taxonomy-form input,
+.academy-material-taxonomy-form textarea {
+  min-height: 2.65rem;
+  border-radius: 0.65rem !important;
+}
+.academy-material-taxonomy-form :is(input,textarea):focus-visible,
+.academy-material-taxonomy-list input:focus-visible {
+  outline: 3px solid rgba(104,65,184,0.24);
+  outline-offset: 2px;
+  border-color: #6841b8 !important;
+}
+.academy-material-taxonomy-actions button { min-height: 2.65rem; }
+.dark .academy-course-mode-nav {
+  border-color: #2b4c56;
+  background: rgba(19,42,51,0.72);
+}
+.dark .academy-course-mode-nav button { color: #b7d2d5; }
+.dark .academy-course-mode-nav button[aria-pressed="true"] {
+  border-color: #41636c;
+  background: #21454e;
+  color: #e1f7f7;
+}
+.dark .academy-material-taxonomy-heading h2 { color: #eee7fb; }
+.dark .academy-material-taxonomy-form,
+.dark .academy-material-taxonomy-list {
+  border-color: #403455 !important;
+  box-shadow: none;
+}
+.dark .academy-material-taxonomy-form input,
+.dark .academy-material-taxonomy-form textarea {
+  border-color: #51436b !important;
+  background: #171222 !important;
+}
+@media (max-width: 640px) {
+  .academy-course-mode-nav button { flex: 1 1 100%; text-align: left; }
+  .academy-material-taxonomy-form,
+  .academy-material-taxonomy-list { padding: 1rem !important; }
+  .academy-material-taxonomy-actions { width: 100%; }
+  .academy-material-taxonomy-actions button { flex: 1 1 100%; }
+}
