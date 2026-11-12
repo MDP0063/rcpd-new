@@ -423,7 +423,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {
           method: 'PUT',
           body: JSON.stringify({
-            expectedRevision: note.revision ?? 1,
+            expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1,
             sources: [...sources, { materialId, materialVersionId, ...(selectedAnchor ? { anchor: selectedAnchor } : {}) }]
           })
         }
@@ -460,7 +460,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     try {
       const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
         API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
-        { method: 'PUT', body: JSON.stringify({ expectedRevision: note.revision ?? 1, sources }) }
+        { method: 'PUT', body: JSON.stringify({ expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1, sources }) }
       );
       if (!response.ok || !response.data) {
         setLoadError(response.error || 'Der Textanker konnte nicht gespeichert werden.');
@@ -499,7 +499,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {
           method: 'PUT',
           body: JSON.stringify({
-            expectedRevision: note.revision ?? 1,
+            expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1,
             sources: nextSources
           })
         }
