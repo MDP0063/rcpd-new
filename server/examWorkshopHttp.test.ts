@@ -757,6 +757,12 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     );
     assert.equal(forbiddenRevisionDecision.status, 403,
       'course reviewers cannot accept or reject revision requests');
+    const invalidSupervisorRejection = await jsonRequest(
+      `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/resolve-revision-request`, admin.token,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'reject', reason: 'Zu kurz' }) }
+    );
+    assert.equal(invalidSupervisorRejection.status, 400,
+      'a supervisor rejection without a meaningful reason is not accepted');
     const acceptedRevisionResponse = await jsonRequest(
       `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/resolve-revision-request`, admin.token,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'accept' }) }
@@ -770,6 +776,9 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(acceptedRevisionQueue.status, 200);
     assert.equal(acceptedRevisionQueue.body.reviews.length, 1,
       'only acceptance returns the attempt to the shared examiner queue');
+    assert.equal(acceptedRevisionQueue.body.reviews[0].reviewClaim, null,
+      'acceptance does not automatically assign the attempt to one reviewer');
+    assert.equal(acceptedRevisionQueue.body.reviews[0].canClaim, true);
     const acceptedRevisionClaim = await jsonRequest(
       `/api/academy/exams/${TEST_EXAM_ID}/attempts/${attemptToGrade.id}/review-claim`, courseReviewer.token,
       { method: 'POST' }
