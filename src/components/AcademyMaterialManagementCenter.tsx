@@ -52,7 +52,9 @@ function messageFor(error?: string): string {
     case 'ACADEMY_MATERIAL_TITLE_INVALID': return 'Gib einen Titel mit höchstens 200 Zeichen ein.';
     case 'ACADEMY_MATERIAL_METADATA_REQUIRED': return 'Wähle eine Kategorie und einen Dokumenttyp aus.';
     case 'ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE': return 'Die ausgewählte Kategorie ist archiviert. Wähle eine aktive Kategorie.';
+    case 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND': return 'Die ausgewählte Kategorie wurde zwischenzeitlich entfernt. Wähle eine andere Kategorie.';
     case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE': return 'Der ausgewählte Dokumenttyp ist archiviert. Wähle einen aktiven Dokumenttyp.';
+    case 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND': return 'Der ausgewählte Dokumenttyp wurde zwischenzeitlich entfernt. Wähle einen anderen Dokumenttyp.';
     case 'ACADEMY_MATERIAL_CONTENT_INVALID': return 'Gib Inhalt ein. Er darf höchstens 200.000 Zeichen umfassen.';
     case 'ACADEMY_MATERIAL_FORMAT_INVALID': return 'Wähle Markdown oder Code als Inhaltsformat aus.';
     case 'ACADEMY_MATERIAL_CODE_LANGUAGE_INVALID': return 'Die optionale Sprachkennung darf nur Buchstaben, Zahlen und die Zeichen _ + # . - enthalten.';
@@ -307,7 +309,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       setErrors({ general: messageFor(response.error) });
       setBusy(false);
       if (response.error === 'ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE' ||
-          response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE') {
+          response.error === 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND' ||
+          response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE' ||
+          response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND') {
         await loadCatalogsAndMaterials();
       }
       return;
