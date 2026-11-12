@@ -348,8 +348,10 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionQueue[0].revisionRequest?.feedback[0].questionId, 'text');
     assert.equal('requestedByUid' in (revisionQueue[0].revisionRequest || {}), false);
     assert.equal('previousReviewerUid' in (revisionQueue[0].revisionRequest || {}), false);
-    const acceptanceNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
-      .filter(item => item.event.action === 'revision_accepted');
+    const notificationsAfterAcceptance = await listPendingExamReviewNotifications(repository, ['review-attempt']);
+    const acceptanceNotifications = notificationsAfterAcceptance.filter(item => item.event.action === 'revision_accepted');
+    assert.equal(notificationsAfterAcceptance.some(item => item.event.action === 'revision_requested'), false,
+      'a resolved request does not leave stale supervisor action notifications pending');
     assert.deepEqual(acceptanceNotifications.map(item => item.recipientUid), ['grader2']);
     const revisionClaim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader2', 'Zweiter Prüfer', '2026-11-05T12:12:30.000Z');
     assert.equal(revisionClaim.reviewerUid, 'grader2');
@@ -427,8 +429,9 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const rejectedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'colonel', true);
     const rejectionEvent = rejectedHistory.find(item => item.id === 'review-attempt')?.claimHistory?.find(event => event.action === 'revision_rejected');
     assert.equal(rejectionEvent?.reason, 'Die angeführten Gründe rechtfertigen keine erneute Bewertung.');
-    const rejectionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
-      .filter(item => item.event.action === 'revision_rejected');
+    const notificationsAfterRejection = await listPendingExamReviewNotifications(repository, ['review-attempt']);
+    const rejectionNotifications = notificationsAfterRejection.filter(item => item.event.action === 'revision_rejected');
+    assert.equal(notificationsAfterRejection.some(item => item.event.action === 'revision_requested'), false);
     assert.deepEqual(rejectionNotifications.map(item => item.recipientUid), ['grader3']);
 
   } finally {
