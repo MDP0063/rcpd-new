@@ -151,3 +151,52 @@
   .academy-exam-option,
   .academy-exam-primary-button { transition: none !important; }
 }
+
+
+/* Keep the berry accent as orientation only; status colors remain semantic. */
+.academy-exam-runner :is(button, input, select, textarea):focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+.academy-exam-option {
+  min-height: 7rem;
+  text-align: left;
+}
+.academy-exam-option:focus-visible {
+  outline: 3px solid rgba(163,51,112,0.34) !important;
+  outline-offset: 3px;
+}
+.academy-exam-history > div:first-child p { max-width: 54rem; line-height: 1.6; }
+.academy-exam-selection-panel { min-width: 0; }
+.academy-exam-question-nav {
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+}
+.academy-exam-question-nav button { min-width: 2.5rem; min-height: 2.5rem; }
+.academy-exam-question-panel { min-width: 0; }
+.academy-exam-question-panel label {
+  min-height: 2.85rem;
+  line-height: 1.5;
+}
+.academy-exam-attempt-header { align-items: center; }
+.academy-exam-result-card { min-width: 0; }
+.dark .academy-exam-option:focus-visible {
+  outline-color: rgba(217,149,184,0.7) !important;
+}
+@media (max-width: 1023px) {
+  .academy-exam-question-nav { position: static; }
+}
+@media (max-width: 640px) {
+  .academy-exam-runner--attempt .academy-exam-attempt-header { gap: 0.9rem; }
+  .academy-exam-runner--attempt .academy-exam-attempt-header > div:last-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .academy-exam-question-panel label { padding: 0.85rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-exam-runner *,
+  .academy-exam-runner *::before,
+  .academy-exam-runner *::after { scroll-behavior: auto; }
+}
