@@ -214,3 +214,9 @@ Der aktuelle Code besitzt bereits eine fünfteilige Hauptnavigation und einen R�
 - Bestehende Rollen-/Berechtigungsdarstellung in Verwaltungsansichten gegen aktuelle serverseitige Rechte prüfen.
 - Fehlende Kursstatusfilter bleiben außerhalb des reinen visuellen Umfangs; eine funktionale Ergänzung benötigt separate fachliche Abwägung.
 - Manuelle Live-Firestore-/Browser-/Screenreader-Abnahme bleibt offen.
+
+## 9. Umsetzungsprotokoll – Meine Notizen
+
+**PR #250 – offen am 12.11.2026:** Die Notizenübersicht und der Editor werden als getrennte Ansichten umgesetzt. Der Editor zeigt die privaten Quellenverknüpfungen weiterhin an. Speichern erhält die Primärgewichtung, Verwerfen eine sekundäre Aktion und Löschen eine klar destruktive Gestaltung. Ein Parent-/Child-Dirty-State schützt den Wechsel über die Hauptnavigation, den Kachel-Rückweg und Examiner-Deep-Links; während eines laufenden Speichervorgangs werden die lokalen Abbruchaktionen gesperrt.
+
+Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision, Datenmodell, Quellenbindung und Owner-Isolation bleiben unverändert. Der PR ist zum Zeitpunkt dieses Eintrags noch nicht gemergt; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
