@@ -1132,3 +1132,9 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - PR #155 enthält bestätigte Empfehlungs-Lifecycle-Entscheidungen, die in der aktuellen Spezifikation noch teilweise als offen geführt wurden. Die fehlenden Regeln wurden gezielt nachgeführt; Fristen/Erinnerungen bleiben offen. Der 137 Commits zurückliegende PR-Branch wird nicht als Ganzes gemergt.
 - Der systematische Funktions-/Fehleraudit der implementierten Academy bleibt laufend. Statische Codebefunde, CI und manuelle Browser-/Live-Firestore-Abnahme werden getrennt dokumentiert.
 - **Nächster Schwerpunkt:** offene Funktionsbefunde priorisiert schließen und parallel die restlichen Academy-Unterseiten auf Basis der bereits beschlossenen fünfteiligen IA, Kachelgestaltung und Navigationsregeln detailliert visuell überarbeiten. Keine erneute Grundsatzkonzeption beschlossener Bereiche.
+
+### Dokumentationsabgleich – Revisions-Action-Request-Empfängerregel
+
+- Die am 11.11.2026 bestätigte Zuständigkeit ist nun in DECISIONS.md, der Academy-Detail-Spezifikation und OPEN-QUESTIONS.md konsistent festgehalten.
+- Aktuelle kursberechtigte Prüfer dürfen eine Revision auslösen; die resultierende Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer bleibt historisch nachvollziehbar, erhält aber keinen Bearbeitungsvorrang.
+- Keine Implementierung wird durch diese Dokumentationsänderung als abgeschlossen markiert. Revisionsrückgabe, Empfängerzustellung und Benachrichtigungen bleiben funktionale Restarbeiten.

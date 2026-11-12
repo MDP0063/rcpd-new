@@ -1432,3 +1432,15 @@ Objektiv begründbare UX-/Accessibility-/Konsistenzdetails dürfen innerhalb bes
 Kritischere Entscheidungen werden nach der Analyse mit Fragestellung, Quellen, Optionen, Vor-/Nachteilen, Risiken, Empfehlung/Entscheidung, Auswirkungen und Änderungsmöglichkeiten vorgestellt. Bei größeren Design-/UX-Arbeitsschritten erfolgen gebündelte Zwischenstände.
 
 Bestehende Nutzerentscheidungen, Sicherheits-/Datenschutzgrenzen, Datenintegrität, Kostenlimit und Architektur bleiben Schutzgrenzen. Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur benötigen weiterhin vorherige Zustimmung.
+
+## Ergänzung – Empfänger und Zuständigkeit bei Revisions-Action-Requests
+
+Bei der Rückgabe einer abgeschlossenen manuellen Bewertung zur Revision gilt:
+
+1. Jede Person, die zum Zeitpunkt der Aktion serverseitig als Prüfer für den betroffenen Kurs berechtigt ist, darf die Rückgabe auslösen.
+2. Die Rückgabe erfordert einen nachvollziehbaren Revisionsgrund und konkretes Feedback zu den betroffenen Bewertungsschritten.
+3. Die dadurch erzeugte Action Request geht ausschließlich an Admins und Colonels. Sie wird nicht automatisch dem ursprünglichen Prüfer oder einem anderen Prüfer zur Bearbeitung zugewiesen.
+4. Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie sichtbar, erhält daraus aber weder Bearbeitungsvorrang noch eine bevorzugte Zuweisung.
+5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Nach der Entscheidung erfolgt die erneute Bewertung durch einen beliebigen aktuell kursberechtigten Prüfer gemäß den bestehenden Claim-Regeln.
+
+Diese Empfängerregel ändert weder die bestehende Kursberechtigung noch die Claim-/Reassignment-Regeln. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung als auch die Zuständigkeit der Action-Request-Empfänger durchsetzen.
