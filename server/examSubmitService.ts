@@ -24,6 +24,8 @@ export interface PublicExamSubmission {
   preliminaryScoreBasisPoints: number;
   finalScoreBasisPoints: number | null;
   requiresManualReview: boolean;
+  /** True when a previously released result is visible while a correction/revision awaits rerelease. */
+  reviewInProgress?: boolean;
   questionResults: Array<{
     questionId: string;
     pointsEarnedMilli: number;
@@ -79,7 +81,8 @@ export function toParticipantSubmission(
       attemptNumber: attempt.attemptNumber,
       submittedAtIso: String(attempt.submittedAtIso || ''),
       ...attempt.publishedResultSnapshot,
-      requiresManualReview: false
+      requiresManualReview: false,
+      reviewInProgress: true
     };
   }
   return {
