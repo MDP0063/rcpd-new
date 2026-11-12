@@ -214,8 +214,50 @@ export const ExamParticipantRunner: React.FC = () => {
     setRunnerError('');
   }, []);
 
-  const startOrResume = async () => {
+  const checkActiveAttemptBeforeStart = async () => {
     if (!selectedExam || !selectedCourseCode || starting) return;
+    const requestId = ++startCheckRequestIdRef.current;
+    const examId = selectedExam.id;
+    const courseCode = selectedCourseCode;
+    setStartConfirmationOpen(true);
+    setStartConfirmationState('checking');
+    setStartConfirmationError('');
+    setActiveAttemptPreview(null);
+    const response = await apiFetch<{ attempt: PublicAttempt }>(
+      `${API_ENDPOINTS.ACADEMY_EXAM_ATTEMPT(examId)}?attemptCourseCode=${encodeURIComponent(courseCode)}`,
+      { cache: 'no-store' }
+    );
+    if (requestId !== startCheckRequestIdRef.current) return;
+    if (response.ok && response.data?.attempt) {
+      setActiveAttemptPreview(response.data.attempt);
+      setStartConfirmationState('resume');
+      return;
+    }
+    if (response.status === 404) {
+      setStartConfirmationState('new');
+      return;
+    }
+    setStartConfirmationError(response.error || 'Der aktuelle Prüfungsversuch konnte nicht geprüft werden.');
+    setStartConfirmationState('error');
+  };
+
+  const cancelStartConfirmation = () => {
+    startCheckRequestIdRef.current += 1;
+    setStartConfirmationOpen(false);
+    setStartConfirmationState('idle');
+    setStartConfirmationError('');
+    setActiveAttemptPreview(null);
+    startButtonRef.current?.focus();
+  };
+
+  const startOrResume = async () => {
+    if (
+      !selectedExam ||
+      !selectedCourseCode ||
+      starting ||
+      !startConfirmationOpen ||
+      (startConfirmationState !== 'new' && startConfirmationState !== 'resume')
+    ) return;
     setStarting(true);
     setRunnerError('');
     const response = await apiFetch<{ attempt: PublicAttempt }>(
