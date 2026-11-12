@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listCompletedManualReviewSummaries, requestExamReviewRevision, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -256,6 +256,61 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const rereleasedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
     assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
+
+    const revisionSummaries = await listCompletedManualReviewSummaries(repository, ['PC-101']);
+    assert.equal(revisionSummaries.length, 1);
+    assert.deepEqual(revisionSummaries[0].questionSteps, [{ questionId: 'text', label: 'Frage 2' }]);
+    assert.equal('questions' in revisionSummaries[0], false,
+      'the course-authorized revision index must not expose answers or grading rubrics');
+    await assert.rejects(
+      requestExamReviewRevision(repository, 'review-exam', 'review-attempt', 'student-1',
+        'Eine Bewertung sollte überprüft werden.', [{ questionId: 'text', feedback: 'Bitte erneut prüfen.' }], ['admin']),
+      /EXAM_SELF_REVIEW_FORBIDDEN/
+    );
+    await assert.rejects(
+      requestExamReviewRevision(repository, 'review-exam', 'review-attempt', 'grader2',
+        'Eine Bewertung sollte überprüft werden.', [{ questionId: 'unknown', feedback: 'Bitte erneut prüfen.' }], ['admin']),
+      /EXAM_REVIEW_REVISION_FEEDBACK_INVALID/
+    );
+    const revisionRequest = await requestExamReviewRevision(
+      repository, 'review-exam', 'review-attempt', 'grader2',
+      'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.',
+      [{ questionId: 'text', feedback: 'Die Antwort enthält den geforderten zweiten Begründungsschritt.' }],
+      ['admin', 'colonel'],
+      '2026-11-05T12:12:00.000Z'
+    );
+    assert.equal(revisionRequest.status, 'pending_review');
+    assert.equal(revisionRequest.reviewClaim, null);
+    assert.equal(revisionRequest.reviewedByUid, 'grader',
+      'the original reviewer remains in the attempt until the revision is completed');
+    assert.equal(revisionRequest.resultReleaseStatus, 'pending_rerelease');
+    assert.equal(revisionRequest.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
+      'the last published participant result is retained during revision');
+    assert.equal(revisionRequest.questionGrades?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
+    const revisionQueue = await listExamReviews(repository, ['PC-101'], 'grader2');
+    assert.equal(revisionQueue.length, 1);
+    assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
+    assert.equal(revisionQueue[0].revisionRequest?.feedback[0].questionId, 'text');
+    const revisionNotifications = await listPendingExamReviewNotifications(repository, ['review-attempt']);
+    assert.deepEqual(revisionNotifications.map(item => item.recipientUid).sort(), ['admin', 'colonel']);
+    const revisionClaim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader2', 'Zweiter Prüfer', '2026-11-05T12:12:30.000Z');
+    assert.equal(revisionClaim.reviewerUid, 'grader2');
+    await gradeExamAttempt(
+      repository, 'review-exam', 'review-attempt', 'grader2',
+      [{ questionId: 'text', pointsEarnedMilli: 800 }], '2026-11-05T12:13:00.000Z'
+    );
+    const revisedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(revisedAttempt?.status, 'passed');
+    assert.equal(revisedAttempt?.reviewedByUid, 'grader2');
+    assert.equal(revisedAttempt?.resultReleaseStatus, 'pending_rerelease');
+    assert.equal(revisedAttempt?.reviewClaimHistory?.at(-1)?.action, 'revision_completed');
+    const participantDuringRevision = (await listOwnExamResults(repository, 'student-1'))[0];
+    assert.equal(participantDuringRevision.finalScoreBasisPoints, 9500,
+      'the participant continues to see the last released result until the revised result is released');
+    assert.equal((await listPendingExamResultReleases(repository)).length, 1);
+    const revisionReleased = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:14:00.000Z');
+    assert.equal(revisionReleased.finalScoreBasisPoints, 9000);
+    assert.equal((await listOwnExamResults(repository, 'student-1'))[0].finalScoreBasisPoints, 9000);
 
   } finally {
     await rm(directory, { recursive: true, force: true });
