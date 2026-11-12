@@ -398,3 +398,11 @@
 - GitHub Actions: TypeScript-/Produktionsbuild-/Testworkflow und PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 - Neue verbindliche UI-Terminologie: übergeordnete Ausbildungseinheit heißt in sichtbaren Academy-Texten „Lehrgang“; technische Program-Entität/API bleibt unverändert.
 - PR #251 vereinheitlicht die Terminologie in Teilnehmer- und Verwaltungsoberflächen und aktualisiert die Detail-Spezifikation sowie das Entscheidungsregister.
+
+## 2026-11-12 – PR #251: Lehrgang-Terminologie und Übersichtsklarstellung
+
+- Teilnehmer- und Verwaltungsoberflächen verwenden durchgehend „Lehrgang“ statt „Programm“; technische `Program`-Namen bleiben unverändert.
+- Die Kurs-/Lehrgangsverwaltung und die Academy-Startkachel verwenden konsistente, verständliche Bezeichnungen.
+- Die Übersichts-Kachel beschreibt nun den tatsächlichen Zweck der Übersicht (Aufbau/Beziehungen erklären), statt persönliche Fortschrittsfunktionen anzukündigen.
+- Veraltete PR-#250-Statusangaben in den Planungsdokumenten wurden berichtigt.
+- PR #251 offen, nicht gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
