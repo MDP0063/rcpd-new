@@ -2334,13 +2334,7 @@ async function startServer() {
               ...event,
               actorName: reviewerName(event.actorUid),
               targetName: reviewerName(event.targetUid || null),
-              previousName: reviewerName(event.previousUid || null),
-              ...(Array.isArray(event.feedback) ? {
-                feedback: event.feedback.map(entry => ({
-                  ...entry,
-                  label: `Frage ${Math.max(1, (item.questions || []).findIndex(question => question.questionId === entry.questionId) + 1)}`
-                }))
-              } : {})
+              previousName: reviewerName(event.previousUid || null)
             }))
           } : {}),
           ...(item.detailed && item.reviewCorrections ? {
