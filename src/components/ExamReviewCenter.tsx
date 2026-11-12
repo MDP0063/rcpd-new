@@ -367,7 +367,7 @@ export const ExamReviewCenter: React.FC<{
             : <div className="exam-review-questions">{review.questions.map((question, index) => <div key={question.questionId} className="exam-review-question grid gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 md:grid-cols-[1fr_180px]"><div className="exam-review-question-copy space-y-2"><h4 className="text-sm font-semibold">Frage {index + 1}: {question.question}</h4><p onClick={() => { if (review.isClaimOwner) recordActivity(review); }} className="exam-review-answer whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-950">{question.answer}</p>{question.gradingRubric && <p className="exam-review-rubric whitespace-pre-wrap text-xs text-slate-500">Rubrik: {question.gradingRubric}</p>}</div><label className="exam-review-score text-xs font-medium text-slate-600 dark:text-slate-300">Punkte / {question.pointsMilli / 1000}<input className={fieldClass + ' mt-1'} type="number" disabled={!review.isClaimOwner || savingId === review.id} min={0} max={question.pointsMilli / 1000} step="0.001" value={grades[review.id]?.[question.questionId] ?? ''} onFocus={() => { if (review.isClaimOwner) recordActivity(review); }} onChange={event => { const value = event.target.value; setGrades(current => ({ ...current, [review.id]: { ...current[review.id], [question.questionId]: value } })); if (review.isClaimOwner) scheduleDraftSave(review, question, value); }}/></label></div>)}</div>}
         </div>
         <aside className="exam-review-context" aria-label="Kontext zum Prüfungsvorgang">
-          <details open>
+          <details>
             <summary>Vorgangskontext</summary>
             <dl>
               <div><dt>Teilnehmer</dt><dd>{review.userName}</dd></div>
