@@ -142,8 +142,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             ? 'Diese Notiz wurde zwischenzeitlich geändert. Lade die aktuelle Fassung neu, bevor du weiterarbeitest.'
             : response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.';
           saveErrorsByIdRef.current.set(draft.id, message);
-          if (!pendingSaveRef.current) pendingSaveRef.current = draft;
-          resumePendingAfterRequest = pendingSaveRef.current.id !== draft.id;
+          const pendingDraft = pendingSaveRef.current || draft;
+          pendingSaveRef.current = pendingDraft;
+          resumePendingAfterRequest = pendingDraft.id !== draft.id;
           if (currentDraftRef.current?.id === draft.id) {
             setSaveStatus('error');
             setSaveError(message);
