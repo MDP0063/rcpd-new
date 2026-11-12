@@ -572,6 +572,21 @@ export async function gradeExamAttempt(
       requiresManualReview: question.needsManualReview,
       ...(typeof oldGrades.get(question.questionId)?.correct === 'boolean' ? { correct: oldGrades.get(question.questionId)!.correct } : {})
     }));
+    const claimHistory = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    const latestRevisionRequest = [...claimHistory].reverse().find(event => event.action === 'revision_requested');
+    const revisionAlreadyCompleted = latestRevisionRequest
+      ? claimHistory.some(event => event.action === 'revision_completed' && event.revisionRequestedAtIso === latestRevisionRequest.atIso)
+      : true;
+    const nextClaimHistory = latestRevisionRequest && !revisionAlreadyCompleted
+      ? [...claimHistory, {
+          action: 'revision_completed' as const,
+          actorUid: reviewerUid,
+          previousUid: latestRevisionRequest.previousUid,
+          targetUid: latestRevisionRequest.actorUid,
+          revisionRequestedAtIso: latestRevisionRequest.atIso,
+          atIso: nowIso
+        }]
+      : claimHistory;
     const finalized: ExamAttemptRecord = {
       ...attempt,
       reviewClaim: null,
@@ -581,6 +596,7 @@ export async function gradeExamAttempt(
       preliminaryScoreBasisPoints: result.preliminaryScoreBasisPoints,
       finalScoreBasisPoints: result.finalScoreBasisPoints,
       questionGrades,
+      reviewClaimHistory: nextClaimHistory,
       reviewedByUid: reviewerUid,
       reviewedAtIso: nowIso
     };
