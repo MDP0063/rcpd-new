@@ -29,9 +29,21 @@ interface MaterialDetailResponse {
 }
 
 type FormErrors = Partial<Record<
-  'title' | 'categoryId' | 'documentTypeId' | 'contentFormat' | 'content' | 'responsibleCourseCode' | 'description' | 'general',
+  'title' | 'categoryId' | 'documentTypeId' | 'contentFormat' | 'content' | 'responsibleCourseCode' | 'description' | 'codeLanguage' | 'general',
   string
 >>;
+
+const errorFieldTargets: Record<string, string> = {
+  title: 'academy-material-title',
+  responsibleCourseCode: 'academy-material-course',
+  categoryId: 'academy-material-category',
+  documentTypeId: 'academy-material-document-type',
+  contentFormat: 'academy-material-format',
+  content: 'academy-material-content',
+  description: 'academy-material-description',
+  codeLanguage: 'academy-material-code-language',
+  general: 'academy-material-general'
+};
 
 const field = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const fieldError = 'border-rose-500 dark:border-rose-500';
@@ -258,7 +270,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     if (description.length > 2000) next.description = 'Die Beschreibung darf höchstens 2.000 Zeichen enthalten.';
     if (contentFormat === 'code' && codeLanguage.trim() &&
         !/^[A-Za-z0-9_+#.-]{1,40}$/.test(codeLanguage.trim())) {
-      next.general = 'Die Sprachkennung enthält nicht unterstützte Zeichen oder ist zu lang.';
+      next.codeLanguage = 'Die Sprachkennung enthält nicht unterstützte Zeichen oder ist zu lang.';
     }
     return next;
   };
@@ -278,7 +290,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     event.preventDefault();
     const nextErrors = validateForm();
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      if (nextErrors.content) setContentPreview(false);
+      return;
+    }
     if (editingMaster && editingMaster.publicationStatus === 'archived') {
       setErrors({ general: 'Archivierte Materialien können nicht bearbeitet werden.' });
       return;
@@ -434,7 +449,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {Object.entries(errors).map(([key, message]) => (
               <li key={key}>
-                <a className="underline" href={'#academy-material-' + key}>{message}</a>
+                <a className="underline" href={'#' + (errorFieldTargets[key] || 'academy-material-general')}>{message}</a>
               </li>
             ))}
           </ul>
@@ -550,7 +565,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                 {isScopedInstructor && courseOptions.length > 0 ? (
                   <select id="academy-material-course" className={field + (errors.responsibleCourseCode ? ' ' + fieldError : '')}
                     value={responsibleCourseCode} onChange={event => { setResponsibleCourseCode(event.target.value); setFormDirty(true); }}
-                    required disabled={busy || Boolean(editingMaster)}>
+                    required disabled={busy || Boolean(editingMaster)}
+                    aria-invalid={Boolean(errors.responsibleCourseCode)} aria-describedby={errors.responsibleCourseCode ? 'academy-material-course-hint academy-material-course-error' : 'academy-material-course-hint'}>
                     <option value="">Kurs auswählen</option>
                     {courseOptions.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
@@ -558,10 +574,11 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                   <input id="academy-material-course" className={field + (errors.responsibleCourseCode ? ' ' + fieldError : '')}
                     value={responsibleCourseCode} onChange={event => { setResponsibleCourseCode(event.target.value.toUpperCase()); setFormDirty(true); }}
                     placeholder="z. B. FTO-01" maxLength={40} required={!globalManager}
-                    disabled={busy || Boolean(editingMaster)} />
+                    disabled={busy || Boolean(editingMaster)}
+                    aria-invalid={Boolean(errors.responsibleCourseCode)} aria-describedby={errors.responsibleCourseCode ? 'academy-material-course-error' : undefined} />
                 )}
-                <p className="text-xs text-slate-500 dark:text-slate-400">Diese Zuordnung steuert delegierte Bearbeitungsrechte. Sie ist unabhängig von der automatisch vergebenen Materialkennung.</p>
-                {errors.responsibleCourseCode && <p className="text-xs text-rose-700 dark:text-rose-300">{errors.responsibleCourseCode}</p>}
+                <p id="academy-material-course-hint" className="text-xs text-slate-500 dark:text-slate-400">Diese Zuordnung steuert delegierte Bearbeitungsrechte. Sie ist unabhängig von der automatisch vergebenen Materialkennung.</p>
+                {errors.responsibleCourseCode && <p id="academy-material-course-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.responsibleCourseCode}</p>}
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-category" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategorie <span className="text-rose-600">*</span></label>
@@ -596,10 +613,11 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               </div>
               <div className="space-y-1.5 md:col-span-2">
                 <label htmlFor="academy-material-description" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung (optional)</label>
-                <textarea id="academy-material-description" className={field} value={description}
+                <textarea id="academy-material-description" className={field + (errors.description ? ' ' + fieldError : '')} value={description}
                   onChange={event => { setDescription(event.target.value); setFormDirty(true); }}
-                  rows={2} maxLength={2000} disabled={busy || editingMaster?.publicationStatus === 'archived'} />
-                {errors.description && <p className="text-xs text-rose-700 dark:text-rose-300">{errors.description}</p>}
+                  rows={2} maxLength={2000} disabled={busy || editingMaster?.publicationStatus === 'archived'}
+                  aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? 'academy-material-description-error' : undefined} />
+                {errors.description && <p id="academy-material-description-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.description}</p>}
               </div>
               <div className="academy-material-form-section md:col-span-2"><h4>Inhalt und Darstellung</h4><p>Wähle das Format und pflege den eigentlichen Lerninhalt. Die Vorschau dient nur der Kontrolle und führt keinen Code aus.</p></div>
               <div className="space-y-1.5">
@@ -614,9 +632,11 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               {contentFormat === 'code' && (
                 <div className="space-y-1.5">
                   <label htmlFor="academy-material-code-language" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Programmiersprache (optional)</label>
-                  <input id="academy-material-code-language" className={field} value={codeLanguage}
+                  <input id="academy-material-code-language" className={field + (errors.codeLanguage ? ' ' + fieldError : '')} value={codeLanguage}
                     onChange={event => { setCodeLanguage(event.target.value); setFormDirty(true); }}
-                    placeholder="z. B. typescript" maxLength={40} disabled={busy || editingMaster?.publicationStatus === 'archived'} />
+                    placeholder="z. B. typescript" maxLength={40} disabled={busy || editingMaster?.publicationStatus === 'archived'}
+                     aria-invalid={Boolean(errors.codeLanguage)} aria-describedby={errors.codeLanguage ? 'academy-material-code-language-error' : undefined} />
+                   {errors.codeLanguage && <p id="academy-material-code-language-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.codeLanguage}</p>}
                 </div>
               )}
               <div className="space-y-1.5 md:col-span-2">
