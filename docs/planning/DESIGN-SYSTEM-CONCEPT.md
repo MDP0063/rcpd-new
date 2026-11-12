@@ -441,3 +441,11 @@ Die interne numerische Clearance-Stufe wird nicht mehr angezeigt oder im öffent
 Sekundärer Vorgangskontext und Korrekturhistorie bleiben vorhanden, sind aber standardmäßig eingeklappt. Das folgt dem Prinzip „häufig benötigte Kernaktion zuerst, ergänzender Kontext bei Bedarf“, ohne Daten oder Funktionen zu verstecken.
 
 **Status:** PR #255 gemergt; CI erfolgreich (455/455 Tests), manuelle Tastatur-/Screenreader-Abnahme offen.
+
+## 31. Verwaltungslisten – beschriftete Metadatenpaare (PR #258, 12.11.2026)
+
+Kurs- und Lehrgangseinträge verwenden eine responsive `dl`-Struktur statt eines langen, punktgetrennten Metadatenabsatzes. Jede Information hat eine sichtbare Beschriftung und einen klar zugeordneten Wert: Kennung, Veröffentlichung, Version, Entwurf, Verfügbarkeit und gegebenenfalls Materialprüfung.
+
+Die Paare umbrechen mit `flex-wrap` und erzeugen keine horizontale Scrollfläche. Es werden keine Status-Badges oder neuen Farben benötigt; die bestehende ruhige Typografie bleibt erhalten.
+
+**Status:** PR #258 gemergt; CI erfolgreich (455/455 Tests). Manuelle Viewport-/Dark-Mode-Abnahme offen.
