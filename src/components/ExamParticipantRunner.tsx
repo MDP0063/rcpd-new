@@ -643,7 +643,7 @@ export const ExamParticipantRunner: React.FC = () => {
         <div className={cardClass + ' academy-exam-empty space-y-2 p-10 text-center'}>
           <ShieldCheck className="mx-auto h-9 w-9 text-sky-600" />
           <h3 className="font-semibold text-slate-900 dark:text-white">Derzeit keine Prüfungen verfügbar</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Sobald eine Prüfung veröffentlicht und für deine Freigabestufe verfügbar ist, erscheint sie hier.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Sobald eine Prüfung veröffentlicht und für dich freigegeben ist, erscheint sie hier.</p>
         </div>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
