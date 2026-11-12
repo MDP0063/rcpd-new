@@ -644,18 +644,21 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory)) {
         throw new Error('EXAM_REVIEW_REVISION_COMPLETION_HISTORY_INVALID');
       }
-      if (!completion ||
-          Object.keys(completion).sort().join(',') !==
-            'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid' ||
-          completion.action !== 'revision_completed' ||
-          completion.revisionRequestIndex !== revisionRequestIndex ||
-          completion.revisionRequestedAtIso !== request.atIso ||
-          completion.previousUid !== request.previousUid ||
-          completion.targetUid !== request.actorUid ||
-          typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid ||
-          typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso ||
-          Number.isNaN(Date.parse(completion.atIso))) {
-        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_INVALID');
+      if (!completion) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_MISSING');
+      if (Object.keys(completion).sort().join(',') !==
+          'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid') {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_KEYS_INVALID');
+      }
+      if (completion.action !== 'revision_completed') throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_ACTION_INVALID');
+      if (completion.revisionRequestIndex !== revisionRequestIndex) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_INDEX_INVALID');
+      if (completion.revisionRequestedAtIso !== request.atIso) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_REQUEST_TIME_INVALID');
+      if (completion.previousUid !== request.previousUid) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_PREVIOUS_REVIEWER_INVALID');
+      if (completion.targetUid !== request.actorUid) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_REQUESTER_INVALID');
+      if (typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_ACTOR_INVALID');
+      }
+      if (typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso || Number.isNaN(Date.parse(completion.atIso))) {
+        throw new Error('EXAM_REVIEW_REVISION_COMPLETION_EVENT_TIMESTAMP_INVALID');
       }
       if (next.reviewClaim !== null || !draft || Object.keys(draft).length !== 0) {
         throw new Error('EXAM_REVIEW_REVISION_COMPLETION_DRAFT_INVALID');
