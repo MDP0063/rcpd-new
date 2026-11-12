@@ -116,7 +116,6 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const persistPending = useCallback(async () => {
     if (savingRef.current) return;
     savingRef.current = true;
-    setSaveStatus('saving');
     let resumePendingAfterRequest = true;
     try {
       while (pendingSaveRef.current) {
@@ -124,6 +123,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         pendingSaveRef.current = null;
         const expectedRevision = revisionByIdRef.current.get(draft.id) ?? 1;
         savingDraftIdRef.current = draft.id;
+        if (currentDraftRef.current?.id === draft.id) setSaveStatus('saving');
         const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
           API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(draft.id),
           {
@@ -143,7 +143,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             : response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.';
           saveErrorsByIdRef.current.set(draft.id, message);
           if (!pendingSaveRef.current) pendingSaveRef.current = draft;
-          resumePendingAfterRequest = false;
+          resumePendingAfterRequest = pendingSaveRef.current.id !== draft.id;
           if (currentDraftRef.current?.id === draft.id) {
             setSaveStatus('error');
             setSaveError(message);
