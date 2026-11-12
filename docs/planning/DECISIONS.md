@@ -534,3 +534,6 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Leseransicht hält die Materialnavigation nach dem Öffnen aus dem Katalog sichtbar. Die Materialübersicht bleibt als klarer Rückweg erreichbar.
 - Visuelle Akzente dienen Orientierung und Fokus, nicht als Warnsignal für normale Kategorien oder Navigationszustände.
 - Bestehende serverseitige Berechtigungs-, Revisions-, Versions- und Referenzprüfungen bleiben unverändert.
+
+
+- Die Bibliotheksoberfläche nutzt einen konsolidierten Stilabschnitt statt mehrfacher, konkurrierender Override-Blöcke. Violett ist der Bibliotheks-Orientierungsakzent (Themenkicker, aktive Materialnavigation, Fokus); Karten, Flächen und gewöhnliche Aktionen bleiben neutral. Primäraktionen sind sparsam, Sekundäraktionen zurückhaltend und irreversible Löschaktionen klar destruktiv gekennzeichnet. Dark Mode, mobile Layouts und Reduced Motion folgen denselben Zustandsregeln.
