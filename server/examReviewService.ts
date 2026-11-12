@@ -813,7 +813,7 @@ export async function requestExamReviewRevision(
       previousGrades: questions.map(question => ({
         questionId: question.questionId,
         pointsEarnedMilli: question.pointsEarnedMilli,
-        maxPointsMilli: question.maxPointsMilli
+        maxPointsMilli: question.pointsMilli
       })),
       questionIds,
       revisionRequestIndex: history.length,
@@ -983,6 +983,12 @@ export async function getReleasedPassingFinalExam(
   return proofs.sort((left, right) => right.releasedAtIso.localeCompare(left.releasedAtIso))[0] ?? null;
 }
 
+export type ExamParticipantReviewHistoryEvent = Omit<ExamReviewClaimHistoryEntry, 'feedback' | 'previousGrades' | 'nextGrades'> & {
+  feedback?: Array<{ questionId: string; feedback: string; label: string }>;
+  previousGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
+  nextGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
+};
+
 export interface ExamParticipantReviewHistoryItem {
   id: string;
   examId: string;
@@ -995,7 +1001,7 @@ export interface ExamParticipantReviewHistoryItem {
   responsibleReviewerName: string | null;
   reviewedAtIso: string | null;
   detailed: boolean;
-  claimHistory?: ExamReviewClaimHistoryEntry[];
+  claimHistory?: ExamParticipantReviewHistoryEvent[];
   reviewCorrections?: Array<Record<string, unknown>>;
   questions?: Array<{
     questionId: string;
