@@ -1102,4 +1102,4 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Katalog-Leerzustände unterscheiden nun „keine veröffentlichten Lehrgänge/Kurse vorhanden“ von „keine Treffer für die Suche“.
 - Ein vorhandener Kurs-/Lehrgangsversionseintrag ohne Zusammenfassung wird nicht mehr fälschlich als „keine veröffentlichte Version“ dargestellt; stattdessen wird die fehlende Kurzbeschreibung benannt.
 - Keine API-, Datenmodell-, Status-, Berechtigungs- oder Nachweisänderung.
-- PR #252 ist in Vorbereitung; CI und manuelle Browserabnahme stehen aus.
+- PR #252 ist als eigenständiger PR vorbereitet; CI und manuelle Browserabnahme stehen aus.
