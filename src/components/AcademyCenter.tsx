@@ -8,20 +8,15 @@ import {
   ExternalLink,
   CheckCircle2,
   Lock,
-  Plus,
   Award,
   FileText,
   Clock,
-  Upload,
   Terminal
 } from 'lucide-react';
 import {
   AcademyExamDoc,
-  AssessmentStage,
   ExamQuestionPublicItem,
   ModuleCategory,
-  ModuleEmbedType,
-  OfficerRole,
   ROLE_HIERARCHY,
   TrainingModuleDoc,
   UserProgressDoc,
@@ -597,11 +592,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               { id: 'notes' as const, label: 'Meine Notizen', accent: '#287A45' }
             ].map(item => {
               const selected = item.id === 'exam_center'
-                ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections', 'add_code_test'].includes(activeTab)
+                ? ['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab)
                 : item.id === 'courses'
-                  ? ['courses', 'instructor_grading'].includes(activeTab)
+                  ? ['courses'].includes(activeTab)
                   : item.id === 'modules'
-                    ? ['modules', 'upload_textbook'].includes(activeTab)
+                    ? ['modules'].includes(activeTab)
                     : activeTab === item.id;
               return <button key={item.id} type="button"
                 onClick={() => {
