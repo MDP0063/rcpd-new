@@ -372,3 +372,14 @@
 - Die PUT-Route für Legacy-Material prüft jetzt die Berechtigung sowohl für den gespeicherten Quell-Kurscode als auch für den Ziel-Kurscode einer Änderung. Damit kann ein scoped Kursausbilder kein fremdes Material per Codewechsel übernehmen.
 - Ein HTTP-Regressionstest deckt den Cross-Scope-Takeover ab und prüft, dass abgewiesene Änderungen keine Materialdaten verändern.
 - Implementierung auf Branch `fix/academy-legacy-module-scope-authorization`; CI/Review noch ausstehend. Keine Browser-/Live-Firestore-Prüfung behauptet.
+
+
+## 2026-11-12 – Academy-Lernbibliothek: Fehlerwiederherstellung und Fortschrittsabgleich (PR #202–#210)
+
+- Historischen Status von PR #202 korrigiert: Das Lernbibliotheks-Redesign wurde am 12.11.2026 gemergt; TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Der Render-Deploy-Hook wurde übersprungen; eine Browser-/Live-Firestore-Abnahme ist nicht belegt.
+- PR #203/#204 ergänzten Rückkehr- und Reader-Wiederherstellungsaktionen; PR #205 dokumentierte die ausdrückliche Arbeitsfreigabe für die Academy.
+- PR #206 ergänzte programmatisch erkennbare Statusmeldungen für dynamische Suchtrefferzahlen; PR #207 ergänzte gezielte Wiederholungsaktionen für temporäre Fehler beim Abruf des Bibliothekskatalogs und einzelner Materialien.
+- PR #208/#210 aktualisierten den Planungsindex und den dokumentierten Fortschritt nach den Bibliotheksänderungen.
+- PR #209 ergänzte eine Wiederholungsaktion für temporäre Fehler beim initialen Laden privater Notizen; Notiz- und Lesezeichenaktionen bleiben während eines wiederholbaren Ladefehlers gesperrt.
+- Keine der genannten Änderungen veränderte die bestehenden Materialversionen, Veröffentlichungs-, Archivierungs-, Rollen-, Berechtigungs- oder Datenschutzregeln.
+- GitHub Actions für die jeweiligen Anwendungs-PRs meldeten TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung als erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
