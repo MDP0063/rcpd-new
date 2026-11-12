@@ -500,9 +500,10 @@ export async function listExamReviews(
     const canClaim = !attempt.reviewClaim || isOwnDisconnectedClaim;
     const questions = attempt.reviewClaim && !isClaimOwner ? [] : pendingFreeTextQuestions(attempt, version);
     const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
-    const latestRevisionRequest = [...history].reverse().find(event => event.action === 'revision_requested');
+    const latestRevisionRequestIndex = history.map(event => event.action).lastIndexOf('revision_requested');
+    const latestRevisionRequest = latestRevisionRequestIndex >= 0 ? history[latestRevisionRequestIndex] : undefined;
     const revisionCompleted = latestRevisionRequest
-      ? history.some(event => event.action === 'revision_completed' && event.revisionRequestedAtIso === latestRevisionRequest.atIso)
+      ? history.some(event => event.action === 'revision_completed' && event.revisionRequestIndex === latestRevisionRequestIndex)
       : false;
     const revisionRequest = latestRevisionRequest && !revisionCompleted ? {
       requestedByUid: latestRevisionRequest.actorUid,
@@ -802,6 +803,7 @@ export async function requestExamReviewRevision(
       reason,
       feedback,
       questionIds,
+      revisionRequestIndex: history.length,
       recipientUids: recipients,
       notificationRequired: true as const,
       atIso: nowIso
