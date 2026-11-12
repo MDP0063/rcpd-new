@@ -392,14 +392,6 @@
 - Keine der genannten Änderungen veränderte die bestehenden Materialversionen, Veröffentlichungs-, Archivierungs-, Rollen-, Berechtigungs- oder Datenschutzregeln.
 - GitHub Actions für die jeweiligen Anwendungs-PRs meldeten TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung als erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 
-## 2026-11-12 – PR #250: Meine Notizen als fokussierter Arbeitsbereich
-
-- Notizenübersicht und Notizbearbeitung sind getrennte Ansichten; Quellenverknüpfungen bleiben im Editor sichtbar.
-- Speichern, Verwerfen und Löschen haben eine klare visuelle Hierarchie. Leerbestand und leere Suchergebnisse werden unterschiedlich erklärt.
-- Unsaved-/Saving-State schützt den Wechsel über die Academy-Hauptnavigation, Kachel-Rückweg und Examiner-Deep-Link; laufende Speicherrequests verhindern das lokale Verwerfen.
-- Keine Änderung an privater Owner-Isolation, Datenmodell, API oder Materialversionsbindung.
-- PR #250 ist offen; CI und manuelle Browser-/Accessibility-Abnahme sind noch ausstehend.
-
 ## 2026-11-12 – PR #250 gemergt und Lehrgang-Terminologie vereinheitlicht
 
 - PR #250 wurde mit Commit `1a4bb48841c017b7a2f8cc935660754c27523abc` gemergt: getrennte Notizenübersicht und fokussierter Editor, sichtbarer Quellenkontext, klare Aktionshierarchie und Schutz ungespeicherter Änderungen beim Verlassen.
