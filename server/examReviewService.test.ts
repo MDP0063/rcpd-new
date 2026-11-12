@@ -286,7 +286,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionRequest.resultReleaseStatus, 'pending_rerelease');
     assert.equal(revisionRequest.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
       'the last published participant result is retained during revision');
-    assert.equal(revisionRequest.questionGrades?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
+    assert.equal((revisionRequest.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
     const revisionQueue = await listExamReviews(repository, ['PC-101'], 'grader2');
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
