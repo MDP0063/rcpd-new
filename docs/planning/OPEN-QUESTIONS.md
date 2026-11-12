@@ -299,3 +299,13 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Beschlossen:** Bei größeren Design-/UX-Schritten sind gebündelte Zwischenstände vorgesehen.
 - **Weiterhin zustimmungspflichtig:** Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stilrichtung/Formensprache und globalen Portalstruktur.
 - **Offen:** Konkrete globale Portalidentität, globale Navigation, Light-/Dark-Mode-Strategie sowie die im Abschnitt „Noch offene Designfragen“ beschriebenen Grundlagen.
+
+
+## 12.11.2026 – Academy-Fehleraudit läuft
+
+- Der systematische Audit der implementierten Academy-Funktionen hat begonnen; noch nicht abgeschlossen.
+- **Vorläufiger Fund A-01:** Die Legacy-Route `PUT /api/academy/modules/:modId` prüft die Kursberechtigung anhand des angefragten Ziel-Kurscodes, nicht zusätzlich anhand des gespeicherten Original-Kurscodes. Ein scoped Instructor könnte damit ein fremdes Legacy-Material in den eigenen Scope verschieben und bearbeiten. Statisch bestätigt, aber noch nicht behoben und noch ohne Regressionstest. Die aktuelle UI nutzt die neue versionierte Materialverwaltung; der alte API-Endpunkt bleibt trotzdem erreichbar.
+- **Vorläufiger Fund A-02:** Alte Material-/Prüfungs-Formularzustände und Legacy-Handler sind in `AcademyCenter.tsx` verblieben, obwohl die aktuelle Bereichsnavigation diese alten Ansichten nicht mehr ansteuert. Wartungs-/Abweichungsrisiko; vor Entfernung alle möglichen Aufrufer prüfen.
+- **Positive Zwischenbefunde:** Die neue versionierte Materialverwaltung enthält serverseitige Scope-Prüfungen; Reader-Tests decken Teilnahmebindung, gepinnte Materialversion und Zugriffsschutz für fremde Teilnahmen ab. Archivierung erhält bereits gepinnte historische Kursreferenzen und entfernt archivierte Inhalte aus dem öffentlichen Katalog.
+- Die aktuelle Prüfung ist eine statische Quellcodeanalyse. Noch keine lokale Testausführung, kein CI-Lauf, keine Browser-/Live-Firestore-Abnahme. Fundstatus und Prüfgrenzen sind in `PROGRESS.md` dokumentiert.
+- **Weiter offen:** Audit der Notiz-Owner-Isolation, Kurs-/Material-Lifecycle, Repository- und Firestore-Adapter, Konkurrenz-/Versionskonflikte, Prüfungs-/Reviewer-Datenprojektionen und Progress-Endpunkte.
