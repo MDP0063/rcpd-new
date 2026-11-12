@@ -763,3 +763,13 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 **Recherchegrundlage:** WCAG 2.2 (W3C), insbesondere Fokus, Zielgrößen und Animation aus Interaktionen: https://www.w3.org/TR/WCAG22/ . Ergänzend Nielsen Norman Group, „Progressive Disclosure“: https://www.nngroup.com/articles/progressive-disclosure/ sowie die zehn Usability-Heuristiken: https://www.nngroup.com/articles/ten-usability-heuristics/ . Die Prinzipien wurden auf die vorhandenen Academy-Aufgaben angewandt; es wurden keine neuen Funktionen eingeführt.
 
 **Prüfstatus:** statische Codeprüfung der geänderten Komponenten und Styles. Noch keine echte Browser-/Geräteprüfung, kein Live-Firestore-Test und kein Deployment. CI wird über den Draft-PR geprüft. Die fünf Kacheln und alle bestehenden fachlichen Funktionen müssen vor Merge zusätzlich visuell und responsiv abgenommen werden.
+
+## 11.11.2026 – Zentrale Teilnehmer-Prüferhistorie (Implementierungsbranch)
+
+- Branch `feature/academy-exam-participant-record`: zentrale Teilnehmerakte im Examiner-Bereich mit Suche über Name, Badge und Callsign.
+- Neue geschützte API liefert nur Prüfungsvorgänge innerhalb der serverseitig geprüften Kurszuständigkeit des angemeldeten Prüfers.
+- Vertrauliche Bewertungsantworten, Rubriken, Claim-Ereignisse und Korrekturdetails erscheinen nur für Admins/Colonels sowie Prüfer, die am konkreten Vorgang beteiligt waren. Andere berechtigte Prüfer erhalten nur Status und aktuelle Zuständigkeit.
+- Teilnehmerakte sortiert nach tatsächlichem Bewertungsabschluss (neueste zuerst); bei offenen Bewertungen dient die Einreichung als Fallback. Fehlerzustand und fachlicher Leerzustand bleiben getrennt.
+- Backend- und HTTP-Regressionstests für Kurs-Scope, Whitelist-Sperre und Vertraulichkeitsprojektion ergänzt.
+- Der Branch ist noch nicht gemergt. Lint, Build, vollständige Tests und unabhängiges Review stehen aus; kein Deployment oder Browser-Test behauptet.
+- Nächster Schritt nach dieser Basis: beschlossene Revisionsrückgabe und Action Requests, mit Erhalt desselben Prüfungsversuchs, gespeicherter Drafts und des zuletzt freigegebenen Ergebnisses.

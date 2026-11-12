@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
@@ -39,6 +39,22 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.deepEqual(await listExamReviews(repository, ['LAW-01'], 'grader'), []);
     const claim = await claimExamReview(repository, 'review-exam', 'review-attempt', 'grader', 'Prüfer', '2026-11-05T12:02:30.000Z');
     assert.equal(claim.reviewerUid, 'grader');
+    const hiddenParticipantHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'other-grader', false
+    );
+    assert.equal(hiddenParticipantHistory.length, 1);
+    assert.equal(hiddenParticipantHistory[0].detailed, false);
+    assert.equal('questions' in hiddenParticipantHistory[0], false,
+      'an authorized but uninvolved reviewer must not receive answers or grading details');
+    const ownerParticipantHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'grader', false
+    );
+    assert.equal(ownerParticipantHistory[0].detailed, true);
+    assert.equal(ownerParticipantHistory[0].questions?.[0].answer, 'Meine Antwort');
+    assert.equal((await listExamParticipantReviewHistory(
+      repository, 'student-1', ['LAW-01'], 'grader', false
+    )).length, 0, 'participant history is restricted to the reviewer course scope');
+
     const savedDraft = await saveExamReviewDraft(repository, 'review-exam', 'review-attempt', 'grader', 'text', 400, '2026-11-05T12:02:35.000Z');
     assert.equal(savedDraft.revision, 1);
     assert.equal(savedDraft.draftGrades.text, 400);
