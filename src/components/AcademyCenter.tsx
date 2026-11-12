@@ -1126,7 +1126,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <>
         <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />
-        <ExamReviewRevisionCenter />
+        <ExamReviewRevisionCenter currentUser={currentUser} />
       </>}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
