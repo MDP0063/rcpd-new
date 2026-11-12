@@ -330,6 +330,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
     assert.equal(revisionQueue[0].revisionRequest?.feedback[0].questionId, 'text');
+    assert.equal('requestedByUid' in (revisionQueue[0].revisionRequest || {}), false);
+    assert.equal('previousReviewerUid' in (revisionQueue[0].revisionRequest || {}), false);
     const acceptanceNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
       .filter(item => item.event.action === 'revision_accepted');
     assert.deepEqual(acceptanceNotifications.map(item => item.recipientUid), ['grader2']);
@@ -363,6 +365,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionHistoryEvent?.previousReviewedAtIso, rereleasedAttempt.reviewedAtIso);
     assert.equal(revisionHistoryEvent?.previousGrades?.[0]?.pointsEarnedMilli, 900);
     assert.equal(revisionHistoryEvent?.previousGrades?.[0]?.label, 'Frage 2');
+    assert.equal('recipientUids' in (revisionHistoryEvent || {}), false);
+    assert.equal('notificationDeliveredTo' in (revisionHistoryEvent || {}), false);
     assert.equal(revisionCompletionEvent?.nextGrades?.[0]?.pointsEarnedMilli, 800);
     assert.equal(revisionCompletionEvent?.nextGrades?.[0]?.label, 'Frage 2');
     const unrelatedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'unrelated-reviewer', false);
