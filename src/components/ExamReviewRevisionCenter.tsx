@@ -117,7 +117,7 @@ export const ExamReviewRevisionCenter: React.FC = () => {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h4 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h4>
-              <p className="mt-1 text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {review.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</p>
+              <p className="mt-1 text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {review.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'}</p>
               <p className="mt-1 text-xs text-slate-500">Bewertet am {new Date(review.reviewedAtIso).toLocaleString('de-DE')} · {review.reviewedByName}</p>
             </div>
             <div className="flex items-center gap-2">
