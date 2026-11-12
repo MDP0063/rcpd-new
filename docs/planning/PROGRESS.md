@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252, #253 und #255 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252, #253, #255, #257 und #258 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #255 (Merge-Commit `bcce59fb9f967299105313ce769fc6bc549e885e`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, den fokussierten Notizeditor, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen, informierte Prüfungsstartbestätigung und verbesserte Examiner-Accessibility). PR #246–#248 sind ebenfalls enthalten.
+**Aktueller Basisstand:** `main` nach PR #258 (Merge-Commit `d8034258058d46d63d8f18325e9d9ee6df96b289`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, fokussierte Notizen, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen, informierte Prüfungsstartbestätigung, Examiner-Accessibility, Legacy-UI-Bereinigung und strukturierte Verwaltungsmetadaten). PR #246–#248 sind ebenfalls enthalten.
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1121,3 +1121,17 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Beim Öffnen wird der Fokus auf die Panelüberschrift gesetzt; beim Abbrechen kehrt er zum auslösenden Button zurück.
 - Vorgangskontext in offenen Bewertungen und Korrekturhistorie in abgeschlossenen Bewertungen sind standardmäßig eingeklappt, bleiben aber direkt erreichbar.
 - CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+### PR #257 – Unerreichbare Legacy-Editorpfade entfernt (12.11.2026)
+
+- PR #257 wurde am 12.11.2026 gemergt. Die drei nicht erreichbaren UI-Zweige `upload_textbook`, `add_code_test` und `instructor_grading` samt Formular-State und Handlern wurden entfernt.
+- Die gültigen Legacy-Teilnehmeransichten für Lehrmaterialien, Übungstests und Abschlussprüfungen bleiben erhalten. Ebenso bleiben gespeicherte Daten und Server-Endpunkte erhalten; es gab keine Datenmigration oder -löschung.
+- Die ungenutzte Frontend-Konstante `INSTRUCTOR_GRADE` wurde entfernt; der Server-Endpunkt bleibt aus Rückwärtskompatibilitätsgründen bestehen.
+- CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen.
+
+### PR #258 – Verwaltungsmetadaten strukturiert (12.11.2026)
+
+- PR #258 wurde am 12.11.2026 mit Commit `d8034258058d46d63d8f18325e9d9ee6df96b289` gemergt.
+- Kurs- und Lehrgangslisten zeigen Kennung, Veröffentlichungsstatus, Version, Entwurfsrevision, Verfügbarkeit und gegebenenfalls Materialprüfungsstatus als beschriftete Schlüssel-Wert-Gruppen statt als langen punktgetrennten Fließtext.
+- Es wurden keine Status-/Versionswerte, Fachregeln oder API-Daten verändert.
+- CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Responsive-/Dark-Mode-Abnahme bleibt offen.
