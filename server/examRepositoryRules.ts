@@ -210,17 +210,17 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
   if (existing.status === 'passed' || existing.status === 'failed') {
     const previousClaimHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
     const nextClaimHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
-    const appended = nextClaimHistory[nextClaimHistory.length - 1] as Record<string, unknown> | undefined;
+    const revisionEvent = nextClaimHistory[nextClaimHistory.length - 1] as Record<string, unknown> | undefined;
     const appendOnly = nextClaimHistory.length === previousClaimHistory.length + 1 &&
       isDeepStrictEqual(nextClaimHistory.slice(0, -1), previousClaimHistory);
     const stripHistory = (document: ExamDocument) =>
       Object.fromEntries(Object.entries(document).filter(([key]) => key !== 'reviewClaimHistory'));
 
-    if (appendOnly && appended?.action === 'revision_requested' && next.status === existing.status) {
-      const questionIds = Array.isArray(appended.questionIds) ? appended.questionIds : [];
-      const feedback = Array.isArray(appended.feedback) ? appended.feedback : [];
-      const previousGrades = Array.isArray(appended.previousGrades) ? appended.previousGrades : [];
-      const recipients = Array.isArray(appended.recipientUids) ? appended.recipientUids : [];
+    if (appendOnly && revisionEvent?.action === 'revision_requested' && next.status === existing.status) {
+      const questionIds = Array.isArray(revisionEvent.questionIds) ? revisionEvent.questionIds : [];
+      const feedback = Array.isArray(revisionEvent.feedback) ? revisionEvent.feedback : [];
+      const previousGrades = Array.isArray(revisionEvent.previousGrades) ? revisionEvent.previousGrades : [];
+      const recipients = Array.isArray(revisionEvent.recipientUids) ? revisionEvent.recipientUids : [];
       const existingGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
       const validQuestionIds = questionIds.length > 0 && questionIds.length <= 50 &&
         questionIds.every((id, index) => typeof id === 'string' && id.trim() && id.length <= 128 && questionIds.indexOf(id) === index);
@@ -255,16 +255,16 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       if (
         !isDeepStrictEqual(stripHistory(existing), stripHistory(next)) ||
         !validQuestionIds || !validFeedback || !validPreviousGrades || !validRecipients ||
-        !appended || Object.keys(appended).sort().join(',') !==
+        !revisionEvent || Object.keys(revisionEvent).sort().join(',') !==
           'action,actorUid,atIso,feedback,notificationRequired,previousGrades,previousReviewedAtIso,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
-        !Number.isSafeInteger(appended.revisionRequestIndex) || appended.revisionRequestIndex !== previousClaimHistory.length ||
-        typeof appended.actorUid !== 'string' || !appended.actorUid.trim() ||
-        appended.previousUid !== existing.reviewedByUid ||
-        appended.previousReviewedAtIso !== existing.reviewedAtIso ||
-        typeof appended.previousReviewedAtIso !== 'string' || Number.isNaN(Date.parse(appended.previousReviewedAtIso)) ||
-        typeof appended.reason !== 'string' || appended.reason.trim().length < 10 || appended.reason.length > 1000 ||
-        appended.notificationRequired !== true ||
-        typeof appended.atIso !== 'string' || Number.isNaN(Date.parse(appended.atIso))
+        !Number.isSafeInteger(revisionEvent.revisionRequestIndex) || revisionEvent.revisionRequestIndex !== previousClaimHistory.length ||
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        revisionEvent.previousUid !== existing.reviewedByUid ||
+        revisionEvent.previousReviewedAtIso !== existing.reviewedAtIso ||
+        typeof revisionEvent.previousReviewedAtIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.previousReviewedAtIso)) ||
+        typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 || revisionEvent.reason.length > 1000 ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
       ) throw new Error('EXAM_REVIEW_REVISION_INVALID');
       return;
     }
@@ -276,24 +276,24 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       (event.action === 'revision_accepted' || event.action === 'revision_rejected' || event.action === 'revision_completed')
     );
     const isDecisionAppend = appendOnly &&
-      (appended?.action === 'revision_accepted' || appended?.action === 'revision_rejected') &&
-      request && !alreadyResolved && appended.revisionRequestIndex === requestIndex &&
-      appended.targetUid === request.actorUid;
+      (revisionEvent?.action === 'revision_accepted' || revisionEvent?.action === 'revision_rejected') &&
+      request && !alreadyResolved && revisionEvent.revisionRequestIndex === requestIndex &&
+      revisionEvent.targetUid === request.actorUid;
 
-    if (isDecisionAppend && appended?.action === 'revision_rejected' && next.status === existing.status) {
+    if (isDecisionAppend && revisionEvent?.action === 'revision_rejected' && next.status === existing.status) {
       if (
         !isDeepStrictEqual(stripHistory(existing), stripHistory(next)) ||
-        Object.keys(appended).sort().join(',') !==
+        Object.keys(revisionEvent).sort().join(',') !==
           'action,actorUid,atIso,notificationRequired,reason,revisionRequestIndex,targetUid' ||
-        typeof appended.actorUid !== 'string' || !appended.actorUid.trim() ||
-        typeof appended.reason !== 'string' || appended.reason.trim().length < 10 || appended.reason.length > 1000 ||
-        appended.notificationRequired !== true ||
-        typeof appended.atIso !== 'string' || Number.isNaN(Date.parse(appended.atIso))
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 || revisionEvent.reason.length > 1000 ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
       ) throw new Error('EXAM_REVIEW_REVISION_REJECTION_INVALID');
       return;
     }
 
-    if (isDecisionAppend && appended?.action === 'revision_accepted' && next.status === 'pending_review') {
+    if (isDecisionAppend && revisionEvent?.action === 'revision_accepted' && next.status === 'pending_review') {
       const allowedMutable = new Set([
         'status', 'reviewClaim', 'questionGrades', 'reviewClaimHistory',
         'resultReleaseStatus', 'publishedResultSnapshot'
@@ -341,11 +341,11 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         next.reviewClaim !== null ||
         !isDeepStrictEqual(strip(existing), strip(next)) ||
         !gradesValid || !priorGradesValid || !releaseStateValid ||
-        Object.keys(appended).sort().join(',') !==
+        Object.keys(revisionEvent).sort().join(',') !==
           'action,actorUid,atIso,notificationRequired,revisionRequestIndex,targetUid' ||
-        typeof appended.actorUid !== 'string' || !appended.actorUid.trim() ||
-        appended.notificationRequired !== true ||
-        typeof appended.atIso !== 'string' || Number.isNaN(Date.parse(appended.atIso))
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
       ) throw new Error('EXAM_REVIEW_REVISION_ACCEPTANCE_INVALID');
       return;
     }
