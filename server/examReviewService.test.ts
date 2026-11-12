@@ -483,14 +483,14 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       repository, 'academy-final', 'academy-final-attempt', 'academy-grader-2',
       [{ questionId: 'written', pointsEarnedMilli: 1000 }], '2026-11-10T12:05:55.000Z'
     );
-    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T05:06:00.000Z');
+    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
     assert.ok(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'));
 
     const corrected = await correctCompletedExamReview(
       repository, 'academy-final', 'academy-final-attempt', 'academy-admin',
       [{ questionId: 'written', pointsEarnedMilli: 0 }],
       'Bewertung nach erneuter Prüfung korrigiert.',
-      '2026-11-10T12:05:00.000Z'
+      '2026-11-10T12:07:00.000Z'
     );
     assert.equal(corrected.status, 'failed');
     assert.equal(
@@ -498,7 +498,7 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       null,
       'a corrected result must not satisfy the course completion requirement until the corrected result is released'
     );
-    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
+    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:08:00.000Z');
     assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null,
       'the newly released failing result replaces the previous passing proof');
 
