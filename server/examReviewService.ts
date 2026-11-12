@@ -764,8 +764,8 @@ export async function listPendingExamReviewRevisionRequests(repository: ExamRepo
   const failed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
     where: [{ field: 'status', value: 'failed' }], limit: HISTORY_LIMIT
   }));
-  const attempts = sortCompletedManualReviewAttempts([...passed, ...failed]
-    .filter(attempt => Boolean(latestPendingRevisionRequest(attempt.reviewClaimHistory || []))));
+  const attempts = [...passed, ...failed]
+    .filter(attempt => Boolean(latestPendingRevisionRequest(attempt.reviewClaimHistory || [])));
   const results: PendingExamReviewRevisionRequest[] = [];
   for (const attempt of attempts) {
     const pending = latestPendingRevisionRequest(attempt.reviewClaimHistory || []);
