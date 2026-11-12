@@ -244,6 +244,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       'the previously released result remains visible while a corrected result awaits rerelease');
     assert.equal(participantDuringCorrection.finalScoreBasisPoints, 7500,
       'the participant continues to see the last published score, not the new internal score');
+    assert.equal(participantDuringCorrection.reviewInProgress, true,
+      'the participant receives an explicit neutral review-in-progress state');
     assert.equal(participantDuringCorrection.questionResults.find(question => question.questionId === 'text')?.pointsEarnedMilli, 500,
       'the participant continues to see the last published question score');
     assert.equal((await listPendingExamResultReleases(repository)).length, 1);
@@ -252,6 +254,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const participantAfterRerelease = (await listOwnExamResults(repository, 'student-1'))[0];
     assert.equal(participantAfterRerelease.status, 'passed');
     assert.equal(participantAfterRerelease.finalScoreBasisPoints, 9500);
+    assert.notEqual(participantAfterRerelease.reviewInProgress, true);
     assert.equal(participantAfterRerelease.questionResults.find(question => question.questionId === 'text')?.pointsEarnedMilli, 900);
     const rereleasedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
@@ -308,6 +311,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const participantDuringRevision = (await listOwnExamResults(repository, 'student-1'))[0];
     assert.equal(participantDuringRevision.finalScoreBasisPoints, 9500,
       'the participant continues to see the last released result until the revised result is released');
+    assert.equal(participantDuringRevision.reviewInProgress, true);
     assert.equal((await listPendingExamResultReleases(repository)).length, 1);
     const revisionReleased = await releaseExamResult(repository, 'review-exam', 'review-attempt', 'admin', '2026-11-05T12:14:00.000Z');
     assert.equal(revisionReleased.finalScoreBasisPoints, 9000);
