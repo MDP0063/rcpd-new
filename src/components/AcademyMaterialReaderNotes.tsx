@@ -290,9 +290,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       // Flush the current version's draft before the reader switches to another material.
       // The debounce timer is cleaned up separately, so relying on it here could lose edits.
       const current = draftsBySourceRef.current.get(sourceKey) || null;
-      for (const [key, value] of draftsBySourceRef.current.entries()) {
-      if (value.id === noteId) draftsBySourceRef.current.delete(key);
-    }
+      draftsBySourceRef.current.delete(sourceKey);
       const savedDraft = current ? lastSavedByIdRef.current.get(current.id) || null : null;
       const savedSnapshot = savedDraft ? serializeDraft(savedDraft) : '';
       if (current && serializeDraft(current) !== savedSnapshot) {
@@ -649,7 +647,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     lastSavedByIdRef.current.delete(noteId);
     setNotes(previous => previous.filter(note => note.id !== noteId));
     noteMutationVersionRef.current += 1;
-    draftsBySourceRef.current.delete(sourceKey);
+    for (const [key, value] of draftsBySourceRef.current.entries()) {
+      if (value.id === noteId) draftsBySourceRef.current.delete(key);
+    }
     setSelectedNoteId('');
     setTitle('');
     setContent('');
