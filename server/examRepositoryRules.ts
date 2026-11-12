@@ -225,6 +225,7 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       );
       const questionIds = Array.isArray(revisionEvent?.questionIds) ? revisionEvent.questionIds : [];
       const feedback = Array.isArray(revisionEvent?.feedback) ? revisionEvent.feedback : [];
+      const previousGrades = Array.isArray(revisionEvent?.previousGrades) ? revisionEvent.previousGrades : [];
       const recipients = Array.isArray(revisionEvent?.recipientUids) ? revisionEvent.recipientUids : [];
       const previousGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
       const nextGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
@@ -238,6 +239,16 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         entry.feedback.length <= 1000 &&
         feedback.findIndex((candidate: any) => candidate?.questionId === entry.questionId) === index
       );
+      const validPreviousGrades = previousGrades.length === questionIds.length &&
+        previousGrades.every((grade: any, index: number) =>
+          grade && typeof grade === 'object' && !Array.isArray(grade) &&
+          Object.keys(grade).sort().join(',') === 'maxPointsMilli,pointsEarnedMilli,questionId' &&
+          typeof grade.questionId === 'string' && questionIds.includes(grade.questionId) &&
+          previousGrades.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+          Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+          Number.isSafeInteger(grade.maxPointsMilli) && grade.maxPointsMilli > 0 &&
+          grade.pointsEarnedMilli <= grade.maxPointsMilli
+        );
       const validRecipients = recipients.length > 0 && recipients.length <= 1000 &&
         recipients.every((uid: unknown, index: number) =>
           typeof uid === 'string' && uid.trim() && uid.length <= 128 && recipients.indexOf(uid) === index
@@ -267,11 +278,11 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       if (
         next.reviewClaim !== null ||
         !isDeepStrictEqual(strip(existing), strip(next)) ||
-        !validQuestionIds || !validFeedback || !validRecipients || !gradesValid ||
+        !validQuestionIds || !validFeedback || !validPreviousGrades || !validRecipients || !gradesValid ||
         !releaseStateValid ||
         !revisionEvent ||
         Object.keys(revisionEvent).sort().join(',') !==
-          'action,actorUid,atIso,feedback,notificationRequired,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
+          'action,actorUid,atIso,feedback,notificationRequired,previousGrades,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
         !Number.isSafeInteger(revisionEvent.revisionRequestIndex) || revisionEvent.revisionRequestIndex !== previousClaimHistory.length ||
         typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
         revisionEvent.previousUid !== existing.reviewedByUid ||
