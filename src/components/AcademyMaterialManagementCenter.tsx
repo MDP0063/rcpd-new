@@ -306,6 +306,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     if (!response.ok || !response.data) {
       setErrors({ general: messageFor(response.error) });
       setBusy(false);
+      if (response.error === 'ACADEMY_MATERIAL_CATEGORY_NOT_ACTIVE' ||
+          response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_ACTIVE') {
+        await loadCatalogsAndMaterials();
+      }
       return;
     }
     if (editingMaster && draft) {
