@@ -327,7 +327,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
     if (savingRef.current || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
-      setAnchorNotice('Diese Notiz wird gerade gespeichert oder aktualisiert. Bitte warte kurz und wähle sie dann erneut aus.');
+      setAnchorNotice('Ein Notiz-Speichervorgang läuft gerade. Bitte warte kurz und wähle die Notiz dann erneut aus.');
       return;
     }
     const pendingOtherId = Array.from(pendingSavesRef.current.keys()).find(id => id !== note.id);
