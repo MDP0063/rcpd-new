@@ -1121,3 +1121,14 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Beim Öffnen wird der Fokus auf die Panelüberschrift gesetzt; beim Abbrechen kehrt er zum auslösenden Button zurück.
 - Vorgangskontext in offenen Bewertungen und Korrekturhistorie in abgeschlossenen Bewertungen sind standardmäßig eingeklappt, bleiben aber direkt erreichbar.
 - CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+### 12.11.2026 – Offene PRs abgeglichen und Entscheidungsdokumentation konsolidiert
+
+- PR #257 ist gemergt: nicht erreichbare Legacy-Editorpfade wurden aus `AcademyCenter.tsx` entfernt; keine gespeicherten Datensätze oder Server-Endpunkte wurden gelöscht. CI: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich.
+- PR #244 enthält einen sinnvollen Accessibility-/Validierungsfix der Materialverwaltung, ist jedoch 16 Commits hinter `main`. Die Änderung wird auf aktuellem `main` neu aufgesetzt; der alte PR wird nach erfolgreicher Übernahme geschlossen.
+- PR #196 ist inhaltlich durch spätere Revisions-/Action-Request-Beschlüsse in `main` bereits abgedeckt und wird als redundant geschlossen.
+- PR #197 enthält die bestätigte Arbeitsvereinbarung zur eigenständigen Entscheidungsfreiheit nach Recherche. Diese wurde selektiv in die aktuellen Planungsdokumente portiert; veraltete Zwischenstände aus dem alten Branch werden nicht übernommen.
+- PR #155 enthält bestätigte Empfehlungs-Lifecycle-Entscheidungen, die in der aktuellen Spezifikation noch teilweise als offen geführt wurden. Die fehlenden Regeln wurden gezielt nachgeführt; Fristen/Erinnerungen bleiben offen. Der 137 Commits zurückliegende PR-Branch wird nicht als Ganzes gemergt.
+- Der systematische Funktions-/Fehleraudit der implementierten Academy bleibt laufend. Statische Codebefunde, CI und manuelle Browser-/Live-Firestore-Abnahme werden getrennt dokumentiert.
+- **Nächster Schwerpunkt:** offene Funktionsbefunde priorisiert schließen und parallel die restlichen Academy-Unterseiten auf Basis der bereits beschlossenen fünfteiligen IA, Kachelgestaltung und Navigationsregeln detailliert visuell überarbeiten. Keine erneute Grundsatzkonzeption beschlossener Bereiche.
