@@ -1042,18 +1042,18 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             </section>
           ) : (
             <div className={`academy-library-reader-layout grid grid-cols-1 ${isLibraryNavigationOpen ? 'lg:grid-cols-12' : ''} gap-6 items-start`}>
+              {versionedMaterialsError && (
+                <div className="col-span-full flex flex-wrap items-center gap-3 rounded-md border border-rose-200 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">
+                  <p>{versionedMaterialsError}</p>
+                  {versionedMaterialsRetryable && <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>Erneut versuchen</button>}
+                </div>
+              )}
               {isLibraryNavigationOpen && (
                 <aside id="academy-material-navigation" aria-label="Materialnavigation" className="academy-library-sidebar lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
                   <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
                    <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{versionedMaterialsLoading ? 'Materialien werden geladen …' : versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + (filteredLibraryEntries.length === 1 ? ' Material' : ' Materialien')}</p>
-                    {versionedMaterialsError && (
-                      <div className="space-y-2 rounded-md border border-rose-200 p-2 text-xs text-rose-700 dark:border-rose-900 dark:text-rose-300">
-                        <p>{versionedMaterialsError}</p>
-                        {versionedMaterialsRetryable && <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>Erneut versuchen</button>}
-                      </div>
-                    )}
                   {filteredLibraryEntries.length === 0 ? (versionedMaterialsLoading || versionedMaterialsError ? null : <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p>) : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
                       {filteredLibraryEntries.map(entry => {
@@ -1079,6 +1079,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               )}
               {/* Right 8 Cols: Viewer */}
               <div className={isLibraryNavigationOpen ? 'lg:col-span-8' : 'w-full'}>
+                <p role="alert" className="sr-only">{versionedMaterialsError}</p>
                 <p role="alert" className="sr-only">{versionedMaterialError}</p>
                 {activeVersionedMaterialId ? (
                   versionedMaterialLoading ? (
