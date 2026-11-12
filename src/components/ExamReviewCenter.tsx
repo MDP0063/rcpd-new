@@ -381,7 +381,7 @@ export const ExamReviewCenter: React.FC<{
 
     <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Aktualisieren</button></div>
     {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
-    {!loading && !loadError && reviews.length > 0 && <section className="exam-review-filters" aria-label="Offene Bewertungen filtern">
+    {!loading && !loadError && (reviews.length > 0 || hasActiveQueueFilters) && <section className="exam-review-filters" aria-label="Offene Bewertungen filtern">
       <div className="exam-review-filter-field">
         <label htmlFor="exam-review-participant-filter">Teilnehmer</label>
         <input id="exam-review-participant-filter" type="search" value={queueSearch} onChange={event => setQueueSearch(event.target.value)} placeholder="Teilnehmername suchen …"/>
