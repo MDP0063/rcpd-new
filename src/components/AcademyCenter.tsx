@@ -86,11 +86,16 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
   useEffect(() => {
     if (!reviewNavigationTarget) return;
+    if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Du hast ungespeicherte Änderungen an einer privaten Notiz. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
+      onReviewNavigationConsumed?.();
+      return;
+    }
+    setHasUnsavedNoteChanges(false);
     setIsAcademyHome(false);
     setActiveTab('exam_reviews');
     setInitialReviewAttemptId(reviewNavigationTarget.attemptId);
     onReviewNavigationConsumed?.();
-  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId]);
+  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId, activeTab, hasUnsavedNoteChanges, onReviewNavigationConsumed]);
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
   const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
