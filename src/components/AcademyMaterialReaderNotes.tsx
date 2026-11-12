@@ -252,6 +252,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const createNote = async () => {
+    if (!notesLoaded || loading || savingAction) return;
     if (hasUnsavedChanges && draft) {
       queueSave(draft);
       return;
@@ -378,6 +379,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const toggleBookmark = async () => {
+    if (!notesLoaded || loading || savingAction) return;
     const existing = bookmarks[0];
     setSavingAction(true);
     if (existing) {
@@ -479,7 +481,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {selectedAnchor ? <p className="rounded-md border border-sky-200 bg-sky-50 p-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Ausgewählte Textstelle wird beim nächsten neuen Eintrag als Anker gespeichert: „{selectedAnchor.quote.slice(0, 180)}“</p> : null}
         {anchorNotice ? <p className="text-xs text-amber-700 dark:text-amber-300" role="status">{anchorNotice}</p> : null}
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
+          <button type="button" className={primary} onClick={() => void createNote()} disabled={loading || !notesLoaded || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
             {selectedAnchor ? 'Notiz zur Textstelle hinzufügen' : 'Notiz hinzufügen'}
           </button>
           <button type="button" className={secondary} onClick={() => void toggleBookmark()} disabled={loading || loadRetryable || savingAction || hasUnsavedChanges || saveStatus !== 'saved'}>
@@ -588,8 +590,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
               <input className={field} value={tags} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
             </label>
             {saveError ? (
-              <div className="space-y-2" role="alert">
-                <p className="text-sm text-rose-700 dark:text-rose-300">{saveError}</p>
+              <div className="space-y-2">
+                <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" className={secondary} onClick={() => queueSave(draft)}>Erneut speichern</button>
                   <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction}>Aktuelle Fassung laden</button>
