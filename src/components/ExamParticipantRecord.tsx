@@ -29,6 +29,7 @@ interface CorrectionGrade {
 interface ReviewCorrectionHistoryEntry {
   reviewerUid: string;
   reviewerName?: string;
+  previousReviewerName?: string;
   atIso: string;
   reason: string;
   previousReviewerUid: string;
@@ -179,7 +180,10 @@ export const ExamParticipantRecord: React.FC<{
                 return <li key={index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
                   <p className="font-semibold">{correction.reason || 'Korrektur'}</p>
                   <p className="mt-1 text-slate-500">
-                    {dateLabel(correction.atIso)} · Prüfer: {correction.reviewerName || 'Nicht dokumentiert'}
+                    {dateLabel(correction.atIso)} · Korrigiert von: {correction.reviewerName || 'Nicht dokumentiert'}
+                  </p>
+                  <p className="mt-1 text-slate-500">
+                    Ursprüngliche Bewertung von: {correction.previousReviewerName || 'Nicht dokumentiert'}
                   </p>
                   <p className="mt-1">
                     Ergebnis: {correction.previousStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({scoreLabel(correction.previousScoreBasisPoints)}) → {correction.nextStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({scoreLabel(correction.nextScoreBasisPoints)})
@@ -192,7 +196,7 @@ export const ExamParticipantRecord: React.FC<{
                       const nextPoints = nextByQuestion.get(questionId);
                       return <li key={questionId}>
                         <p className="font-medium text-slate-700 dark:text-slate-200">
-                          {question ? `Frage ${questionIndex + 1}: ${question.question}` : 'Bewertungsschritt'}
+                          {question ? `Frage: ${question.question}` : 'Bewertungsschritt'}
                         </p>
                         <p className="mt-0.5 text-slate-500">
                           {previousPoints === undefined ? '–' : pointsLabel(previousPoints)} → {nextPoints === undefined ? '–' : pointsLabel(nextPoints)} Punkte
