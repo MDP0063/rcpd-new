@@ -509,7 +509,10 @@ export async function listExamReviews(
       requestedAtIso: latestRevisionRequest.atIso,
       previousReviewerUid: latestRevisionRequest.previousUid || null,
       reason: latestRevisionRequest.reason || '',
-      feedback: latestRevisionRequest.feedback || []
+      feedback: (latestRevisionRequest.feedback || []).map(item => ({
+        ...item,
+        label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === item.questionId) + 1)}`
+      }))
     } : null;
     if (questions.length || attempt.reviewClaim) results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
