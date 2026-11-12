@@ -12,7 +12,6 @@ interface ReviewSummary {
   assessmentStage: 'test' | 'final_exam';
   status: 'passed' | 'failed';
   reviewedAtIso: string;
-  reviewedByUid: string;
   reviewedByName: string;
   questionSteps: Array<{ questionId: string; label: string }>;
 }
