@@ -286,6 +286,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionRequest.reviewClaim, null);
     assert.equal(revisionRequest.reviewedByUid, 'grader',
       'the original reviewer remains in the attempt until the revision is completed');
+    assert.equal(revisionRequest.reviewClaimHistory?.at(-1)?.previousReviewedAtIso, rereleasedAttempt.reviewedAtIso,
+      'the original review timestamp is retained in the revision history');
     assert.equal(revisionRequest.resultReleaseStatus, 'pending_rerelease');
     assert.equal(revisionRequest.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
       'the last published participant result is retained during revision');
