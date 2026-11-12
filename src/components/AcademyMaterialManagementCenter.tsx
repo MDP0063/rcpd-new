@@ -398,7 +398,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               Hier pflegst du Materialien zentral: Entwürfe vorbereiten, veröffentlichte Fassungen nachvollziehen und Änderungen bewusst freigeben. Text und Markdown sowie Quelltext werden unterstützt.
             </p>
           </div>
-          <button type="button" className={primary} onClick={startNew} disabled={busy}>Neues Material anlegen</button>
+          {!isEditorOpen && <button type="button" className={primary} onClick={startNew} disabled={busy}>Neues Material anlegen</button>}
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Kennungen und Versionsnummern werden automatisch vergeben. Kategorie und Dokumenttyp sind erforderlich. Beschreibung und erforderlicher Rang sind optional.
