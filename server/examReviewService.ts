@@ -577,9 +577,10 @@ export async function gradeExamAttempt(
       ...(typeof oldGrades.get(question.questionId)?.correct === 'boolean' ? { correct: oldGrades.get(question.questionId)!.correct } : {})
     }));
     const claimHistory = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
-    const latestRevisionRequest = [...claimHistory].reverse().find(event => event.action === 'revision_requested');
+    const latestRevisionRequestIndex = claimHistory.map(event => event.action).lastIndexOf('revision_requested');
+    const latestRevisionRequest = latestRevisionRequestIndex >= 0 ? claimHistory[latestRevisionRequestIndex] : undefined;
     const revisionAlreadyCompleted = latestRevisionRequest
-      ? claimHistory.some(event => event.action === 'revision_completed' && event.revisionRequestedAtIso === latestRevisionRequest.atIso)
+      ? claimHistory.some(event => event.action === 'revision_completed' && event.revisionRequestIndex === latestRevisionRequestIndex)
       : true;
     const nextClaimHistory = latestRevisionRequest && !revisionAlreadyCompleted
       ? [...claimHistory, {
@@ -588,6 +589,7 @@ export async function gradeExamAttempt(
           previousUid: latestRevisionRequest.previousUid,
           targetUid: latestRevisionRequest.actorUid,
           revisionRequestedAtIso: latestRevisionRequest.atIso,
+          revisionRequestIndex: latestRevisionRequestIndex,
           atIso: nowIso
         }]
       : claimHistory;
