@@ -322,6 +322,21 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setModuleDocumentTypeFilter('');
   };
 
+  const openVersionedMaterial = (materialId: string) => {
+    if (activeVersionedMaterialId === materialId) {
+      setIsLibraryNavigationOpen(true);
+      return;
+    }
+    setActiveModuleId(null);
+    setCurrentVersionedMaterial(null);
+    setVersionedMaterialLoading(true);
+    setVersionedMaterialError('');
+    setVersionedMaterialRetryable(false);
+    setSelectedVersionedMaterialAnchor(null);
+    setActiveVersionedMaterialId(materialId);
+    setIsLibraryNavigationOpen(true);
+  };
+
   const currentModule = modules.find(module => module.id === activeModuleId) || null;
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
@@ -938,12 +953,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <h2 id="academy-library-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Lernbibliothek</h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Alle für dich zugänglichen veröffentlichten Materialien an einem Ort.</p>
                 </div>
-                <p role="status" aria-atomic="true" className="text-sm text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} von {libraryEntries.length} Materialien</p>
+                {!versionedMaterialsLoading && (
+                  <p role="status" aria-atomic="true" className="text-sm text-slate-500 dark:text-slate-400">
+                    {versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + ' von ' + libraryEntries.length + ' Materialien'}
+                  </p>
+                )}
               </div>
+              <p role="alert" className="sr-only">{versionedMaterialsError}</p>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && (
                 <div className="flex flex-wrap items-center gap-3 text-sm text-rose-700 dark:text-rose-300">
-                  <p role="alert">{versionedMaterialsError}</p>
+                  <p>{versionedMaterialsError}</p>
                   {versionedMaterialsRetryable && (
                     <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>
                       Erneut versuchen
@@ -1008,14 +1028,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 </div>
               )}
               {sortedLibraryEntries.length === 0 ? (
-                versionedMaterialsLoading ? null : (
+                versionedMaterialsLoading || versionedMaterialsError ? null : (
                   <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
                 )
               ) : (
                 <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
 {sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
 <div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
-<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); } else { setActiveModuleId(null); setActiveVersionedMaterialId(entry.id); } setIsLibraryNavigationOpen(true); }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
+<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); setIsLibraryNavigationOpen(true); } else { openVersionedMaterial(entry.id); } }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
 </article>)}
 </div>
               )}
@@ -1027,8 +1047,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
                   <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
-                   <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} {filteredLibraryEntries.length === 1 ? 'Material' : 'Materialien'}</p>
-                  {filteredLibraryEntries.length === 0 ? <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p> : (
+                   <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{versionedMaterialsLoading ? 'Materialien werden geladen …' : versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + (filteredLibraryEntries.length === 1 ? ' Material' : ' Materialien')}</p>
+                  {filteredLibraryEntries.length === 0 ? (versionedMaterialsLoading || versionedMaterialsError ? null : <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p>) : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
                       {filteredLibraryEntries.map(entry => {
                         const isSelected = entry.kind === 'legacy'
@@ -1039,8 +1059,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             setActiveVersionedMaterialId(null);
                             setActiveModuleId(entry.id);
                           } else {
-                            setActiveModuleId(null);
-                            setActiveVersionedMaterialId(entry.id);
+                            openVersionedMaterial(entry.id);
                           }
                         }} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
                           <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{entry.code}</span>
@@ -1054,6 +1073,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               )}
               {/* Right 8 Cols: Viewer */}
               <div className={isLibraryNavigationOpen ? 'lg:col-span-8' : 'w-full'}>
+                <p role="alert" className="sr-only">{versionedMaterialError}</p>
                 {activeVersionedMaterialId ? (
                   versionedMaterialLoading ? (
                     <p role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300">Material wird geladen …</p>
@@ -1101,7 +1121,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     </article>
                   ) : (
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
-                      <p role="alert" className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
                       {versionedMaterialRetryable && (
                         <button type="button" onClick={() => setVersionedMaterialLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialLoading} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
                           Erneut versuchen
