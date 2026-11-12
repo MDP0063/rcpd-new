@@ -134,6 +134,10 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
         );
     if (!response.ok || !response.data) {
       setFormError(errorMessage(response.error));
+      if (response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_REVISION_CONFLICT' ||
+          response.error === 'ACADEMY_MATERIAL_DOCUMENT_TYPE_NOT_FOUND') {
+        await load();
+      }
       setBusy(false);
       return;
     }
