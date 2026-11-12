@@ -333,18 +333,40 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           current.requiresManualReview === false
         ));
       const publishedSnapshot = next.publishedResultSnapshot as Record<string, unknown> | undefined;
-      const releaseStateValid = existing.resultReleaseStatus === 'released'
-        ? next.resultReleaseStatus === 'pending_rerelease' && Boolean(publishedSnapshot &&
+      const publishedSnapshotValid = existing.resultReleaseStatus === 'released'
+        ? Boolean(publishedSnapshot &&
+            Object.keys(publishedSnapshot).sort().join(',') === 'automaticallyEarnedPointsMilli,finalScoreBasisPoints,manuallyEarnedPointsMilli,preliminaryScoreBasisPoints,questionResults,status,totalPossiblePointsMilli' &&
             publishedSnapshot.status === existing.status &&
             publishedSnapshot.totalPossiblePointsMilli === existing.totalPossiblePointsMilli &&
             publishedSnapshot.automaticallyEarnedPointsMilli === existing.automaticallyEarnedPointsMilli &&
             publishedSnapshot.manuallyEarnedPointsMilli === existing.manuallyEarnedPointsMilli &&
             publishedSnapshot.preliminaryScoreBasisPoints === existing.preliminaryScoreBasisPoints &&
-            publishedSnapshot.finalScoreBasisPoints === existing.finalScoreBasisPoints)
+            publishedSnapshot.finalScoreBasisPoints === (existing.finalScoreBasisPoints ?? null) &&
+            Array.isArray(publishedSnapshot.questionResults) &&
+            (existing.assessmentStage === 'final_exam'
+              ? publishedSnapshot.questionResults.length === 0
+              : publishedSnapshot.questionResults.every((item: any, index: number, all: any[]) =>
+                  item && typeof item.questionId === 'string' &&
+                  Number.isSafeInteger(item.pointsEarnedMilli) && item.pointsEarnedMilli >= 0 &&
+                  Number.isSafeInteger(item.maxPointsMilli) && item.maxPointsMilli >= item.pointsEarnedMilli &&
+                  typeof item.requiresManualReview === 'boolean' &&
+                  all.findIndex(candidate => candidate?.questionId === item.questionId) === index &&
+                  Array.isArray(existing.questionGrades) &&
+                  existing.questionGrades.some((grade: any) =>
+                    grade?.questionId === item.questionId &&
+                    grade.pointsEarnedMilli === item.pointsEarnedMilli &&
+                    grade.maxPointsMilli === item.maxPointsMilli &&
+                    grade.requiresManualReview === item.requiresManualReview
+                  ) &&
+                  (item.correct === undefined || typeof item.correct === 'boolean') &&
+                  (item.explanation === undefined || typeof item.explanation === 'string')
+                )))
+        : isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot);
+      const releaseStateValid = existing.resultReleaseStatus === 'released'
+        ? next.resultReleaseStatus === 'pending_rerelease' && publishedSnapshotValid
         : existing.resultReleaseStatus === 'pending_rerelease'
-          ? next.resultReleaseStatus === 'pending_rerelease' && isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot)
-          : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus) &&
-            isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot);
+          ? next.resultReleaseStatus === 'pending_rerelease' && publishedSnapshotValid
+          : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus) && publishedSnapshotValid;
       if (
         next.reviewClaim !== null ||
         !isDeepStrictEqual(strip(existing), strip(next)) ||
