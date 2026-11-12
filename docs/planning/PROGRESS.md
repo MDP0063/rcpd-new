@@ -738,3 +738,13 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - Eine zentrale Teilnehmerakte, wie sie Abschnitt 15.7 vorsieht, ist in der aktuellen UI noch nicht vorhanden. Historie wird deshalb nicht redundant in Prüferwarteschlange und Korrekturcenter eingeführt.
 - Als nächster zusammenhängender Funktionsblock ist die zentrale Teilnehmerakte bzw. deren Academy-Integration zu untersuchen und umzusetzen. Darauf aufbauend folgen berechtigungsgesteuerte Historienprojektion, Revisionsrückgabe mit Pflichtfeedback pro betroffenem Bewertungsschritt und passende Action-Request-Benachrichtigungen.
 - Vor Revisionsimplementierung müssen Ergebnis-Snapshot, bestehende Bewertungs-Drafts, Claim-Übergänge und Repository-Validierungsregeln gemeinsam regressionsgesichert werden. Kein neuer Prüfungsversuch darf entstehen.
+
+
+## 12.11.2026 – Erweiterter Entscheidungsmodus und Dokumentationspflicht
+
+- Der Projektinhaber hat die Entscheidungsfreiheit erweitert: Neben objektiven UX-/Design-Detailentscheidungen darf der Assistent auch kritischere fachliche/technische Fragen eigenständig entscheiden, jedoch nur nach gründlicher Recherche, Vergleich relevanter Standards/etablierter Lösungen sowie nachvollziehbarer Abwägung von Alternativen, Risiken und Auswirkungen.
+- Kritischere Entscheidungen werden nach der Analyse in einem strukturierten Ergebnisblock präsentiert (Fragestellung, Quellen/Recherche, Optionen, Vor-/Nachteile, Empfehlung/Entscheidung, Auswirkungen und Änderungsmöglichkeiten). Der Nutzer kann gezielt einzelne Punkte anpassen.
+- Bei größeren Design-/UX-Schritten erfolgt eine gebündelte Zwischenpräsentation. Objektive Accessibility-, Konsistenz-, Responsive- und Interaktionsdetails dürfen innerhalb bestehender Leitplanken eigenständig entschieden werden.
+- Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Bestehende Beschlüsse, Sicherheitsgrenzen, Kostenlimit und Architektur dürfen nicht gefährdet werden.
+- Recherche ist verbindlich; bloße Designintuition reicht nicht. Quellen und die konkrete Übertragbarkeit auf den RCPD-Kontext gehören in die Dokumentation.
+- Dokumentationshierarchie: DECISIONS.md als verbindliches Register, passende Detail-Spezifikation für die vollständigen Regeln, PROGRESS.md für tatsächlichen Arbeits-/Prüfstand, OPEN-QUESTIONS.md für ungeklärte Entscheidungen. Repository ist die verlässliche Übergabegrundlage; Memory ist ergänzend und nicht synchron garantierbar.
