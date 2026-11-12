@@ -529,3 +529,13 @@ Die Bestätigung zeigt nur Daten aus dem tatsächlichen veröffentlichten Prüfu
 - Fokus wird beim Öffnen auf die Panelüberschrift gesetzt und beim Abbrechen zum jeweiligen Trigger zurückgeführt.
 - Der sekundäre Vorgangskontext in offenen Bewertungen und die Korrekturhistorie in abgeschlossenen Bewertungen sind standardmäßig eingeklappt. Alle Inhalte bleiben über native Disclosure-Elemente direkt erreichbar.
 - **Status:** PR #255 gemergt; CI erfolgreich (TypeScript, Produktionsbuild, 455/455 Tests, PR-Vorlagenprüfung). Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+## 16. Unerreichbare Legacy-Editorpfade
+
+Der Codeabgleich bestätigte, dass `upload_textbook`, `add_code_test` und `instructor_grading` keine erreichbaren Academy-Ansichten mehr waren: keine aktiven Navigations-/Deep-Link-Einstiege und keine `setActiveTab`-Aufrufe. PR #257 entfernte nur diese UI-Zweige, ihre Handler und Formular-State-Felder. Gültige Legacy-Teilnehmeransichten, Daten und Server-Endpunkte blieben erhalten. Das reduziert tote Codepfade, ohne die noch benötigten Legacy-Daten zu migrieren oder zu löschen.
+
+## 17. Kurs-/Lehrgangsverwaltung – Metadaten scanbar strukturieren
+
+Die Verwaltungslisten fassten mehrere unterschiedliche Fakten in einem langen Fließtext zusammen. PR #258 ersetzt dies durch beschriftete Schlüssel-Wert-Gruppen. Das verbessert die Scanbarkeit und macht Veröffentlichungsstatus, Version, Entwurfsrevision, Verfügbarkeit und Materialprüfungszustand einzeln erkennbar. Die Metadaten bleiben responsiv und verändern keine Fachlogik.
+
+**Status:** PR #257 und #258 gemergt; TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Manuelle Browser-/Responsive-/Dark-Mode-Abnahme bleibt offen.
