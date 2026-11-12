@@ -63,7 +63,9 @@ const actionLabel: Record<string, string> = {
   warning_started: 'Inaktivitätswarnung gestartet',
   transferred: 'An anderen Prüfer übergeben',
   reassigned: 'Administrativ neu zugewiesen',
-  revision_requested: 'Bewertung zur Revision zurückgegeben',
+  revision_requested: 'Revisionsanfrage gestellt',
+  revision_accepted: 'Revisionsanfrage angenommen',
+  revision_rejected: 'Revisionsanfrage begründet abgelehnt',
   revision_completed: 'Revision erneut bewertet'
 };
 
