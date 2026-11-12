@@ -575,3 +575,26 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - Beim Öffnen wird der Fokus auf die Panelüberschrift gesetzt; beim Abbrechen kehrt er zum auslösenden Button zurück.
 - Ein echtes Modal ist nur dann zulässig, wenn Hintergrundinteraktion tatsächlich blockiert wird und die vollständige Modal-Fokusführung (Einschluss, Escape-/Abbruchverhalten, Rückgabe des Fokus) umgesetzt ist.
 - Sekundärer Kontext und Historien dürfen standardmäßig eingeklappt sein, müssen aber ohne zusätzliche Navigationsebene direkt erreichbar bleiben.
+
+
+## A2. Entscheidungsfreiheit, Recherchepflicht und Ergebnispräsentation (12.11.2026)
+
+- **BESCHLOSSEN – objektive UX-/Designentscheidungen:** Objektiv begründbare Detailentscheidungen darf der Assistent innerhalb bestehender Projektleitplanken eigenständig treffen. Dazu gehören Konsistenz, Informationshierarchie, Abstände, Ausrichtung, responsives Verhalten, Tastaturbedienung, Fokusführung, Kontrast und Accessibility.
+- **BESCHLOSSEN – weitergehende fachliche/technische Entscheidungen:** Auch kritischere fachliche und technische Fragen darf der Assistent eigenständig entscheiden, wenn eine sorgfältige und ausreichend breite Recherche, Prüfung etablierter Standards und vergleichbarer Lösungen sowie eine nachvollziehbare Abwägung realer Alternativen, Risiken, Folgewirkungen und bestehender Beschlüsse vorausgegangen ist.
+- **BESCHLOSSEN – Ergebnispräsentation:** Kritischere Entscheidungen werden nach der Analyse in einem klaren Ergebnisblock präsentiert: Fragestellung; Recherchegrundlage und Quellen; betrachtete Optionen; Vor-/Nachteile und Risiken; begründete Empfehlung und getroffene Entscheidung; Auswirkungen, offene Unsicherheiten und gezielte Änderungsmöglichkeiten.
+- **BESCHLOSSEN – Zwischenstände:** Bei größeren Design-/UX-Arbeitsschritten werden die wesentlichen Entscheidungen gebündelt vorgestellt, nicht jede Kleinigkeit einzeln.
+- **BESCHLOSSEN – Recherchepflicht:** Relevante Design-, UX-, Accessibility- und kritischere Architektur-/Prozessentscheidungen werden nicht aus bloßer Intuition getroffen. Geeignete aktuelle Primärquellen, Standards und belastbare Vergleichsbeispiele werden recherchiert; die Übertragbarkeit auf den konkreten RCPD-Kontext wird dokumentiert.
+- **SCHUTZGRENZE:** Frühere Nutzerentscheidungen, Sicherheitsgrenzen, Datenintegrität, Kostenlimit und bestehende Architektur dürfen nicht stillschweigend gefährdet oder überschrieben werden.
+- **SCHUTZGRENZE:** Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Navigation/Portalstruktur bleiben vorher zustimmungspflichtig. Eine Freigabe für objektive UX-Details ist keine pauschale Freigabe für diese Identitätsentscheidungen.
+- **SCHUTZGRENZE:** Eigenständige Entscheidung bedeutet nicht automatisch Freigabe für Deployment, kostenpflichtige Dienste oder Änderungen außerhalb des vereinbarten Projektumfangs.
+- **DOKUMENTATION:** Wesentliche Entscheidungen werden zeitnah in DECISIONS.md, der passenden Detail-Spezifikation, PROGRESS.md und bei Bedarf OPEN-QUESTIONS.md festgehalten. Das Repository ist die maßgebliche dauerhafte Grundlage für Chat-Übergaben.
+
+## Academy – Erneute Empfehlung nach Ausblenden (11.11.2026)
+
+- **BESCHLOSSEN:** Eine manuelle Empfehlung gilt als tatsächlich neu, wenn ein berechtigter Ausbilder oder Administrator sie ausdrücklich erneut erstellt.
+- **BESCHLOSSEN:** Eine automatische Empfehlung gilt als tatsächlich neu, wenn ein neuer, eigenständiger fachlicher Auslöser eintritt.
+- **BESCHLOSSEN:** Eine bloße Versionsänderung, ein erneutes Laden/Öffnen oder eine Fortschrittsänderung ohne neuen fachlichen Auslöser erzeugt keine neue Empfehlung.
+- **BESCHLOSSEN:** Eine ausgeblendete Empfehlung bleibt ansonsten ausgeblendet; nur eine nach diesen Kriterien tatsächlich neu erstellte Empfehlung darf erneut erscheinen.
+- **BESCHLOSSEN – Historien:** Empfehlungshistorie und Benachrichtigungshistorie sind getrennt. Erstere dokumentiert den fachlichen Lebenszyklus; letztere Versand/Zustellung, Lesezustand und Ziel. Änderungen einer Empfehlung erzeugen nicht automatisch neue Benachrichtigungen.
+- **BESCHLOSSEN – Nichtverfügbarkeit/Veraltung:** Vorübergehende Nichtverfügbarkeit macht eine Empfehlung nicht erledigt. Sie bleibt historisch erhalten und kann nach Wiederverfügbarkeit weiterbearbeitet werden. Bei fachlicher Veraltung oder dauerhaftem Rückzug wird sie mit Grund historisch zurückgenommen und aus der aktiven Übersicht entfernt. Ein Nachfolger darf nur mit nachvollziehbarer fachlicher Zuordnung verknüpft werden.
+- **BESCHLOSSEN – Manuelle Zurücknahme:** Ersteller dürfen eigene manuelle Empfehlungen zurücknehmen; Admins dürfen alle manuellen Empfehlungen zurücknehmen. Automatische Empfehlungen enden grundsätzlich anhand ihrer fachlichen Regeln. Admins dürfen sie ausnahmsweise mit dokumentiertem Grund manuell zurücknehmen. Zurücknahme bleibt historisch nachvollziehbar und ist vom persönlichen Ausblenden getrennt.

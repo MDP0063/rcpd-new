@@ -429,3 +429,12 @@
 - Fokus geht beim Öffnen auf die jeweilige Überschrift und beim Abbrechen zum auslösenden Button zurück.
 - Vorgangskontext und Korrekturhistorie sind standardmäßig eingeklappt und über native Disclosure-Elemente erreichbar.
 - PR #255 am 12.11.2026 mit Commit bcce59fb9f967299105313ce769fc6bc549e885e gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-Abnahme offen.
+
+
+## 2026-11-12 – Offene PRs fachlich abgeglichen und Entscheidungen nachgeführt
+
+- Die offenen Dokumentations-PRs #155, #196 und #197 wurden mit dem aktuellen Stand von `main` abgeglichen. Bereits in späteren Änderungen enthaltene Revisionszuständigkeit aus #196 wird nicht doppelt übernommen; der veraltete PR wird geschlossen.
+- Die noch fehlenden, zuvor bestätigten Empfehlungsregeln aus #155 wurden gezielt in DECISIONS.md und ACADEMY-DETAILED-SPECIFICATION.md nachgeführt. Nur Fristen/Erinnerungen bleiben offen.
+- Die in #197 dokumentierte Entscheidungsfreiheit wurde auf den aktuellen Dokumentationsstand portiert: eigenständige objektive UX-/Accessibility-Entscheidungen sowie kritischere Entscheidungen nach gründlicher Recherche und dokumentierter Abwägung; subjektive globale Identitätsentscheidungen bleiben zustimmungspflichtig.
+- Die Materialformular-Validierungsverbesserung aus #244 wird auf aktuellem `main` neu aufgesetzt, statt den 16 Commits zurückliegenden Branch zu mergen.
+- PR #257 (Entfernung nicht erreichbarer Legacy-Editorpfade) ist bereits gemergt; CI erfolgreich, manuelle Browserabnahme bleibt gesondert.

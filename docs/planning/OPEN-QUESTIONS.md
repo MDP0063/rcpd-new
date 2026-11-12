@@ -291,3 +291,19 @@ Die serverseitige Berechtigungsprüfung für den manuellen Examiner-Workflow wur
 Die Ergebnisprojektion wurde gemäß Abschnitt 15.3 korrigiert: PR #189 erhält den zuletzt freigegebenen Snapshot während `pending_rerelease`; PR #190 erhält ursprünglichen Prüfer und ursprünglichen Bewertungsabschlusszeitpunkt bei späteren Korrekturen. CI einschließlich Tests war erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Die gemeinsame Browser-/Live-Firestore-Abnahme bleibt offen.
 
 Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offen und wird getrennt fortgesetzt.
+
+
+## 12.11.2026 – Entscheidungsfreiheit und Recherchemodus
+
+- **Beschlossen:** Objektive UX-/Accessibility-/Konsistenzentscheidungen darf der Assistent innerhalb der bestehenden Projektleitplanken eigenständig treffen.
+- **Beschlossen:** Auch kritischere fachliche/technische Entscheidungen darf der Assistent nach gründlicher Recherche und dokumentierter Abwägung eigenständig entscheiden und anschließend strukturiert zur gezielten Korrektur präsentieren.
+- **Beschlossen:** Bei größeren Design-/UX-Schritten sind gebündelte Zwischenstände vorgesehen.
+- **Weiterhin zustimmungspflichtig:** Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stilrichtung/Formensprache und globalen Portalstruktur.
+- **Weiterhin offen:** Konkrete globale Portalidentität, globale Navigation und Light-/Dark-Mode-Strategie.
+
+## 12.11.2026 – Empfehlungsregeln abgeschlossen
+
+- Die Kriterien für das erneute Erscheinen ausgeblendeter Empfehlungen sind beschlossen: manuell nur nach ausdrücklicher Neuerstellung durch berechtigte Ausbilder/Admins; automatisch nur nach neuem, eigenständigem fachlichem Auslöser.
+- Reload, erneutes Öffnen, Versionsänderung und Fortschrittsänderung ohne neuen fachlichen Auslöser lösen keine neue Empfehlung aus.
+- Empfehlungshistorie und Benachrichtigungshistorie sind getrennt; Regeln für vorübergehende Nichtverfügbarkeit, fachliche Veraltung und manuelle Zurücknahme sind festgelegt.
+- **Weiterhin offen:** konkrete Fristen und Erinnerungsregeln.

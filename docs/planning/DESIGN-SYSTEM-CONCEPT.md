@@ -441,3 +441,12 @@ Die interne numerische Clearance-Stufe wird nicht mehr angezeigt oder im öffent
 Sekundärer Vorgangskontext und Korrekturhistorie bleiben vorhanden, sind aber standardmäßig eingeklappt. Das folgt dem Prinzip „häufig benötigte Kernaktion zuerst, ergänzender Kontext bei Bedarf“, ohne Daten oder Funktionen zu verstecken.
 
 **Status:** PR #255 gemergt; CI erfolgreich (455/455 Tests), manuelle Tastatur-/Screenreader-Abnahme offen.
+
+
+## Recherche- und Entscheidungsprotokoll (12.11.2026)
+
+Objektiv begründbare UX-/Accessibility-/Konsistenzdetails werden innerhalb der bestehenden Leitplanken eigenständig entschieden. Kritischere fachliche und technische Fragen dürfen ebenfalls eigenständig entschieden werden, aber nur nach gründlicher Recherche geeigneter Primärquellen, aktueller Standards und belastbarer Vergleichslösungen sowie einer nachvollziehbaren Abwägung von Alternativen, Risiken, Abhängigkeiten und Auswirkungen.
+
+Kritischere Entscheidungen werden nach der Analyse als Ergebnisblock präsentiert: Fragestellung, Recherche/Quellen, Optionen, Vor-/Nachteile, Risiken, Empfehlung und Entscheidung, Auswirkungen sowie gezielte Änderungsmöglichkeiten. Bei größeren Design-/UX-Arbeitsschritten werden die wesentlichen Zwischenstände gebündelt vorgestellt.
+
+Bestehende Beschlüsse, Sicherheits- und Datenschutzgrenzen, Datenintegrität, Kostenlimit und Architektur bleiben verbindlich. Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Implementierte Prototypen gelten nicht automatisch als abgenommen; Browser-, Responsive-, Accessibility- und Funktionsprüfung bleiben getrennte Prüfschritte.
