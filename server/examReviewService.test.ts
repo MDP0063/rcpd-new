@@ -316,6 +316,11 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       resolveExamReviewRevisionRequest(repository, 'review-exam', 'review-attempt', 'admin', 'reject', '', '2026-11-05T12:12:10.000Z'),
       /EXAM_REVIEW_REVISION_DECISION_REASON_INVALID/
     );
+    await assert.rejects(
+      correctCompletedExamReview(repository, 'review-exam', 'review-attempt', 'admin',
+        [{ questionId: 'text', pointsEarnedMilli: 1000 }], 'Eine parallele Korrektur darf nicht möglich sein.'),
+      /EXAM_REVIEW_REVISION_ALREADY_PENDING/
+    );
 
     const acceptedRevision = await resolveExamReviewRevisionRequest(
       repository, 'review-exam', 'review-attempt', 'admin', 'accept', '', '2026-11-05T12:12:20.000Z'
@@ -361,10 +366,13 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     const revisedHistoryItem = revisedHistory.find(item => item.id === 'review-attempt');
     assert.equal(revisedHistoryItem?.detailed, true);
     const revisionHistoryEvent = revisedHistoryItem?.claimHistory?.find(event => event.action === 'revision_requested');
+    const revisionAcceptanceEvent = revisedHistoryItem?.claimHistory?.find(event => event.action === 'revision_accepted');
     const revisionCompletionEvent = revisedHistoryItem?.claimHistory?.find(event => event.action === 'revision_completed');
     assert.equal(revisionHistoryEvent?.previousReviewedAtIso, rereleasedAttempt.reviewedAtIso);
     assert.equal(revisionHistoryEvent?.previousGrades?.[0]?.pointsEarnedMilli, 900);
     assert.equal(revisionHistoryEvent?.previousGrades?.[0]?.label, 'Frage 2');
+    assert.equal(revisionAcceptanceEvent?.actorUid, 'admin');
+    assert.equal(revisionAcceptanceEvent?.targetUid, 'grader2');
     assert.equal('recipientUids' in (revisionHistoryEvent || {}), false);
     assert.equal('notificationDeliveredTo' in (revisionHistoryEvent || {}), false);
     assert.equal(revisionCompletionEvent?.nextGrades?.[0]?.pointsEarnedMilli, 800);
@@ -405,6 +413,9 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal((await listPendingExamReviewRevisionRequests(repository)).length, 0);
     assert.equal((await listCompletedManualReviewSummaries(repository, ['PC-101'])).length, 1,
       'after rejection the unchanged completed review can be requested again if needed');
+    const rejectedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'colonel', true);
+    const rejectionEvent = rejectedHistory.find(item => item.id === 'review-attempt')?.claimHistory?.find(event => event.action === 'revision_rejected');
+    assert.equal(rejectionEvent?.reason, 'Die angeführten Gründe rechtfertigen keine erneute Bewertung.');
     const rejectionNotifications = (await listPendingExamReviewNotifications(repository, ['review-attempt']))
       .filter(item => item.event.action === 'revision_rejected');
     assert.deepEqual(rejectionNotifications.map(item => item.recipientUid), ['grader3']);
