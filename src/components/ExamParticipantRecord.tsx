@@ -111,7 +111,7 @@ export const ExamParticipantRecord: React.FC<{
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h4 className="font-semibold text-slate-900 dark:text-white">{item.examTitle}</h4>
-              <p className="mt-1 text-xs text-slate-500">{item.courseCode} · {item.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Wissenstest'} · Eingereicht: {dateLabel(item.submittedAtIso)}</p>
+              <p className="mt-1 text-xs text-slate-500">{item.courseCode} · {item.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Wissenstest'} · Eingereicht: {dateLabel(item.submittedAtIso)}</p>
             </div>
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{statusLabel[item.status]}</span>
           </div>
