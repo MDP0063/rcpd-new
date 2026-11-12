@@ -10,20 +10,22 @@
 ### 1.1 Zwei gleichberechtigte Zwecke
 
 Die Academy ist gleichzeitig:
-- ein operativer Ausbildungsarbeitsbereich, in dem Nutzer Programme, Kurse, erforderliche Lernbestandteile, Prüfungen und persönliche Aufgaben bearbeiten;
+- ein operativer Ausbildungsarbeitsbereich, in dem Nutzer Lehrgänge, Kurse, erforderliche Lernbestandteile, Prüfungen und persönliche Aufgaben bearbeiten;
 - eine eigenständige Wissensbibliothek, in der fachliche Materialien unabhängig von einem bestimmten Kurs auffindbar und lesbar sind.
 
-Die Bibliothek darf nicht zu einem reinen Anhängsel der Kurse werden. Inhalte sollen nicht künstlich in Kurskopien vervielfältigt werden. Ein Kurs oder Programm kann auf ein kanonisches Bibliotheksmaterial verweisen; das Material bleibt als eigenständige Wissensressource nutzbar.
+Die Bibliothek darf nicht zu einem reinen Anhängsel der Kurse werden. Inhalte sollen nicht künstlich in Kurskopien vervielfältigt werden. Ein Kurs oder Lehrgang kann auf ein kanonisches Bibliotheksmaterial verweisen; das Material bleibt als eigenständige Wissensressource nutzbar.
 
-Die Academy erzwingt keinen einzigen linearen Lernweg. Lernpfade, Programme und Empfehlungen geben Orientierung und Struktur, aber eine bloße Reihenfolge darf nicht automatisch eine Zugangssperre erzeugen.
+Die Academy erzwingt keinen einzigen linearen Lernweg. Lernpfade, Lehrgänge und Empfehlungen geben Orientierung und Struktur, aber eine bloße Reihenfolge darf nicht automatisch eine Zugangssperre erzeugen.
 
-### 1.2 Kurse und Programme sind unterschiedliche Ebenen
+### 1.2 Lehrgänge und Kurse sind unterschiedliche Ebenen
 
-- Ein **Kurs** ist ein eigenständiges fachliches Lernmodul. Er kann unabhängig von einem Programm begonnen werden.
-- Ein **Programm** bündelt Kurse zu einem übergeordneten Ausbildungsziel und definiert, welche davon erforderlich und welche lediglich empfohlen sind.
-- Ein Kurs kann mehreren Programmen zugeordnet sein. Das bedeutet nicht, dass für jedes Programm eine separate Kurskopie oder künstlich getrennte Teilnahme nötig ist.
-- Ein Kurs kann auch dann sinnvoll und zugänglich bleiben, wenn er keinem Programm zugeordnet ist.
-- Eine Reihenfolge innerhalb eines Programms ist eine Orientierung. Eine Sperre darf nur aus einer ausdrücklich definierten fachlichen Voraussetzung entstehen, nicht allein aus der Position eines Kurses in einer Liste.
+- Ein **Kurs** ist ein eigenständiges fachliches Lernmodul. Er kann unabhängig von einem Lehrgang begonnen werden.
+- Ein **Lehrgang** (technische Entität im Datenmodell: Program) bündelt Kurse zu einem übergeordneten Ausbildungsziel und definiert, welche davon erforderlich und welche lediglich empfohlen sind.
+- Ein Kurs kann mehreren Lehrgängen zugeordnet sein. Das bedeutet nicht, dass für jeden Lehrgang eine separate Kurskopie oder künstlich getrennte Teilnahme nötig ist.
+- Ein Kurs kann auch dann sinnvoll und zugänglich bleiben, wenn er keinem Lehrgang zugeordnet ist.
+- Eine Reihenfolge innerhalb eines Lehrgangs ist eine Orientierung. Eine Sperre darf nur aus einer ausdrücklich definierten fachlichen Voraussetzung entstehen, nicht allein aus der Position eines Kurses in einer Liste.
+
+**Verbindliche UI-Terminologie:** In allen deutschsprachigen Teilnehmer- und Verwaltungsoberflächen heißt die übergeordnete Ausbildungseinheit **Lehrgang**. „Programm“ bleibt ausschließlich der technische Name der Program-Entität, ihrer API-Endpunkte, Typen und internen Bezeichner. Neue sichtbare UI-Texte verwenden „Lehrgang“ und die passenden Zusammensetzungen (Lehrgangsfortschritt, Lehrgangsteilnahme, Lehrgangsversion usw.). Diese Sprachentscheidung ändert weder Datenmodell noch API-Verträge.
 
 ### 1.3 Hauptnavigation – Option A verbindlich
 
@@ -39,11 +41,11 @@ Der Examiner wird bei entsprechender Berechtigung innerhalb der Academy angebote
 
 Die Entscheidung betrifft die fachlichen Hauptbereiche. Sie legt noch nicht fest, ob die spätere Darstellung als Sidebar, Tabs, Untermenü oder mobile Navigation erfolgt. Diese konkrete grafische Umsetzung bleibt Teil der späteren Informationsarchitektur und Designphase.
 
-## 2. Übersicht, Programme und Kurse
+## 2. Übersicht, Lehrgänge und Kurse
 
 ### 2.1 Academy-Übersicht
 
-Die interne Academy-Übersicht dient primär der **Orientierung und Erklärung des Academy-Aufbaus**. Sie ist weder ein zweites Portal-Dashboard noch eine zweite Kurs-/Programmübersicht. Persönliche Kursstände, Teilnahmen und Programmdetails gehören in den Kursbereich; portalweite Aufgaben und Handlungsaufforderungen bleiben auf dem Portal-Dashboard.
+Die interne Academy-Übersicht dient primär der **Orientierung und Erklärung des Academy-Aufbaus**. Sie ist weder ein zweites Portal-Dashboard noch eine zweite Kurs-/Lehrgangsübersicht. Persönliche Kursstände, Teilnahmen und Lehrgangsdetails gehören in den Kursbereich; portalweite Aufgaben und Handlungsaufforderungen bleiben auf dem Portal-Dashboard.
 
 Verbindliche Leitlinien:
 - Die Übersicht erklärt in verständlicher, kurzer Sprache Zweck und Aufbau der Academy.
@@ -51,18 +53,18 @@ Verbindliche Leitlinien:
 - Lehrgänge beschreiben übergeordnete Ausbildungsziele und können Kurse bündeln. Kurse können zugleich unabhängig von einem Lehrgang genutzt werden. Materialien können aus Kursen heraus oder direkt in der Lernbibliothek geöffnet werden.
 - Prüfungen werden als Mittel zur Wissensüberprüfung bzw. zum Nachweis eingeordnet; private Notizen als persönliche Lernhilfe.
 - Die fünf bestehenden Academy-Bereiche werden nicht als zweite Kachel- oder Linknavigation wiederholt. Die horizontale Academy-Hauptnavigation bleibt der Wechsel zwischen den Bereichen.
-- Die Übersicht zeigt keine zweite persönliche Kursliste, keine duplizierten Programmkarten, keine Aufgabenliste des Portals und keine redundanten Fortschritts-/Prüfungskennzahlen.
+- Die Übersicht zeigt keine zweite persönliche Kursliste, keine duplizierten Lehrgangskarten, keine Aufgabenliste des Portals und keine redundanten Fortschritts-/Prüfungskennzahlen.
 - Farben der fünf Academy-Bereiche dürfen sparsam als Orientierung und Akzent eingesetzt werden; keine erneute große Kachelgestaltung.
 - Inhalte müssen für Nutzer ohne Academy-Vorwissen verständlich sein, ohne die Gestaltung kindlich oder ausschließlich auf Jugendliche auszurichten.
 - Das Öffnen eines Dokuments, eines Kurses oder einer Seite darf nicht als Verständnis, erfolgreiche Bearbeitung oder Abschluss ausgegeben werden.
 
-Die frühere Leitlinie, relevante Programme auf der internen Übersicht prominent aufzulisten, wird durch diese Abgrenzung ersetzt: Programme bleiben fachlich wichtig, ihre Auswahl und persönliche Teilnahme werden aber im Kursbereich dargestellt, damit die Übersicht keine Funktionen dupliziert.
+Die frühere Leitlinie, relevante Lehrgänge auf der internen Übersicht prominent aufzulisten, wird durch diese Abgrenzung ersetzt: Lehrgänge bleiben fachlich wichtig, ihre Auswahl und persönliche Teilnahme werden aber im Kursbereich dargestellt, damit die Übersicht keine Funktionen dupliziert.
 
-### 2.2 Programmübersicht und Programmdetail
+### 2.2 Lehrgangsübersicht und Lehrgangsdetail
 
-Ein Programm soll sein fachliches Ziel verständlich machen. Als Planungsleitlinie wurden **drei bis sechs konkrete Lernziele** pro Programmdetail festgehalten. Diese Ziele sollen beschreiben, was Teilnehmer fachlich lernen oder beherrschen sollen, nicht nur allgemeine Werbetexte darstellen.
+Ein Lehrgang soll sein fachliches Ziel verständlich machen. Als Planungsleitlinie wurden **drei bis sechs konkrete Lernziele** pro Lehrgangsdetail festgehalten. Diese Ziele sollen beschreiben, was Teilnehmer fachlich lernen oder beherrschen sollen, nicht nur allgemeine Werbetexte darstellen.
 
-Das Programmdetail unterscheidet mindestens:
+Das Lehrgangsdetail unterscheidet mindestens:
 - Zweck und Lernziele;
 - erforderliche Kurse bzw. Bestandteile;
 - empfohlene, aber freiwillige Kurse;
@@ -70,7 +72,7 @@ Das Programmdetail unterscheidet mindestens:
 - Voraussetzungen und tatsächlichen persönlichen Status;
 - den eigenen Fortschritt und noch ausstehende Anforderungen.
 
-Erforderliche und empfohlene Kurse dürfen nicht visuell oder logisch vermischt werden. Empfohlene Kurse blockieren den Programmabschluss nicht.
+Erforderliche und empfohlene Kurse dürfen nicht visuell oder logisch vermischt werden. Empfohlene Kurse blockieren den Lehrgangsabschluss nicht.
 
 ### 2.3 Kursstruktur
 
@@ -277,7 +279,7 @@ Datenschutz und Datenminimierung gelten auch für Audit-Daten. Ein Audit-Log ist
 
 ### 7.1 Programmabschluss
 
-Ein Programm ist abgeschlossen, wenn alle ausdrücklich als erforderlich markierten Bedingungen der maßgeblichen Programmversion erfüllt sind.
+Ein Programm ist abgeschlossen, wenn alle ausdrücklich als erforderlich markierten Bedingungen der maßgeblichen Lehrgangsversion erfüllt sind.
 
 Nicht blockierend sind:
 - empfohlene Kurse;
@@ -285,18 +287,18 @@ Nicht blockierend sind:
 - freiwillige Wissenstests;
 - Abschlussprüfungen, sofern sie nicht ausdrücklich als Voraussetzung des Programms definiert wurden.
 
-Ein Kursabschluss kann für mehrere Programme zählen, wenn die jeweilige Programmversion diese Kursversion bzw. diesen Nachweis anerkennt. Dafür werden keine künstlich getrennten Kurs-Teilnahmen erzeugt.
+Ein Kursabschluss kann für mehrere Programme zählen, wenn die jeweilige Lehrgangsversion diese Kursversion bzw. diesen Nachweis anerkennt. Dafür werden keine künstlich getrennten Kurs-Teilnahmen erzeugt.
 
 ### 7.2 Versionierung von Programmen
 
 Programm-Anforderungen werden versioniert:
 - ein bereits abgeschlossenes Programm bleibt historisch abgeschlossen;
 - neue Anforderungen werden nicht rückwirkend auf einen historischen Abschluss angewendet;
-- für laufende Programmteilnahmen ist ausdrücklich zu entscheiden, ob eine neue Programmversion übernommen wird;
-- der Standard ist, dass laufende Teilnahmen bei der begonnenen Programmversion bleiben;
-- ein automatischer Wechsel auf eine neue Programmversion findet nicht statt.
+- für laufende Programmteilnahmen ist ausdrücklich zu entscheiden, ob eine neue Lehrgangsversion übernommen wird;
+- der Standard ist, dass laufende Teilnahmen bei der begonnenen Lehrgangsversion bleiben;
+- ein automatischer Wechsel auf eine neue Lehrgangsversion findet nicht statt.
 
-Ein berechtigter Administrator kann eine laufende Teilnahme bewusst auf eine neue Programmversion umstellen. Dabei:
+Ein berechtigter Administrator kann eine laufende Teilnahme bewusst auf eine neue Lehrgangsversion umstellen. Dabei:
 - bleiben gültige Kursabschlüsse erhalten, wenn sie von der neuen Version anerkannt werden;
 - werden zusätzliche oder nicht mehr passende Anforderungen transparent ausgewiesen;
 - wird die Umstellung protokolliert;
@@ -1408,3 +1410,10 @@ Die SVG-Dateien sind eigenständige lokale Ressourcen unter `src/assets/academy/
 **BESCHLOSSEN:** Der Academy-Kopf erhält eine zurückhaltende Kombination aus typografischer Hierarchie und kleinem blauen Akzent: dezente Oberzeile „Ausbildungsbereich“, größere prägnante Überschrift „Academy“, kurze Beschreibung und etwas mehr Abstand zum Inhalt. Keine große Header-Fläche und kein Banner. Die Kachelgestaltung wird nicht verändert.
 
 **BESCHLOSSEN:** Beim Aktivieren einer Kachel darf eine sehr kurze, subtile Druckreaktion erfolgen. Der Zielbereich erscheint mit einem kurzen Fade-in und minimaler vertikaler Bewegung (Richtwert ca. 180 ms). Keine auffälligen Zoom-/Ladeeffekte; `prefers-reduced-motion` muss respektiert werden.
+
+
+## Verbindliche UI-Terminologie – Lehrgang statt Programm (12.11.2026)
+
+In sämtlichen deutschsprachigen Academy-Teilnehmer- und Verwaltungsoberflächen heißt die übergeordnete Ausbildungseinheit **Lehrgang**. Die eigenständige Lerneinheit bleibt **Kurs**. Dies gilt für Kataloge, Detailansichten, Lernziele, Pflicht-/Empfehlungskurse, Fortschritt, Teilnahme, Versionen, Verwaltung, Fehlermeldungen und Bestätigungen.
+
+Die technische Entität heißt weiterhin `Program`. API-Endpunkte, technische Typen, Felder, Variablen und persistierte IDs bleiben unverändert. Die UI-Bezeichnung ist eine sprachliche Klarstellung bereits bestehender Fachlogik, keine Änderung an Datenmodell, Ablauf, Status oder Berechtigungen.

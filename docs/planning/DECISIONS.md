@@ -549,3 +549,11 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **Schutz bestehender Beschlüsse:** Bestehende Academy-Fachregeln, Rollen, Berechtigungen, Statusdefinitionen, Datenschutz-, Versions-, Veröffentlichungs- und Datenintegritätsregeln bleiben verbindlich. Die Designfreigabe erlaubt eine gründliche Überarbeitung der visuellen und objektiv begründbaren UX-Ausgestaltung, aber keine stillschweigende Änderung fachlicher Funktionen oder Datenregeln. Neue fachliche oder portalweite Grundsatzentscheidungen werden vor Umsetzung vorgelegt.
 - **Dokumentationspflicht:** Jede relevante Berechtigung, Abgrenzung, Designentscheidung, Quelle, technische Änderung, Prüfung, Einschränkung und offene Abnahme wird zeitnah und ausführlich in den zuständigen Repository-Dokumenten festgehalten. Chat-Absprachen gelten nicht als ausreichend dokumentiert.
 - **Kosten-/Deploymentgrenze:** Kostenfreie Architektur und bestehende Dienste bleiben verbindlich. Keine neuen kostenpflichtigen Dienste, Ressourcen oder Abhängigkeiten ohne gesonderte Freigabe. Ein Merge nach `main` kann den bestehenden Render-Autodeploy auslösen; der tatsächliche Produktionsstatus muss separat verifiziert werden.
+
+
+## 12.11.2026 – Verbindliche UI-Terminologie: Lehrgang statt Programm
+
+- **BESCHLOSSEN:** Die übergeordnete Ausbildungseinheit wird in sämtlichen deutschsprachigen Academy-Teilnehmer- und Verwaltungsoberflächen als **Lehrgang** bezeichnet. Die eigenständige Lerneinheit bleibt **Kurs**.
+- Die Bezeichnung gilt konsistent für Kataloge, Detailansichten, Fortschritt, Teilnahme, Versionen, Verwaltungslisten, Editoren, Fehlermeldungen und Bestätigungsdialoge.
+- **TECHNISCHE AUSNAHME:** Die bestehende Datenmodell-/API-Entität heißt weiterhin Program; technische Typen, Endpunkte, Felder, Variablen und persistierte IDs werden nicht umbenannt. „Programm“ ist damit ein interner technischer Begriff, kein bevorzugter UI-Begriff.
+- **SCHUTZGRENZE:** Keine Datenmigration, API-Änderung, neue Fachregel oder Änderung an Lehrgangs-/Kurslebenszyklen. Es handelt sich um eine verbindliche sprachliche und UX-konsistente Darstellung bereits bestehender Konzepte.

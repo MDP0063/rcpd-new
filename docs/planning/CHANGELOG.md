@@ -392,10 +392,17 @@
 - Keine der genannten Änderungen veränderte die bestehenden Materialversionen, Veröffentlichungs-, Archivierungs-, Rollen-, Berechtigungs- oder Datenschutzregeln.
 - GitHub Actions für die jeweiligen Anwendungs-PRs meldeten TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung als erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 
-## 2026-11-12 – PR #250: Meine Notizen als fokussierter Arbeitsbereich
+## 2026-11-12 – PR #250 gemergt und Lehrgang-Terminologie vereinheitlicht
 
-- Notizenübersicht und Notizbearbeitung sind getrennte Ansichten; Quellenverknüpfungen bleiben im Editor sichtbar.
-- Speichern, Verwerfen und Löschen haben eine klare visuelle Hierarchie. Leerbestand und leere Suchergebnisse werden unterschiedlich erklärt.
-- Unsaved-/Saving-State schützt den Wechsel über die Academy-Hauptnavigation, Kachel-Rückweg und Examiner-Deep-Link; laufende Speicherrequests verhindern das lokale Verwerfen.
-- Keine Änderung an privater Owner-Isolation, Datenmodell, API oder Materialversionsbindung.
-- PR #250 ist offen; CI und manuelle Browser-/Accessibility-Abnahme sind noch ausstehend.
+- PR #250 wurde mit Commit `1a4bb48841c017b7a2f8cc935660754c27523abc` gemergt: getrennte Notizenübersicht und fokussierter Editor, sichtbarer Quellenkontext, klare Aktionshierarchie und Schutz ungespeicherter Änderungen beim Verlassen.
+- GitHub Actions: TypeScript-/Produktionsbuild-/Testworkflow und PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
+- Neue verbindliche UI-Terminologie: übergeordnete Ausbildungseinheit heißt in sichtbaren Academy-Texten „Lehrgang“; technische Program-Entität/API bleibt unverändert.
+- PR #251 vereinheitlicht die Terminologie in Teilnehmer- und Verwaltungsoberflächen und aktualisiert die Detail-Spezifikation sowie das Entscheidungsregister.
+
+## 2026-11-12 – PR #251: Lehrgang-Terminologie und Übersichtsklarstellung
+
+- Teilnehmer- und Verwaltungsoberflächen verwenden durchgehend „Lehrgang“ statt „Programm“; technische `Program`-Namen bleiben unverändert.
+- Die Kurs-/Lehrgangsverwaltung und die Academy-Startkachel verwenden konsistente, verständliche Bezeichnungen.
+- Die Übersichts-Kachel beschreibt nun den tatsächlichen Zweck der Übersicht (Aufbau/Beziehungen erklären), statt persönliche Fortschrittsfunktionen anzukündigen.
+- Veraltete PR-#250-Statusangaben in den Planungsdokumenten wurden berichtigt.
+- PR #251 offen, nicht gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.

@@ -405,4 +405,13 @@ Der Notizbereich wird als klarer Zweischritt gestaltet: Übersicht mit Suche, ko
 
 Ungespeicherte Änderungen und laufende Speicheraktionen werden an die Academy-Hülle gemeldet. Ein Bereichswechsel oder der direkte Rückweg zur Kachelstartseite fragt nach, bevor nicht abgeschlossene Änderungen verlassen werden. Die Änderung lässt private Daten ausschließlich beim Eigentümer und ändert keine serverseitige Regel.
 
-**Umsetzungsstatus:** PR #250 offen; Build/Test und manuelle Browser-/Screenreader-Abnahme noch nicht abgeschlossen.
+**Umsetzungsstatus:** PR #250 am 12.11.2026 gemergt (Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`); GitHub Actions für TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich. Manuelle Browser-/Screenreader-Abnahme bleibt offen.
+
+
+## 27. Lehrgang-Terminologie und Übersichtskachel (PR #251, 12.11.2026)
+
+Die sichtbare Academy-Terminologie verwendet nun durchgehend „Lehrgang“ für die übergeordnete Ausbildungseinheit und „Kurs“ für die einzelne Lerneinheit. Die technische Program-Entität bleibt unverändert. Die Kursbereich-Verwaltungsaktion verwendet dieselbe Bezeichnung.
+
+Die Beschreibung der Übersichtskachel wurde an die beschlossene Funktion angepasst: Sie verspricht Orientierung über Aufbau und Zusammenspiel von Lehrgängen, Kursen und Lernbibliothek. Persönliche Fortschritts-/Nächste-Schritte-Funktionen werden nicht mehr suggeriert.
+
+**Status:** PR #251 offen; CI erfolgreich (455/455 Tests), manuelle Browser-/Accessibility-Abnahme noch offen.
