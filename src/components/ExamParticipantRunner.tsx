@@ -674,8 +674,68 @@ export const ExamParticipantRunner: React.FC = () => {
                     {selectedExam.assignedCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
                 </label>
-                <button type="button" disabled={!canStart} onClick={() => void startOrResume()} className={primaryButton + ' w-full'}>{starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}{starting ? 'Wird vorbereitet …' : 'Prüfung starten / fortsetzen'}</button>
-                <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Voraussetzungen, tatsächliche Startberechtigung und verbleibende Versuche werden bei jedem Start verbindlich auf dem Server geprüft.</p>
+                {!startConfirmationOpen ? (
+                  <>
+                    <button ref={startButtonRef} type="button" disabled={!canStart} onClick={() => void checkActiveAttemptBeforeStart()} className={primaryButton + ' w-full'}>
+                      <ArrowRight className="h-4 w-4" />Prüfung starten / fortsetzen
+                    </button>
+                    <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Vor dem Start werden der aktuelle Versuch und die für diese Prüfung geltenden Folgen geprüft. Noch wird kein Versuch begonnen.</p>
+                  </>
+                ) : (
+                  <section className="academy-exam-start-confirmation space-y-3 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/30" aria-labelledby="academy-exam-start-confirmation-heading">
+                    <div>
+                      <h4 ref={startConfirmationHeadingRef} tabIndex={-1} id="academy-exam-start-confirmation-heading" className="font-bold text-slate-900 outline-none dark:text-white">Verbindliche Startbestätigung</h4>
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Es wird erst gestartet oder fortgesetzt, wenn du die abschließende Aktion bestätigst.</p>
+                    </div>
+                    {startConfirmationState === 'checking' && (
+                      <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Wir prüfen, ob bereits ein laufender Versuch besteht. Es wird noch nichts gestartet.</p>
+                    )}
+                    {startConfirmationState === 'error' && (
+                      <div role="alert" className="space-y-2 text-sm text-rose-700 dark:text-rose-300">
+                        <p>{startConfirmationError}</p>
+                        <button type="button" className={secondaryButton} onClick={() => void checkActiveAttemptBeforeStart()} disabled={starting}>Erneut prüfen</button>
+                      </div>
+                    )}
+                    {startConfirmationState === 'new' && (
+                      <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                        <p className="font-semibold">Du startest diese Prüfung jetzt verbindlich.</p>
+                        {selectedExam.timeLimitMinutes > 0
+                          ? <p>Das Zeitlimit von {selectedExam.timeLimitMinutes} Minuten beginnt unmittelbar mit dem Start.</p>
+                          : <p>Für diese Prüfung ist kein Zeitlimit festgelegt.</p>}
+                        {selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0
+                          ? <p>Es gibt keine feste Begrenzung der Versuche. Ein neuer Versuch wird dennoch als eigener Versuch gespeichert.</p>
+                          : <p>Dieser Start legt einen neuen Versuch an und zählt auf das Limit von {selectedExam.maxAttempts} Versuchen. Ob noch ein Versuch verfügbar ist, prüft der Server beim verbindlichen Start.</p>}
+                        <p>Wenn du die Seite verlässt, wird der Versuch nicht zurückgesetzt. Du kannst ihn im selben Kurskontext fortsetzen; ein vorhandenes Zeitlimit läuft währenddessen weiter. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                      </div>
+                    )}
+                    {startConfirmationState === 'resume' && activeAttemptPreview && (
+                      <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                        <p className="font-semibold">Du setzt einen bereits laufenden Versuch fort.</p>
+                        <p>Versuch {activeAttemptPreview.attemptNumber} · Kurskontext {activeAttemptPreview.attemptCourseCode} · begonnen am {new Date(activeAttemptPreview.startedAtIso).toLocaleString('de-DE')}.</p>
+                        <p>Es wird kein zusätzlicher Versuch angelegt oder verbraucht.</p>
+                        {activeAttemptPreview.deadlineIso
+                          ? <p>Das Zeitlimit läuft weiter und endet am {new Date(activeAttemptPreview.deadlineIso).toLocaleString('de-DE')}. Das Fortsetzen setzt die Frist nicht zurück.</p>
+                          : <p>Für diesen laufenden Versuch ist kein Zeitlimit festgelegt.</p>}
+                        <p>Der Versuch bleibt im selben Kurskontext fortsetzbar. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className={secondaryButton} onClick={cancelStartConfirmation} disabled={starting}>Zurück</button>
+                      {startConfirmationState === 'new' && (
+                        <button type="button" className={primaryButton} onClick={() => void startOrResume()} disabled={starting}>
+                          {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                          {starting ? 'Wird gestartet …' : 'Prüfung verbindlich starten'}
+                        </button>
+                      )}
+                      {startConfirmationState === 'resume' && (
+                        <button type="button" className={primaryButton} onClick={() => void startOrResume()} disabled={starting}>
+                          {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                          {starting ? 'Wird fortgesetzt …' : 'Laufenden Versuch fortsetzen'}
+                        </button>
+                      )}
+                    </div>
+                  </section>
+                )}
               </>
             ) : <p className="text-sm text-slate-500">Wähle eine Prüfung aus der Liste.</p>}
           </aside>
