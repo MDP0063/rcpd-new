@@ -282,9 +282,18 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       event.revisionRequestIndex === requestIndex &&
       (event.action === 'revision_accepted' || event.action === 'revision_rejected' || event.action === 'revision_completed')
     );
+    const requestQuestionIds = Array.isArray(request?.questionIds) ? request.questionIds : [];
+    const requestPreviousGrades = Array.isArray(request?.previousGrades) ? request.previousGrades : [];
+    const currentAttemptGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
+    const requestGradesStillCurrent = requestQuestionIds.length > 0 &&
+      requestPreviousGrades.length === requestQuestionIds.length &&
+      requestPreviousGrades.every((grade: any) => requestQuestionIds.includes(grade.questionId) &&
+        currentAttemptGrades.some(current => current.questionId === grade.questionId &&
+          current.pointsEarnedMilli === grade.pointsEarnedMilli &&
+          current.maxPointsMilli === grade.maxPointsMilli && current.requiresManualReview === false));
     const isDecisionAppend = appendOnly &&
       (revisionEvent?.action === 'revision_accepted' || revisionEvent?.action === 'revision_rejected') &&
-      request && !alreadyResolved && revisionEvent.revisionRequestIndex === requestIndex &&
+      request && !alreadyResolved && requestGradesStillCurrent && revisionEvent.revisionRequestIndex === requestIndex &&
       revisionEvent.targetUid === request.actorUid &&
       request.previousUid === existing.reviewedByUid &&
       request.previousReviewedAtIso === existing.reviewedAtIso;
