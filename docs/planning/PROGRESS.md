@@ -1138,3 +1138,23 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Die am 11.11.2026 bestätigte Zuständigkeit ist nun in DECISIONS.md, der Academy-Detail-Spezifikation und OPEN-QUESTIONS.md konsistent festgehalten.
 - Aktuelle kursberechtigte Prüfer dürfen eine Revision auslösen; die resultierende Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer bleibt historisch nachvollziehbar, erhält aber keinen Bearbeitungsvorrang.
 - Keine Implementierung wird durch diese Dokumentationsänderung als abgeschlossen markiert. Revisionsrückgabe, Empfängerzustellung und Benachrichtigungen bleiben funktionale Restarbeiten.
+
+## 12.11.2026 – Academy-PR-Bestand bereinigt und Dokumentation synchronisiert
+
+### Gemergte Arbeiten
+- **PR #246** – Taxonomie nach Edit-Konflikten neu laden.
+- **PR #247** – Versionshistorie nach erfolgreicher Materialveröffentlichung lokal aktualisieren.
+- **PR #248** – ausstehendes Debounce-Autosave beim bewussten Verwerfen/Neuladen privater Notizen abbrechen.
+- **PR #255** – Examiner-Aktionspanels korrekt als Inline-Regionen auszeichnen, Fokus beim Öffnen/Abbrechen führen und sekundären Kontext bzw. Korrekturhistorie standardmäßig einklappen.
+- **PR #256** – Dokumentation der Examiner-Accessibility-Änderung.
+- **PR #257** – nicht erreichbare Legacy-Erstellungs-/Bewertungsansichten aus `AcademyCenter.tsx` und ungenutzte Frontend-Konstante entfernen; gespeicherte Daten und Server-Endpunkte bleiben bestehen.
+- **PR #261** – Zuständigkeit für Revisions-Action-Requests in DECISIONS, Academy-Detail-Spezifikation, OPEN-QUESTIONS und PROGRESS dokumentiert. Merge-Commit `0d47a189bfeea62d101f78abc43445ade78d8981`.
+
+### Geschlossene, nicht gemergte Alt-PRs – Inhalt erhalten oder bereits redundant
+- **PR #155** – geschlossen, nicht gemergt. Der Branch war 139 Commits hinter `main` und 85 Commits voraus (divergiert). Die fachlich relevanten Empfehlungs-Lifecycle-Entscheidungen wurden bereits gezielt in den aktuellen Planungsstand portiert; der vollständige Alt-Branch wurde bewusst nicht übernommen. Konkrete Fristen/Erinnerungen bleiben offen.
+- **PR #196** – geschlossen, nicht gemergt. Die Empfängerregel für Revisions-Action-Requests wurde auf aktuellem `main` neu dokumentiert und mit PR #261 gemergt. Der alte Branch war 53 Commits zurück.
+- **PR #197** – geschlossen, nicht gemergt. Die Entscheidungsfreiheit und Recherchepflicht waren bereits in den aktuellen Planungsdokumenten verankert; der alte Branch war 53 Commits zurück.
+- **PR #244** – geschlossen, nicht gemergt. Der Validierungs-/Accessibility-Fix (explizite Fehlerziele, korrekte Sprachfeldzuordnung, `aria-invalid`/`aria-describedby`, sichtbares Inhaltsfeld bei Inhaltsfehlern) war bereits vollständig im aktuellen `main` vorhanden.
+
+### PR-Bestand nach Bereinigung
+Am 12.11.2026 wurde die GitHub-API-Abfrage für offene Pull Requests wiederholt. Ergebnis: **keine offenen Pull Requests**. Die geschlossenen Alt-PRs sind nicht mit offenen Aufgaben gleichzusetzen; fachlich noch offene Punkte stehen weiterhin in OPEN-QUESTIONS.md. Es wurden keine PRs allein zur Reduktion der Anzahl gemergt.
