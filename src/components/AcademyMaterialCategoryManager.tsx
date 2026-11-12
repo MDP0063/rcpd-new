@@ -259,7 +259,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             <button type="submit" className={primaryButton} disabled={busy}>
               {busy ? 'Speichert …' : editing ? 'Änderungen speichern' : 'Kategorie hinzufügen'}
             </button>
-            {editing && <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Abbrechen</button>}
+            <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Zurück zur Kategorienübersicht</button>
           </div>
         </form>
         ) : (
