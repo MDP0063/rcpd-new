@@ -317,6 +317,19 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionReleased.finalScoreBasisPoints, 9000);
     assert.equal((await listOwnExamResults(repository, 'student-1'))[0].finalScoreBasisPoints, 9000);
 
+    const secondRevision = await requestExamReviewRevision(
+      repository, 'review-exam', 'review-attempt', 'grader3',
+      'Auch die erneute Bewertung benötigt eine unabhängige Prüfung.',
+      [{ questionId: 'text', feedback: 'Bitte die Gewichtung des zweiten Begründungsschritts erneut prüfen.' }],
+      ['admin'],
+      '2026-11-05T12:12:00.000Z'
+    );
+    const secondRevisionIndex = secondRevision.reviewClaimHistory!.length - 1;
+    assert.equal(secondRevision.reviewClaimHistory![secondRevisionIndex].revisionRequestIndex, secondRevisionIndex);
+    const secondRevisionQueue = await listExamReviews(repository, ['PC-101'], 'grader3');
+    assert.equal(secondRevisionQueue[0].revisionRequest?.reason, 'Auch die erneute Bewertung benötigt eine unabhängige Prüfung.',
+      'a later revision request remains open even if its timestamp matches an earlier request');
+
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
