@@ -344,6 +344,14 @@
 - PR #193: TypeScript/Build, Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Live-/Browserabnahme steht aus.
 
 
+## 2026-11-12 – Academy-Unterbereiche und Kachelreflex
+
+- Wiederherstellung des zuvor beschlossenen weichen weißen Kachelreflexes (dezent im Ruhezustand, stärker bei Hover; Illustrationen unverändert).
+- Visuelle Vereinheitlichung der Bereiche Kurse, Lernbibliothek, Prüfungen und Meine Notizen einschließlich Dark Mode, responsiver Anordnung und Tastaturfokus.
+- Ältere Prüfungslisten-Auswahl auf natives Button-Verhalten mit Tastaturbedienbarkeit umgestellt; keine fachliche Funktion entfernt.
+- Keine Änderungen an Berechtigungen, APIs, Datenmodellen oder fachlichen Statuslogiken.
+- Browser-/Responsive-Abnahme und Deployment stehen noch aus.
+
 ## 2026-11-11 – Zentrale Teilnehmer-Prüferhistorie (Implementierungsbranch)
 
 - Examiner-Bereich erhält eine zentrale Teilnehmerakten-Suche und eine kompakte, nach Bewertungsabschluss sortierte Historienansicht.
