@@ -17,13 +17,15 @@ Die Bibliothek darf nicht zu einem reinen Anhängsel der Kurse werden. Inhalte s
 
 Die Academy erzwingt keinen einzigen linearen Lernweg. Lernpfade, Programme und Empfehlungen geben Orientierung und Struktur, aber eine bloße Reihenfolge darf nicht automatisch eine Zugangssperre erzeugen.
 
-### 1.2 Kurse und Programme sind unterschiedliche Ebenen
+### 1.2 Lehrgänge und Kurse sind unterschiedliche Ebenen
 
 - Ein **Kurs** ist ein eigenständiges fachliches Lernmodul. Er kann unabhängig von einem Programm begonnen werden.
-- Ein **Programm** bündelt Kurse zu einem übergeordneten Ausbildungsziel und definiert, welche davon erforderlich und welche lediglich empfohlen sind.
-- Ein Kurs kann mehreren Programmen zugeordnet sein. Das bedeutet nicht, dass für jedes Programm eine separate Kurskopie oder künstlich getrennte Teilnahme nötig ist.
+- Ein **Lehrgang** (technische Entität im Datenmodell: Program) bündelt Kurse zu einem übergeordneten Ausbildungsziel und definiert, welche davon erforderlich und welche lediglich empfohlen sind.
+- Ein Kurs kann mehreren Lehrgängen zugeordnet sein. Das bedeutet nicht, dass für jedes Programm eine separate Kurskopie oder künstlich getrennte Teilnahme nötig ist.
 - Ein Kurs kann auch dann sinnvoll und zugänglich bleiben, wenn er keinem Programm zugeordnet ist.
-- Eine Reihenfolge innerhalb eines Programms ist eine Orientierung. Eine Sperre darf nur aus einer ausdrücklich definierten fachlichen Voraussetzung entstehen, nicht allein aus der Position eines Kurses in einer Liste.
+
+**Verbindliche UI-Terminologie:** In allen deutschsprachigen Teilnehmer- und Verwaltungsoberflächen heißt die übergeordnete Ausbildungseinheit **Lehrgang**. „Programm“ bleibt ausschließlich der technische Name der Program-Entität, ihrer API-Endpunkte, Typen und internen Bezeichner. Neue sichtbare UI-Texte verwenden „Lehrgang“ und die passenden Zusammensetzungen (Lehrgangsfortschritt, Lehrgangsteilnahme, Lehrgangsversion usw.). Diese Sprachentscheidung ändert weder Datenmodell noch API-Verträge.
+- Eine Reihenfolge innerhalb eines Lehrgangs ist eine Orientierung. Eine Sperre darf nur aus einer ausdrücklich definierten fachlichen Voraussetzung entstehen, nicht allein aus der Position eines Kurses in einer Liste.
 
 ### 1.3 Hauptnavigation – Option A verbindlich
 
@@ -39,7 +41,7 @@ Der Examiner wird bei entsprechender Berechtigung innerhalb der Academy angebote
 
 Die Entscheidung betrifft die fachlichen Hauptbereiche. Sie legt noch nicht fest, ob die spätere Darstellung als Sidebar, Tabs, Untermenü oder mobile Navigation erfolgt. Diese konkrete grafische Umsetzung bleibt Teil der späteren Informationsarchitektur und Designphase.
 
-## 2. Übersicht, Programme und Kurse
+## 2. Übersicht, Lehrgänge und Kurse
 
 ### 2.1 Academy-Übersicht
 
@@ -58,7 +60,7 @@ Verbindliche Leitlinien:
 
 Die frühere Leitlinie, relevante Programme auf der internen Übersicht prominent aufzulisten, wird durch diese Abgrenzung ersetzt: Programme bleiben fachlich wichtig, ihre Auswahl und persönliche Teilnahme werden aber im Kursbereich dargestellt, damit die Übersicht keine Funktionen dupliziert.
 
-### 2.2 Programmübersicht und Programmdetail
+### 2.2 Lehrgangsübersicht und Lehrgangsdetail
 
 Ein Programm soll sein fachliches Ziel verständlich machen. Als Planungsleitlinie wurden **drei bis sechs konkrete Lernziele** pro Programmdetail festgehalten. Diese Ziele sollen beschreiben, was Teilnehmer fachlich lernen oder beherrschen sollen, nicht nur allgemeine Werbetexte darstellen.
 
