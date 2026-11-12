@@ -616,7 +616,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme</h3>
                     {programPinByCourse.get(selectedCourse.master.id)?.length &&
                       new Set(programPinByCourse.get(selectedCourse.master.id)!.map(item => item.pin.courseVersionId)).size > 1 ? (
-                        <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Lehrgangsversions-Pins. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Lehrgangsversionsbindungen. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
                       ) : (
                         <>
                           <p className={muted}>Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.</p>
