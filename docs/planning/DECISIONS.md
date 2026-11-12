@@ -518,3 +518,10 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **NICHT BESCHLOSSEN:** Eine physische Löschung vorhandener Firestore-Datensätze. Dafür ist zuerst eine Inventur aller historischen Referenzen und eine sichere Bereinigungsstrategie erforderlich.
 - **UMSETZUNG:** PR #201, gemergt am 12.11.2026 als Squash-Commit `59183857c41a31e1d352ffc57c9d21a9749997ea`. Regressionstests decken Katalog- und Aktivitätsfeed-Ausblendung, blockierte Update-/Delete-Versuche sowie eine frische Datenbank ohne diese Seeds ab.
 - **VALIDIERUNGSGRENZE:** GitHub Actions meldete TypeScript, Produktionsbuild und vollständige Teststufe als erfolgreich. Keine Live-Firestore-Inventur, produktive Datenänderung, Render-Bereitstellung oder Browserabnahme wurde mit diesem PR durchgeführt.
+
+## Bibliothek – Redesign (12.11.2026)
+- **BESCHLOSSEN:** Die Lernbibliothek wird als eigenständiger, übersichtlicher Arbeitsbereich neu gestaltet. Das Redesign umfasst Nutzeransicht, Navigation, Materialdarstellung/Reader, Verwaltung und sämtliche verwendeten Schaltflächen.
+- **BESCHLOSSEN:** Größere Themen- und Materialkacheln sind erwünscht; sie unterscheiden sich visuell von den fünf Academy-Einstiegskacheln.
+- **BESCHLOSSEN:** Die bestehende Farbauswahl ist grundsätzlich akzeptiert. Akzente werden kontextbezogen und zurückhaltend verwendet; normale Navigation/Kategorien dürfen nicht wie Warn-/Fehlersignale wirken.
+- **BESCHLOSSEN:** Schaltflächen müssen eine klare visuelle Hierarchie, verständliche handlungsorientierte Beschriftungen, konsistente Größen und erkennbare Zustände besitzen. Keine dekorative Überladung, keine generischen KI-Dashboard-Muster, keine unnötige Häufung gleichrangiger Aktionen.
+- **BESCHLOSSEN:** Bestehende Versionierungs-, Veröffentlichungs-, Archivierungs-, Berechtigungs- und Datenschutzregeln bleiben unverändert.
