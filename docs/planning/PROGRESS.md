@@ -822,3 +822,13 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - CI des Zwischencommits `21d43e64cf844c31fac32fb814c8f9ac4fa6ad3e` schlug mit TypeScript-Fehlern wegen dieser nicht vorhandenen Felder fehl. Korrektur erfolgte im Folgecommit `ecda264998618704e2a24f591c42f69932a05e31`; erneute CI-Prüfung steht noch aus.
 - Offene UX-Arbeit: Kategorien-/Dokumenttypenformulare sind noch neben den Listen eingebettet; Bearbeitungswechsel kann Eingaben ohne explizite Rückfrage verwerfen. Diese Verwaltungsstrecken müssen noch in klare Übersichts- und Bearbeitungsansichten überführt werden.
 - PR #202 bleibt offen und ungemergt. Kein Browser-/Produktionscheck erfolgt.
+
+
+### Bibliotheksverwaltung: getrennte Taxonomie-Arbeitsansichten – 12.11.2026
+- Kategorien- und Dokumenttypenverwaltung zeigen jetzt entweder die jeweilige Übersicht oder den eigenständigen Editor, nicht mehr beide nebeneinander.
+- Wechsel von „Neu“ zu „Bearbeiten“ bzw. zwischen Datensätzen fragt bei veränderten Formularwerten nach, bevor Eingaben verworfen werden. Abbrechen prüft ebenfalls auf ungespeicherte Änderungen. Nach erfolgreichem Speichern kehrt die Ansicht zur Liste zurück.
+- Löschaktionen sind als destruktive Aktionen visuell von normalen Bearbeiten-/Archivieren-Aktionen getrennt. Normale Kategorien und Navigation behalten neutrale Flächen; der Bibliotheksakzent bleibt auf Orientierung und Fokus begrenzt.
+- Die Materialverwaltungssuche berücksichtigt die Felder, die tatsächlich in der Listenprojektion vorhanden sind. Nicht verfügbare Versionsfelder wurden nicht in die API-Projektion hineinerfunden.
+- Beim Öffnen eines Materials aus dem Katalog bleibt die Materialnavigation direkt sichtbar. Leser können zwischen Materialien wechseln oder zur Materialübersicht zurückkehren; Bezeichnungen der Rück-/Navigationsaktionen wurden vereinheitlicht.
+- Keine Änderung an API, Datenmodell, Rollen-/Kursberechtigungen, Versionsbindung, Veröffentlichung oder Archivierung.
+- CI-Prüfung für diese Folgeänderungen steht aus; keine Browser-/Live-Firestore-Abnahme erfolgt.
