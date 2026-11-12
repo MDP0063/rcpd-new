@@ -509,16 +509,4 @@ Diese Befunde werden in ACADEMY-SUBPAGE-REDESIGN.md ausführlicher dokumentiert.
 - Der aktive Kurspfad zeigt jetzt die veröffentlichten Lernziele und Kapitel derselben Kursversion weiter an. Das hält den Lernkontext nach dem Start sichtbar, ohne neue Daten oder fachliche Fortschrittsregeln zu erzeugen.
 - Kataloge unterscheiden leere veröffentlichte Bestände von Suchanfragen ohne Treffer.
 - Ein vorhandener Kurs-/Lehrgangsversionseintrag ohne Zusammenfassung erhält einen passenden Hinweis statt einer irreführenden Aussage, dass keine veröffentlichte Version existiert.
-- **Status:** PR #252 gemergt; CI erfolgreich (455/455 Tests). Manuelle Browser-/Accessibility-Abnahme steht aus.
-
-
-## 14. Prüfungsstart – fehlende Bestätigung und interne Berechtigungsdaten
-
-Der Codeabgleich des ExamParticipantRunner hat zwei konkrete Abweichungen von der beschlossenen Prüfungs-UX gezeigt:
-
-1. Der Button „Prüfung starten / fortsetzen“ rief bisher unmittelbar den POST-Start-Endpunkt auf. Die bestätigte Option C vom 06.11.2026 verlangt eine vorherige informierte Bestätigung. PR #253 ergänzt den GET-Check auf einen aktiven Versuch und die getrennte Bestätigungsstufe. Ein neuer Versuch entsteht erst nach „Prüfung verbindlich starten“; Fortsetzen verbraucht keinen weiteren Versuch.
-2. Der Teilnehmerkatalog gab den numerischen Wert minClearance zurück und die UI zeigte „Freigabestufe“. Das widerspricht der Entscheidung, interne Clearance-/Berechtigungsdetails nicht offenzulegen. PR #253 entfernt das Feld aus der öffentlichen Katalogprojektion und UI; serverseitige Filterung bleibt erhalten.
-
-Die Bestätigung zeigt nur Daten aus dem tatsächlichen veröffentlichten Prüfungsstand bzw. dem aktiven Versuch. Ein Zeitlimit von 0 bedeutet kein Zeitlimit; maxAttempts 0/null bedeutet unbegrenzt. Keine Konsequenzen werden erfunden.
-
-**Status:** PR #253 offen; CI und manuelle Browser-/Tastatur-/Screenreader-Abnahme ausstehend.
+- **Status:** PR #252 offen; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
