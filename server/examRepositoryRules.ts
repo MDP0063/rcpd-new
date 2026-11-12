@@ -282,10 +282,12 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
         !releaseStateValid ||
         !revisionEvent ||
         Object.keys(revisionEvent).sort().join(',') !==
-          'action,actorUid,atIso,feedback,notificationRequired,previousGrades,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
+          'action,actorUid,atIso,feedback,notificationRequired,previousGrades,previousReviewedAtIso,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
         !Number.isSafeInteger(revisionEvent.revisionRequestIndex) || revisionEvent.revisionRequestIndex !== previousClaimHistory.length ||
         typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
         revisionEvent.previousUid !== existing.reviewedByUid ||
+        revisionEvent.previousReviewedAtIso !== existing.reviewedAtIso ||
+        typeof revisionEvent.previousReviewedAtIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.previousReviewedAtIso)) ||
         typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 ||
         revisionEvent.reason.length > 1000 ||
         revisionEvent.notificationRequired !== true ||
