@@ -691,7 +691,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
       {['exam_center', 'tests', 'final_exams'].includes(activeTab) && (
-        <nav aria-label="Prüfungsbereiche" className="flex flex-wrap gap-2">
+        <nav aria-label="Prüfungsbereiche" className="academy-exam-section-nav flex flex-wrap gap-2">
           {[
             { id: 'exam_center' as const, label: 'Prüfungszentrum' },
             { id: 'tests' as const, label: `Übungstests (${practiceTests.length})` },
@@ -714,31 +714,31 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Wähle einen Bereich, um deine Ausbildung fortzusetzen.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <button type="button" onClick={() => { setActiveTab('overview'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#2864D9] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9]">
+            <button type="button" onClick={() => { setActiveTab('overview'); setIsAcademyHome(false); }} className="academy-entry-tile group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#2864D9] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2864D9]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
               <img src={overviewWayfinder} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Übersicht</span>
               <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Deinen Ausbildungsstand und die nächsten Schritte im Blick behalten.</span>
             </button>
-            <button type="button" onClick={() => { setActiveTab('courses'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#087F8C] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F8C]">
+            <button type="button" onClick={() => { setActiveTab('courses'); setIsAcademyHome(false); }} className="academy-entry-tile group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#087F8C] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F8C]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
               <img src={coursesGraduationCap} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Kurse</span>
               <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Lehrgänge und Kurse entdecken, beginnen und bearbeiten.</span>
             </button>
-            <button type="button" onClick={() => { setActiveTab('modules'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#6841B8] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6841B8]">
+            <button type="button" onClick={() => { setActiveTab('modules'); setIsAcademyHome(false); }} className="academy-entry-tile group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#6841B8] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6841B8]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
               <img src={libraryThreeBooks} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Lernbibliothek</span>
               <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Fachliche Materialien finden und als Wissensquelle nutzen.</span>
             </button>
-            <button type="button" onClick={() => { setActiveTab('exam_center'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#A33370] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#A33370]">
+            <button type="button" onClick={() => { setActiveTab('exam_center'); setIsAcademyHome(false); }} className="academy-entry-tile group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#A33370] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#A33370]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
               <img src={examsAnswerSheet} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Prüfungen</span>
               <span className="mt-2 block max-w-xs text-sm leading-relaxed text-white">Wissen überprüfen und zugängliche Prüfungen ablegen.</span>
             </button>
-            <button type="button" onClick={() => { setActiveTab('notes'); setIsAcademyHome(false); }} className="group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#287A45] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#287A45]">
+            <button type="button" onClick={() => { setActiveTab('notes'); setIsAcademyHome(false); }} className="academy-entry-tile group relative isolate min-h-[220px] overflow-hidden rounded-xl bg-[#287A45] p-6 sm:p-7 xl:p-8 text-left text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,23,42,0.18)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 active:scale-[0.985] active:duration-150 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#287A45]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 -z-10 h-28 w-48 rounded-full bg-white/10 blur-3xl opacity-70 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100" />
               <img src={notesNotepad} alt="" aria-hidden="true" className="mb-5 h-10 w-10 object-contain sm:h-12 sm:w-12" />
               <span className="block text-lg font-semibold">Meine Notizen</span>
@@ -1201,15 +1201,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   const prog = getExamProgress(ex.id);
                   const isSelected = currentExam?.id === ex.id;
                   return (
-                    <div
+                    <button
                       key={ex.id}
+                      type="button"
                       onClick={() => {
                         setActiveExamId(ex.id);
                         setExamAnswers({});
                         setExamSubmittedResult(null);
                         setExamExplanations({});
                       }}
-                      className={`py-3.5 px-3 rounded-md transition-colors cursor-pointer ${
+                      aria-pressed={isSelected}
+                      className={`academy-legacy-exam-option w-full text-left py-3.5 px-3 rounded-md transition-colors ${
                         isSelected
                           ? 'bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800'
                           : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
@@ -1232,7 +1234,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         <Clock className="w-3 h-3" /> {ex.timeLimitMinutes} Min ·{' '}
                         {ex.assessmentStage === 'final_exam' ? 'Abschlussprüfung (Rookie+)' : 'Übungstest (Trainee+)'}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
