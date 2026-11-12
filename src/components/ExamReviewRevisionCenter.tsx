@@ -137,7 +137,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
     );
     setSavingId('');
     if (!response.ok) {
-      setError(response.error || 'Die Bewertung konnte nicht zur Revision zurückgegeben werden.');
+      setError(response.error || 'Die Revisionsanfrage konnte nicht gesendet werden.');
       return;
     }
     setReviews(current => current.filter(item => item.id !== review.id));
@@ -150,7 +150,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
       <div>
         <h3 id="exam-review-revision-title" className="text-base font-semibold text-slate-900 dark:text-white">Abgeschlossene Bewertungen</h3>
         <p className="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-          Du kannst eine abgeschlossene manuelle Bewertung zur Revision zurückgeben. Die Anfrage benötigt eine Begründung und konkretes Feedback zu mindestens einem Bewertungsschritt.
+          Du kannst eine abgeschlossene manuelle Bewertung zur Prüfung durch Admins und Colonels vorschlagen. Erst nach Annahme beginnt die erneute Bewertung. Die Anfrage benötigt eine Begründung und konkretes Feedback zu mindestens einem Bewertungsschritt.
         </p>
       </div>
       <button type="button" onClick={() => void load()} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">
@@ -235,7 +235,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
               <button type="button" onClick={() => { setExpandedId(current => current === review.id ? '' : review.id); setError(''); }}
                 aria-expanded={expandedId === review.id}
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
-                <RotateCcw size={15}/> {expandedId === review.id ? 'Schließen' : 'Revision anfordern'}
+                <RotateCcw size={15}/> {expandedId === review.id ? 'Schließen' : 'Revisionsanfrage stellen'}
               </button>
             </div>
           </div>
@@ -272,7 +272,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
             <div className="flex flex-wrap justify-end gap-2">
               <button type="button" onClick={() => setExpandedId('')} disabled={Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-700">Abbrechen</button>
               <button type="button" onClick={() => void submit(review)} disabled={Boolean(savingId)} className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-                {savingId === review.id ? 'Wird zurückgegeben …' : 'Zur Revision zurückgeben'}
+                {savingId === review.id ? 'Wird gesendet …' : 'Revisionsanfrage senden'}
               </button>
             </div>
           </div>}
