@@ -758,7 +758,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
               <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
               {saveError ? (
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>
+                  {blockedSaveIdsRef.current.has(selectedNote.id)
+                    ? <span className="text-xs text-amber-700 dark:text-amber-300">Nach einem Versionskonflikt bitte zuerst die aktuelle Fassung laden.</span>
+                    : <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>}
                   <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction || saveStatus !== 'error'}>Aktuelle Fassung laden</button>
                 </div>
               ) : null}
