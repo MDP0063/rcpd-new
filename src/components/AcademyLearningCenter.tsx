@@ -723,7 +723,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h2>
                   <p className={muted}>Nur du kannst diese Notiz und ihre verknüpften Quellen sehen.</p>
                 </div>
-                <button type="button" className={secondary} onClick={cancelNoteEdit}>← Zurück zu meinen Notizen</button>
+                <button type="button" className={`${secondary} academy-note-cancel`} onClick={cancelNoteEdit}>← Zurück zu meinen Notizen</button>
               </header>
               <form className={`${panel} academy-note-editor p-5 space-y-4`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
                 <label className="block space-y-1.5">
@@ -740,8 +740,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   <span className="text-xs text-slate-500 dark:text-slate-400">Schlagwörter helfen dir, die Notiz später wiederzufinden.</span>
                 </label>
                 <div className="academy-note-editor-actions flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-                  <button type="button" className={secondary} onClick={cancelNoteEdit}>Änderungen verwerfen</button>
-                  <button type="submit" className={primary} disabled={saving || !noteHasUnsavedChanges}>{saving ? 'Speichert …' : 'Änderungen speichern'}</button>
+                  <button type="button" className={`${secondary} academy-note-cancel`} onClick={cancelNoteEdit}>Änderungen verwerfen</button>
+                  <button type="submit" className={`${primary} academy-note-save`} disabled={saving || !noteHasUnsavedChanges}>{saving ? 'Speichert …' : 'Änderungen speichern'}</button>
                 </div>
               </form>
             </div>
