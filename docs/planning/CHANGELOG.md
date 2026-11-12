@@ -351,3 +351,11 @@
 - Ältere Prüfungslisten-Auswahl auf natives Button-Verhalten mit Tastaturbedienbarkeit umgestellt; keine fachliche Funktion entfernt.
 - Keine Änderungen an Berechtigungen, APIs, Datenmodellen oder fachlichen Statuslogiken.
 - Browser-/Responsive-Abnahme und Deployment stehen noch aus.
+
+## 2026-11-11 – Zentrale Teilnehmer-Prüferhistorie (Implementierungsbranch)
+
+- Examiner-Bereich erhält eine zentrale Teilnehmerakten-Suche und eine kompakte, nach Bewertungsabschluss sortierte Historienansicht.
+- Neue API-Projektion begrenzt Datensätze serverseitig auf die Kurszuständigkeiten des angemeldeten Prüfers.
+- Vollständige Bewertungsdetails bleiben auf beteiligte Prüfer und Admins/Colonels beschränkt; andere berechtigte Prüfer sehen ausschließlich Status und Zuständigkeit.
+- Tests für Kurs-Scope, Whitelist-Sperre und Detailvertraulichkeit ergänzt.
+- Noch nicht gemergt; CI, unabhängiges Review und Browser-/Live-Abnahme ausstehend.
