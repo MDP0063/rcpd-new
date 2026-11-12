@@ -745,6 +745,8 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(supervisorRequestInbox.status, 200, JSON.stringify(supervisorRequestInbox.body));
     assert.equal(supervisorRequestInbox.body.requests.length, 1);
     assert.equal(supervisorRequestInbox.body.requests[0].requestedByName, 'HttpSecondReviewer');
+    assert.equal('requestedByUid' in supervisorRequestInbox.body.requests[0], false);
+    assert.equal('reviewedByUid' in supervisorRequestInbox.body.requests[0], false);
     const requestNotificationState = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
     assert.equal(requestNotificationState.body.notifications.some((item: Record<string, any>) =>
       item.title === 'Neue Revisionsanfrage' && item.linkTarget?.attemptId === attemptToGrade.id
