@@ -2,8 +2,7 @@
 
 **Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`).  
-**Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
+**Aktueller Basisstand:** `main` nach PR #211 (Merge-Commit `3a177d6adf704851c57500cc17f606ed6121f49a`).ngsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -870,3 +869,15 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Der verifizierte Main-Basisstand und die jüngste Fortschrittsaktualisierung wurden im Planungsindex nachgeführt.
 - PR #208 wurde am 12.11.2026 gemergt (Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`). Es wurden nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` geändert.
 - Die älteren Audit-Dokumente behalten ihre historischen Prüfstände; die Dokumentationspflege behauptet keine nachträgliche Vollprüfung dieser Befunde.
+
+
+### PR #210 – Dokumentationsabgleich nach PR #207/#208 (12.11.2026)
+
+- Der Planungsindex und Fortschritt wurden nach dem Retry-Fix #207 und dem vorherigen Dokumentationsabgleich #208 aktualisiert.
+- PR #210 wurde am 12.11.2026 gemergt (Commit `013ef2544d7b253bfc732643cc86b90b62b85573`). Nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` wurden geändert. TypeScript-/Build-/Testläufe wurden nicht erneut ausgeführt, da keine Anwendungsdateien betroffen waren.
+
+### PR #211 – Fehler-/Retry-Semantik in der Materialverwaltung (12.11.2026)
+
+- Der `role="alert"`-Container in `AcademyMaterialManagementCenter.tsx` enthält nur noch die Fehlermeldung. Der interaktive Button „Erneut versuchen“ ist ein separates Element außerhalb der Alert-Live-Region.
+- Bestehendes Retry-Verhalten, Datenabrufe, Berechtigungen, APIs und visuelle Darstellung wurden nicht verändert.
+- PR #211 wurde am 12.11.2026 gemergt (Commit `3a177d6adf704851c57500cc17f606ed6121f49a`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung waren laut GitHub Actions erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
