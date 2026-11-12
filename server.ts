@@ -2346,7 +2346,8 @@ async function startServer() {
       }
       if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
           Object.keys(req.body).some(key => key !== 'decision' && key !== 'reason') ||
-          (req.body.reason !== undefined && typeof req.body.reason !== 'string')) {
+          (req.body.reason !== undefined && typeof req.body.reason !== 'string') ||
+          (req.body.decision === 'accept' && req.body.reason !== undefined)) {
         res.status(400).json({ error: 'Die Entscheidung zur Revisionsanfrage ist ungültig.' });
         return;
       }
