@@ -621,7 +621,7 @@ export const ExamParticipantRunner: React.FC = () => {
           <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Verfügbare Prüfungen</h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-300">Starte eine Prüfung oder setze einen begonnenen Versuch fort. Deine Antworten werden automatisch und revisionsgesichert gespeichert.</p>
         </div>
-        <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
+        <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog || startConfirmationOpen} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
       {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
@@ -637,7 +637,7 @@ export const ExamParticipantRunner: React.FC = () => {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-3">
             {catalog.map(exam => (
-              <button key={exam.id} type="button" onClick={() => {
+              <button key={exam.id} type="button" disabled={startConfirmationOpen} onClick={() => {
                 setSelectedExamId(exam.id);
                 setSelectedCourseCode(exam.assignedCourseCodes[0] || '');
                 setRunnerError('');
@@ -664,13 +664,13 @@ export const ExamParticipantRunner: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'}</p>
                 </div>
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
+                  <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0 ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
                   <div className="flex justify-between gap-2"><span>Bestehensgrenze</span><strong>{(selectedExam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</strong></div>
                   <div className="flex justify-between gap-2"><span>Freigabestufe</span><strong>{selectedExam.minClearance}</strong></div>
                 </div>
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
-                  <select value={selectedCourseCode} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                  <select value={selectedCourseCode} disabled={startConfirmationOpen} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     {selectedExam.assignedCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
                 </label>
