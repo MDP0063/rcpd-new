@@ -879,9 +879,9 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Während eines temporären Notiz-Ladefehlers sind das Anlegen einer Notiz und das Setzen eines Lesezeichens gesperrt, damit keine Aktionen auf einer unvollständigen Liste aufbauen.
 - PR #209 wurde am 12.11.2026 als Squash-Merge `af24d99b9593f7fcadb305f892d01d9cc687b718` gemergt. TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich; Render-Deploy-Hook übersprungen. Keine Browser-/Live-Firestore-Abnahme.
 
-- **Aktueller Audit-Befund (noch nicht umgesetzt):** Der direkte Bibliotheks-Reader rendert `AcademyMaterialReaderNotes` ohne `selectedAnchor` und `onJumpToAnchor`. Die stabile Textanker-Interaktion ist dadurch im Kurs-Reader verfügbar, aber im direkten Bibliotheks-Reader nicht angebunden. Vor einer Umsetzung wird geprüft, wie sich die bestehende Ankerlogik ohne Duplizierung und ohne Änderung der Versionsbindung wiederverwenden lässt; die fachliche Spezifikation bleibt maßgeblich.
+- **ABGELÖST durch PR #215 (12.11.2026):** Der direkte Bibliotheks-Reader übergibt jetzt `selectedAnchor` und `onJumpToAnchor` an `AcademyMaterialReaderNotes`; die bestehende versionsgebundene Ankerlogik wird in beiden Readern wiederverwendet.
 
-- **Nächster Prüffokus:** Reader-/Notiz-Parität zwischen Kursansicht und direkter Bibliotheksansicht; danach Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt separat offen.
+- **Historischer nächster Prüffokus vor PR #215:** Reader-/Notiz-Parität zwischen Kursansicht und direkter Bibliotheksansicht. Dieser Punkt ist durch PR #215 erledigt; die gemeinsame Browser-/Screenreader-/Live-Firestore-Abnahme bleibt separat offen.
 
 
 ### PR #211 – Fehler-/Retry-Semantik in der Materialverwaltung (12.11.2026)
@@ -906,10 +906,8 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - PR #211 trennte den interaktiven „Erneut versuchen“-Button semantisch vom `role="alert"`-Container in der Materialverwaltung (Merge `3a177d6adf704851c57500cc17f606ed6121f49a`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen.
 - PR #212 dokumentierte den privaten Notiz-Retry aus #209 (Merge `6d77c6385caf6a9f4c2b5a3253f8e750b79e56bc`).
 
-### PR #215/#216/#219/#221 – Reader-Parität und Bibliothekszustände (12.11.2026)
+### PR #219/#221 – Materialverwaltungszustände und Validierungssemantik (12.11.2026)
 
-- PR #215 verbindet im direkten Bibliotheks-Reader die vorhandene versionsgebundene Textankerlogik mit den privaten Notizen. Auswahl per Maus und Touch sowie das Zurücksetzen bei Material-/Versionswechsel sind enthalten. Merge `3bc3b50997a3a0d9499ae705239b5d277a7029d7`; keine manuelle Browser-/Touch-/Live-Firestore-Abnahme behauptet.
-- PR #216 behebt die falsche Leerzustandsmeldung nach fehlgeschlagenem privaten Notizabruf. Ein eigener `notesLoaded`-Status wird nur bei erfolgreicher Serverantwort gesetzt. Merge `dcdde42b361e205b635e5a892730dbbd913d55fb`; TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen.
 - PR #219 ergänzt in der Materialverwaltung eine persistente, nur für Screenreader sichtbare `role="status"`-Region für Ladezustand, Trefferzahl und leere Suchergebnisse. Die sichtbare Zählerposition bleibt bestehen; leerer Materialbestand und Suche ohne Treffer werden sprachlich unterschieden. Merge `53841115a7760b61aaef751cc4445b41bf72b4f7`; Build/TypeScript/Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen. Kein manueller Browser-/Screenreader-Test.
 - PR #221 trennt die textliche Validierungsankündigung von den interaktiven Feldsprunglinks in der Materialverwaltung. Der vorhandene Fokus auf die Fehlerzusammenfassung bleibt erhalten; Validierung und Feldzuordnung bleiben unverändert. Merge `ee5df95e5c83c1e1466f466249cc0b01dc30c008`; TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen. Kein manueller Screenreader-/Tastaturtest.
 - PR #214 war ein nicht gemergter Vorläufer der Textanker-Paritätskorrektur und wurde nach Umsetzung durch #215 geschlossen.
