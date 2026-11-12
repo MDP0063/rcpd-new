@@ -46,6 +46,7 @@ export interface ExamReviewClaimHistoryEntry {
   questionIds?: string[];
   recipientUids?: string[];
   revisionRequestedAtIso?: string;
+  revisionRequestIndex?: number;
   notificationRequired?: true;
   notificationDeliveredTo?: string[];
   atIso: string;
