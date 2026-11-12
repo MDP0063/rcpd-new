@@ -2289,7 +2289,8 @@ async function startServer() {
         return;
       }
       const recipients = state.accounts
-        .filter(account => account.publicProfile.role === 'admin' || account.publicProfile.role === 'colonel')
+        .filter(account => isEligibleExamReviewerAccount(account) &&
+          (account.publicProfile.role === 'admin' || account.publicProfile.role === 'colonel'))
         .map(account => account.uid);
       const updated = await requestExamReviewRevision(
         getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
@@ -2311,8 +2312,8 @@ async function startServer() {
       const state = peekDatabase();
       const sessionUid = res.locals.sessionUid as string | undefined;
       const caller = state.accounts.find(account => account.uid === sessionUid);
-      if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
-        res.status(403).json({ error: 'Offene Revisionsanfragen sind ausschließlich für Admins und Colonels sichtbar.' });
+      if (!caller || !isEligibleExamReviewerAccount(caller) || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Offene Revisionsanfragen sind ausschließlich für aktive Admins und Colonels sichtbar.' });
         return;
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
@@ -2333,8 +2334,8 @@ async function startServer() {
       const state = peekDatabase();
       const sessionUid = res.locals.sessionUid as string | undefined;
       const caller = state.accounts.find(account => account.uid === sessionUid);
-      if (!caller || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
-        res.status(403).json({ error: 'Nur Admins und Colonels dürfen über Revisionsanfragen entscheiden.' });
+      if (!caller || !isEligibleExamReviewerAccount(caller) || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nur aktive Admins und Colonels dürfen über Revisionsanfragen entscheiden.' });
         return;
       }
       if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
