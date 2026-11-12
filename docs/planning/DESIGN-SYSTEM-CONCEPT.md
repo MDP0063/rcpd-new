@@ -433,3 +433,11 @@ Die Prüfungsdetailansicht wechselt nach dem ersten Klick in eine kompakte Best�
 Die interne numerische Clearance-Stufe wird nicht mehr angezeigt oder im öffentlichen Teilnehmerkatalog übertragen. Die serverseitige Zugriffsfilterung bleibt unverändert.
 
 **Status:** PR #253 am 12.11.2026 gemergt; CI erfolgreich (455/455 Tests), manuelle Accessibility-Abnahme bleibt offen.
+
+## 30. Examiner-Arbeitsansichten – Inline-Bestätigungen und progressive Offenlegung (PR #255, 12.11.2026)
+
+Übergabe-/Neuzuweisungs- und Freigabeaktionen öffnen Inline-Regionen statt vorgetäuschter modaler Dialoge. Die Region ist über eine Überschrift beschriftet; Fokus wird beim Öffnen auf diese Überschrift gesetzt und beim Abbrechen zum auslösenden Button zurückgeführt.
+
+Sekundärer Vorgangskontext und Korrekturhistorie bleiben vorhanden, sind aber standardmäßig eingeklappt. Das folgt dem Prinzip „häufig benötigte Kernaktion zuerst, ergänzender Kontext bei Bedarf“, ohne Daten oder Funktionen zu verstecken.
+
+**Status:** PR #255 gemergt; CI erfolgreich (455/455 Tests), manuelle Tastatur-/Screenreader-Abnahme offen.
