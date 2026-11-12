@@ -836,11 +836,15 @@ export async function listExamParticipantReviewHistory(
       throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     }
     const claimHistory = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    const correctionHistory = Array.isArray((attempt as any).reviewCorrections)
+      ? (attempt as any).reviewCorrections as Array<{ reviewerUid?: unknown }>
+      : [];
     const wasInvolved = attempt.reviewedByUid === reviewerUid ||
       attempt.reviewClaim?.reviewerUid === reviewerUid ||
       claimHistory.some(event =>
         event.actorUid === reviewerUid || event.targetUid === reviewerUid || event.previousUid === reviewerUid
-      );
+      ) ||
+      correctionHistory.some(correction => correction?.reviewerUid === reviewerUid);
     const detailed = isSupervisor || wasInvolved;
     const questions = attempt.status === 'pending_review'
       ? pendingFreeTextQuestions(attempt, version)
