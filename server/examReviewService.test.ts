@@ -444,6 +444,48 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       finalScoreBasisPoints: 10_000
     });
 
+    await requestExamReviewRevision(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-grader',
+      'Die bisherige Bewertung soll unabhängig überprüft werden.',
+      [{ questionId: 'written', feedback: 'Bitte die vollständige fachliche Herleitung erneut prüfen.' }],
+      ['academy-admin'], '2026-11-10T12:04:30.000Z'
+    );
+    assert.deepEqual(
+      await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), proof,
+      'a request awaiting supervisor decision does not invalidate an already released course proof'
+    );
+    await resolveExamReviewRevisionRequest(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-admin', 'reject',
+      'Die Anfrage enthält keinen ausreichenden Hinweis auf eine fehlerhafte Bewertung.',
+      '2026-11-10T12:05:00.000Z'
+    );
+    assert.deepEqual(
+      await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), proof,
+      'a rejected revision request leaves the released course proof unchanged'
+    );
+
+    await requestExamReviewRevision(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-grader-2',
+      'Ein konkreter Bewertungsfehler wurde nachgewiesen.',
+      [{ questionId: 'written', feedback: 'Die Antwort erfüllt den zweiten erforderlichen Bewertungspunkt.' }],
+      ['academy-admin'], '2026-11-10T12:05:30.000Z'
+    );
+    await resolveExamReviewRevisionRequest(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-admin', 'accept', '',
+      '2026-11-10T12:05:45.000Z'
+    );
+    assert.equal(
+      await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null,
+      'only acceptance starts the revision and removes the old result from current course-proof eligibility'
+    );
+    await claimExamReview(repository, 'academy-final', 'academy-final-attempt', 'academy-grader-2', 'Prüfer 2', '2026-11-10T12:05:50.000Z');
+    await gradeExamAttempt(
+      repository, 'academy-final', 'academy-final-attempt', 'academy-grader-2',
+      [{ questionId: 'written', pointsEarnedMilli: 1000 }], '2026-11-10T12:05:55.000Z'
+    );
+    await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T05:06:00.000Z');
+    assert.ok(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'));
+
     const corrected = await correctCompletedExamReview(
       repository, 'academy-final', 'academy-final-attempt', 'academy-admin',
       [{ questionId: 'written', pointsEarnedMilli: 0 }],
