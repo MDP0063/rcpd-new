@@ -593,6 +593,67 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     }
     return;
   }
+  if (existing.status === 'pending_review' && (next.status === 'passed' || next.status === 'failed')) {
+    const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
+    const nextHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
+    const revisionRequestIndex = previousHistory.map(event => event.action).lastIndexOf('revision_requested');
+    const hasOpenRevision = revisionRequestIndex >= 0 &&
+      !previousHistory.some(event => event.action === 'revision_completed' && event.revisionRequestIndex === revisionRequestIndex);
+    if (hasOpenRevision) {
+      const request = previousHistory[revisionRequestIndex] as Record<string, unknown>;
+      const completion = nextHistory[nextHistory.length - 1] as Record<string, unknown> | undefined;
+      const questionIds = Array.isArray(request.questionIds) ? request.questionIds : [];
+      const nextGrades = Array.isArray(completion?.nextGrades) ? completion.nextGrades : [];
+      const attemptGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
+      const allowedMutable = new Set([
+        'status', 'reviewClaim', 'reviewDraft', 'manuallyEarnedPointsMilli',
+        'preliminaryScoreBasisPoints', 'finalScoreBasisPoints', 'questionGrades',
+        'reviewClaimHistory', 'reviewedByUid', 'reviewedAtIso'
+      ]);
+      const strip = (document: ExamDocument) => Object.fromEntries(
+        Object.entries(document).filter(([key]) => !allowedMutable.has(key))
+      );
+      const validNextGrades = nextGrades.length === questionIds.length &&
+        nextGrades.every((grade: any, index: number) =>
+          grade && typeof grade === 'object' && !Array.isArray(grade) &&
+          Object.keys(grade).sort().join(',') === 'maxPointsMilli,pointsEarnedMilli,questionId' &&
+          typeof grade.questionId === 'string' && questionIds.includes(grade.questionId) &&
+          nextGrades.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+          Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+          Number.isSafeInteger(grade.maxPointsMilli) && grade.maxPointsMilli > 0 &&
+          grade.pointsEarnedMilli <= grade.maxPointsMilli &&
+          attemptGrades.some((attemptGrade: any) =>
+            attemptGrade?.questionId === grade.questionId &&
+            attemptGrade.pointsEarnedMilli === grade.pointsEarnedMilli &&
+            attemptGrade.maxPointsMilli === grade.maxPointsMilli &&
+            attemptGrade.requiresManualReview === false
+          )
+        );
+      const draft = next.reviewDraft && typeof next.reviewDraft === 'object' && !Array.isArray(next.reviewDraft)
+        ? next.reviewDraft as Record<string, unknown> : null;
+      if (
+        nextHistory.length !== previousHistory.length + 1 ||
+        !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory) ||
+        !completion ||
+        Object.keys(completion).sort().join(',') !==
+          'action,actorUid,atIso,nextGrades,previousUid,revisionRequestedAtIso,revisionRequestIndex,targetUid' ||
+        completion.action !== 'revision_completed' ||
+        completion.revisionRequestIndex !== revisionRequestIndex ||
+        completion.revisionRequestedAtIso !== request.atIso ||
+        completion.previousUid !== request.previousUid ||
+        completion.targetUid !== request.actorUid ||
+        typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid ||
+        typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso ||
+        Number.isNaN(Date.parse(completion.atIso)) ||
+        next.reviewClaim !== null ||
+        !draft || Object.keys(draft).length !== 0 ||
+        !validNextGrades ||
+        !isDeepStrictEqual(strip(existing), strip(next))
+      ) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_INVALID');
+      return;
+    }
+  }
+
   if (existing.status !== 'in_progress' && existing.status !== 'pending_review') {
     throw new Error('EXAM_ATTEMPT_IMMUTABLE');
   }
