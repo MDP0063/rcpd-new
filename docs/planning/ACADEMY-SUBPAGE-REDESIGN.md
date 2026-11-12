@@ -1,7 +1,7 @@
 # Academy – vollständiges Unterseiten-Redesign und UX-Bestandsaudit
 
 **Stand:** 12.11.2026  
-**Prüfgrundlage:** main nach PR #248, einschließlich PRs #246–#248  
+**Prüfgrundlage:** main nach PR #250, einschließlich PRs #246–#248 und dem fokussierten Notizeditor aus #250  
 **Status:** Recherchegestütztes Redesign-Konzept; bestehende Fachregeln bleiben verbindlich. Die vorgeschlagenen Layout-/Kompositionsmuster dürfen innerhalb der bestätigten Academy-Designfreigabe eigenständig umgesetzt werden.  
 **Geltungsbereich:** interne Academy-Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner sowie Meine Notizen.
 
@@ -217,6 +217,6 @@ Der aktuelle Code besitzt bereits eine fünfteilige Hauptnavigation und einen R�
 
 ## 9. Umsetzungsprotokoll – Meine Notizen
 
-**PR #250 – offen am 12.11.2026:** Die Notizenübersicht und der Editor werden als getrennte Ansichten umgesetzt. Der Editor zeigt die privaten Quellenverknüpfungen weiterhin an. Speichern erhält die Primärgewichtung, Verwerfen eine sekundäre Aktion und Löschen eine klar destruktive Gestaltung. Ein Parent-/Child-Dirty-State schützt den Wechsel über die Hauptnavigation, den Kachel-Rückweg und Examiner-Deep-Links; während eines laufenden Speichervorgangs werden die lokalen Abbruchaktionen gesperrt.
+**PR #250 – am 12.11.2026 gemergt (Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`):** Die Notizenübersicht und der Editor werden als getrennte Ansichten umgesetzt. Der Editor zeigt die privaten Quellenverknüpfungen weiterhin an. Speichern erhält die Primärgewichtung, Verwerfen eine sekundäre Aktion und Löschen eine klar destruktive Gestaltung. Ein Parent-/Child-Dirty-State schützt den Wechsel über die Hauptnavigation, den Kachel-Rückweg und Examiner-Deep-Links; während eines laufenden Speichervorgangs werden die lokalen Abbruchaktionen gesperrt.
 
-Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision, Datenmodell, Quellenbindung und Owner-Isolation bleiben unverändert. Der PR ist zum Zeitpunkt dieses Eintrags noch nicht gemergt; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
+Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision, Datenmodell, Quellenbindung und Owner-Isolation bleiben unverändert. Der PR ist gemergt. CI (TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung) war erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. Manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme bleibt offen.
