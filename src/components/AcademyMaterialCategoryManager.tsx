@@ -253,7 +253,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             <p id="academy-category-description-hint" className="text-xs text-slate-500 dark:text-slate-400">Bis zu 300 Zeichen</p>
           </div>
 
-          {formError && <p id="academy-category-form-error" role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
+          <p id="academy-category-form-error" role="alert" className={formError ? "rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200" : "sr-only"}>{formError}</p>
 
           <div className="flex flex-wrap gap-2">
             <button type="submit" className={primaryButton} disabled={busy}>
@@ -279,14 +279,13 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             <input id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
           </div>
 
+          <div className={loadError ? "space-y-3" : "sr-only"}>
+            <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+            {loadError ? <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button> : null}
+          </div>
           {loading ? (
             <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Kategorien werden geladen …</p>
-          ) : loadError ? (
-            <div className="space-y-3">
-              <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
-              <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button>
-            </div>
-          ) : visibleCategories.length === 0 ? (
+          ) : loadError ? null : visibleCategories.length === 0 ? (
             <p role="status" className="rounded-md border border-dashed border-slate-300 p-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
               {categories.length === 0 ? 'Noch keine Kategorien angelegt.' : 'Keine Kategorie entspricht deiner Suche.'}
             </p>
