@@ -409,9 +409,12 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       </header>
 
       {Object.keys(errors).length > 0 && (
-        <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="academy-material-error-heading"
+        <div ref={errorSummaryRef} tabIndex={-1}
           className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
-          <h3 id="academy-material-error-heading" className="font-semibold">Bitte prüfe folgende Angaben</h3>
+          <div role="alert" aria-labelledby="academy-material-error-heading">
+            <h3 id="academy-material-error-heading" className="font-semibold">Bitte prüfe folgende Angaben</h3>
+            <p className="mt-1">Korrigiere die aufgeführten Felder, bevor du den Entwurf speicherst.</p>
+          </div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {Object.entries(errors).map(([key, message]) => (
               <li key={key}>
