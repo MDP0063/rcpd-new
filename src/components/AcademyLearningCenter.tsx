@@ -399,7 +399,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const saveNote = async () => {
-    if (!editingNote) return;
+    if (!editingNote || saving || !noteHasUnsavedChanges) return;
     setSaving(true);
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES + `/${encodeURIComponent(editingNote.id)}`, {
       method: 'PUT',
