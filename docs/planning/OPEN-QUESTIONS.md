@@ -309,3 +309,9 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Positive Zwischenbefunde:** Die neue versionierte Materialverwaltung enthält serverseitige Scope-Prüfungen; Reader-Tests decken Teilnahmebindung, gepinnte Materialversion und Zugriffsschutz für fremde Teilnahmen ab. Archivierung erhält bereits gepinnte historische Kursreferenzen und entfernt archivierte Inhalte aus dem öffentlichen Katalog.
 - Die aktuelle Prüfung ist eine statische Quellcodeanalyse. Noch keine lokale Testausführung, kein CI-Lauf, keine Browser-/Live-Firestore-Abnahme. Fundstatus und Prüfgrenzen sind in `PROGRESS.md` dokumentiert.
 - **Weiter offen:** Audit der Notiz-Owner-Isolation, Kurs-/Material-Lifecycle, Repository- und Firestore-Adapter, Konkurrenz-/Versionskonflikte, Prüfungs-/Reviewer-Datenprojektionen und Progress-Endpunkte.
+
+### Ergänzung – Zwischenstand Notizen und Teilnahmezugriffe (12.11.2026)
+
+- Private Notizen sind serverseitig strikt owner-isoliert; HTTP-Regressionstests prüfen ausdrücklich auch Admin-/Colonel-Zugriffe auf fremde Notizen und Quellenstatus.
+- Teilnahme- und Materialreader-Routen binden Zugriffe an den Teilnehmer bzw. den zuständigen Kursmanager, die konkrete gepinnte Kursversion, Materialversion und Rangfreigabe.
+- Diese Bereiche zeigen im statischen Review und in vorhandenen Tests positive Schutzmechanismen. Eine Live-Firestore-/Browserabnahme ist damit nicht ersetzt.
