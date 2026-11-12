@@ -940,10 +940,7 @@ export async function getReleasedPassingFinalExam(
   const matching = attempts.filter(attempt =>
     typeof attempt.attemptCourseCode === 'string' &&
     attempt.attemptCourseCode.trim().toUpperCase() === courseCode.trim().toUpperCase() &&
-    attempt.status === 'passed' &&
-    attempt.assessmentStage === 'final_exam' &&
-    attempt.resultReleaseStatus === 'released' &&
-    Number.isSafeInteger(attempt.finalScoreBasisPoints) &&
+    (attempt.resultReleaseStatus === 'released' || attempt.resultReleaseStatus === 'pending_rerelease') &&
     Array.isArray(attempt.resultReleaseHistory) &&
     attempt.resultReleaseHistory.length > 0
   );
@@ -954,19 +951,26 @@ export async function getReleasedPassingFinalExam(
     if (!version || version.examId !== examId ||
         version.versionNumber !== attempt.versionNumber ||
         version.assessmentStage !== 'final_exam') continue;
+    // During a correction/revision, the internal grade may differ from the last
+    // published grade. Course completion remains based on that published snapshot
+    // until a replacement result is explicitly released.
+    const published = toParticipantSubmission(attempt, version);
+    const publishedScore = published.finalScoreBasisPoints;
     const lastRelease = attempt.resultReleaseHistory![attempt.resultReleaseHistory!.length - 1];
-    if (lastRelease.status !== 'passed' ||
-        lastRelease.finalScoreBasisPoints !== attempt.finalScoreBasisPoints ||
+    if (published.status !== 'passed' ||
+        !Number.isSafeInteger(publishedScore) ||
+        lastRelease.status !== 'passed' ||
+        lastRelease.finalScoreBasisPoints !== publishedScore ||
         typeof lastRelease.releasedByUid !== 'string' || !lastRelease.releasedByUid.trim() ||
         typeof lastRelease.releasedAtIso !== 'string' ||
         !Number.isFinite(Date.parse(lastRelease.releasedAtIso)) ||
         !Number.isSafeInteger(version.passingScoreBasisPoints) ||
-        Number(attempt.finalScoreBasisPoints) < version.passingScoreBasisPoints ||
-        Number(attempt.finalScoreBasisPoints) > 10_000) continue;
+        Number(publishedScore) < version.passingScoreBasisPoints ||
+        Number(publishedScore) > 10_000) continue;
     proofs.push({
       attemptId: attempt.id,
       releasedAtIso: lastRelease.releasedAtIso,
-      finalScoreBasisPoints: Number(attempt.finalScoreBasisPoints)
+      finalScoreBasisPoints: Number(publishedScore)
     });
   }
   return proofs.sort((left, right) => right.releasedAtIso.localeCompare(left.releasedAtIso))[0] ?? null;
