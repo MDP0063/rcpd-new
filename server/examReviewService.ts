@@ -1047,7 +1047,15 @@ export async function listExamParticipantReviewHistory(
       reviewedAtIso: attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
       detailed,
       ...(detailed ? {
-        claimHistory: claimHistory.map(event => ({ ...event })),
+        claimHistory: claimHistory.map(event => ({
+          ...event,
+          ...(Array.isArray(event.feedback) ? {
+            feedback: event.feedback.map(entry => ({
+              ...entry,
+              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === entry.questionId) + 1)}`
+            }))
+          } : {})
+        })),
         reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
         questions
       } : {})
