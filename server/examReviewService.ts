@@ -800,6 +800,12 @@ export interface ExamParticipantReviewHistoryItem {
   detailed: boolean;
   claimHistory?: ExamReviewClaimHistoryEntry[];
   reviewCorrections?: Array<Record<string, unknown>>;
+  resultReleaseHistory?: Array<{
+    releasedByUid: string;
+    releasedAtIso: string;
+    status: 'passed' | 'failed';
+    finalScoreBasisPoints: number | null;
+  }>;
   questions?: Array<{
     questionId: string;
     question: string;
@@ -867,6 +873,7 @@ export async function listExamParticipantReviewHistory(
       ...(detailed ? {
         claimHistory: claimHistory.map(event => ({ ...event })),
         reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
+        resultReleaseHistory: Array.isArray(attempt.resultReleaseHistory) ? attempt.resultReleaseHistory : [],
         questions
       } : {})
     });
