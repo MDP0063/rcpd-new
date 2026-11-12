@@ -581,7 +581,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             <div className="flex flex-wrap items-start justify-between gap-2">
                               <div>
                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{requirement.description || requirement.targetId}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{requirement.required ? 'Erforderlich' : 'Optional'} · {requirement.type === 'required_assessment' ? 'Prüfungsnachweis' : requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung' : requirement.type === 'instructor_confirmation' ? 'Bestätigung durch Ausbilder' : requirement.type === 'practical_task' ? 'Praktische Aufgabe' : requirement.type === 'required_chapter' ? 'Kapitel' : 'Material'}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{requirement.required ? 'Erforderlich' : 'Optional'} · {requirement.type === 'required_assessment' ? 'Kursabschlussprüfung' : requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung' : requirement.type === 'instructor_confirmation' ? 'Bestätigung durch Ausbilder' : requirement.type === 'practical_task' ? 'Praktische Aufgabe' : requirement.type === 'required_chapter' ? 'Kapitel' : 'Material'}</p>
                               </div>
                               <span className="text-xs font-semibold">{satisfied ? 'Nachweis vorhanden' : 'Offen'}</span>
                             </div>
@@ -592,7 +592,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
                             )}
-                            {requirement.type === 'required_assessment' && <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird nach bestandener und offiziell freigegebener Abschlussprüfung automatisch berücksichtigt.</p>}
+                            {requirement.type === 'required_assessment' && <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>}
                             {['practical_task', 'instructor_confirmation'].includes(requirement.type) && !matching.length && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Nachweis muss von einem berechtigten Ausbilder erfasst werden.</p>
                             )}
