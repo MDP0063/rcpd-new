@@ -268,6 +268,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(participantAfterRerelease.questionResults.find(question => question.questionId === 'text')?.pointsEarnedMilli, 900);
     const rereleasedAttempt = await repository.get<any>('exam_attempts', 'review-attempt');
     assert.equal(rereleasedAttempt?.resultReleaseHistory?.length, 2);
+    const supervisorReleaseHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'admin', true
+    );
+    assert.equal(supervisorReleaseHistory[0].resultReleaseHistory?.length, 2);
+    assert.equal(supervisorReleaseHistory[0].resultReleaseHistory?.[0].releasedByUid, 'admin');
+    const unrelatedReleaseHistory = await listExamParticipantReviewHistory(
+      repository, 'student-1', ['PC-101'], 'unrelated-grader', false
+    );
+    assert.equal(unrelatedReleaseHistory[0].detailed, false);
+    assert.equal('resultReleaseHistory' in unrelatedReleaseHistory[0], false,
+      'unrelated course-authorized reviewers must not see confidential release history');
     assert.equal((await listCompletedManualReviews(repository))[0].questions[0].pointsEarnedMilli, 900);
 
   } finally {
