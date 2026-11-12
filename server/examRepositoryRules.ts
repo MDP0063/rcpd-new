@@ -346,7 +346,9 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
             Array.isArray(publishedSnapshot.questionResults) &&
             (existing.assessmentStage === 'final_exam'
               ? publishedSnapshot.questionResults.length === 0
-              : publishedSnapshot.questionResults.every((item: any, index: number, all: any[]) =>
+              : Array.isArray(existing.questionGrades) &&
+                publishedSnapshot.questionResults.length === existing.questionGrades.length &&
+                publishedSnapshot.questionResults.every((item: any, index: number, all: any[]) =>
                   item && typeof item.questionId === 'string' &&
                   Number.isSafeInteger(item.pointsEarnedMilli) && item.pointsEarnedMilli >= 0 &&
                   Number.isSafeInteger(item.maxPointsMilli) && item.maxPointsMilli >= item.pointsEarnedMilli &&
