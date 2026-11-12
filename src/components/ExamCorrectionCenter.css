@@ -267,3 +267,76 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+.exam-correction-filters {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.4fr) repeat(3, minmax(10rem, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+  margin-bottom: 1.1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--exam-line);
+  border-radius: 0.95rem;
+  background: rgba(255,255,255,0.82);
+}
+.exam-correction-filter-field { display: grid; gap: 0.35rem; min-width: 0; }
+.exam-correction-filter-field label {
+  color: #66515d;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+.exam-correction-filter-field input,
+.exam-correction-filter-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #ddcbd5;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #342b31;
+  font-size: 0.82rem;
+}
+.exam-correction-filter-field :is(input,select):focus-visible {
+  outline: 3px solid rgba(163,51,112,0.22);
+  outline-offset: 2px;
+  border-color: #a33370;
+}
+.exam-correction-filter-footer {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid #eee5ea;
+  color: #806c78;
+  font-size: 0.72rem;
+}
+.exam-correction-filter-footer button {
+  color: #842858;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dark .exam-correction-filters {
+  border-color: #513447;
+  background: rgba(31,23,32,0.9);
+}
+.dark .exam-correction-filter-field label { color: #d8c8d2; }
+.dark .exam-correction-filter-field :is(input,select) {
+  border-color: #624458;
+  background: #1e1820;
+  color: #f0e8ee;
+}
+.dark .exam-correction-filter-footer { border-color: #513447; color: #bba5b2; }
+.dark .exam-correction-filter-footer button { color: #efbfd6; }
+@media (max-width: 900px) {
+  .exam-correction-filters { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 560px) {
+  .exam-correction-filters { grid-template-columns: minmax(0,1fr); padding: 0.9rem; }
+  .exam-correction-filter-footer { grid-column: 1; align-items: flex-start; }
+}
