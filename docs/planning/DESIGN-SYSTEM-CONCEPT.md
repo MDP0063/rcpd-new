@@ -386,3 +386,13 @@ Bei der Überarbeitung jedes Untermoduls wird explizit geprüft:
 - Bleiben Tastaturfokus, Kontrast, responsive Darstellung und Dark Mode erhalten?
 
 Diese Regeln ändern weder Funktionen noch Berechtigungen, Datenmodelle oder fachliche Statuslogik.
+
+## 25. Vollständige Unterseitenprüfung und Redesign-Konzept (12.11.2026)
+
+Die eigenständige Recherche und Neukonzeption der internen Academy-Unterseiten ist in [ACADEMY-SUBPAGE-REDESIGN.md](./ACADEMY-SUBPAGE-REDESIGN.md) dokumentiert. Sie umfasst Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner, Meine Notizen sowie gemeinsame Seitenmuster und Accessibility-Anforderungen.
+
+Die neue Ausarbeitung verändert nicht die bestätigte visuelle Identität: Kachelstartseite und SVG-Illustrationen bleiben unverändert; die horizontale Fünf-Bereiche-Navigation, Bereichsfarben, matte blaue Wellenform und freundliche Lernplattform-Anmutung bleiben erhalten. Neu bewertet werden die Komposition der inneren Seiten, die Hierarchie von Teilnehmer- und Verwaltungsaufgaben, sekundäre Navigation, responsive Darstellung sowie Katalog-/Detail-/Editor-/Reader-Muster.
+
+Die Recherche stützt sich u. a. auf Home Office Design System, DWP Design System, Nielsen Norman Group Progressive Disclosure, W3C WCAG 2.2, WAI-ARIA APG und GOV.UK Service Design Patterns. Die Quellen und die konkrete Übertragung auf RCPD sind in der Unterseitenspezifikation einzeln dokumentiert.
+
+Die Umsetzungsreihenfolge und offenen technischen Prüfungen sind dort ausgewiesen. Bestehende Fachregeln, Datenmodelle, Berechtigungen, private Notizen, Prüfungsabläufe und Versionierung bleiben Schutzgrenzen. Die visuelle Neukonzeption ist innerhalb der am 12.11.2026 erweiterten Academy-Arbeitsfreigabe zur eigenständigen Umsetzung freigegeben; neue fachliche Funktionen oder portalweite Änderungen sind davon nicht umfasst.
