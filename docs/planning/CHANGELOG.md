@@ -1,3 +1,11 @@
+## 2026-11-12 – Academy-Arbeitsfreigabe, Fehlerkorrekturen und vollständiges Unterseiten-Redesign
+
+- Die ausdrückliche Arbeits- und Merge-Ermächtigung des Projektinhabers wurde präzisiert und erweitert: ChatGPT darf innerhalb der gesamten Academy eigenständig recherchieren, konzipieren, implementieren, testen, dokumentieren, PRs erstellen/reviewen und geeignete PRs selbst mergen. Die Grenzen zu portalweiten Änderungen, direkten main-Commits, Branch Protection, Sicherheitsreviews und kostenpflichtigen Diensten sind in DECISIONS.md, AGENTS.md und CONTRIBUTOR_ROLES.md festgehalten.
+- PR #246 (Taxonomie-Refresh nach Bearbeitungskonflikten), PR #247 (Versionshistorie nach Veröffentlichung) und PR #248 (Autosave-Debounce beim Verwerfen abbrechen) wurden nach erfolgreichen GitHub-Build-/TypeScript-/Test- und PR-Vorlagenprüfungen gemergt. Render-Deploy-Hooks wurden in diesen PR-Workflows übersprungen; manuelle Browser-/Live-Firestore-Abnahme bleibt offen.
+- Neue Datei ACADEMY-SUBPAGE-REDESIGN.md: aktueller Codebestand und Recherche zu allen Academy-Unterseiten, seitenweise Redesign-Richtung, gemeinsame Katalog-/Detail-/Editor-/Prüfungsmuster, WCAG-/Responsive-Anforderungen und Umsetzungsreihenfolge.
+- DESIGN-SYSTEM-CONCEPT.md und ACADEMY-UX-AUDIT.md verweisen auf die neue Ausarbeitung. README.md und PROGRESS.md wurden auf den aktuellen Merge- und Arbeitsstand aktualisiert.
+- Keine Anwendungscodeänderung in diesem Dokumentations-PR; keine Änderung an fachlichen Academy-Regeln, Berechtigungen, Datenmodellen oder Portalmodulen.
+
 # Änderungsverlauf der Planungsdokumentation
 
 ## 2026-11-11 – Ergebnisfreigabe und Bewertungsverlauf bei Korrekturen (PR #189/#190)
