@@ -80,6 +80,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const revisionByIdRef = useRef(new Map<string, number>());
   const draftsBySourceRef = useRef(new Map<string, NoteDraft>());
   const sourceKey = JSON.stringify([materialId, materialVersionId]);
+  const sourceKeyRef = useRef(sourceKey);
   const pendingSavesRef = useRef(new Map<string, NoteDraft>());
   const blockedSaveIdsRef = useRef(new Set<string>());
   const operationLockedIdsRef = useRef(new Set<string>());
@@ -289,8 +290,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }) : null, [selectedNote, title, content, tags]);
 
   currentDraftRef.current = draft;
-  if (draft) draftsBySourceRef.current.set(sourceKey, draft);
-  else draftsBySourceRef.current.delete(sourceKey);
+  useEffect(() => {
+    if (sourceKeyRef.current !== sourceKey) {
+      sourceKeyRef.current = sourceKey;
+      return;
+    }
+    if (draft) draftsBySourceRef.current.set(sourceKey, draft);
+    else draftsBySourceRef.current.delete(sourceKey);
+  }, [draft, sourceKey]);
   const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
 
   useEffect(() => {
