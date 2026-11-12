@@ -35,7 +35,7 @@ export const ExamWorkshopPermissionEditor: React.FC<Props> = ({ value, onChange 
 
   const categories = [
     { key: 'tests' as const, title: 'Übungstests' },
-    { key: 'finalExams' as const, title: 'Abschlussprüfungen' }
+    { key: 'finalExams' as const, title: 'Kursabschlussprüfungen' }
   ];
 
   return (
@@ -94,9 +94,9 @@ export const ExamWorkshopPermissionEditor: React.FC<Props> = ({ value, onChange 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {([
               ['newTestsRequireApproval', 'Neue Übungstests benötigen Freigabe'],
-              ['newFinalExamsRequireApproval', 'Neue Abschlussprüfungen benötigen Freigabe'],
+              ['newFinalExamsRequireApproval', 'Neue Kursabschlussprüfungen benötigen Freigabe'],
               ['testUpdatesRequireApproval', 'Änderungen an Übungstests benötigen Freigabe'],
-              ['finalExamUpdatesRequireApproval', 'Änderungen an Abschlussprüfungen benötigen Freigabe']
+              ['finalExamUpdatesRequireApproval', 'Änderungen an Kursabschlussprüfungen benötigen Freigabe']
             ] as const).map(([key, label]) => (
               <label key={key} className={labelClass}>
                 <input className={checkboxClass} type="checkbox" checked={value.publication[key]}
@@ -121,7 +121,7 @@ export const ExamWorkshopPermissionEditor: React.FC<Props> = ({ value, onChange 
             className="mt-3 min-h-32 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white">
             {exams.map(exam => (
               <option key={exam.id} value={exam.id}>
-                {exam.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {exam.title || 'Unbenannter Entwurf'} · {exam.id}
+                {exam.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · {exam.title || 'Unbenannter Entwurf'} · {exam.id}
               </option>
             ))}
           </select>
