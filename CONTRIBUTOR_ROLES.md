@@ -13,7 +13,7 @@ Dieses Dokument legt die empfohlenen Hauptaufgaben der am RCPD-Projekt beteiligt
 | **Google AI Studio** | Prototypen, UI-Konzepte und Experimente | Ideen, Oberflächen und neue Interaktionen explorieren; Prototypen und begrenzte Implementierungen erstellen; Annahmen und offene technische Fragen kennzeichnen, bevor Ergebnisse in die Hauptanwendung übernommen werden. |
 | **Google Antigravity** | Repository-weite Umsetzung und Integration | Klar abgegrenzte Aufgaben über mehrere Dateien hinweg umsetzen; Änderungen integrieren; verfügbare Lint-, Build- und Testläufe ausführen; Fehler beheben und Ergebnisse für einen Pull Request vorbereiten. |
 | **Zweiter Account des Projektinhabers** | Organisatorische Unterstützung / zusätzlicher Zugang | Keine feste technische Zuständigkeit. Kann je nach Bedarf zur Koordination, Kommunikation oder als zusätzlicher Zugang dienen. Es wird keine bestimmte KI-Fähigkeit oder technische Aufgabe vorausgesetzt. |
-| **Projektinhaber** | Priorisierung und endgültige Entscheidungen | Anforderungen und Prioritäten festlegen, Änderungen beurteilen und den Merge freigeben. |
+| **Projektinhaber** | Priorisierung und endgültige Entscheidungen | Anforderungen und Prioritäten festlegen und fachliche Grundsatzentscheidungen treffen. Die Academy-Umsetzung und das Mergen geeigneter Academy-PRs sind ausdrücklich an ChatGPT delegiert; außerhalb dieses Bereichs bleibt die Merge-Entscheidung beim Projektinhaber. |
 
 Diese Rollen sind Schwerpunktsetzungen, keine exklusiven Berechtigungen. Jede beteiligte KI soll auf entdeckte Fehler, Sicherheitsprobleme oder Widersprüche hinweisen – unabhängig von ihrer Hauptaufgabe.
 
