@@ -84,7 +84,7 @@ function courseValidation(code: string, title: string, objectives: AcademyLearni
 function programValidation(code: string, title: string, objectives: AcademyLearningObjective[], references: AcademyProgramCourseReference[]): string[] {
   const errors: string[] = [];
   if (!/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(code.trim().toUpperCase())) errors.push('Die Lehrgangskennung benötigt 2 bis 40 Zeichen und darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten.');
-  if (!title.trim()) errors.push('Gib einen Lehrgangtitel ein.');
+  if (!title.trim()) errors.push('Gib einen Lehrgangstitel ein.');
   if (title.trim().length > 200) errors.push('Der Lehrgangstitel darf höchstens 200 Zeichen enthalten.');
   if (objectives.length < 3 || objectives.length > 6) errors.push('Ein Lehrgang benötigt drei bis sechs Lernziele.');
   if (objectives.some(item => !item.description.trim() || item.description.trim().length > 500)) errors.push('Jedes Lernziel benötigt eine Beschreibung mit höchstens 500 Zeichen.');
@@ -296,7 +296,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       onStatusToast('Lehrgangsentwurf wurde angelegt. Er ist noch nicht veröffentlicht.');
       return;
     }
-    if (!programDraft) { setBusy(false); setFormError(['Der Lehrgangsentwurf konnte nicht geladen werden. Öffne das Lehrgang erneut.']); return; }
+    if (!programDraft) { setBusy(false); setFormError(['Der Lehrgangsentwurf konnte nicht geladen werden. Öffne den Lehrgang erneut.']); return; }
     const response = await apiFetch<{ draft: AcademyProgramDraftDoc }>(API_ENDPOINTS.ACADEMY_PROGRAM(programMaster.id) + '/draft', {
       method: 'PUT',
       body: JSON.stringify({ expectedRevision: programDraft.workingRevision, draft: draftPayload })
@@ -442,7 +442,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
           </section>
           <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-programs-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Lehrgange</h3>
+              <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">{listedPrograms.length} Einträge</span>
             </div>
             {listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lehrgänge vorhanden.</p> : (
@@ -555,7 +555,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               })}</ul>}
               {selectableCourses.length === 0 && <p className="text-sm text-amber-700 dark:text-amber-300">Es gibt noch keine veröffentlichten und verfügbaren Kurse, die zugeordnet werden können.</p>}
             </section>
-            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Lehrgangentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft || !programHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
+            <div className="flex flex-wrap items-center gap-2"><button type="submit" className={primary} disabled={busy}>{busy ? 'Speichern …' : programMaster ? 'Entwurf speichern' : 'Lehrgangsentwurf anlegen'}</button>{programMaster && <button type="button" className={secondary} onClick={() => void publishProgram()} disabled={busy || programDirty || !programDraft || !programHasUnpublishedChanges}>{busy ? 'Bitte warten …' : 'Gespeicherte Version veröffentlichen'}</button>}</div>
             {programDirty && programMaster && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">Es gibt ungespeicherte Änderungen. Speichere den Entwurf, bevor du eine neue Version veröffentlichst.</p>}
             {programMaster && <p className="text-xs text-slate-500 dark:text-slate-400">Veröffentlichungsstatus: {statusName(programMaster.publicationStatus)}. Erforderliche Kurse bestimmen den Lehrgangsabschluss; empfohlene Kurse sind kein Abschlusskriterium.</p>}
           </form>
