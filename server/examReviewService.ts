@@ -758,20 +758,30 @@ export interface PendingExamReviewRevisionRequest {
 }
 
 export async function listPendingExamReviewRevisionRequests(repository: ExamRepository): Promise<PendingExamReviewRevisionRequest[]> {
-  const completed = await listCompletedManualReviews(repository, true);
+  const passed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [{ field: 'status', value: 'passed' }], limit: HISTORY_LIMIT
+  }));
+  const failed = ensureBounded(await repository.list<ExamAttemptRecord>('exam_attempts', {
+    where: [{ field: 'status', value: 'failed' }], limit: HISTORY_LIMIT
+  }));
+  const attempts = sortCompletedManualReviewAttempts([...passed, ...failed])
+    .filter(attempt => Boolean(latestPendingRevisionRequest(attempt.reviewClaimHistory || [])));
   const results: PendingExamReviewRevisionRequest[] = [];
-  for (const item of completed) {
-    const attempt = await repository.get<ExamAttemptRecord>('exam_attempts', item.id);
-    if (!attempt) continue;
+  for (const attempt of attempts) {
     const pending = latestPendingRevisionRequest(attempt.reviewClaimHistory || []);
     if (!pending) continue;
-    const labels = new Map(item.questionSteps.map(step => [step.questionId, step.label]));
+    if (!attempt.reviewedByUid || !attempt.reviewedAtIso) throw new Error('EXAM_REVIEW_REVISION_STALE');
+    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== attempt.examId || version.versionNumber !== attempt.versionNumber ||
+        !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    const labels = new Map(version.questionsSnapshot.map((question, index) => [question.id, `Frage ${index + 1}`]));
     results.push({
-      id: item.id, examId: item.examId, examTitle: item.examTitle, userName: item.userName,
-      attemptCourseCode: item.attemptCourseCode, submittedAtIso: item.submittedAtIso,
-      assessmentStage: item.assessmentStage, status: item.status, reviewedAtIso: item.reviewedAtIso,
-      reviewedByUid: item.reviewedByUid, requestedAtIso: pending.event.atIso,
-      requestedByUid: pending.event.actorUid, reason: pending.event.reason || '',
+      id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
+      attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
+      assessmentStage: version.assessmentStage, status: attempt.status,
+      reviewedAtIso: attempt.reviewedAtIso, reviewedByUid: attempt.reviewedByUid,
+      requestedAtIso: pending.event.atIso, requestedByUid: pending.event.actorUid,
+      reason: pending.event.reason || '',
       feedback: (pending.event.feedback || []).map(entry => ({
         questionId: entry.questionId, label: labels.get(entry.questionId) || 'Bewertungsschritt', feedback: entry.feedback
       })),
