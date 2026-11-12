@@ -175,20 +175,27 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         }
 
         const saved = response.data.note;
-        const savedSnapshot = serializeDraft(draft);
+        const savedDraft: NoteDraft = {
+          id: saved.id, title: saved.title || '', content: saved.content || '', tags: saved.tags || []
+        };
+        const sentSnapshot = serializeDraft(draft);
+        const savedSnapshot = serializeDraft(savedDraft);
         saveErrorsByIdRef.current.delete(id);
         blockedSaveIdsRef.current.delete(id);
         revisionByIdRef.current.set(saved.id, saved.revision ?? expectedRevision + 1);
-        lastSavedByIdRef.current.set(saved.id, draft);
+        lastSavedByIdRef.current.set(saved.id, savedDraft);
         setNotes(previous => previous.map(note => note.id === saved.id ? saved : note));
 
         const queuedDraft = pendingSavesRef.current.get(id);
-        if (queuedDraft && serializeDraft(queuedDraft) === savedSnapshot) {
+        if (queuedDraft && serializeDraft(queuedDraft) === sentSnapshot) {
           pendingSavesRef.current.delete(id);
         }
         if (currentDraftRef.current?.id === id) {
-          if (serializeDraft(currentDraftRef.current) === savedSnapshot) {
-            lastSavedRef.current = savedSnapshot;
+          lastSavedRef.current = savedSnapshot;
+          if (serializeDraft(currentDraftRef.current) === sentSnapshot) {
+            setTitle(savedDraft.title);
+            setContent(savedDraft.content);
+            setTags(savedDraft.tags.join(', '));
             setSaveStatus('saved');
             setSaveError('');
           } else {
