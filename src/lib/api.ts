@@ -219,7 +219,6 @@ export const API_ENDPOINTS = {
   EVENTS: '/api/events',
   NOTIFICATIONS: '/api/notifications',
   AUDIT_LOGS: '/api/admin/audit-logs',
-  INSTRUCTOR_GRADE: '/api/academy/instructor-grade',
   PROFILE_SELF: '/api/profile/self',
   WHITELIST_VERIFY: '/api/v1/whitelist/verify',
   DEPLOYMENT_MANIFESTS: '/api/v1/deployment/manifests',
