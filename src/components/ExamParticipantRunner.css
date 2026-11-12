@@ -200,3 +200,7 @@
   .academy-exam-runner *::before,
   .academy-exam-runner *::after { scroll-behavior: auto; }
 }
+
+.dark .academy-exam-runner :is(button,input,select,textarea):focus-visible {
+  outline-color: rgba(217,149,184,0.72);
+}
