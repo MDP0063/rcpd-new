@@ -182,6 +182,13 @@ const DUMMY_HASH = hashPassword('dummy-passwort-fuer-gleiche-antwortzeit');
 // Online threshold: 45 seconds since last heartbeat or login
 const ONLINE_THRESHOLD_MS = 45 * 1000;
 
+// These IDs identify obsolete sample materials from the original portal seed.
+// Keep stored records intact for historical references, but never expose them as active library items.
+const RETIRED_LEGACY_EXAMPLE_MODULE_IDS = new Set([
+  'mod_default_sop01',
+  'mod_default_pc102'
+]);
+
 function computeIsOnline(record: StoredAccountRecord): boolean {
   if (!record.isOnline || !record.lastSeenIso) return false;
   const diff = Date.now() - new Date(record.lastSeenIso).getTime();
@@ -361,6 +368,7 @@ function buildRecentPublicActivity(state: PortalDatabaseState): PublicActivityDo
   }
 
   for (const mod of state.modules || []) {
+    if (RETIRED_LEGACY_EXAMPLE_MODULE_IDS.has(mod.id)) continue;
     const authorName = accountDisplayNames.get(mod.authorUid);
     candidates.push({
       id: `pub_mod_${mod.id}`,
@@ -569,74 +577,6 @@ function createInitialDatabase(): PortalDatabaseState {
     }
   ];
 
-  const defaultModules: TrainingModuleDoc[] = [
-    {
-      id: 'mod_default_sop01',
-      title: 'Streifendienst, Eigensicherung & Funkdisziplin',
-      code: 'SOP-01',
-      category: 'SOP & Policy',
-      minClearance: ROLE_HIERARCHY.trainee.defaultClearance,
-      requiredRole: 'trainee',
-      embedType: 'document',
-      contentMarkdown: `# 1. Grundsätze des Streifendienstes (SOP-01)
-
-Jeder Beamte des California POST Dienstportals vertritt im täglichen Streifendienst die rechtsstaatlichen Grundsätze der Verhältnismäßigkeit, Eigensicherung und professionellen Kommunikation. Vor Beginn jeder Schicht sind Dienstfahrzeug, Funkgerät und persönliche Schutzausrüstung vollständig auf Einsatzbereitschaft zu prüfen.
-
-## 2. Funkdisziplin & 10-Codes im Einsatzfunk
-
-Der Funkverkehr ist sachlich, knapp und eindeutig zu führen. Vor jedem Funkspruch ist das eigene Rufzeichen (Callsign) zu nennen.
-
-- 10-4: Verstanden / Bestätigung der Durchsage
-- 10-7: Außer Dienst / Nicht einsatzbereit
-- 10-8: Im Dienst / Einsatzbereit auf Streife
-- 10-20: Aktueller Standort der Einheit
-- 10-99: Beamter in unmittelbarer Gefahr — Höchste Priorität für alle Einheiten
-
-## 3. Taktische Eigensicherung bei Fahrzeugkontrollen (Traffic Stops)
-
-Bei jeder Verkehrskontrolle ist der Streifenwagen leicht versetzt hinter dem Zielobjekt zu positionieren, um einen sicheren Korridor für die herantretende Kraft zu schaffen. Vor dem Verlassen des Streifenwagens werden Kennzeichen, Fahrzeugtyp und Standort (10-20) an die Leitstelle durchgegeben.`,
-      externalUrl: '',
-      pdfDataUrl: '',
-      pdfFileName: '',
-      interactiveCode: '',
-      estimatedMinutes: 20,
-      authorUid: 'usr_admin_1',
-      updatedIso: nowIso
-    },
-    {
-      id: 'mod_default_pc102',
-      title: 'California Penal Code & Eingriffsrecht im Vollzugsdienst',
-      code: 'PC-102',
-      category: 'California Penal Code',
-      minClearance: ROLE_HIERARCHY.trainee.defaultClearance,
-      requiredRole: 'trainee',
-      embedType: 'document',
-      contentMarkdown: `# 1. Rechtsgrundlagen für freiheitsentziehende Maßnahmen
-
-Eine vorläufige Festnahme (Arrest) setzt einen hinreichenden Tatverdacht (Probable Cause) voraus. Bei einer kurzzeitigen Festhaltung zur Sachverhaltsklärung (Detention / Terry Stop) genügt ein begründeter Anfangsverdacht (Reasonable Suspicion) auf Basis konkreter, artikulierbarer Tatsachen.
-
-## 2. Belehrungspflichten (Miranda Warning)
-
-Vor jeder formellen Vernehmung einer in Gewahrsam befindlichen Person ist die Belehrung vollständig und dokumentiert durchzuführen:
-
-- Sie haben das Recht zu schweigen.
-- Alles, was Sie sagen, kann und wird vor Gericht gegen Sie verwendet werden.
-- Sie haben das Recht, zu jeder Vernehmung einen Verteidiger hinzuzuziehen.
-- Wenn Sie sich keinen Verteidiger leisten können, wird Ihnen auf Staatskosten ein Pflichtverteidiger bestellt.
-
-## 3. Grundsatz der Verhältnismäßigkeit (Use of Force Continuum)
-
-Unmittelbarer Zwang darf nur angewendet werden, soweit mildere Mittel (insbesondere deeskalierende Ansprache und klare Handlungsanweisungen) keinen Erfolg versprechen oder aufgrund einer gegenwärtigen Gefahr nicht möglich sind.`,
-      externalUrl: '',
-      pdfDataUrl: '',
-      pdfFileName: '',
-      interactiveCode: '',
-      estimatedMinutes: 25,
-      authorUid: 'usr_admin_1',
-      updatedIso: nowIso
-    }
-  ];
-
   const defaultExams: AcademyExamDoc[] = [
     {
       id: 'exam_default_test01',
@@ -740,7 +680,7 @@ Unmittelbarer Zwang darf nur angewendet werden, soweit mildere Mittel (insbesond
     version: 3,
     accounts: initialAccounts,
     applications: [],
-    modules: defaultModules,
+    modules: [],
     exams: defaultExams,
     progress: [],
     academy_courses: [],
@@ -2873,7 +2813,9 @@ async function startServer() {
             callerClearance
           )
     );
-    const visibleModules = dbState.modules.map(module => {
+    const visibleModules = dbState.modules
+      .filter(module => !RETIRED_LEGACY_EXAMPLE_MODULE_IDS.has(module.id))
+      .map(module => {
       const clientModule = toClientModule(module);
       const hasRankAccess = canReadModule(
         callerRoleMeta.rankOrder,
@@ -3732,6 +3674,14 @@ async function startServer() {
       return;
     }
 
+    if (RETIRED_LEGACY_EXAMPLE_MODULE_IDS.has(modId)) {
+      res.status(409).json({
+        error: 'LEGACY_EXAMPLE_MODULE_RETIRED',
+        message: 'Dieses alte Beispielmaterial ist stillgelegt und kann nicht mehr bearbeitet werden.'
+      });
+      return;
+    }
+
     const originalCode = dbState.modules[idx].code;
     const targetCode = code !== undefined ? String(code).trim() : originalCode;
     // Scoped instructors must be authorized for both sides of a course-code move.
@@ -3850,6 +3800,13 @@ async function startServer() {
     const targetMod = dbState.modules.find(m => m.id === req.params.modId);
     if (!targetMod) {
       res.status(404).json({ error: 'Modul nicht gefunden.' });
+      return;
+    }
+    if (RETIRED_LEGACY_EXAMPLE_MODULE_IDS.has(targetMod.id)) {
+      res.status(409).json({
+        error: 'LEGACY_EXAMPLE_MODULE_RETIRED',
+        message: 'Dieses alte Beispielmaterial ist stillgelegt. Historische Daten bleiben unverändert erhalten.'
+      });
       return;
     }
     if (!caller || !canActorEditCourseCode(caller, targetMod.code)) {

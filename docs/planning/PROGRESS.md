@@ -789,3 +789,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Regressionstest: Ein Admin legt ein Material außerhalb des Scopes an; ein scoped Ausbilder versucht, es in seinen eigenen Kurscode zu verschieben. Erwartet wird 403; anschließend bestätigt eine Admin-Metadatenänderung, dass Kurscode und ursprünglicher Inhalt unverändert blieben.
 - Die Korrektur betrifft ausschließlich den Legacy-Endpunkt und seine Tests. Versionierte Materialendpunkte und PDF-Bestand bleiben unverändert.
 - Status: Implementierung auf Branch `fix/academy-legacy-module-scope-authorization`; CI und unabhängige Review stehen aus. Noch keine Live-Firestore-/Browserprüfung.
+
+### Legacy-Academy-Beispielmaterialien stillgelegt
+
+- Entscheidung: `mod_default_sop01` und `mod_default_pc102` waren ausschließlich alte Beispielinhalte und werden nicht in das versionierte Materialsystem migriert.
+- Neue Portal-Datenbanken starten ohne diese alten Legacy-Module.
+- Bereits gespeicherte Datensätze bleiben zunächst unverändert in der Datenbank, werden aber aus der aktiven Modul-/Bibliotheksprojektion und aus der öffentlichen Aktivitätsliste ausgeschlossen.
+- Die Legacy-Update- und -Delete-Routen weisen Änderungen an diesen beiden IDs mit `409 LEGACY_EXAMPLE_MODULE_RETIRED` zurück. Damit bleiben historische Verweise bis zu einer späteren Dateninventur unangetastet.
+- Die API-Regressionstests prüfen die Unsichtbarkeit sowie die blockierten Update-/Delete-Versuche; ein zusätzlicher Fresh-Database-Test prüft, dass die Beispielmaterialien nicht erneut angelegt werden.
+- Keine Firestore-Produktivdaten wurden im Rahmen dieser Codeänderung gelesen oder verändert. Die endgültige Datenbereinigung bleibt nach einer gesonderten Referenzprüfung offen.

@@ -80,13 +80,27 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01'])
     ],
     applications: [],
-    modules: [{
-      id: 'existing-pdf-module', title: 'Existing PDF handbook', code: 'SOP-PDF-01',
-      category: 'SOP & Policy', minClearance: 1, requiredRole: 'trainee', embedType: 'pdf_upload',
-      contentMarkdown: '', externalUrl: '', pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK',
-      pdfFileName: 'legacy-handbook.pdf', interactiveCode: '', estimatedMinutes: 15,
-      authorUid: 'academy-admin', updatedIso: new Date().toISOString()
-    }],
+    modules: [
+      {
+        id: 'existing-pdf-module', title: 'Existing PDF handbook', code: 'SOP-PDF-01',
+        category: 'SOP & Policy', minClearance: 1, requiredRole: 'trainee', embedType: 'pdf_upload',
+        contentMarkdown: '', externalUrl: '', pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK',
+        pdfFileName: 'legacy-handbook.pdf', interactiveCode: '', estimatedMinutes: 15,
+        authorUid: 'academy-admin', updatedIso: new Date().toISOString()
+      },
+      {
+        id: 'mod_default_sop01', title: 'Streifendienst, Eigensicherung & Funkdisziplin', code: 'SOP-01',
+        category: 'SOP & Policy', minClearance: 1, requiredRole: 'trainee', embedType: 'document',
+        contentMarkdown: 'Old sample content', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 20, authorUid: 'academy-admin', updatedIso: new Date().toISOString()
+      },
+      {
+        id: 'mod_default_pc102', title: 'California Penal Code & Eingriffsrecht im Vollzugsdienst', code: 'PC-102',
+        category: 'California Penal Code', minClearance: 1, requiredRole: 'trainee', embedType: 'document',
+        contentMarkdown: 'Old sample content', externalUrl: '', pdfDataUrl: '', pdfFileName: '',
+        interactiveCode: '', estimatedMinutes: 25, authorUid: 'academy-admin', updatedIso: new Date().toISOString()
+      }
+    ],
     exams: [], progress: [], announcements: [], messages: [],
     requests: [], events: [], auditLogs: [], notifications: []
   };
@@ -682,6 +696,33 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(sessionModuleDelete.status, 200, JSON.stringify(sessionModuleDelete.body));
     assert.equal(sessionModuleDelete.body!.deleted, true);
 
+    const retiredExampleIds = ['mod_default_sop01', 'mod_default_pc102'];
+    const stateAfterRetirement = await request('/api/portal/state?uid=academy-admin', admin);
+    assert.equal(stateAfterRetirement.status, 200, JSON.stringify(stateAfterRetirement.body));
+    assert.equal(
+      stateAfterRetirement.body!.recentPublicActivity.some((item: { title: string }) =>
+        item.title.includes('Streifendienst, Eigensicherung & Funkdisziplin') ||
+        item.title.includes('California Penal Code & Eingriffsrecht im Vollzugsdienst')
+      ),
+      false,
+      'retired sample materials must not reappear in the public activity feed'
+    );
+    for (const retiredId of retiredExampleIds) {
+      assert.equal(
+        stateAfterRetirement.body!.modules.some((module: { id: string }) => module.id === retiredId),
+        false,
+        'retired sample material must not appear in the active catalog: ' + retiredId
+      );
+      const blockedEdit = await request('/api/academy/modules/' + retiredId, admin, {
+        method: 'PUT', ...json({ title: 'Attempted legacy edit' })
+      });
+      assert.equal(blockedEdit.status, 409);
+      assert.equal(blockedEdit.body!.error, 'LEGACY_EXAMPLE_MODULE_RETIRED');
+      const blockedDelete = await request('/api/academy/modules/' + retiredId, admin, { method: 'DELETE' });
+      assert.equal(blockedDelete.status, 409);
+      assert.equal(blockedDelete.body!.error, 'LEGACY_EXAMPLE_MODULE_RETIRED');
+    }
+
     const created = await request('/api/academy/courses', admin, {
       method: 'POST',
       ...json({
@@ -1094,6 +1135,62 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(updateForeignNote.status, 404);
     const deleteForeignNote = await request(`/api/academy/notes/${officerNoteId}`, admin, { method: 'DELETE' });
     assert.equal(deleteForeignNote.status, 404);
+  } finally {
+    if (child.exitCode === null) {
+      child.kill();
+      await Promise.race([once(child, 'exit').then(() => undefined), new Promise(resolve => setTimeout(resolve, 1000))]);
+      if (child.exitCode === null) {
+        child.kill('SIGKILL');
+        await Promise.race([once(child, 'exit').then(() => undefined), new Promise(resolve => setTimeout(resolve, 1000))]);
+      }
+    }
+    await rm(dataDirectory, { recursive: true, force: true });
+  }
+});
+
+test('fresh portal databases do not seed the retired legacy Academy sample materials', { timeout: 30_000 }, async () => {
+  const dataDirectory = await mkdtemp(path.join(tmpdir(), 'rcpd-academy-fresh-'));
+  const port = await unusedPort();
+  const baseUrl = 'http://127.0.0.1:' + port;
+  let childOutput = '';
+  let childError = '';
+  const runtimePreload = path.join(dataDirectory, 'runtime-preload.mjs');
+  await writeFile(runtimePreload, [
+    "import os from 'node:os';",
+    "import { syncBuiltinESMExports } from 'node:module';",
+    "os.userInfo = () => ({ username: 'academy-test', uid: -1, gid: -1, shell: null, homedir: process.cwd() });",
+    'syncBuiltinESMExports();'
+  ].join('\n'));
+  const child = spawn(process.execPath, ['--import', pathToFileURL(runtimePreload).href, '--import', 'tsx', path.join(process.cwd(), 'server.ts')], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env, DATA_DIR: dataDirectory, PORT: String(port),
+      SESSION_SECRET: 'academy-fresh-test-session-secret-is-at-least-32-bytes',
+      ADMIN_INITIAL_PASSWORD: PASSWORD,
+      NODE_ENV: 'production', STORAGE_BACKEND: 'json', ALLOWED_ORIGINS: ''
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  child.stdout.setEncoding('utf8').on('data', data => { childOutput += data; });
+  child.stderr.setEncoding('utf8').on('data', data => { childError += data; });
+  try {
+    let ready = false;
+    let lastError = '';
+    for (let attempt = 0; attempt < 150; attempt += 1) {
+      if (child.exitCode !== null) break;
+      try {
+        if ((await fetch(baseUrl + '/api/health')).ok) { ready = true; break; }
+      } catch (error) { lastError = String(error); }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    assert.equal(ready, true, 'server did not become ready: ' + lastError + '\n' + childOutput + '\n' + childError);
+    const admin = await login(baseUrl, 'Admin1');
+    const response = await fetch(baseUrl + '/api/portal/state?uid=usr_admin_1', {
+      headers: { Authorization: 'Bearer ' + admin }
+    });
+    assert.equal(response.status, 200);
+    const state = await response.json() as { modules: Array<{ id: string }> };
+    assert.deepEqual(state.modules, []);
   } finally {
     if (child.exitCode === null) {
       child.kill();
