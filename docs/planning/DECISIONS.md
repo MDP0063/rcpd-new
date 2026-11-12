@@ -509,3 +509,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Akzentfarben werden rollenbasiert und zurückhaltend eingesetzt. Sie dienen der Bereichszuordnung und Orientierung, nicht als pauschale Rahmen-, Warn- oder Statusfarbe. Insbesondere darf der Beerenton der Prüfungen keine flächige rote Umrandung oder einen Warnzustand suggerieren.
 - **BESCHLOSSEN:** Fachliche Statusfarben (z. B. Erfolg, Warnung, Fehler, bestanden/nicht bestanden) behalten ihre eigenständige semantische Bedeutung und werden nicht durch Bereichsakzente ersetzt. Bereichsakzent und Statusfarbe sind visuell klar unterscheidbar.
 - **SCHUTZGRENZE:** Die fünfteilige Kachelstartseite, ihre Kachelfarben, Inhalte und Illustrationen bleiben unverändert. Diese Ergänzung betrifft die Navigation und die Gestaltung der internen Untermodule.
+
+## Entscheidung vom 12.11.2026 – Stilllegung alter Academy-Beispielmaterialien
+
+- **BESCHLOSSEN:** Die Legacy-Materialien `mod_default_sop01` („Streifendienst, Eigensicherung & Funkdisziplin“) und `mod_default_pc102` („California Penal Code & Eingriffsrecht im Vollzugsdienst“) waren ausschließlich alte Beispielinhalte. Sie sind keine offiziellen Lerninhalte und werden nicht in das versionierte Materialsystem migriert.
+- **BESCHLOSSEN:** Neue Portal-Datenbanken legen diese beiden Legacy-Materialien nicht mehr an. Bereits gespeicherte Datensätze werden aus dem aktiven Legacy-Katalog und der öffentlichen Aktivitätsliste ausgeblendet.
+- **SCHUTZREGEL:** Die alten Update- und Delete-Endpunkte dürfen diese beiden IDs nicht mehr verändern oder löschen. Sie antworten mit `409 LEGACY_EXAMPLE_MODULE_RETIRED`. Bestehende Daten bleiben bis zur gesonderten Referenzprüfung erhalten, damit historische Kurs-, Prüfungs- oder Fortschrittsverweise nicht versehentlich beschädigt werden.
+- **NICHT BESCHLOSSEN:** Eine physische Löschung vorhandener Firestore-Datensätze. Dafür ist zuerst eine Inventur aller historischen Referenzen und eine sichere Bereinigungsstrategie erforderlich.
+- **UMSETZUNG:** PR #201, gemergt am 12.11.2026 als Squash-Commit `59183857c41a31e1d352ffc57c9d21a9749997ea`. Regressionstests decken Katalog- und Aktivitätsfeed-Ausblendung, blockierte Update-/Delete-Versuche sowie eine frische Datenbank ohne diese Seeds ab.
+- **VALIDIERUNGSGRENZE:** GitHub Actions meldete TypeScript, Produktionsbuild und vollständige Teststufe als erfolgreich. Keine Live-Firestore-Inventur, produktive Datenänderung, Render-Bereitstellung oder Browserabnahme wurde mit diesem PR durchgeführt.
