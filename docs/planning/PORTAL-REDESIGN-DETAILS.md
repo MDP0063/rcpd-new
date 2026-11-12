@@ -609,3 +609,12 @@ Die am 11.11.2026 getroffene Arbeitsvereinbarung überträgt ChatGPT die eigenst
 - Die globale visuelle Identität, globale Navigation und Theme-Strategie des Portals bleiben offen und werden nicht allein aus der Academy abgeleitet.
 
 Die ausführliche Arbeitsgrundlage einschließlich Referenzen und Qualitäts-Gates ist [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md). Diese Ergänzung ersetzt keine der bestehenden fachlichen Modulregeln oder den Auditablauf.
+
+
+## 22. Erweiterte Entscheidungsfreiheit und Recherchepflicht (12.11.2026)
+
+Die Entscheidungsfreiheit von ChatGPT wurde über objektive Design-/UX-Details hinaus erweitert. Kritischere fachliche und technische Fragen dürfen eigenständig entschieden werden, wenn vorher gründlich recherchiert, relevante Standards und etablierte Vergleichslösungen geprüft sowie Alternativen, Risiken, Abhängigkeiten und Auswirkungen nachvollziehbar abgewogen wurden. Bloße Intuition reicht nicht.
+
+Kritischere Entscheidungen werden dem Projektinhaber im Nachgang in einem strukturierten Ergebnisblock präsentiert: Fragestellung, Recherche und Quellen, Optionen, Vor-/Nachteile, Risiken, begründete Empfehlung und getroffene Entscheidung, Auswirkungen sowie gezielte Änderungsmöglichkeiten. Bei größeren Design-/UX-Schritten werden Zwischenstände gebündelt präsentiert.
+
+Objektive UX-/Accessibility-/Konsistenzdetails bleiben innerhalb bestehender Leitplanken eigenständig entscheidbar. Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Keine dieser Freiheiten erlaubt, frühere Nutzerentscheidungen, Sicherheitsgrenzen, Datenintegrität, Kostenlimit oder bestehende Architektur stillschweigend zu gefährden. Die Repository-Dokumentation bleibt die maßgebliche Grundlage für Chat-Übergaben; ChatGPT Memory ist ergänzend und nicht synchron garantierbar.
