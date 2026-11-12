@@ -331,7 +331,7 @@ export const ExamReviewCenter: React.FC<{
     if (courseFilter && review.attemptCourseCode !== courseFilter) return false;
     if (examTypeFilter !== 'all' && review.assessmentStage !== examTypeFilter) return false;
     if (normalizedQueueSearch && !review.userName.toLocaleLowerCase('de-DE').includes(normalizedQueueSearch)) return false;
-    if (onlyMyReviews && !review.isClaimOwner) return false;
+    if (onlyMyReviews && !review.isClaimOwner && !review.reviewClaim?.isDisconnected) return false;
     if (workStatusFilter === 'unclaimed' && review.reviewClaim) return false;
     if (workStatusFilter === 'claimed' && (!review.reviewClaim || review.reviewClaim.isDisconnected || review.reviewClaim.warningStartedAtIso)) return false;
     if (workStatusFilter === 'warning' && !review.reviewClaim?.warningStartedAtIso) return false;
