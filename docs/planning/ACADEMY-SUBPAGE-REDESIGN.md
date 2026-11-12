@@ -50,7 +50,7 @@ Prüfgegenstand sind u. a.:
 
 ### 3.1 Gemeinsame Academy-Hülle
 
-Der aktuelle Code besitzt bereits eine fünfteilige Hauptnavigation und einen Rückweg zur Kachelstartseite. Die Navigation wird in AcademyCenter.tsx gerendert; der aktive Bereich erhält einen farbigen Unterstrich. Die CSS-Implementierung nutzt derzeit ein Fünf-Spalten-Raster. Der Rückweg und die Navigation sind vorhanden, aber die gesamte Kopf-/Navigationshierarchie muss auf Desktop, Tablet und schmalen Mobilgeräten zusammenhängend geprüft werden.
+Der aktuelle Code besitzt bereits eine fünfteilige Hauptnavigation und einen Rückweg zur Kachelstartseite. Die Navigation wird in AcademyCenter.tsx gerendert; der aktive Bereich erhält einen farbigen Unterstrich. Auf breiten Viewports nutzt sie fünf Spalten; unter 760 px wechselt das Raster bereits auf zwei Spalten, wobei der letzte Navigationspunkt die gesamte Zeile einnimmt. Der Rückweg und die Navigation sind vorhanden. Zu prüfen bleibt, ob diese zweispaltige mobile Anordnung in realen schmalen Viewports gut scanbar ist und ob die aktive Markierung, Fokusreihenfolge und Textlängen zuverlässig funktionieren.
 
 **Redesign-Richtung:**
 - Eine einzige gemeinsame Academy-Seitenhülle: direkter Rückweg zur Kachelstartseite, klarer Seitenkopf, horizontale Fünf-Bereiche-Navigation, darunter genau ein aktiver Inhaltsbereich.
