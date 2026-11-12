@@ -653,8 +653,14 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
     const nextHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
     const revisionRequestIndex = previousHistory.map(event => event.action).lastIndexOf('revision_requested');
-    const hasOpenRevision = revisionRequestIndex >= 0 &&
-      !previousHistory.some(event => event.action === 'revision_completed' && event.revisionRequestIndex === revisionRequestIndex);
+    const revisionAccepted = revisionRequestIndex >= 0 && previousHistory.some(event =>
+      event.action === 'revision_accepted' && event.revisionRequestIndex === revisionRequestIndex
+    );
+    const revisionCompleted = revisionRequestIndex >= 0 && previousHistory.some(event =>
+      event.action === 'revision_completed' && event.revisionRequestIndex === revisionRequestIndex
+    );
+    if (revisionRequestIndex >= 0 && !revisionAccepted) throw new Error('EXAM_REVIEW_REVISION_NOT_ACCEPTED');
+    const hasOpenRevision = revisionAccepted && !revisionCompleted;
     if (hasOpenRevision) {
       const request = previousHistory[revisionRequestIndex] as Record<string, unknown>;
       const completion = nextHistory[nextHistory.length - 1] as Record<string, unknown> | undefined;
