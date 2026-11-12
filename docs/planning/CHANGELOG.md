@@ -405,4 +405,20 @@
 - Die Kurs-/Lehrgangsverwaltung und die Academy-Startkachel verwenden konsistente, verständliche Bezeichnungen.
 - Die Übersichts-Kachel beschreibt nun den tatsächlichen Zweck der Übersicht (Aufbau/Beziehungen erklären), statt persönliche Fortschrittsfunktionen anzukündigen.
 - Veraltete PR-#250-Statusangaben in den Planungsdokumenten wurden berichtigt.
-- PR #251 offen, nicht gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+- PR #251 am 12.11.2026 mit Commit `611f701df54ecb302a4fcf84005544beee4485a1` gemergt. CI erfolgreich: TypeScript/Produktionsbuild/Testworkflow, 455/455 Tests; PR-Vorlagenprüfung erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+## 2026-11-12 – PR #252: Kursdetail-Kontext und Katalogzustände
+
+- Die Academy-Übersicht hat nur noch eine globale h1; die interne Überschrift ist eine h2.
+- Lernziele und Kapitel bleiben nach Kursstart sichtbar und stammen weiterhin aus derselben gepinnten Kursversion.
+- Suchergebnislosigkeit wird von einem tatsächlich leeren veröffentlichten Katalog unterschieden.
+- Vorhandene Versionen ohne Kurzbeschreibung werden nicht mehr als fehlende Veröffentlichung missverstanden.
+- Keine Änderungen an Daten, APIs, Berechtigungen, Status- oder Abschlusslogik. PR #252 am 12.11.2026 mit Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0` gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+## 2026-11-12 – PR #253: Informierte Prüfungsstartbestätigung und Clearance-Schutz
+
+- Vor dem verbindlichen Start wird geprüft, ob ein aktiver Versuch im gewählten Kurskontext existiert.
+- Neue Versuche werden erst durch „Prüfung verbindlich starten“ angelegt. Laufende Versuche werden über „Laufenden Versuch fortsetzen“ idempotent fortgesetzt; dabei wird kein weiterer Versuch gezählt.
+- Die Bestätigung zeigt das tatsächliche Zeitlimit, die Versuchslimitierung und die Fortsetzungsregeln. 0/null bei maxAttempts und 0 bei timeLimitMinutes werden als unbegrenzt/ohne Zeitlimit behandelt.
+- Numerische minClearance-Werte werden nicht mehr im Teilnehmerkatalog oder in der UI offengelegt; die serverseitige Berechtigungsfilterung bleibt erhalten.
+- PR #253 offen; CI und manuelle Browser-/Accessibility-Abnahme stehen aus.
