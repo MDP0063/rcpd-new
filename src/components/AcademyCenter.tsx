@@ -894,7 +894,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <h2 id="academy-library-heading" className="text-xl font-semibold text-slate-900 dark:text-white">Lernbibliothek</h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Alle für dich zugänglichen veröffentlichten Materialien an einem Ort.</p>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} von {libraryEntries.length} Materialien</p>
+                <p role="status" aria-atomic="true" className="text-sm text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} von {libraryEntries.length} Materialien</p>
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
@@ -974,6 +974,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
                   <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                   <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} {filteredLibraryEntries.length === 1 ? 'Material' : 'Materialien'}</p>
                   {filteredLibraryEntries.length === 0 ? <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p> : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
                       {filteredLibraryEntries.map(entry => {
