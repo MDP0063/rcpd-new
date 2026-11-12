@@ -15,10 +15,13 @@ export interface ExamParticipantCatalogEntry {
   passingScoreBasisPoints: number;
   maxAttempts: number | null;
   prerequisites: ExamPrerequisite[];
+}
+
+interface ExamParticipantCatalogCandidate extends ExamParticipantCatalogEntry {
   minClearance: number;
 }
 
-function toCatalogEntry(master: ExamDocument, version: ExamDocument): ExamParticipantCatalogEntry {
+function toCatalogEntry(master: ExamDocument, version: ExamDocument): ExamParticipantCatalogCandidate {
   if (
     version.id !== master.currentPublishedVersionId ||
     version.examId !== master.id ||
@@ -129,7 +132,8 @@ export async function listParticipantExamCatalog(
     const version = await repository.get('exam_versions', master.currentPublishedVersionId);
     if (!version) throw new Error('EXAM_CATALOG_SNAPSHOT_INVALID');
     const entry = toCatalogEntry(master, version);
-    if (entry.minClearance <= participantClearanceLevel) entries.push(entry);
+    const { minClearance, ...publicEntry } = entry;
+    if (minClearance <= participantClearanceLevel) entries.push(publicEntry);
   }
 
   return entries.sort((a, b) =>
