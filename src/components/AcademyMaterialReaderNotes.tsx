@@ -88,6 +88,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const savingDraftIdRef = useRef<string | null>(null);
   const saveErrorsByIdRef = useRef(new Map<string, string>());
   const lastSavedByIdRef = useRef(new Map<string, NoteDraft>());
+  const noteMutationVersionRef = useRef(0);
   const lastSavedRef = useRef('');
   const currentDraftRef = useRef<NoteDraft | null>(null);
   const persistPendingRef = useRef<() => Promise<void>>(async () => {});
@@ -184,6 +185,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         blockedSaveIdsRef.current.delete(id);
         revisionByIdRef.current.set(saved.id, saved.revision ?? expectedRevision + 1);
         lastSavedByIdRef.current.set(saved.id, savedDraft);
+        noteMutationVersionRef.current += 1;
         setNotes(previous => previous.map(note => note.id === saved.id ? saved : note));
 
         const queuedDraft = pendingSavesRef.current.get(id);
@@ -235,13 +237,13 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   useEffect(() => {
     let active = true;
+    const mutationVersionAtStart = noteMutationVersionRef.current;
     setLoading(true);
     setNotesLoaded(false);
     setLoadError('');
     setLoadRetryable(false);
     setSaveStatus('saved');
     setSaveError('');
-    setNotes([]);
     setSelectedNoteId('');
     setTitle('');
     setContent('');
@@ -254,6 +256,11 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         if (!response.ok || !response.data) {
           setLoadError(response.error || 'Deine privaten Notizen konnten nicht geladen werden.');
           setLoadRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
+          return;
+        }
+        if (noteMutationVersionRef.current !== mutationVersionAtStart) {
+          setNotesLoaded(true);
+          setLoadRetryable(false);
           return;
         }
         const ownNotes = response.data.notes;
@@ -393,6 +400,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     const note = response.data.note;
     revisionByIdRef.current.set(note.id, note.revision ?? 1);
     setNotes(previous => [...previous, note]);
+    noteMutationVersionRef.current += 1;
     setSelectedNoteId(note.id);
     setTitle('');
     setContent('');
@@ -435,6 +443,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+    noteMutationVersionRef.current += 1;
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
     } finally {
@@ -598,6 +607,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     saveErrorsByIdRef.current.delete(latest.id);
     lastSavedByIdRef.current.set(latest.id, latestDraft);
     setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
+    noteMutationVersionRef.current += 1;
     setTitle(latestDraft.title);
     setContent(latestDraft.content);
     setTags(latestDraft.tags.join(', '));
@@ -639,6 +649,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     saveErrorsByIdRef.current.delete(noteId);
     lastSavedByIdRef.current.delete(noteId);
     setNotes(previous => previous.filter(note => note.id !== noteId));
+    noteMutationVersionRef.current += 1;
     draftsBySourceRef.current.delete(sourceKey);
     setSelectedNoteId('');
     setTitle('');
