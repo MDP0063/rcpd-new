@@ -367,8 +367,9 @@ export const ExamReviewCenter: React.FC<{
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
       </header>
       {review.revisionRequest && <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100" aria-label="Revisionsanfrage">
-        <h4 className="font-semibold">Zur Revision zurückgegeben</h4>
-        <p className="mt-1"><span className="font-semibold">Begründung:</span> {review.revisionRequest.reason}</p>
+        <h4 className="font-semibold">Revisionsanfrage angenommen</h4>
+        <p className="mt-1">Admins oder Colonels haben die erneute Bewertung freigegeben. Der Vorgang steht jetzt wieder der gemeinsamen Prüferliste zur Verfügung.</p>
+        <p className="mt-1"><span className="font-semibold">Ursprüngliche Begründung:</span> {review.revisionRequest.reason}</p>
         <p className="mt-1 text-xs opacity-80">Angefordert am {new Date(review.revisionRequest.requestedAtIso).toLocaleString('de-DE')}</p>
         <ul className="mt-3 space-y-2 border-t border-amber-300/70 pt-3 dark:border-amber-800">
           {review.revisionRequest.feedback.map(item => {
