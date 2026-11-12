@@ -224,11 +224,6 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
 
   persistPendingRef.current = persistPending;
 
-  const queueSave = useCallback((draft: NoteDraft) => {
-    pendingSaveRef.current = draft;
-    void persistPending();
-  }, [persistPending]);
-
   useEffect(() => {
     let active = true;
     setLoading(true);
