@@ -124,6 +124,10 @@ export const ExamParticipantRunner: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [starting, setStarting] = useState(false);
+  const [startConfirmationOpen, setStartConfirmationOpen] = useState(false);
+  const [startConfirmationState, setStartConfirmationState] = useState<'idle' | 'checking' | 'new' | 'resume' | 'error'>('idle');
+  const [startConfirmationError, setStartConfirmationError] = useState('');
+  const [activeAttemptPreview, setActiveAttemptPreview] = useState<PublicAttempt | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
   const [runnerError, setRunnerError] = useState('');
@@ -137,6 +141,13 @@ export const ExamParticipantRunner: React.FC = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
   const autoSubmitRef = useRef(false);
+  const startCheckRequestIdRef = useRef(0);
+  const startButtonRef = useRef<HTMLButtonElement | null>(null);
+  const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
+  useEffect(() => {
+    if (startConfirmationOpen) startConfirmationHeadingRef.current?.focus();
+  }, [startConfirmationOpen]);
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
