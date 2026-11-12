@@ -81,6 +81,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const draftsBySourceRef = useRef(new Map<string, NoteDraft>());
   const sourceKey = JSON.stringify([materialId, materialVersionId]);
   const sourceKeyRef = useRef(sourceKey);
+  // Keep pending edits per note: a material switch can overlap an in-flight save for another source.
   const pendingSavesRef = useRef(new Map<string, NoteDraft>());
   const blockedSaveIdsRef = useRef(new Set<string>());
   const operationLockedIdsRef = useRef(new Set<string>());
@@ -88,6 +89,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const savingDraftIdRef = useRef<string | null>(null);
   const saveErrorsByIdRef = useRef(new Map<string, string>());
   const lastSavedByIdRef = useRef(new Map<string, NoteDraft>());
+  // Ignore note-list responses that started before a newer local mutation completed.
   const noteMutationVersionRef = useRef(0);
   const lastSavedRef = useRef('');
   const currentDraftRef = useRef<NoteDraft | null>(null);
