@@ -217,6 +217,12 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
       Object.fromEntries(Object.entries(document).filter(([key]) => key !== 'reviewClaimHistory'));
 
     if (appendOnly && revisionEvent?.action === 'revision_requested' && next.status === existing.status) {
+      const previousRequestIndex = previousClaimHistory.map(event => event.action).lastIndexOf('revision_requested');
+      const previousRequestPending = previousRequestIndex >= 0 && !previousClaimHistory.some(event =>
+        event.revisionRequestIndex === previousRequestIndex &&
+        (event.action === 'revision_accepted' || event.action === 'revision_rejected' || event.action === 'revision_completed')
+      );
+      if (previousRequestPending) throw new Error('EXAM_REVIEW_REVISION_ALREADY_PENDING');
       const questionIds = Array.isArray(revisionEvent.questionIds) ? revisionEvent.questionIds : [];
       const feedback = Array.isArray(revisionEvent.feedback) ? revisionEvent.feedback : [];
       const previousGrades = Array.isArray(revisionEvent.previousGrades) ? revisionEvent.previousGrades : [];
