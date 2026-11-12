@@ -19,9 +19,7 @@ interface ReviewItem {
   reviewClaim: ReviewClaim | null; isClaimOwner: boolean; canClaim: boolean;
   draftGrades: Record<string, number>;
   revisionRequest: {
-    requestedByUid: string;
     requestedAtIso: string;
-    previousReviewerUid: string | null;
     reason: string;
     feedback: Array<{ questionId: string; feedback: string; label: string }>;
   } | null;
