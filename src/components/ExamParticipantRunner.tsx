@@ -281,8 +281,11 @@ export const ExamParticipantRunner: React.FC = () => {
       setActiveAttemptPreview(null);
       applyAttempt(response.data.attempt);
     } else {
-      setStartConfirmationError(response.error || 'Die Prüfung konnte nicht gestartet werden. Prüfe die Voraussetzungen und versuche es erneut.');
-      setStartConfirmationState('error');
+      restoreStartFocusRef.current = false;
+      setStartConfirmationOpen(false);
+      setStartConfirmationState('idle');
+      setActiveAttemptPreview(null);
+      setRunnerError(response.error || 'Die Prüfung konnte nicht gestartet werden.');
     }
     setStarting(false);
   };
