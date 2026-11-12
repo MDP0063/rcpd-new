@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Korrekturen #215/#216 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`).  
+**Aktueller Basisstand:** `main` nach PR #216 (Merge-Commit `dcdde42b361e205b635e5a892730dbbd913d55fb`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -882,3 +882,30 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - **Aktueller Audit-Befund (noch nicht umgesetzt):** Der direkte Bibliotheks-Reader rendert `AcademyMaterialReaderNotes` ohne `selectedAnchor` und `onJumpToAnchor`. Die stabile Textanker-Interaktion ist dadurch im Kurs-Reader verfügbar, aber im direkten Bibliotheks-Reader nicht angebunden. Vor einer Umsetzung wird geprüft, wie sich die bestehende Ankerlogik ohne Duplizierung und ohne Änderung der Versionsbindung wiederverwenden lässt; die fachliche Spezifikation bleibt maßgeblich.
 
 - **Nächster Prüffokus:** Reader-/Notiz-Parität zwischen Kursansicht und direkter Bibliotheksansicht; danach Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt separat offen.
+
+
+### PR #210/#211/#212 – Dokumentations- und Alert-Konsolidierung (12.11.2026)
+
+- PR #210 aktualisierte den Fortschritt nach dem öffentlichen Bibliotheks-Retry-Fix #207 (Merge `013ef2544d7b253bfc732643cc86b90b62b85573`).
+- PR #211 trennte den interaktiven „Erneut versuchen“-Button semantisch vom `role="alert"`-Container in der Materialverwaltung (Merge `3a177d6adf704851c57500cc17f606ed6121f49a`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen.
+- PR #212 dokumentierte den privaten Notiz-Retry aus #209 (Merge `6d77c6385caf6a9f4c2b5a3253f8e750b79e56bc`). Der Index-/Fortschrittsstand wird mit diesem Abschnitt auf den späteren Main-Stand nach #216 aktualisiert.
+
+### PR #215 – Textanker im direkten Bibliotheks-Reader (12.11.2026)
+
+- Der zuvor dokumentierte Paritätsbefund wurde behoben: Der direkte Reader übergibt nun den ausgewählten Textanker und die Sprungfunktion an `AcademyMaterialReaderNotes`, analog zum Kurs-Reader.
+- Die Auswahl wird beim Material-/Versionswechsel und bei Rückkehr zur Materialübersicht zurückgesetzt. Der direkte Reader unterstützt Auswahl per Maus und Touch. Die bestehende versionsgebundene Ankerauflösung wird wiederverwendet; es wurde kein neuer Daten-/Berechtigungspfad geschaffen.
+- PR #215 wurde am 12.11.2026 gemergt (Commit `3bc3b50997a3a0d9499ae705239b5d277a7029d7`). PR #214 war ein konkurrierender, nicht gemergter Vorläufer und wurde nach Umsetzung durch #215 geschlossen.
+- Keine manuelle Browser-/Touch-/Live-Firestore-Abnahme behauptet.
+
+### PR #216 – Notiz-Leerzustand nur nach erfolgreichem Abruf (12.11.2026)
+
+- Vor dem Fix erschien nach einem fehlgeschlagenen privaten Notizabruf neben dem Fehler fälschlich „Für diese Materialfassung gibt es noch keine persönlichen Einträge.“ Eine leere lokale Liste war dabei kein Beleg für einen erfolgreichen leeren Serverabruf.
+- Ein eigener `notesLoaded`-Status wird beim Start jedes Abrufs zurückgesetzt und nur bei erfolgreicher Antwort gesetzt. Die Leeransicht wird erst danach angezeigt.
+- Keine Änderung an privaten Notizdaten, Eigentümerisolation, Revisionen, Materialversionsbindung, API oder Berechtigungen.
+- PR #216 wurde am 12.11.2026 gemergt (Commit `dcdde42b361e205b635e5a892730dbbd913d55fb`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+
+### Aktualisierter nächster Auditfokus
+
+- Reader-/Notiz-Verhalten in Kurs-Reader und direktem Bibliotheks-Reader auf Parität, Textanker, Auswahlrücksetzung und Fehler-/Speicherzustände prüfen.
+- Danach Materialverwaltung und Taxonomie auf konkrete Lade-, Speichern-, Versions- und Berechtigungsfehler prüfen; keine zusätzlichen Verwaltungsfunktionen ohne Beschluss.
+- Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen Spezifikation und tatsächliche Datenflüsse prüfen.
