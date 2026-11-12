@@ -1064,27 +1064,30 @@ export async function listExamParticipantReviewHistory(
       reviewedAtIso: attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
       detailed,
       ...(detailed ? {
-        claimHistory: claimHistory.map(event => ({
-          ...event,
-          ...(Array.isArray(event.feedback) ? {
-            feedback: event.feedback.map(entry => ({
-              ...entry,
-              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === entry.questionId) + 1)}`
-            }))
-          } : {}),
-          ...(Array.isArray(event.previousGrades) ? {
-            previousGrades: event.previousGrades.map(grade => ({
-              ...grade,
-              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
-            }))
-          } : {}),
-          ...(Array.isArray(event.nextGrades) ? {
-            nextGrades: event.nextGrades.map(grade => ({
-              ...grade,
-              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
-            }))
-          } : {})
-        })),
+        claimHistory: claimHistory.map((event): ExamParticipantReviewHistoryEvent => {
+          const { feedback, previousGrades, nextGrades, ...baseEvent } = event;
+          return {
+            ...baseEvent,
+            ...(Array.isArray(feedback) ? {
+              feedback: feedback.map(entry => ({
+                ...entry,
+                label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === entry.questionId) + 1)}`
+              }))
+            } : {}),
+            ...(Array.isArray(previousGrades) ? {
+              previousGrades: previousGrades.map(grade => ({
+                ...grade,
+                label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
+              }))
+            } : {}),
+            ...(Array.isArray(nextGrades) ? {
+              nextGrades: nextGrades.map(grade => ({
+                ...grade,
+                label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
+              }))
+            } : {})
+          };
+        }),
         reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
         questions
       } : {})
