@@ -209,8 +209,8 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
           </div>
         </div>
 
-        {review.reviewCorrections.length > 0 && <div className="exam-correction-history space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <h4 className="text-sm font-semibold">Korrekturhistorie</h4>
+        {review.reviewCorrections.length > 0 && <details className="exam-correction-history space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <summary className="text-sm font-semibold">Korrekturhistorie ({review.reviewCorrections.length})</summary>
           {review.reviewCorrections.map((entry, index) => <div key={entry.atIso + index} className="exam-correction-history-entry rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-950">
             <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · korrigiert von {entry.reviewerUid}</p>
             <p className="mt-1 text-slate-500">Vorherige Bewertung: {entry.previousReviewerUid} · {new Date(entry.previousReviewedAtIso).toLocaleString('de-DE')}</p>
@@ -218,7 +218,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
             <p className="mt-1 whitespace-pre-wrap">Begründung: {entry.reason}</p>
             <p className="mt-1 text-slate-500">Punkte: {entry.previousGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')} → {entry.nextGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')}</p>
           </div>)}
-        </div>}
+        </details>}
       </article>)}
   </section>;
 };
