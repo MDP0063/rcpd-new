@@ -284,7 +284,9 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     const isDecisionAppend = appendOnly &&
       (revisionEvent?.action === 'revision_accepted' || revisionEvent?.action === 'revision_rejected') &&
       request && !alreadyResolved && revisionEvent.revisionRequestIndex === requestIndex &&
-      revisionEvent.targetUid === request.actorUid;
+      revisionEvent.targetUid === request.actorUid &&
+      request.previousUid === existing.reviewedByUid &&
+      request.previousReviewedAtIso === existing.reviewedAtIso;
 
     if (isDecisionAppend && revisionEvent?.action === 'revision_rejected' && next.status === existing.status) {
       if (
