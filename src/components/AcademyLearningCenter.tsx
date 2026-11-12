@@ -24,6 +24,7 @@ interface Props {
   currentUser: UserPublicProfile;
   area: 'courses' | 'notes';
   onStatusToast: (message: string) => void;
+  onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
 }
 
 type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
@@ -104,7 +105,7 @@ function availabilityNotice(master: { publicationStatus: string; availability: s
   return null;
 }
 
-export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast }) => {
+export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast, onUnsavedChangesChange }) => {
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
@@ -131,6 +132,15 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteTags, setNoteTags] = useState('');
+  const noteHasUnsavedChanges = Boolean(editingNote && (
+    noteTitle !== (editingNote.title || '') ||
+    noteContent !== (editingNote.content || '') ||
+    noteTags !== editingNote.tags.join(', ')
+  ));
+  useEffect(() => {
+    onUnsavedChangesChange?.(noteHasUnsavedChanges);
+  }, [noteHasUnsavedChanges, onUnsavedChangesChange]);
+  useEffect(() => () => onUnsavedChangesChange?.(false), [onUnsavedChangesChange]);
 
   const canCreate = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const ownCourseParticipationByCourse = useMemo(
@@ -380,6 +390,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       setProgramDetail(response.data);
       setDetailLoading(false);
     }
+  };
+
+  const cancelNoteEdit = () => {
+    if (noteHasUnsavedChanges && !window.confirm('Nicht gespeicherte Änderungen an dieser privaten Notiz verwerfen?')) return;
+    setEditingNote(null);
   };
 
   const saveNote = async () => {
@@ -700,59 +715,87 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
       {area === 'notes' && (
         <section className="academy-notes-area space-y-5">
-          <header className="academy-notes-heading space-y-2">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Meine Notizen</h2>
-            <p className={muted}>Deine Notizen und Lesezeichen sind privat und werden nur deinem Konto zugeordnet. Andere Nutzer und Administratoren erhalten über diese Ansicht keinen Zugriff.</p>
-          </header>
-          {loading ? <p className={muted} role="status">Private Notizen werden geladen …</p> : loadError ? (
-            <div className={`${panel} p-4 space-y-3`} role="alert">
-              <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
-              <button type="button" className={secondary} onClick={() => void loadNotes()}>Erneut laden</button>
+          {editingNote ? (
+            <div className="academy-notes-editor-view space-y-5">
+              <header className="academy-notes-editor-heading flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="academy-notes-eyebrow">PERSÖNLICHER ARBEITSBEREICH</p>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h2>
+                  <p className={muted}>Nur du kannst diese Notiz und ihre verknüpften Quellen sehen.</p>
+                </div>
+                <button type="button" className={secondary} onClick={cancelNoteEdit}>← Zurück zu meinen Notizen</button>
+              </header>
+              <form className={`${panel} academy-note-editor p-5 space-y-4`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
+                  <input className={field} value={noteTitle} onChange={event => setNoteTitle(event.target.value)} maxLength={200} />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Inhalt</span>
+                  <textarea className={field} rows={12} value={noteContent} onChange={event => setNoteContent(event.target.value)} maxLength={20000} />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter</span>
+                  <input className={field} value={noteTags} onChange={event => setNoteTags(event.target.value)} placeholder="Mit Kommas getrennt" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Schlagwörter helfen dir, die Notiz später wiederzufinden.</span>
+                </label>
+                <div className="academy-note-editor-actions flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                  <button type="button" className={secondary} onClick={cancelNoteEdit}>Änderungen verwerfen</button>
+                  <button type="submit" className={primary} disabled={saving || !noteHasUnsavedChanges}>{saving ? 'Speichert …' : 'Änderungen speichern'}</button>
+                </div>
+              </form>
             </div>
           ) : (
             <>
-              <label className="academy-notes-search block space-y-1">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Notizen durchsuchen</span>
-                <input className={field} value={noteSearch} onChange={event => setNoteSearch(event.target.value)} placeholder="Titel, Inhalt oder Schlagwort" />
-              </label>
-              <div className="academy-notes-layout grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className={`${panel} academy-notes-list divide-y divide-slate-200 dark:divide-slate-800`}>
-                  {filteredNotes.length === 0 ? <p className={`p-4 ${muted}`}>{notes.length ? 'Keine Notiz passt zu deiner Suche.' : 'Du hast noch keine Notizen oder Lesezeichen gespeichert.'}</p> : filteredNotes.map(note => (
-                    <article key={note.id} className="academy-note-card p-4 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-white">{note.title || (note.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel')}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{note.kind === 'bookmark' ? 'Lesezeichen' : 'Private Notiz'} · {dateLabel(note.updatedIso)}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          {note.kind === 'note' && <button type="button" className={secondary} onClick={() => { setEditingNote(note); setNoteTitle(note.title || ''); setNoteContent(note.content || ''); setNoteTags(note.tags.join(', ')); }}>Bearbeiten</button>}
-                          <button type="button" className={secondary} disabled={saving} onClick={() => void deleteNote(note)}>Löschen</button>
-                        </div>
-                      </div>
-                      {note.content && <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-4">{note.content}</p>}
-                      {note.tags.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{note.tags.join(' · ')}</p>}
-                      <AcademyPrivateNoteSources
-                        noteId={note.id}
-                        sources={note.sources?.length ? note.sources : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]}
-                      />
-                    </article>
-                  ))}
+              <header className="academy-notes-heading space-y-2">
+                <p className="academy-notes-eyebrow">PERSÖNLICHER ARBEITSBEREICH</p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Meine Notizen</h2>
+                <p className={muted}>Deine Notizen und Lesezeichen sind privat und werden nur deinem Konto zugeordnet. Andere Nutzer und Administratoren erhalten über diese Ansicht keinen Zugriff.</p>
+              </header>
+              {loading ? <p className={muted} role="status">Private Notizen werden geladen …</p> : loadError ? (
+                <div className={`${panel} p-4 space-y-3`} role="alert">
+                  <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+                  <button type="button" className={secondary} onClick={() => void loadNotes()}>Erneut laden</button>
                 </div>
-                {editingNote ? (
-                  <form className={`${panel} academy-note-editor p-4 space-y-3`} onSubmit={event => { event.preventDefault(); void saveNote(); }}>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Private Notiz bearbeiten</h3>
-                    <label className="block space-y-1"><span className="text-sm font-medium">Titel</span><input className={field} value={noteTitle} onChange={event => setNoteTitle(event.target.value)} maxLength={200} /></label>
-                    <label className="block space-y-1"><span className="text-sm font-medium">Inhalt</span><textarea className={field} rows={8} value={noteContent} onChange={event => setNoteContent(event.target.value)} maxLength={20000} /></label>
-                    <label className="block space-y-1"><span className="text-sm font-medium">Schlagwörter (Komma getrennt)</span><input className={field} value={noteTags} onChange={event => setNoteTags(event.target.value)} /></label>
-                    <div className="flex flex-wrap gap-2"><button type="submit" className={primary} disabled={saving}>{saving ? 'Speichert …' : 'Änderungen speichern'}</button><button type="button" className={secondary} onClick={() => setEditingNote(null)}>Abbrechen</button></div>
-                  </form>
-                ) : (
-                  <div className={`${panel} academy-notes-reader-hint p-4 space-y-2`}>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Notizen aus dem Reader</h3>
-                    <p className={muted}>Neue Notizen und Lesezeichen werden direkt im Dokument-Reader angelegt. Die aktuelle Bibliothek verwendet noch das ältere Materialmodell ohne stabile Dokumentversions-IDs; deshalb kann eine neue Notiz hier nicht sicher an eine konkrete Materialfassung gebunden werden.</p>
+              ) : (
+                <>
+                  <label className="academy-notes-search block space-y-1.5">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Notizen durchsuchen</span>
+                    <input className={field} value={noteSearch} onChange={event => setNoteSearch(event.target.value)} placeholder="Titel, Inhalt oder Schlagwort" />
+                  </label>
+                  <div className={`${panel} academy-notes-list divide-y divide-slate-200 dark:divide-slate-800`}>
+                    {filteredNotes.length === 0 ? (
+                      <div className="academy-notes-empty p-6">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{notes.length ? 'Keine passenden Notizen' : 'Noch keine Notizen gespeichert'}</h3>
+                        <p className={`${muted} mt-1`}>{notes.length ? 'Ändere deinen Suchbegriff, um weitere Einträge zu finden.' : 'Neue Notizen und Lesezeichen legst du direkt im Material-Reader an.'}</p>
+                      </div>
+                    ) : filteredNotes.map(note => (
+                      <article key={note.id} className="academy-note-card p-4 space-y-2">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 dark:text-white">{note.title || (note.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel')}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{note.kind === 'bookmark' ? 'Lesezeichen' : 'Private Notiz'} · {dateLabel(note.updatedIso)}</p>
+                          </div>
+                          <div className="academy-note-card-actions flex flex-wrap gap-2">
+                            {note.kind === 'note' && <button type="button" className={secondary} onClick={() => { setEditingNote(note); setNoteTitle(note.title || ''); setNoteContent(note.content || ''); setNoteTags(note.tags.join(', ')); }}>Bearbeiten</button>}
+                            <button type="button" className="academy-note-delete" disabled={saving} onClick={() => void deleteNote(note)}>Löschen</button>
+                          </div>
+                        </div>
+                        {note.content && <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-4">{note.content}</p>}
+                        {note.tags.length > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{note.tags.join(' · ')}</p>}
+                        <AcademyPrivateNoteSources
+                          noteId={note.id}
+                          sources={note.sources?.length ? note.sources : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]}
+                        />
+                      </article>
+                    ))}
                   </div>
-                )}
-              </div>
+                  <div className="academy-notes-reader-hint p-4 space-y-1">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Notizen und Lesezeichen im Reader</h3>
+                    <p className={muted}>Neue Notizen und Lesezeichen legst du direkt beim Lesen eines Materials an. So bleibt jede neue Notiz an die konkrete Materialfassung gebunden.</p>
+                  </div>
+                </>
+              )}
             </>
           )}
         </section>
