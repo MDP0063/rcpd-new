@@ -323,7 +323,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionReleased.finalScoreBasisPoints, 9000);
     assert.equal((await listOwnExamResults(repository, 'student-1'))[0].finalScoreBasisPoints, 9000);
 
-    const revisedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'grader2');
+    const revisedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'grader2', false);
     const revisedHistoryItem = revisedHistory.find(item => item.id === 'review-attempt');
     assert.equal(revisedHistoryItem?.detailed, true);
     const revisionHistoryEvent = revisedHistoryItem?.claimHistory?.find(event => event.action === 'revision_requested');
@@ -333,7 +333,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionHistoryEvent?.previousGrades?.[0]?.label, 'Frage 2');
     assert.equal(revisionCompletionEvent?.nextGrades?.[0]?.pointsEarnedMilli, 800);
     assert.equal(revisionCompletionEvent?.nextGrades?.[0]?.label, 'Frage 2');
-    const unrelatedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'unrelated-reviewer');
+    const unrelatedHistory = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'unrelated-reviewer', false);
     assert.equal(unrelatedHistory.find(item => item.id === 'review-attempt')?.detailed, false,
       'unrelated course reviewers must not receive the private revision and grading history');
 
