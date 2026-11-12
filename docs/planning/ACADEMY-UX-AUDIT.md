@@ -443,3 +443,12 @@ Der interne Übersichtsbereich wurde in PR #158 gestalterisch umgesetzt:
 - keine persönliche Kursliste, keine Kennzahlen-/Aufgaben-Duplikate und keine Dashboard-Projektion.
 
 Die horizontale Bereichsnavigation bleibt unverändert. Auf der internen Übersicht wird der bisherige globale Academy-Header/Breadcrumb nicht wiederholt. Die Änderung ist im PR-Diff enthalten. GitHub Actions `build-and-verify` (TypeScript-Prüfung, Produktionsbuild und Tests) sowie die PR-Beschreibungsprüfung sind erfolgreich. Browser-/Live-Abnahme und Screenshot stehen noch aus.
+
+
+## 9. Nachprüfung am 12.11.2026 – Examiner-Erreichbarkeit
+
+**BESTÄTIGTER TECHNISCHER BEFUND:** In `AcademyCenter.tsx` wurde `exam_reviews` ausschließlich durch ein eingehendes `reviewNavigationTarget` (Benachrichtigungslink) aktiviert. Für `exam_corrections` existierte kein regulärer `setActiveTab`-Einstieg. Außerdem wurde die Unter-Navigation „Prüfungsbereiche“ nur für `exam_center`, `tests` und `final_exams` gerendert, nicht für `exam_reviews` oder `exam_corrections`.
+
+**AUSWIRKUNG:** Ohne passenden Benachrichtigungslink war die offene Bewertungswarteschlange nicht direkt auffindbar; Korrekturen und Ergebnisfreigaben hatten keinen regulären sichtbaren Einstieg innerhalb der Academy.
+
+**KORREKTUR IN ARBEIT:** Branch `fix/academy-exam-review-navigation` erweitert die vorhandene Prüfungs-Unter-Navigation um rollenabhängige Einstiege. „Offene Bewertungen“ wird bei bestehender `canEditAcademy`-Berechtigung gezeigt; „Korrekturen & Freigaben“ nur für Admin und Colonel. Die Hauptnavigation und die fünf Academy-Bereiche bleiben unverändert. CI und Browser-/Rollenprüfung stehen noch aus.
