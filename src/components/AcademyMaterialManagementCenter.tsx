@@ -96,6 +96,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [editingMaster, setEditingMaster] = useState<AcademyMaterialMasterDoc | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [draft, setDraft] = useState<AcademyMaterialDraftDoc | null>(null);
   const [currentVersion, setCurrentVersion] = useState<AcademyMaterialVersionDoc | null>(null);
   const [versions, setVersions] = useState<AcademyMaterialVersionSummary[]>([]);
@@ -167,7 +168,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const startNew = () => {
     if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein neues Material beginnen?')) return;
     resetEditor();
+    setIsEditorOpen(true);
   };
+
 
   const loadMoreVersions = async () => {
     if (!editingMaster || nextVersionOffset === null || loadingMoreVersions || versionHistoryMaterialIdRef.current !== editingMaster.id) return;
@@ -196,6 +199,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     const { master, draft: loadedDraft, currentVersion: loadedCurrent, versions: loadedVersions } = response.data;
     versionHistoryMaterialIdRef.current = master.id;
     setEditingMaster(master);
+    setIsEditorOpen(true);
     setDraft(loadedDraft);
     setCurrentVersion(loadedCurrent);
     setVersions(loadedVersions);
@@ -394,7 +398,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               Hier pflegst du Materialien zentral: Entwürfe vorbereiten, veröffentlichte Fassungen nachvollziehen und Änderungen bewusst freigeben. Text und Markdown sowie Quelltext werden unterstützt.
             </p>
           </div>
-          <button type="button" className={secondary} onClick={startNew} disabled={busy}>Neues Material</button>
+          <button type="button" className={primary} onClick={startNew} disabled={busy}>Neues Material anlegen</button>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Kennungen und Versionsnummern werden automatisch vergeben. Kategorie und Dokumenttyp sind erforderlich. Beschreibung und erforderlicher Rang sind optional.
