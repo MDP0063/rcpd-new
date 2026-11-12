@@ -386,3 +386,21 @@ Bei der Überarbeitung jedes Untermoduls wird explizit geprüft:
 - Bleiben Tastaturfokus, Kontrast, responsive Darstellung und Dark Mode erhalten?
 
 Diese Regeln ändern weder Funktionen noch Berechtigungen, Datenmodelle oder fachliche Statuslogik.
+
+
+## 25. Recherche- und Entscheidungsprotokoll für weitere Design-/UX-Arbeit (12.11.2026)
+
+### 25.1 Eigenständige Detailentscheidungen
+Objektiv begründbare UX-/Accessibility-/Konsistenzentscheidungen werden innerhalb der bereits beschlossenen Academy- und Portal-Leitplanken eigenständig getroffen. Dazu gehören insbesondere Informationshierarchie, Abstände, Ausrichtung, responsive Anordnung, Tastaturbedienung, Fokusführung, Kontrast, semantische Zustände und konsistente Komponentenverwendung. Dabei dürfen vorhandene Inhalte, Funktionen, Datenquellen und Berechtigungen nicht unbeabsichtigt verändert werden.
+
+### 25.2 Kritischere Entscheidungen
+Auch kritischere fachliche oder technische Fragen können eigenständig entschieden werden, wenn vorher ausreichend breit recherchiert wurde. Dazu gehören geeignete Standards und Primärquellen, etablierte Plattformmuster, belastbare Vergleichsbeispiele, konkrete Risiken und Abhängigkeiten sowie die Übertragbarkeit auf den tatsächlichen RCPD-Anwendungsfall. Eine Entscheidung aus bloßer Intuition ist nicht ausreichend.
+
+### 25.3 Ergebnisblöcke und Zwischenpräsentationen
+Kritischere Entscheidungen werden im Nachgang als klar abgegrenzter Ergebnisblock präsentiert: Fragestellung, Recherche/Quellen, Alternativen, Vor- und Nachteile, Risiken, Empfehlung und getroffene Entscheidung, Auswirkungen sowie gezielte Änderungsmöglichkeiten. Bei größeren Design-/UX-Arbeitsschritten wird der Zwischenstand gebündelt vorgestellt, damit der Projektinhaber nur die Punkte ändern muss, mit denen er nicht einverstanden ist.
+
+### 25.4 Grenzen
+Die Freiheit gilt nicht als Freigabe, bestehende Nutzerentscheidungen, Sicherheits- und Datenschutzgrenzen, Kostenlimit, Datenintegrität oder Architektur stillschweigend zu verändern. Prägende subjektive Entscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Academy-spezifische Freigaben dürfen nicht automatisch auf das gesamte Portal übertragen werden.
+
+### 25.5 Quellen- und Abnahmequalität
+Bei relevanten Design-/UX-Empfehlungen werden Quellen im jeweiligen Entscheidungsblock und in den passenden Projektunterlagen festgehalten. Standards werden nicht nur genannt, sondern auf den konkreten Workflow und die Zielgruppen des Portals angewendet. Implementierte Prototypen gelten nicht automatisch als abgenommen; Browser-, Responsive-, Accessibility- und Funktionsprüfung bleiben getrennte Prüfschritte.
