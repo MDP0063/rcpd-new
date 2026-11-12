@@ -821,7 +821,7 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Ein erster Versuch, auch Beschreibungen und veröffentlichte Kategorien/Dokumenttypen über `AcademyMaterialListItem` zu durchsuchen, scheiterte an der tatsächlichen Typdefinition: Diese Felder sind in der Listenprojektion nicht enthalten. Die nicht unterstützten Felder wurden entfernt; keine API-Projektion wurde nur für die Suche aufgebläht.
 - CI des Zwischencommits `21d43e64cf844c31fac32fb814c8f9ac4fa6ad3e` schlug mit TypeScript-Fehlern wegen dieser nicht vorhandenen Felder fehl. Korrektur erfolgte im Folgecommit `ecda264998618704e2a24f591c42f69932a05e31`; erneute CI-Prüfung steht noch aus.
 - Offene UX-Arbeit: Kategorien-/Dokumenttypenformulare sind noch neben den Listen eingebettet; Bearbeitungswechsel kann Eingaben ohne explizite Rückfrage verwerfen. Diese Verwaltungsstrecken müssen noch in klare Übersichts- und Bearbeitungsansichten überführt werden.
-- PR #202 bleibt offen und ungemergt. Kein Browser-/Produktionscheck erfolgt.
+- **Korrektur des historischen Status:** PR #202 wurde am 12.11.2026 als Squash-Merge `d74ed44a345bdfb59f4cc6f25ecb4a6dded754bc` gemergt. TypeScript-Prüfung, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. Keine manuelle Browser-/Live-Firestore-Abnahme.
 
 
 ### Bibliotheksverwaltung: getrennte Taxonomie-Arbeitsansichten – 12.11.2026
@@ -831,7 +831,7 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Die Materialverwaltungssuche berücksichtigt die Felder, die tatsächlich in der Listenprojektion vorhanden sind. Nicht verfügbare Versionsfelder wurden nicht in die API-Projektion hineinerfunden.
 - Beim Öffnen eines Materials aus dem Katalog bleibt die Materialnavigation direkt sichtbar. Leser können zwischen Materialien wechseln oder zur Materialübersicht zurückkehren; Bezeichnungen der Rück-/Navigationsaktionen wurden vereinheitlicht.
 - Keine Änderung an API, Datenmodell, Rollen-/Kursberechtigungen, Versionsbindung, Veröffentlichung oder Archivierung.
-- CI-Prüfung für diese Folgeänderungen steht aus; keine Browser-/Live-Firestore-Abnahme erfolgt.
+- PR #203 ergänzt die Rückkehraktion auch im Erstellmodus und schützt ungespeicherte Eingaben. Die GitHub-Build-/Verify- und PR-Vorlagenprüfungen waren erfolgreich; keine Browser-/Live-Firestore-Abnahme.
 
 
 - Abschließende Stilbereinigung: Die zuvor mehrfach angehängten, teils widersprüchlichen Bibliotheks-CSS-Regeln wurden in einen konsistenten Abschnitt überführt. Er definiert Katalogkarten, Reader, Sidebar, Verwaltungsformulare, Buttonzustände, Dark Mode, mobile Darstellung und Reduced Motion gemeinsam. Der Bibliotheksakzent bleibt violett und wird nur für Orientierung/Fokus eingesetzt; normale Aktionen bleiben neutral, Löschen bleibt semantisch destruktiv.
@@ -844,6 +844,7 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Der Projektinhaber hat ChatGPT ausdrücklich autorisiert, das Academy-Redesign eigenständig fortzuführen, mehrere zusammenhängende Änderungen ohne Einzelabfrage umzusetzen und geeignete PRs nach bestandener Prüfung selbst zu mergen. Die bestehende Academy-Konzeption und alle bereits beschlossenen Anforderungen bleiben unverändert; Details stehen im Entscheidungsregister.
 - **PR #203 – Taxonomie-Editor:** Rückkehraktion ist jetzt auch im Erstellmodus in Kategorie- und Dokumenttypverwaltung sichtbar. Die vorhandene Bestätigung schützt ungespeicherte Eingaben. Gemergt als `6ed0a161d761c44cdff2e97f377da5f0a35c83c4`. GitHub Build/Verify und PR-Vorlagenprüfung erfolgreich. Kein manueller Browser-/Live-Firestore-Test; Render-Deploymentstatus nicht separat verifiziert.
 - **PR #204 – Reader-Fehlerbehandlung:** Bei fehlgeschlagenem Laden einer Materialfassung steht direkt im Fehlerzustand eine Wiederholungsaktion zur Verfügung. Keine Änderung an Materialversion, Kursbindung, Notizen oder Berechtigungen. Gemergt als `2c24449aacdfed00590a705901e5cf722e27c9a5`. TypeScript-Prüfung, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich. Optionaler Render-Deploy-Hook übersprungen; kein manueller Browser-/Live-Firestore-Test.
+- **PR #205 – Arbeitsfreigabe dokumentiert:** Die eigenständige Fortführung und die Merge-Ausnahme für Academy-PRs nach bestandenen Prüfungen wurden im Entscheidungsregister und Fortschritt festgehalten. Keine Änderung am Anwendungscode.
 - **Nächster Prüffokus:** Lernbibliothek als Ganzes (Katalog, Filter, Reader, Notizen, Materialverwaltung und Taxonomie) gegen die beschlossene Spezifikation prüfen; danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Bereits umgesetzte Funktionen werden auf reale Fehler, Daten-/Berechtigungskonflikte, Fehlerzustände, Accessibility und responsive Bedienbarkeit geprüft, bevor größere visuelle Schritte erfolgen.
 - **Recherchegrundlage für Bedien- und Accessibility-Prüfungen:** WCAG 2.2 (insbesondere 3.3.1/3.3.2), W3C WAI Understanding Error Identification, GOV.UK WCAG guidance und Nielsen Norman Group zu Empty States. Externe Muster dienen als Qualitätsreferenz und überschreiben keine RCPD-Beschlüsse.
 - **Validierungsgrenze:** GitHub Actions ist kein Ersatz für manuelle Browser- und Live-Firestore-Abnahme. Diese bleibt für die Academy als zusammenhängender End-to-End-Schritt offen.
@@ -870,3 +871,14 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Der verifizierte Main-Basisstand und die jüngste Fortschrittsaktualisierung wurden im Planungsindex nachgeführt.
 - PR #208 wurde am 12.11.2026 gemergt (Commit `ed1644afc3f9e4eb37480dcec4dc6359e02cfed6`). Es wurden nur `docs/planning/README.md` und `docs/planning/PROGRESS.md` geändert.
 - Die älteren Audit-Dokumente behalten ihre historischen Prüfstände; die Dokumentationspflege behauptet keine nachträgliche Vollprüfung dieser Befunde.
+
+### PR #209 – Wiederholungsaktion für private Notizen (12.11.2026)
+
+- Beim initialen Laden privater Notizen und Lesezeichen im Material-Reader kann ein temporärer Netzwerk-/Serverfehler jetzt direkt erneut versucht werden.
+- Ein Retry wird nur für Netzwerkfehler, HTTP 429 und Serverfehler ab 500 angeboten. Fachliche Clientfehler wie 401/403/404 erhalten keine Wiederholungsaktion.
+- Während eines temporären Notiz-Ladefehlers sind das Anlegen einer Notiz und das Setzen eines Lesezeichens gesperrt, damit keine Aktionen auf einer unvollständigen Liste aufbauen.
+- PR #209 wurde am 12.11.2026 als Squash-Merge `af24d99b9593f7fcadb305f892d01d9cc687b718` gemergt. TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich; Render-Deploy-Hook übersprungen. Keine Browser-/Live-Firestore-Abnahme.
+
+- **Aktueller Audit-Befund (noch nicht umgesetzt):** Der direkte Bibliotheks-Reader rendert `AcademyMaterialReaderNotes` ohne `selectedAnchor` und `onJumpToAnchor`. Die stabile Textanker-Interaktion ist dadurch im Kurs-Reader verfügbar, aber im direkten Bibliotheks-Reader nicht angebunden. Vor einer Umsetzung wird geprüft, wie sich die bestehende Ankerlogik ohne Duplizierung und ohne Änderung der Versionsbindung wiederverwenden lässt; die fachliche Spezifikation bleibt maßgeblich.
+
+- **Nächster Prüffokus:** Reader-/Notiz-Parität zwischen Kursansicht und direkter Bibliotheksansicht; danach Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Browser-/Screenreader-/Live-Firestore-Abnahme bleibt separat offen.
