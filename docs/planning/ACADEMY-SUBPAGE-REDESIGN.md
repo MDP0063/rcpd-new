@@ -269,7 +269,7 @@ GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/T
 
 ## 12. Umsetzungsprotokoll – Kursdetail und Katalogzustände (PR #252)
 
-**PR #252 – am 12.11.2026 gemergt (Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0`):** Die doppelte h1 auf der Academy-Übersicht wird behoben, indem die interne Überschrift auf h2 herabgestuft wird. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
+**PR #252 – am 12.11.2026 gemergt (Commit `a952a59360f3ef1c47c5517acf0b9dd78f1d9da0`):** Die doppelte h1 auf der Academy-Übersicht wurde behoben, indem die interne Überschrift auf h2 herabgestuft wurde. Im aktiven Kursdetail werden die Lernziele und Kapitel aus der bereits geladenen, teilnahmegebundenen Kursversion zusätzlich angezeigt. Suchergebnislosigkeit erhält eigene Meldungen; ein vorhandener Versionsdatensatz ohne Kurzbeschreibung wird nicht mehr als fehlende Veröffentlichung dargestellt.
 
 Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweisbedingungen oder Versionierung. TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung waren erfolgreich; manuelle Browser-/Accessibility-Abnahme steht noch aus.
 
