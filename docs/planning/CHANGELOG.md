@@ -351,3 +351,11 @@
 - Ältere Prüfungslisten-Auswahl auf natives Button-Verhalten mit Tastaturbedienbarkeit umgestellt; keine fachliche Funktion entfernt.
 - Keine Änderungen an Berechtigungen, APIs, Datenmodellen oder fachlichen Statuslogiken.
 - Browser-/Responsive-Abnahme und Deployment stehen noch aus.
+
+
+## 2026-11-12 – Examiner-Unterbereiche in der Academy erreichbar gemacht (Folge-PR)
+
+- Die vorhandene Prüfungs-Unter-Navigation ist jetzt auch bei geöffneten Examiner-Ansichten sichtbar.
+- „Offene Bewertungen“ wird für Admins, Colonels und berechtigte Kursausbilder angeboten; „Korrekturen & Freigaben“ nur für Admins und Colonels.
+- Die bestehende serverseitige Zugriffskontrolle und die vorhandenen Examiner-/Korrekturkomponenten bleiben unverändert. Es wird keine sechste Academy-Hauptrubrik eingeführt.
+- Branch `fix/academy-exam-review-navigation`; CI/Review und spätere Browserprüfung stehen noch aus.
