@@ -271,7 +271,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
                 {documentTypes.filter(item => item.status === 'active').length} aktiv · {documentTypes.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={secondaryButton} onClick={beginCreate} disabled={busy}>Neuer Dokumenttyp</button>
+            <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neuer Dokumenttyp</button>
           </div>
 
           <div className="space-y-1.5">
