@@ -62,6 +62,63 @@
   color: #15243a;
 }
 .academy-overview-content { position: relative; z-index: 1; }
+
+/* Shared outer surface for every internal Academy area, without clipping reader or menu overlays. */
+.academy-subpage-shell {
+  --academy-blue: #2864d9;
+  position: relative;
+  isolation: isolate;
+  padding: clamp(1rem, 2.4vw, 2rem);
+  border: 1px solid #e0eaf7;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(207, 226, 252, 0.48), transparent 42%),
+    linear-gradient(145deg, #f5f8fd 0%, #eef4fb 58%, #f4f7fc 100%);
+  color: #15243a;
+}
+.academy-subpage-shell::before,
+.academy-subpage-shell::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  clip-path: inset(0 round 1.5rem);
+}
+.academy-subpage-shell::before {
+  width: 48%;
+  height: 92%;
+  right: 0;
+  top: 0;
+  border-radius: 0 0 0 100%;
+  background: linear-gradient(145deg, rgba(184, 211, 247, 0.18), rgba(111, 161, 226, 0.055));
+  transform: rotate(-8deg);
+  transform-origin: top right;
+}
+.academy-subpage-shell::after {
+  width: 58%;
+  height: 42%;
+  right: -1%;
+  bottom: 0;
+  border: 1px solid rgba(91, 145, 214, 0.14);
+  border-radius: 50%;
+  box-shadow: 0 -14px 0 -13px rgba(91, 145, 214, 0.12), 0 -29px 0 -28px rgba(91, 145, 214, 0.1);
+  transform: rotate(-7deg);
+}
+.academy-subpage-shell > header,
+.academy-subpage-shell > .academy-content-enter {
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 640px) {
+  .academy-subpage-shell {
+    padding: 1rem;
+    border-radius: 1.1rem;
+  }
+  .academy-subpage-shell::before,
+  .academy-subpage-shell::after {
+    clip-path: inset(0 round 1.1rem);
+  }
+}
 .academy-overview-hero {
   position: relative;
   isolation: isolate;
@@ -222,6 +279,20 @@
     radial-gradient(ellipse at 100% 0%, rgba(45, 91, 151, 0.22), transparent 42%),
     linear-gradient(145deg, #101e32 0%, #12243b 58%, #101d30 100%);
   color: #e7effb;
+}
+.dark .academy-subpage-shell {
+  border-color: #263b59;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(45, 91, 151, 0.22), transparent 42%),
+    linear-gradient(145deg, #101e32 0%, #12243b 58%, #101d30 100%);
+  color: #e7effb;
+}
+.dark .academy-subpage-shell::before {
+  background: linear-gradient(145deg, rgba(85, 137, 202, 0.16), rgba(56, 103, 163, 0.05));
+}
+.dark .academy-subpage-shell::after {
+  border-color: rgba(111, 161, 226, 0.12);
+  box-shadow: 0 -14px 0 -13px rgba(111, 161, 226, 0.1), 0 -29px 0 -28px rgba(111, 161, 226, 0.08);
 }
 .dark .academy-overview-hero {
   border-color: #2c4567;
