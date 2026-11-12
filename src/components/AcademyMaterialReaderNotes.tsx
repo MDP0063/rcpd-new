@@ -253,7 +253,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           return;
         }
         const ownNotes = response.data.notes;
-        for (const note of ownNotes) revisionByIdRef.current.set(note.id, note.revision ?? 1);
+        for (const note of ownNotes) {
+          revisionByIdRef.current.set(note.id, note.revision ?? 1);
+          lastSavedByIdRef.current.set(note.id, serializeDraft({
+            id: note.id, title: note.title || '', content: note.content || '', tags: note.tags
+          }));
+        }
         setNotes(ownNotes);
         setNotesLoaded(true);
         setLoadRetryable(false);
@@ -273,8 +278,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       // The debounce timer is cleaned up separately, so relying on it here could lose edits.
       const current = draftsBySourceRef.current.get(sourceKey) || null;
       draftsBySourceRef.current.delete(sourceKey);
-      if (current && serializeDraft(current) !== lastSavedRef.current) {
-        pendingSaveRef.current = current;
+      const savedSnapshot = current ? lastSavedByIdRef.current.get(current.id) || '' : '';
+      if (current && serializeDraft(current) !== savedSnapshot) {
+        pendingSavesRef.current.set(current.id, current);
         void persistPendingRef.current();
       }
     };
