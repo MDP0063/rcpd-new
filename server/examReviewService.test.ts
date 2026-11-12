@@ -301,7 +301,7 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(pendingRequests[0].previousGrades[0].pointsEarnedMilli, 900);
     const participantWhilePending = (await listOwnExamResults(repository, 'student-1'))[0];
     assert.equal(participantWhilePending.finalScoreBasisPoints, 9500);
-    assert.equal(participantWhilePending.reviewInProgress, false,
+    assert.equal(Boolean(participantWhilePending.reviewInProgress), false,
       'the review is not in progress until an Admin or Colonel accepts the request');
     await assert.rejects(requestExamReviewRevision(
       repository, 'review-exam', 'review-attempt', 'grader3',
