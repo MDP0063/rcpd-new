@@ -426,8 +426,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         </div>
       )}
 
-      <div className="academy-material-management-workspace grid grid-cols-1 gap-5 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.5fr)]">
-        <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
+      <div className="academy-material-management-workspace grid grid-cols-1 gap-5">
+        {!isEditorOpen && <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
           <div className="flex items-center justify-between gap-3">
             <h3 className="academy-material-list-title font-semibold text-slate-900 dark:text-white">Vorhandene Materialien</h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length}</span>
@@ -460,9 +460,13 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               ))}
             </ul>
           )}
-        </aside>
+        </aside>}
 
-        <div className="academy-material-management-main space-y-5">
+        {isEditorOpen && <div className="academy-material-management-main space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
+            <button type="button" className={secondary} onClick={() => { if (formDirty && !window.confirm("Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?")) return; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
+          </div>
           {editingMaster && (
             <div className="academy-material-meta rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -650,7 +654,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-50 p-3 text-xs leading-5 text-slate-800 dark:bg-slate-950 dark:text-slate-200">{currentVersion.content}</pre>
             </section>
           )}
-        </div>
+        </div>}
       </div>
     </section>
   );
