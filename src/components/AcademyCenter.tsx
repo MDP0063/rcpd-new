@@ -82,11 +82,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams' | 'instructor_grading' | 'upload_textbook' | 'add_code_test'
   >('overview');
-  const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Du hast ungespeicherte Änderungen an einer privaten Notiz. Möchtest du den Bereich wirklich verlassen?');
+  const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?');
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
   useEffect(() => {
     if (!reviewNavigationTarget) return;
-    if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Du hast ungespeicherte Änderungen an einer privaten Notiz. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
+    if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
       onReviewNavigationConsumed?.();
       return;
     }
