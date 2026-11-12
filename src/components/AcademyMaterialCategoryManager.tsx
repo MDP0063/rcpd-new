@@ -10,6 +10,7 @@ interface Props {
 const inputClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const primaryButton = 'inline-flex items-center justify-center rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const secondaryButton = 'inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const dangerButton = 'inline-flex items-center justify-center rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600';
 
 function errorMessage(code?: string): string {
   switch (code) {
@@ -35,6 +36,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AcademyMaterialCategoryView | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -55,7 +57,12 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
 
   useEffect(() => { void load(); }, [load]);
 
-  const beginCreate = () => {
+  const hasFormChanges = formOpen && (
+    name !== (editing?.name || '') ||
+    description !== (editing?.description || '')
+  );
+
+  const resetForm = () => {
     setEditing(null);
     setName('');
     setDescription('');
@@ -63,16 +70,26 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setFormErrorField(null);
   };
 
+  const beginCreate = () => {
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue Kategorie beginnen?')) return;
+    resetForm();
+    setFormOpen(true);
+  };
+
   const beginEdit = (category: AcademyMaterialCategoryView) => {
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere Kategorie bearbeiten?')) return;
     setEditing(category);
     setName(category.name);
     setDescription(category.description || '');
     setFormError('');
     setFormErrorField(null);
+    setFormOpen(true);
   };
 
   const cancelEdit = () => {
-    beginCreate();
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    resetForm();
+    setFormOpen(false);
   };
 
   const save = async (event: React.FormEvent) => {
@@ -122,7 +139,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     }
     const saved = response.data.category;
     await load();
-    beginCreate();
+    resetForm();
+    setFormOpen(false);
     setBusy(false);
     onStatusToast(editing ? `Kategorie „${saved.name}“ aktualisiert.` : `Kategorie „${saved.name}“ angelegt.`);
   };
@@ -193,7 +211,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
         </p>
       </header>
 
-      <div className="academy-material-taxonomy-layout grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5 items-start">
+      <div className="academy-material-taxonomy-layout">
+        {formOpen ? (
         <form onSubmit={save} className="academy-material-taxonomy-form rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{editing ? 'Kategorie bearbeiten' : 'Kategorie hinzufügen'}</h3>
@@ -243,7 +262,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             {editing && <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Abbrechen</button>}
           </div>
         </form>
-
+        ) : (
         <div className="academy-material-taxonomy-list rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -252,7 +271,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                 {categories.filter(item => item.status === 'active').length} aktiv · {categories.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={secondaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
+            <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
           </div>
 
           <div className="space-y-1.5">
@@ -292,7 +311,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(category)} disabled={busy}>
                         {category.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
                       </button>
-                      <button type="button" className={secondaryButton} onClick={() => void deleteCategory(category)} disabled={busy}>
+                      <button type="button" className={dangerButton} onClick={() => void deleteCategory(category)} disabled={busy}>
                         Endgültig löschen
                       </button>
                     </div>
@@ -302,6 +321,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             </ul>
           )}
         </div>
+        )}
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">

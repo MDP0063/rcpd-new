@@ -799,3 +799,41 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Die API-Regressionstests prüfen die Unsichtbarkeit sowie die blockierten Update-/Delete-Versuche; ein zusätzlicher Fresh-Database-Test prüft, dass die Beispielmaterialien nicht erneut angelegt werden.
 - Keine Firestore-Produktivdaten wurden im Rahmen dieser Codeänderung gelesen oder verändert. Die endgültige Datenbereinigung bleibt nach einer gesonderten Referenzprüfung offen.
 - **Status 12.11.2026:** PR #201 wurde nach erfolgreicher CI-Prüfung gemergt (Squash-Merge `59183857c41a31e1d352ffc57c9d21a9749997ea`). TypeScript-Prüfung, Produktionsbuild und vollständige Teststufe waren in GitHub Actions erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen; Produktionsbereitstellung und Browserabnahme sind daher nicht bestätigt.
+
+## 12.11.2026 – Lernbibliothek-Redesign begonnen
+- Nutzer hat das neue Bibliothekskonzept bestätigt und direkte Umsetzung freigegeben.
+- Umfang: Nutzeransicht, Navigation, Materialkarten/Reader, Verwaltungsabläufe und vollständiges Redesign der Schaltflächen.
+- Farbakzente bleiben grundsätzlich geeignet; entscheidend ist ihr kontextbezogener, zurückhaltender Einsatz. Normale Kategorien und Navigation dürfen nicht wie Warn-/Fehlersignale wirken.
+- Recherche zu Buttons: klare Hierarchie (primär/sekundär/tertiär), kurze handlungsorientierte Labels, sparsame Anzahl, Links für Navigation statt Aktionsbuttons, sichtbare Fokus- und Zustände, destruktive Aktionen getrennt. Quellen: USWDS https://designsystem.digital.gov/components/buttons/ ; GOV.UK https://design-system.service.gov.uk/components/button/ ; KERN UX-Standard https://www.designsystem.gov.de/komponenten/button/ ; NN/g https://www.nngroup.com/articles/button-states-communicate-interaction/ ; WCAG 2.2 https://www.w3.org/TR/WCAG22/.
+- Erster Implementierungsschritt auf Branch `redesign/academy-library-experience`: dynamische Themenbereich-Kacheln mit realen Kategorien/Materialanzahlen, größere Materialkarten, ruhige Verwaltungsnavigation und konsistentere Fokus-/Aktionsstile.
+- Private Notizen sind im zentralen Reader für versionierte Materialien integriert; sie bleiben an die exakte Materialversion gebunden. Legacy-Materialien ohne Versions-ID erhalten keine künstliche Notizbindung.
+- Verwaltung weiterentwickelt: Suchbereich, Materialliste und Editor werden klarer gruppiert; die Suche berücksichtigt auch Kategorien und Dokumenttypen, soweit diese in den geladenen Entwurfsmetadaten vorliegen.
+- Bearbeitungsformular in „Grunddaten und Zuordnung“ sowie „Inhalt und Darstellung“ gegliedert. Markdown-/Code-Vorschau ergänzt; Markdown wird mit `rehype-sanitize` sicher gerendert, Code bleibt reine Anzeige und wird nicht ausgeführt.
+- Aktionen hierarchisiert: Entwurf speichern als Hauptaktion, Veröffentlichung als bewusste Sekundäraktion, Änderungen verwerfen nur bei ungespeicherten Eingaben; Archivierung als getrennte, klar beschriebene destruktive Aktion.
+- Kategorien-/Dokumenttypenverwaltung erhält konsistentere Formular-, Fokus- und Kartenstile. Reader-Navigation und Seitenleisten wurden vereinheitlicht; reine Zugriffsbeschränkungen sind nicht länger rot wie ein Fehler markiert.
+- Farbakzent der Bibliothek bleibt das bereits beschlossene Violett `#6841B8`, wird aber nur dezent als Kategorie-/Orientierungshinweis genutzt; Aktionsbuttons bleiben neutral-sachlich. Dekorative Farbverläufe wurden entfernt.
+- Noch offen: vollständige Zusammenführung der alten und versionierten Materialmodelle (ohne Datenmigration oder künstliche Versions-IDs), zusätzliche Regressionstests und Browser-/Mobile-/Dark-Mode-QA.
+- Keine Datenmodell-, API-, Berechtigungs- oder Veröffentlichungslogik geändert.
+
+
+### Nachprüfung der Materialverwaltung – 12.11.2026
+- Die Materialsuche wurde erweitert, soweit es die bestehende Listenprojektion sicher hergibt: Materialkennung, Kurszuständigkeit, Entwurfstitel, veröffentlichter Titel, Kategorie/Dokumenttyp aus dem vorhandenen Entwurf und Verwaltungsstatus.
+- Ein erster Versuch, auch Beschreibungen und veröffentlichte Kategorien/Dokumenttypen über `AcademyMaterialListItem` zu durchsuchen, scheiterte an der tatsächlichen Typdefinition: Diese Felder sind in der Listenprojektion nicht enthalten. Die nicht unterstützten Felder wurden entfernt; keine API-Projektion wurde nur für die Suche aufgebläht.
+- CI des Zwischencommits `21d43e64cf844c31fac32fb814c8f9ac4fa6ad3e` schlug mit TypeScript-Fehlern wegen dieser nicht vorhandenen Felder fehl. Korrektur erfolgte im Folgecommit `ecda264998618704e2a24f591c42f69932a05e31`; erneute CI-Prüfung steht noch aus.
+- Offene UX-Arbeit: Kategorien-/Dokumenttypenformulare sind noch neben den Listen eingebettet; Bearbeitungswechsel kann Eingaben ohne explizite Rückfrage verwerfen. Diese Verwaltungsstrecken müssen noch in klare Übersichts- und Bearbeitungsansichten überführt werden.
+- PR #202 bleibt offen und ungemergt. Kein Browser-/Produktionscheck erfolgt.
+
+
+### Bibliotheksverwaltung: getrennte Taxonomie-Arbeitsansichten – 12.11.2026
+- Kategorien- und Dokumenttypenverwaltung zeigen jetzt entweder die jeweilige Übersicht oder den eigenständigen Editor, nicht mehr beide nebeneinander.
+- Wechsel von „Neu“ zu „Bearbeiten“ bzw. zwischen Datensätzen fragt bei veränderten Formularwerten nach, bevor Eingaben verworfen werden. Abbrechen prüft ebenfalls auf ungespeicherte Änderungen. Nach erfolgreichem Speichern kehrt die Ansicht zur Liste zurück.
+- Löschaktionen sind als destruktive Aktionen visuell von normalen Bearbeiten-/Archivieren-Aktionen getrennt. Normale Kategorien und Navigation behalten neutrale Flächen; der Bibliotheksakzent bleibt auf Orientierung und Fokus begrenzt.
+- Die Materialverwaltungssuche berücksichtigt die Felder, die tatsächlich in der Listenprojektion vorhanden sind. Nicht verfügbare Versionsfelder wurden nicht in die API-Projektion hineinerfunden.
+- Beim Öffnen eines Materials aus dem Katalog bleibt die Materialnavigation direkt sichtbar. Leser können zwischen Materialien wechseln oder zur Materialübersicht zurückkehren; Bezeichnungen der Rück-/Navigationsaktionen wurden vereinheitlicht.
+- Keine Änderung an API, Datenmodell, Rollen-/Kursberechtigungen, Versionsbindung, Veröffentlichung oder Archivierung.
+- CI-Prüfung für diese Folgeänderungen steht aus; keine Browser-/Live-Firestore-Abnahme erfolgt.
+
+
+- Abschließende Stilbereinigung: Die zuvor mehrfach angehängten, teils widersprüchlichen Bibliotheks-CSS-Regeln wurden in einen konsistenten Abschnitt überführt. Er definiert Katalogkarten, Reader, Sidebar, Verwaltungsformulare, Buttonzustände, Dark Mode, mobile Darstellung und Reduced Motion gemeinsam. Der Bibliotheksakzent bleibt violett und wird nur für Orientierung/Fokus eingesetzt; normale Aktionen bleiben neutral, Löschen bleibt semantisch destruktiv.
+- Katalogkarten blenden einen nicht vorhandenen Dokumenttyp aus, statt einen leeren Metadaten-Trenner darzustellen. Der Status während der Veröffentlichung wurde sprachlich korrigiert.
+- GitHub Actions für Commit `b2d9ca875883e57d2d3a69004c61deff36a48732`: TypeScript/Produktionsbuild und vollständige Tests erfolgreich; PR-Template-Prüfung erfolgreich. Optionaler Render-Deploy-Hook übersprungen. Kein Browser- oder Live-Firestore-Test.

@@ -139,3 +139,42 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* The list and editor are separate work views, never shown side by side. */
+.academy-material-taxonomy-layout {
+  display: block;
+  min-width: 0;
+}
+.academy-material-taxonomy-form {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+}
+.academy-material-taxonomy-list {
+  width: 100%;
+}
+.academy-material-taxonomy-form button,
+.academy-material-taxonomy-list button {
+  border-radius: 0.45rem !important;
+  box-shadow: none !important;
+  font-weight: 600;
+}
+.academy-material-taxonomy-form button:active,
+.academy-material-taxonomy-list button:active {
+  transform: translateY(1px);
+}
+.academy-material-taxonomy-form button:disabled,
+.academy-material-taxonomy-list button:disabled {
+  transform: none;
+}
+.dark .academy-material-taxonomy-form button:focus-visible,
+.dark .academy-material-taxonomy-list button:focus-visible {
+  outline-color: rgba(190, 166, 230, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-material-taxonomy-form button,
+  .academy-material-taxonomy-list button {
+    transform: none !important;
+  }
+}

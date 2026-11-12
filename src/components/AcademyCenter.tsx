@@ -41,6 +41,7 @@ import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
 import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager';
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
+import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
 import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
 
@@ -859,11 +860,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               <button type="button" aria-pressed={libraryAreaMode === 'materials'} onClick={() => setLibraryAreaMode('materials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'materials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Materialien</button>
               {canAuthorCourses && (
                 <>
-                  <button type="button" aria-pressed={libraryAreaMode === 'categories'} onClick={() => setLibraryAreaMode('categories')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'categories' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kategorien verwalten</button>
-                  <button type="button" aria-pressed={libraryAreaMode === 'documentTypes'} onClick={() => setLibraryAreaMode('documentTypes')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'documentTypes' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Dokumenttypen verwalten</button>
+                  <button type="button" aria-pressed={libraryAreaMode === 'categories'} onClick={() => setLibraryAreaMode('categories')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'categories' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Kategorien</button>
+                  <button type="button" aria-pressed={libraryAreaMode === 'documentTypes'} onClick={() => setLibraryAreaMode('documentTypes')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'documentTypes' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Dokumenttypen</button>
                 </>
               )}
-              <button type="button" aria-pressed={libraryAreaMode === 'versionedMaterials'} onClick={() => setLibraryAreaMode('versionedMaterials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'versionedMaterials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Versionierte Materialien</button>
+              <button type="button" aria-pressed={libraryAreaMode === 'versionedMaterials'} onClick={() => setLibraryAreaMode('versionedMaterials')} className={`rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${libraryAreaMode === 'versionedMaterials' ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'}`}>Materialverwaltung</button>
             </div>
           )}
           {libraryAreaMode === 'categories' && canAuthorCourses ? (
@@ -897,7 +898,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
               {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
-              <div className="academy-library-toolbar grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
+              {!moduleSearchQuery.trim() && !moduleCategoryFilter && !moduleDocumentTypeFilter && libraryCategories.length > 0 && (
+<section className="academy-library-topics space-y-3" aria-labelledby="academy-library-topics-heading">
+<div className="flex flex-wrap items-end justify-between gap-2"><div><h3 id="academy-library-topics-heading" className="text-base font-semibold text-slate-900 dark:text-white">Themenbereiche</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Wähle einen Bereich, um die zugehörigen Materialien zu entdecken.</p></div><button type="button" className="academy-library-text-action" onClick={() => { setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }}>Alle Materialien anzeigen</button></div>
+<div className="academy-library-topic-grid">
+{libraryCategories.map(category => { const count = libraryEntries.filter(entry => entry.category === category).length; return <button key={category} type="button" className="academy-library-topic-card" onClick={() => { setModuleCategoryFilter(category); setModuleDocumentTypeFilter(''); }}><span className="academy-library-topic-kicker">THEMENBEREICH</span><span className="academy-library-topic-title">{category}</span><span className="academy-library-topic-meta">{count} {count === 1 ? 'Material' : 'Materialien'}</span><span className="academy-library-topic-arrow" aria-hidden="true">Ansehen →</span></button>; })}
+</div></section>
+)}<div className="academy-library-toolbar grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
                 <div className="academy-library-search">
                   <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
                   <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Beschreibung" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
@@ -953,25 +960,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 )
               ) : (
                 <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
-                  {sortedLibraryEntries.map(entry => (
-                    <button key={entry.kind + ':' + entry.id} type="button" onClick={() => {
-                      if (entry.kind === 'legacy') {
-                        setActiveVersionedMaterialId(null);
-                        setActiveModuleId(entry.id);
-                      } else {
-                        setActiveModuleId(null);
-                        setActiveVersionedMaterialId(entry.id);
-                      }
-                      setIsLibraryNavigationOpen(false);
-                    }} className="academy-library-result w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-600">
-                      <span className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <span className="font-medium text-sm text-slate-900 dark:text-white">{entry.title}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{entry.code}</span>
-                      </span>
-                      <span className="block mt-1 text-xs text-slate-600 dark:text-slate-400">{entry.category}{entry.documentTypeName ? ` · ${entry.documentTypeName}` : ''}</span>
-                    </button>
-                  ))}
-                </div>
+{sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
+<div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
+<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); } else { setActiveModuleId(null); setActiveVersionedMaterialId(entry.id); } setIsLibraryNavigationOpen(true); }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
+</article>)}
+</div>
               )}
             </section>
           ) : (
@@ -1025,9 +1018,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {currentVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {currentVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
+                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
-                            {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
+                            {isLibraryNavigationOpen ? 'Navigation ausblenden' : 'Materialnavigation anzeigen'}
                           </button>
                         </div>
                       </div>
@@ -1040,12 +1033,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             <pre className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
                           </div>
                         )}
+                      <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} />
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
                     <div role="alert" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
                       <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
-                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
+                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                     </div>
                   )
                 ) : currentModule && (
@@ -1082,9 +1076,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
+                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                         <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
-                          {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
+                          {isLibraryNavigationOpen ? 'Materialnavigation ausblenden' : 'Materialnavigation anzeigen'}
                         </button>
                       </div>
                     </div>
