@@ -414,7 +414,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const reloadSelectedNote = async () => {
-    if (!selectedNote || !window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    if (!selectedNote || saveStatus !== 'error' || savingAction) return;
+    if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    pendingSaveRef.current = null;
     setSavingAction(true);
     const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
     setSavingAction(false);
@@ -566,12 +568,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
-              <input className={field} value={title} maxLength={200} onChange={event => setTitle(event.target.value)} />
+              <input className={field} value={title} maxLength={200} disabled={savingAction} onChange={event => setTitle(event.target.value)} />
             </label>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <label htmlFor="academy-reader-note-content" className="text-sm font-medium text-slate-700 dark:text-slate-200">Inhalt (Markdown)</label>
-                <button type="button" className={secondary} onClick={() => setPreview(value => !value)} aria-pressed={preview}>
+                <button type="button" className={secondary} onClick={() => setPreview(value => !value)} aria-pressed={preview} disabled={savingAction}>
                   {preview ? 'Bearbeiten' : 'Vorschau'}
                 </button>
               </div>
@@ -580,19 +582,19 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>{content}</ReactMarkdown>
                 </article>
               ) : (
-                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} onChange={event => setContent(event.target.value)} />
+                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} disabled={savingAction} onChange={event => setContent(event.target.value)} />
               )}
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter (Komma getrennt)</span>
-              <input className={field} value={tags} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
+              <input className={field} value={tags} disabled={savingAction} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
             </label>
             {saveError ? (
               <div className="space-y-2" role="alert">
                 <p className="text-sm text-rose-700 dark:text-rose-300">{saveError}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={secondary} onClick={() => queueSave(draft)}>Erneut speichern</button>
-                  <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction}>Aktuelle Fassung laden</button>
+                  <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>
+                  <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction || saveStatus !== 'error'}>Aktuelle Fassung laden</button>
                 </div>
               </div>
             ) : null}
