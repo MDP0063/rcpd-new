@@ -60,6 +60,18 @@ export const ExamReviewCenter: React.FC<{
   const inFlightDraftSaves = useRef<Record<string, { pending: { review: ReviewItem; question: ReviewQuestion; value: string }; promise: Promise<boolean> }>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
   const scrolledTargetRef = useRef<string | null>(null);
+  const transferTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const releaseTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const transferDialogHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const releaseDialogHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => {
+    if (transferDialog) transferDialogHeadingRef.current?.focus();
+    else transferTriggerRef.current?.focus();
+  }, [transferDialog]);
+  useEffect(() => {
+    if (releaseDialogId) releaseDialogHeadingRef.current?.focus();
+    else releaseTriggerRef.current?.focus();
+  }, [releaseDialogId]);
   useEffect(() => {
     if (!initialAttemptId || loading || scrolledTargetRef.current === initialAttemptId) return;
     const target = document.getElementById(`exam-review-${initialAttemptId}`);
