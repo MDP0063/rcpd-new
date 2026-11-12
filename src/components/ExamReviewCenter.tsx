@@ -381,8 +381,8 @@ export const ExamReviewCenter: React.FC<{
         </aside>
       </div>
       {review.isClaimOwner && <div className="exam-review-footer flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-slate-800"><p className="text-xs text-slate-500">{draftSaveStatus[review.id] === 'saving' ? 'Bewertungsentwurf wird gespeichert …' : draftSaveStatus[review.id] === 'saved' ? 'Entwurf gespeichert' : draftSaveStatus[review.id] === 'error' ? 'Entwurf konnte nicht gespeichert werden' : 'Änderungen werden automatisch als Entwurf gespeichert.'}</p><button type="button" disabled={Boolean(savingId)} onClick={() => void submit(review)} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Speichert …' : 'Bewertung abschließen'}</button></div>}
-      {transferDialog?.review.id === review.id && <div role="dialog" aria-modal="true" aria-label={transferDialog.mode === 'transfer' ? 'Prüfungsvorgang übergeben' : 'Prüfungsvorgang neu zuweisen'} className="exam-review-dialog space-y-3 rounded-lg border border-sky-300 bg-sky-50 p-4 text-sm text-sky-950">
-        <p className="font-semibold">{transferDialog.mode === 'transfer' ? 'Vorgang an einen anderen Prüfer übergeben' : 'Zuständigkeit administrativ neu zuweisen'}</p>
+      {transferDialog?.review.id === review.id && <section role="region" aria-labelledby="exam-review-transfer-heading" className="exam-review-dialog space-y-3 rounded-lg border border-sky-300 bg-sky-50 p-4 text-sm text-sky-950">
+        <h4 ref={transferDialogHeadingRef} tabIndex={-1} id="exam-review-transfer-heading" className="font-semibold outline-none">{transferDialog.mode === 'transfer' ? 'Vorgang an einen anderen Prüfer übergeben' : 'Zuständigkeit administrativ neu zuweisen'}</h4>
         <p className="text-xs">Gespeicherte Bewertungsentwürfe bleiben erhalten. Nicht gespeicherte Eingaben werden nicht übertragen.</p>
         <label className="block text-xs font-semibold">Neuer Verantwortlicher
           <select value={transferTargetUid} onChange={event => setTransferTargetUid(event.target.value)} className={fieldClass + ' mt-1'}>
@@ -404,7 +404,7 @@ export const ExamReviewCenter: React.FC<{
             : <button type="button" disabled={Boolean(savingId) || !transferTargetUid} onClick={() => void submitTransfer(false)} className="rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white disabled:opacity-50">Neu zuweisen</button>}
           <button type="button" disabled={Boolean(savingId)} onClick={() => setTransferDialog(null)} className="rounded-lg border border-sky-600 px-3 py-2">Abbrechen</button>
         </div>
-      </div>}
+      </section>}
       {releaseDialogId === review.id && <div role="dialog" aria-modal="true" aria-label="Prüfungsvorgang freigeben" className="exam-review-dialog space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Was soll mit noch nicht gespeicherten Eingaben geschehen?</p><div className="flex flex-wrap gap-2"><button type="button" disabled={Boolean(savingId)} onClick={async () => { const saved = await flushDraftSaves(review); if (saved) { setReleaseDialogId(''); setNotice('Entwurf gespeichert. Du bleibst für den Vorgang zuständig.'); } }} className="rounded-lg border border-amber-500 px-3 py-2 font-semibold">Zurück und speichern</button><button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={async () => { discardPendingDraftSaves(review); setReleaseDialogId(''); await claimOrRelease(review, 'release'); }} className="rounded-lg bg-amber-800 px-3 py-2 font-semibold text-white">Freigeben und ungespeicherte Änderungen verwerfen</button><button type="button" onClick={() => setReleaseDialogId('')} className="rounded-lg border border-amber-500 px-3 py-2">Abbrechen</button></div></div>}
     </article>)}
   </section>;
