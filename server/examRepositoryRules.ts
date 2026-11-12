@@ -179,15 +179,17 @@ function isReviewNotificationDeliveryUpdate(previousValue: unknown, nextValue: u
     if (!isDeepStrictEqual(previousCore, nextCore) ||
         nextRecipients.length < previousRecipients.length ||
         !previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) ||
-        nextRecipients.length > 2 ||
+        nextRecipients.length > (current.action === 'revision_requested' ? (Array.isArray(current.recipientUids) ? current.recipientUids.length : 0) : 2) ||
         nextRecipients.some((uid, recipientIndex) =>
           typeof uid !== 'string' || !uid.trim() || nextRecipients.indexOf(uid) !== recipientIndex
         )) return false;
     if (nextRecipients.length > previousRecipients.length) {
       changed = true;
-      const expectedRecipients = current.action === 'transferred' || current.action === 'reassigned'
-        ? [current.previousUid, current.targetUid]
-        : [current.targetUid];
+      const expectedRecipients = current.action === 'revision_requested'
+        ? (Array.isArray(current.recipientUids) ? current.recipientUids : [])
+        : current.action === 'transferred' || current.action === 'reassigned'
+          ? [current.previousUid, current.targetUid]
+          : [current.targetUid];
       if (current.notificationRequired !== true ||
           nextRecipients.some(uid => !expectedRecipients.includes(uid)) ||
           nextRecipients.length > expectedRecipients.length) return false;
@@ -206,6 +208,80 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     ) return;
   }
   if (existing.status === 'passed' || existing.status === 'failed') {
+    const previousClaimHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
+    const nextClaimHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
+    const revisionEvent = nextClaimHistory[nextClaimHistory.length - 1] as Record<string, unknown> | undefined;
+    const isRevisionReturn = next.status === 'pending_review' &&
+      nextClaimHistory.length === previousClaimHistory.length + 1 &&
+      isDeepStrictEqual(nextClaimHistory.slice(0, -1), previousClaimHistory) &&
+      revisionEvent?.action === 'revision_requested';
+    if (isRevisionReturn) {
+      const allowedMutable = new Set([
+        'status', 'reviewClaim', 'questionGrades', 'reviewClaimHistory',
+        'resultReleaseStatus', 'publishedResultSnapshot'
+      ]);
+      const strip = (document: ExamDocument) => Object.fromEntries(
+        Object.entries(document).filter(([key]) => !allowedMutable.has(key))
+      );
+      const questionIds = Array.isArray(revisionEvent.questionIds) ? revisionEvent.questionIds : [];
+      const feedback = Array.isArray(revisionEvent.feedback) ? revisionEvent.feedback : [];
+      const recipients = Array.isArray(revisionEvent.recipientUids) ? revisionEvent.recipientUids : [];
+      const previousGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
+      const nextGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
+      const validQuestionIds = questionIds.length > 0 && questionIds.length <= 50 &&
+        questionIds.every((id, index) => typeof id === 'string' && id.trim() && id.length <= 128 && questionIds.indexOf(id) === index);
+      const validFeedback = feedback.length > 0 && feedback.length <= 50 && feedback.every((entry: any, index: number) =>
+        entry && typeof entry === 'object' && !Array.isArray(entry) &&
+        Object.keys(entry).sort().join(',') === 'feedback,questionId' &&
+        typeof entry.questionId === 'string' && questionIds.includes(entry.questionId) &&
+        typeof entry.feedback === 'string' && entry.feedback.trim().length >= 10 &&
+        entry.feedback.length <= 1000 &&
+        feedback.findIndex((candidate: any) => candidate?.questionId === entry.questionId) === index
+      );
+      const validRecipients = recipients.length > 0 && recipients.length <= 1000 &&
+        recipients.every((uid: unknown, index: number) =>
+          typeof uid === 'string' && uid.trim() && uid.length <= 128 && recipients.indexOf(uid) === index
+        );
+      const gradesValid = previousGrades.length === nextGrades.length &&
+        previousGrades.every((previous: any) => {
+          const updated = nextGrades.find((grade: any) => grade?.questionId === previous.questionId);
+          if (!updated) return false;
+          const { requiresManualReview: _previousManual, ...previousRest } = previous;
+          const { requiresManualReview: _nextManual, ...nextRest } = updated;
+          return isDeepStrictEqual(previousRest, nextRest) &&
+            (questionIds.includes(String(previous.questionId))
+              ? previous.requiresManualReview === false && updated.requiresManualReview === true
+              : isDeepStrictEqual(previous.requiresManualReview, updated.requiresManualReview));
+        });
+      const publishedSnapshot = next.publishedResultSnapshot as Record<string, unknown> | undefined;
+      const releaseStateValid = existing.resultReleaseStatus === 'released'
+        ? next.resultReleaseStatus === 'pending_rerelease' && Boolean(publishedSnapshot &&
+            publishedSnapshot.status === existing.status &&
+            publishedSnapshot.totalPossiblePointsMilli === existing.totalPossiblePointsMilli &&
+            publishedSnapshot.automaticallyEarnedPointsMilli === existing.automaticallyEarnedPointsMilli &&
+            publishedSnapshot.manuallyEarnedPointsMilli === existing.manuallyEarnedPointsMilli &&
+            publishedSnapshot.preliminaryScoreBasisPoints === existing.preliminaryScoreBasisPoints &&
+            publishedSnapshot.finalScoreBasisPoints === existing.finalScoreBasisPoints)
+        : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus) &&
+          isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot);
+      if (
+        next.reviewClaim !== null ||
+        !isDeepStrictEqual(strip(existing), strip(next)) ||
+        !validQuestionIds || !validFeedback || !validRecipients || !gradesValid ||
+        !releaseStateValid ||
+        !revisionEvent ||
+        Object.keys(revisionEvent).sort().join(',') !==
+          'action,actorUid,atIso,feedback,notificationRequired,previousUid,questionIds,reason,recipientUids' ||
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        revisionEvent.previousUid !== existing.reviewedByUid ||
+        typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 ||
+        revisionEvent.reason.length > 1000 ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
+      ) throw new Error('EXAM_REVIEW_REVISION_INVALID');
+      return;
+    }
+
     const previousReleaseHistory = Array.isArray(existing.resultReleaseHistory) ? existing.resultReleaseHistory : [];
     const nextReleaseHistory = Array.isArray(next.resultReleaseHistory) ? next.resultReleaseHistory : [];
     const releaseEntry = nextReleaseHistory[nextReleaseHistory.length - 1] as Record<string, unknown> | undefined;
