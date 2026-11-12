@@ -259,7 +259,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
             <button type="submit" className={primaryButton} disabled={busy}>
               {busy ? 'Speichert …' : editing ? 'Änderungen speichern' : 'Dokumenttyp hinzufügen'}
             </button>
-            {editing && <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Abbrechen</button>}
+            <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Zurück zur Dokumenttypübersicht</button>
           </div>
         </form>
         ) : (
