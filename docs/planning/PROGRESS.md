@@ -748,3 +748,40 @@ Nach bestätigtem Deployment folgt die gemeinsame Browserabnahme. Anschließend 
 - Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Bestehende Beschlüsse, Sicherheitsgrenzen, Kostenlimit und Architektur dürfen nicht gefährdet werden.
 - Recherche ist verbindlich; bloße Designintuition reicht nicht. Quellen und die konkrete Übertragbarkeit auf den RCPD-Kontext gehören in die Dokumentation.
 - Dokumentationshierarchie: DECISIONS.md als verbindliches Register, passende Detail-Spezifikation für die vollständigen Regeln, PROGRESS.md für tatsächlichen Arbeits-/Prüfstand, OPEN-QUESTIONS.md für ungeklärte Entscheidungen. Repository ist die verlässliche Übergabegrundlage; Memory ist ergänzend und nicht synchron garantierbar.
+
+
+## 12.11.2026 – Beginn des systematischen Academy-Fehleraudits
+
+**Prüfgrundlage:** Quellcode auf `main` (Repository-Stand beim Audit am 12.11.2026), insbesondere `server.ts`, `server/academyApi.ts`, `server/academyRepository.ts`, `server/academyRepositoryRules.ts`, `server/academyApi.test.ts`, `src/components/AcademyCenter.tsx` und die neue Academy-Verwaltung/Reader-Komponenten. Dies ist eine statische Codeprüfung über GitHub-Dateiansichten; in diesem Durchgang wurden keine Tests lokal ausgeführt und keine Laufzeit-/Live-Firestore-Prüfung vorgenommen.
+
+### Vorläufiger Fund A-01 – Legacy-Materialupdate prüft nur Ziel-Kurscode
+
+- **Ort:** `server.ts`, Route `PUT /api/academy/modules/:modId`.
+- **Befund:** Die Route ermittelt `targetCode` aus dem Request-Body (oder verwendet bei fehlendem Feld den bisherigen Code) und prüft anschließend `canActorEditCourseCode(caller, targetCode)`. Sie prüft nicht zusätzlich, ob der angemeldete Akteur bereits den gespeicherten `code` des Zielmaterials bearbeiten darf.
+- **Risiko:** Ein granular berechtigter Ausbilder könnte bei einem direkten Request ein Material aus einem fremden Kurscode auf einen ihm zugewiesenen Kurscode umhängen und dessen übrige Felder bearbeiten. Das ist ein potenzieller horizontaler Berechtigungsfehler / Scope-Wechsel.
+- **Reichweite:** Die alte UI-Unteransicht `upload_textbook` ist in der aktuellen Academy-Navigation nicht mehr erreichbar; die Legacy-API-Route bleibt jedoch registriert. Daher ist der Befund als **API-Sicherheitslücke im Legacy-Endpunkt** zu behandeln, nicht als bestätigter normaler UI-Ablauf. Aktuelle neue Materialverwaltung verwendet die getrennten versionierten Material-Endpunkte.
+- **Testlücke:** `server/academyApi.test.ts` prüft neue versionierte Material-Endpunkte auf Scope-Beschränkung und testet die Legacy-Routen gegen Actor-Spoofing/PDF-Uploads. Es fehlt aber ein Regressionstest, in dem ein scoped Instructor ein Legacy-Material aus Kurs B per PUT auf Kurs A umstellt.
+- **Empfohlene Korrektur:** Vor jeder Änderung muss die Berechtigung für den gespeicherten Original-Kurscode geprüft werden. Wenn ein Codewechsel überhaupt noch erlaubt sein soll, müssen sowohl Original- als auch Zielkurscode innerhalb des erlaubten Scopes liegen; vorzugsweise Legacy-Route für scoped Instructoren vollständig sperren, falls sie nicht mehr fachlich benötigt wird. Bestehende Admin-/Colonel-Funktion und historische PDF-Metadaten dürfen nicht unbeabsichtigt verändert werden.
+- **Status:** Statisch im Code bestätigt; Laufzeit-/Regressionstest noch ausstehend. Noch nicht behoben.
+
+### Vorläufiger Fund A-02 – Legacy-Materialrouten und veraltete UI-Pfade
+
+- **Befund:** `AcademyCenter.tsx` enthält weiterhin die Zustände/Formulare `upload_textbook` und `add_code_test`, aber die aktuelle sichtbare Hauptnavigation setzt diese Zustände nicht mehr. Der alte Handler `handleCreateModule` und der Legacy-API-Pfad sind dennoch im Code vorhanden; die Legacy-API bleibt serverseitig registriert.
+- **Risiko:** Doppelte bzw. veraltete Implementierungspfade erhöhen die Wartungslast und können abweichende Validierungs-, Versions- und Berechtigungsregeln behalten. Der direkte API-Endpunkt bleibt unabhängig von der UI aufrufbar.
+- **Status:** Statisch festgestellt. Vor Entfernung oder Sperrung sind alle Call-Sites, Datenbestände und mögliche externe Aufrufer zu prüfen; keine vorschnelle Löschung.
+
+### Positive Prüfbeobachtungen (noch kein vollständiges Sicherheitsurteil)
+
+- Die neuen versionierten Materialendpunkte prüfen Kurs-Scope serverseitig; die HTTP-Tests enthalten positive und negative Scope-Fälle.
+- Der Reader bindet Materialzugriff an die konkrete Teilnahme, gepinnte Kursversion und Materialversion; fremde Teilnehmer und nicht gepinnte Versionen werden mit 404 abgewiesen.
+- Archivierte Materialien verschwinden aus dem öffentlichen Katalog/Reader, während bereits gepinnte historische Kursversionen ihren Materialzugriff behalten.
+- Die API-Tests prüfen, dass nicht autorisierte Akteure Materialien nicht archivieren dürfen und scoped Instructoren nicht außerhalb ihres zugewiesenen Kurscodes publizieren dürfen.
+- Diese Beobachtungen ersetzen keine vollständige Prüfung der Race Conditions, Datenbankadapter, Notiz-Privatsphäre, Berechtigungsänderungen oder produktiven Firestore-Regeln.
+
+### Nächste Prüfschritte
+
+1. Prüfen, ob die Legacy-Material-Update-Route außerhalb der alten Academy-Komponente noch gebraucht wird; danach gezielte Regressionstests und sichere Sperrung/Korrektur.
+2. Vollständige Berechtigungsmatrix für neue Materialverwaltung, Kursverwaltung, Veröffentlichung, Archivierung, Reader und private Notizen gegen Domain-Regeln und Firestore-Adapter prüfen.
+3. Race Conditions / optimistic concurrency / Revision-Checks sowie Repository-Transitionen und Fehlerbehandlung prüfen.
+4. Exam/Reviewer/Teilnehmerstatus, Notiz-Owner-Isolation, Progress-API und alle Datenprojektionen auf Datenleck/IDOR prüfen.
+5. Danach Tests lokal/CI ausführen und Browser-/Responsive-/Live-Firestore-Prüfung getrennt dokumentieren.
