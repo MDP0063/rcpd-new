@@ -763,3 +763,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 **Recherchegrundlage:** WCAG 2.2 (W3C), insbesondere Fokus, Zielgrößen und Animation aus Interaktionen: https://www.w3.org/TR/WCAG22/ . Ergänzend Nielsen Norman Group, „Progressive Disclosure“: https://www.nngroup.com/articles/progressive-disclosure/ sowie die zehn Usability-Heuristiken: https://www.nngroup.com/articles/ten-usability-heuristics/ . Die Prinzipien wurden auf die vorhandenen Academy-Aufgaben angewandt; es wurden keine neuen Funktionen eingeführt.
 
 **Prüfstatus:** statische Codeprüfung der geänderten Komponenten und Styles. Noch keine echte Browser-/Geräteprüfung, kein Live-Firestore-Test und kein Deployment. CI wird über den Draft-PR geprüft. Die fünf Kacheln und alle bestehenden fachlichen Funktionen müssen vor Merge zusätzlich visuell und responsiv abgenommen werden.
+
+
+### Academy-Audit: Legacy-Materialroute – Berechtigungsprüfung korrigiert (Folge-PR)
+
+- Bestätigter Befund: `PUT /api/academy/modules/:modId` prüfte bei scoped Kursausbildern nur den Ziel-Kurscode aus dem Request. Ein Ausbilder konnte dadurch ein ursprünglich fremdes Legacy-Material durch gleichzeitiges Umschreiben des Kurscodes in seinen Zuständigkeitsbereich übernehmen und weitere Felder ändern.
+- Korrektur: Die serverseitige Route prüft nun sowohl den gespeicherten ursprünglichen Kurscode als auch den gewünschten Ziel-Kurscode. Admin-/Colonel-Verhalten bleibt über `canActorEditCourseCode` unverändert.
+- Regressionstest: Ein Admin legt ein Material außerhalb des Scopes an; ein scoped Ausbilder versucht, es in seinen eigenen Kurscode zu verschieben. Erwartet wird 403; anschließend bestätigt eine Admin-Metadatenänderung, dass Kurscode und ursprünglicher Inhalt unverändert blieben.
+- Die Korrektur betrifft ausschließlich den Legacy-Endpunkt und seine Tests. Versionierte Materialendpunkte und PDF-Bestand bleiben unverändert.
+- Status: Implementierung auf Branch `fix/academy-legacy-module-scope-authorization`; CI und unabhängige Review stehen aus. Noch keine Live-Firestore-/Browserprüfung.
