@@ -196,7 +196,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
           {request.feedback.map(item => <div key={item.questionId} className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.label}</p>
             <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{item.feedback}</p>
-            {request.previousGrades.find(grade => grade.questionId === item.questionId) && <p className="mt-1 text-xs text-slate-500">Bisherige Punkte: {request.previousGrades.find(grade => grade.questionId === item.questionId)!.pointsEarnedMilli / 1000} / {request.previousGrades.find(grade => grade.questionId === item.questionId)!.maxPointsMilli / 1000}</p>}
+            {request.previousGrades.find(grade => grade.questionId === item.questionId) && <p className="mt-1 text-xs text-slate-500">Bisherige Punkte: {(request.previousGrades.find(grade => grade.questionId === item.questionId)!.pointsEarnedMilli / 1000).toLocaleString('de-DE')} / {(request.previousGrades.find(grade => grade.questionId === item.questionId)!.maxPointsMilli / 1000).toLocaleString('de-DE')}</p>}
           </div>)}
         </div>
         {rejectingId === request.id && <div>
