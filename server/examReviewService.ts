@@ -778,7 +778,7 @@ export async function listPendingExamReviewRevisionRequests(repository: ExamRepo
     results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
-      assessmentStage: version.assessmentStage, status: attempt.status,
+      assessmentStage: version.assessmentStage, status: attempt.status as 'passed' | 'failed',
       reviewedAtIso: attempt.reviewedAtIso, reviewedByUid: attempt.reviewedByUid,
       requestedAtIso: pending.event.atIso, requestedByUid: pending.event.actorUid,
       reason: pending.event.reason || '',
