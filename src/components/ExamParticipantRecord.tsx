@@ -64,7 +64,7 @@ const dateLabel = (value: string | null | undefined) => {
 };
 
 const pointsLabel = (value: number) => (value / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
-const scoreLabel = (value: number | null) => value === null
+const scoreLabel = (value: number | null | undefined) => value == null
   ? '–'
   : `${(value / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`;
 
@@ -173,8 +173,8 @@ export const ExamParticipantRecord: React.FC<{
             <h5 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Nachträgliche Korrekturen</h5>
             <ol className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
               {item.reviewCorrections.map((correction, index) => {
-                const previousByQuestion = new Map(correction.previousGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli]));
-                const nextByQuestion = new Map(correction.nextGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli]));
+                const previousByQuestion = new Map<string, number>(correction.previousGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli] as const));
+                const nextByQuestion = new Map<string, number>(correction.nextGrades.map(grade => [grade.questionId, grade.pointsEarnedMilli] as const));
                 const changedQuestionIds = [...new Set([...previousByQuestion.keys(), ...nextByQuestion.keys()])];
                 return <li key={index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
                   <p className="font-semibold">{correction.reason || 'Korrektur'}</p>
