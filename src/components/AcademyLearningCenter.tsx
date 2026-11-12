@@ -183,7 +183,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       );
       if (requestId !== contentLoadRequestIdRef.current) return;
       const failedDetail = detailsResponse.find(item => !item.ok || !item.data);
-      if (failedDetail) throw new Error(failedDetail.error || 'Programmfortschritt konnte nicht geladen werden.');
+      if (failedDetail) throw new Error(failedDetail.error || 'Lehrgangsfortschritt konnte nicht geladen werden.');
       setCourses(nextCourses);
       setPrograms(nextPrograms);
       setCourseParticipations(nextCourseParticipations);
@@ -355,7 +355,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     );
     if (!response.ok || !response.data) {
       setSaving(false);
-      onStatusToast(response.error || 'Das Programm konnte nicht begonnen werden.');
+      onStatusToast(response.error || 'Der Lehrgang konnte nicht begonnen werden.');
       return;
     }
     if (detailRequestIdRef.current === requestId) {
@@ -366,7 +366,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
     setSaving(false);
     if (await refreshLearningDataIfActive() && detailRequestIdRef.current === requestId) {
-      onStatusToast('Programmteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
+      onStatusToast('Lehrgangsteilnahme wurde angelegt. Die Pflichtkursversionen sind jetzt fest zugeordnet; die Kurse beginnen erst beim jeweiligen Kursstart.');
     }
   };
 
@@ -384,7 +384,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       if (detailRequestIdRef.current !== requestId) return;
       if (!response.ok || !response.data) {
         setDetailLoading(false);
-        onStatusToast(response.error || 'Programmfortschritt konnte nicht geladen werden.');
+        onStatusToast(response.error || 'Lehrgangsfortschritt konnte nicht geladen werden.');
         return;
       }
       setProgramDetail(response.data);
@@ -455,14 +455,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
             <div className="academy-courses-catalog space-y-6">
               <header className="academy-courses-heading space-y-2">
                 <p className="academy-courses-eyebrow">DEIN AUSBILDUNGSWEG</p>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Programme und Kurse</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Lehrgänge und Kurse</h2>
                 <p className={muted}>Programme geben Ausbildungsziele und erforderliche Lernschritte vor. Kurse können unabhängig davon direkt begonnen werden.</p>
               </header>
               <label className="academy-courses-search block space-y-1">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Programme und Kurse durchsuchen</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</span>
                 <input className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
               </label>
-              {loading ? <p className={muted} role="status">Programme und Kurse werden geladen …</p> : loadError ? (
+              {loading ? <p className={muted} role="status">Lehrgänge und Kurse werden geladen …</p> : loadError ? (
                 <div className={`${panel} p-4 space-y-3`} role="alert">
                   <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
                   <button type="button" className={secondary} onClick={() => void loadLearningData()}>Erneut laden</button>
@@ -471,10 +471,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <>
                   <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Ausbildungsprogramme</h3>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{filteredPrograms.length} Programme</span>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{filteredPrograms.length} Lehrgänge</span>
                     </div>
-                    {filteredPrograms.length === 0 ? <p className={`${panel} p-4 ${muted}`}>Derzeit sind keine veröffentlichten Programme verfügbar.</p> : (
+                    {filteredPrograms.length === 0 ? <p className={`${panel} p-4 ${muted}`}>Derzeit sind keine veröffentlichten Lehrgänge verfügbar.</p> : (
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                         {filteredPrograms.map(entry => {
                           const detail = programDetails.find(item => item.participation.programId === entry.master.id);
@@ -485,7 +485,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Entwurf'}</p>
                                   {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
                                   <h4 className="mt-1 font-semibold text-slate-900 dark:text-white">{entry.version?.title || entry.draft?.title || entry.master.code}</h4>
-                                  <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Programmversion.'}</p>
+                                  <p className={`mt-1 ${muted}`}>{entry.version?.summary || 'Noch keine veröffentlichte Lehrgangsversion.'}</p>
                                 </div>
                                 {detail && <span className="shrink-0 text-xs font-semibold text-sky-700 dark:text-sky-300" aria-label={`Fortschritt: ${detail.progress.completionPercentage} Prozent`}>Fortschritt {detail.progress.completionPercentage}%</span>}
                               </div>
@@ -493,7 +493,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {detail ? statusLabel(detail.progress.status) : 'Noch keine Teilnahme'}
                                 {entry.version ? ` · ${entry.version.courseReferences.filter(item => item.requirement === 'required').length} Pflichtkurse` : ''}
                               </p>
-                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openProgram(entry)}>Programm ansehen</button>
+                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openProgram(entry)}>Lehrgang ansehen</button>
                             </article>
                           );
                         })}
@@ -616,11 +616,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme</h3>
                     {programPinByCourse.get(selectedCourse.master.id)?.length &&
                       new Set(programPinByCourse.get(selectedCourse.master.id)!.map(item => item.pin.courseVersionId)).size > 1 ? (
-                        <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Programmversions-Pins. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Lehrgangsversions-Pins. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
                       ) : (
                         <>
                           <p className={muted}>Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.</p>
-                          {programPinByCourse.get(selectedCourse.master.id)?.[0] && <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Kurs ist in einem begonnenen Programm an Version {programPinByCourse.get(selectedCourse.master.id)![0].version.versionNumber} gebunden.</p>}
+                          {programPinByCourse.get(selectedCourse.master.id)?.[0] && <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Kurs ist in einem begonnenen Lehrgang an Version {programPinByCourse.get(selectedCourse.master.id)![0].version.versionNumber} gebunden.</p>}
                           <button type="button" className={primary} disabled={saving || !selectedCourse.version} onClick={() => void startCourse()}>
                             {saving ? 'Wird gestartet …' : 'Kurs starten'}
                           </button>
@@ -647,10 +647,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     {progress && (
                       <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="font-semibold">Dein Programmfortschritt</h3>
+                          <h3 className="font-semibold">Dein Lehrgangsfortschritt</h3>
                           <span className="text-sm font-semibold tabular-nums">{progress.completionPercentage}%</span>
                         </div>
-                        <div className="academy-program-progress-track h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.completionPercentage} aria-label="Programmfortschritt">
+                        <div className="academy-program-progress-track h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.completionPercentage} aria-label="Lehrgangsfortschritt">
                           <div className="h-full bg-sky-700 dark:bg-sky-400" style={{ width: `${progress.completionPercentage}%` }} />
                         </div>
                         <p className={muted}>{progress.completedRequiredCourseCount} von {progress.requiredCourseCount} Pflichtkursen abgeschlossen · {progress.startedRequiredCourseCount} begonnen</p>
@@ -680,7 +680,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                           </div>
                         );
                       })}
-                      {version.courseReferences.filter(item => item.requirement === 'required').length === 0 && <p className={muted}>Diese Programmversion hat keine Pflichtkurse.</p>}
+                      {version.courseReferences.filter(item => item.requirement === 'required').length === 0 && <p className={muted}>Diese Lehrgangsversion hat keine Pflichtkurse.</p>}
                     </div>
                     {version.courseReferences.some(item => item.requirement === 'recommended') && (
                       <div className={`${panel} academy-program-panel p-4 space-y-3`}>
@@ -691,7 +691,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         })}
                       </div>
                     )}
-                    {detailLoading && !programDetail && <p className={muted} role="status">Deine Programmteilnahme wird geladen …</p>}
+                    {detailLoading && !programDetail && <p className={muted} role="status">Deine Lehrgangsteilnahme wird geladen …</p>}
                     {!programDetail && !detailLoading && programParticipations.some(item => item.programId === selectedProgram.master.id) && (
                       <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <p className={muted}>Eine bestehende Programmteilnahme ist vorhanden, ihr Fortschritt konnte aber noch nicht geladen werden.</p>
@@ -702,7 +702,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       <div className={`${panel} academy-program-panel p-4 space-y-2`}>
                         <p className={muted}>Beim Programmstart werden die konkreten Versionen aller Pflichtkurse festgehalten. Die einzelnen Kurse beginnen erst, wenn du sie selbst startest.</p>
                         <button type="button" className={primary} disabled={saving || selectedProgram.master.publicationStatus !== 'published' || selectedProgram.master.availability !== 'available'} onClick={() => void startProgram()}>
-                          {saving ? 'Wird gestartet …' : 'Programm beginnen'}
+                          {saving ? 'Wird gestartet …' : 'Lehrgang beginnen'}
                         </button>
                       </div>
                     )}
