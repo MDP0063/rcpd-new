@@ -433,7 +433,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const attachAnchorToNote = async (note: AcademyPrivateNoteDoc) => {
-    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction) return;
+    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction ||
+        pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id ||
+        operationLockedIdsRef.current.has(note.id)) {
+      if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id) {
+        setAnchorNotice('Speichere zuerst die Änderungen dieser Notiz, bevor du einen Textanker hinzufügst.');
+      }
+      return;
+    }
     const sources = noteSources(note).map(source =>
       source.materialId === materialId && source.materialVersionId === materialVersionId
         ? { ...source, anchor: selectedAnchor }
