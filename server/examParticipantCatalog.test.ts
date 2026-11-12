@@ -69,7 +69,7 @@ test('Teilnehmerkatalog gibt keine Fragen, Lösungsschlüssel, Erklärungen oder
     await addPublishedExam(repository, { id: 'visible' });
     const catalog = await listParticipantExamCatalog(repository, 5);
     const serialized = JSON.stringify(catalog);
-    for (const forbidden of ['questionsSnapshot', 'correctOptionId', 'Interne Frage?', 'Interne Erklärung', 'gradingRubric']) {
+    for (const forbidden of ['questionsSnapshot', 'correctOptionId', 'Interne Frage?', 'Interne Erklärung', 'gradingRubric', 'minClearance']) {
       assert.equal(serialized.includes(forbidden), false, `Verbotenes Feld im Katalog: ${forbidden}`);
     }
     assert.deepEqual(catalog[0], {
@@ -81,8 +81,7 @@ test('Teilnehmerkatalog gibt keine Fragen, Lösungsschlüssel, Erklärungen oder
       timeLimitMinutes: 30,
       passingScoreBasisPoints: 7500,
       maxAttempts: null,
-      prerequisites: [],
-      minClearance: 0
+      prerequisites: []
     });
   });
 });
