@@ -35,6 +35,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AcademyMaterialCategoryView | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -55,7 +56,12 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
 
   useEffect(() => { void load(); }, [load]);
 
-  const beginCreate = () => {
+  const hasFormChanges = formOpen && (
+    name !== (editing?.name || '') ||
+    description !== (editing?.description || '')
+  );
+
+  const resetForm = () => {
     setEditing(null);
     setName('');
     setDescription('');
@@ -63,16 +69,26 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setFormErrorField(null);
   };
 
+  const beginCreate = () => {
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue kategorie beginnen?')) return;
+    resetForm();
+    setFormOpen(true);
+  };
+
   const beginEdit = (category: AcademyMaterialCategoryView) => {
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere kategorie bearbeiten?')) return;
     setEditing(category);
     setName(category.name);
     setDescription(category.description || '');
     setFormError('');
     setFormErrorField(null);
+    setFormOpen(true);
   };
 
   const cancelEdit = () => {
-    beginCreate();
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    resetForm();
+    setFormOpen(false);
   };
 
   const save = async (event: React.FormEvent) => {
@@ -122,7 +138,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     }
     const saved = response.data.category;
     await load();
-    beginCreate();
+    resetForm();
+    setFormOpen(false);
     setBusy(false);
     onStatusToast(editing ? `Kategorie „${saved.name}“ aktualisiert.` : `Kategorie „${saved.name}“ angelegt.`);
   };
@@ -193,7 +210,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
         </p>
       </header>
 
-      <div className="academy-material-taxonomy-layout grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-5 items-start">
+      <div className="academy-material-taxonomy-layout">
+        {formOpen ? (
         <form onSubmit={save} className="academy-material-taxonomy-form rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{editing ? 'Kategorie bearbeiten' : 'Kategorie hinzufügen'}</h3>
@@ -243,7 +261,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             {editing && <button type="button" className={secondaryButton} onClick={cancelEdit} disabled={busy}>Abbrechen</button>}
           </div>
         </form>
-
+        ) : (
         <div className="academy-material-taxonomy-list rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -302,6 +320,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             </ul>
           )}
         </div>
+        )}
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
