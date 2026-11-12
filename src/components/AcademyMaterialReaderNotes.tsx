@@ -76,6 +76,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [savingAction, setSavingAction] = useState(false);
   const [linkNoteSearch, setLinkNoteSearch] = useState('');
   const [anchorNotice, setAnchorNotice] = useState('');
+  const saveDebounceTimerRef = useRef<number | null>(null);
   const revisionByIdRef = useRef(new Map<string, number>());
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
@@ -227,8 +228,15 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     const snapshot = serializeDraft(draft);
     if (snapshot === lastSavedRef.current) return;
     setSaveStatus('unsaved');
-    const timer = window.setTimeout(() => queueSave(draft), 700);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      if (saveDebounceTimerRef.current === timer) saveDebounceTimerRef.current = null;
+      queueSave(draft);
+    }, 700);
+    saveDebounceTimerRef.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (saveDebounceTimerRef.current === timer) saveDebounceTimerRef.current = null;
+    };
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
@@ -418,6 +426,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const reloadSelectedNote = async () => {
     if (!selectedNote || saveStatus !== 'error' || savingAction) return;
     if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    if (saveDebounceTimerRef.current !== null) {
+      window.clearTimeout(saveDebounceTimerRef.current);
+      saveDebounceTimerRef.current = null;
+    }
     pendingSaveRef.current = null;
     setSavingAction(true);
     const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
