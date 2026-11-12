@@ -380,12 +380,22 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(secondRevision.reviewClaimHistory![secondRevisionIndex].revisionRequestIndex, secondRevisionIndex);
     assert.equal((await listExamReviews(repository, ['PC-101'], 'grader3')).length, 0,
       'a second revision request also waits for supervisor approval');
-    const rejectedRevision = await resolveExamReviewRevisionRequest(
-      repository, 'review-exam', 'review-attempt', 'colonel', 'reject',
-      'Die angeführten Gründe rechtfertigen keine erneute Bewertung.',
-      '2026-11-05T12:15:00.000Z'
-    );
-    assert.equal(rejectedRevision.status, 'passed');
+    const concurrentRejections = await Promise.allSettled([
+      resolveExamReviewRevisionRequest(
+        repository, 'review-exam', 'review-attempt', 'colonel', 'reject',
+        'Die angeführten Gründe rechtfertigen keine erneute Bewertung.',
+        '2026-11-05T12:15:00.000Z'
+      ),
+      resolveExamReviewRevisionRequest(
+        repository, 'review-exam', 'review-attempt', 'admin', 'reject',
+        'Die angeführten Gründe rechtfertigen keine erneute Bewertung.',
+        '2026-11-05T12:15:00.000Z'
+      )
+    ]);
+    assert.equal(concurrentRejections.filter(result => result.status === 'fulfilled').length, 1,
+      'two concurrent supervisor decisions cannot resolve the same request twice');
+    const rejectedRevision = await repository.get<any>('exam_attempts', 'review-attempt');
+    assert.equal(rejectedRevision?.status, 'passed');
     assert.equal(rejectedRevision.resultReleaseStatus, 'released');
     assert.equal(rejectedRevision.finalScoreBasisPoints, 9000);
     assert.equal((await listPendingExamReviewRevisionRequests(repository)).length, 0);
