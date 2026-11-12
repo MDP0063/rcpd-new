@@ -26,7 +26,7 @@ interface ReviewSummary {
   questionSteps: Array<{ questionId: string; label: string }>;
 }
 
-const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
+const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900';
 
 export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile }> = ({ currentUser }) => {
   const isSupervisor = (currentUser.role === 'admin' || currentUser.role === 'colonel') &&
