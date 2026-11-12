@@ -609,7 +609,7 @@ export async function gradeExamAttempt(
 }
 
 
-export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner' | 'canClaim' | 'draftGrades' | 'draftRevision'> {
+export interface CompletedManualReviewItem extends Omit<ExamReviewItem, 'reviewClaim' | 'isClaimOwner' | 'canClaim' | 'draftGrades' | 'draftRevision' | 'revisionRequest'> {
   status: 'passed' | 'failed';
   finalScoreBasisPoints: number | null;
   reviewedAtIso: string;
@@ -769,7 +769,10 @@ export async function requestExamReviewRevision(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
-    if (!attempt.reviewedByUid || !attempt.reviewedAtIso) throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
+    if (typeof attempt.reviewedByUid !== 'string' || !attempt.reviewedByUid.trim() ||
+        typeof attempt.reviewedAtIso !== 'string' || !attempt.reviewedAtIso.trim()) {
+      throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
+    }
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber ||
         !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
