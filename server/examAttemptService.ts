@@ -44,6 +44,7 @@ export interface ExamReviewClaimHistoryEntry {
   reason?: string;
   feedback?: Array<{ questionId: string; feedback: string }>;
   previousGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number }>;
+  previousReviewedAtIso?: string;
   nextGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number }>;
   questionIds?: string[];
   recipientUids?: string[];
