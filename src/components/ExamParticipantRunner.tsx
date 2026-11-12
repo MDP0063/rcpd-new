@@ -144,9 +144,18 @@ export const ExamParticipantRunner: React.FC = () => {
   const startCheckRequestIdRef = useRef(0);
   const startButtonRef = useRef<HTMLButtonElement | null>(null);
   const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const wasStartConfirmationOpenRef = useRef(false);
+  const restoreStartFocusRef = useRef(false);
 
   useEffect(() => {
-    if (startConfirmationOpen) startConfirmationHeadingRef.current?.focus();
+    if (startConfirmationOpen) {
+      wasStartConfirmationOpenRef.current = true;
+      startConfirmationHeadingRef.current?.focus();
+    } else if (wasStartConfirmationOpenRef.current) {
+      wasStartConfirmationOpenRef.current = false;
+      if (restoreStartFocusRef.current) startButtonRef.current?.focus();
+      restoreStartFocusRef.current = false;
+    }
   }, [startConfirmationOpen]);
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
@@ -243,11 +252,11 @@ export const ExamParticipantRunner: React.FC = () => {
 
   const cancelStartConfirmation = () => {
     startCheckRequestIdRef.current += 1;
+    restoreStartFocusRef.current = true;
     setStartConfirmationOpen(false);
     setStartConfirmationState('idle');
     setStartConfirmationError('');
     setActiveAttemptPreview(null);
-    startButtonRef.current?.focus();
   };
 
   const startOrResume = async () => {
@@ -265,6 +274,7 @@ export const ExamParticipantRunner: React.FC = () => {
       { method: 'POST', body: JSON.stringify({ attemptCourseCode: selectedCourseCode }) }
     );
     if (response.ok && response.data?.attempt) {
+      restoreStartFocusRef.current = false;
       setStartConfirmationOpen(false);
       setStartConfirmationState('idle');
       setStartConfirmationError('');
