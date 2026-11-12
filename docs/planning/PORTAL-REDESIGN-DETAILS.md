@@ -609,3 +609,10 @@ Die am 11.11.2026 getroffene Arbeitsvereinbarung überträgt ChatGPT die eigenst
 - Die globale visuelle Identität, globale Navigation und Theme-Strategie des Portals bleiben offen und werden nicht allein aus der Academy abgeleitet.
 
 Die ausführliche Arbeitsgrundlage einschließlich Referenzen und Qualitäts-Gates ist [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md). Diese Ergänzung ersetzt keine der bestehenden fachlichen Modulregeln oder den Auditablauf.
+
+
+## 12.11.2026 – Erweiterter Recherche- und Entscheidungsmodus
+
+Der Projektinhaber hat bestätigt, dass neben objektiven UX-/Accessibility-/Konsistenzdetails auch kritischere fachliche und technische Fragen eigenständig entschieden werden dürfen, sofern vorher gründlich recherchiert und nachvollziehbar abgewogen wurde. Die Recherche umfasst geeignete Primärquellen, aktuelle Standards und belastbare Vergleichslösungen; zu bewerten sind Alternativen, Risiken, Abhängigkeiten und Auswirkungen.
+
+Kritischere Entscheidungen werden nach der Analyse mit Fragestellung, Quellen, Optionen, Vor-/Nachteilen, Risiken, Empfehlung/Entscheidung, Auswirkungen und Änderungsmöglichkeiten vorgestellt. Bei größeren Design-/UX-Arbeitsschritten werden Zwischenstände gebündelt präsentiert. Prägende subjektive Grundsatzentscheidungen zur globalen Identität, grundlegenden Stilrichtung und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Bestehende Beschlüsse, Sicherheitsgrenzen, Kostenlimit, Datenintegrität und Architektur dürfen nicht stillschweigend gefährdet werden.
