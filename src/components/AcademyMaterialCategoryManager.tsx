@@ -134,6 +134,10 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
         );
     if (!response.ok || !response.data) {
       setFormError(errorMessage(response.error));
+      if (response.error === 'ACADEMY_MATERIAL_CATEGORY_REVISION_CONFLICT' ||
+          response.error === 'ACADEMY_MATERIAL_CATEGORY_NOT_FOUND') {
+        await load();
+      }
       setBusy(false);
       return;
     }
