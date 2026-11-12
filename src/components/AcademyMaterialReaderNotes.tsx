@@ -78,6 +78,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [anchorNotice, setAnchorNotice] = useState('');
   const saveDebounceTimerRef = useRef<number | null>(null);
   const revisionByIdRef = useRef(new Map<string, number>());
+  const draftsBySourceRef = useRef(new Map<string, NoteDraft>());
+  const sourceKey = JSON.stringify([materialId, materialVersionId]);
   const pendingSaveRef = useRef<NoteDraft | null>(null);
   const savingRef = useRef(false);
   const lastSavedRef = useRef('');
@@ -113,6 +115,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     if (savingRef.current) return;
     savingRef.current = true;
     setSaveStatus('saving');
+    let resumePendingAfterRequest = true;
     try {
       while (pendingSaveRef.current) {
         const draft = pendingSaveRef.current;
@@ -131,7 +134,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           }
         );
         if (!response.ok || !response.data) {
-          pendingSaveRef.current = null;
+          if (!pendingSaveRef.current) pendingSaveRef.current = draft;
+          resumePendingAfterRequest = false;
           setSaveStatus('error');
           setSaveError(response.status === 409
             ? 'Diese Notiz wurde zwischenzeitlich geändert. Lade die aktuelle Fassung neu, bevor du weiterarbeitest.'
@@ -153,7 +157,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
     } finally {
       savingRef.current = false;
-      if (pendingSaveRef.current) void persistPendingRef.current();
+      if (resumePendingAfterRequest && pendingSaveRef.current) void persistPendingRef.current();
     }
   }, []);
 
@@ -177,7 +181,6 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     setTags('');
     currentDraftRef.current = null;
     lastSavedRef.current = '';
-    revisionByIdRef.current.clear();
     void apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES)
       .then(response => {
         if (!active) return;
@@ -205,7 +208,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       active = false;
       // Flush the current version's draft before the reader switches to another material.
       // The debounce timer is cleaned up separately, so relying on it here could lose edits.
-      const current = currentDraftRef.current;
+      const current = draftsBySourceRef.current.get(sourceKey) || null;
+      draftsBySourceRef.current.delete(sourceKey);
       if (current && serializeDraft(current) !== lastSavedRef.current) {
         pendingSaveRef.current = current;
         void persistPendingRef.current();
@@ -221,6 +225,8 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }) : null, [selectedNote, title, content, tags]);
 
   currentDraftRef.current = draft;
+  if (draft) draftsBySourceRef.current.set(sourceKey, draft);
+  else draftsBySourceRef.current.delete(sourceKey);
   const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
 
   useEffect(() => {
@@ -354,6 +360,10 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const removeCurrentSourceFromNote = async (note: AcademyPrivateNoteDoc) => {
+    if (selectedNoteId === note.id && (hasUnsavedChanges || saveStatus !== 'saved')) {
+      if (hasUnsavedChanges && draft) queueSave(draft);
+      return;
+    }
     const sources = noteSources(note);
     if (sources.length <= 1) return;
     setSavingAction(true);
@@ -470,6 +480,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     }
     setNotes(previous => previous.filter(note => note.id !== selectedNote.id));
     revisionByIdRef.current.delete(selectedNote.id);
+    draftsBySourceRef.current.delete(sourceKey);
     setSelectedNoteId('');
     setTitle('');
     setContent('');
