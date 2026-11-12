@@ -23,7 +23,7 @@ interface ReviewItem {
     requestedAtIso: string;
     previousReviewerUid: string | null;
     reason: string;
-    feedback: Array<{ questionId: string; feedback: string }>;
+    feedback: Array<{ questionId: string; feedback: string; label: string }>;
   } | null;
 }
 
@@ -372,9 +372,8 @@ export const ExamReviewCenter: React.FC<{
         <p className="mt-1 text-xs opacity-80">Angefordert am {new Date(review.revisionRequest.requestedAtIso).toLocaleString('de-DE')}</p>
         <ul className="mt-3 space-y-2 border-t border-amber-300/70 pt-3 dark:border-amber-800">
           {review.revisionRequest.feedback.map(item => {
-            const index = review.questions.findIndex(question => question.questionId === item.questionId);
             return <li key={item.questionId}>
-              <p className="font-semibold">{index >= 0 ? `Frage ${index + 1}` : 'Bewertungsschritt'}</p>
+              <p className="font-semibold">{item.label}</p>
               <p className="mt-0.5 whitespace-pre-wrap">{item.feedback}</p>
             </li>;
           })}
