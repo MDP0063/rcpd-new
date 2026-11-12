@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Reader-/Notizkorrekturen #228/#230 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Reader-/Taxonomiekorrekturen #233/#235 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #230 (Merge-Commit `801296b59d4c033461352a85cb901297171fcc1f`).
+**Aktueller Basisstand:** `main` nach PR #235 (Merge-Commit `fb8b5e8bf3aca351de6f2cbc0dacc47ac5829aaf`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -974,3 +974,25 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Private Notizen: Browser-/Live-Firestore-Abnahme der Autosave-, Konflikt-, Reload-, Mehrfachquellen- und Quellenstatusabläufe.
 - Materialverwaltung: Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen in realen Abläufen prüfen.
 - Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+
+
+### PR #233 – Persistente Fehler-Live-Regionen in der Academy (12.11.2026)
+
+- Lade- und Speicherfehler in Kurs-Reader, privaten Reader-Notizen, Materialverwaltung sowie Kategorie-/Dokumenttypverwaltung verwenden jetzt bereits vor dem Fehler vorhandene Alert-Textknoten. Die Fehlermeldung wird in diese Region eingesetzt, statt erst zusammen mit der Alert-Rolle in den DOM eingefügt zu werden.
+- Retry-/Reload-Schaltflächen liegen weiterhin außerhalb der Alert-Live-Regionen. Formular- und Fehlertexte, Retry-Verhalten, Datenabrufe und Berechtigungen bleiben unverändert.
+- PR #233 wurde am 12.11.2026 gemergt (Commit `6b48bb9af666660ce6b2813659b428b3e54898f5`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Screenreader-Test.
+- Recherchegrundlage: W3C WAI Technique ARIA19 (https://www.w3.org/WAI/WCAG21/Techniques/aria/ARIA19) empfiehlt einen leeren Alert-Container bereits im DOM; MDN Live Regions (https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions) empfiehlt die Registrierung der Live-Region vor dem Inhaltsupdate.
+
+### PR #235 – Taxonomie nach Archivierungs-/Reaktivierungskonflikten aktualisieren (12.11.2026)
+
+- Bei Revisionskonflikten oder nicht mehr vorhandenen Einträgen während Archivierung/Reaktivierung zeigten die Taxonomie-Manager bisher eine Fehlermeldung, luden die Liste aber nicht neu. Ein erneuter Versuch konnte dadurch mit demselben veralteten Revisionsstand wieder scheitern.
+- Kategorie- und Dokumenttypmanager laden nach fehlgeschlagener Archivierung/Reaktivierung jetzt den aktuellen Listenstand erneut. Die serverseitige Revisions- und Berechtigungsentscheidung bleibt unverändert.
+- PR #235 wurde am 12.11.2026 gemergt (Commit `fb8b5e8bf3aca351de6f2cbc0dacc47ac5829aaf`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Live-Firestore-Test.
+- PR #234 war ein älterer Vorläufer auf dem vorherigen Stand und wurde zugunsten der konfliktfreien Neuauflage #235 geschlossen.
+
+### Nächster Auditfokus
+
+- Reader-/Notiz-End-to-End-Verhalten: Autosave, Konfliktauflösung, Reload, Textanker, Mehrfachquellen und Quellenstatus in Kurs-Reader und direktem Bibliotheks-Reader.
+- Materialverwaltung: Speichern, Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen einschließlich Revisions-/Konfliktfällen.
+- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+- Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
