@@ -814,3 +814,11 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Farbakzent der Bibliothek bleibt das bereits beschlossene Violett `#6841B8`, wird aber nur dezent als Kategorie-/Orientierungshinweis genutzt; Aktionsbuttons bleiben neutral-sachlich. Dekorative Farbverläufe wurden entfernt.
 - Noch offen: vollständige Zusammenführung der alten und versionierten Materialmodelle (ohne Datenmigration oder künstliche Versions-IDs), zusätzliche Regressionstests und Browser-/Mobile-/Dark-Mode-QA.
 - Keine Datenmodell-, API-, Berechtigungs- oder Veröffentlichungslogik geändert.
+
+
+### Nachprüfung der Materialverwaltung – 12.11.2026
+- Die Materialsuche wurde erweitert, soweit es die bestehende Listenprojektion sicher hergibt: Materialkennung, Kurszuständigkeit, Entwurfstitel, veröffentlichter Titel, Kategorie/Dokumenttyp aus dem vorhandenen Entwurf und Verwaltungsstatus.
+- Ein erster Versuch, auch Beschreibungen und veröffentlichte Kategorien/Dokumenttypen über `AcademyMaterialListItem` zu durchsuchen, scheiterte an der tatsächlichen Typdefinition: Diese Felder sind in der Listenprojektion nicht enthalten. Die nicht unterstützten Felder wurden entfernt; keine API-Projektion wurde nur für die Suche aufgebläht.
+- CI des Zwischencommits `21d43e64cf844c31fac32fb814c8f9ac4fa6ad3e` schlug mit TypeScript-Fehlern wegen dieser nicht vorhandenen Felder fehl. Korrektur erfolgte im Folgecommit `ecda264998618704e2a24f591c42f69932a05e31`; erneute CI-Prüfung steht noch aus.
+- Offene UX-Arbeit: Kategorien-/Dokumenttypenformulare sind noch neben den Listen eingebettet; Bearbeitungswechsel kann Eingaben ohne explizite Rückfrage verwerfen. Diese Verwaltungsstrecken müssen noch in klare Übersichts- und Bearbeitungsansichten überführt werden.
+- PR #202 bleibt offen und ungemergt. Kein Browser-/Produktionscheck erfolgt.
