@@ -9,7 +9,7 @@ interface ClaimHistoryEvent {
   targetName?: string | null;
   previousName?: string | null;
   reason?: string;
-  feedback?: Array<{ questionId: string; feedback: string }>;
+  feedback?: Array<{ questionId: string; feedback: string; label: string }>;
   revisionRequestedAtIso?: string;
   atIso: string;
 }
@@ -134,10 +134,7 @@ export const ExamParticipantRecord: React.FC<{
                 <div><span className="font-semibold text-slate-700 dark:text-slate-200">{actionLabel[event.action] || 'Prüfungsvorgang aktualisiert'}</span><span className="text-slate-500"> · {dateLabel(event.atIso)}</span>
                   <p className="mt-0.5 text-slate-500">{event.actorName || 'System'}{event.targetName ? ` → ${event.targetName}` : ''}{event.previousName ? ` (zuvor: ${event.previousName})` : ''}{event.reason ? ` · Grund: ${event.reason}` : ''}</p>
                   {event.feedback && event.feedback.length > 0 && <ul className="mt-2 space-y-1 rounded-md bg-slate-50 p-2 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                    {event.feedback.map(entry => {
-                      const questionIndex = item.questions?.findIndex(question => question.questionId === entry.questionId) ?? -1;
-                      return <li key={entry.questionId}><span className="font-semibold">{questionIndex >= 0 ? `Frage ${questionIndex + 1}` : 'Bewertungsschritt'}:</span> {entry.feedback}</li>;
-                    })}
+                    {event.feedback.map(entry => <li key={entry.questionId}><span className="font-semibold">{entry.label}:</span> {entry.feedback}</li>)}
                   </ul>}
                 </div>
               </li>)}
