@@ -26,6 +26,14 @@ interface CorrectionGrade {
   pointsEarnedMilli: number;
 }
 
+interface ResultReleaseHistoryEntry {
+  releasedByUid: string;
+  releasedByName?: string | null;
+  releasedAtIso: string;
+  status: 'passed' | 'failed';
+  finalScoreBasisPoints: number | null;
+}
+
 interface ReviewCorrectionHistoryEntry {
   reviewerUid: string;
   reviewerName?: string;
@@ -56,6 +64,7 @@ interface ParticipantHistoryItem {
   detailed: boolean;
   claimHistory?: ClaimHistoryEvent[];
   reviewCorrections?: ReviewCorrectionHistoryEntry[];
+  resultReleaseHistory?: ResultReleaseHistoryEntry[];
   questions?: ReviewQuestion[];
 }
 
@@ -168,6 +177,16 @@ export const ExamParticipantRecord: React.FC<{
               {question.gradingRubric && <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">Bewertungsrubrik: {question.gradingRubric}</p>}
               {typeof question.pointsEarnedMilli === 'number' && <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">Bewertung: {(question.pointsEarnedMilli / 1000).toLocaleString('de-DE')} / {(question.pointsMilli / 1000).toLocaleString('de-DE')} Punkte</p>}
             </div>)}
+          </div>}
+
+          {item.detailed && item.resultReleaseHistory && item.resultReleaseHistory.length > 0 && <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
+            <h5 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Ergebnisfreigaben</h5>
+            <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+              {item.resultReleaseHistory.map((release, index) => <li key={release.releasedAtIso + index} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                <p className="font-semibold">{release.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {scoreLabel(release.finalScoreBasisPoints)}</p>
+                <p className="mt-1 text-slate-500">{dateLabel(release.releasedAtIso)} · Freigegeben von: {release.releasedByName || 'Nicht dokumentiert'}</p>
+              </li>)}
+            </ol>
           </div>}
 
           {item.detailed && item.reviewCorrections && item.reviewCorrections.length > 0 && <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
