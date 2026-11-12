@@ -1,6 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
+import type { UserPublicProfile } from '../types/portal';
+
+interface PendingRevisionRequest {
+  id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
+  submittedAtIso: string; assessmentStage: 'test' | 'final_exam'; status: 'passed' | 'failed';
+  reviewedAtIso: string; reviewedByName: string; requestedAtIso: string; requestedByName: string;
+  reason: string;
+  feedback: Array<{ questionId: string; label: string; feedback: string }>;
+  previousGrades: Array<{ questionId: string; label: string; pointsEarnedMilli: number; maxPointsMilli: number }>;
+}
 
 interface ReviewSummary {
   id: string;
@@ -18,8 +28,14 @@ interface ReviewSummary {
 
 const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
 
-export const ExamReviewRevisionCenter: React.FC = () => {
+export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile }> = ({ currentUser }) => {
+  const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
+  const [requests, setRequests] = useState<PendingRevisionRequest[]>([]);
+  const [requestLoadError, setRequestLoadError] = useState('');
+  const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
+  const [rejectingId, setRejectingId] = useState('');
+  const [decisionSavingId, setDecisionSavingId] = useState('');
   const [expandedId, setExpandedId] = useState('');
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [selectedSteps, setSelectedSteps] = useState<Record<string, string[]>>({});
@@ -40,10 +56,49 @@ export const ExamReviewRevisionCenter: React.FC = () => {
       setLoadError('');
       setReviews(response.data.reviews);
     }
+    if (isSupervisor) {
+      const pending = await apiFetch<{ requests: PendingRevisionRequest[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEW_REVISION_REQUESTS, { cache: 'no-store' });
+      if (!pending.ok || !pending.data) {
+        setRequestLoadError(pending.error || 'Offene Revisionsanfragen konnten nicht geladen werden.');
+        setRequests([]);
+      } else {
+        setRequestLoadError('');
+        setRequests(pending.data.requests);
+      }
+    } else {
+      setRequests([]);
+      setRequestLoadError('');
+    }
     setLoading(false);
-  }, []);
+  }, [isSupervisor]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const decide = async (request: PendingRevisionRequest, decision: 'accept' | 'reject') => {
+    const reason = (rejectionReasons[request.id] || '').trim();
+    if (decision === 'reject' && (reason.length < 10 || reason.length > 1000)) {
+      setError('Eine Ablehnung benötigt eine nachvollziehbare Begründung mit 10 bis 1000 Zeichen.');
+      return;
+    }
+    setDecisionSavingId(request.id);
+    setError('');
+    setNotice('');
+    const response = await apiFetch(
+      API_ENDPOINTS.ACADEMY_EXAM_REVIEW_RESOLVE_REVISION(request.examId, request.id),
+      { method: 'POST', body: JSON.stringify({ decision, ...(decision === 'reject' ? { reason } : {}) }) }
+    );
+    setDecisionSavingId('');
+    if (!response.ok) {
+      setError(response.error || 'Die Revisionsanfrage konnte nicht entschieden werden.');
+      return;
+    }
+    setRejectingId('');
+    setRejectionReasons(current => { const next = { ...current }; delete next[request.id]; return next; });
+    setNotice(decision === 'accept'
+      ? 'Die Revisionsanfrage wurde angenommen. Der Vorgang ist jetzt wieder in der gemeinsamen Prüferliste.'
+      : 'Die Revisionsanfrage wurde begründet abgelehnt. Die bisherige Bewertung bleibt unverändert.');
+    await load();
+  };
 
   const toggleStep = (reviewId: string, questionId: string, checked: boolean) => {
     setSelectedSteps(current => {
@@ -87,7 +142,7 @@ export const ExamReviewRevisionCenter: React.FC = () => {
     }
     setReviews(current => current.filter(item => item.id !== review.id));
     setExpandedId('');
-    setNotice('Die Bewertung wurde zur Revision zurückgegeben. Admins und Colonels wurden benachrichtigt; der Vorgang steht wieder in der gemeinsamen Prüferliste.');
+    setNotice('Die Revisionsanfrage wurde an Admins und Colonels gesendet. Die bisherige Bewertung bleibt bis zur Entscheidung unverändert; eine erneute Bewertung beginnt erst nach Annahme.');
   };
 
   return <section className="exam-review-revision-center space-y-4" aria-labelledby="exam-review-revision-title">
@@ -109,6 +164,59 @@ export const ExamReviewRevisionCenter: React.FC = () => {
     </div>}
     {error && <div role="alert" className="flex items-start gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17} className="mt-0.5 shrink-0"/>{error}</div>}
     {notice && <div role="status" className="flex items-start gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17} className="mt-0.5 shrink-0"/>{notice}</div>}
+
+    {isSupervisor && <section aria-labelledby="exam-revision-requests-title" className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 id="exam-revision-requests-title" className="font-semibold text-slate-900 dark:text-white">Offene Revisionsanfragen</h4>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Diese Anfragen warten auf eine Entscheidung. Erst nach Annahme wird der Versuch wieder für kursberechtigte Prüfer freigegeben.</p>
+        </div>
+        <span className="rounded-full border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">{requests.length} offen</span>
+      </div>
+      {requestLoadError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800">{requestLoadError}</div>}
+      {!loading && !requestLoadError && requests.length === 0 && <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">Keine offenen Revisionsanfragen.</p>}
+      {requests.map(request => <article key={request.id} className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h5 className="font-semibold text-slate-900 dark:text-white">{request.examTitle}</h5>
+            <p className="mt-1 text-xs text-slate-500">{request.userName} · {request.attemptCourseCode} · {request.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'}</p>
+            <p className="mt-1 text-xs text-slate-500">Angefragt von {request.requestedByName} am {new Date(request.requestedAtIso).toLocaleString('de-DE')}</p>
+            <p className="text-xs text-slate-500">Ursprüngliche Bewertung: {request.reviewedByName} · {new Date(request.reviewedAtIso).toLocaleString('de-DE')}</p>
+          </div>
+          <span className={request.status === 'passed' ? 'text-xs font-semibold text-emerald-700 dark:text-emerald-400' : 'text-xs font-semibold text-rose-700 dark:text-rose-400'}>{request.status === 'passed' ? 'Bisher bestanden' : 'Bisher nicht bestanden'}</span>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Begründung</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-200">{request.reason}</p>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Betroffene Bewertungsschritte</p>
+          {request.feedback.map(item => <div key={item.questionId} className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.label}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{item.feedback}</p>
+            {request.previousGrades.find(grade => grade.questionId === item.questionId) && <p className="mt-1 text-xs text-slate-500">Bisherige Punkte: {request.previousGrades.find(grade => grade.questionId === item.questionId)!.pointsEarnedMilli / 1000} / {request.previousGrades.find(grade => grade.questionId === item.questionId)!.maxPointsMilli / 1000}</p>}
+          </div>)}
+        </div>
+        {rejectingId === request.id && <div>
+          <label htmlFor={`exam-revision-reject-reason-${request.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Ablehnung</label>
+          <textarea id={`exam-revision-reject-reason-${request.id}`} className={fieldClass} rows={3} minLength={10} maxLength={1000}
+            value={rejectionReasons[request.id] || ''}
+            onChange={event => setRejectionReasons(current => ({ ...current, [request.id]: event.target.value }))}
+            aria-describedby={`exam-revision-reject-help-${request.id}`}
+            placeholder="Erkläre nachvollziehbar, warum die Revisionsanfrage abgelehnt wird."/>
+          <p id={`exam-revision-reject-help-${request.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
+        </div>}
+        <div className="flex flex-wrap justify-end gap-2">
+          {rejectingId === request.id ? <>
+            <button type="button" onClick={() => setRejectingId('')} disabled={Boolean(decisionSavingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-700">Abbrechen</button>
+            <button type="button" onClick={() => void decide(request, 'reject')} disabled={Boolean(decisionSavingId)} className="rounded-lg border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-800 disabled:opacity-50 dark:border-rose-900 dark:text-rose-300">{decisionSavingId === request.id ? 'Wird gespeichert …' : 'Begründet ablehnen'}</button>
+          </> : <>
+            <button type="button" onClick={() => setRejectingId(request.id)} disabled={Boolean(decisionSavingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Ablehnen</button>
+            <button type="button" onClick={() => void decide(request, 'accept')} disabled={Boolean(decisionSavingId)} className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{decisionSavingId === request.id ? 'Wird angenommen …' : 'Annehmen und erneut bewerten lassen'}</button>
+          </>}
+        </div>
+      </article>)}
+    </section>}
 
     {loading ? <p role="status" className="py-5 text-center text-sm text-slate-500"><Loader2 size={16} className="mr-2 inline animate-spin"/>Abgeschlossene Bewertungen werden geladen …</p>
       : !loadError && reviews.length === 0 ? <p className="rounded-lg border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-700">Keine abgeschlossenen manuellen Bewertungen in deinen Kursen vorhanden.</p>
