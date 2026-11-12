@@ -211,6 +211,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const queueSave = useCallback((draft: NoteDraft) => {
     if (operationLockedIdsRef.current.has(draft.id)) return;
     if (blockedSaveIdsRef.current.has(draft.id)) {
+      pendingSavesRef.current.set(draft.id, draft);
       const message = saveErrorsByIdRef.current.get(draft.id) ||
         'Lade zuerst die aktuelle Notizfassung, bevor du erneut speicherst.';
       if (currentDraftRef.current?.id === draft.id) {
@@ -543,7 +544,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         savingDraftIdRef.current === selectedNote.id || operationLockedIdsRef.current.has(selectedNote.id)) return;
     if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
     const noteId = selectedNote.id;
-    const draftToKeep = pendingSavesRef.current.get(noteId) || draft;
+    const draftToKeep = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
+      ? draft
+      : pendingSavesRef.current.get(noteId) || draft;
     if (saveDebounceTimerRef.current !== null) {
       window.clearTimeout(saveDebounceTimerRef.current);
       saveDebounceTimerRef.current = null;
@@ -591,8 +594,9 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         operationLockedIdsRef.current.has(selectedNote.id) ||
         !window.confirm('Diese private Notiz endgültig löschen?')) return;
     const noteId = selectedNote.id;
-    const draftToRestore = pendingSavesRef.current.get(noteId) ||
-      (hasUnsavedChanges && draft ? draft : null);
+    const draftToRestore = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
+      ? draft
+      : pendingSavesRef.current.get(noteId) || null;
     if (saveDebounceTimerRef.current !== null) {
       window.clearTimeout(saveDebounceTimerRef.current);
       saveDebounceTimerRef.current = null;
