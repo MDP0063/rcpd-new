@@ -195,7 +195,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
     {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => void load()} disabled={loading || Boolean(savingId)} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
 
-    {!loading && !loadError && (reviews.length > 0 || pendingReleases.length > 0) && <section className="exam-correction-filters" aria-label="Bewertungen und Freigaben filtern">
+    {!loading && !loadError && (reviews.length > 0 || pendingReleases.length > 0 || hasActiveFilters) && <section className="exam-correction-filters" aria-label="Bewertungen und Freigaben filtern">
       <div className="exam-correction-filter-field">
         <label htmlFor="exam-correction-participant-filter">Teilnehmer</label>
         <input id="exam-correction-participant-filter" type="search" value={participantFilter} onChange={event => setParticipantFilter(event.target.value)} placeholder="Teilnehmername suchen …"/>
