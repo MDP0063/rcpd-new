@@ -1020,7 +1020,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
                           <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Bibliothek</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
-                            {isLibraryNavigationOpen ? 'Materialliste schließen' : 'Materialliste öffnen'}
+                            {isLibraryNavigationOpen ? 'Navigation schließen' : 'Materialnavigation öffnen'}
                           </button>
                         </div>
                       </div>
