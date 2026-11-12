@@ -65,6 +65,7 @@ export function jumpToTextAnchor(
   const selection = window.getSelection();
   selection?.removeAllRanges();
   selection?.addRange(range);
-  match.node.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const behavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  match.node.parentElement?.scrollIntoView({ behavior, block: 'center' });
   return 'resolved';
 }
