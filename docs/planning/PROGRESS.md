@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Bibliotheks-/Reader-Korrekturen #224/#225 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Reader-/Notizkorrekturen #228/#230 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #225 (Merge-Commit `51114f3ba171855711a50a583a192908e43014f2`).
+**Aktueller Basisstand:** `main` nach PR #230 (Merge-Commit `801296b59d4c033461352a85cb901297171fcc1f`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -951,3 +951,26 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Materialverwaltung: Speichern, Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen einschließlich Konflikt-/Fehlerfällen.
 - Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
 - Gemeinsame manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein separater Qualitäts-Gate; CI-Erfolg wird nicht als Produktionsabnahme ausgegeben.
+
+
+### PR #228 – Private Notizen: Speichern und Neuladen gegen Parallelaktionen absichern (12.11.2026)
+
+- Nach einem fehlgeschlagenen Autosave konnten „Erneut speichern“ und „Aktuelle Fassung laden“ auch während eines laufenden Schreibversuchs gleichzeitig aktiv sein. Zusätzlich waren die Notizfelder während des Neuladens weiter bearbeitbar.
+- Die Konfliktaktionen sind jetzt nur im tatsächlichen Fehlerzustand aktiv. Beim Neuladen werden Eingaben und Aktionen gesperrt; der Handler prüft den Fehlerzustand zusätzlich und leert defensiv die ausstehende Save-Queue.
+- Autosave, Serverrevisionen, Eigentümerisolation und Versionsbindung bleiben unverändert.
+- PR #228 wurde am 12.11.2026 gemergt (Commit `d2184996266a3b517e6ad7e29ece7de948acaba3`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Live-Firestore-Test.
+
+### PR #230 – Private Notizaktionen erst nach erfolgreichem Initialabruf (12.11.2026)
+
+- Bei permanenten Ladefehlern wie 401/403/404 war `loadRetryable` korrekt `false`, aber `notesLoaded` blieb ebenfalls `false`. Die UI konnte dadurch Notiz-/Lesezeichenaktionen wieder aktivieren, obwohl die Ausgangsliste nie erfolgreich geladen wurde.
+- „Notiz hinzufügen“ und „Lesezeichen setzen“ prüfen jetzt `notesLoaded` sowohl in der Button-Freigabe als auch in den Handlern; zusätzlich werden Lade- und Parallelaktionszustände geprüft.
+- Die Alert-Live-Region für Speicherfehler enthält nur noch den Meldungstext; Retry-/Reload-Schaltflächen liegen außerhalb.
+- PR #230 wurde am 12.11.2026 gemergt (Commit `801296b59d4c033461352a85cb901297171fcc1f`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
+- PR #229 war ein älterer Vorläufer auf dem Stand vor PR #228 und wurde zugunsten der konfliktfreien Neuauflage #230 geschlossen.
+
+### Nächster Auditfokus
+
+- Weitere Lade-/Fehleransagen in Reader und Taxonomie gegen die WAI-ARIA-Empfehlung für persistent gemountete Live-Regionen prüfen.
+- Private Notizen: Browser-/Live-Firestore-Abnahme der Autosave-, Konflikt-, Reload-, Mehrfachquellen- und Quellenstatusabläufe.
+- Materialverwaltung: Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen in realen Abläufen prüfen.
+- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
