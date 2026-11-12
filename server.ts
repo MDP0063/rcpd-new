@@ -3671,8 +3671,16 @@ async function startServer() {
       return;
     }
 
-    const targetCode = code !== undefined ? String(code).trim() : dbState.modules[idx].code;
-    if (!caller || !canActorEditCourseCode(caller, targetCode)) {
+    const originalCode = dbState.modules[idx].code;
+    const targetCode = code !== undefined ? String(code).trim() : originalCode;
+    // Scoped instructors must be authorized for both sides of a course-code move.
+    // Checking only the target would let them take over an out-of-scope module by
+    // changing its code to one of their assigned courses in the same request.
+    if (
+      !caller ||
+      !canActorEditCourseCode(caller, originalCode) ||
+      !canActorEditCourseCode(caller, targetCode)
+    ) {
       res.status(403).json({
         error: 'Keine Lehrgangs-Berechtigung zum Bearbeiten dieses Moduls.'
       });
