@@ -420,86 +420,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     );
   };
 
-  const handleCreateModule = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canEditAcademy) return;
-
-    const res = await apiFetch<{ ok: boolean; module: TrainingModuleDoc }>(
-      API_ENDPOINTS.ACADEMY_MODULES,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          title: modTitle,
-          code: modCode,
-          category: modCategory,
-          requiredRole: modRequiredRole,
-          embedType: modEmbedType,
-          contentMarkdown: modMarkdown,
-          externalUrl: modExternalUrl,
-          interactiveCode: modInteractiveCode,
-          estimatedMinutes: Number(modMinutes) || 25
-        })
-      }
-    );
-
-    if (!res.ok || !res.data) {
-      onStatusToast(res.error || 'Lehrbuch/Dokument konnte nicht gespeichert werden.');
-      return;
-    }
-
-    await onRefreshState();
-    setModTitle('');
-    setModMarkdown('');
-    onStatusToast(`Lehrmaterial "${res.data.module.title}" erfolgreich veröffentlicht.`);
-    setActiveTab('modules');
-    setActiveModuleId(res.data.module.id);
-  };
-
-  const handleCreateExam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canEditAcademy) return;
-
-    if (examFormat === 'structured_quiz') {
-      try {
-        JSON.parse(examQuestionsJson);
-      } catch {
-        onStatusToast('Fehler: Das eingegebene Fragen-JSON ist ungültig.');
-        return;
-      }
-    }
-
-    const res = await apiFetch<{ ok: boolean; exam: AcademyExamDoc }>(
-      API_ENDPOINTS.ACADEMY_EXAMS,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          actorUid: currentUser.uid,
-          title: examTitle,
-          moduleCode: examModuleCode,
-          assessmentStage: examStage,
-          passingScore: Number(examPassingScore) || 75,
-          timeLimitMinutes: Number(examTimeLimit) || 20,
-          examFormat,
-          questionsPayload: examQuestionsJson,
-          interactiveWidgetCode: examWidgetCode
-        })
-      }
-    );
-
-    if (!res.ok || !res.data) {
-      onStatusToast(res.error || 'Test/Prüfung konnte nicht erstellt werden.');
-      return;
-    }
-
-    await onRefreshState();
-    setExamTitle('');
-    onStatusToast(
-      `${examStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} "${res.data.exam.title}" veröffentlicht.`
-    );
-    setActiveTab(examStage === 'final_exam' ? 'final_exams' : 'tests');
-    setActiveExamId(res.data.exam.id);
-  };
-
   const handleDeleteModule = async (id: string) => {
     if (!canEditAcademy) return;
     const res = await apiFetch(
@@ -532,40 +452,6 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     } else {
       onStatusToast(res.error || 'Test / Prüfung konnte nicht gelöscht werden.');
     }
-  };
-
-  const handleAssignInstructorGrade = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gradeTargetUserUid || !gradeCourseCode.trim()) {
-      onStatusToast('Bitte Teilnehmer und Lehrgangs-Code auswählen.');
-      return;
-    }
-    setSubmittingGrade(true);
-    const res = await apiFetch(API_ENDPOINTS.INSTRUCTOR_GRADE, {
-      method: 'POST',
-      body: JSON.stringify({
-        instructorUid: currentUser.uid,
-        targetUserUid: gradeTargetUserUid,
-        courseCode: gradeCourseCode.trim().toUpperCase(),
-        targetTitle: gradeCourseTitle.trim(),
-        targetType: 'module',
-        status: gradeStatus,
-        scorePercent: Number(gradeScorePercent),
-        instructorFeedback: gradeFeedback.trim()
-      })
-    });
-    setSubmittingGrade(false);
-
-    if (!res.ok) {
-      onStatusToast(res.error || 'Notenvergabe fehlgeschlagen.');
-      return;
-    }
-
-    setGradeFeedback('');
-    await onRefreshState();
-    onStatusToast(
-      `Lehrgangs-Note (${gradeScorePercent}% · ${gradeStatus.toUpperCase()}) für ${gradeCourseCode.toUpperCase()} gespeichert und Teilnehmer benachrichtigt.`
-    );
   };
 
   const renderStructuredHandbookContent = (markdown: string) => {
