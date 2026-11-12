@@ -290,9 +290,11 @@ export async function listPendingExamReviewNotifications(
     const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
     history.forEach((event, eventIndex) => {
       if (!event.notificationRequired) return;
-      const recipients = event.action === 'transferred' || event.action === 'reassigned'
-        ? [event.previousUid, event.targetUid]
-        : [event.targetUid];
+      const recipients = event.action === 'revision_requested'
+        ? (event.recipientUids || [])
+        : event.action === 'transferred' || event.action === 'reassigned'
+          ? [event.previousUid, event.targetUid]
+          : [event.targetUid];
       for (const recipientUid of recipients) {
         if (recipientUid && !event.notificationDeliveredTo?.includes(recipientUid)) {
           results.push({
@@ -321,9 +323,11 @@ export async function markExamReviewNotificationDelivered(
     const history = [...(attempt.reviewClaimHistory || [])];
     const event = history[eventIndex];
     if (!event?.notificationRequired) throw new Error('EXAM_REVIEW_NOTIFICATION_NOT_FOUND');
-    const recipients = event.action === 'transferred' || event.action === 'reassigned'
-      ? [event.previousUid, event.targetUid]
-      : [event.targetUid];
+    const recipients = event.action === 'revision_requested'
+      ? (event.recipientUids || [])
+      : event.action === 'transferred' || event.action === 'reassigned'
+        ? [event.previousUid, event.targetUid]
+        : [event.targetUid];
     if (!recipients.includes(recipientUid)) throw new Error('EXAM_REVIEW_NOTIFICATION_RECIPIENT_INVALID');
     if (event.notificationDeliveredTo?.includes(recipientUid)) return;
     history[eventIndex] = {
@@ -447,15 +451,24 @@ export interface ExamReviewItem {
   canClaim: boolean;
   draftGrades: Record<string, number>;
   draftRevision: number;
+  revisionRequest: {
+    requestedByUid: string;
+    requestedAtIso: string;
+    previousReviewerUid: string | null;
+    reason: string;
+    feedback: Array<{ questionId: string; feedback: string }>;
+  } | null;
 }
 
 function hasPendingExamReviewNotification(attempt: ExamAttemptRecord): boolean {
   const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
   return history.some(event => {
     if (!event.notificationRequired) return false;
-    const recipients = event.action === 'transferred' || event.action === 'reassigned'
-      ? [event.previousUid, event.targetUid]
-      : [event.targetUid];
+    const recipients = event.action === 'revision_requested'
+      ? (event.recipientUids || [])
+      : event.action === 'transferred' || event.action === 'reassigned'
+        ? [event.previousUid, event.targetUid]
+        : [event.targetUid];
     return recipients.some(uid => Boolean(uid) && !event.notificationDeliveredTo?.includes(uid!));
   });
 }
@@ -486,10 +499,22 @@ export async function listExamReviews(
     const isClaimOwner = attempt.reviewClaim?.reviewerUid === reviewerUid && !attempt.reviewClaim.disconnectedAtIso;
     const canClaim = !attempt.reviewClaim || isOwnDisconnectedClaim;
     const questions = attempt.reviewClaim && !isClaimOwner ? [] : pendingFreeTextQuestions(attempt, version);
+    const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    const latestRevisionRequest = [...history].reverse().find(event => event.action === 'revision_requested');
+    const revisionCompleted = latestRevisionRequest
+      ? history.some(event => event.action === 'revision_completed' && event.revisionRequestedAtIso === latestRevisionRequest.atIso)
+      : false;
+    const revisionRequest = latestRevisionRequest && !revisionCompleted ? {
+      requestedByUid: latestRevisionRequest.actorUid,
+      requestedAtIso: latestRevisionRequest.atIso,
+      previousReviewerUid: latestRevisionRequest.previousUid || null,
+      reason: latestRevisionRequest.reason || '',
+      feedback: latestRevisionRequest.feedback || []
+    } : null;
     if (questions.length || attempt.reviewClaim) results.push({
       id: attempt.id, examId: attempt.examId, examTitle: version.title, userName: attempt.userName,
       attemptCourseCode: attempt.attemptCourseCode, submittedAtIso: String(attempt.submittedAtIso || ''),
-      assessmentStage: version.assessmentStage, questions,
+      assessmentStage: version.assessmentStage, questions, revisionRequest,
       reviewClaim: attempt.reviewClaim ? {
         reviewerName: attempt.reviewClaim.reviewerName,
         claimedAtIso: attempt.reviewClaim.claimedAtIso,
@@ -636,6 +661,141 @@ export async function listCompletedManualReviews(repository: ExamRepository): Pr
     });
   }
   return results;
+}
+
+export interface CompletedManualReviewSummary {
+  id: string;
+  examId: string;
+  examTitle: string;
+  userName: string;
+  attemptCourseCode: string;
+  submittedAtIso: string;
+  assessmentStage: 'test' | 'final_exam';
+  status: 'passed' | 'failed';
+  reviewedAtIso: string;
+  reviewedByUid: string;
+  questionSteps: Array<{ questionId: string; label: string }>;
+}
+
+/** Safe index for course-authorized reviewers: no participant answers, grading rubrics or point values. */
+export async function listCompletedManualReviewSummaries(
+  repository: ExamRepository,
+  allowedCourseCodes: readonly string[]
+): Promise<CompletedManualReviewSummary[]> {
+  const allowed = new Set(allowedCourseCodes.map(code => code.trim().toUpperCase()));
+  const completed = await listCompletedManualReviews(repository);
+  const summaries: CompletedManualReviewSummary[] = [];
+  for (const item of completed) {
+    if (!allowed.has('*') && !allowed.has(item.attemptCourseCode.trim().toUpperCase())) continue;
+    const attempt = await repository.get<ExamAttemptRecord>('exam_attempts', item.id);
+    if (!attempt) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    const version = await repository.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== item.examId) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    summaries.push({
+      id: item.id, examId: item.examId, examTitle: item.examTitle, userName: item.userName,
+      attemptCourseCode: item.attemptCourseCode, submittedAtIso: item.submittedAtIso,
+      assessmentStage: item.assessmentStage, status: item.status, reviewedAtIso: item.reviewedAtIso,
+      reviewedByUid: item.reviewedByUid,
+      questionSteps: item.questions.map(question => ({
+        questionId: question.questionId,
+        label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(candidate => candidate.id === question.questionId) + 1)}`
+      }))
+    });
+  }
+  return summaries;
+}
+
+export async function requestExamReviewRevision(
+  repository: ExamRepository,
+  examId: string,
+  attemptId: string,
+  reviewerUid: string,
+  reasonInput: unknown,
+  feedbackInput: unknown,
+  notificationRecipientUids: readonly string[],
+  nowIso = new Date().toISOString()
+): Promise<ExamAttemptRecord> {
+  const reason = typeof reasonInput === 'string' ? reasonInput.trim() : '';
+  if (!reviewerUid.trim()) throw new Error('EXAM_REVIEWER_INVALID');
+  if (reason.length < 10 || reason.length > 1000) throw new Error('EXAM_REVIEW_REVISION_REASON_INVALID');
+  validReviewTime(nowIso);
+  if (!Array.isArray(feedbackInput) || feedbackInput.length < 1 || feedbackInput.length > 50) {
+    throw new Error('EXAM_REVIEW_REVISION_FEEDBACK_INVALID');
+  }
+  const recipients = [...new Set(notificationRecipientUids)];
+  if (!recipients.length || recipients.length > 1000 ||
+      recipients.some(uid => typeof uid !== 'string' || !uid.trim() || uid.length > 128)) {
+    throw new Error('EXAM_REVIEW_REVISION_RECIPIENTS_INVALID');
+  }
+  const feedback = feedbackInput.map(entry => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) ||
+        Object.keys(entry).some(key => key !== 'questionId' && key !== 'feedback')) {
+      throw new Error('EXAM_REVIEW_REVISION_FEEDBACK_INVALID');
+    }
+    const questionId = (entry as Record<string, unknown>).questionId;
+    const text = typeof (entry as Record<string, unknown>).feedback === 'string'
+      ? String((entry as Record<string, unknown>).feedback).trim() : '';
+    if (typeof questionId !== 'string' || !questionId.trim() || questionId.length > 128 ||
+        text.length < 10 || text.length > 1000) {
+      throw new Error('EXAM_REVIEW_REVISION_FEEDBACK_INVALID');
+    }
+    return { questionId, feedback: text };
+  });
+  if (new Set(feedback.map(item => item.questionId)).size !== feedback.length) {
+    throw new Error('EXAM_REVIEW_REVISION_FEEDBACK_INVALID');
+  }
+
+  return repository.runTransaction(async transaction => {
+    const attempt = await transaction.get<ExamAttemptRecord>('exam_attempts', attemptId);
+    if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
+    if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
+    if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
+    if (!attempt.reviewedByUid || !attempt.reviewedAtIso) throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
+    const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
+    if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber ||
+        !Array.isArray(version.questionsSnapshot)) throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
+    const questions = completedFreeTextQuestions(attempt, version);
+    if (!questions.length) throw new Error('EXAM_REVIEW_REVISION_NOT_COMPLETED');
+    const questionIds = questions.map(question => question.questionId);
+    if (feedback.some(item => !questionIds.includes(item.questionId))) {
+      throw new Error('EXAM_REVIEW_REVISION_FEEDBACK_INVALID');
+    }
+    const history = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    if (history.length >= REVIEW_CLAIM_HISTORY_LIMIT) throw new Error('EXAM_REVIEW_CLAIM_HISTORY_LIMIT');
+    let resultReleaseStatus = attempt.resultReleaseStatus;
+    let publishedResultSnapshot = attempt.publishedResultSnapshot;
+    if (attempt.resultReleaseStatus === 'released') {
+      publishedResultSnapshot = toPublishedResultSnapshot(toParticipantSubmission(attempt, version));
+      resultReleaseStatus = 'pending_rerelease';
+    } else if (attempt.resultReleaseStatus === 'pending_rerelease' && !publishedResultSnapshot) {
+      throw new Error('EXAM_PUBLISHED_RESULT_SNAPSHOT_INVALID');
+    }
+    const questionGrades = (Array.isArray(attempt.questionGrades) ? attempt.questionGrades : []).map((grade: any) =>
+      questionIds.includes(String(grade?.questionId || '')) ? { ...grade, requiresManualReview: true } : grade
+    );
+    const event = {
+      action: 'revision_requested' as const,
+      actorUid: reviewerUid,
+      previousUid: attempt.reviewedByUid,
+      reason,
+      feedback,
+      questionIds,
+      recipientUids: recipients,
+      notificationRequired: true as const,
+      atIso: nowIso
+    };
+    const next: ExamAttemptRecord = {
+      ...attempt,
+      status: 'pending_review',
+      reviewClaim: null,
+      questionGrades,
+      reviewClaimHistory: [...history, event],
+      ...(resultReleaseStatus !== undefined ? { resultReleaseStatus } : {}),
+      ...(publishedResultSnapshot ? { publishedResultSnapshot } : {})
+    };
+    await transaction.update('exam_attempts', attemptId, next);
+    return next;
+  });
 }
 
 /** Corrections are appended to reviewCorrections; the original review completion identity/time remains stable for history ordering. */
