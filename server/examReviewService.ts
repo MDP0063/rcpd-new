@@ -1066,6 +1066,18 @@ export async function listExamParticipantReviewHistory(
               ...entry,
               label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === entry.questionId) + 1)}`
             }))
+          } : {}),
+          ...(Array.isArray(event.previousGrades) ? {
+            previousGrades: event.previousGrades.map(grade => ({
+              ...grade,
+              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
+            }))
+          } : {}),
+          ...(Array.isArray(event.nextGrades) ? {
+            nextGrades: event.nextGrades.map(grade => ({
+              ...grade,
+              label: `Frage ${Math.max(1, version.questionsSnapshot.findIndex(question => question.id === grade.questionId) + 1)}`
+            }))
           } : {})
         })),
         reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
