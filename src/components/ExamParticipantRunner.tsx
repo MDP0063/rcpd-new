@@ -21,7 +21,6 @@ interface CatalogEntry {
   passingScoreBasisPoints: number;
   maxAttempts: number | null;
   prerequisites: Array<{ examId: string; mode: 'completed' | 'passed'; minScoreBasisPoints?: number }>;
-  minClearance: number;
 }
 
 interface PublicQuestionBase {
@@ -679,7 +678,6 @@ export const ExamParticipantRunner: React.FC = () => {
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                   <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0 ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
                   <div className="flex justify-between gap-2"><span>Bestehensgrenze</span><strong>{(selectedExam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</strong></div>
-                  <div className="flex justify-between gap-2"><span>Freigabestufe</span><strong>{selectedExam.minClearance}</strong></div>
                 </div>
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
