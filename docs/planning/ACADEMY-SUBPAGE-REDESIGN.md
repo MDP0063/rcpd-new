@@ -1,7 +1,7 @@
 # Academy – vollständiges Unterseiten-Redesign und UX-Bestandsaudit
 
 **Stand:** 12.11.2026  
-**Prüfgrundlage:** main nach PR #253, einschließlich PRs #246–#253; zusätzlicher Codeabgleich der Teilnehmerprüfungen, Kursdetails, Notizen, Lernbibliothek und Verwaltungsansichten  
+**Prüfgrundlage:** main nach PR #255, einschließlich PRs #246–#255; zusätzlicher Codeabgleich der Teilnehmerprüfungen, Kursdetails, Notizen, Lernbibliothek, Verwaltungs- und Bewertungsansichten  
 **Status:** Recherchegestütztes Redesign-Konzept; bestehende Fachregeln bleiben verbindlich. Die vorgeschlagenen Layout-/Kompositionsmuster dürfen innerhalb der bestätigten Academy-Designfreigabe eigenständig umgesetzt werden.  
 **Geltungsbereich:** interne Academy-Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner sowie Meine Notizen.
 
@@ -284,3 +284,14 @@ Die Änderung verändert keine Daten, API, Berechtigungen, Statuswerte, Nachweis
 - Numerische minClearance-Werte werden aus der öffentlichen Katalogprojektion entfernt. Die serverseitige Filterung nach Freigabestufe bleibt unverändert; sichtbare Texte sagen nur „für dich freigegeben“.
 
 Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. Der PR änderte keine Bewertungs-, Fragen-, Timer- oder Berechtigungslogik. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Browser-/Tastatur-/Screenreader-Abnahme bleibt offen.
+
+## 14. Umsetzungsprotokoll – Examiner-Accessibility und sekundäre Informationen (PR #255)
+
+**PR #255 – am 12.11.2026 gemergt (Commit bcce59fb9f967299105313ce769fc6bc549e885e):**
+
+- Übergabe-/Neuzuweisungs- und Freigabepanels sind Inline-Regionen im normalen Dokumentfluss. Die vorherige role="dialog" aria-modal="true"-Kennzeichnung war falsch, da kein Modal-Overlay und keine Modal-Fokusbegrenzung existierten.
+- Die Panels haben nun eine beschriftete Region und eine fokussierbare Überschrift. Beim Öffnen wird der Fokus auf diese Überschrift gesetzt; beim Abbrechen wird er zum Auslöser zurückgeführt.
+- Der sekundäre Vorgangskontext einer offenen Bewertung ist standardmäßig geschlossen.
+- Die Korrekturhistorie einer abgeschlossenen Bewertung ist als native Disclosure mit Eintragsanzahl standardmäßig geschlossen.
+
+Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten bleiben unverändert. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
