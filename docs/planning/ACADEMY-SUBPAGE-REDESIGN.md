@@ -1,7 +1,7 @@
 # Academy – vollständiges Unterseiten-Redesign und UX-Bestandsaudit
 
 **Stand:** 12.11.2026  
-**Prüfgrundlage:** main nach PR #250, einschließlich PRs #246–#248 und dem fokussierten Notizeditor aus #250  
+**Prüfgrundlage:** main nach PR #250, einschließlich PRs #246–#248 und dem fokussierten Notizeditor aus #250; zusätzlicher Codeabgleich der Kurs-/Lehrgangs-Terminologie und Übersichtstexte auf PR-#251-Branch  
 **Status:** Recherchegestütztes Redesign-Konzept; bestehende Fachregeln bleiben verbindlich. Die vorgeschlagenen Layout-/Kompositionsmuster dürfen innerhalb der bestätigten Academy-Designfreigabe eigenständig umgesetzt werden.  
 **Geltungsbereich:** interne Academy-Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner sowie Meine Notizen.
 
@@ -220,3 +220,45 @@ Der aktuelle Code besitzt bereits eine fünfteilige Hauptnavigation und einen R�
 **PR #250 – am 12.11.2026 gemergt (Commit `1a4bb48841c017b7a2f8cc935660754c27523abc`):** Die Notizenübersicht und der Editor werden als getrennte Ansichten umgesetzt. Der Editor zeigt die privaten Quellenverknüpfungen weiterhin an. Speichern erhält die Primärgewichtung, Verwerfen eine sekundäre Aktion und Löschen eine klar destruktive Gestaltung. Ein Parent-/Child-Dirty-State schützt den Wechsel über die Hauptnavigation, den Kachel-Rückweg und Examiner-Deep-Links; während eines laufenden Speichervorgangs werden die lokalen Abbruchaktionen gesperrt.
 
 Die Änderung ist rein clientseitige Darstellung/Zustandsführung. API, Revision, Datenmodell, Quellenbindung und Owner-Isolation bleiben unverändert. Der PR ist gemergt. CI (TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung) war erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. Manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme bleibt offen.
+
+
+## 10. Vertiefter Codeabgleich und konkrete Befunde (12.11.2026)
+
+### 10.1 Übersicht – Semantik und Inhalt
+
+- Die Academy-Hülle rendert auf Unterseiten bereits eine globale h1 „Academy“. Die interne Übersichtsseite rendert zusätzlich eine zweite h1 „Willkommen in der Academy“. Das ist eine unnötige doppelte Hauptüberschrift im selben Dokument. **Korrektur vorgesehen:** die interne Überschrift wird zur h2; die globale Academy-Überschrift bleibt die eine h1.
+- Die Beschreibung der Übersichtskachel versprach zuvor „Ausbildungsstand und nächste Schritte“, obwohl die beschlossene Übersicht keine persönliche Fortschritts- oder Aufgabenliste ist. **In PR #251 korrigiert:** die Kachel beschreibt jetzt die Orientierung über Aufbau und Zusammenspiel der Academy-Bereiche.
+- Die eigentliche Übersichtsseite entspricht inhaltlich bereits dem Beschluss: nicht-linearer Lernweg, Lehrgänge/Kurse/Bibliothek, kurze Einordnung von Prüfungen und privaten Notizen, keine duplizierten persönlichen Kennzahlen oder Bereichslinks. Die Grundstruktur muss nicht neu erfunden werden.
+
+### 10.2 Kurse und Lehrgänge – Kontext im aktiven Kurs
+
+- Vor dem Kursstart zeigt die Detailansicht Lernziele und Kapitel.
+- Nach Beginn einer Teilnahme zeigt der aktive Detailpfad Abschlussbedingungen/Nachweise und den versionierten Materialreader, blendet aber Lernziele und Kapitel aus derselben Kursversion aus.
+- Das ist ein konkreter Informationsverlust für bereits gestartete Teilnehmer: die fachliche Zielsetzung und Kapitelstruktur bleiben relevant, auch wenn die Teilnahme begonnen hat.
+- **Korrektur vorgesehen:** dieselben veröffentlichten Lernziele und Kapitel auch im aktiven Detailpfad anzeigen, in kompakter Hierarchie und ohne neue Daten/Status/Funktionen. Abschlussnachweise und Materialreader bleiben zentral.
+
+### 10.3 Prüfungen – zwei unterschiedliche Daten-/Workflow-Familien
+
+- Der neue ExamParticipantRunner lädt den Prüfungskatalog über /api/academy/exams/catalog und arbeitet mit versionierten Prüfungsversuchen, Autosave, serverseitigen Versuchsstatuswerten und freigegebenen Ergebnissen.
+- Die zusätzlichen Bereiche „Übungstests“ und „Abschlussprüfungen“ in AcademyCenter lesen dagegen die ältere AcademyExamDoc-Familie aus den Portal-Props und speichern Fortschritt über den älteren Progress-Endpunkt. Die alte Anlage unter POST /api/academy/exams ist serverseitig ausdrücklich als Legacy-Anlage gekennzeichnet.
+- Beide Systeme verwenden ähnliche sichtbare Begriffe, sind aber keine nachgewiesen identischen Datenquellen oder Workflows. Dadurch besteht ein reales Risiko doppelter bzw. widersprüchlicher Prüfungs-Einstiege.
+- **Schutzmaßnahme:** bis Datenbestand, Migration, Nutzung und Ergebnis-/Freigaberegeln vollständig abgeglichen sind, weder die alten Pfade löschen noch die beiden Systeme visuell/funktional zusammenführen. Dieser Punkt bleibt ein eigener technischer und fachlicher Prüfblock.
+
+### 10.4 Nicht erreichbare Legacy-Editorpfade
+
+- Der lokale activeTab-State enthält noch upload_textbook, add_code_test und instructor_grading; die zugehörigen JSX-Zweige und Handler sind noch im großen AcademyCenter.tsx enthalten.
+- Im gesamten Component-State gibt es keine Navigation, die diese Werte setzt. Die aktuellen sichtbaren Einstiege führen zur versionierten Lernbibliothek, zum neuen Prüfungszentrum und zur separaten Kurs-/Lehrgangsverwaltung.
+- Die betreffenden Legacy-Editorpfade sind damit im aktuellen Academy-UI nicht erreichbar. Das ist zunächst ein Wartbarkeitsbefund, keine Berechtigungslücke: die Handler prüfen zusätzlich serverseitige Rechte und die Routen sind nicht sichtbar verlinkt.
+- **Nächster Prüfschritt:** Abhängigkeiten, alte Datensätze und API-Verträge prüfen. Danach die nachweislich toten UI-Zweige/States gezielt entfernen oder eine bewusste Legacy-Rückführung dokumentieren. Keine Daten oder Legacy-Teilnehmeransichten ohne Migrationsprüfung löschen.
+
+### 10.5 Gemeinsame Navigation und Verwaltungsansichten
+
+- Die Hauptnavigation bleibt ein fünfteiliger, einzelner Navigationsbereich; die mobile CSS-Regel verwendet unter 760 px zwei Spalten und eine volle letzte Zeile. Das vermeidet fünf zu schmale gleich breite Buttons. Die tatsächliche Lesbarkeit bei 320/375/768 px muss manuell geprüft werden; aus CSS allein wird keine responsive Abnahme abgeleitet.
+- Kursverwaltung und Materialverwaltung öffnen jeweils eigenständige Listen-/Editoransichten. Die Materialverwaltung blendet die Liste beim Editieren aus; Versionshistorie und Formular sind dadurch nicht gleichzeitig mit einem zweiten Katalog im Wettbewerb. Dieses Muster bleibt erhalten.
+- Die Bibliotheks-Unterbereiche „Materialien“, „Kategorien“, „Dokumenttypen“ und „Materialverwaltung“ sind unterschiedliche vorhandene Aufgaben. Keine zusätzliche Untermenüebene allein aus optischen Gründen einführen.
+
+## 11. Umsetzungsprotokoll – Terminologie (PR #251)
+
+**PR #251 – offen am 12.11.2026:** Teilnehmerkatalog, Kurs-/Lehrgangsdetails, Fortschritt, Teilnahme, Versionsbindungen, Verwaltungslisten, Editorbeschriftungen, Fehlermeldungen, Bestätigungen und Kursbereich-Navigation verwenden sichtbar „Lehrgang“ statt „Programm“. Die Academy-Übersichtskachel beschreibt nun den tatsächlichen Orientierungszweck. Technische Program-Namen und Datenverträge bleiben unverändert.
+
+GitHub Actions: PR-Vorlagenprüfung erfolgreich; TypeScript-/Produktionsbuild-/Testworkflow erfolgreich, 455/455 Tests. Optionaler Render-Deploy-Hook übersprungen. PR #251 ist noch nicht gemergt; manuelle Browser-/Screenreader-Abnahme steht aus.
