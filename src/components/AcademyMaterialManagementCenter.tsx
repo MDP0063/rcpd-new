@@ -433,14 +433,21 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         {!isEditorOpen && <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
           <div className="flex items-center justify-between gap-3">
             <h3 className="academy-material-list-title font-semibold text-slate-900 dark:text-white">Vorhandene Materialien</h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length}</span>
+            <span aria-hidden="true" className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length}</span>
           </div>
+          <p className="sr-only" role="status" aria-atomic="true">
+            {loading
+              ? 'Materialien werden geladen.'
+              : filteredMaterials.length === 0
+                ? materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'
+                : filteredMaterials.length + (filteredMaterials.length === 1 ? ' Material gefunden.' : ' Materialien gefunden.')}
+          </p>
           <label htmlFor="academy-material-search" className="mt-3 block text-sm font-medium text-slate-800 dark:text-slate-200">Materialien durchsuchen</label>
           <input id="academy-material-search" type="search" className={field + ' academy-material-search-input mt-1'} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Kurs" />
           {loading ? (
-            <p className="py-5 text-sm text-slate-600 dark:text-slate-300" role="status">Materialien werden geladen …</p>
+            <p className="py-5 text-sm text-slate-600 dark:text-slate-300">Materialien werden geladen …</p>
           ) : filteredMaterials.length === 0 ? (
-            <p className="py-5 text-sm text-slate-600 dark:text-slate-300" role="status">Noch keine passenden Materialien vorhanden.</p>
+            <p className="py-5 text-sm text-slate-600 dark:text-slate-300">{materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'}</p>
           ) : (
             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
               {filteredMaterials.map(item => (
