@@ -369,9 +369,14 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       '2026-11-10T12:05:00.000Z'
     );
     assert.equal(corrected.status, 'failed');
-    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
+    assert.deepEqual(
+      await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'),
+      proof,
+      'the last released passing result remains valid for course completion until the corrected result is released'
+    );
     await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
-    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null);
+    assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null,
+      'the newly released failing result replaces the previous passing proof');
 
     await repository.create('exam_masters', 'academy-knowledge-test', {
       id: 'academy-knowledge-test', status: 'published', startable: true, minClearance: 0,
