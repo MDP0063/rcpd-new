@@ -525,3 +525,12 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Die bestehende Farbauswahl ist grundsätzlich akzeptiert. Akzente werden kontextbezogen und zurückhaltend verwendet; normale Navigation/Kategorien dürfen nicht wie Warn-/Fehlersignale wirken.
 - **BESCHLOSSEN:** Schaltflächen müssen eine klare visuelle Hierarchie, verständliche handlungsorientierte Beschriftungen, konsistente Größen und erkennbare Zustände besitzen. Keine dekorative Überladung, keine generischen KI-Dashboard-Muster, keine unnötige Häufung gleichrangiger Aktionen.
 - **BESCHLOSSEN:** Bestehende Versionierungs-, Veröffentlichungs-, Archivierungs-, Berechtigungs- und Datenschutzregeln bleiben unverändert.
+
+
+### Bibliotheksverwaltung – Interaktionsregeln (12.11.2026)
+- Kategorien und Dokumenttypen werden in getrennten Arbeitsansichten verwaltet: Liste/Übersicht und Editor sind nicht gleichzeitig sichtbar.
+- Formularwechsel darf geänderte Eingaben nicht stillschweigend verwerfen. Bei Wechsel, Neu-Anlage und Abbruch wird bei Änderungen eine Bestätigung eingeholt.
+- Löschaktionen werden als destruktive Aktion gekennzeichnet; Archivieren/Reaktivieren bleibt eine normale Verwaltungsaktion mit eigener Bestätigung.
+- Leseransicht hält die Materialnavigation nach dem Öffnen aus dem Katalog sichtbar. Die Materialübersicht bleibt als klarer Rückweg erreichbar.
+- Visuelle Akzente dienen Orientierung und Fokus, nicht als Warnsignal für normale Kategorien oder Navigationszustände.
+- Bestehende serverseitige Berechtigungs-, Revisions-, Versions- und Referenzprüfungen bleiben unverändert.
