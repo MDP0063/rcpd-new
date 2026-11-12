@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – Academy-Redesign wird eigenständig in geprüften PR-Schritten fortgeführt; aktuelle Korrekturen #215/#216/#219 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #215 (Merge-Commit `3bc3b50997a3a0d9499ae705239b5d277a7029d7`).  
+**Aktueller Basisstand:** `main` nach PR #219 (Merge-Commit `53841115a7760b61aaef751cc4445b41bf72b4f7`).
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -898,3 +898,23 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - PR #215 wurde am 12.11.2026 gemergt (Commit `3bc3b50997a3a0d9499ae705239b5d277a7029d7`). TypeScript, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung waren erfolgreich; Render-Deploy-Hook übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test.
 
 - **Nächster Prüffokus:** Materialverwaltung und Taxonomie vollständig auf Fehlerzustände, Daten-/Berechtigungsgrenzen und responsive Bedienbarkeit prüfen. Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Die manuelle Reader-/Notiz-End-to-End-Abnahme bleibt separat offen.
+
+
+### PR #210/#211/#212 – Dokumentations- und Alert-Konsolidierung (12.11.2026)
+
+- PR #210 aktualisierte den Fortschritt nach dem öffentlichen Bibliotheks-Retry-Fix #207 (Merge `013ef2544d7b253bfc732643cc86b90b62b85573`).
+- PR #211 trennte den interaktiven „Erneut versuchen“-Button semantisch vom `role="alert"`-Container in der Materialverwaltung (Merge `3a177d6adf704851c57500cc17f606ed6121f49a`). TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen.
+- PR #212 dokumentierte den privaten Notiz-Retry aus #209 (Merge `6d77c6385caf6a9f4c2b5a3253f8e750b79e56bc`).
+
+### PR #215/#216/#219 – Reader-Parität und Bibliothekszustände (12.11.2026)
+
+- PR #215 verbindet im direkten Bibliotheks-Reader die vorhandene versionsgebundene Textankerlogik mit den privaten Notizen. Auswahl per Maus und Touch sowie das Zurücksetzen bei Material-/Versionswechsel sind enthalten. Merge `3bc3b50997a3a0d9499ae705239b5d277a7029d7`; keine manuelle Browser-/Touch-/Live-Firestore-Abnahme behauptet.
+- PR #216 behebt die falsche Leerzustandsmeldung nach fehlgeschlagenem privaten Notizabruf. Ein eigener `notesLoaded`-Status wird nur bei erfolgreicher Serverantwort gesetzt. Merge `dcdde42b361e205b635e5a892730dbbd913d55fb`; TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen.
+- PR #219 ergänzt in der Materialverwaltung eine persistente, nur für Screenreader sichtbare `role="status"`-Region für Ladezustand, Trefferzahl und leere Suchergebnisse. Die sichtbare Zählerposition bleibt bestehen; leerer Materialbestand und Suche ohne Treffer werden sprachlich unterschieden. Merge `53841115a7760b61aaef751cc4445b41bf72b4f7`; Build/TypeScript/Tests und PR-Vorlagenprüfung erfolgreich; Render-Hook übersprungen. Kein manueller Browser-/Screenreader-Test.
+- PR #214 war ein nicht gemergter Vorläufer der Textanker-Paritätskorrektur und wurde nach Umsetzung durch #215 geschlossen.
+
+### Aktualisierter nächster Auditfokus
+
+- Reader-/Notiz-Verhalten in Kurs-Reader und direktem Bibliotheks-Reader auf Parität, Textanker, Auswahlrücksetzung und Fehler-/Speicherzustände prüfen.
+- Danach Materialverwaltung und Taxonomie auf konkrete Lade-, Speichern-, Versions- und Berechtigungsfehler prüfen; keine zusätzlichen Verwaltungsfunktionen ohne Beschluss.
+- Anschließend Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen Spezifikation und tatsächliche Datenflüsse prüfen.
