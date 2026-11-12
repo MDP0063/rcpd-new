@@ -71,13 +71,13 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   };
 
   const beginCreate = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue Dokumenttyp beginnen?')) return;
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen neuen Dokumenttyp beginnen?')) return;
     resetForm();
     setFormOpen(true);
   };
 
   const beginEdit = (documentType: AcademyMaterialDocumentTypeView) => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere Dokumenttyp bearbeiten?')) return;
+    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen anderen Dokumenttyp bearbeiten?')) return;
     setEditing(documentType);
     setName(documentType.name);
     setDescription(documentType.description || '');
