@@ -537,55 +537,85 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const reloadSelectedNote = async () => {
-    if (!selectedNote || saveStatus !== 'error' || savingAction) return;
+    if (!selectedNote || saveStatus !== 'error' || savingAction ||
+        savingDraftIdRef.current === selectedNote.id || operationLockedIdsRef.current.has(selectedNote.id)) return;
     if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    const noteId = selectedNote.id;
+    const draftToKeep = pendingSavesRef.current.get(noteId) || draft;
     if (saveDebounceTimerRef.current !== null) {
       window.clearTimeout(saveDebounceTimerRef.current);
       saveDebounceTimerRef.current = null;
     }
-    pendingSaveRef.current = null;
+    operationLockedIdsRef.current.add(noteId);
     setSavingAction(true);
-    const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+    let response: { ok: boolean; data?: { notes: AcademyPrivateNoteDoc[] }; error?: string };
+    try {
+      response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+    } catch (error) {
+      response = { ok: false, error: error instanceof Error ? error.message : 'Die aktuelle Notizfassung konnte nicht geladen werden.' };
+    }
     setSavingAction(false);
+    operationLockedIdsRef.current.delete(noteId);
     if (!response.ok || !response.data) {
+      if (draftToKeep) pendingSavesRef.current.set(noteId, draftToKeep);
       setSaveError(response.error || 'Die aktuelle Notizfassung konnte nicht geladen werden.');
       return;
     }
-    const latest = response.data.notes.find(note => note.id === selectedNote.id);
+    const latest = response.data.notes.find(note => note.id === noteId);
     if (!latest) {
+      if (draftToKeep) pendingSavesRef.current.set(noteId, draftToKeep);
       setSaveError('Diese Notiz ist nicht mehr vorhanden. Lade den Reader neu.');
       return;
     }
+    const latestDraft: NoteDraft = {
+      id: latest.id, title: latest.title || '', content: latest.content || '', tags: latest.tags
+    };
+    pendingSavesRef.current.delete(noteId);
+    blockedSaveIdsRef.current.delete(noteId);
     revisionByIdRef.current.set(latest.id, latest.revision ?? 1);
     saveErrorsByIdRef.current.delete(latest.id);
+    lastSavedByIdRef.current.set(latest.id, serializeDraft(latestDraft));
     setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
-    setTitle(latest.title || '');
-    setContent(latest.content || '');
-    setTags(latest.tags.join(', '));
-    lastSavedRef.current = serializeDraft({
-      id: latest.id,
-      title: latest.title || '',
-      content: latest.content || '',
-      tags: latest.tags
-    });
+    setTitle(latestDraft.title);
+    setContent(latestDraft.content);
+    setTags(latestDraft.tags.join(', '));
+    lastSavedRef.current = serializeDraft(latestDraft);
     setSaveStatus('saved');
     setSaveError('');
   };
 
   const deleteSelectedNote = async () => {
-    if (!selectedNote || savingDraftIdRef.current === selectedNote.id || !window.confirm('Diese private Notiz endgültig löschen?')) return;
-    if (draft && serializeDraft(draft) !== lastSavedRef.current) pendingSaveRef.current = null;
+    if (!selectedNote || savingDraftIdRef.current === selectedNote.id ||
+        operationLockedIdsRef.current.has(selectedNote.id) ||
+        !window.confirm('Diese private Notiz endgültig löschen?')) return;
+    const noteId = selectedNote.id;
+    const draftToRestore = pendingSavesRef.current.get(noteId) ||
+      (hasUnsavedChanges && draft ? draft : null);
+    if (saveDebounceTimerRef.current !== null) {
+      window.clearTimeout(saveDebounceTimerRef.current);
+      saveDebounceTimerRef.current = null;
+    }
+    operationLockedIdsRef.current.add(noteId);
     setSavingAction(true);
-    const response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(selectedNote.id), { method: 'DELETE' });
+    let response: { ok: boolean; error?: string };
+    try {
+      response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(noteId), { method: 'DELETE' });
+    } catch (error) {
+      response = { ok: false, error: error instanceof Error ? error.message : 'Die Notiz konnte nicht gelöscht werden.' };
+    }
     setSavingAction(false);
+    operationLockedIdsRef.current.delete(noteId);
     if (!response.ok) {
+      if (draftToRestore) pendingSavesRef.current.set(noteId, draftToRestore);
       setLoadError(response.error || 'Die Notiz konnte nicht gelöscht werden.');
       return;
     }
-    setNotes(previous => previous.filter(note => note.id !== selectedNote.id));
-    revisionByIdRef.current.delete(selectedNote.id);
-    saveErrorsByIdRef.current.delete(selectedNote.id);
-    if (pendingSaveRef.current?.id === selectedNote.id) pendingSaveRef.current = null;
+    pendingSavesRef.current.delete(noteId);
+    blockedSaveIdsRef.current.delete(noteId);
+    revisionByIdRef.current.delete(noteId);
+    saveErrorsByIdRef.current.delete(noteId);
+    lastSavedByIdRef.current.delete(noteId);
+    setNotes(previous => previous.filter(note => note.id !== noteId));
     draftsBySourceRef.current.delete(sourceKey);
     setSelectedNoteId('');
     setTitle('');
