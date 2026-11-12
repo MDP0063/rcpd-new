@@ -522,3 +522,10 @@ Der Codeabgleich des ExamParticipantRunner hat zwei konkrete Abweichungen von de
 Die Bestätigung zeigt nur Daten aus dem tatsächlichen veröffentlichten Prüfungsstand bzw. dem aktiven Versuch. Ein Zeitlimit von 0 bedeutet kein Zeitlimit; maxAttempts 0/null bedeutet unbegrenzt. Keine Konsequenzen werden erfunden.
 
 **Status:** PR #253 am 12.11.2026 gemergt; CI erfolgreich (455/455 Tests). Manuelle Browser-/Tastatur-/Screenreader-Abnahme steht noch aus.
+
+## 15. Examiner-Arbeitsansichten – Inline-Semantik und Informationsdichte
+
+- Die Übergabe-/Neuzuweisungs- und Freigabepanels wurden zuvor mit role="dialog" aria-modal="true" ausgezeichnet, obwohl sie im Dokumentfluss lagen und weder Overlay noch Fokusbegrenzung besaßen. PR #255 stellt sie auf beschriftete Inline-Regionen um.
+- Fokus wird beim Öffnen auf die Panelüberschrift gesetzt und beim Abbrechen zum jeweiligen Trigger zurückgeführt.
+- Der sekundäre Vorgangskontext in offenen Bewertungen und die Korrekturhistorie in abgeschlossenen Bewertungen sind standardmäßig eingeklappt. Alle Inhalte bleiben über native Disclosure-Elemente direkt erreichbar.
+- **Status:** PR #255 gemergt; CI erfolgreich (TypeScript, Produktionsbuild, 455/455 Tests, PR-Vorlagenprüfung). Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
