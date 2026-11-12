@@ -773,3 +773,11 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Backend- und HTTP-Regressionstests für Kurs-Scope, Whitelist-Sperre und Vertraulichkeitsprojektion ergänzt.
 - Der Branch ist noch nicht gemergt. Lint, Build, vollständige Tests und unabhängiges Review stehen aus; kein Deployment oder Browser-Test behauptet.
 - Nächster Schritt nach dieser Basis: beschlossene Revisionsrückgabe und Action Requests, mit Erhalt desselben Prüfungsversuchs, gespeicherter Drafts und des zuletzt freigegebenen Ergebnisses.
+
+### Academy-Audit: Examiner-Ansichten waren nicht vollständig erreichbar
+
+- Im aktuellen `AcademyCenter.tsx` wurde `exam_reviews` nur über eingehende Benachrichtigungsnavigation aktiviert; für `exam_corrections` gab es keinen regulären `setActiveTab`-Einstieg. Die Unter-Navigation „Prüfungsbereiche“ wurde zudem bei beiden Ansichten ausgeblendet.
+- Folge: Die Examiner-Warteschlange war ohne passenden Benachrichtigungslink nicht direkt erreichbar; Korrekturen und Ergebnisfreigaben waren aus der normalen Academy-Bedienung heraus nicht erreichbar.
+- Korrektur auf Branch `fix/academy-exam-review-navigation`: Die bestehende Prüfungs-Unter-Navigation bleibt innerhalb des Bereichs „Prüfungen“ und zeigt nun rollenabhängig „Offene Bewertungen“ (Admins, Colonels und berechtigte Kursausbilder) sowie „Korrekturen & Freigaben“ (Admin/Colonel). Bestehende Berechtigungsprüfungen und Komponenten bleiben maßgeblich.
+- Keine neue Academy-Hauptrubrik und keine neue fachliche Funktion. Der vorhandene Examiner-Bereich wird nur regulär erreichbar gemacht.
+- CI/Review noch ausstehend; Browser-/Rollenprüfung bleibt Teil der späteren gemeinsamen Academy-Abnahme.

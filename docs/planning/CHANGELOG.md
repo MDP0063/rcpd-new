@@ -359,3 +359,10 @@
 - Vollständige Bewertungsdetails bleiben auf beteiligte Prüfer und Admins/Colonels beschränkt; andere berechtigte Prüfer sehen ausschließlich Status und Zuständigkeit.
 - Tests für Kurs-Scope, Whitelist-Sperre und Detailvertraulichkeit ergänzt.
 - Noch nicht gemergt; CI, unabhängiges Review und Browser-/Live-Abnahme ausstehend.
+
+## 2026-11-12 – Examiner-Unterbereiche in der Academy erreichbar gemacht (Folge-PR)
+
+- Die vorhandene Prüfungs-Unter-Navigation ist jetzt auch bei geöffneten Examiner-Ansichten sichtbar.
+- „Offene Bewertungen“ wird für Admins, Colonels und berechtigte Kursausbilder angeboten; „Korrekturen & Freigaben“ nur für Admins und Colonels.
+- Die bestehende serverseitige Zugriffskontrolle und die vorhandenen Examiner-/Korrekturkomponenten bleiben unverändert. Es wird keine sechste Academy-Hauptrubrik eingeführt.
+- Branch `fix/academy-exam-review-navigation`; CI/Review und spätere Browserprüfung stehen noch aus.
