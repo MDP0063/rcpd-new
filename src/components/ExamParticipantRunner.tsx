@@ -265,9 +265,14 @@ export const ExamParticipantRunner: React.FC = () => {
       { method: 'POST', body: JSON.stringify({ attemptCourseCode: selectedCourseCode }) }
     );
     if (response.ok && response.data?.attempt) {
+      setStartConfirmationOpen(false);
+      setStartConfirmationState('idle');
+      setStartConfirmationError('');
+      setActiveAttemptPreview(null);
       applyAttempt(response.data.attempt);
     } else {
-      setRunnerError(response.error || 'Die Prüfung konnte nicht gestartet werden.');
+      setStartConfirmationError(response.error || 'Die Prüfung konnte nicht gestartet werden. Prüfe die Voraussetzungen und versuche es erneut.');
+      setStartConfirmationState('error');
     }
     setStarting(false);
   };
