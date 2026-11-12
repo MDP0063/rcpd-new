@@ -222,10 +222,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       item.master.responsibleCourseCode || '',
       item.draft?.title || '',
       item.currentVersion?.title || '',
-      item.draft?.description || '',
-      item.currentVersion?.description || '',
-      categories.find(category => category.id === (item.draft?.categoryId || item.currentVersion?.categoryId))?.name || '',
-      documentTypes.find(type => type.id === (item.draft?.documentTypeId || item.currentVersion?.documentTypeId))?.name || ''
+      categories.find(category => category.id === item.draft?.categoryId)?.name || '',
+      documentTypes.find(type => type.id === item.draft?.documentTypeId)?.name || ''
     ].some(value => value.toLocaleLowerCase('de-DE').includes(query));
   }), [materials, search, categories, documentTypes]);
 
