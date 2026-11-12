@@ -858,9 +858,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               <div className="academy-eyebrow">
                 Orientierung
               </div>
-              <h1 id="academy-overview-content-heading" className="academy-page-title">
+              <h2 id="academy-overview-content-heading" className="academy-page-title">
                 Willkommen in der Academy
-              </h1>
+              </h2>
               <p className="academy-page-lede">
                 Hier findest du deine Ausbildungsinhalte an einem Ort. Die Academy verbindet Lehrgänge, einzelne Kurse und Lernmaterialien – damit du dich gezielt informieren, lernen und dein Wissen überprüfen kannst.
               </p>
