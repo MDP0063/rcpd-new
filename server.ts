@@ -2265,6 +2265,12 @@ async function startServer() {
               reviewerName: reviewerName(typeof correction.reviewerUid === 'string' ? correction.reviewerUid : null),
               previousReviewerName: reviewerName(typeof correction.previousReviewerUid === 'string' ? correction.previousReviewerUid : null)
             }))
+          } : {}),
+          ...(item.detailed && item.resultReleaseHistory ? {
+            resultReleaseHistory: item.resultReleaseHistory.map(release => ({
+              ...release,
+              releasedByName: reviewerName(typeof release.releasedByUid === 'string' ? release.releasedByUid : null)
+            }))
           } : {})
         }))
       });
