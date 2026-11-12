@@ -973,6 +973,7 @@ export async function correctCompletedExamReview(
     if (!attempt || attempt.examId !== examId) throw new Error('EXAM_ATTEMPT_NOT_FOUND');
     if (attempt.userId === reviewerUid) throw new Error('EXAM_SELF_REVIEW_FORBIDDEN');
     if (attempt.status !== 'passed' && attempt.status !== 'failed') throw new Error('EXAM_REVIEW_CORRECTION_NOT_COMPLETED');
+    if (latestPendingRevisionRequest(attempt.reviewClaimHistory || [])) throw new Error('EXAM_REVIEW_REVISION_ALREADY_PENDING');
     if (!attempt.reviewedByUid || !attempt.reviewedAtIso) throw new Error('EXAM_REVIEW_CORRECTION_NOT_COMPLETED');
     const version = await transaction.get<ExamVersionRecord>('exam_versions', attempt.examVersionId);
     if (!version || version.examId !== examId || version.versionNumber !== attempt.versionNumber || !Array.isArray(version.questionsSnapshot)) {
