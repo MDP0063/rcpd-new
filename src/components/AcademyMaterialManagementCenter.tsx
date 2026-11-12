@@ -428,12 +428,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         </div>
       )}
 
-      {loadError && (
-        <div className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
-          <p role="alert">{loadError}</p>
-          <button type="button" className={secondary + ' mt-3'} onClick={() => void loadCatalogsAndMaterials()}>Erneut versuchen</button>
-        </div>
-      )}
+      <div className={loadError ? "rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200" : "sr-only"}>
+        <p role="alert">{loadError}</p>
+        {loadError ? <button type="button" className={secondary + ' mt-3'} onClick={() => void loadCatalogsAndMaterials()}>Erneut versuchen</button> : null}
+      </div>
 
       <div className="academy-material-management-workspace grid grid-cols-1 gap-5">
         {!isEditorOpen && <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">

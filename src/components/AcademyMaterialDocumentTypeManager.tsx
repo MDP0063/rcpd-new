@@ -211,6 +211,11 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
         </p>
       </header>
 
+      <div className={loadError ? "space-y-3" : "sr-only"}>
+        <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+        {loadError ? <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button> : null}
+      </div>
+
       <div className="academy-material-taxonomy-layout">
         {formOpen ? (
         <form onSubmit={save} className="academy-material-taxonomy-form rounded-lg border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900">
@@ -253,7 +258,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
             <p id="academy-document-type-description-hint" className="text-xs text-slate-500 dark:text-slate-400">Bis zu 300 Zeichen</p>
           </div>
 
-          {formError && <p id="academy-document-type-form-error" role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{formError}</p>}
+          <p id="academy-document-type-form-error" role="alert" className={formError ? "rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200" : "sr-only"}>{formError}</p>
 
           <div className="flex flex-wrap gap-2">
             <button type="submit" className={primaryButton} disabled={busy}>
@@ -281,12 +286,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
           {loading ? (
             <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Dokumenttypen werden geladen …</p>
-          ) : loadError ? (
-            <div className="space-y-3">
-              <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
-              <button type="button" className={secondaryButton} onClick={() => void load()}>Erneut versuchen</button>
-            </div>
-          ) : visibleDocumentTypes.length === 0 ? (
+          ) : loadError ? null : visibleDocumentTypes.length === 0 ? (
             <p role="status" className="rounded-md border border-dashed border-slate-300 p-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
               {documentTypes.length === 0 ? 'Noch keine Dokumenttypen angelegt.' : 'Kein Dokumenttyp entspricht deiner Suche.'}
             </p>

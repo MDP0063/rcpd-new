@@ -491,16 +491,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           </button>
         </div>
         {loading ? <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Persönliche Einträge werden geladen …</p> : null}
-        {loadError ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p>
-            {loadRetryable ? (
-              <button type="button" className={secondary} onClick={() => setLoadAttempt(attempt => attempt + 1)} disabled={loading || savingAction}>
-                Erneut versuchen
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+        <div className={loadError ? "flex flex-wrap items-center gap-3" : "sr-only"}>
+          <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{loadError}</p>
+          {loadError && loadRetryable ? (
+            <button type="button" className={secondary} onClick={() => setLoadAttempt(attempt => attempt + 1)} disabled={loading || savingAction}>
+              Erneut versuchen
+            </button>
+          ) : null}
+        </div>
         {notesLoaded && !loading && linkedNotes.length === 0 && unlinkedNotes.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Für diese Materialfassung gibt es noch keine persönlichen Einträge.</p> : null}
         {bookmarks.map(note => {
           const anchor = noteSources(note).find(source => source.materialId === materialId && source.materialVersionId === materialVersionId)?.anchor;
@@ -591,15 +589,15 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter (Komma getrennt)</span>
               <input className={field} value={tags} disabled={savingAction} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
             </label>
-            {saveError ? (
-              <div className="space-y-2">
-                <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
+            <div className={saveError ? "space-y-2" : "sr-only"}>
+              <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
+              {saveError ? (
                 <div className="flex flex-wrap gap-2">
                   <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>
                   <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction || saveStatus !== 'error'}>Aktuelle Fassung laden</button>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
             <div className="flex flex-wrap justify-between gap-2">
               {noteSources(selectedNote).length > 1 ? (
                 <button type="button" className={secondary} disabled={savingAction || hasUnsavedChanges || saveStatus !== 'saved'} onClick={() => void removeCurrentSourceFromNote(selectedNote)}>
