@@ -549,7 +549,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   );
 
   return (
-    <div className={`academy-center-root ${!isAcademyHome && activeTab === 'overview' ? 'academy-interior-shell space-y-7' : 'space-y-9'}`}>
+    <div className={`academy-center-root ${isAcademyHome ? 'space-y-9' : activeTab === 'overview' ? 'academy-interior-shell space-y-7' : 'academy-subpage-shell space-y-7'}`}>
 
       {(isAcademyHome || activeTab !== 'overview') && (
         <header className="space-y-2.5">
