@@ -590,13 +590,12 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                     <button type="button" className={contentPreview ? 'is-active' : ''} aria-pressed={contentPreview} onClick={() => setContentPreview(true)}>Vorschau</button>
                   </div>
                 </div>
-                {!contentPreview ? (
-                  <textarea id="academy-material-content"
-                    className={field + ' min-h-[22rem] resize-y font-mono text-sm leading-6'}
-                    value={content} onChange={event => { setContent(event.target.value); setFormDirty(true); }}
-                    rows={18} required disabled={busy || editingMaster?.publicationStatus === 'archived'}
-                    aria-invalid={Boolean(errors.content)} aria-describedby={errors.content ? 'academy-material-content-error academy-material-content-hint' : 'academy-material-content-hint'} />
-                ) : (
+                <textarea id="academy-material-content"
+                  className={field + ' min-h-[22rem] resize-y font-mono text-sm leading-6' + (contentPreview ? ' hidden' : '')}
+                  value={content} onChange={event => { setContent(event.target.value); setFormDirty(true); }}
+                  rows={18} required={!contentPreview} disabled={busy || editingMaster?.publicationStatus === 'archived'}
+                  aria-invalid={Boolean(errors.content)} aria-describedby={errors.content ? 'academy-material-content-error academy-material-content-hint' : 'academy-material-content-hint'} />
+                {contentPreview && (
                   <div className="academy-material-content-preview min-h-[22rem]" aria-label="Vorschau des Materialinhalts">
                     {!content.trim() ? <p className="text-sm text-slate-500">Noch kein Inhalt vorhanden.</p> : contentFormat === 'code'
                       ? <pre><code>{content}</code></pre>
