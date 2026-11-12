@@ -747,6 +747,10 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
     assert.equal(supervisorRequestInbox.body.requests[0].requestedByName, 'HttpSecondReviewer');
     assert.equal('requestedByUid' in supervisorRequestInbox.body.requests[0], false);
     assert.equal('reviewedByUid' in supervisorRequestInbox.body.requests[0], false);
+    assert.equal('questions' in supervisorRequestInbox.body.requests[0], false,
+      'the supervisor inbox does not expose participant answers or question payloads');
+    assert.equal('gradingRubric' in supervisorRequestInbox.body.requests[0], false,
+      'the supervisor inbox does not expose internal grading rubrics');
     const requestNotificationState = await jsonRequest('/api/portal/state?uid=http-admin', admin.token);
     assert.equal(requestNotificationState.body.notifications.some((item: Record<string, any>) =>
       item.title === 'Neue Revisionsanfrage' && item.linkTarget?.attemptId === attemptToGrade.id
