@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './AcademyCenter.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -42,8 +42,9 @@ import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
-import type { AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
+import type { AcademyPrivateNoteTextAnchor, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
+import { captureTextAnchorFromSelection, jumpToTextAnchor } from '../lib/academyTextAnchorDom';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
@@ -123,6 +124,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [versionedMaterialError, setVersionedMaterialError] = useState('');
   const [versionedMaterialRetryable, setVersionedMaterialRetryable] = useState(false);
   const [versionedMaterialLoadAttempt, setVersionedMaterialLoadAttempt] = useState(0);
+  const [selectedLibraryAnchor, setSelectedLibraryAnchor] = useState<AcademyPrivateNoteTextAnchor | null>(null);
+  const libraryMarkdownContentRef = useRef<HTMLElement | null>(null);
+  const libraryCodeContentRef = useRef<HTMLPreElement | null>(null);
+  useEffect(() => {
+    setSelectedLibraryAnchor(null);
+  }, [activeVersionedMaterialId, currentVersionedMaterial?.versionId]);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   // Interactive Test/Exam Runner State
@@ -618,8 +625,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     );
   };
 
+  const captureLibraryTextAnchor = (event: React.MouseEvent<HTMLElement>, kind: 'markdown' | 'code') => {
+    setSelectedLibraryAnchor(captureTextAnchorFromSelection(event.currentTarget, kind));
+  };
+  const jumpToLibraryTextAnchor = (anchor: AcademyPrivateNoteTextAnchor): 'resolved' | 'missing' | 'ambiguous' =>
+    jumpToTextAnchor(anchor.kind === 'markdown' ? libraryMarkdownContentRef.current : libraryCodeContentRef.current, anchor);
+
   const renderVersionedMaterialMarkdown = (markdown: string) => (
-    <div className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
+    <article ref={libraryMarkdownContentRef} onMouseUp={event => captureLibraryTextAnchor(event, 'markdown')} className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
@@ -644,7 +657,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       >
         {markdown}
       </ReactMarkdown>
-    </div>
+    </article>
   );
 
   return (
@@ -1057,10 +1070,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         : (
                           <div className="space-y-2">
                             <p className="text-xs font-mono text-slate-500 dark:text-slate-400">QUELLCODE · WIRD NICHT AUSGEFÜHRT</p>
-                            <pre className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
+                            <pre ref={libraryCodeContentRef} onMouseUp={event => captureLibraryTextAnchor(event, 'code')} className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-800 dark:text-slate-100"><code>{currentVersionedMaterial.content}</code></pre>
                           </div>
                         )}
-                      <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} />
+                      <AcademyMaterialReaderNotes materialId={currentVersionedMaterial.id} materialVersionId={currentVersionedMaterial.versionId} selectedAnchor={selectedLibraryAnchor} onJumpToAnchor={jumpToLibraryTextAnchor} />
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
