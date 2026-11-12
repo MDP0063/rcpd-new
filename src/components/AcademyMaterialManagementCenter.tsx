@@ -561,7 +561,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                   <select id="academy-material-course" className={field + (errors.responsibleCourseCode ? ' ' + fieldError : '')}
                     value={responsibleCourseCode} onChange={event => { setResponsibleCourseCode(event.target.value); setFormDirty(true); }}
                     required disabled={busy || Boolean(editingMaster)}
-                    aria-invalid={Boolean(errors.responsibleCourseCode)} aria-describedby={errors.responsibleCourseCode ? 'academy-material-course-error' : undefined}>
+                    aria-invalid={Boolean(errors.responsibleCourseCode)} aria-describedby={errors.responsibleCourseCode ? 'academy-material-course-hint academy-material-course-error' : 'academy-material-course-hint'}>
                     <option value="">Kurs auswählen</option>
                     {courseOptions.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
@@ -572,7 +572,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                     disabled={busy || Boolean(editingMaster)}
                     aria-invalid={Boolean(errors.responsibleCourseCode)} aria-describedby={errors.responsibleCourseCode ? 'academy-material-course-error' : undefined} />
                 )}
-                <p className="text-xs text-slate-500 dark:text-slate-400">Diese Zuordnung steuert delegierte Bearbeitungsrechte. Sie ist unabhängig von der automatisch vergebenen Materialkennung.</p>
+                <p id="academy-material-course-hint" className="text-xs text-slate-500 dark:text-slate-400">Diese Zuordnung steuert delegierte Bearbeitungsrechte. Sie ist unabhängig von der automatisch vergebenen Materialkennung.</p>
                 {errors.responsibleCourseCode && <p id="academy-material-course-error" className="text-xs text-rose-700 dark:text-rose-300">{errors.responsibleCourseCode}</p>}
               </div>
               <div className="space-y-1.5">
