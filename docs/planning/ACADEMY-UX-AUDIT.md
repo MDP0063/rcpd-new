@@ -476,3 +476,16 @@ Die Recherche vom 12.11.2026 ist in der Unterseitenspezifikation mit URLs und RC
 - **BESCHLOSSENE Schutzgrenzen:** Kachelstartseite, SVG-Illustrationen, Fünf-Bereiche-Navigation, Bereichsfarben, matte blaue Wellenform, private Notizregeln, Versions-/Veröffentlichungslogik, Prüfungs-/Ergebnisregeln.
 - **REDESIGN-KONZEPT:** Die inneren Unterseiten und tieferen Arbeitsansichten werden in einem gemeinsamen System neu gegliedert. Konkrete Vorschläge und Umsetzungsreihenfolge sind in ACADEMY-SUBPAGE-REDESIGN.md dokumentiert.
 - **NOCH NICHT MANUELL ABGENOMMEN:** Browserdarstellung nach aktuellem Render-Deployment, responsive Viewports, Tastatur-/Screenreader-Verhalten und Live-Firestore-Szenarien.
+
+## 11. PR #250 – fokussierte Notizbearbeitung und Navigation (12.11.2026)
+
+Der Notizbereich wird in PR #250 als eigener Arbeitsbereich umgesetzt:
+- Die Liste bleibt auf Suche, Notizmetadaten, Vorschau und Quellenstatus konzentriert.
+- Bearbeiten öffnet einen separaten, fokussierten Editor. Die Quellenverknüpfungen und ihr Verfügbarkeits-/Berechtigungsstatus bleiben dort sichtbar.
+- Speichern, Verwerfen und Löschen sind visuell unterschiedlich gewichtet; destruktives Löschen ist als solches erkennbar.
+- Der alte erklärende Hinweis auf ein angeblich nicht versionsgebundenes Materialmodell wurde durch eine knappe, mit dem aktuellen versionierten Reader übereinstimmende Erklärung ersetzt.
+- Dirty-/Saving-State wird an die Academy-Hülle gemeldet. Navigation zu anderen Hauptbereichen, zur Kachelstartseite und über Examiner-Deep-Links fordert bei nicht abgeschlossenen Änderungen eine Bestätigung. Während eines aktiven Save-Requests sind die Editor-Abbruchaktionen deaktiviert.
+
+**Schutzgrenze:** Die Erstellung neuer Notizen/Lesezeichen bleibt im Reader. Die Änderung führt weder eine neue Erstellungsfunktion noch API-/Datenmodell-/Berechtigungsänderungen ein. Die Owner-Isolation und Versionsbindung bleiben unverändert.
+
+**Prüfstatus:** PR #250 offen. GitHub Actions für den aktuellen Head und manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme stehen noch aus.
