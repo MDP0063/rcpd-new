@@ -115,10 +115,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [versionedMaterials, setVersionedMaterials] = useState<AcademyPublicMaterialCatalogItem[]>([]);
   const [versionedMaterialsLoading, setVersionedMaterialsLoading] = useState(false);
   const [versionedMaterialsError, setVersionedMaterialsError] = useState('');
+  const [versionedMaterialsRetryable, setVersionedMaterialsRetryable] = useState(false);
+  const [versionedMaterialsLoadAttempt, setVersionedMaterialsLoadAttempt] = useState(0);
   const [activeVersionedMaterialId, setActiveVersionedMaterialId] = useState<string | null>(null);
   const [currentVersionedMaterial, setCurrentVersionedMaterial] = useState<AcademyPublicMaterialDetail | null>(null);
   const [versionedMaterialLoading, setVersionedMaterialLoading] = useState(false);
   const [versionedMaterialError, setVersionedMaterialError] = useState('');
+  const [versionedMaterialRetryable, setVersionedMaterialRetryable] = useState(false);
+  const [versionedMaterialLoadAttempt, setVersionedMaterialLoadAttempt] = useState(0);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   // Interactive Test/Exam Runner State
@@ -175,36 +179,44 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     let cancelled = false;
     setVersionedMaterialsLoading(true);
     setVersionedMaterialsError('');
+    setVersionedMaterialsRetryable(false);
     setVersionedMaterials([]);
     void apiFetch<{ materials: AcademyPublicMaterialCatalogItem[] }>(API_ENDPOINTS.ACADEMY_MATERIAL_CATALOG)
       .then(response => {
         if (cancelled) return;
         if (!response.ok || !response.data) {
           setVersionedMaterialsError(response.error || 'Neue Materialien konnten nicht geladen werden.');
+          setVersionedMaterialsRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
           return;
         }
         setVersionedMaterials(Array.isArray(response.data.materials) ? response.data.materials : []);
+        setVersionedMaterialsRetryable(false);
       })
       .catch(() => {
-        if (!cancelled) setVersionedMaterialsError('Neue Materialien konnten nicht geladen werden.');
+        if (!cancelled) {
+          setVersionedMaterialsError('Neue Materialien konnten nicht geladen werden.');
+          setVersionedMaterialsRetryable(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setVersionedMaterialsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [activeTab, libraryAreaMode, currentUser.uid, currentUser.role]);
+  }, [activeTab, libraryAreaMode, currentUser.uid, currentUser.role, versionedMaterialsLoadAttempt]);
 
   useEffect(() => {
     if (!activeVersionedMaterialId) {
       setCurrentVersionedMaterial(null);
       setVersionedMaterialLoading(false);
       setVersionedMaterialError('');
+      setVersionedMaterialRetryable(false);
       return;
     }
     let cancelled = false;
     setCurrentVersionedMaterial(null);
     setVersionedMaterialLoading(true);
     setVersionedMaterialError('');
+    setVersionedMaterialRetryable(false);
     void apiFetch<{ material: AcademyPublicMaterialDetail }>(
       API_ENDPOINTS.ACADEMY_MATERIAL_CATALOG_ITEM(activeVersionedMaterialId)
     )
@@ -212,18 +224,23 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         if (cancelled) return;
         if (!response.ok || !response.data) {
           setVersionedMaterialError(response.error || 'Dieses Material ist nicht mehr verfügbar.');
+          setVersionedMaterialRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
           return;
         }
         setCurrentVersionedMaterial(response.data.material);
+        setVersionedMaterialRetryable(false);
       })
       .catch(() => {
-        if (!cancelled) setVersionedMaterialError('Dieses Material konnte nicht geladen werden.');
+        if (!cancelled) {
+          setVersionedMaterialError('Dieses Material konnte nicht geladen werden.');
+          setVersionedMaterialRetryable(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setVersionedMaterialLoading(false);
       });
     return () => { cancelled = true; };
-  }, [activeVersionedMaterialId, currentUser.uid, currentUser.role]);
+  }, [activeVersionedMaterialId, currentUser.uid, currentUser.role, versionedMaterialLoadAttempt]);
 
   const myProgress = userProgress.filter(p => p.userId === currentUser.uid);
 
@@ -897,7 +914,16 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <p role="status" aria-atomic="true" className="text-sm text-slate-500 dark:text-slate-400">{filteredLibraryEntries.length} von {libraryEntries.length} Materialien</p>
               </div>
               {versionedMaterialsLoading && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Versionierte Materialien werden geladen …</p>}
-              {versionedMaterialsError && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{versionedMaterialsError}</p>}
+              {versionedMaterialsError && (
+                <div className="flex flex-wrap items-center gap-3 text-sm text-rose-700 dark:text-rose-300">
+                  <p role="alert">{versionedMaterialsError}</p>
+                  {versionedMaterialsRetryable && (
+                    <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>
+                      Erneut versuchen
+                    </button>
+                  )}
+                </div>
+              )}
               {!moduleSearchQuery.trim() && !moduleCategoryFilter && !moduleDocumentTypeFilter && libraryCategories.length > 0 && (
 <section className="academy-library-topics space-y-3" aria-labelledby="academy-library-topics-heading">
 <div className="flex flex-wrap items-end justify-between gap-2"><div><h3 id="academy-library-topics-heading" className="text-base font-semibold text-slate-900 dark:text-white">Themenbereiche</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Wähle einen Bereich, um die zugehörigen Materialien zu entdecken.</p></div><button type="button" className="academy-library-text-action" onClick={() => { setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }}>Alle Materialien anzeigen</button></div>
@@ -1038,8 +1064,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(currentVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
-                    <div role="alert" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
+                      <p role="alert" className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
+                      {versionedMaterialRetryable && (
+                        <button type="button" onClick={() => setVersionedMaterialLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialLoading} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
+                          Erneut versuchen
+                        </button>
+                      )}
                       <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
                     </div>
                   )
