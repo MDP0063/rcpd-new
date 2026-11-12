@@ -832,3 +832,8 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Beim Öffnen eines Materials aus dem Katalog bleibt die Materialnavigation direkt sichtbar. Leser können zwischen Materialien wechseln oder zur Materialübersicht zurückkehren; Bezeichnungen der Rück-/Navigationsaktionen wurden vereinheitlicht.
 - Keine Änderung an API, Datenmodell, Rollen-/Kursberechtigungen, Versionsbindung, Veröffentlichung oder Archivierung.
 - CI-Prüfung für diese Folgeänderungen steht aus; keine Browser-/Live-Firestore-Abnahme erfolgt.
+
+
+- Abschließende Stilbereinigung: Die zuvor mehrfach angehängten, teils widersprüchlichen Bibliotheks-CSS-Regeln wurden in einen konsistenten Abschnitt überführt. Er definiert Katalogkarten, Reader, Sidebar, Verwaltungsformulare, Buttonzustände, Dark Mode, mobile Darstellung und Reduced Motion gemeinsam. Der Bibliotheksakzent bleibt violett und wird nur für Orientierung/Fokus eingesetzt; normale Aktionen bleiben neutral, Löschen bleibt semantisch destruktiv.
+- Katalogkarten blenden einen nicht vorhandenen Dokumenttyp aus, statt einen leeren Metadaten-Trenner darzustellen. Der Status während der Veröffentlichung wurde sprachlich korrigiert.
+- GitHub Actions für Commit `b2d9ca875883e57d2d3a69004c61deff36a48732`: TypeScript/Produktionsbuild und vollständige Tests erfolgreich; PR-Template-Prüfung erfolgreich. Optionaler Render-Deploy-Hook übersprungen. Kein Browser- oder Live-Firestore-Test.
