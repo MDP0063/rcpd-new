@@ -438,3 +438,12 @@
 - Die in #197 dokumentierte Entscheidungsfreiheit wurde auf den aktuellen Dokumentationsstand portiert: eigenständige objektive UX-/Accessibility-Entscheidungen sowie kritischere Entscheidungen nach gründlicher Recherche und dokumentierter Abwägung; subjektive globale Identitätsentscheidungen bleiben zustimmungspflichtig.
 - Die Materialformular-Validierungsverbesserung aus #244 wird auf aktuellem `main` neu aufgesetzt, statt den 16 Commits zurückliegenden Branch zu mergen.
 - PR #257 (Entfernung nicht erreichbarer Legacy-Editorpfade) ist bereits gemergt; CI erfolgreich, manuelle Browserabnahme bleibt gesondert.
+
+## 2026-11-12 – Academy-PR-Bestand bereinigt
+
+- PR #246, #247, #248, #255, #256, #257 und #261 wurden gemergt. PR #261 enthält die verbindliche Empfängerregel für Revisions-Action-Requests; Merge-Commit: `0d47a189bfeea62d101f78abc43445ade78d8981`.
+- PR #155 wurde geschlossen, weil seine relevanten Empfehlungsentscheidungen bereits selektiv auf dem aktuellen `main` dokumentiert waren; der stark divergierte Alt-Branch wurde nicht als Ganzes übernommen.
+- PR #196 wurde durch die aktuelle, gemergte Dokumentationsübernahme in #261 ersetzt.
+- PR #197 wurde geschlossen, weil Entscheidungsfreiheit und Recherchepflicht bereits im aktuellen Planungsstand verankert waren.
+- PR #244 wurde geschlossen, weil sein Validierungs-/Accessibility-Fix bereits im aktuellen `main` enthalten war.
+- Abschließende GitHub-API-Abfrage am 12.11.2026: keine offenen PRs. Noch offene fachliche und technische Arbeiten verbleiben in OPEN-QUESTIONS.md/PROGRESS.md und sind nicht durch das Schließen der Alt-PRs erledigt.
