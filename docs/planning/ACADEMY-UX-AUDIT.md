@@ -1,7 +1,7 @@
 # Academy – Ergänzende Implementierungsprüfung und Vorbereitung des visuellen Redesigns
 
 **Stand:** 11.11.2026  
-**Prüfgegenstand:** aktueller Repository-Stand `main`, Commit `eb3d75b24b4d90f1f923e57f5ec527b03ea02408`  
+**Prüfgegenstand:** ergänzender Auditstand vom 11.11.2026; der nachfolgende Academy-Unterseiten-Audit vom 12.11.2026 ist die aktuellere Redesign-Grundlage.  
 **Status:** Ergänzendes Audit zur Vorbereitung der visuellen Gestaltung. Die bestehende Academy-Informationsarchitektur und die fachlichen/UX-Beschlüsse werden nicht neu aufgerollt.  
 **Arbeitsmodus:** Read-only-Audit. Es wurden keine Anwendungsdateien geändert.
 
@@ -488,4 +488,4 @@ Der Notizbereich wird in PR #250 als eigener Arbeitsbereich umgesetzt:
 
 **Schutzgrenze:** Die Erstellung neuer Notizen/Lesezeichen bleibt im Reader. Die Änderung führt weder eine neue Erstellungsfunktion noch API-/Datenmodell-/Berechtigungsänderungen ein. Die Owner-Isolation und Versionsbindung bleiben unverändert.
 
-**Prüfstatus:** PR #250 offen. GitHub Actions für den aktuellen Head und manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme stehen noch aus.
+**Prüfstatus:** PR #250 am 12.11.2026 gemergt. GitHub Actions (TypeScript, Produktionsbuild, Tests und PR-Vorlagenprüfung) erfolgreich; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Tastatur-/Screenreader-/Dark-Mode-Abnahme steht noch aus.
