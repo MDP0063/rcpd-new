@@ -763,3 +763,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 **Recherchegrundlage:** WCAG 2.2 (W3C), insbesondere Fokus, Zielgrößen und Animation aus Interaktionen: https://www.w3.org/TR/WCAG22/ . Ergänzend Nielsen Norman Group, „Progressive Disclosure“: https://www.nngroup.com/articles/progressive-disclosure/ sowie die zehn Usability-Heuristiken: https://www.nngroup.com/articles/ten-usability-heuristics/ . Die Prinzipien wurden auf die vorhandenen Academy-Aufgaben angewandt; es wurden keine neuen Funktionen eingeführt.
 
 **Prüfstatus:** statische Codeprüfung der geänderten Komponenten und Styles. Noch keine echte Browser-/Geräteprüfung, kein Live-Firestore-Test und kein Deployment. CI wird über den Draft-PR geprüft. Die fünf Kacheln und alle bestehenden fachlichen Funktionen müssen vor Merge zusätzlich visuell und responsiv abgenommen werden.
+
+
+### Academy-Audit: Examiner-Ansichten waren nicht vollständig erreichbar
+
+- Im aktuellen `AcademyCenter.tsx` wurde `exam_reviews` nur über eingehende Benachrichtigungsnavigation aktiviert; für `exam_corrections` gab es keinen regulären `setActiveTab`-Einstieg. Die Unter-Navigation „Prüfungsbereiche“ wurde zudem bei beiden Ansichten ausgeblendet.
+- Folge: Die Examiner-Warteschlange war ohne passenden Benachrichtigungslink nicht direkt erreichbar; Korrekturen und Ergebnisfreigaben waren aus der normalen Academy-Bedienung heraus nicht erreichbar.
+- Korrektur auf Branch `fix/academy-exam-review-navigation`: Die bestehende Prüfungs-Unter-Navigation bleibt innerhalb des Bereichs „Prüfungen“ und zeigt nun rollenabhängig „Offene Bewertungen“ (Admins, Colonels und berechtigte Kursausbilder) sowie „Korrekturen & Freigaben“ (Admin/Colonel). Bestehende Berechtigungsprüfungen und Komponenten bleiben maßgeblich.
+- Keine neue Academy-Hauptrubrik und keine neue fachliche Funktion. Der vorhandene Examiner-Bereich wird nur regulär erreichbar gemacht.
+- CI/Review noch ausstehend; Browser-/Rollenprüfung bleibt Teil der späteren gemeinsamen Academy-Abnahme.
