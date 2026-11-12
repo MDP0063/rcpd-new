@@ -12,6 +12,8 @@ Der Projektinhaber hat ChatGPT die eigenständige Ausarbeitung objektiv begründ
 
 Prägende, nicht objektiv entscheidbare Grundsatzfragen – insbesondere visuelle Identität, grundlegende Stilrichtung, starke Farb-/Formensprache oder konzeptionelle Änderungen – werden vor einer Festlegung erneut mit dem Projektinhaber abgestimmt. Bereits bestätigte Grundrichtungen müssen nicht erneut grundsätzlich zur Wahl gestellt werden; ihre konkrete Ausarbeitung darf aber nicht stillschweigend zu einer anderen Identität führen.
 
+**Erweiterung der Freigabe vom 12.11.2026:** Der Projektinhaber hat ausdrücklich beauftragt, das Design sämtlicher noch nicht abschließend überarbeiteter Academy-Unterseiten gründlich neu zu durchdenken und innerhalb der bestätigten Academy-Identität eigenständig anzupassen. ChatGPT muss daher nicht für jede einzelne Layout-, Hierarchie-, Kompositions-, Komponenten- oder Interaktionsdarstellung erneut um Zustimmung bitten. Eigenständige Anpassungen sind zulässig, solange Kachelstartseite, fünfteilige Hauptnavigation, Bereichsfarben, matte blaue Wellenform, bestätigte Informationsarchitektur und sämtliche fachlichen Schutzregeln erhalten bleiben. Eine erneute Abstimmung ist nur erforderlich, wenn eine Änderung diese bestätigte Identität oder Navigation grundsätzlich ersetzt, neue fachliche Funktionen/Status/Berechtigungen einführt oder den Geltungsbereich auf andere Portalmodule ausweitet.
+
 ## 2. Unveränderliche Grundlagen und Schutzgrenzen
 
 - Das Redesign betrifft langfristig das gesamte RCPD-Portal; die endgültige globale Portalgestaltung ist noch nicht beschlossen.
