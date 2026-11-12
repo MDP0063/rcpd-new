@@ -308,6 +308,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     else draftsBySourceRef.current.delete(sourceKey);
   }, [draft, sourceKey]);
   const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
+  const hasSaveConflict = Boolean(selectedNote && blockedSaveIdsRef.current.has(selectedNote.id));
 
   useEffect(() => {
     if (!draft) return;
@@ -749,7 +750,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
-              <input className={field} value={title} maxLength={200} disabled={savingAction} onChange={event => setTitle(event.target.value)} />
+              <input className={field} value={title} maxLength={200} disabled={savingAction || hasSaveConflict} onChange={event => setTitle(event.target.value)} />
             </label>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -763,12 +764,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>{content}</ReactMarkdown>
                 </article>
               ) : (
-                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} disabled={savingAction} onChange={event => setContent(event.target.value)} />
+                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} disabled={savingAction || hasSaveConflict} onChange={event => setContent(event.target.value)} />
               )}
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter (Komma getrennt)</span>
-              <input className={field} value={tags} disabled={savingAction} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
+              <input className={field} value={tags} disabled={savingAction || hasSaveConflict} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
             </label>
             <div className={saveError ? "space-y-2" : "sr-only"}>
               <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
