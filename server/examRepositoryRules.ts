@@ -247,13 +247,20 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
           revisionPreviousGrades.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
           Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
           Number.isSafeInteger(grade.maxPointsMilli) && grade.maxPointsMilli > 0 &&
-          grade.pointsEarnedMilli <= grade.maxPointsMilli
+          grade.pointsEarnedMilli <= grade.maxPointsMilli &&
+          existingGrades.some((current: any) =>
+            current?.questionId === grade.questionId &&
+            current.pointsEarnedMilli === grade.pointsEarnedMilli &&
+            current.maxPointsMilli === grade.maxPointsMilli &&
+            current.requiresManualReview === false
+          )
         );
       const validRecipients = recipients.length > 0 && recipients.length <= 1000 &&
         recipients.every((uid: unknown, index: number) =>
           typeof uid === 'string' && uid.trim() && uid.length <= 128 && recipients.indexOf(uid) === index
         );
       const gradesValid = existingGrades.length === nextGrades.length &&
+        new Set(nextGrades.map((grade: any) => String(grade?.questionId || ''))).size === nextGrades.length &&
         existingGrades.every((previous: any) => {
           const updated = nextGrades.find((grade: any) => grade?.questionId === previous.questionId);
           if (!updated) return false;
