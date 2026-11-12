@@ -6,7 +6,6 @@ import rehypeSanitize from 'rehype-sanitize';
 import {
   BookOpen,
   ExternalLink,
-  CheckCircle2,
   Lock,
   Award,
   FileText,
