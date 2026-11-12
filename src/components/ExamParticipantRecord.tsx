@@ -10,6 +10,8 @@ interface ClaimHistoryEvent {
   previousName?: string | null;
   reason?: string;
   feedback?: Array<{ questionId: string; feedback: string; label: string }>;
+  previousGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
+  nextGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
   revisionRequestedAtIso?: string;
   atIso: string;
 }
@@ -136,6 +138,14 @@ export const ExamParticipantRecord: React.FC<{
                   {event.feedback && event.feedback.length > 0 && <ul className="mt-2 space-y-1 rounded-md bg-slate-50 p-2 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
                     {event.feedback.map(entry => <li key={entry.questionId}><span className="font-semibold">{entry.label}:</span> {entry.feedback}</li>)}
                   </ul>}
+                  {event.previousGrades && event.previousGrades.length > 0 && <div className="mt-2 rounded-md bg-slate-50 p-2 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                    <p className="mb-1 font-semibold">Vorherige Bewertung</p>
+                    {event.previousGrades.map(grade => <p key={grade.questionId}>{grade.label}: {(grade.pointsEarnedMilli / 1000).toLocaleString('de-DE')} / {(grade.maxPointsMilli / 1000).toLocaleString('de-DE')} Punkte</p>)}
+                  </div>}
+                  {event.nextGrades && event.nextGrades.length > 0 && <div className="mt-2 rounded-md bg-slate-50 p-2 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                    <p className="mb-1 font-semibold">Erneute Bewertung</p>
+                    {event.nextGrades.map(grade => <p key={grade.questionId}>{grade.label}: {(grade.pointsEarnedMilli / 1000).toLocaleString('de-DE')} / {(grade.maxPointsMilli / 1000).toLocaleString('de-DE')} Punkte</p>)}
+                  </div>}
                 </div>
               </li>)}
             </ol>
