@@ -1,7 +1,7 @@
 # Academy – vollständiges Unterseiten-Redesign und UX-Bestandsaudit
 
 **Stand:** 12.11.2026  
-**Prüfgrundlage:** main nach PR #255, einschließlich PRs #246–#255; zusätzlicher Codeabgleich der Teilnehmerprüfungen, Kursdetails, Notizen, Lernbibliothek, Verwaltungs- und Bewertungsansichten  
+**Prüfgrundlage:** main nach PR #258, einschließlich PRs #246–#258; zusätzlicher Codeabgleich der Teilnehmerprüfungen, Kursdetails, Notizen, Lernbibliothek, Verwaltungs- und Bewertungsansichten  
 **Status:** Recherchegestütztes Redesign-Konzept; bestehende Fachregeln bleiben verbindlich. Die vorgeschlagenen Layout-/Kompositionsmuster dürfen innerhalb der bestätigten Academy-Designfreigabe eigenständig umgesetzt werden.  
 **Geltungsbereich:** interne Academy-Übersicht, Kurse/Lehrgänge, Lernbibliothek/Reader/Verwaltung, Prüfungen/Examiner sowie Meine Notizen.
 
@@ -295,3 +295,15 @@ Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. 
 - Die Korrekturhistorie einer abgeschlossenen Bewertung ist als native Disclosure mit Eintragsanzahl standardmäßig geschlossen.
 
 Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten bleiben unverändert. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+## 15. Umsetzungsprotokoll – nicht erreichbare Legacy-Editoren (PR #257)
+
+**PR #257 – am 12.11.2026 gemergt:** Die drei nicht mehr navigierbaren UI-Zweige `upload_textbook`, `add_code_test` und `instructor_grading` wurden aus `AcademyCenter.tsx` entfernt. Ihre Formular-State-Felder, Handler, bedingten JSX-Blöcke und nicht mehr benötigten Imports wurden ebenfalls entfernt.
+
+Die Entfernung ist auf nachweislich unerreichbare UI-Pfade begrenzt: Es gab keine aktiven `setActiveTab`-Aufrufe oder Navigations-/Deep-Link-Einstiege für diese Tab-IDs. Die gültigen Legacy-Teilnehmeransichten für Lehrmaterialien, Übungstests und Abschlussprüfungen bleiben erhalten. Server-Endpunkte und gespeicherte Daten wurden nicht entfernt; es gab keine Migration oder Löschung. PDF-Infrastruktur bleibt wie beschlossen nachrangig, vorhandene Legacy-PDFs bleiben lesbar.
+
+## 16. Umsetzungsprotokoll – Kurs-/Lehrgangsverwaltungslisten (PR #258)
+
+**PR #258 – am 12.11.2026 gemergt (Commit `d8034258058d46d63d8f18325e9d9ee6df96b289`):** Die langen punktgetrennten Metadatenzeilen wurden in responsive, beschriftete Schlüssel-Wert-Gruppen umgebaut. Kennung, Veröffentlichungsstatus, veröffentlichte Version, Entwurfsrevision, Verfügbarkeit und relevante Materialprüfungszustände bleiben vollständig erhalten und sind einzeln scanbar.
+
+Die Änderung verändert keine Daten, Statuswerte, Versionsregeln, Berechtigungen oder APIs. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Responsive-/Dark-Mode-Abnahme bleibt offen.
