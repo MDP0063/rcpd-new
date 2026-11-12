@@ -422,3 +422,10 @@
 - Die Bestätigung zeigt das tatsächliche Zeitlimit, die Versuchslimitierung und die Fortsetzungsregeln. 0/null bei maxAttempts und 0 bei timeLimitMinutes werden als unbegrenzt/ohne Zeitlimit behandelt.
 - Numerische minClearance-Werte werden nicht mehr im Teilnehmerkatalog oder in der UI offengelegt; die serverseitige Filterung bleibt erhalten.
 - PR #253 wurde am 12.11.2026 mit Commit `8df61a5d1e04df91126955aa76825c818b7bc00f` gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Accessibility-Abnahme offen.
+
+## 2026-11-12 – PR #255: Examiner-Panel-Semantik und Fokusführung
+
+- Übergabe-/Neuzuweisungs- und Freigabepanels in offenen Bewertungen sind korrekt als beschriftete Inline-Regionen statt als nicht-modale Dialoge ausgezeichnet.
+- Fokus geht beim Öffnen auf die jeweilige Überschrift und beim Abbrechen zum auslösenden Button zurück.
+- Vorgangskontext und Korrekturhistorie sind standardmäßig eingeklappt und über native Disclosure-Elemente erreichbar.
+- PR #255 am 12.11.2026 mit Commit bcce59fb9f967299105313ce769fc6bc549e885e gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-Abnahme offen.
