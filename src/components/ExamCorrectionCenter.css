@@ -167,7 +167,8 @@
   padding: 1rem 0 1.15rem !important;
   border-color: var(--exam-line) !important;
 }
-.exam-correction-history h4 {
+.exam-correction-history summary {
+  cursor: pointer;
   color: #713254;
   font-size: 0.9rem;
   font-weight: 750;
@@ -193,7 +194,7 @@
 .dark .exam-release-heading h3,
 .dark .exam-release-details p:first-child,
 .dark .exam-correction-card-heading h3,
-.dark .exam-correction-history h4 {
+.dark .exam-correction-history summary {
   color: #f2dce8;
 }
 .dark .exam-release-item,
