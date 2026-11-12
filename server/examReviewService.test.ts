@@ -369,10 +369,10 @@ test('Academy erkennt ausschließlich aktuell freigegebene bestandene final_exam
       '2026-11-10T12:05:00.000Z'
     );
     assert.equal(corrected.status, 'failed');
-    assert.deepEqual(
+    assert.equal(
       await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'),
-      proof,
-      'the last released passing result remains valid for course completion until the corrected result is released'
+      null,
+      'a corrected result must not satisfy the course completion requirement until the corrected result is released'
     );
     await releaseExamResult(repository, 'academy-final', 'academy-final-attempt', 'academy-admin', '2026-11-10T12:06:00.000Z');
     assert.equal(await getReleasedPassingFinalExam(repository, 'academy-student', 'academy-final', 'BASIC-01'), null,
