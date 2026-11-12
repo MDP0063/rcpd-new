@@ -61,15 +61,22 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState('');
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [releaseLoadError, setReleaseLoadError] = useState('');
   const [notice, setNotice] = useState('');
+  const [courseFilter, setCourseFilter] = useState('');
+  const [examTypeFilter, setExamTypeFilter] = useState<'all' | 'test' | 'final_exam'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'passed' | 'failed'>('all');
+  const [participantFilter, setParticipantFilter] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     const response = await apiFetch<{ reviews: Review[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEW_CORRECTIONS, { cache: 'no-store' });
     if (!response.ok || !response.data) {
-      setError(response.error || 'Die abgeschlossenen Bewertungen konnten nicht geladen werden.');
+      setLoadError(response.error || 'Die abgeschlossenen Bewertungen konnten nicht geladen werden.');
       setReviews([]);
     } else {
+      setLoadError('');
       setError('');
       setReviews(response.data.reviews);
       setGrades(current => {
@@ -83,16 +90,38 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
     if (canReleaseResults) {
       const releaseResponse = await apiFetch<{ releases: PendingRelease[] }>(API_ENDPOINTS.ADMIN_EXAM_RESULT_RELEASES, { cache: 'no-store' });
       if (releaseResponse.ok && releaseResponse.data && Array.isArray(releaseResponse.data.releases)) {
+        setReleaseLoadError('');
         setPendingReleases(releaseResponse.data.releases);
       } else {
         setPendingReleases([]);
-        setError(releaseResponse.error || 'Die ausstehenden Ergebnisfreigaben konnten nicht geladen werden.');
+        setReleaseLoadError(releaseResponse.error || 'Die ausstehenden Ergebnisfreigaben konnten nicht geladen werden.');
       }
     } else {
       setPendingReleases([]);
+      setReleaseLoadError('');
     }
     setLoading(false);
   }, [canReleaseResults]);
+
+  const availableCourseCodes = [...new Set([
+    ...reviews.map(review => review.attemptCourseCode),
+    ...pendingReleases.map(item => item.attemptCourseCode)
+  ])].sort((a, b) => a.localeCompare(b, 'de-DE'));
+  const normalizedParticipantFilter = participantFilter.trim().toLocaleLowerCase('de-DE');
+  const matchesFilters = (item: { userName: string; attemptCourseCode: string; assessmentStage: 'test' | 'final_exam'; status: 'passed' | 'failed' }) =>
+    (!courseFilter || item.attemptCourseCode === courseFilter) &&
+    (examTypeFilter === 'all' || item.assessmentStage === examTypeFilter) &&
+    (statusFilter === 'all' || item.status === statusFilter) &&
+    (!normalizedParticipantFilter || item.userName.toLocaleLowerCase('de-DE').includes(normalizedParticipantFilter));
+  const filteredReviews = [...reviews].filter(matchesFilters).sort((a, b) => Date.parse(b.reviewedAtIso) - Date.parse(a.reviewedAtIso));
+  const filteredPendingReleases = [...pendingReleases].filter(matchesFilters).sort((a, b) => Date.parse(a.submittedAtIso) - Date.parse(b.submittedAtIso));
+  const hasActiveFilters = Boolean(courseFilter || examTypeFilter !== 'all' || statusFilter !== 'all' || participantFilter.trim());
+  const resetFilters = () => {
+    setCourseFilter('');
+    setExamTypeFilter('all');
+    setStatusFilter('all');
+    setParticipantFilter('');
+  };
 
   useEffect(() => { void load(); }, [load]);
 
@@ -163,19 +192,54 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
     </div>
 
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
+    {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => void load()} disabled={loading || Boolean(savingId)} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
 
+    {!loading && !loadError && (reviews.length > 0 || pendingReleases.length > 0) && <section className="exam-correction-filters" aria-label="Bewertungen und Freigaben filtern">
+      <div className="exam-correction-filter-field">
+        <label htmlFor="exam-correction-participant-filter">Teilnehmer</label>
+        <input id="exam-correction-participant-filter" type="search" value={participantFilter} onChange={event => setParticipantFilter(event.target.value)} placeholder="Teilnehmername suchen …"/>
+      </div>
+      <div className="exam-correction-filter-field">
+        <label htmlFor="exam-correction-course-filter">Kurs</label>
+        <select id="exam-correction-course-filter" value={courseFilter} onChange={event => setCourseFilter(event.target.value)}>
+          <option value="">Alle Kurse</option>
+          {availableCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
+        </select>
+      </div>
+      <div className="exam-correction-filter-field">
+        <label htmlFor="exam-correction-type-filter">Prüfungstyp</label>
+        <select id="exam-correction-type-filter" value={examTypeFilter} onChange={event => setExamTypeFilter(event.target.value as 'all' | 'test' | 'final_exam')}>
+          <option value="all">Alle Prüfungstypen</option>
+          <option value="test">Übungstest</option>
+          <option value="final_exam">Abschlussprüfung</option>
+        </select>
+      </div>
+      <div className="exam-correction-filter-field">
+        <label htmlFor="exam-correction-status-filter">Ergebnisstatus</label>
+        <select id="exam-correction-status-filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value as 'all' | 'passed' | 'failed')}>
+          <option value="all">Alle Ergebnisse</option>
+          <option value="passed">Bestanden</option>
+          <option value="failed">Nicht bestanden</option>
+        </select>
+      </div>
+      <div className="exam-correction-filter-footer">
+        <span>{filteredReviews.length} Bewertungen · {filteredPendingReleases.length} Freigaben</span>
+        {hasActiveFilters && <button type="button" onClick={resetFilters}>Filter zurücksetzen</button>}
+      </div>
+    </section>}
     {canReleaseResults && <section className="exam-release-panel space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div className="exam-release-heading"><h3 className="font-bold text-slate-900 dark:text-white">Ausstehende Ergebnisfreigaben</h3><p className="mt-1 text-xs text-slate-500">Nur endgültig bewertete Ergebnisse können hier offiziell für Teilnehmer freigegeben werden. Korrekturen nach einer früheren Freigabe erfordern eine erneute Freigabe.</p></div>
-      {pendingReleases.length === 0 ? <p className="text-sm text-slate-500">Keine ausstehenden Ergebnisfreigaben.</p> : pendingReleases.map(item => <div key={item.id} className="exam-release-item flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
+      {releaseLoadError ? <div role="alert" className="text-sm text-rose-700 dark:text-rose-300">{releaseLoadError}</div> : filteredPendingReleases.length === 0 ? <p className="text-sm text-slate-500">{pendingReleases.length ? 'Keine Freigaben entsprechen den gewählten Filtern.' : 'Keine ausstehenden Ergebnisfreigaben.'}</p> : filteredPendingReleases.map(item => <div key={item.id} className="exam-release-item flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
         <div className="exam-release-details"><p className="font-semibold text-slate-900 dark:text-white">{item.examTitle} · {item.attemptCourseCode}</p><p className="text-xs text-slate-500">{item.userName} · {item.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · {new Date(item.submittedAtIso).toLocaleString('de-DE')}</p><p className="text-xs text-slate-500">{item.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {formatScore(item.finalScoreBasisPoints)}{item.resultReleaseStatus === 'pending_rerelease' ? ' · erneute Freigabe nach Korrektur' : ''}</p>{item.resultReleaseHistory.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Vorherige Freigaben: {item.resultReleaseHistory.map(entry => `${new Date(entry.releasedAtIso).toLocaleString('de-DE')} (${entry.releasedByUid})`).join(' · ')}</p>}</div>
         <button type="button" disabled={Boolean(savingId)} onClick={() => void release(item)} className="exam-release-button rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingId === item.id ? 'Gibt frei …' : 'Ergebnis freigeben'}</button>
       </div>)}
     </section>}
 
     {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div>
-      : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine abgeschlossenen manuellen Bewertungen vorhanden.</div>
-      : reviews.map(review => <article key={review.id} className="exam-correction-card space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      : loadError ? null
+      : filteredReviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">{reviews.length ? 'Keine Bewertungen entsprechen den gewählten Filtern.' : 'Keine abgeschlossenen manuellen Bewertungen vorhanden.'}{reviews.length > 0 && hasActiveFilters && <button type="button" onClick={resetFilters} className="ml-2 font-semibold underline">Filter zurücksetzen</button>}</div>
+      : filteredReviews.map(review => <article key={review.id} className="exam-correction-card space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         <header className="exam-correction-card-heading flex flex-wrap justify-between gap-2">
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3>
