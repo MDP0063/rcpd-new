@@ -537,3 +537,13 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 
 
 - Die Bibliotheksoberfläche nutzt einen konsolidierten Stilabschnitt statt mehrfacher, konkurrierender Override-Blöcke. Violett ist der Bibliotheks-Orientierungsakzent (Themenkicker, aktive Materialnavigation, Fokus); Karten, Flächen und gewöhnliche Aktionen bleiben neutral. Primäraktionen sind sparsam, Sekundäraktionen zurückhaltend und irreversible Löschaktionen klar destruktiv gekennzeichnet. Dark Mode, mobile Layouts und Reduced Motion folgen denselben Zustandsregeln.
+
+
+## Arbeitsfreigabe vom 12.11.2026 – Academy-Redesign
+
+- **BESCHLOSSEN – ausdrückliche projektspezifische Ausnahme:** Der Projektinhaber hat ChatGPT ausdrücklich autorisiert, das Academy-Redesign eigenständig weiterzuentwickeln, die nächsten zusammenhängenden Änderungen ohne Einzelabfrage umzusetzen und geeignete Academy-Redesign-PRs nach Prüfung selbst zu mergen.
+- Diese Freigabe hebt die zuvor notierte Merge-Sperre ausschließlich für das Academy-Redesign auf. Sie erlaubt weiterhin keine direkten Commits auf `main`; Änderungen laufen über Branches und Pull Requests.
+- Die Freigabe erlaubt keine Änderung bereits besprochener oder beschlossener Academy-Anforderungen, Fachregeln, Informationsarchitektur, Rollen, Berechtigungen, Statusdefinitionen, Datenschutz- oder Versionsregeln. Bei Konflikten haben die bestehenden bestätigten Entscheidungen Vorrang.
+- Vor relevanten UX-/Designentscheidungen und Änderungen wird recherchiert und geprüft, ob sie mit bestehenden Beschlüssen und dem Gesamtziel vereinbar sind. Echte, nicht auflösbare Grundsatzfragen werden dem Projektinhaber vorgelegt.
+- Merge erfolgt erst nach Code-/Diff-Prüfung und erfolgreichen erforderlichen CI-Prüfungen. Merge-bedingte Render-Autodeploys sind als mögliche Folge zu dokumentieren; ein erfolgreicher Merge ist kein Nachweis einer erfolgreichen Live-Abnahme.
+- Kostenfreie Architektur und bestehende Dienste bleiben verbindlich. Keine neuen kostenpflichtigen Dienste, Ressourcen oder Abhängigkeiten ohne gesonderte Freigabe.

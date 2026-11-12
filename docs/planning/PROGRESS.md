@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 11.11.2026 – zusätzlich PR #189/#190/#191/#192/#193 gemergt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #193 (Merge-Commit `6f9e54bfaa02ae9530e745487cdbc4037c31cca0`).  
+**Aktueller Basisstand:** `main` nach PR #204 (Merge-Commit `2c24449aacdfed00590a705901e5cf722e27c9a5`).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -837,3 +837,13 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - Abschließende Stilbereinigung: Die zuvor mehrfach angehängten, teils widersprüchlichen Bibliotheks-CSS-Regeln wurden in einen konsistenten Abschnitt überführt. Er definiert Katalogkarten, Reader, Sidebar, Verwaltungsformulare, Buttonzustände, Dark Mode, mobile Darstellung und Reduced Motion gemeinsam. Der Bibliotheksakzent bleibt violett und wird nur für Orientierung/Fokus eingesetzt; normale Aktionen bleiben neutral, Löschen bleibt semantisch destruktiv.
 - Katalogkarten blenden einen nicht vorhandenen Dokumenttyp aus, statt einen leeren Metadaten-Trenner darzustellen. Der Status während der Veröffentlichung wurde sprachlich korrigiert.
 - GitHub Actions für Commit `b2d9ca875883e57d2d3a69004c61deff36a48732`: TypeScript/Produktionsbuild und vollständige Tests erfolgreich; PR-Template-Prüfung erfolgreich. Optionaler Render-Deploy-Hook übersprungen. Kein Browser- oder Live-Firestore-Test.
+
+
+## 0.3 Fortführung des Academy-Redesigns (12.11.2026)
+
+- Der Projektinhaber hat ChatGPT ausdrücklich autorisiert, das Academy-Redesign eigenständig fortzuführen, mehrere zusammenhängende Änderungen ohne Einzelabfrage umzusetzen und geeignete PRs nach bestandener Prüfung selbst zu mergen. Die bestehende Academy-Konzeption und alle bereits beschlossenen Anforderungen bleiben unverändert; Details stehen im Entscheidungsregister.
+- **PR #203 – Taxonomie-Editor:** Rückkehraktion ist jetzt auch im Erstellmodus in Kategorie- und Dokumenttypverwaltung sichtbar. Die vorhandene Bestätigung schützt ungespeicherte Eingaben. Gemergt als `6ed0a161d761c44cdff2e97f377da5f0a35c83c4`. GitHub Build/Verify und PR-Vorlagenprüfung erfolgreich. Kein manueller Browser-/Live-Firestore-Test; Render-Deploymentstatus nicht separat verifiziert.
+- **PR #204 – Reader-Fehlerbehandlung:** Bei fehlgeschlagenem Laden einer Materialfassung steht direkt im Fehlerzustand eine Wiederholungsaktion zur Verfügung. Keine Änderung an Materialversion, Kursbindung, Notizen oder Berechtigungen. Gemergt als `2c24449aacdfed00590a705901e5cf722e27c9a5`. TypeScript-Prüfung, Produktionsbuild, vollständige Tests und PR-Vorlagenprüfung erfolgreich. Optionaler Render-Deploy-Hook übersprungen; kein manueller Browser-/Live-Firestore-Test.
+- **Nächster Prüffokus:** Lernbibliothek als Ganzes (Katalog, Filter, Reader, Notizen, Materialverwaltung und Taxonomie) gegen die beschlossene Spezifikation prüfen; danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Bereits umgesetzte Funktionen werden auf reale Fehler, Daten-/Berechtigungskonflikte, Fehlerzustände, Accessibility und responsive Bedienbarkeit geprüft, bevor größere visuelle Schritte erfolgen.
+- **Recherchegrundlage für Bedien- und Accessibility-Prüfungen:** WCAG 2.2 (insbesondere 3.3.1/3.3.2), W3C WAI Understanding Error Identification, GOV.UK WCAG guidance und Nielsen Norman Group zu Empty States. Externe Muster dienen als Qualitätsreferenz und überschreiben keine RCPD-Beschlüsse.
+- **Validierungsgrenze:** GitHub Actions ist kein Ersatz für manuelle Browser- und Live-Firestore-Abnahme. Diese bleibt für die Academy als zusammenhängender End-to-End-Schritt offen.
