@@ -290,3 +290,13 @@ Die serverseitige Berechtigungsprüfung für den manuellen Examiner-Workflow wur
 Die Ergebnisprojektion wurde gemäß Abschnitt 15.3 korrigiert: PR #189 erhält den zuletzt freigegebenen Snapshot während `pending_rerelease`; PR #190 erhält ursprünglichen Prüfer und ursprünglichen Bewertungsabschlusszeitpunkt bei späteren Korrekturen. CI einschließlich Tests war erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. Die gemeinsame Browser-/Live-Firestore-Abnahme bleibt offen.
 
 Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offen und wird getrennt fortgesetzt.
+
+
+## 12.11.2026 – Entscheidungsfreiheit und Recherchemodus
+
+- **Beschlossen:** Objektive UX-/Accessibility-/Konsistenzentscheidungen darf der Assistent innerhalb der bestehenden Projektleitplanken eigenständig treffen.
+- **Beschlossen:** Auch kritischere fachliche/technische Entscheidungen darf der Assistent nach gründlicher Recherche und dokumentierter Abwägung eigenständig treffen und anschließend strukturiert zur gezielten Korrektur präsentieren.
+- **Beschlossen:** Bei größeren Design-/UX-Schritten sind gebündelte Zwischenstände vorgesehen.
+- **Weiterhin zustimmungspflichtig:** Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stilrichtung/Formensprache und globalen Portalstruktur.
+- **Offen:** Konkrete globale Portalidentität, globale Navigation, Light-/Dark-Mode-Strategie sowie die im Abschnitt „Noch offene Designfragen“ beschriebenen Grundlagen.
+- **Offen – Revisionsworkflow:** Ob Admins/Colonels die Revisionsanträge ausdrücklich über die Aktionen „Annehmen“ und „Ablehnen“ entscheiden und welche genaue Ablehnungs-/Historienlogik gilt, ist noch nicht eindeutig bestätigt. Bis zur Klärung keine Implementierung dieser spezifischen Entscheidungszustände.
