@@ -2,7 +2,7 @@
 
 **Stand:** 12.11.2026 – PR #203 und #204 gemergt; Academy-Redesign wird auf ausdrückliche Freigabe eigenständig in kleinen geprüften PR-Schritten fortgeführt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #204 (Merge-Commit `2c24449aacdfed00590a705901e5cf722e27c9a5`).  
+**Aktueller Basisstand:** `main` nach PR #206 (Merge-Commit `e328ecbd1f7133e7f58f39b090de6ecaef12935a`).  
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -847,3 +847,12 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 - **Nächster Prüffokus:** Lernbibliothek als Ganzes (Katalog, Filter, Reader, Notizen, Materialverwaltung und Taxonomie) gegen die beschlossene Spezifikation prüfen; danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen. Bereits umgesetzte Funktionen werden auf reale Fehler, Daten-/Berechtigungskonflikte, Fehlerzustände, Accessibility und responsive Bedienbarkeit geprüft, bevor größere visuelle Schritte erfolgen.
 - **Recherchegrundlage für Bedien- und Accessibility-Prüfungen:** WCAG 2.2 (insbesondere 3.3.1/3.3.2), W3C WAI Understanding Error Identification, GOV.UK WCAG guidance und Nielsen Norman Group zu Empty States. Externe Muster dienen als Qualitätsreferenz und überschreiben keine RCPD-Beschlüsse.
 - **Validierungsgrenze:** GitHub Actions ist kein Ersatz für manuelle Browser- und Live-Firestore-Abnahme. Diese bleibt für die Academy als zusammenhängender End-to-End-Schritt offen.
+
+
+### PR #206 – Trefferzahlen der Lernbibliothek als Statusmeldungen (12.11.2026)
+
+- Bestätigter Accessibility-Befund: Die sichtbare Trefferzahl im Bibliothekskatalog und in der Materialnavigation wurde bei Such-/Filteränderungen dynamisch aktualisiert, war aber nicht als programmatisch erkennbare Statusmeldung ausgezeichnet.
+- Korrektur: Beide vorhandenen Trefferzahlen verwenden jetzt `role="status"` und `aria-atomic="true"`. Die sichtbare Darstellung, Filterlogik und Datenprojektion bleiben unverändert.
+- Recherchegrundlage: W3C WAI Technique ARIA22 beschreibt `role="status"` für dynamische Suchergebnis-Meldungen und empfiehlt bei Bedarf ein explizites `aria-atomic="true"`; das W3C-Suchbeispiel demonstriert die Ansage einer Ergebniszahl durch Screenreader.
+- PR #206 wurde am 12.11.2026 nach erfolgreicher TypeScript-Prüfung, Produktionsbuild, vollständigem Testsatz und PR-Vorlagenprüfung gemergt (Squash-Merge `e328ecbd1f7133e7f58f39b090de6ecaef12935a`).
+- Der optionale Render-Deploy-Hook wurde übersprungen. Kein manueller Browser-/Screenreader-/Live-Firestore-Test; die tatsächliche Ansage bleibt Teil der späteren Accessibility-Abnahme.
