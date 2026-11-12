@@ -1884,6 +1884,7 @@ async function startServer() {
       EXAM_REVIEW_REVISION_RECIPIENTS_INVALID: { status: 409, message: 'Die Empfänger der Revisionsanfrage konnten nicht sicher bestimmt werden.' },
       EXAM_REVIEW_REVISION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die zur Revision zurückgegeben werden kann.' },
       EXAM_REVIEW_REVISION_INVALID: { status: 409, message: 'Die Revisionsrückgabe ist mit dem gespeicherten Bewertungsstand nicht konsistent.' },
+      EXAM_REVIEW_REVISION_COMPLETION_INVALID: { status: 409, message: 'Die erneute Bewertung konnte nicht sicher mit der Revisionshistorie verknüpft werden.' },
       EXAM_ATTEMPT_CORRECTION_INVALID: { status: 409, message: 'Die Korrekturhistorie des Prüfungsversuchs ist ungültig.' },
       EXAM_SELF_REVIEW_FORBIDDEN: { status: 403, message: 'Du darfst deinen eigenen Prüfungsversuch nicht bewerten.' },
       EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
