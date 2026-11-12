@@ -221,15 +221,13 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const filteredMaterials = useMemo(() => materials.filter(item => {
     const query = search.trim().toLocaleLowerCase('de-DE');
     if (!query) return true;
-    const categoryId = item.draft?.categoryId || item.currentVersion?.categoryId || '';
-    const documentTypeId = item.draft?.documentTypeId || item.currentVersion?.documentTypeId || '';
+    const categoryId = item.draft?.categoryId || '';
+    const documentTypeId = item.draft?.documentTypeId || '';
     return [
       item.master.code,
       item.master.responsibleCourseCode || '',
       item.draft?.title || '',
       item.currentVersion?.title || '',
-      item.draft?.description || '',
-      item.currentVersion?.description || '',
       categories.find(category => category.id === categoryId)?.name || '',
       documentTypes.find(type => type.id === documentTypeId)?.name || '',
       statusLabel(item.master, item.draft)
