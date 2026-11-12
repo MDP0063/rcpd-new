@@ -290,6 +290,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisionRequest.publishedResultSnapshot?.finalScoreBasisPoints, 9500,
       'the last published participant result is retained during revision');
     assert.equal((revisionRequest.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
+    assert.equal(revisionRequest.reviewClaimHistory?.at(-1)?.previousGrades?.[0]?.pointsEarnedMilli, 900,
+      'the prior internal grade is retained in the revision audit event');
     const revisionQueue = await listExamReviews(repository, ['PC-101'], 'grader2');
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');
@@ -308,6 +310,8 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
     assert.equal(revisedAttempt?.reviewedByUid, 'grader2');
     assert.equal(revisedAttempt?.resultReleaseStatus, 'pending_rerelease');
     assert.equal(revisedAttempt?.reviewClaimHistory?.at(-1)?.action, 'revision_completed');
+    assert.equal(revisedAttempt?.reviewClaimHistory?.at(-1)?.nextGrades?.[0]?.pointsEarnedMilli, 800,
+      'the revised grade is recorded separately from the prior grade');
     const participantDuringRevision = (await listOwnExamResults(repository, 'student-1'))[0];
     assert.equal(participantDuringRevision.finalScoreBasisPoints, 9500,
       'the participant continues to see the last released result until the revised result is released');
