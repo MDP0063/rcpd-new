@@ -29,6 +29,7 @@ import examsAnswerSheet from '../assets/academy/exams-answer-sheet.svg';
 import notesNotepad from '../assets/academy/notes-notepad.svg';
 import { ExamParticipantRunner } from './ExamParticipantRunner';
 import { ExamReviewCenter } from './ExamReviewCenter';
+import { ExamReviewRevisionCenter } from './ExamReviewRevisionCenter';
 import { ExamCorrectionCenter } from './ExamCorrectionCenter';
 import { AcademyLearningCenter } from './AcademyLearningCenter';
 import { AcademyAuthoringCenter } from './AcademyAuthoringCenter';
@@ -1123,7 +1124,10 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
       {activeTab === 'exam_center' && <ExamParticipantRunner />}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
-      {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
+      {activeTab === 'exam_reviews' && canEditAcademy && <>
+        <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />
+        <ExamReviewRevisionCenter />
+      </>}
 
       {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
       {(activeTab === 'tests' || activeTab === 'final_exams') && (
