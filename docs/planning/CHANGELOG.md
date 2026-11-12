@@ -429,3 +429,16 @@
 - Fokus geht beim Öffnen auf die jeweilige Überschrift und beim Abbrechen zum auslösenden Button zurück.
 - Vorgangskontext und Korrekturhistorie sind standardmäßig eingeklappt und über native Disclosure-Elemente erreichbar.
 - PR #255 am 12.11.2026 mit Commit bcce59fb9f967299105313ce769fc6bc549e885e gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Manuelle Browser-/Screenreader-Abnahme offen.
+
+## 2026-11-12 – PR #257: Unerreichbare Legacy-Editorpfade entfernt
+
+- Entfernt wurden ausschließlich die nicht erreichbaren Academy-UI-Zweige `upload_textbook`, `add_code_test` und `instructor_grading` samt Handlern, Formular-State und ungenutzten Imports.
+- Die gültigen Legacy-Teilnehmeransichten für Lehrmaterialien, Übungstests und Abschlussprüfungen sowie deren gespeicherte Daten bleiben erhalten.
+- Bestehende Server-Endpunkte bleiben erhalten; nur die ungenutzte Frontend-Konstante `INSTRUCTOR_GRADE` wurde entfernt.
+- Keine Datenmigration oder -löschung. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen.
+
+## 2026-11-12 – PR #258: Verwaltungsmetadaten strukturiert
+
+- Kurs- und Lehrgangslisten verwenden jetzt beschriftete Schlüssel-Wert-Gruppen für Kennung, Veröffentlichungsstatus, Version, Entwurf, Verfügbarkeit und Materialprüfung.
+- Keine Änderungen an Statuslogik, Datenmodell oder API.
+- PR #258 mit Commit `d8034258058d46d63d8f18325e9d9ee6df96b289` gemergt. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung; optionaler Render-Deploy-Hook übersprungen. Responsive-/Dark-Mode-Browserabnahme bleibt offen.
