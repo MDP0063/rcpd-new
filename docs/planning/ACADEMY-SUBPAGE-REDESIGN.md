@@ -297,3 +297,13 @@ Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. 
 - Die Korrekturhistorie einer abgeschlossenen Bewertung ist als native Disclosure mit Eintragsanzahl standardmäßig geschlossen.
 
 Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten bleiben unverändert. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 13. Prüfungs-Unter-Navigation – rollenpräzise Aktionsbezeichnung (13.11.2026)
+
+**PR #287 – in Arbeit:** https://github.com/MDP0063/rcpd-new/pull/287
+
+- Admins sehen für den bestehenden Korrektur-/Freigabebereich die Bezeichnung „Korrekturen & Freigaben“.
+- Colonels sehen „Bewertungskorrekturen“, da die vorhandene Komponente Ergebnisfreigaben ausschließlich für Admins lädt und anbietet (`canReleaseResults={currentUser.role === 'admin'}`).
+- Die Änderung korrigiert nur die Beschriftung. Rollen, Rechte, API-Aufrufe und tatsächliche Aktionen bleiben unverändert.
+- CI und Browserprüfung stehen für den PR noch aus; keine Berechtigungs- oder Workflowänderung.
