@@ -1230,4 +1230,4 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Die Detailansicht zeigt für nicht gestartete Kurse nun die ausgewählte veröffentlichte Version statt „Noch keine Teilnahme“ als Versionsmetadatum. Fehlende Kurzbeschreibung und fehlende Veröffentlichung werden getrennt benannt.
 - Archivierte bzw. vorübergehend nicht verfügbare Kurse erhalten in der Detailansicht einen klaren Hinweis; die bereits vorhandene Startaktion wird deaktiviert, wenn der serverseitige Veröffentlichungs-/Verfügbarkeits-Gate den Start nicht zulässt. Bereits gestartete Teilnahmen bleiben unberührt.
 - Die Änderung ist auf bestehende Daten und Regeln begrenzt; keine API-, Datenmodell-, Rollen- oder serverseitige Statusänderung.
-- Der aktuelle PR-Head benötigt noch vollständige CI-/PR-Validierung und gezielte Browserprüfung; kein Merge und kein Deployment.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Commit `9975db5` erfolgreich; PR-Vorlagenprüfung ebenfalls. Der optionale Render-Deploy-Hook wurde übersprungen. Gezielte Browser-/Responsive-/Accessibility-Prüfung steht noch aus; kein Merge und kein Deployment.
