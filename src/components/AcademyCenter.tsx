@@ -1125,13 +1125,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 
-      {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & ABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
+      {/* TAB 2 & 3: ÜBUNGSTESTS (TRAINEE+) & KURSABSCHLUSSPRÜFUNGEN (ROOKIE+) */}
       {(activeTab === 'tests' || activeTab === 'final_exams') && (
         <div>
           {activeTab === 'final_exams' && !canAccessFinalExams ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 space-y-3 shadow-xs">
               <div className="flex items-center gap-2 text-xs font-mono text-rose-600 dark:text-rose-400 font-semibold">
-                <Lock className="w-4 h-4" /> ZUGRIFF AUF ABSCHLUSSPRÜFUNGEN GESPERRT (RANG TRAINEE)
+                <Lock className="w-4 h-4" /> ZUGRIFF AUF KURSABSCHLUSSPRÜFUNGEN GESPERRT (RANG TRAINEE)
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Abschlussarbeiten und Kursabschlussprüfungen sind erst ab dem Rang „Rookie“ freigeschaltet
