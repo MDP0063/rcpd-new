@@ -282,11 +282,11 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
               <label htmlFor={`exam-revision-reason-${review.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Revision</label>
               <textarea id={`exam-revision-reason-${review.id}`} aria-invalid={Boolean(validationErrors[`reason:${review.id}`])} aria-describedby={`exam-revision-reason-help-${review.id}${validationErrors[`reason:${review.id}`] ? ` exam-revision-reason-error-${review.id}` : ''}`} className={`${fieldClass} ${validationErrors[`reason:${review.id}`] ? 'border-rose-600 dark:border-rose-400' : ''}`} rows={3} required minLength={10} maxLength={1000}
                 value={reasons[review.id] || ''} onChange={event => { setReasons(current => ({ ...current, [review.id]: event.target.value })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
-                placeholder="Beschreibe, warum die abgeschlossene Bewertung erneut geprüft werden soll." aria-describedby={`exam-revision-reason-help-${review.id}`}/>
+                placeholder="Beschreibe, warum die abgeschlossene Bewertung erneut geprüft werden soll."/>
               <p id={`exam-revision-reason-help-${review.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
               {validationErrors[`reason:${review.id}`] && <p id={`exam-revision-reason-error-${review.id}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">{validationErrors[`reason:${review.id}`]}</p>}
             </div>
-            <fieldset className="space-y-3" aria-describedby={validationErrors[`steps:${review.id}`] ? `exam-revision-steps-error-${review.id}` : undefined}>
+            <fieldset className="space-y-3" aria-invalid={Boolean(validationErrors[`steps:${review.id}`])} aria-describedby={validationErrors[`steps:${review.id}`] ? `exam-revision-steps-error-${review.id}` : undefined}>
               <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Betroffene Bewertungsschritte</legend>
               <p className="text-xs text-slate-500">Es werden nur die Nummern der manuell bewerteten Fragen angezeigt. Antworten und interne Bewertungsdetails bleiben bis zur Übernahme des Vorgangs geschützt.</p>
               {validationErrors[`steps:${review.id}`] && <p id={`exam-revision-steps-error-${review.id}`} className="text-sm font-medium text-rose-700 dark:text-rose-300">{validationErrors[`steps:${review.id}`]}</p>}
@@ -302,7 +302,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
                     <textarea id={`exam-revision-feedback-${review.id}-${step.questionId}`} aria-invalid={Boolean(validationErrors[`feedback:${review.id}:${step.questionId}`])} aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}${validationErrors[`feedback:${review.id}:${step.questionId}`] ? ` exam-revision-feedback-error-${review.id}-${step.questionId}` : ''}`} className={`${fieldClass} ${validationErrors[`feedback:${review.id}:${step.questionId}`] ? 'border-rose-600 dark:border-rose-400' : ''}`} rows={2} required minLength={10} maxLength={1000}
                       value={feedback[review.id]?.[step.questionId] || ''}
                       onChange={event => { setFeedback(current => ({ ...current, [review.id]: { ...(current[review.id] || {}), [step.questionId]: event.target.value } })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
-                      placeholder="Welcher Bewertungsschritt soll überprüft werden und warum?" aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}`}/>
+                      placeholder="Welcher Bewertungsschritt soll überprüft werden und warum?"/>
                     <p id={`exam-revision-feedback-help-${review.id}-${step.questionId}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
                     {validationErrors[`feedback:${review.id}:${step.questionId}`] && <p id={`exam-revision-feedback-error-${review.id}-${step.questionId}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">{validationErrors[`feedback:${review.id}:${step.questionId}`]}</p>}
                   </div>}
