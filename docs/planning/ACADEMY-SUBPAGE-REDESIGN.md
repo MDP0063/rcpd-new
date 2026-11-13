@@ -297,3 +297,17 @@ Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. 
 - Die Korrekturhistorie einer abgeschlossenen Bewertung ist als native Disclosure mit Eintragsanzahl standardmäßig geschlossen.
 
 Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten bleiben unverändert. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 13. Lernbibliothek – visuelle Verfeinerung (13.11.2026)
+
+**Umsetzung in PR #288:** https://github.com/MDP0063/rcpd-new/pull/288
+
+- Der bestätigte violette Bereichsakzent (#6841B8) wird in Themenbereichen, Materialmetadaten, Fokuszuständen und primären Reader-Aktionen konsistent verwendet. Die Farbe bleibt ein Bereichsakzent und wird nicht als Statusfarbe eingesetzt.
+- Themenbereichs- und Materialkarten erhalten eine ruhigere, konsistente Oberflächenhierarchie mit klarer Hover-/Fokus-Rückmeldung.
+- Kategorie und Dokumenttyp werden auf Materialkarten als kompakte Metadaten-Chips dargestellt.
+- Beschreibungen in Karten werden auf maximal drei Zeilen begrenzt, damit Katalogkarten bei längeren Texten vergleichbar bleiben; der vollständige Inhalt bleibt im Reader zugänglich.
+- Reader-Navigation, Kopfbereich und Materialaktion werden dezent auf die Bibliotheksidentität abgestimmt. Die Lesefläche selbst bleibt neutral und lesefokussiert.
+- Mobile Karten und Such-/Sortierflächen erhalten ausreichend große Aktionen und volle verfügbare Breite.
+- Keine Änderung an Katalogdaten, Suche, Filtern, Sortierung, Materialzugriff, Versionierung, Notizen, Textankern oder Verwaltung. Keine neuen Abhängigkeiten und keine PDF-Infrastruktur.
+- CI und Browser-/Accessibility-Prüfung stehen für den PR noch aus.
