@@ -12,7 +12,10 @@
 /* Shared Academy section navigation: one clear active state, no duplicated entry tiles. */
 .academy-main-nav {
   display: grid;
+  flex: 1 1 34rem;
+  min-width: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
   gap: 0.35rem;
   padding: 0.45rem;
   border: 1px solid #dce7f6;
@@ -21,8 +24,11 @@
   box-shadow: 0 5px 18px rgba(31, 69, 119, 0.055);
 }
 .academy-main-nav button {
+  display: flex;
   min-width: 0;
   min-height: 2.85rem;
+  align-items: center;
+  justify-content: center;
   padding: 0.65rem 0.75rem;
   border: 0;
   border-radius: 0.7rem;
@@ -30,6 +36,8 @@
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
   transition: color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
 }
 .academy-main-nav button:hover {
@@ -259,7 +267,6 @@
 }
 @media (max-width: 760px) {
   .academy-main-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .academy-main-nav button:last-child { grid-column: 1 / -1; }
   .academy-structure-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
