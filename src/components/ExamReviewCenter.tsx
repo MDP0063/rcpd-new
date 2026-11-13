@@ -398,7 +398,7 @@ export const ExamReviewCenter: React.FC<{
         <select id="exam-review-type-filter" value={examTypeFilter} onChange={event => setExamTypeFilter(event.target.value as 'all' | 'test' | 'final_exam')}>
           <option value="all">Alle Prüfungstypen</option>
           <option value="test">Übungstest</option>
-          <option value="final_exam">Abschlussprüfung</option>
+          <option value="final_exam">Kursabschlussprüfung</option>
         </select>
       </div>
       <div className="exam-review-filter-field">
