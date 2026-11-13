@@ -1014,24 +1014,21 @@ Abgeschlossene Vorgänge verschwinden aus der offenen Aufgabenliste, bleiben abe
 
 **Bestätigte Grundlage:** Alle zum Zeitpunkt der Rückgabe für den Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit Begründung und konkretem Feedback zu betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen. Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; es entsteht kein neuer Prüfungsversuch und die Bewertungshistorie bleibt erhalten.
 
-**Offene fachliche Entscheidung:** Es ist noch nicht ausdrücklich entschieden, ob ein Admin/Colonel die Action Request zwingend annehmen oder ablehnen muss, bevor der Versuch wieder in die gemeinsame Prüferliste kommt. Die Empfängerregel „Admins und Colonels“ allein belegt keine zusätzliche verpflichtende Freigabestufe.
-
-**Vorgeschlagener Ablauf in PR #267 – nicht freigegeben:**
-- Das Einreichen erzeugt zunächst ausschließlich eine offene Action Request an Admins und Colonels. Bis zu deren Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch wird noch nicht in die gemeinsame Prüferliste aufgenommen.
-- Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie begründet ab.
-- Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert.
-- Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen.
-- Es erfolgt keine automatische Einzelzuweisung. Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
+**Beschlossener zweistufiger Ablauf (Option 2, ausdrücklich bestätigt am 13.11.2026):**
+- Das Einreichen erzeugt eine offene Action Request ausschließlich an Admins und Colonels. Bis zur Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch bleibt aus der gemeinsamen Prüferliste ausgeschlossen.
+- Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie mit einer nachvollziehbaren Begründung ab.
+- Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert; der Vorgang wird nicht erneut zur Bewertung freigegeben.
+- Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen. Es wird kein neuer Versuch angelegt und keine einzelne Person automatisch zugewiesen.
+- Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
 - Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, zählt während der erneuten Bewertung aber nicht als aktueller Kursabschlussnachweis. Erst die erneute Ergebnisfreigabe stellt den neuen Nachweisstand her.
 
-**Bereits bestätigte Schutzregeln:**
+**Weitere Schutzregeln:**
 - Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
-- Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
 - Bereits gespeicherte Bewertungsschritte bleiben erhalten. Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
 - Konkretes Feedback zu betroffenen Bewertungsschritten und der Grund der Revision sind erforderlich.
 - Sämtliche Anfragen, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert.
 
-Die vorherige Bewertungshistorie darf nicht unsichtbar werden. Der vorgeschlagene Supervisor-Gate-Ablauf darf erst nach ausdrücklicher Freigabe umgesetzt oder als verbindlich dokumentiert werden.
+Die vorherige Bewertungshistorie darf nicht unsichtbar werden. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung beim Antrag als auch die Admin-/Colonel-Zuständigkeit bei Inbox und Entscheidung durchsetzen.
 
 ### 14.15 Grading Workspace
 
