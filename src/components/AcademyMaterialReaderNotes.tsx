@@ -78,8 +78,19 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const [anchorNotice, setAnchorNotice] = useState('');
   const saveDebounceTimerRef = useRef<number | null>(null);
   const revisionByIdRef = useRef(new Map<string, number>());
-  const pendingSaveRef = useRef<NoteDraft | null>(null);
+  const draftsBySourceRef = useRef(new Map<string, NoteDraft>());
+  const sourceKey = JSON.stringify([materialId, materialVersionId]);
+  const sourceKeyRef = useRef(sourceKey);
+  // Keep pending edits per note: a material switch can overlap an in-flight save for another source.
+  const pendingSavesRef = useRef(new Map<string, NoteDraft>());
+  const blockedSaveIdsRef = useRef(new Set<string>());
+  const operationLockedIdsRef = useRef(new Set<string>());
   const savingRef = useRef(false);
+  const savingDraftIdRef = useRef<string | null>(null);
+  const saveErrorsByIdRef = useRef(new Map<string, string>());
+  const lastSavedByIdRef = useRef(new Map<string, NoteDraft>());
+  // Ignore note-list responses that started before a newer local mutation completed.
+  const noteMutationVersionRef = useRef(0);
   const lastSavedRef = useRef('');
   const currentDraftRef = useRef<NoteDraft | null>(null);
   const persistPendingRef = useRef<() => Promise<void>>(async () => {});
@@ -112,72 +123,135 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const persistPending = useCallback(async () => {
     if (savingRef.current) return;
     savingRef.current = true;
-    setSaveStatus('saving');
+    const blockedThisRun = new Set<string>();
     try {
-      while (pendingSaveRef.current) {
-        const draft = pendingSaveRef.current;
-        pendingSaveRef.current = null;
-        const expectedRevision = revisionByIdRef.current.get(draft.id) ?? 1;
-        const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
-          API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(draft.id),
-          {
-            method: 'PUT',
-            body: JSON.stringify({
-              expectedRevision,
-              title: draft.title,
-              content: draft.content,
-              tags: draft.tags
-            })
-          }
+      while (true) {
+        const entry = Array.from(pendingSavesRef.current.entries()).find(([id]) =>
+          !blockedThisRun.has(id) &&
+          !blockedSaveIdsRef.current.has(id) &&
+          !operationLockedIdsRef.current.has(id)
         );
-        if (!response.ok || !response.data) {
-          pendingSaveRef.current = null;
-          setSaveStatus('error');
-          setSaveError(response.status === 409
-            ? 'Diese Notiz wurde zwischenzeitlich geändert. Lade die aktuelle Fassung neu, bevor du weiterarbeitest.'
-            : response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.');
-          return;
+        if (!entry) break;
+        const [id, draft] = entry;
+        pendingSavesRef.current.delete(id);
+        const expectedRevision = revisionByIdRef.current.get(id) ?? 1;
+        savingDraftIdRef.current = id;
+        if (currentDraftRef.current?.id === id) setSaveStatus('saving');
+
+        let response: { ok: boolean; data?: { note: AcademyPrivateNoteDoc } | null; status: number; error?: string };
+        try {
+          response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
+            API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(id),
+            {
+              method: 'PUT',
+              body: JSON.stringify({
+                expectedRevision,
+                title: draft.title,
+                content: draft.content,
+                tags: draft.tags
+              })
+            }
+          );
+        } catch (error) {
+          response = {
+            ok: false,
+            status: 0,
+            error: error instanceof Error ? error.message : 'Die Notiz konnte nicht gespeichert werden.'
+          };
         }
+        savingDraftIdRef.current = null;
+
+        if (!response.ok || !response.data) {
+          const message = response.status === 409
+            ? 'Diese Notiz wurde zwischenzeitlich geändert. Lade die aktuelle Fassung neu, bevor du weiterarbeitest.'
+            : response.error || 'Die Notiz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.';
+          const latestDraft = pendingSavesRef.current.get(id) || draft;
+          pendingSavesRef.current.set(id, latestDraft);
+          if (response.status === 409) blockedSaveIdsRef.current.add(id);
+          blockedThisRun.add(id);
+          saveErrorsByIdRef.current.set(id, message);
+          if (currentDraftRef.current?.id === id) {
+            setSaveStatus('error');
+            setSaveError(message);
+          }
+          continue;
+        }
+
         const saved = response.data.note;
+        const savedDraft: NoteDraft = {
+          id: saved.id, title: saved.title || '', content: saved.content || '', tags: saved.tags || []
+        };
+        const sentSnapshot = serializeDraft(draft);
+        const savedSnapshot = serializeDraft(savedDraft);
+        saveErrorsByIdRef.current.delete(id);
+        blockedSaveIdsRef.current.delete(id);
         revisionByIdRef.current.set(saved.id, saved.revision ?? expectedRevision + 1);
+        lastSavedByIdRef.current.set(saved.id, savedDraft);
+        noteMutationVersionRef.current += 1;
         setNotes(previous => previous.map(note => note.id === saved.id ? saved : note));
-        const savedSnapshot = serializeDraft(draft);
-        if (currentDraftRef.current?.id === draft.id &&
-            serializeDraft(currentDraftRef.current) === savedSnapshot) {
+
+        const queuedDraft = pendingSavesRef.current.get(id);
+        if (queuedDraft && serializeDraft(queuedDraft) === sentSnapshot) {
+          pendingSavesRef.current.delete(id);
+        }
+        if (currentDraftRef.current?.id === id) {
           lastSavedRef.current = savedSnapshot;
-          setSaveStatus('saved');
-          setSaveError('');
-        } else if (currentDraftRef.current?.id === draft.id) {
-          pendingSaveRef.current = currentDraftRef.current;
+          if (serializeDraft(currentDraftRef.current) === sentSnapshot) {
+            setTitle(savedDraft.title);
+            setContent(savedDraft.content);
+            setTags(savedDraft.tags.join(', '));
+            setSaveStatus('saved');
+            setSaveError('');
+          } else {
+            pendingSavesRef.current.set(id, currentDraftRef.current);
+          }
         }
       }
     } finally {
+      savingDraftIdRef.current = null;
       savingRef.current = false;
-      if (pendingSaveRef.current) void persistPendingRef.current();
+      const hasRunnablePending = Array.from(pendingSavesRef.current.keys()).some(id =>
+        !blockedThisRun.has(id) &&
+        !blockedSaveIdsRef.current.has(id) &&
+        !operationLockedIdsRef.current.has(id)
+      );
+      if (hasRunnablePending) void persistPendingRef.current();
     }
   }, []);
 
-  persistPendingRef.current = persistPending;
-
   const queueSave = useCallback((draft: NoteDraft) => {
-    pendingSaveRef.current = draft;
+    if (operationLockedIdsRef.current.has(draft.id)) return;
+    if (blockedSaveIdsRef.current.has(draft.id)) {
+      pendingSavesRef.current.set(draft.id, draft);
+      const message = saveErrorsByIdRef.current.get(draft.id) ||
+        'Lade zuerst die aktuelle Notizfassung, bevor du erneut speicherst.';
+      if (currentDraftRef.current?.id === draft.id) {
+        setSaveStatus('error');
+        setSaveError(message);
+      }
+      return;
+    }
+    pendingSavesRef.current.set(draft.id, draft);
     void persistPending();
   }, [persistPending]);
 
+  persistPendingRef.current = persistPending;
+
   useEffect(() => {
     let active = true;
+    const mutationVersionAtStart = noteMutationVersionRef.current;
     setLoading(true);
     setNotesLoaded(false);
     setLoadError('');
     setLoadRetryable(false);
-    setNotes([]);
+    setSaveStatus('saved');
+    setSaveError('');
     setSelectedNoteId('');
     setTitle('');
     setContent('');
     setTags('');
     currentDraftRef.current = null;
     lastSavedRef.current = '';
-    revisionByIdRef.current.clear();
     void apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES)
       .then(response => {
         if (!active) return;
@@ -186,8 +260,18 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
           setLoadRetryable(response.status === 0 || response.status === 429 || response.status >= 500);
           return;
         }
+        if (noteMutationVersionRef.current !== mutationVersionAtStart) {
+          setNotesLoaded(true);
+          setLoadRetryable(false);
+          return;
+        }
         const ownNotes = response.data.notes;
-        for (const note of ownNotes) revisionByIdRef.current.set(note.id, note.revision ?? 1);
+        for (const note of ownNotes) {
+          revisionByIdRef.current.set(note.id, note.revision ?? 1);
+          lastSavedByIdRef.current.set(note.id, {
+            id: note.id, title: note.title || '', content: note.content || '', tags: note.tags
+          });
+        }
         setNotes(ownNotes);
         setNotesLoaded(true);
         setLoadRetryable(false);
@@ -205,9 +289,12 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       active = false;
       // Flush the current version's draft before the reader switches to another material.
       // The debounce timer is cleaned up separately, so relying on it here could lose edits.
-      const current = currentDraftRef.current;
-      if (current && serializeDraft(current) !== lastSavedRef.current) {
-        pendingSaveRef.current = current;
+      const current = draftsBySourceRef.current.get(sourceKey) || null;
+      draftsBySourceRef.current.delete(sourceKey);
+      const savedDraft = current ? lastSavedByIdRef.current.get(current.id) || null : null;
+      const savedSnapshot = savedDraft ? serializeDraft(savedDraft) : '';
+      if (current && serializeDraft(current) !== savedSnapshot) {
+        pendingSavesRef.current.set(current.id, current);
         void persistPendingRef.current();
       }
     };
@@ -221,7 +308,16 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }) : null, [selectedNote, title, content, tags]);
 
   currentDraftRef.current = draft;
+  useEffect(() => {
+    if (sourceKeyRef.current !== sourceKey) {
+      sourceKeyRef.current = sourceKey;
+      return;
+    }
+    if (draft) draftsBySourceRef.current.set(sourceKey, draft);
+    else draftsBySourceRef.current.delete(sourceKey);
+  }, [draft, sourceKey]);
   const hasUnsavedChanges = Boolean(draft && serializeDraft(draft) !== lastSavedRef.current);
+  const hasSaveConflict = Boolean(selectedNote && blockedSaveIdsRef.current.has(selectedNote.id));
 
   useEffect(() => {
     if (!draft) return;
@@ -240,22 +336,33 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   }, [draft, queueSave]);
 
   const selectNote = (note: AcademyPrivateNoteDoc) => {
+    if (savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Diese Notiz wird gerade gespeichert oder aktualisiert. Bitte warte kurz und wähle sie dann erneut aus.');
+      return;
+    }
     if (hasUnsavedChanges && draft) {
       queueSave(draft);
       return;
     }
-    setSelectedNoteId(note.id);
-    setTitle(note.title || '');
-    setContent(note.content || '');
-    setTags(note.tags.join(', '));
-    lastSavedRef.current = serializeDraft({
+    const serverDraft: NoteDraft = {
       id: note.id,
       title: note.title || '',
       content: note.content || '',
       tags: note.tags
-    });
-    setSaveStatus('saved');
-    setSaveError('');
+    };
+    const pendingDraft = pendingSavesRef.current.get(note.id) || null;
+    const savedDraft = lastSavedByIdRef.current.get(note.id) || serverDraft;
+    const selectedDraft = pendingDraft || savedDraft;
+    setSelectedNoteId(note.id);
+    setTitle(selectedDraft.title);
+    setContent(selectedDraft.content);
+    setTags(selectedDraft.tags.join(', '));
+    lastSavedRef.current = serializeDraft(savedDraft);
+    lastSavedByIdRef.current.set(note.id, savedDraft);
+    setSaveStatus(pendingDraft ? 'error' : 'saved');
+    setSaveError(pendingDraft
+      ? saveErrorsByIdRef.current.get(note.id) || 'Deine letzte Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.'
+      : '');
     setPreview(false);
   };
 
@@ -286,17 +393,28 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     const note = response.data.note;
     revisionByIdRef.current.set(note.id, note.revision ?? 1);
     setNotes(previous => [...previous, note]);
+    noteMutationVersionRef.current += 1;
     setSelectedNoteId(note.id);
     setTitle('');
     setContent('');
     setTags('');
     lastSavedRef.current = serializeDraft({ id: note.id, title: '', content: '', tags: [] });
+    lastSavedByIdRef.current.set(note.id, { id: note.id, title: '', content: '', tags: [] });
     setSaveStatus('saved');
     setSaveError('');
     setLoadError('');
   };
 
   const addCurrentSourceToNote = async (note: AcademyPrivateNoteDoc) => {
+    if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Speichere oder lade zuerst die Änderungen dieser Notiz, bevor du eine weitere Quelle hinzufügst.');
+      return;
+    }
+    if (selectedNoteId === note.id && (hasUnsavedChanges || saveStatus !== 'saved')) {
+      if (hasUnsavedChanges && draft) queueSave(draft);
+      setAnchorNotice('Speichere zuerst die aktuellen Notizänderungen, bevor du eine weitere Quelle hinzufügst.');
+      return;
+    }
     const sources = noteSources(note);
     if (sources.some(source => source.materialId === materialId && source.materialVersionId === materialVersionId)) return;
     setSavingAction(true);
@@ -307,7 +425,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {
           method: 'PUT',
           body: JSON.stringify({
-            expectedRevision: note.revision ?? 1,
+            expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1,
             sources: [...sources, { materialId, materialVersionId, ...(selectedAnchor ? { anchor: selectedAnchor } : {}) }]
           })
         }
@@ -318,6 +436,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      noteMutationVersionRef.current += 1;
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht mit der Notiz verknüpft werden.');
     } finally {
@@ -326,7 +445,14 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const attachAnchorToNote = async (note: AcademyPrivateNoteDoc) => {
-    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction) return;
+    if (!selectedAnchor || hasUnsavedChanges || saveStatus !== 'saved' || savingAction ||
+        pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id ||
+        operationLockedIdsRef.current.has(note.id)) {
+      if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id) {
+        setAnchorNotice('Speichere zuerst die Änderungen dieser Notiz, bevor du einen Textanker hinzufügst.');
+      }
+      return;
+    }
     const sources = noteSources(note).map(source =>
       source.materialId === materialId && source.materialVersionId === materialVersionId
         ? { ...source, anchor: selectedAnchor }
@@ -337,7 +463,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     try {
       const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(
         API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(note.id),
-        { method: 'PUT', body: JSON.stringify({ expectedRevision: note.revision ?? 1, sources }) }
+        { method: 'PUT', body: JSON.stringify({ expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1, sources }) }
       );
       if (!response.ok || !response.data) {
         setLoadError(response.error || 'Der Textanker konnte nicht gespeichert werden.');
@@ -345,6 +471,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      noteMutationVersionRef.current += 1;
       setAnchorNotice('Textanker wurde an dieser Materialquelle gespeichert.');
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Der Textanker konnte nicht gespeichert werden.');
@@ -354,6 +481,15 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   const removeCurrentSourceFromNote = async (note: AcademyPrivateNoteDoc) => {
+    if (pendingSavesRef.current.has(note.id) || savingDraftIdRef.current === note.id || operationLockedIdsRef.current.has(note.id)) {
+      setAnchorNotice('Speichere oder lade zuerst die Änderungen dieser Notiz, bevor du die Quelle entfernst.');
+      return;
+    }
+    if (selectedNoteId === note.id && (hasUnsavedChanges || saveStatus !== 'saved')) {
+      if (hasUnsavedChanges && draft) queueSave(draft);
+      setAnchorNotice('Speichere zuerst die aktuellen Notizänderungen, bevor du die Quelle entfernst.');
+      return;
+    }
     const sources = noteSources(note);
     if (sources.length <= 1) return;
     setSavingAction(true);
@@ -367,7 +503,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         {
           method: 'PUT',
           body: JSON.stringify({
-            expectedRevision: note.revision ?? 1,
+            expectedRevision: revisionByIdRef.current.get(note.id) ?? note.revision ?? 1,
             sources: nextSources
           })
         }
@@ -378,6 +514,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
       }
       revisionByIdRef.current.set(note.id, response.data.note.revision ?? (note.revision ?? 1) + 1);
       setNotes(previous => previous.map(item => item.id === note.id ? response.data!.note : item));
+      noteMutationVersionRef.current += 1;
       if (selectedNoteId === note.id) setSelectedNoteId('');
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Die Materialquelle konnte nicht von der Notiz gelöst werden.');
@@ -398,6 +535,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         return;
       }
       setNotes(previous => previous.filter(note => note.id !== existing.id));
+      noteMutationVersionRef.current += 1;
       return;
     }
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES, {
@@ -420,56 +558,98 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
     const note = response.data.note;
     revisionByIdRef.current.set(note.id, note.revision ?? 1);
     setNotes(previous => [...previous, note]);
+    noteMutationVersionRef.current += 1;
     setLoadError('');
   };
 
   const reloadSelectedNote = async () => {
-    if (!selectedNote || saveStatus !== 'error' || savingAction) return;
+    if (!selectedNote || saveStatus !== 'error' || savingAction ||
+        savingDraftIdRef.current === selectedNote.id || operationLockedIdsRef.current.has(selectedNote.id)) return;
     if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    const noteId = selectedNote.id;
+    const draftToKeep = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
+      ? draft
+      : pendingSavesRef.current.get(noteId) || draft;
     if (saveDebounceTimerRef.current !== null) {
       window.clearTimeout(saveDebounceTimerRef.current);
       saveDebounceTimerRef.current = null;
     }
-    pendingSaveRef.current = null;
+    operationLockedIdsRef.current.add(noteId);
     setSavingAction(true);
-    const response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+    let response: { ok: boolean; data?: { notes: AcademyPrivateNoteDoc[] } | null; error?: string };
+    try {
+      response = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+    } catch (error) {
+      response = { ok: false, error: error instanceof Error ? error.message : 'Die aktuelle Notizfassung konnte nicht geladen werden.' };
+    }
     setSavingAction(false);
+    operationLockedIdsRef.current.delete(noteId);
     if (!response.ok || !response.data) {
+      if (draftToKeep) pendingSavesRef.current.set(noteId, draftToKeep);
       setSaveError(response.error || 'Die aktuelle Notizfassung konnte nicht geladen werden.');
       return;
     }
-    const latest = response.data.notes.find(note => note.id === selectedNote.id);
+    const latest = response.data.notes.find(note => note.id === noteId);
     if (!latest) {
+      if (draftToKeep) pendingSavesRef.current.set(noteId, draftToKeep);
       setSaveError('Diese Notiz ist nicht mehr vorhanden. Lade den Reader neu.');
       return;
     }
+    const latestDraft: NoteDraft = {
+      id: latest.id, title: latest.title || '', content: latest.content || '', tags: latest.tags
+    };
+    pendingSavesRef.current.delete(noteId);
+    blockedSaveIdsRef.current.delete(noteId);
     revisionByIdRef.current.set(latest.id, latest.revision ?? 1);
+    saveErrorsByIdRef.current.delete(latest.id);
+    lastSavedByIdRef.current.set(latest.id, latestDraft);
     setNotes(previous => previous.map(note => note.id === latest.id ? latest : note));
-    setTitle(latest.title || '');
-    setContent(latest.content || '');
-    setTags(latest.tags.join(', '));
-    lastSavedRef.current = serializeDraft({
-      id: latest.id,
-      title: latest.title || '',
-      content: latest.content || '',
-      tags: latest.tags
-    });
+    noteMutationVersionRef.current += 1;
+    setTitle(latestDraft.title);
+    setContent(latestDraft.content);
+    setTags(latestDraft.tags.join(', '));
+    lastSavedRef.current = serializeDraft(latestDraft);
     setSaveStatus('saved');
     setSaveError('');
   };
 
   const deleteSelectedNote = async () => {
-    if (!selectedNote || !window.confirm('Diese private Notiz endgültig löschen?')) return;
-    if (draft && serializeDraft(draft) !== lastSavedRef.current) pendingSaveRef.current = null;
+    if (!selectedNote || savingDraftIdRef.current === selectedNote.id ||
+        operationLockedIdsRef.current.has(selectedNote.id) ||
+        !window.confirm('Diese private Notiz endgültig löschen?')) return;
+    const noteId = selectedNote.id;
+    const draftToRestore = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
+      ? draft
+      : pendingSavesRef.current.get(noteId) || null;
+    if (saveDebounceTimerRef.current !== null) {
+      window.clearTimeout(saveDebounceTimerRef.current);
+      saveDebounceTimerRef.current = null;
+    }
+    operationLockedIdsRef.current.add(noteId);
     setSavingAction(true);
-    const response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(selectedNote.id), { method: 'DELETE' });
+    let response: { ok: boolean; error?: string };
+    try {
+      response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + '/' + encodeURIComponent(noteId), { method: 'DELETE' });
+    } catch (error) {
+      response = { ok: false, error: error instanceof Error ? error.message : 'Die Notiz konnte nicht gelöscht werden.' };
+    }
     setSavingAction(false);
+    operationLockedIdsRef.current.delete(noteId);
     if (!response.ok) {
+      if (draftToRestore) pendingSavesRef.current.set(noteId, draftToRestore);
       setLoadError(response.error || 'Die Notiz konnte nicht gelöscht werden.');
       return;
     }
-    setNotes(previous => previous.filter(note => note.id !== selectedNote.id));
-    revisionByIdRef.current.delete(selectedNote.id);
+    pendingSavesRef.current.delete(noteId);
+    blockedSaveIdsRef.current.delete(noteId);
+    revisionByIdRef.current.delete(noteId);
+    saveErrorsByIdRef.current.delete(noteId);
+    lastSavedByIdRef.current.delete(noteId);
+    setNotes(previous => previous.filter(note => note.id !== noteId));
+    noteMutationVersionRef.current += 1;
+    for (const [key, value] of draftsBySourceRef.current.entries()) {
+      if (value.id === noteId) draftsBySourceRef.current.delete(key);
+    }
     setSelectedNoteId('');
     setTitle('');
     setContent('');
@@ -580,7 +760,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
-              <input className={field} value={title} maxLength={200} disabled={savingAction} onChange={event => setTitle(event.target.value)} />
+              <input className={field} value={title} maxLength={200} disabled={savingAction || hasSaveConflict} onChange={event => setTitle(event.target.value)} />
             </label>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -594,18 +774,20 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={markdownComponents}>{content}</ReactMarkdown>
                 </article>
               ) : (
-                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} disabled={savingAction} onChange={event => setContent(event.target.value)} />
+                <textarea id="academy-reader-note-content" className={field} rows={7} maxLength={20000} value={content} disabled={savingAction || hasSaveConflict} onChange={event => setContent(event.target.value)} />
               )}
             </div>
             <label className="block space-y-1">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter (Komma getrennt)</span>
-              <input className={field} value={tags} disabled={savingAction} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
+              <input className={field} value={tags} disabled={savingAction || hasSaveConflict} onChange={event => setTags(event.target.value)} placeholder="z. B. Funk, Verfahren" />
             </label>
             <div className={saveError ? "space-y-2" : "sr-only"}>
               <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{saveError}</p>
               {saveError ? (
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>
+                  {blockedSaveIdsRef.current.has(selectedNote.id)
+                    ? <span className="text-xs text-amber-700 dark:text-amber-300">Nach einem Versionskonflikt bitte zuerst die aktuelle Fassung laden.</span>
+                    : <button type="button" className={secondary} onClick={() => queueSave(draft)} disabled={savingAction || saveStatus !== 'error'}>Erneut speichern</button>}
                   <button type="button" className={secondary} onClick={() => void reloadSelectedNote()} disabled={savingAction || saveStatus !== 'error'}>Aktuelle Fassung laden</button>
                 </div>
               ) : null}
