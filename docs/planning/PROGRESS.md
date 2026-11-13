@@ -1231,4 +1231,4 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Kategorie- und Dokumenttypverwaltung erhalten eine klarere Gewichtung zwischen Bearbeiten, Archivieren/Reaktivieren und endgültigem Löschen.
 - Ausschließlich CSS/Präsentation; keine Änderung an Formularfeldern, Pflichtangaben, Rollen-/Kursrechten, Veröffentlichungs- oder Versionslogik, Taxonomie-Lebenszyklus oder Materialinhalten.
 - Die gemeldete White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsstörung ist ausdrücklich **nicht** Teil dieses Schritts und bleibt für eine separate Reproduktion/Ursachenanalyse vorgemerkt.
-- Browser-/Responsive-/Keyboard-Abnahme und CI stehen nach Erstellung der PR aus.
+- CI auf PR-Head `682348df7e60f5864f00318307478545d053c273` erfolgreich: `bun run lint`, Produktionsbuild und `bun run test` bestanden ([Workflow](https://github.com/MDP0063/rcpd-new/actions/runs/43428990832)). Der optionale Render-Deploy-Hook wurde übersprungen; kein Deployment ausgelöst. Browser-/Responsive-/Keyboard-Abnahme steht weiterhin aus.
