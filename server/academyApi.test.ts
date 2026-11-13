@@ -1077,6 +1077,31 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(duplicateNoteSource.status, 400);
 
+    const invalidNoteAnchor = await request('/api/academy/notes', officer, {
+      method: 'POST',
+      ...json({
+        materialId: 'manual-1', materialVersionId: 'manual-1__v1', kind: 'note',
+        sources: [{
+          materialId: 'manual-1', materialVersionId: 'manual-1__v1',
+          anchor: { kind: 'markdown', quote: 'A'.repeat(1001), prefix: '', suffix: '' }
+        }]
+      })
+    });
+    assert.equal(invalidNoteAnchor.status, 400,
+      'private note anchors must enforce bounded quote/context fields before persistence');
+    const malformedNoteAnchor = await request('/api/academy/notes', officer, {
+      method: 'POST',
+      ...json({
+        materialId: 'manual-1', materialVersionId: 'manual-1__v1', kind: 'note',
+        sources: [{
+          materialId: 'manual-1', materialVersionId: 'manual-1__v1',
+          anchor: { kind: 'markdown', quote: 'valid quote', prefix: '', suffix: '', startLine: 0, endLine: 1 }
+        }]
+      })
+    });
+    assert.equal(malformedNoteAnchor.status, 400,
+      'line metadata is only valid as positive, ordered code-anchor positions');
+
     const removeOriginalSource = await request(`/api/academy/notes/${officerNoteId}`, officer, {
       method: 'PUT', ...json({
         expectedRevision: 4,
