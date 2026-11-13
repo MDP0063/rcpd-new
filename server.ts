@@ -43,7 +43,7 @@ import { projectExamWorkshopMaster, restoreDelegatedMatchingIds } from './server
 import { getActiveExamAttempt, projectStartedExamAttempt, startExamAttempt } from './server/examAttemptService.ts';
 import { saveExamAttemptAnswers } from './server/examAutosaveService.ts';
 import { submitExamAttempt } from './server/examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listCompletedManualReviewSummaries, listPendingExamReviewRevisionRequests, requestExamReviewRevision, resolveExamReviewRevisionRequest, listOwnExamResults, listPendingExamResultReleases, releaseExamResult, getReleasedPassingFinalExam } from './server/examReviewService.ts';
 import {
   addExamComment,
   archiveExamMaster,
@@ -1879,6 +1879,20 @@ async function startServer() {
       EXAM_REVIEW_CORRECTION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Korrekturbegründung mit mindestens 10 Zeichen ein.' },
       EXAM_REVIEW_CORRECTION_TIME_INVALID: { status: 400, message: 'Der Korrekturzeitpunkt ist ungültig.' },
       EXAM_REVIEW_CORRECTION_LIMIT: { status: 409, message: 'Für diesen Prüfungsversuch wurde die maximale Zahl an Korrekturen erreicht.' },
+      EXAM_REVIEW_REVISION_REASON_INVALID: { status: 400, message: 'Bitte gib eine nachvollziehbare Revisionsbegründung mit mindestens 10 Zeichen ein.' },
+      EXAM_REVIEW_REVISION_FEEDBACK_INVALID: { status: 400, message: 'Bitte gib für mindestens einen betroffenen Bewertungsschritt konkretes Feedback mit mindestens 10 Zeichen ein.' },
+      EXAM_REVIEW_REVISION_RECIPIENTS_INVALID: { status: 409, message: 'Die Empfänger der Revisionsanfrage konnten nicht sicher bestimmt werden.' },
+      EXAM_REVIEW_REVISION_NOT_COMPLETED: { status: 409, message: 'Dieser Versuch hat keine abgeschlossene manuelle Bewertung, die zur Revision zurückgegeben werden kann.' },
+      EXAM_REVIEW_REVISION_INVALID: { status: 409, message: 'Die Revisionsrückgabe ist mit dem gespeicherten Bewertungsstand nicht konsistent.' },
+      EXAM_REVIEW_REVISION_COMPLETION_INVALID: { status: 409, message: 'Die erneute Bewertung konnte nicht sicher mit der Revisionshistorie verknüpft werden.' },
+      EXAM_REVIEW_REVISION_NOT_ACCEPTED: { status: 409, message: 'Die Revisionsanfrage wurde noch nicht durch Admin oder Colonel angenommen.' },
+      EXAM_REVIEW_REVISION_ALREADY_PENDING: { status: 409, message: 'Für diese Bewertung liegt bereits eine offene Revisionsanfrage vor.' },
+      EXAM_REVIEW_REVISION_DECISION_INVALID: { status: 400, message: 'Die Entscheidung zur Revisionsanfrage ist ungültig.' },
+      EXAM_REVIEW_REVISION_DECISION_REASON_INVALID: { status: 400, message: 'Bitte gib für eine Ablehnung eine nachvollziehbare Begründung mit mindestens 10 Zeichen ein.' },
+      EXAM_REVIEW_REVISION_NOT_PENDING: { status: 409, message: 'Für diese Bewertung liegt keine offene Revisionsanfrage vor.' },
+      EXAM_REVIEW_REVISION_STALE: { status: 409, message: 'Die Bewertung hat sich seit der Anfrage geändert. Bitte lade den Vorgang neu.' },
+      EXAM_REVIEW_REVISION_REJECTION_INVALID: { status: 409, message: 'Die Ablehnung konnte nicht sicher mit der Revisionshistorie verknüpft werden.' },
+      EXAM_REVIEW_REVISION_ACCEPTANCE_INVALID: { status: 409, message: 'Die Annahme konnte nicht sicher mit der Revisionshistorie verknüpft werden.' },
       EXAM_ATTEMPT_CORRECTION_INVALID: { status: 409, message: 'Die Korrekturhistorie des Prüfungsversuchs ist ungültig.' },
       EXAM_SELF_REVIEW_FORBIDDEN: { status: 403, message: 'Du darfst deinen eigenen Prüfungsversuch nicht bewerten.' },
       EXAM_MANUAL_GRADES_INVALID: { status: 400, message: 'Die manuelle Bewertung enthält ungültige Punkte oder Fragen.' },
@@ -1937,6 +1951,18 @@ async function startServer() {
               ? `${processLabel} wurde dir von ${state.accounts.find(account => account.uid === event.actorUid)?.publicProfile.displayName || 'einem Vorgesetzten'} zugewiesen. Grund: ${reason}.`
               : `Deine Zuständigkeit für ${processLabel} wurde administrativ an ${target?.publicProfile.displayName || 'einen anderen Prüfer'} übertragen. Grund: ${reason}.`;
           }
+        } else if (event.action === 'revision_requested') {
+          title = 'Neue Revisionsanfrage';
+          const requester = state.accounts.find(account => account.uid === event.actorUid);
+          message = `${processLabel}: ${requester?.publicProfile.displayName || 'Ein kursberechtigter Prüfer'} hat eine Revisionsanfrage gestellt. Grund: ${reason}. Bitte entscheide im Examiner-Bereich über Annahme oder begründete Ablehnung.`;
+        } else if (event.action === 'revision_accepted') {
+          title = 'Revisionsanfrage angenommen';
+          const supervisor = state.accounts.find(account => account.uid === event.actorUid);
+          message = `${processLabel}: Deine Revisionsanfrage wurde von ${supervisor?.publicProfile.displayName || 'einer berechtigten Aufsichtsperson'} angenommen. Der Vorgang steht jetzt wieder der gemeinsamen Prüferliste zur Verfügung.`;
+        } else if (event.action === 'revision_rejected') {
+          title = 'Revisionsanfrage abgelehnt';
+          const supervisor = state.accounts.find(account => account.uid === event.actorUid);
+          message = `${processLabel}: Deine Revisionsanfrage wurde von ${supervisor?.publicProfile.displayName || 'einer berechtigten Aufsichtsperson'} abgelehnt. Begründung: ${reason}. Die bisherige Bewertung bleibt bestehen.`;
         } else if (event.action === 'warning_started') {
           type = 'exam_review_warning';
           title = 'Dein Bewertungs-Claim läuft bald aus';
@@ -2206,6 +2232,141 @@ async function startServer() {
       }
       if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
       res.json({ reviews: await listCompletedManualReviews(getExamRepository()) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  // Abgeschlossene manuelle Bewertungen als datensparsamer Index für kursberechtigte Revisionsanfragen.
+  app.get('/api/academy/exam-review-history', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const state = peekDatabase();
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const permissions = caller && (caller.publicProfile.granularPermissions || getDefaultGranularPermissions(caller.publicProfile.role));
+      const canReviewAnyCourse = Boolean(caller && isEligibleExamReviewerAccount(caller) && (
+        caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel' ||
+        (permissions?.canGradeAssignedCourses && permissions.assignedCourseCodes.length > 0)
+      ));
+      if (!caller || !canReviewAnyCourse) {
+        res.status(403).json({ error: 'Für die Revisionsübersicht fehlt die kursbezogene Prüferberechtigung.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
+        return;
+      }
+      const isSupervisor = caller.publicProfile.role === 'admin' || caller.publicProfile.role === 'colonel';
+      const allowed = isSupervisor ? ['*'] : permissions!.assignedCourseCodes;
+      const summaries = await listCompletedManualReviewSummaries(getExamRepository(), allowed);
+      try { await deliverPendingExamReviewNotifications(summaries.map(item => item.id)); } catch (notificationError) {
+        console.error('Completed review notification delivery will be retried:', notificationError);
+      }
+      res.json({ reviews: summaries.map(({ reviewedByUid, ...item }) => ({
+        ...item,
+        reviewedByName: state.accounts.find(account => account.uid === reviewedByUid)?.publicProfile.displayName || 'Unbekannt'
+      })) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  // Jede aktuell kursberechtigte prüfende Person kann eine abgeschlossene manuelle Bewertung als Revisionsanfrage an Admins und Colonels richten.
+  app.post('/api/academy/exams/:id/attempts/:attemptId/request-revision', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const state = peekDatabase();
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      const attempt = await getExamRepository().get('exam_attempts', req.params.attemptId);
+      if (!caller || !attempt || attempt.examId !== req.params.id ||
+          attempt.userId === caller.uid ||
+          !canBeAssignedExamReviewer(caller, String(attempt.attemptCourseCode || ''))) {
+        res.status(403).json({ error: 'Für die Revisionsrückgabe fehlt die aktuelle Prüferberechtigung für diesen Kurs.' });
+        return;
+      }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+          Object.keys(req.body).some(key => key !== 'reason' && key !== 'feedback')) {
+        res.status(400).json({ error: 'Die Revisionsanfrage ist ungültig.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) {
+        res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' });
+        return;
+      }
+      const recipients = state.accounts
+        .filter(account => isEligibleExamReviewerAccount(account) &&
+          (account.publicProfile.role === 'admin' || account.publicProfile.role === 'colonel'))
+        .map(account => account.uid);
+      const updated = await requestExamReviewRevision(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
+        req.body.reason, req.body.feedback, recipients
+      );
+      recordExamWorkshopAudit(caller.uid, 'Revisionsanfrage gestellt', req.params.id,
+        `Versuch ${req.params.attemptId}: Revisionsanfrage an Admins und Colonels gestellt. Grund: ${String(req.body.reason).trim().slice(0, 700)}`);
+      try { await deliverPendingExamReviewNotifications([updated.id]); } catch (notificationError) {
+        console.error('Exam revision request notification delivery will be retried:', notificationError);
+      }
+      res.json({ success: true });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  // Offene Revisions-Action-Requests sind ausschließlich für Admins und Colonels sichtbar.
+  app.get('/api/academy/exam-review-revision-requests', async (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const state = peekDatabase();
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      if (!caller || !isEligibleExamReviewerAccount(caller) || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Offene Revisionsanfragen sind ausschließlich für aktive Admins und Colonels sichtbar.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const requests = await listPendingExamReviewRevisionRequests(getExamRepository());
+      try { await deliverPendingExamReviewNotifications(requests.map(item => item.id)); } catch (notificationError) {
+        console.error('Pending revision request notification delivery will be retried:', notificationError);
+      }
+      const displayName = (uid: string) => state.accounts.find(account => account.uid === uid)?.publicProfile.displayName || 'Unbekannt';
+      res.json({ requests: requests.map(({ reviewedByUid, requestedByUid, ...item }) => ({
+        ...item,
+        reviewedByName: displayName(reviewedByUid),
+        requestedByName: displayName(requestedByUid)
+      })) });
+    } catch (error) { sendExamAttemptError(error, res, next); }
+  });
+
+  // Admins und Colonels entscheiden über Annahme oder begründete Ablehnung; erst Annahme öffnet die Prüferliste.
+  app.post('/api/academy/exams/:id/attempts/:attemptId/resolve-revision-request', async (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const state = peekDatabase();
+      const sessionUid = res.locals.sessionUid as string | undefined;
+      const caller = state.accounts.find(account => account.uid === sessionUid);
+      if (!caller || !isEligibleExamReviewerAccount(caller) || !['admin', 'colonel'].includes(caller.publicProfile.role)) {
+        res.status(403).json({ error: 'Nur aktive Admins und Colonels dürfen über Revisionsanfragen entscheiden.' });
+        return;
+      }
+      if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+          Object.keys(req.body).some(key => key !== 'decision' && key !== 'reason') ||
+          (req.body.reason !== undefined && typeof req.body.reason !== 'string') ||
+          (req.body.decision === 'accept' && req.body.reason !== undefined)) {
+        res.status(400).json({ error: 'Die Entscheidung zur Revisionsanfrage ist ungültig.' });
+        return;
+      }
+      if (await examWorkshopMaintenanceActive()) { res.status(503).json({ error: 'Das Prüfungssystem ist vorübergehend pausiert.' }); return; }
+      const updated = await resolveExamReviewRevisionRequest(
+        getExamRepository(), req.params.id, req.params.attemptId, caller.uid,
+        req.body.decision, req.body.reason
+      );
+      const accepted = req.body.decision === 'accept';
+      recordExamWorkshopAudit(
+        caller.uid,
+        accepted ? 'Revisionsanfrage angenommen' : 'Revisionsanfrage abgelehnt',
+        req.params.id,
+        `Versuch ${req.params.attemptId}: ${accepted ? 'Annahme' : 'Ablehnung'}. ${accepted ? '' : 'Begründung: ' + String(req.body.reason || '').trim().slice(0, 700)}`
+      );
+      try { await deliverPendingExamReviewNotifications([updated.id]); } catch (notificationError) {
+        console.error('Exam revision decision notification delivery will be retried:', notificationError);
+      }
+      res.json({ success: true, decision: accepted ? 'accepted' : 'rejected' });
     } catch (error) { sendExamAttemptError(error, res, next); }
   });
 

@@ -1012,18 +1012,23 @@ Abgeschlossene Vorgänge verschwinden aus der offenen Aufgabenliste, bleiben abe
 
 ### 14.14 Revision und erneute Bewertung
 
-Eine zurückgegebene Bewertung wird wieder in die gemeinsame Aufgabenliste aufgenommen und als „Revision“ kenntlich gemacht.
+**Bestätigte Grundlage:** Alle zum Zeitpunkt der Rückgabe für den Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit Begründung und konkretem Feedback zu betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen. Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; es entsteht kein neuer Prüfungsversuch und die Bewertungshistorie bleibt erhalten.
 
-- Ein neuer Claim kann erforderlich sein.
-- Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
-- Bereits gespeicherte Bewertungsschritte bleiben erhalten.
-- Alle autorisierten Prüfer sind gleichberechtigt.
+**Beschlossener zweistufiger Ablauf (Option 2, ausdrücklich bestätigt am 13.11.2026):**
+- Das Einreichen erzeugt eine offene Action Request ausschließlich an Admins und Colonels. Bis zur Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch bleibt aus der gemeinsamen Prüferliste ausgeschlossen.
+- Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie mit einer nachvollziehbaren Begründung ab.
+- Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert; der Vorgang wird nicht erneut zur Bewertung freigegeben.
+- Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen. Es wird kein neuer Versuch angelegt und keine einzelne Person automatisch zugewiesen.
+- Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
+- Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, zählt während der erneuten Bewertung aber nicht als aktueller Kursabschlussnachweis. Erst die erneute Ergebnisfreigabe stellt den neuen Nachweisstand her.
+
+**Weitere Schutzregeln:**
 - Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
+- Bereits gespeicherte Bewertungsschritte bleiben erhalten. Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
 - Konkretes Feedback zu betroffenen Bewertungsschritten und der Grund der Revision sind erforderlich.
-- Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
-- Sämtliche Änderungen und Übergaben werden protokolliert.
+- Sämtliche Anfragen, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert.
 
-Die Revision darf nicht dazu führen, dass die vorherige Bewertungshistorie unsichtbar wird.
+Die vorherige Bewertungshistorie darf nicht unsichtbar werden. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung beim Antrag als auch die Admin-/Colonel-Zuständigkeit bei Inbox und Entscheidung durchsetzen.
 
 ### 14.15 Grading Workspace
 
@@ -1441,6 +1446,9 @@ Bei der Rückgabe einer abgeschlossenen manuellen Bewertung zur Revision gilt:
 2. Die Rückgabe erfordert einen nachvollziehbaren Revisionsgrund und konkretes Feedback zu den betroffenen Bewertungsschritten.
 3. Die dadurch erzeugte Action Request geht ausschließlich an Admins und Colonels. Sie wird nicht automatisch dem ursprünglichen Prüfer oder einem anderen Prüfer zur Bearbeitung zugewiesen.
 4. Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie sichtbar, erhält daraus aber weder Bearbeitungsvorrang noch eine bevorzugte Zuweisung.
-5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Nach der Entscheidung erfolgt die erneute Bewertung durch einen beliebigen aktuell kursberechtigten Prüfer gemäß den bestehenden Claim-Regeln.
+5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten.
+6. Das Einreichen startet noch keine erneute Bewertung und nimmt den Versuch noch nicht in die gemeinsame Prüferliste auf. Admin oder Colonel muss die Action Request ausdrücklich annehmen oder begründet ablehnen. Bei Ablehnung bleiben Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert.
+7. Erst nach Annahme erfolgt die Rückkehr desselben Versuchs in die gemeinsame Prüferliste. Die erneute Bewertung ist keiner einzelnen Person automatisch zugewiesen; jeder aktuell kursberechtigte Prüfer kann den Vorgang nach den bestehenden Claim-Regeln übernehmen.
+8. Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, ist bis zur erneuten Ergebnisfreigabe aber kein aktueller Kursabschlussnachweis.
 
 Diese Empfängerregel ändert weder die bestehende Kursberechtigung noch die Claim-/Reassignment-Regeln. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung als auch die Zuständigkeit der Action-Request-Empfänger durchsetzen.
