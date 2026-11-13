@@ -15,7 +15,7 @@ interface ReviewClaim {
 }
 interface ReviewItem {
   id: string; examId: string; examTitle: string; userName: string; attemptCourseCode: string;
-  submittedAtIso: string; questions: ReviewQuestion[];
+  submittedAtIso: string; assessmentStage: 'test' | 'final_exam'; questions: ReviewQuestion[];
   reviewClaim: ReviewClaim | null; isClaimOwner: boolean; canClaim: boolean;
   draftGrades: Record<string, number>;
 }
@@ -45,6 +45,7 @@ export const ExamReviewCenter: React.FC<{
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState('');
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [notice, setNotice] = useState('');
   const [draftSaveStatus, setDraftSaveStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
   const [releaseDialogId, setReleaseDialogId] = useState('');
@@ -53,6 +54,11 @@ export const ExamReviewCenter: React.FC<{
   const [transferReason, setTransferReason] = useState('');
   const [participantQuery, setParticipantQuery] = useState('');
   const [selectedParticipant, setSelectedParticipant] = useState<UserPublicProfile | null>(null);
+  const [queueSearch, setQueueSearch] = useState('');
+  const [courseFilter, setCourseFilter] = useState('');
+  const [examTypeFilter, setExamTypeFilter] = useState<'all' | 'test' | 'final_exam'>('all');
+  const [workStatusFilter, setWorkStatusFilter] = useState<'all' | 'unclaimed' | 'claimed' | 'warning' | 'disconnected'>('all');
+  const [onlyMyReviews, setOnlyMyReviews] = useState(false);
   const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
@@ -84,10 +90,11 @@ export const ExamReviewCenter: React.FC<{
   const load = useCallback(async () => {
     const response = await apiFetch<{ reviews: ReviewItem[] }>(API_ENDPOINTS.ACADEMY_EXAM_REVIEWS, { cache: 'no-store' });
     if (!response.ok || !response.data) {
-      setError(response.error || 'Die offenen Freitextbewertungen konnten nicht geladen werden.');
+      setLoadError(response.error || 'Die offenen Freitextbewertungen konnten nicht geladen werden.');
       reviewsRef.current = [];
       setReviews([]);
     } else {
+      setLoadError('');
       setError('');
       const previousReviews = reviewsRef.current;
       for (const previous of previousReviews) {
@@ -318,6 +325,27 @@ export const ExamReviewCenter: React.FC<{
   };
 
   const normalizedParticipantQuery = participantQuery.trim().toLocaleLowerCase('de-DE');
+  const normalizedQueueSearch = queueSearch.trim().toLocaleLowerCase('de-DE');
+  const availableCourseCodes = [...new Set(reviews.map(review => review.attemptCourseCode))].sort((a, b) => a.localeCompare(b, 'de-DE'));
+  const filteredReviews = reviews.filter(review => {
+    if (courseFilter && review.attemptCourseCode !== courseFilter) return false;
+    if (examTypeFilter !== 'all' && review.assessmentStage !== examTypeFilter) return false;
+    if (normalizedQueueSearch && !review.userName.toLocaleLowerCase('de-DE').includes(normalizedQueueSearch)) return false;
+    if (onlyMyReviews && !review.isClaimOwner && !review.reviewClaim?.isDisconnected) return false;
+    if (workStatusFilter === 'unclaimed' && review.reviewClaim) return false;
+    if (workStatusFilter === 'claimed' && (!review.reviewClaim || review.reviewClaim.isDisconnected || review.reviewClaim.warningStartedAtIso)) return false;
+    if (workStatusFilter === 'warning' && !review.reviewClaim?.warningStartedAtIso) return false;
+    if (workStatusFilter === 'disconnected' && !review.reviewClaim?.isDisconnected) return false;
+    return true;
+  }).sort((a, b) => Date.parse(a.submittedAtIso) - Date.parse(b.submittedAtIso) || a.id.localeCompare(b.id));
+  const hasActiveQueueFilters = Boolean(courseFilter || examTypeFilter !== 'all' || workStatusFilter !== 'all' || onlyMyReviews || queueSearch.trim());
+  const resetQueueFilters = () => {
+    setQueueSearch('');
+    setCourseFilter('');
+    setExamTypeFilter('all');
+    setWorkStatusFilter('all');
+    setOnlyMyReviews(false);
+  };
   const participantMatches = normalizedParticipantQuery.length < 2 || selectedParticipant
     ? []
     : roster.filter(member => member.uid !== currentUser.uid && [
@@ -351,10 +379,50 @@ export const ExamReviewCenter: React.FC<{
     </div>
     {selectedParticipant && <ExamParticipantRecord participant={selectedParticipant} onClose={() => { setSelectedParticipant(null); setParticipantQuery(''); }}/>}
 
-    <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">Aktualisieren</button></div>
+    <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Aktualisieren</button></div>
+    {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
+    {!loading && !loadError && (reviews.length > 0 || hasActiveQueueFilters) && <section className="exam-review-filters" aria-label="Offene Bewertungen filtern">
+      <div className="exam-review-filter-field">
+        <label htmlFor="exam-review-participant-filter">Teilnehmer</label>
+        <input id="exam-review-participant-filter" type="search" value={queueSearch} onChange={event => setQueueSearch(event.target.value)} placeholder="Teilnehmername suchen …"/>
+      </div>
+      <div className="exam-review-filter-field">
+        <label htmlFor="exam-review-course-filter">Kurs</label>
+        <select id="exam-review-course-filter" value={courseFilter} onChange={event => setCourseFilter(event.target.value)}>
+          <option value="">Alle Kurse</option>
+          {availableCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
+        </select>
+      </div>
+      <div className="exam-review-filter-field">
+        <label htmlFor="exam-review-type-filter">Prüfungstyp</label>
+        <select id="exam-review-type-filter" value={examTypeFilter} onChange={event => setExamTypeFilter(event.target.value as 'all' | 'test' | 'final_exam')}>
+          <option value="all">Alle Prüfungstypen</option>
+          <option value="test">Übungstest</option>
+          <option value="final_exam">Abschlussprüfung</option>
+        </select>
+      </div>
+      <div className="exam-review-filter-field">
+        <label htmlFor="exam-review-status-filter">Bearbeitungsstatus</label>
+        <select id="exam-review-status-filter" value={workStatusFilter} onChange={event => setWorkStatusFilter(event.target.value as typeof workStatusFilter)}>
+          <option value="all">Alle offenen Vorgänge</option>
+          <option value="unclaimed">Noch nicht beansprucht</option>
+          <option value="claimed">In Bearbeitung</option>
+          <option value="warning">Inaktivitätswarnung</option>
+          <option value="disconnected">Eigene Verbindung unterbrochen</option>
+        </select>
+      </div>
+      <label className="exam-review-filter-mine">
+        <input type="checkbox" checked={onlyMyReviews} onChange={event => setOnlyMyReviews(event.target.checked)}/>
+        <span>Nur mir zugewiesene Vorgänge</span>
+      </label>
+      <div className="exam-review-filter-footer">
+        <span>{filteredReviews.length} von {reviews.length} Vorgängen · älteste Einreichung zuerst</span>
+        {hasActiveQueueFilters && <button type="button" onClick={resetQueueFilters}>Filter zurücksetzen</button>}
+      </div>
+    </section>}
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
-    {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : reviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Keine offenen Freitextbewertungen.</div> : reviews.map(review => <article id={`exam-review-${review.id}`} key={review.id} className="exam-review-card space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : loadError ? null : filteredReviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">{reviews.length === 0 ? 'Keine offenen Freitextbewertungen.' : 'Keine Vorgänge entsprechen den gewählten Filtern.'}{reviews.length > 0 && hasActiveQueueFilters && <button type="button" onClick={resetQueueFilters} className="ml-2 font-semibold text-slate-700 underline dark:text-slate-200">Filter zurücksetzen</button>}</div> : filteredReviews.map(review => <article id={`exam-review-${review.id}`} key={review.id} className="exam-review-card space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <header className="exam-review-card-heading flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
         {review.reviewClaim ? <div className="exam-review-claim-actions text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <><button type="button" disabled={Boolean(savingId)} onClick={event => { transferTriggerRef.current = event.currentTarget; openTransferDialog(review, 'transfer'); }} className="mt-1 mr-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Übergeben</button><button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={event => { releaseTriggerRef.current = event.currentTarget; setReleaseDialogId(review.id); }} className="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold dark:border-slate-700">Vorgang freigeben</button></>}{isSupervisor && review.reviewClaim && !review.isClaimOwner && <button type="button" disabled={Boolean(savingId)} onClick={event => { transferTriggerRef.current = event.currentTarget; openTransferDialog(review, 'reassign'); }} className="mt-1 rounded-lg border border-amber-400 px-3 py-1.5 font-semibold text-amber-800 dark:text-amber-300">Administrativ neu zuweisen</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 rounded-lg bg-sky-600 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}

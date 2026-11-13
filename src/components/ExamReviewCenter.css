@@ -185,3 +185,88 @@
 @media (prefers-reduced-motion: reduce) {
   .exam-review-center * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+
+.exam-review-filters {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.4fr) repeat(3, minmax(10rem, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--exam-line);
+  border-radius: 0.95rem;
+  background: rgba(255,255,255,0.82);
+}
+.exam-review-filter-field { display: grid; gap: 0.35rem; min-width: 0; }
+.exam-review-filter-field label {
+  color: #66515d;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+.exam-review-filter-field input,
+.exam-review-filter-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #ddcbd5;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #342b31;
+  font-size: 0.82rem;
+}
+.exam-review-filter-field :is(input,select):focus-visible {
+  outline: 3px solid rgba(163,51,112,0.22);
+  outline-offset: 2px;
+  border-color: #a33370;
+}
+.exam-review-filter-mine {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 0.55rem;
+  color: #594b53;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.exam-review-filter-mine input { width: 1rem; height: 1rem; accent-color: #a33370; }
+.exam-review-filter-footer {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid #eee5ea;
+  color: #806c78;
+  font-size: 0.72rem;
+}
+.exam-review-filter-footer button {
+  color: #842858;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dark .exam-review-filters {
+  border-color: #513447;
+  background: rgba(31,23,32,0.9);
+}
+.dark .exam-review-filter-field label,
+.dark .exam-review-filter-mine { color: #d8c8d2; }
+.dark .exam-review-filter-field :is(input,select) {
+  border-color: #624458;
+  background: #1e1820;
+  color: #f0e8ee;
+}
+.dark .exam-review-filter-footer { border-color: #513447; color: #bba5b2; }
+.dark .exam-review-filter-footer button { color: #efbfd6; }
+@media (max-width: 900px) {
+  .exam-review-filters { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 560px) {
+  .exam-review-filters { grid-template-columns: minmax(0,1fr); padding: 0.9rem; }
+  .exam-review-filter-mine,
+  .exam-review-filter-footer { grid-column: 1; }
+  .exam-review-filter-footer { align-items: flex-start; }
+}
