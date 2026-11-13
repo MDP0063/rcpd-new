@@ -111,7 +111,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'nav-academy',
         category: 'Navigation',
         title: 'Ausbildungsbereich, Handbücher & Prüfungen',
-        subtitle: 'PDF-Lehrbücher, Code-Tests, Abschlussprüfungen & Ausbilder-Notenvergabe',
+        subtitle: 'PDF-Lehrbücher, Code-Tests, Kursabschlussprüfungen & Ausbilder-Notenvergabe',
         targetSection: 'academy'
       },
       {
@@ -185,7 +185,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       id: `ex-${ex.id}`,
       category: 'Prüfung / Test',
       title: `${ex.moduleCode}: ${ex.title}`,
-      subtitle: `${ex.assessmentStage === 'final_exam' ? 'Abschlussprüfung' : 'Übungstest'} · Bestehensgrenze: ${ex.passingScore}%`,
+      subtitle: `${ex.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · Bestehensgrenze: ${ex.passingScore}%`,
       targetSection: 'academy'
     }));
 
