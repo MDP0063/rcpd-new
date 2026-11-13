@@ -236,10 +236,9 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
         </div>
         {rejectingId === request.id && <div>
           <label htmlFor={`exam-revision-reject-reason-${request.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Ablehnung</label>
-          <textarea id={`exam-revision-reject-reason-${request.id}`} aria-invalid={errorTargetId === `exam-revision-reject-reason-${request.id}`} aria-describedby={`exam-revision-reject-help-${request.id}${errorTargetId === `exam-revision-reject-reason-${request.id}` ? ` exam-revision-reject-error-${request.id}` : ''}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
+          <textarea id={`exam-revision-reject-reason-${request.id}`} aria-invalid={errorTargetId === `exam-revision-reject-reason-${request.id}`} aria-describedby={`exam-revision-reject-help-${request.id}${errorTargetId === `exam-revision-reject-reason-${request.id}` ? ` exam-revision-reject-error-${request.id}` : ''}`} className={`${fieldClass} ${errorTargetId === `exam-revision-reject-reason-${request.id}` ? 'border-rose-600 dark:border-rose-400' : ''}`} rows={3} required minLength={10} maxLength={1000}
             value={rejectionReasons[request.id] || ''}
-            onChange={event => setRejectionReasons(current => ({ ...current, [request.id]: event.target.value }))}
-            aria-describedby={`exam-revision-reject-help-${request.id}`}
+            onChange={event => { setRejectionReasons(current => ({ ...current, [request.id]: event.target.value })); setError(''); setErrorTargetId(''); }}
             placeholder="Erkläre nachvollziehbar, warum die Revisionsanfrage abgelehnt wird."/>
           <p id={`exam-revision-reject-help-${request.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
           {errorTargetId === `exam-revision-reject-reason-${request.id}` && <p id={`exam-revision-reject-error-${request.id}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">Die Begründung muss zwischen 10 und 1000 Zeichen lang sein.</p>}
@@ -281,7 +280,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
           {expandedId === review.id && <div className="mt-4 space-y-4 border-t border-slate-200 pt-4 dark:border-slate-800">
             <div>
               <label htmlFor={`exam-revision-reason-${review.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Revision</label>
-              <textarea id={`exam-revision-reason-${review.id}`} aria-invalid={Boolean(validationErrors[`reason:${review.id}`])} aria-describedby={`exam-revision-reason-help-${review.id}${validationErrors[`reason:${review.id}`] ? ` exam-revision-reason-error-${review.id}` : ''}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
+              <textarea id={`exam-revision-reason-${review.id}`} aria-invalid={Boolean(validationErrors[`reason:${review.id}`])} aria-describedby={`exam-revision-reason-help-${review.id}${validationErrors[`reason:${review.id}`] ? ` exam-revision-reason-error-${review.id}` : ''}`} className={`${fieldClass} ${validationErrors[`reason:${review.id}`] ? 'border-rose-600 dark:border-rose-400' : ''}`} rows={3} required minLength={10} maxLength={1000}
                 value={reasons[review.id] || ''} onChange={event => { setReasons(current => ({ ...current, [review.id]: event.target.value })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
                 placeholder="Beschreibe, warum die abgeschlossene Bewertung erneut geprüft werden soll." aria-describedby={`exam-revision-reason-help-${review.id}`}/>
               <p id={`exam-revision-reason-help-${review.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
@@ -300,7 +299,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
                   </label>
                   {checked && <div className="mt-2">
                     <label htmlFor={`exam-revision-feedback-${review.id}-${step.questionId}`} className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">Konkretes Feedback zu {step.label}</label>
-                    <textarea id={`exam-revision-feedback-${review.id}-${step.questionId}`} aria-invalid={Boolean(validationErrors[`feedback:${review.id}:${step.questionId}`])} aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}${validationErrors[`feedback:${review.id}:${step.questionId}`] ? ` exam-revision-feedback-error-${review.id}-${step.questionId}` : ''}`} className={fieldClass} rows={2} required minLength={10} maxLength={1000}
+                    <textarea id={`exam-revision-feedback-${review.id}-${step.questionId}`} aria-invalid={Boolean(validationErrors[`feedback:${review.id}:${step.questionId}`])} aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}${validationErrors[`feedback:${review.id}:${step.questionId}`] ? ` exam-revision-feedback-error-${review.id}-${step.questionId}` : ''}`} className={`${fieldClass} ${validationErrors[`feedback:${review.id}:${step.questionId}`] ? 'border-rose-600 dark:border-rose-400' : ''}`} rows={2} required minLength={10} maxLength={1000}
                       value={feedback[review.id]?.[step.questionId] || ''}
                       onChange={event => { setFeedback(current => ({ ...current, [review.id]: { ...(current[review.id] || {}), [step.questionId]: event.target.value } })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
                       placeholder="Welcher Bewertungsschritt soll überprüft werden und warum?" aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}`}/>
