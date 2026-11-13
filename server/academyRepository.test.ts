@@ -289,6 +289,13 @@ test('program enrollment pins required course versions without prematurely start
     courseParticipationId: `participation_learner-1_${master.id}`
   }]);
   const pinnedCourseParticipationId = programParticipation.requiredCoursePins[0].courseParticipationId;
+  await repository.setCourseAvailability(master.id, 'unavailable', now);
+  await assert.rejects(
+    repository.startCourseParticipation('learner-1', master.id, now),
+    /ACADEMY_COURSE_NOT_STARTABLE/,
+    'a program pin must not bypass a later course availability restriction'
+  );
+  await repository.setCourseAvailability(master.id, 'available', now);
   assert.equal(await repository.getCourseParticipation(pinnedCourseParticipationId), null);
   assert.deepEqual(await repository.listOwnCourseParticipations('learner-1'), []);
 
