@@ -125,7 +125,7 @@ export const ProfessionalDevelopmentModule: React.FC<ProfessionalDevelopmentModu
         code: ex.moduleCode,
         title: ex.title,
         kind: ex.assessmentStage,
-        kindLabel: isFinalExam ? 'Abschlussprüfung' : 'Übungstest',
+        kindLabel: isFinalExam ? 'Kursabschlussprüfung' : 'Übungstest',
         categoryOrStage: isFinalExam ? 'POST Zertifizierung' : 'Leistungsnachweis',
         scorePercent: prog ? Math.min(100, Math.max(0, prog.scorePercent)) : 0,
         passingThreshold: ex.passingScore,

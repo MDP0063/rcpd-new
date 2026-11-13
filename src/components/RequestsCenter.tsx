@@ -129,7 +129,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
             category === 'rank_change'
               ? `Zielrang: ${requestedRole.toUpperCase()} (${ROLE_HIERARCHY[requestedRole].defaultRank})`
               : category === 'exam_workshop_access'
-                ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen').join(', ')
+                ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Kursabschlussprüfungen').join(', ')
                 : targetDetail.trim(),
           ...(category === 'exam_workshop_access' ? { examWorkshopAreas } : {}),
           justification: justification.trim(),
@@ -411,7 +411,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                     <fieldset className="space-y-2 rounded-md border border-sky-200 dark:border-sky-900 p-3">
                       <legend className="px-1 text-xs font-semibold">Benötigter Bereich *</legend>
                       {([
-                        ['tests', 'Prüfungen / Tests'], ['final_exams', 'Abschlussprüfungen']
+                        ['tests', 'Prüfungen / Tests'], ['final_exams', 'Kursabschlussprüfungen']
                       ] as const).map(([area, label]) => (
                         <label key={area} className="flex items-center gap-2 text-sm">
                           <input type="checkbox" checked={examWorkshopAreas.includes(area)} onChange={event => setExamWorkshopAreas(current => event.target.checked ? [...new Set([...current, area])] : current.filter(item => item !== area))} />
@@ -516,7 +516,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                         {category === 'rank_change'
                           ? `Zielrang: ${requestedRole.toUpperCase()} (${ROLE_HIERARCHY[requestedRole].defaultRank})`
                           : category === 'exam_workshop_access'
-                            ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen').join(', ')
+                            ? examWorkshopAreas.map(area => area === 'tests' ? 'Prüfungen / Tests' : 'Kursabschlussprüfungen').join(', ')
                             : targetDetail}
                       </span>
                     </div>
@@ -854,7 +854,7 @@ export const RequestsCenter: React.FC<RequestsCenterProps> = ({
                                       {(reqDoc.examWorkshopAreas || []).map(area => (
                                         <label key={area} className="flex items-center gap-2 text-xs">
                                           <input type="checkbox" checked={examWorkshopGrantAreas.includes(area)} onChange={event => setExamWorkshopGrantAreas(current => event.target.checked ? [...new Set([...current, area])] : current.filter(item => item !== area))} />
-                                          {area === 'tests' ? 'Prüfungen / Tests' : 'Abschlussprüfungen'}
+                                          {area === 'tests' ? 'Prüfungen / Tests' : 'Kursabschlussprüfungen'}
                                         </label>
                                       ))}
                                     </fieldset>

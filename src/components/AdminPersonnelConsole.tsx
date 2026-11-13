@@ -753,7 +753,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                 className="w-full px-3 py-2 text-xs rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
               >
                 <option value="trainee">5. Trainee (Standard-Einstieg — Lehrmaterial &amp; Tests)</option>
-                <option value="rookie">4. Rookie (Inkl. Abschlussprüfung)</option>
+                <option value="rookie">4. Rookie (Inkl. Kursabschlussprüfung)</option>
                 <option value="officer">3. Officer (Regulärer Streifendienst)</option>
                 <option value="colonel">2. Colonel (Kann Lehrmaterialien &amp; Tests bearbeiten)</option>
                 <option value="admin">1. Admin (Vollzugriff)</option>
@@ -1164,7 +1164,7 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
                                   className="w-full px-3 py-2 text-xs font-medium rounded bg-white dark:bg-slate-900 border border-sky-400 text-slate-900 dark:text-white"
                                 >
                                   <option value="trainee">5. Trainee (Nur Lehrmaterial &amp; Tests)</option>
-                                  <option value="rookie">4. Rookie (Inkl. Abschlussprüfung)</option>
+                                  <option value="rookie">4. Rookie (Inkl. Kursabschlussprüfung)</option>
                                   <option value="officer">3. Officer (Vollzugsdienst)</option>
                                   <option value="colonel">2. Colonel (Darf Lerninhalte &amp; Tests bearbeiten)</option>
                                   <option value="admin">1. Admin (Vollzugriff)</option>
