@@ -606,14 +606,15 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie nachvollziehbar. Daraus entstehen weder Bearbeitungsvorrang noch bevorzugte Zuweisung bei der erneuten Bewertung.
 - **SCHUTZGRENZE:** Die Revisionsrückgabe erzeugt keinen neuen Prüfungsversuch. Bereits gespeicherte Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Die erneute Bewertung erfolgt durch einen beliebigen aktuell kursberechtigten Prüfer nach den bestehenden Claim-Regeln.
 
-## Academy – Vorgeschlagener zweistufiger Ablauf für Revisionsanfragen (12.11.2026, NICHT BESCHLOSSEN)
+## Academy – Zweistufiger Ablauf für Revisionsanfragen (13.11.2026)
 
-- **BESTÄTIGT:** Alle zum Zeitpunkt der Rückgabe serverseitig für den betroffenen Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit Begründung und konkretem Feedback zu betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen.
-- **BESTÄTIGT:** Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; der gleiche Prüfungsversuch und die bisherige Historie bleiben erhalten.
-- **OFFEN:** Es ist nicht ausdrücklich entschieden, ob ein Admin/Colonel die Action Request zwingend annehmen oder ablehnen muss, bevor der Versuch wieder in die gemeinsame Prüferliste kommt. Die Empfängerregel allein legt diese zusätzliche Freigabestufe nicht fest.
-- **VORSCHLAG (PR #267):** Bis zu einer Admin-/Colonel-Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert und der Vorgang außerhalb der gemeinsamen Prüferliste.
-- **VORSCHLAG (PR #267):** Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie mit Begründung ab. Erst nach Annahme wird derselbe Prüfungsversuch wieder für alle aktuell kursberechtigten Prüfer bereitgestellt.
-- **VORSCHLAG (PR #267):** Ein bereits freigegebenes Ergebnis wird als Snapshot bewahrt und bleibt während der erneuten Bewertung sichtbar, zählt aber bis zur erneuten Ergebnisfreigabe nicht als aktueller Kursabschlussnachweis.
-- **TECHNISCHE SCHUTZGRENZE (VORSCHLAG):** Pro Versuch höchstens eine offene Revisionsanfrage; Annahme/Ablehnung append-only und gegen konkurrierende Doppelentscheidung geschützt.
+- **BESCHLOSSEN:** Alle zum Zeitpunkt der Rückgabe serverseitig für den betroffenen Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit verpflichtender Begründung und konkretem Feedback zu den betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen.
+- **BESCHLOSSEN:** Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; derselbe Prüfungsversuch und die bisherige Historie bleiben erhalten.
+- **BESCHLOSSEN – verpflichtende Freigabestufe:** Die Action Request muss von einem Admin oder Colonel ausdrücklich angenommen oder abgelehnt werden, bevor der Versuch wieder in die gemeinsame Prüferliste gelangen kann.
+- **BESCHLOSSEN – Wartezustand:** Bis zur Entscheidung bleibt der bisherige Bewertungsstatus unverändert. Der Vorgang bleibt aus der gemeinsamen Prüferliste ausgeschlossen.
+- **BESCHLOSSEN – Annahme:** Erst nach Annahme wird derselbe Prüfungsversuch für alle aktuell kursberechtigten Prüfer erneut bereitgestellt. Es wird kein neuer Prüfungsversuch angelegt.
+- **BESCHLOSSEN – Ablehnung:** Die Ablehnung benötigt eine Begründung. Die bisherige Bewertung, das veröffentlichte Ergebnis und der bisherige Kursnachweis bleiben bestehen; der Vorgang wird nicht erneut zur Bewertung freigegeben.
+- **BESCHLOSSEN – Ergebnis-Snapshot:** Ein bereits freigegebenes Ergebnis wird während der Revision als Snapshot bewahrt und bleibt für Teilnehmer sichtbar. Ab Annahme der Revision zählt dieser Snapshot bis zur erneuten Ergebnisfreigabe jedoch nicht als aktueller Kursabschlussnachweis.
+- **TECHNISCHE SCHUTZGRENZEN:** Pro Versuch höchstens eine offene Revisionsanfrage; Antrag und Entscheidung werden append-only protokolliert und gegen konkurrierende Doppelanträge bzw. Doppelentscheidungen geschützt. Die bestehende nachträgliche Admin-/Colonel-Korrektur bleibt ein separater Prozess.
 
-Der verpflichtende zweistufige Gate-Ablauf darf erst nach ausdrücklicher fachlicher Freigabe als beschlossen dokumentiert oder gemergt werden.
+Die zweistufige Freigabestufe wurde vom Projektinhaber am 13.11.2026 ausdrücklich als Option 2 bestätigt.
