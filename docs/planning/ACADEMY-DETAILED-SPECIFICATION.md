@@ -1012,18 +1012,15 @@ Abgeschlossene Vorgänge verschwinden aus der offenen Aufgabenliste, bleiben abe
 
 ### 14.14 Revision und erneute Bewertung
 
-Eine zurückgegebene Bewertung wird wieder in die gemeinsame Aufgabenliste aufgenommen und als „Revision“ kenntlich gemacht.
-
-- Ein neuer Claim kann erforderlich sein.
-- Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
-- Bereits gespeicherte Bewertungsschritte bleiben erhalten.
-- Alle autorisierten Prüfer sind gleichberechtigt.
-- Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
-- Konkretes Feedback zu betroffenen Bewertungsschritten und der Grund der Revision sind erforderlich.
-- Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
-- Sämtliche Änderungen und Übergaben werden protokolliert.
-
-Die Revision darf nicht dazu führen, dass die vorherige Bewertungshistorie unsichtbar wird.
+**Beschlossener zweistufiger Ablauf (Option 2, ausdrücklich bestätigt am 13.11.2026):**
+- Das Einreichen erzeugt eine offene Action Request ausschließlich an Admins und Colonels. Bis zur Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch bleibt aus der gemeinsamen Prüferliste ausgeschlossen.
+- Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie mit einer nachvollziehbaren Begründung ab.
+- Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert; der Vorgang wird nicht erneut zur Bewertung freigegeben.
+- Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen. Es wird kein neuer Versuch angelegt und keine einzelne Person automatisch zugewiesen.
+- Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
+- Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, zählt während der erneuten Bewertung aber nicht als aktueller Kursabschlussnachweis. Erst die erneute Ergebnisfreigabe stellt den neuen Nachweisstand her.
+- Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar. Bereits gespeicherte Bewertungsschritte bleiben erhalten; ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
+- Grund, Feedback, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert. Es entsteht kein neuer Prüfungsversuch.
 
 ### 14.15 Grading Workspace
 
