@@ -1012,20 +1012,26 @@ Abgeschlossene Vorgänge verschwinden aus der offenen Aufgabenliste, bleiben abe
 
 ### 14.14 Revision und erneute Bewertung
 
-Die Revisionsrückgabe ist ein zweistufiger Vorgang. Das Einreichen erzeugt zunächst ausschließlich eine offene Action Request an Admins und Colonels. Bis zu deren Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch wird noch nicht in die gemeinsame Prüferliste aufgenommen.
+**Bestätigte Grundlage:** Alle zum Zeitpunkt der Rückgabe für den Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit Begründung und konkretem Feedback zu betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen. Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; es entsteht kein neuer Prüfungsversuch und die Bewertungshistorie bleibt erhalten.
 
-- Admin oder Colonel muss die Anfrage ausdrücklich annehmen oder begründet ablehnen. Eine Ablehnung erfordert eine nachvollziehbare Begründung.
+**Offene fachliche Entscheidung:** Es ist noch nicht ausdrücklich entschieden, ob ein Admin/Colonel die Action Request zwingend annehmen oder ablehnen muss, bevor der Versuch wieder in die gemeinsame Prüferliste kommt. Die Empfängerregel „Admins und Colonels“ allein belegt keine zusätzliche verpflichtende Freigabestufe.
+
+**Vorgeschlagener Ablauf in PR #267 – nicht freigegeben:**
+- Das Einreichen erzeugt zunächst ausschließlich eine offene Action Request an Admins und Colonels. Bis zu deren Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert; der Versuch wird noch nicht in die gemeinsame Prüferliste aufgenommen.
+- Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie begründet ab.
 - Bei Ablehnung bleiben bisherige Bewertung, freigegebenes Ergebnis und Kursabschlussnachweis unverändert.
 - Erst nach Annahme wird derselbe Prüfungsversuch wieder als „Bewertung ausstehend“ in die gemeinsame Prüferliste aufgenommen.
 - Es erfolgt keine automatische Einzelzuweisung. Alle aktuell für den konkreten Kurs autorisierten Prüfer sind nach Annahme gleichberechtigt.
-- Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
 - Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, zählt während der erneuten Bewertung aber nicht als aktueller Kursabschlussnachweis. Erst die erneute Ergebnisfreigabe stellt den neuen Nachweisstand her.
+
+**Bereits bestätigte Schutzregeln:**
+- Der ursprüngliche Prüfer erhält keinen Vorrang, bleibt aber in den Details nachvollziehbar.
 - Es entsteht kein neuer Prüfungsversuch; der bestehende Vorgang wird weiterbearbeitet.
 - Bereits gespeicherte Bewertungsschritte bleiben erhalten. Ein neuer Prüfer darf weitere Fehler korrigieren, auch wenn sie nicht ursprünglich markiert waren.
 - Konkretes Feedback zu betroffenen Bewertungsschritten und der Grund der Revision sind erforderlich.
-- Sämtliche Anfragen, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert. Pro Versuch ist nur eine offene Revisionsanfrage zulässig.
+- Sämtliche Anfragen, Entscheidungen, Änderungen und Übergaben werden historisch protokolliert.
 
-Die Revision darf nicht dazu führen, dass die vorherige Bewertungshistorie unsichtbar wird.
+Die vorherige Bewertungshistorie darf nicht unsichtbar werden. Der vorgeschlagene Supervisor-Gate-Ablauf darf erst nach ausdrücklicher Freigabe umgesetzt oder als verbindlich dokumentiert werden.
 
 ### 14.15 Grading Workspace
 
