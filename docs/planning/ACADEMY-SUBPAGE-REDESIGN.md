@@ -306,4 +306,4 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Admins sehen für den bestehenden Korrektur-/Freigabebereich die Bezeichnung „Korrekturen & Freigaben“.
 - Colonels sehen „Bewertungskorrekturen“, da die vorhandene Komponente Ergebnisfreigaben ausschließlich für Admins lädt und anbietet (`canReleaseResults={currentUser.role === 'admin'}`).
 - Die Änderung korrigiert nur die Beschriftung. Rollen, Rechte, API-Aufrufe und tatsächliche Aktionen bleiben unverändert.
-- CI und Browserprüfung stehen für den PR noch aus; keine Berechtigungs- oder Workflowänderung.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Code-Commit `b0250ec` erfolgreich; PR-Vorlagenprüfung ebenfalls. Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus; keine Berechtigungs- oder Workflowänderung.
