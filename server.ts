@@ -628,7 +628,7 @@ function createInitialDatabase(): PortalDatabaseState {
     },
     {
       id: 'exam_default_final01',
-      title: 'Offizielle CA-POST Abschlussprüfung: Recht & Einsatztaktik',
+      title: 'Offizielle CA-POST Kursabschlussprüfung: Recht & Einsatztaktik',
       moduleCode: 'PC-102',
       assessmentStage: 'final_exam',
       minClearance: ROLE_HIERARCHY.rookie.defaultClearance,
@@ -3241,7 +3241,7 @@ async function startServer() {
         'EXAM_WORKSHOP',
         'Berechtigungen der Prüfungswerkstatt geändert',
         `${target.publicProfile.displayName} (${target.publicProfile.badgeNumber})`,
-        `Werkstattzugang: ${nextPerms.examWorkshop?.hasAccess ? 'erteilt' : 'nicht erteilt'} · Zugangsbeantragung: ${nextPerms.examWorkshop?.canRequestAccess ? 'erlaubt' : 'nicht erlaubt'} · Rechte für Tests und Abschlussprüfungen wurden aktualisiert.`
+        `Werkstattzugang: ${nextPerms.examWorkshop?.hasAccess ? 'erteilt' : 'nicht erteilt'} · Zugangsbeantragung: ${nextPerms.examWorkshop?.canRequestAccess ? 'erlaubt' : 'nicht erlaubt'} · Rechte für Tests und Kursabschlussprüfungen wurden aktualisiert.`
       );
     }
 
@@ -3883,7 +3883,7 @@ async function startServer() {
       dbState,
       caller,
       'ACADEMY_DOC',
-      stage === 'final_exam' ? 'Abschlussprüfung angelegt' : 'Übungstest angelegt',
+      stage === 'final_exam' ? 'Kursabschlussprüfung angelegt' : 'Übungstest angelegt',
       `${newExam.moduleCode} — ${newExam.title}`,
       `Bestehensgrenze: ${newExam.passingScore}% · Format: ${newExam.examFormat}`
     );
