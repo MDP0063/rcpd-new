@@ -1222,3 +1222,12 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Die technische Implementierung in PR #267 ist noch nicht mergebereit: Der Branch divergiert gegenüber main (129 Commits voraus, 13 Commits hinter main; gemeinsamer Ausgangspunkt dc1bf7e). Er muss kontrolliert aktualisiert werden; danach ist der vollständige CI-Lauf erneut erforderlich.
 - Unabhängige Codeprüfung, manuelle Browser-/Tastatur-/Screenreader-Abnahme und Firestore-Produktionsprüfung stehen aus. Der optionale Render-Deploy-Schritt wurde nicht ausgelöst; kein Produktionsdeploy bestätigt.
 - PR #284 (private Notizentwürfe beim Materialwechsel) bleibt bis zur manuellen Browserprüfung der Autosave-/Race-Szenarien Draft.
+
+
+## 13.11.2026 – Fortsetzung des Academy-Unterseiten-Redesigns
+
+- **PR #286 – Kursdetail: Versions- und Verfügbarkeitskontext** ist als fokussierter Draft auf aktuellem `main` angelegt: https://github.com/MDP0063/rcpd-new/pull/286.
+- Die Detailansicht zeigt für nicht gestartete Kurse nun die ausgewählte veröffentlichte Version statt „Noch keine Teilnahme“ als Versionsmetadatum. Fehlende Kurzbeschreibung und fehlende Veröffentlichung werden getrennt benannt.
+- Archivierte bzw. vorübergehend nicht verfügbare Kurse erhalten in der Detailansicht einen klaren Hinweis; die bereits vorhandene Startaktion wird deaktiviert, wenn der serverseitige Veröffentlichungs-/Verfügbarkeits-Gate den Start nicht zulässt. Bereits gestartete Teilnahmen bleiben unberührt.
+- Die Änderung ist auf bestehende Daten und Regeln begrenzt; keine API-, Datenmodell-, Rollen- oder serverseitige Statusänderung.
+- Der aktuelle PR-Head benötigt noch vollständige CI-/PR-Validierung und gezielte Browserprüfung; kein Merge und kein Deployment.
