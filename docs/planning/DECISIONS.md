@@ -606,10 +606,14 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **BESCHLOSSEN:** Der ursprüngliche Prüfer bleibt in der Vorgangs- und Bewertungshistorie nachvollziehbar. Daraus entstehen weder Bearbeitungsvorrang noch bevorzugte Zuweisung bei der erneuten Bewertung.
 - **SCHUTZGRENZE:** Die Revisionsrückgabe erzeugt keinen neuen Prüfungsversuch. Bereits gespeicherte Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Die erneute Bewertung erfolgt durch einen beliebigen aktuell kursberechtigten Prüfer nach den bestehenden Claim-Regeln.
 
-## Academy – Zweistufige Entscheidung über Revisionsanfragen (12.11.2026)
+## Academy – Vorgeschlagener zweistufiger Ablauf für Revisionsanfragen (12.11.2026, NICHT BESCHLOSSEN)
 
-- **BESCHLOSSEN:** Das Einreichen einer Revisionsanfrage startet noch keine erneute Bewertung. Der abgeschlossene Bewertungsstatus und ein bereits freigegebenes Ergebnis bleiben bis zur Entscheidung unverändert; der Vorgang erscheint währenddessen nicht in der gemeinsamen Prüferliste.
-- **BESCHLOSSEN:** Admin oder Colonel muss die Anfrage ausdrücklich annehmen oder begründet ablehnen. Eine Ablehnung erfordert eine nachvollziehbare Begründung und lässt Bewertung, Ergebnisfreigabe und Kursabschlussnachweis unverändert.
-- **BESCHLOSSEN:** Erst nach Annahme wird derselbe Prüfungsversuch wieder auf „Bewertung ausstehend“ gesetzt und der gemeinsamen Liste für alle aktuell kursberechtigten Prüfer zur Verfügung gestellt. Es erfolgt keine automatische Einzelzuweisung.
-- **BESCHLOSSEN:** Bei Annahme wird die zuletzt freigegebene Ergebnisversion als Snapshot bewahrt. Sie bleibt für Teilnehmer sichtbar, ist während der erneuten Bewertung aber kein aktueller Kursabschlussnachweis; erst die erneute Ergebnisfreigabe entscheidet über den neuen Nachweisstand.
-- **SCHUTZGRENZE:** Pro Versuch darf nur eine Revisionsanfrage gleichzeitig offen sein. Annahme oder Ablehnung wird genau einmal als zusätzliches, historisch erhaltenes Ereignis gespeichert; konkurrierende Entscheidungen dürfen den Vorgang nicht doppelt auflösen.
+- **BESTÄTIGT:** Alle zum Zeitpunkt der Rückgabe serverseitig für den betroffenen Kurs berechtigten Prüfer dürfen eine abgeschlossene manuelle Bewertung mit Begründung und konkretem Feedback zu betroffenen Bewertungsschritten zur Revision zurückgeben und die Action Request auslösen.
+- **BESTÄTIGT:** Die Action Request geht ausschließlich an Admins und Colonels. Der ursprüngliche Prüfer erhält keinen Bearbeitungsvorrang; der gleiche Prüfungsversuch und die bisherige Historie bleiben erhalten.
+- **OFFEN:** Es ist nicht ausdrücklich entschieden, ob ein Admin/Colonel die Action Request zwingend annehmen oder ablehnen muss, bevor der Versuch wieder in die gemeinsame Prüferliste kommt. Die Empfängerregel allein legt diese zusätzliche Freigabestufe nicht fest.
+- **VORSCHLAG (PR #267):** Bis zu einer Admin-/Colonel-Entscheidung bleibt der abgeschlossene Bewertungsstatus unverändert und der Vorgang außerhalb der gemeinsamen Prüferliste.
+- **VORSCHLAG (PR #267):** Admin oder Colonel nimmt die Anfrage ausdrücklich an oder lehnt sie mit Begründung ab. Erst nach Annahme wird derselbe Prüfungsversuch wieder für alle aktuell kursberechtigten Prüfer bereitgestellt.
+- **VORSCHLAG (PR #267):** Ein bereits freigegebenes Ergebnis wird als Snapshot bewahrt und bleibt während der erneuten Bewertung sichtbar, zählt aber bis zur erneuten Ergebnisfreigabe nicht als aktueller Kursabschlussnachweis.
+- **TECHNISCHE SCHUTZGRENZE (VORSCHLAG):** Pro Versuch höchstens eine offene Revisionsanfrage; Annahme/Ablehnung append-only und gegen konkurrierende Doppelentscheidung geschützt.
+
+Der verpflichtende zweistufige Gate-Ablauf darf erst nach ausdrücklicher fachlicher Freigabe als beschlossen dokumentiert oder gemergt werden.
