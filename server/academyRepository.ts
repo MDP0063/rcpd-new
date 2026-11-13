@@ -1165,8 +1165,10 @@ export class AcademyRepository {
       if (!master) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(master));
       const pinnedVersionId = pinnedVersionIds[0];
-      if (!pinnedVersionId &&
-          (master.publicationStatus !== 'published' || !master.currentPublishedVersionId)) {
+      // A program pin preserves the exact course version, not permission to bypass
+      // the course's current publication/availability lifecycle for a not-yet-started course.
+      if (master.publicationStatus !== 'published' ||
+          (!pinnedVersionId && !master.currentPublishedVersionId)) {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
       // A program pin preserves version identity, but does not bypass a precautionary
@@ -1188,7 +1190,7 @@ export class AcademyRepository {
       if (master.materialReviewPending?.length || master.materialReviewVersionRequired?.length) {
         throw new Error('ACADEMY_COURSE_MATERIAL_REVIEW_PENDING');
       }
-      if (!pinnedVersionId && master.availability !== 'available') {
+      if (master.availability !== 'available') {
         throw new Error('ACADEMY_COURSE_NOT_STARTABLE');
       }
       const existing = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
