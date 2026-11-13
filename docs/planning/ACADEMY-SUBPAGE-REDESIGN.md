@@ -304,7 +304,7 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 **Umsetzung in PR #288:** https://github.com/MDP0063/rcpd-new/pull/288
 
 - Der bestätigte violette Bereichsakzent (#6841B8) wird in Themenbereichen, Materialmetadaten, Fokuszuständen und primären Reader-Aktionen konsistent verwendet. Die Farbe bleibt ein Bereichsakzent und wird nicht als Statusfarbe eingesetzt.
-- Themenbereichs- und Materialkarten erhalten eine ruhigere, konsistente Oberflächenhierarchie mit klarer Hover-/Fokus-Rückmeldung.
+- Themenbereichs- und Materialkarten erhalten eine ruhigere, konsistente Oberflächenhierarchie mit klarer Hover-/Fokus-Rückmeldung; der Tastaturfokus nutzt eine durchgezogene, kontrastreiche Violettkontur.
 - Kategorie und Dokumenttyp werden auf Materialkarten als kompakte Metadaten-Chips dargestellt.
 - Beschreibungen in Karten werden auf maximal drei Zeilen begrenzt, damit Katalogkarten bei längeren Texten vergleichbar bleiben; der vollständige Inhalt bleibt im Reader zugänglich.
 - Reader-Navigation, Kopfbereich und Materialaktion werden dezent auf die Bibliotheksidentität abgestimmt. Die Lesefläche selbst bleibt neutral und lesefokussiert.
