@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 12.11.2026 – Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252, #253 und #255 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 13.11.2026 – Der systematische Funktions-/Fehleraudit der Academy läuft; PR-Bereinigung und verifizierte Befunde sind ergänzt. Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252, #253 und #255 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #255 (Merge-Commit `bcce59fb9f967299105313ce769fc6bc549e885e`; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, den fokussierten Notizeditor, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen, informierte Prüfungsstartbestätigung und verbesserte Examiner-Accessibility). PR #246–#248 sind ebenfalls enthalten.
+**Aktueller Basisstand:** `main` nach PR #275 (Merge-Commit `0fde169d38ea611c6b68db1d239dacaf23b3c2eb`; enthält zusätzlich die mobilen Academy-Navigation-/Shell-Korrekturen, Examiner-Teilnehmerakte und Arbeitslisten, einheitliche Kursabschlussprüfungs-Terminologie, Reader-Lesebreite, serverseitige Notizanker-Validierung und den Availability-Gate-Fix für Lehrgangs-Pins; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, den fokussierten Notizeditor, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen, informierte Prüfungsstartbestätigung und verbesserte Examiner-Accessibility). PR #246–#248 sind ebenfalls enthalten.
 **Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
@@ -1158,3 +1158,44 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 ### PR-Bestand nach Bereinigung
 Am 12.11.2026 wurde die GitHub-API-Abfrage für offene Pull Requests wiederholt. Ergebnis: **keine offenen Pull Requests**. Die geschlossenen Alt-PRs sind nicht mit offenen Aufgaben gleichzusetzen; fachlich noch offene Punkte stehen weiterhin in OPEN-QUESTIONS.md. Es wurden keine PRs allein zur Reduktion der Anzahl gemergt.
+## 13.11.2026 – PR-Bereinigung und erster technischer Academy-Funktionsaudit
+
+### In main gemergte PRs
+
+- **#263** – mobile Academy-Hauptnavigation (Merge 7026b4ec3e9728b94bfc89b98b0653336145a3d6).
+- **#264** – Examiner-Teilnehmerakte mit Review-/Ergebnisfreigabehistorie (Merge fd1a563afa09d0e577759a81da7c1045b334461d).
+- **#265** – Examiner-Arbeitslisten, Filter und getrennte Ladefehler (Merge 983a2e7a05d46c7f7084e3ea58699957f7418c12).
+- **#266** – gemeinsame Academy-Unterseiten-Shell (Merge d268a6134b1b34acaf066735189493ac93dfbb89).
+- **#268** – „Kursabschlussprüfung“ im Kursdetail (Merge c2224890821e8ebebf1fcea5a202dd65e2dfca0b).
+- **#271** – begrenzte Markdown-Lesebreite im Reader (Merge 870ed83aa6c4b98bf49d9a28044e5b54373f2f98).
+- **#273** – verbliebene Prüfungsansichten und Berechtigungsbeschriftungen auf „Kursabschlussprüfung“ vereinheitlicht; auf aktuellem main neu aufgebaut (Merge 41a012fe63d872ed810952375a742b3f2fc1d7dc).
+- **#274** – private Notiz-Textanker serverseitig strikt validiert: Zitat-/Kontextlängen, Heading-Pfad, Code-Zeilen und erlaubte Quellfelder (Merge 43221243d16b9b460b6a9ab41274659c57b06012).
+- **#275** – ein Lehrgangs-Pin darf eine spätere Kurs-Nichtverfügbarkeit nicht umgehen; bereits gestartete Teilnahmen behalten ihren Zugriff (Merge 0fde169d38ea611c6b68db1d239dacaf23b3c2eb).
+
+Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Workflows und PR-Vorlagenprüfungen erfolgreich. Die optionalen Render-Deploy-Hooks waren bei den überprüften PR-Läufen übersprungen; ein tatsächlicher Produktionsdeploymentstatus ist damit nicht bestätigt. Die manuelle Browser-/Screenreader-/Live-Firestore-Abnahme bleibt ein eigener Qualitäts-Gate.
+
+### Geschlossene bzw. ersetzte PRs
+
+- **#269** – durch #276 und anschließend #277 auf aktuellem main neu aufgebaut; alte PRs geschlossen, kein Codeverlust.
+- **#270** – veralteter, nach den Merges überlappender Branch geschlossen; die verbleibenden reinen Terminologieänderungen wurden in #273 auf aktuellem main übernommen.
+- **#272** – unnötiger Filter-Fix geschlossen. Die API setzt reviewClaim.isDisconnected ausschließlich bei einem getrennten Claim des aktuell angemeldeten Prüfers; die ursprüngliche Filterbedingung war korrekt. Die vorgeschlagene Änderung hätte eigene getrennte Claims ausgeblendet.
+- **#276** – nach erneutem Main-Fortschritt durch #277 ersetzt; alter PR geschlossen.
+
+### Noch offene PRs
+
+- **#267 – Revisionsanfragen mit Admin-/Colonel-Entscheidung:** CI (TypeScript, Produktionsbuild und 455 Servertests) für den bisherigen Head erfolgreich. Der Branch basiert inzwischen auf einem veralteten Main-Stand und GitHub meldet Merge-Konflikte. Zusätzlich verlangt die dokumentierte Merge-Regel für Autorisierungs-/sensible Datenzugriffsänderungen ein unabhängiges Review. Daher bleibt der PR Draft und wird nicht gemergt, bevor konfliktfrei aktualisiert, unabhängig geprüft und erneut getestet.
+- **#277 – private Notiz-Autosave beim Materialwechsel:** auf aktuellem main aufgebaut; TypeScript-/Produktionsbuild, 455 Servertests und PR-Vorlagenprüfung erfolgreich. Der PR bleibt Draft, bis die zeitabhängigen Client-Szenarien im Browser geprüft wurden: Materialwechsel während Debounce/in-flight Save, mehrere Notizen, Fehler/Retry, 409/Reload, fehlgeschlagenes Löschen und Reader-Unmount/Remount. Es existiert derzeit kein Frontend-Test-Runner; Servertests decken diese Client-Races nicht ab.
+
+### Verifizierte Befunde aus dem laufenden Audit
+
+- **Behoben mit #274:** API-Textanker für private Notizen wurden zuvor per TypeScript-Typ angenommen, aber nicht strukturell begrenzt. Überlange Zitate/Kontextfelder, ungültige Zeilenangaben und zusätzliche unbekannte Quellfelder konnten gespeichert werden. Die API validiert die Anchor-Struktur jetzt vor Persistenz; Regressionstests decken überlange und inkonsistente Anker ab.
+- **Behoben mit #275:** ein bereits begonnener Lehrgang pinnt weiterhin eine exakte Kursversion. Dieser Pin durfte jedoch bei späterer Kurs-Nichtverfügbarkeit einen noch nicht begonnenen Pflichtkurs starten. Die Starttransaktion prüft nun auch für gepinnte Versionen Veröffentlichungsstatus und Verfügbarkeit; Materialprüfungsfehler behalten ihre bisherige spezifische Fehlerpriorität.
+- **Noch in Prüfung mit #277:** die private Notiz-Speicherwarteschlange ist ein zeitabhängiger Client-Pfad. CI bestätigt Build und Servertests, aber nicht die tatsächliche Reihenfolge konkurrierender Browser-Requests. Kein Merge ohne gezielte Browserabnahme.
+- **Noch in Prüfung mit #267:** Revisionsanfragen haben Auswirkungen auf vertrauliche Prüferdaten, Ergebnisfreigabe und Kursabschlussnachweise. Die bestehenden HTTP-/Service-Tests decken wesentliche Rollen- und Zustandsübergänge ab; unabhängiges Review und erneute Prüfung auf aktuellem Main stehen aus.
+
+### Nächster Auditfokus
+
+1. Private Notizen und Reader-End-to-End-Szenarien nach der Browserabnahme von #277 abschließen.
+2. Revisionsworkflow #267 auf aktuellem Main konfliktfrei aktualisieren und unabhängiges Review organisieren.
+3. Danach Materialverwaltung, Kurs-/Lehrgangslebenszyklus, Fortschrittsnachweise und Prüfungs-/Ergebnisprojektionen systematisch weiter prüfen.
+4. Die gemeinsame Browser-/Screenreader-/Live-Firestore-Abnahme separat planen; CI-Erfolg nicht als Produktionsabnahme ausgeben.
