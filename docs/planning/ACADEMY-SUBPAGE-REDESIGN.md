@@ -297,3 +297,14 @@ Die Entscheidung basiert auf der bereits beschlossenen Option C vom 06.11.2026. 
 - Die Korrekturhistorie einer abgeschlossenen Bewertung ist als native Disclosure mit Eintragsanzahl standardmäßig geschlossen.
 
 Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten bleiben unverändert. CI erfolgreich: TypeScript, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 12. Kursdetail – Versions- und Verfügbarkeitskontext (13.11.2026)
+
+**PR #286 – in Arbeit:** https://github.com/MDP0063/rcpd-new/pull/286
+
+- Bei nicht gestarteten Kursen zeigt die Detailkopfzeile die tatsächlich ausgewählte veröffentlichte Kursversion. Die Teilnahmehistorie wird nicht länger als Ersatz für Versionsmetadaten verwendet.
+- Fehlende Kurzbeschreibung und fehlende veröffentlichte Kursversion erhalten unterschiedliche, sachlich korrekte Hinweise.
+- Archivierte und vorübergehend nicht verfügbare Kurse zeigen ihren vorhandenen Zustand auch in der Detailansicht. Der Start wird clientseitig deaktiviert, wenn der bestehende serverseitige Veröffentlichungs-/Verfügbarkeits-Gate einen neuen Start ablehnt.
+- Die Änderung betrifft nur die bestehende Darstellung und Aktivierung der Startaktion. Serverprüfung, Version-Pinning, Berechtigungen, bestehende Teilnahmen und Nachweislogik bleiben unverändert.
+- TypeScript-/Build-/Servertest-CI und gezielte Browserprüfung stehen für den aktuellen Commit noch aus. Der PR bleibt Draft; kein Deployment.
