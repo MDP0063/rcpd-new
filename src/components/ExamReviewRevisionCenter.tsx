@@ -46,6 +46,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
   const [error, setError] = useState('');
   const [errorTargetId, setErrorTargetId] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrorLinks, setValidationErrorLinks] = useState<Array<{ targetId: string; message: string }>>([]);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const [notice, setNotice] = useState('');
   const [savingId, setSavingId] = useState('');
@@ -128,32 +129,35 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
       feedback: (feedback[review.id]?.[questionId] || '').trim()
     }));
     const nextErrors: Record<string, string> = {};
+    const nextErrorLinks: Array<{ targetId: string; message: string }> = [];
     if (reason.length < 10 || reason.length > 1000) {
-      nextErrors[`reason:${review.id}`] = 'Die Begründung muss zwischen 10 und 1000 Zeichen lang sein.';
+      const message = 'Die Begründung muss zwischen 10 und 1000 Zeichen lang sein.';
+      nextErrors[`reason:${review.id}`] = message;
+      nextErrorLinks.push({ targetId: `exam-revision-reason-${review.id}`, message });
     }
     if (!entries.length) {
-      nextErrors[`steps:${review.id}`] = 'Wähle mindestens einen Bewertungsschritt aus.';
+      const message = 'Wähle mindestens einen Bewertungsschritt aus.';
+      nextErrors[`steps:${review.id}`] = message;
+      nextErrorLinks.push({ targetId: `exam-revision-step-${review.id}-${review.questionSteps[0]?.questionId || ''}`, message });
     }
     for (const entry of entries) {
       if (entry.feedback.length < 10 || entry.feedback.length > 1000) {
-        nextErrors[`feedback:${review.id}:${entry.questionId}`] = 'Das Feedback muss zwischen 10 und 1000 Zeichen lang sein.';
+        const message = 'Das Feedback muss zwischen 10 und 1000 Zeichen lang sein.';
+        nextErrors[`feedback:${review.id}:${entry.questionId}`] = message;
+        nextErrorLinks.push({ targetId: `exam-revision-feedback-${review.id}-${entry.questionId}`, message });
       }
     }
     if (Object.keys(nextErrors).length) {
       setValidationErrors(nextErrors);
-      const firstKey = Object.keys(nextErrors)[0];
-      const targetId = firstKey.startsWith('reason:')
-        ? `exam-revision-reason-${review.id}`
-        : firstKey.startsWith('steps:')
-          ? `exam-revision-step-${review.id}-${review.questionSteps[0]?.questionId || ''}`
-          : `exam-revision-feedback-${review.id}-${firstKey.split(':').slice(2).join(':')}`;
-      setErrorTargetId(targetId);
-      setError(Object.values(nextErrors)[0]);
+      setValidationErrorLinks(nextErrorLinks);
+      setErrorTargetId(nextErrorLinks[0]?.targetId || '');
+      setError('Bitte korrigiere die markierten Angaben.');
       return;
     }
 
     setSavingId(review.id);
     setValidationErrors({});
+    setValidationErrorLinks([]);
     setError('');
     setErrorTargetId('');
     setNotice('');
@@ -170,6 +174,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
     setReviews(current => current.filter(item => item.id !== review.id));
     setExpandedId('');
     setValidationErrors({});
+    setValidationErrorLinks([]);
     setNotice('Die Revisionsanfrage wurde an Admins und Colonels gesendet. Die bisherige Bewertung bleibt bis zur Entscheidung unverändert; eine erneute Bewertung beginnt erst nach Annahme.');
   };
 
@@ -191,7 +196,9 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
       <button type="button" onClick={() => void load()} disabled={loading} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button>
     </div>}
     {error && <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-labelledby="exam-revision-error-title" className="flex items-start gap-2 rounded-lg border-l-4 border-rose-600 bg-rose-50 p-3 text-sm text-rose-900 outline-none focus-visible:ring-2 focus-visible:ring-rose-700 dark:bg-rose-950/40 dark:text-rose-100">
-      <AlertCircle size={17} className="mt-0.5 shrink-0"/><div><p id="exam-revision-error-title" className="font-semibold">Es gibt ein Problem</p><p className="mt-1">{error}</p>{errorTargetId && <a className="mt-1 inline-block font-semibold underline underline-offset-2" href={`#${errorTargetId}`}>Zum betroffenen Feld</a>}</div>
+      <AlertCircle size={17} className="mt-0.5 shrink-0"/><div><p id="exam-revision-error-title" className="font-semibold">Es gibt ein Problem</p><p className="mt-1">{error}</p>
+        {validationErrorLinks.length > 0 ? <ul className="mt-2 list-disc space-y-1 pl-5">{validationErrorLinks.map(item => <li key={item.targetId}><a className="font-semibold underline underline-offset-2" href={`#${item.targetId}`}>{item.message}</a></li>)}</ul> : errorTargetId && <a className="mt-1 inline-block font-semibold underline underline-offset-2" href={`#${errorTargetId}`}>Zum betroffenen Feld</a>}
+      </div>
     </div>}
     {notice && <div role="status" className="flex items-start gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17} className="mt-0.5 shrink-0"/>{notice}</div>}
 
@@ -229,12 +236,13 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
         </div>
         {rejectingId === request.id && <div>
           <label htmlFor={`exam-revision-reject-reason-${request.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Ablehnung</label>
-          <textarea id={`exam-revision-reject-reason-${request.id}`} aria-invalid={errorTargetId === `exam-revision-reject-reason-${request.id}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
+          <textarea id={`exam-revision-reject-reason-${request.id}`} aria-invalid={errorTargetId === `exam-revision-reject-reason-${request.id}`} aria-describedby={`exam-revision-reject-help-${request.id}${errorTargetId === `exam-revision-reject-reason-${request.id}` ? ` exam-revision-reject-error-${request.id}` : ''}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
             value={rejectionReasons[request.id] || ''}
             onChange={event => setRejectionReasons(current => ({ ...current, [request.id]: event.target.value }))}
             aria-describedby={`exam-revision-reject-help-${request.id}`}
             placeholder="Erkläre nachvollziehbar, warum die Revisionsanfrage abgelehnt wird."/>
           <p id={`exam-revision-reject-help-${request.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
+          {errorTargetId === `exam-revision-reject-reason-${request.id}` && <p id={`exam-revision-reject-error-${request.id}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">Die Begründung muss zwischen 10 und 1000 Zeichen lang sein.</p>}
         </div>}
         <div className="flex flex-wrap justify-end gap-2">
           {rejectingId === request.id ? <>
@@ -274,7 +282,7 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
             <div>
               <label htmlFor={`exam-revision-reason-${review.id}`} className="mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200">Begründung der Revision</label>
               <textarea id={`exam-revision-reason-${review.id}`} aria-invalid={Boolean(validationErrors[`reason:${review.id}`])} aria-describedby={`exam-revision-reason-help-${review.id}${validationErrors[`reason:${review.id}`] ? ` exam-revision-reason-error-${review.id}` : ''}`} className={fieldClass} rows={3} required minLength={10} maxLength={1000}
-                value={reasons[review.id] || ''} onChange={event => { setReasons(current => ({ ...current, [review.id]: event.target.value })); setValidationErrors(current => { const next = { ...current }; delete next[`reason:${review.id}`]; return next; }); setError(''); setErrorTargetId(''); }}
+                value={reasons[review.id] || ''} onChange={event => { setReasons(current => ({ ...current, [review.id]: event.target.value })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
                 placeholder="Beschreibe, warum die abgeschlossene Bewertung erneut geprüft werden soll." aria-describedby={`exam-revision-reason-help-${review.id}`}/>
               <p id={`exam-revision-reason-help-${review.id}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
               {validationErrors[`reason:${review.id}`] && <p id={`exam-revision-reason-error-${review.id}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">{validationErrors[`reason:${review.id}`]}</p>}
@@ -287,14 +295,14 @@ export const ExamReviewRevisionCenter: React.FC<{ currentUser: UserPublicProfile
                 const checked = (selectedSteps[review.id] || []).includes(step.questionId);
                 return <div key={step.questionId} className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                   <label className="flex min-h-8 items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
-                    <input id={`exam-revision-step-${review.id}-${step.questionId}`} type="checkbox" checked={checked} onChange={event => { toggleStep(review.id, step.questionId, event.target.checked); setValidationErrors(current => { const next = { ...current }; delete next[`steps:${review.id}`]; return next; }); setError(''); setErrorTargetId(''); }} className="h-4 w-4 accent-sky-600"/>
+                    <input id={`exam-revision-step-${review.id}-${step.questionId}`} type="checkbox" checked={checked} onChange={event => { toggleStep(review.id, step.questionId, event.target.checked); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }} className="h-4 w-4 accent-sky-600"/>
                     {step.label}
                   </label>
                   {checked && <div className="mt-2">
                     <label htmlFor={`exam-revision-feedback-${review.id}-${step.questionId}`} className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">Konkretes Feedback zu {step.label}</label>
                     <textarea id={`exam-revision-feedback-${review.id}-${step.questionId}`} aria-invalid={Boolean(validationErrors[`feedback:${review.id}:${step.questionId}`])} aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}${validationErrors[`feedback:${review.id}:${step.questionId}`] ? ` exam-revision-feedback-error-${review.id}-${step.questionId}` : ''}`} className={fieldClass} rows={2} required minLength={10} maxLength={1000}
                       value={feedback[review.id]?.[step.questionId] || ''}
-                      onChange={event => { setFeedback(current => ({ ...current, [review.id]: { ...(current[review.id] || {}), [step.questionId]: event.target.value } })); setValidationErrors(current => { const next = { ...current }; delete next[`feedback:${review.id}:${step.questionId}`]; return next; }); setError(''); setErrorTargetId(''); }}
+                      onChange={event => { setFeedback(current => ({ ...current, [review.id]: { ...(current[review.id] || {}), [step.questionId]: event.target.value } })); setValidationErrors({}); setValidationErrorLinks([]); setError(''); setErrorTargetId(''); }}
                       placeholder="Welcher Bewertungsschritt soll überprüft werden und warum?" aria-describedby={`exam-revision-feedback-help-${review.id}-${step.questionId}`}/>
                     <p id={`exam-revision-feedback-help-${review.id}-${step.questionId}`} className="mt-1 text-xs text-slate-500">Mindestens 10, höchstens 1000 Zeichen.</p>
                     {validationErrors[`feedback:${review.id}:${step.questionId}`] && <p id={`exam-revision-feedback-error-${review.id}-${step.questionId}`} className="mt-1 text-sm font-medium text-rose-700 dark:text-rose-300">{validationErrors[`feedback:${review.id}:${step.questionId}`]}</p>}
