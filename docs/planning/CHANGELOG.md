@@ -447,3 +447,9 @@
 - PR #197 wurde geschlossen, weil Entscheidungsfreiheit und Recherchepflicht bereits im aktuellen Planungsstand verankert waren.
 - PR #244 wurde geschlossen, weil sein Validierungs-/Accessibility-Fix bereits im aktuellen `main` enthalten war.
 - Abschließende GitHub-API-Abfrage am 12.11.2026: keine offenen PRs. Noch offene fachliche und technische Arbeiten verbleiben in OPEN-QUESTIONS.md/PROGRESS.md und sind nicht durch das Schließen der Alt-PRs erledigt.
+
+## 13.11.2026 – Materialeditor und Taxonomie
+
+- Visuelle Hierarchie des bestehenden Materialeditors und der Kategorie-/Dokumenttypverwaltung nachgeschärft.
+- Inhaltliche und technische Abläufe bleiben unverändert; keine Berechtigungs-, Datenmodell- oder API-Änderungen.
+- White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsfehler wird separat untersucht, nicht durch diese CSS-Verfeinerung überdeckt.
