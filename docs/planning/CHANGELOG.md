@@ -447,3 +447,4 @@
 - PR #197 wurde geschlossen, weil Entscheidungsfreiheit und Recherchepflicht bereits im aktuellen Planungsstand verankert waren.
 - PR #244 wurde geschlossen, weil sein Validierungs-/Accessibility-Fix bereits im aktuellen `main` enthalten war.
 - Abschließende GitHub-API-Abfrage am 12.11.2026: keine offenen PRs. Noch offene fachliche und technische Arbeiten verbleiben in OPEN-QUESTIONS.md/PROGRESS.md und sind nicht durch das Schließen der Alt-PRs erledigt.
+- 13.11.2026: Lernbibliothek-Designverfeinerung (PR #288): violette Bereichsidentität in Katalogkarten, Metadaten, Fokus- und Primäraktionen konsistent umgesetzt; Kartenbeschreibungen kompakt gehalten, Reader neutral und lesefokussiert; mobile Such-/Sortierflächen und Aktionen verbessert. Keine Funktions-, Daten- oder Berechtigungsänderung.
