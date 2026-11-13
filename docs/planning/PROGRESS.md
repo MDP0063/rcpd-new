@@ -1214,3 +1214,11 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - PR #280 wurde ohne Merge geschlossen und durch PR #282 ersetzt, weil die zwischenzeitliche Dokumentationsaktualisierung #281 den Main-Stand fortgeschrieben hatte.
 - PR #282 enthält denselben fokussierten Komponenten-Diff wie #277/#280, basiert direkt auf main nach #281 und hat erfolgreiche TypeScript-/Produktionsbuild-/455-Servertest-/PR-Vorlagenprüfungen.
 - Der PR bleibt bewusst Draft, bis die zeitabhängigen Browserfälle (Materialwechsel, Debounce, in-flight Save, Fehler/Retry, 409/Reload, Delete-Failure und Reader-Unmount/Remount) manuell verifiziert sind.
+
+## 13.11.2026 – Revisionsworkflow fachlich freigegeben
+
+- Der Projektinhaber hat Option 2 ausdrücklich bestätigt: verpflichtendes zweistufiges Admin-/Colonel-Gate. Eine offene Revisionsanfrage bleibt außerhalb der gemeinsamen Prüferliste; erst die begründete Annahme durch Admin oder Colonel gibt denselben Versuch für alle aktuell kursberechtigten Prüfer frei. Bei Ablehnung bleiben bisherige Bewertung, veröffentlichtes Ergebnis und Kursnachweis unverändert.
+- Die Entscheidung ist in DECISIONS.md, der Academy-Detail-Spezifikation und OPEN-QUESTIONS.md festgehalten.
+- Die technische Implementierung in PR #267 ist noch nicht mergebereit: Der Branch divergiert gegenüber main (129 Commits voraus, 13 Commits hinter main; gemeinsamer Ausgangspunkt dc1bf7e). Er muss kontrolliert aktualisiert werden; danach ist der vollständige CI-Lauf erneut erforderlich.
+- Unabhängige Codeprüfung, manuelle Browser-/Tastatur-/Screenreader-Abnahme und Firestore-Produktionsprüfung stehen aus. Der optionale Render-Deploy-Schritt wurde nicht ausgelöst; kein Produktionsdeploy bestätigt.
+- PR #284 (private Notizentwürfe beim Materialwechsel) bleibt bis zur manuellen Browserprüfung der Autosave-/Race-Szenarien Draft.
