@@ -48,8 +48,8 @@
 ### Prüfungen und Examiner
 - Die serverseitigen Bewertungs-Drafts sowie Claim-, Inaktivitäts-, Disconnect-, Übergabe- und Neuzuweisungslogik sind in PR #149/#150/#152 umgesetzt. Ihre tatsächlichen Laufzeit-/Browserzustände bleiben Teil der gemeinsamen Academy-Abnahme.
 - Noch offen: vollständige einsehbare Claim-/Übergabehistorie in der UI.
-- Noch offen: wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe gemäß Academy-Spezifikation Abschnitt 14.12/14.14.
-- Die Revisionsberechtigung Option A wurde am 11.11.2026 beschlossen: jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben und die Action Request auslösen. Kein neuer Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten.
+- Revisions-Action-Request und zweistufiges Admin-/Colonel-Gate sind in PR #267 implementiert; die fachliche Option 2 wurde am 13.11.2026 bestätigt. Technische Prüfung und Abnahme siehe PROGRESS.md.
+- Die Revisionsberechtigung Option A bleibt maßgeblich: jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben. Die Action Request geht ausschließlich an Admins/Colonels; erst nach Annahme wird derselbe Versuch für die gemeinsame Prüferliste freigegeben. Kein neuer Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten.
 - Die konkrete Historienanzeige muss die Sichtbarkeitsregeln aus Abschnitt 15.7 einhalten. Historische Korrekturen sind lesbar Fragen/Bewertungsschritten zuzuordnen.
 - Sonderfälle bei Prüfungsstart, Autosave, Resume, Abgabe, Bewertung und Ergebnisfreigabe sowie Sortierung nach tatsächlichem Bewertungsabschlussdatum bleiben im abschließenden technischen/Browser-Audit zu prüfen.
 
