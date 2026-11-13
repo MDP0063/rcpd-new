@@ -106,7 +106,7 @@ export interface AcademyExamDoc {
   id: string;
   title: string;
   moduleCode: string;
-  assessmentStage: AssessmentStage; // 'test' (Übungstest: Trainee+) vs 'final_exam' (Abschlussprüfung: Rookie+)
+  assessmentStage: AssessmentStage; // 'test' (Übungstest: Trainee+) vs 'final_exam' (Kursabschlussprüfung: Rookie+)
   minClearance: number;
   passingScore: number;
   timeLimitMinutes: number;
@@ -156,7 +156,7 @@ export const ROLE_HIERARCHY: Record<
     rankOrder: 1,
     defaultClearance: 10,
     defaultRank: 'Chief of Police / System Admin',
-    permissionsSummary: 'Vollzugriff: Kann alle Konten, Passwörter, Rollen, Lehrmaterialien, Tests & Abschlussprüfungen verwalten.',
+    permissionsSummary: 'Vollzugriff: Kann alle Konten, Passwörter, Rollen, Lehrmaterialien, Tests & Kursabschlussprüfungen verwalten.',
     canEditAcademy: true,
     canAccessFinalExams: true,
     canManageUsers: true,
@@ -167,7 +167,7 @@ export const ROLE_HIERARCHY: Record<
     rankOrder: 2,
     defaultClearance: 8,
     defaultRank: 'Colonel / Deputy Chief',
-    permissionsSummary: 'Kann alle öffentlichen Inhalte sehen sowie Lehrmaterialien, PDFs, Tests und Abschlussprüfungen erstellen & bearbeiten. Keine Benutzerverwaltung.',
+    permissionsSummary: 'Kann alle öffentlichen Inhalte sehen sowie Lehrmaterialien, PDFs, Tests und Kursabschlussprüfungen erstellen & bearbeiten. Keine Benutzerverwaltung.',
     canEditAcademy: true,
     canAccessFinalExams: true,
     canManageUsers: false,
@@ -178,7 +178,7 @@ export const ROLE_HIERARCHY: Record<
     rankOrder: 3,
     defaultClearance: 5,
     defaultRank: 'Patrol Officer',
-    permissionsSummary: 'Zugriff auf Dashboard, Lehrmaterialien, Übungstests und Abschlussprüfungen. Keine Bearbeitungsrechte, keine technischen Menüs.',
+    permissionsSummary: 'Zugriff auf Dashboard, Lehrmaterialien, Übungstests und Kursabschlussprüfungen. Keine Bearbeitungsrechte, keine technischen Menüs.',
     canEditAcademy: false,
     canAccessFinalExams: true,
     canManageUsers: false,
@@ -189,7 +189,7 @@ export const ROLE_HIERARCHY: Record<
     rankOrder: 4,
     defaultClearance: 3,
     defaultRank: 'Probationary Rookie',
-    permissionsSummary: 'Sieht alle öffentlichen Infos, Lehrmaterialien, Übungstests sowie die Abschlussarbeit / Abschlussprüfung. Keine Bearbeitung.',
+    permissionsSummary: 'Sieht alle öffentlichen Infos, Lehrmaterialien, Übungstests sowie die Abschlussarbeit / Kursabschlussprüfung. Keine Bearbeitung.',
     canEditAcademy: false,
     canAccessFinalExams: true,
     canManageUsers: false,
@@ -200,7 +200,7 @@ export const ROLE_HIERARCHY: Record<
     rankOrder: 5,
     defaultClearance: 1,
     defaultRank: 'Academy Trainee',
-    permissionsSummary: 'Sieht öffentliche Infos, Lehrmaterialien und Übungstests. KEIN Zugriff auf Abschlussprüfungen/Abschlussarbeiten und Verwaltung.',
+    permissionsSummary: 'Sieht öffentliche Infos, Lehrmaterialien und Übungstests. KEIN Zugriff auf Kursabschlussprüfungen/Abschlussarbeiten und Verwaltung.',
     canEditAcademy: false,
     canAccessFinalExams: false,
     canManageUsers: false,
