@@ -800,6 +800,12 @@ export interface ExamParticipantReviewHistoryItem {
   detailed: boolean;
   claimHistory?: ExamReviewClaimHistoryEntry[];
   reviewCorrections?: Array<Record<string, unknown>>;
+  resultReleaseHistory?: Array<{
+    releasedByUid: string;
+    releasedAtIso: string;
+    status: 'passed' | 'failed';
+    finalScoreBasisPoints: number | null;
+  }>;
   questions?: Array<{
     questionId: string;
     question: string;
@@ -836,11 +842,15 @@ export async function listExamParticipantReviewHistory(
       throw new Error('EXAM_ATTEMPT_SNAPSHOT_INVALID');
     }
     const claimHistory = Array.isArray(attempt.reviewClaimHistory) ? attempt.reviewClaimHistory : [];
+    const correctionHistory = Array.isArray((attempt as any).reviewCorrections)
+      ? (attempt as any).reviewCorrections as Array<{ reviewerUid?: unknown }>
+      : [];
     const wasInvolved = attempt.reviewedByUid === reviewerUid ||
       attempt.reviewClaim?.reviewerUid === reviewerUid ||
       claimHistory.some(event =>
         event.actorUid === reviewerUid || event.targetUid === reviewerUid || event.previousUid === reviewerUid
-      );
+      ) ||
+      correctionHistory.some(correction => correction?.reviewerUid === reviewerUid);
     const detailed = isSupervisor || wasInvolved;
     const questions = attempt.status === 'pending_review'
       ? pendingFreeTextQuestions(attempt, version)
@@ -863,6 +873,7 @@ export async function listExamParticipantReviewHistory(
       ...(detailed ? {
         claimHistory: claimHistory.map(event => ({ ...event })),
         reviewCorrections: Array.isArray((attempt as any).reviewCorrections) ? (attempt as any).reviewCorrections : [],
+        resultReleaseHistory: Array.isArray(attempt.resultReleaseHistory) ? attempt.resultReleaseHistory : [],
         questions
       } : {})
     });

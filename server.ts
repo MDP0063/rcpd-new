@@ -2262,7 +2262,14 @@ async function startServer() {
           ...(item.detailed && item.reviewCorrections ? {
             reviewCorrections: item.reviewCorrections.map(correction => ({
               ...correction,
-              reviewerName: reviewerName(typeof correction.reviewerUid === 'string' ? correction.reviewerUid : null)
+              reviewerName: reviewerName(typeof correction.reviewerUid === 'string' ? correction.reviewerUid : null),
+              previousReviewerName: reviewerName(typeof correction.previousReviewerUid === 'string' ? correction.previousReviewerUid : null)
+            }))
+          } : {}),
+          ...(item.detailed && item.resultReleaseHistory ? {
+            resultReleaseHistory: item.resultReleaseHistory.map(release => ({
+              ...release,
+              releasedByName: reviewerName(typeof release.releasedByUid === 'string' ? release.releasedByUid : null)
             }))
           } : {})
         }))
