@@ -307,4 +307,4 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Fehlende Kurzbeschreibung und fehlende veröffentlichte Kursversion erhalten unterschiedliche, sachlich korrekte Hinweise.
 - Archivierte und vorübergehend nicht verfügbare Kurse zeigen ihren vorhandenen Zustand auch in der Detailansicht. Der Start wird clientseitig deaktiviert, wenn der bestehende serverseitige Veröffentlichungs-/Verfügbarkeits-Gate einen neuen Start ablehnt.
 - Die Änderung betrifft nur die bestehende Darstellung und Aktivierung der Startaktion. Serverprüfung, Version-Pinning, Berechtigungen, bestehende Teilnahmen und Nachweislogik bleiben unverändert.
-- TypeScript-/Build-/Servertest-CI und gezielte Browserprüfung stehen für den aktuellen Commit noch aus. Der PR bleibt Draft; kein Deployment.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Commit `9975db5` erfolgreich; die PR-Vorlagenprüfung ist ebenfalls erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Die gezielte Browser-/Responsive-/Accessibility-Prüfung steht noch aus; der PR bleibt Draft und es wurde kein Deployment ausgelöst.
