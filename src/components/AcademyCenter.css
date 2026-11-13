@@ -1400,7 +1400,7 @@ main.academy-main-viewport {
   border-color: #cbbbe7;
   box-shadow: 0 5px 16px rgba(67,47,108,.075);
 }
-.academy-library-material-meta > span {
+.academy-library-material-meta > span:not([aria-hidden="true"]) {
   display: inline-flex;
   align-items: center;
   min-height: 1.45rem;
@@ -1456,7 +1456,7 @@ main.academy-main-viewport {
     linear-gradient(135deg, rgba(184,163,223,.1), transparent 62%),
     var(--library-surface);
 }
-.dark .academy-library-material-meta > span {
+.dark .academy-library-material-meta > span:not([aria-hidden="true"]) {
   border-color: #51436b;
   background: #241d32;
   color: #d7c9ef;
