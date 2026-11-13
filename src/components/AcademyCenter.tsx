@@ -623,7 +623,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
             { id: 'tests' as const, label: `Übungstests (${practiceTests.length})` },
             ...(canAccessFinalExams ? [{ id: 'final_exams' as const, label: `Kursabschlussprüfungen (${finalExams.length})` }] : []),
             ...(canEditAcademy ? [{ id: 'exam_reviews' as const, label: 'Offene Bewertungen' }] : []),
-            ...(['admin', 'colonel'].includes(currentUser.role) ? [{ id: 'exam_corrections' as const, label: 'Korrekturen & Freigaben' }] : [])
+            ...(['admin', 'colonel'].includes(currentUser.role) ? [{ id: 'exam_corrections' as const, label: currentUser.role === 'admin' ? 'Korrekturen & Freigaben' : 'Bewertungskorrekturen' }] : [] )
           ].map(item => (
             <button key={item.id} type="button" onClick={() => {
               setIsAcademyHome(false);
