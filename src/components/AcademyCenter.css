@@ -1388,7 +1388,7 @@ main.academy-main-viewport {
 }
 .academy-library-area .academy-library-topic-card:focus-visible,
 .academy-library-area .academy-library-material-card:focus-within {
-  outline: 3px solid rgba(104,65,184,.28);
+  outline: 3px solid #6841b8;
   outline-offset: 3px;
 }
 .academy-library-material-card {
