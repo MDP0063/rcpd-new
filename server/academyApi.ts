@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
+  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
   AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail
 } from '../src/types/academy.ts';
@@ -96,6 +96,41 @@ function fail(res: Response, error: unknown, next: NextFunction): void {
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
+function normalizePrivateNoteAnchor(value: unknown): AcademyPrivateNoteTextAnchor {
+  if (!isObject(value) ||
+      Object.keys(value).some(key => !['kind', 'quote', 'prefix', 'suffix', 'headingPath', 'startLine', 'endLine'].includes(key)) ||
+      (value.kind !== 'markdown' && value.kind !== 'code') ||
+      typeof value.quote !== 'string' || value.quote.length < 1 || value.quote.length > 1000 ||
+      typeof value.prefix !== 'string' || value.prefix.length > 80 ||
+      typeof value.suffix !== 'string' || value.suffix.length > 80) {
+    throw new Error('ACADEMY_NOTE_ANCHOR_INVALID');
+  }
+  const headingPath = value.headingPath;
+  if (headingPath !== undefined && (
+    value.kind !== 'markdown' || !Array.isArray(headingPath) || headingPath.length > 6 ||
+    headingPath.some(item => typeof item !== 'string' || item.length > 120)
+  )) {
+    throw new Error('ACADEMY_NOTE_ANCHOR_INVALID');
+  }
+  const startLine = value.startLine;
+  const endLine = value.endLine;
+  if ((startLine !== undefined || endLine !== undefined) && (
+    value.kind !== 'code' ||
+    !Number.isSafeInteger(startLine) || Number(startLine) < 1 ||
+    !Number.isSafeInteger(endLine) || Number(endLine) < Number(startLine)
+  )) {
+    throw new Error('ACADEMY_NOTE_ANCHOR_INVALID');
+  }
+  return {
+    kind: value.kind,
+    quote: value.quote,
+    prefix: value.prefix,
+    suffix: value.suffix,
+    ...(headingPath === undefined ? {} : { headingPath: headingPath as string[] }),
+    ...(startLine === undefined ? {} : { startLine: Number(startLine), endLine: Number(endLine) })
+  };
+}
+
 function normalizePrivateNoteSources(
   value: unknown,
   fallback: { materialId: string; materialVersionId: string }
@@ -105,7 +140,7 @@ function normalizePrivateNoteSources(
     throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
   }
   const sources = input.map(source => {
-    if (!isObject(source)) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
+    if (!isObject(source) || Object.keys(source).some(key => !['materialId', 'materialVersionId', 'anchor'].includes(key))) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
     const materialId = boundedText(source.materialId, 120);
     const materialVersionId = boundedText(source.materialVersionId, 160);
     if (!materialId || !materialVersionId) throw new Error('ACADEMY_NOTE_SOURCES_INVALID');
@@ -114,15 +149,7 @@ function normalizePrivateNoteSources(
     return {
       materialId,
       materialVersionId,
-      ...(isObject(anchor) ? { anchor: {
-        kind: anchor.kind,
-        quote: anchor.quote,
-        prefix: anchor.prefix,
-        suffix: anchor.suffix,
-        ...(anchor.headingPath === undefined ? {} : { headingPath: anchor.headingPath }),
-        ...(anchor.startLine === undefined ? {} : { startLine: anchor.startLine }),
-        ...(anchor.endLine === undefined ? {} : { endLine: anchor.endLine })
-      } as AcademyPrivateNoteSource['anchor'] } : {})
+      ...(anchor === undefined ? {} : { anchor: normalizePrivateNoteAnchor(anchor) })
     };
   });
   const keys = sources.map(source => `${source.materialId}::${source.materialVersionId}`);
