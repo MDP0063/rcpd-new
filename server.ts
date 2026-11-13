@@ -628,7 +628,7 @@ function createInitialDatabase(): PortalDatabaseState {
     },
     {
       id: 'exam_default_final01',
-      title: 'Offizielle CA-POST Kursabschlussprüfung: Recht & Einsatztaktik',
+      title: 'Offizielle CA-POST Abschlussprüfung: Recht & Einsatztaktik',
       moduleCode: 'PC-102',
       assessmentStage: 'final_exam',
       minClearance: ROLE_HIERARCHY.rookie.defaultClearance,
