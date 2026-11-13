@@ -1228,4 +1228,4 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 
 - **PR #287** korrigiert die Bezeichnung des vorhandenen Korrektur-/Freigabebereichs: Admins sehen „Korrekturen & Freigaben“, Colonels „Bewertungskorrekturen“.
 - Technischer Grund: `ExamCorrectionCenter` lädt Ergebnisfreigaben nur mit `canReleaseResults={currentUser.role === 'admin'}`; Colonels besitzen weiterhin die vorhandene Korrekturfunktion, aber keine Ergebnisfreigabe.
-- Keine Änderung an Berechtigungen, API, Datenmodell oder tatsächlichen Aktionen. CI und Browserprüfung stehen noch aus.
+- Keine Änderung an Berechtigungen, API, Datenmodell oder tatsächlichen Aktionen. TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Code-Commit `b0250ec` erfolgreich; PR-Vorlagenprüfung ebenfalls. Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus.
