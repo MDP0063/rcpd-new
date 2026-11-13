@@ -538,6 +538,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
                 <p className={muted}>{courseDetail?.version || selectedCourse.version ? (courseDetail?.version?.summary || selectedCourse.version?.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Für diesen Kurs liegt noch keine veröffentlichte Version vor.'}</p>
               </header>
+              {availabilityNotice(selectedCourse.master) && (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200" role="status">
+                  {availabilityNotice(selectedCourse.master)}
+                </p>
+              )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
                 {courseDetail.version.learningObjectives.length > 0 && (
@@ -639,9 +644,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <p className="text-sm text-amber-700 dark:text-amber-300">Für diesen Kurs bestehen unterschiedliche Lehrgangsversionsbindungen. Bitte wende dich an die Academy-Verwaltung, bevor du den Kurs startest.</p>
                       ) : (
                         <>
-                          <p className={muted}>Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.</p>
+                          <p className={muted}>{selectedCourse.version ? 'Der Kurs beginnt erst, wenn du ihn bewusst startest. Beim Start wird die für dich maßgebliche Kursversion festgehalten.' : 'Eine Teilnahme ist erst möglich, wenn eine Kursversion veröffentlicht wurde.'}</p>
                           {programPinByCourse.get(selectedCourse.master.id)?.[0] && <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Kurs ist in einem begonnenen Lehrgang an Version {programPinByCourse.get(selectedCourse.master.id)![0].version.versionNumber} gebunden.</p>}
-                          <button type="button" className={primary} disabled={saving || !selectedCourse.version} onClick={() => void startCourse()}>
+                          <button type="button" className={primary} disabled={saving || !selectedCourse.version || selectedCourse.master.publicationStatus !== 'published' || selectedCourse.master.availability !== 'available'} onClick={() => void startCourse()}>
                             {saving ? 'Wird gestartet …' : 'Kurs starten'}
                           </button>
                         </>
