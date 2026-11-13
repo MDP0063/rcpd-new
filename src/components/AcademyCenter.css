@@ -1363,3 +1363,49 @@ main.academy-main-viewport {
   .academy-library-area .academy-library-topic-card:hover { transform: none; }
   .academy-library-area button:active { transform: none !important; }
 }
+
+
+/* Keep participant navigation distinct from role-gated examiner work. */
+.academy-exam-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.8rem 1rem;
+}
+.academy-exam-nav-group {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.academy-exam-nav-group-label {
+  padding-left: 0.25rem;
+  color: #806779;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.academy-exam-nav-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.academy-exam-nav-group--review {
+  padding-left: 1rem;
+  border-left: 1px solid #e5d7e0;
+}
+.dark .academy-exam-nav-group-label { color: #c7aebe; }
+.dark .academy-exam-nav-group--review { border-color: #493442; }
+@media (max-width: 640px) {
+  .academy-exam-nav-group--review {
+    width: 100%;
+    padding-top: 0.65rem;
+    padding-left: 0;
+    border-top: 1px solid #e5d7e0;
+    border-left: 0;
+  }
+  .dark .academy-exam-nav-group--review { border-color: #493442; }
+}

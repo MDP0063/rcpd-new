@@ -1222,3 +1222,10 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Die technische Implementierung in PR #267 ist noch nicht mergebereit: Der Branch divergiert gegenüber main (129 Commits voraus, 13 Commits hinter main; gemeinsamer Ausgangspunkt dc1bf7e). Er muss kontrolliert aktualisiert werden; danach ist der vollständige CI-Lauf erneut erforderlich.
 - Unabhängige Codeprüfung, manuelle Browser-/Tastatur-/Screenreader-Abnahme und Firestore-Produktionsprüfung stehen aus. Der optionale Render-Deploy-Schritt wurde nicht ausgelöst; kein Produktionsdeploy bestätigt.
 - PR #284 (private Notizentwürfe beim Materialwechsel) bleibt bis zur manuellen Browserprüfung der Autosave-/Race-Szenarien Draft.
+
+
+## 13.11.2026 – Rollenpräzise Prüfungsnavigation
+
+- **PR #287** gruppiert die Prüfungs-Unter-Navigation sichtbar in „Teilnahme“ und rollenabhängige „Prüferaufgaben“. Die Prüfergruppe erscheint nur für berechtigte Rollen; auf schmalen Viewports werden die Gruppen gestapelt. Admins sehen „Korrekturen & Freigaben“, Colonels „Bewertungskorrekturen“.
+- Technischer Grund: `ExamCorrectionCenter` lädt Ergebnisfreigaben nur mit `canReleaseResults={currentUser.role === 'admin'}`; Colonels besitzen weiterhin die vorhandene Korrekturfunktion, aber keine Ergebnisfreigabe.
+- Keine Änderung an Berechtigungen, API, Datenmodell oder tatsächlichen Aktionen. TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf dem aktuellen Implementierungsstand `b6cc35c` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43391193711). Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus.
