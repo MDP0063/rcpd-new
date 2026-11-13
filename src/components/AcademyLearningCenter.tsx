@@ -534,9 +534,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
           {screen === 'course' && selectedCourse && (
             <section className="academy-course-detail space-y-5">
               <header className="academy-course-detail-heading space-y-2">
-                <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedCourse.master.code} · {courseDetail?.version ? `Version ${courseDetail.version.versionNumber}` : 'Noch keine Teilnahme'}</p>
+                <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedCourse.master.code} · {courseDetail?.version ? `Version ${courseDetail.version.versionNumber}` : selectedCourse.version ? `Version ${selectedCourse.version.versionNumber}` : 'Noch keine veröffentlichte Version'}</p>
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
-                <p className={muted}>{courseDetail?.version.summary || selectedCourse.version?.summary}</p>
+                <p className={muted}>{courseDetail?.version || selectedCourse.version ? (courseDetail?.version?.summary || selectedCourse.version?.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Für diesen Kurs liegt noch keine veröffentlichte Version vor.'}</p>
               </header>
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
