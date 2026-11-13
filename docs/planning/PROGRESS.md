@@ -1230,4 +1230,4 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Materialkarten erhalten kompaktere, vergleichbare Beschreibungsbereiche; der vollständige Inhalt bleibt im Reader. Reader und Katalog bleiben funktional getrennt.
 - Mobile Such-/Sortierflächen und Materialaktionen werden auf volle Breite optimiert.
 - Ausschließlich CSS-/Designänderungen; keine Änderung an Daten, Berechtigungen, Suche, Filter, Sortierung, Versionierung, Notizen oder PDF-Infrastruktur.
-- CI und gezielte Browser-/Accessibility-Prüfung stehen noch aus. Kein Merge und kein Deployment.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Implementierungs-Commit `4dca74f` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43427744171). Die nachfolgenden Änderungen betreffen nur Dokumentation. Browser-/Accessibility-Prüfung steht noch aus. Kein Merge und kein Deployment.
