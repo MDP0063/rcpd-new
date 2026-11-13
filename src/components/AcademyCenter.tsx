@@ -621,7 +621,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           {[
             { id: 'exam_center' as const, label: 'Prüfungszentrum' },
             { id: 'tests' as const, label: `Übungstests (${practiceTests.length})` },
-            ...(canAccessFinalExams ? [{ id: 'final_exams' as const, label: `Abschlussprüfungen (${finalExams.length})` }] : []),
+            ...(canAccessFinalExams ? [{ id: 'final_exams' as const, label: `Kursabschlussprüfungen (${finalExams.length})` }] : []),
             ...(canEditAcademy ? [{ id: 'exam_reviews' as const, label: 'Offene Bewertungen' }] : []),
             ...(['admin', 'colonel'].includes(currentUser.role) ? [{ id: 'exam_corrections' as const, label: 'Korrekturen & Freigaben' }] : [])
           ].map(item => (
@@ -742,7 +742,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               <div className="space-y-1">
                 <h3 className="font-semibold text-slate-900 dark:text-white">Prüfungen geben Rückmeldung</h3>
                 <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  Übungstests helfen dir, deinen Wissensstand einzuschätzen. Vorgesehene Abschlussprüfungen weisen nach, ob bestimmte Anforderungen erfüllt sind.
+                  Übungstests helfen dir, deinen Wissensstand einzuschätzen. Vorgesehene Kursabschlussprüfungen weisen nach, ob bestimmte Anforderungen erfüllt sind.
                 </p>
               </div>
             </div>
@@ -1134,7 +1134,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <Lock className="w-4 h-4" /> ZUGRIFF AUF ABSCHLUSSPRÜFUNGEN GESPERRT (RANG TRAINEE)
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                Abschlussarbeiten und Abschlussprüfungen sind erst ab dem Rang „Rookie“ freigeschaltet
+                Abschlussarbeiten und Kursabschlussprüfungen sind erst ab dem Rang „Rookie“ freigeschaltet
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
                 Als <strong>Trainee</strong> kannst du uneingeschränkt auf alle Lehrbücher, Lehrmaterialien sowie die regulären <strong>Übungstests</strong> zugreifen. Sobald der Administrator deinen Rang auf <strong>Rookie</strong> oder höher setzt, wird dieser Prüfungsbereich freigeschaltet.
@@ -1145,7 +1145,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               <Terminal className="w-10 h-10 text-sky-600 dark:text-sky-400 mx-auto" />
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Noch keine {activeTab === 'final_exams' ? 'Abschlussprüfungen' : 'Übungstests'} hinterlegt
+                  Noch keine {activeTab === 'final_exams' ? 'Kursabschlussprüfungen' : 'Übungstests'} hinterlegt
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                   In diesem Bereich sind derzeit keine Prüfungen verfügbar.
@@ -1191,7 +1191,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">{ex.title}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
                         <Clock className="w-3 h-3" /> {ex.timeLimitMinutes} Min ·{' '}
-                        {ex.assessmentStage === 'final_exam' ? 'Abschlussprüfung (Rookie+)' : 'Übungstest (Trainee+)'}
+                        {ex.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung (Rookie+)' : 'Übungstest (Trainee+)'}
                       </div>
                     </button>
                   );
@@ -1206,7 +1206,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <div>
                         <div className="text-xs font-mono text-sky-700 dark:text-sky-400 font-semibold">
                           {currentExam.assessmentStage === 'final_exam'
-                            ? 'Offizielle Abschlussprüfung (Rookie+)'
+                            ? 'Offizielle Kursabschlussprüfung (Rookie+)'
                             : 'Übungstest (Trainee+)'}{' '}
                           · {currentExam.moduleCode} · Bestehensgrenze {currentExam.passingScore}%
                         </div>
