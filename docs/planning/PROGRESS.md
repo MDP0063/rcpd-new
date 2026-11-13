@@ -1222,3 +1222,12 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Die technische Implementierung in PR #267 ist noch nicht mergebereit: Der Branch divergiert gegenüber main (129 Commits voraus, 13 Commits hinter main; gemeinsamer Ausgangspunkt dc1bf7e). Er muss kontrolliert aktualisiert werden; danach ist der vollständige CI-Lauf erneut erforderlich.
 - Unabhängige Codeprüfung, manuelle Browser-/Tastatur-/Screenreader-Abnahme und Firestore-Produktionsprüfung stehen aus. Der optionale Render-Deploy-Schritt wurde nicht ausgelöst; kein Produktionsdeploy bestätigt.
 - PR #284 (private Notizentwürfe beim Materialwechsel) bleibt bis zur manuellen Browserprüfung der Autosave-/Race-Szenarien Draft.
+
+
+## 13.11.2026 – Lernbibliothek visuell verfeinert
+
+- **PR #288** setzt die bestehende violette Bibliotheksidentität in Themenkarten, Metadaten, Fokuszuständen und primären Reader-Aktionen konsistenter um.
+- Materialkarten erhalten kompaktere, vergleichbare Beschreibungsbereiche; der vollständige Inhalt bleibt im Reader. Reader und Katalog bleiben funktional getrennt.
+- Mobile Such-/Sortierflächen und Materialaktionen werden auf volle Breite optimiert.
+- Ausschließlich CSS-/Designänderungen; keine Änderung an Daten, Berechtigungen, Suche, Filter, Sortierung, Versionierung, Notizen oder PDF-Infrastruktur.
+- CI und gezielte Browser-/Accessibility-Prüfung stehen noch aus. Kein Merge und kein Deployment.
