@@ -310,4 +310,4 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Reader-Navigation, Kopfbereich und Materialaktion werden dezent auf die Bibliotheksidentität abgestimmt. Die Lesefläche selbst bleibt neutral und lesefokussiert.
 - Mobile Karten und Such-/Sortierflächen erhalten ausreichend große Aktionen und volle verfügbare Breite.
 - Keine Änderung an Katalogdaten, Suche, Filtern, Sortierung, Materialzugriff, Versionierung, Notizen, Textankern oder Verwaltung. Keine neuen Abhängigkeiten und keine PDF-Infrastruktur.
-- CI und Browser-/Accessibility-Prüfung stehen für den PR noch aus.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Implementierungs-Commit `4dca74f` erfolgreich. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43427744171); [PR-Vorlagenprüfung](https://github.com/MDP0063/rcpd-new/actions/runs/43427744279) erfolgreich. Die nachfolgenden Änderungen betreffen nur die Dokumentation. Browser-/Accessibility-Prüfung steht noch aus.
