@@ -1158,3 +1158,10 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 ### PR-Bestand nach Bereinigung
 Am 12.11.2026 wurde die GitHub-API-Abfrage für offene Pull Requests wiederholt. Ergebnis: **keine offenen Pull Requests**. Die geschlossenen Alt-PRs sind nicht mit offenen Aufgaben gleichzusetzen; fachlich noch offene Punkte stehen weiterhin in OPEN-QUESTIONS.md. Es wurden keine PRs allein zur Reduktion der Anzahl gemergt.
+
+## 13.11.2026 – Revisionsworkflow fachlich freigegeben und abgeglichen
+
+- Der Projektinhaber hat Option 2 ausdrücklich bestätigt: verpflichtendes zweistufiges Admin-/Colonel-Gate. Eine offene Revisionsanfrage bleibt außerhalb der gemeinsamen Prüferliste; erst die begründete Annahme durch Admin oder Colonel gibt denselben Versuch für alle aktuell kursberechtigten Prüfer frei. Bei Ablehnung bleiben bisherige Bewertung, veröffentlichtes Ergebnis und Kursnachweis unverändert.
+- PR #267 und die zugehörigen Entscheidungs-/Detaildokumente wurden mit dieser Bestätigung synchronisiert. Die frühere Kennzeichnung als „offen/nicht beschlossen“ wurde entfernt.
+- PR #267 bleibt Draft: CI/TypeScript/Build und 455 Servertests waren auf dem vorherigen Implementierungsstand erfolgreich; nach den reinen Dokumentationsänderungen muss der aktuelle Branch-Commit erneut geprüft werden. Unabhängige Codeprüfung, manuelle Browser-/Tastatur-/Screenreader-Abnahme und Firestore-Produktionsprüfung stehen weiterhin aus. Es wurde kein Render-Produktionsdeploy ausgelöst.
+- Der übrige systematische Academy-Funktionsaudit wird nach Abschluss dieser PR-Prüfung fortgesetzt. PR #284 (private Notizentwürfe beim Materialwechsel) bleibt bis zur manuellen Browserprüfung der Autosave-/Race-Szenarien Draft.
