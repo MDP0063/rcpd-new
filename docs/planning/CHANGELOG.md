@@ -453,3 +453,4 @@
 - Visuelle Hierarchie des bestehenden Materialeditors und der Kategorie-/Dokumenttypverwaltung nachgeschärft.
 - Inhaltliche und technische Abläufe bleiben unverändert; keine Berechtigungs-, Datenmodell- oder API-Änderungen.
 - White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsfehler wird separat untersucht, nicht durch diese CSS-Verfeinerung überdeckt.
+- Ergänzende Prüfung in PR #289: Dark-Mode-Fokusindikator der Materialverwaltung kontrastreicher gestaltet; keine Funktions-, Daten- oder Berechtigungsänderung.
