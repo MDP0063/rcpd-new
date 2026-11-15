@@ -37,6 +37,7 @@ import { AcademyMarkdownRenderer } from './AcademyMarkdownRenderer';
 import type { AcademyPrivateNoteTextAnchor, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { createTextAnchorFromRange, resolveTextAnchorInElement } from '../lib/academyTextAnchors';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
+import './AcademyDesignTokens.css';
 
 interface AcademyCenterProps {
   currentUser: UserPublicProfile;
