@@ -838,17 +838,40 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 <div className="academy-library-topic-grid">
 {libraryCategories.map(category => { const count = libraryEntries.filter(entry => entry.category === category).length; return <button key={category} type="button" className="academy-library-topic-card" onClick={() => { setModuleCategoryFilter(category); setModuleDocumentTypeFilter(''); }}><span className="academy-library-topic-kicker">THEMENBEREICH</span><span className="academy-library-topic-title">{category}</span><span className="academy-library-topic-meta">{count} {count === 1 ? 'Material' : 'Materialien'}</span><span className="academy-library-topic-arrow" aria-hidden="true">Ansehen →</span></button>; })}
 </div></section>
-)}<div className="academy-library-toolbar grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
-                <div className="academy-library-search">
-                  <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
-                  <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Beschreibung" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+)}<div className="academy-library-toolbar grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_15rem]">
+                <div className="academy-library-search min-w-0">
+                  <label htmlFor="academy-library-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Materialien suchen</label>
+                  <div className="academy-library-search-controls">
+                    <input
+                      id="academy-library-global-search"
+                      type="search"
+                      value={moduleSearchQuery}
+                      onChange={event => setModuleSearchQuery(event.target.value)}
+                      placeholder="Titel, Materialcode, Kategorie oder Beschreibung"
+                      aria-describedby="academy-library-search-hint"
+                      className="w-full px-3 py-3 text-base rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                    />
+                    {Boolean(moduleSearchQuery.trim()) && (
+                      <button type="button" className="academy-library-clear-search" onClick={() => setModuleSearchQuery('')}>
+                        Suche löschen
+                      </button>
+                    )}
+                  </div>
+                  <p id="academy-library-search-hint" className="academy-library-search-hint">
+                    Sucht in Titel, Kennung, Kategorie, Dokumenttyp und Beschreibung. Der vollständige Dokumentinhalt wird nicht durchsucht.
+                  </p>
                 </div>
                 <div className="academy-library-sort">
-                  <label htmlFor="academy-library-sort" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sortieren</label>
-                  <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
-                    <option value="relevance">Relevanz</option>
-                    <option value="alphabetical">Alphabetisch</option>
-                    <option value="updated">Zuletzt aktualisiert</option>
+                  <label htmlFor="academy-library-sort" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sortieren</label>
+                  <select
+                    id="academy-library-sort"
+                    value={moduleSortOrder}
+                    onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')}
+                    className="w-full px-3 py-3 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="relevance">Relevanz (ohne Suche: A–Z)</option>
+                    <option value="alphabetical">Titel A–Z</option>
+                    <option value="updated">Zuletzt veröffentlicht / aktualisiert</option>
                   </select>
                 </div>
               </div>
