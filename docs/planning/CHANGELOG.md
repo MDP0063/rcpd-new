@@ -590,5 +590,6 @@
 
 - Nach Auswahl einer Startkachel Fokus auf den aktiven Hauptnavigationsbutton setzen; bei Rückkehr zur Kachelansicht Fokus auf die zuletzt verwendete Einstiegskachel zurückführen.
 - Externe Navigation in den Prüfungsbereich berücksichtigt dieselbe Fokusweitergabe.
+- Ein neues Prüfungsziel im bereits aktiven Prüfungsbereich löst keine ungefragte Fokusverschiebung aus.
 - Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
 - Keine Änderung an Navigation, Berechtigungen oder Seitenstruktur.
