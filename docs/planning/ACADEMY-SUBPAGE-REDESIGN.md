@@ -660,6 +660,7 @@ Die Quellen werden nicht als UI-Vorlage kopiert. Für RCPD gelten folgende über
 **Prüfungen – gewählte Struktur**
 - Teilnehmerwege und Prüferaufgaben bleiben getrennte Navigationsgruppen.
 - Prüfungsrunner ist eine fokussierte Arbeitsansicht: Aufgabeninhalt, Antwort, Fortschritt und verbleibende Zeit; sekundäre Metadaten bleiben zurückhaltend.
+- Beantwortete Fragen erhalten ein sichtbares Häkchen und einen passenden Screenreader-Status; die Auswahlfarbe allein unterscheidet nicht „beantwortet“ von „richtig“. Der Fortschrittsbalken ist neutral. Die Zeitwarnung ist gestuft: Amber bei höchstens fünf Minuten, Rot bei höchstens einer Minute.
 - Ausstehende Bewertung/Freigabe sind neutrale Prozesszustände; bestanden/nicht bestanden sind echte Ergebniszustände.
 - Primäre Aktionen bleiben neutral; die explizite Startbestätigung erklärt tatsächliche Zeit-/Versuchsfolgen.
 
