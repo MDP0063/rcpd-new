@@ -1495,3 +1495,9 @@ main.academy-main-viewport {
 .dark .academy-library-area .academy-library-material-card:focus-within {
   outline-color: #b8a3df;
 }
+
+/* Keep Markdown blockquotes readable in the dark material-editor preview. */
+.dark .academy-material-content-preview blockquote {
+  border-left-color: #64748b;
+  color: #c0cad6;
+}
