@@ -585,7 +585,7 @@ main.academy-main-viewport {
   background: var(--academy-surface-selected) !important; box-shadow: inset 3px 0 0 var(--academy-border-strong);
 }
 .dark .academy-library-reader-heading { border-bottom-color: var(--academy-border) !important; }
-.dark .academy-library-reader-heading > div:first-child > div:first-child { color: var(--academy-area-library) !important; }
+.dark .academy-library-reader-heading > div:first-child > div:first-child { color: var(--academy-area-library-foreground) !important; }
 .dark .academy-library-reader-heading button {
   border-color: var(--academy-border-strong) !important; color: var(--academy-action-secondary-text) !important; background: var(--academy-action-secondary-bg);
 }
