@@ -202,7 +202,6 @@
 
 /* Meine Notizen: personal, calm and privacy-forward; no admin-facing controls are introduced. */
 .academy-learning-center--notes {
-  --academy-notes-accent: #536f8d;
   --academy-notes-border: #d6dee7;
   min-width: 0;
 }
@@ -418,7 +417,7 @@
   max-width: 58rem;
   margin-inline: auto;
 }
- .academy-notes-editor-heading {
+.academy-notes-editor-heading {
   padding: 0.25rem 0 0.9rem;
   border-bottom: 1px solid #d6dee7;
 }
