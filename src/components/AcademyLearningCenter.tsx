@@ -127,6 +127,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [selectedProgram, setSelectedProgram] = useState<ProgramEntry | null>(null);
   const [programDetail, setProgramDetail] = useState<ProgramParticipationDetail | null>(null);
   const [search, setSearch] = useState('');
+  const [courseStatusFilter, setCourseStatusFilter] = useState<'all' | 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended'>('all');
+  const [courseSortOrder, setCourseSortOrder] = useState<'title' | 'newest'>('title');
   const [noteSearch, setNoteSearch] = useState('');
   const [editingNote, setEditingNote] = useState<AcademyPrivateNoteDoc | null>(null);
   const [noteTitle, setNoteTitle] = useState('');
@@ -241,10 +243,27 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
   const filteredCourses = useMemo(() => {
     const value = search.trim().toLocaleLowerCase('de-DE');
-    if (!value) return courses;
-    return courses.filter(item => [item.master.code, item.version?.title || '', item.version?.summary || '']
-      .some(candidate => candidate.toLocaleLowerCase('de-DE').includes(value)));
-  }, [courses, search]);
+    return courses
+      .filter(item => [item.master.code, item.version?.title || '', item.version?.summary || '']
+        .some(candidate => candidate.toLocaleLowerCase('de-DE').includes(value)))
+      .filter(item => {
+        const actualStatus = ownCourseParticipationByCourse.get(item.master.id)?.status ?? 'not_started';
+        return courseStatusFilter === 'all' || actualStatus === courseStatusFilter;
+      })
+      .slice()
+      .sort((a, b) => {
+        const titleA = a.version?.title || a.master.code;
+        const titleB = b.version?.title || b.master.code;
+        if (courseSortOrder === 'newest') {
+          const timeA = a.version?.publishedIso ? Date.parse(a.version.publishedIso) : 0;
+          const timeB = b.version?.publishedIso ? Date.parse(b.version.publishedIso) : 0;
+          const safeTimeA = Number.isFinite(timeA) ? timeA : 0;
+          const safeTimeB = Number.isFinite(timeB) ? timeB : 0;
+          if (safeTimeA !== safeTimeB) return safeTimeB - safeTimeA;
+        }
+        return titleA.localeCompare(titleB, 'de-DE', { sensitivity: 'base' });
+      });
+  }, [courses, search, courseStatusFilter, courseSortOrder, ownCourseParticipationByCourse]);
   const filteredPrograms = useMemo(() => {
     const value = search.trim().toLocaleLowerCase('de-DE');
     if (!value) return programs;
@@ -458,10 +477,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Lehrgänge und Kurse</h2>
                 <p className={muted}>Lehrgänge geben Ausbildungsziele und erforderliche Lernschritte vor. Kurse können unabhängig davon direkt begonnen werden.</p>
               </header>
-              <label className="academy-courses-search block space-y-1">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</span>
-                <input className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
-              </label>
+              <div className="academy-courses-search">
+                <label htmlFor="academy-courses-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</label>
+                <div className="academy-courses-search-controls">
+                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
+                  {Boolean(search.trim()) && <button type="button" className="academy-courses-clear-search" onClick={() => setSearch('')}>Suche löschen</button>}
+                </div>
+              </div>
               {loading ? <p className={muted} role="status">Lehrgänge und Kurse werden geladen …</p> : loadError ? (
                 <div className={`${panel} p-4 space-y-3`} role="alert">
                   <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
@@ -502,11 +524,38 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   </section>
 
                   <section className="academy-courses-section space-y-3">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alle Kurse</h3>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{filteredCourses.length} Kurse</span>
+                    <div className="academy-course-list-controls">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alle Kurse</h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{filteredCourses.length} {filteredCourses.length === 1 ? 'Kurs' : 'Kurse'}</span>
+                      </div>
+                      <div className="academy-course-filter-row">
+                        <label className="academy-course-filter-control">
+                          <span>Teilnahmestatus</span>
+                          <select className={field} value={courseStatusFilter} onChange={event => setCourseStatusFilter(event.target.value as typeof courseStatusFilter)}>
+                            <option value="all">Alle Teilnahmen</option>
+                            <option value="not_started">Nicht begonnen</option>
+                            <option value="in_progress">In Bearbeitung</option>
+                            <option value="completed">Abgeschlossen</option>
+                            <option value="voluntarily_ended">Freiwillig beendet</option>
+                            <option value="administratively_ended">Administrativ beendet</option>
+                          </select>
+                        </label>
+                        <label className="academy-course-filter-control">
+                          <span>Sortieren</span>
+                          <select className={field} value={courseSortOrder} onChange={event => setCourseSortOrder(event.target.value as typeof courseSortOrder)}>
+                            <option value="title">Titel A–Z</option>
+                            <option value="newest">Zuletzt veröffentlicht</option>
+                          </select>
+                        </label>
+                        {courseStatusFilter !== 'all' && (
+                          <button type="button" className="academy-course-filter-reset" onClick={() => setCourseStatusFilter('all')}>
+                            Teilnahmestatus zurücksetzen
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {filteredCourses.length === 0 ? <p className={`${panel} p-4 ${muted}`}>{search.trim() ? 'Keine Kurse entsprechen deiner Suche.' : 'Derzeit sind keine veröffentlichten Kurse verfügbar.'}</p> : (
+                    {filteredCourses.length === 0 ? <p className={`${panel} p-4 ${muted}`}>{search.trim() && courseStatusFilter !== 'all' ? 'Keine Kurse passen zu deiner Suche und diesem Teilnahmestatus.' : search.trim() ? 'Keine Kurse entsprechen deiner Suche.' : courseStatusFilter !== 'all' ? 'Keine Kurse mit diesem Teilnahmestatus vorhanden.' : 'Derzeit sind keine veröffentlichten Kurse verfügbar.'}</p> : (
                       <div className={`${panel} academy-course-list divide-y divide-slate-200 dark:divide-slate-800`}>
                         {filteredCourses.map(entry => {
                           const participation = ownCourseParticipationByCourse.get(entry.master.id);
