@@ -50,6 +50,36 @@ function statusName(status: string): string {
   if (status === 'archived') return 'Archiviert';
   return status;
 }
+
+function filterAndSortEntries<T extends CourseEntry | ProgramEntry>(
+  entries: T[],
+  search: string,
+  publicationFilter: 'all' | 'draft' | 'published' | 'archived',
+  sort: 'code' | 'title' | 'updated'
+): T[] {
+  const query = search.trim().toLocaleLowerCase('de-DE');
+  return entries
+    .filter(entry => {
+      if (publicationFilter !== 'all' && entry.master.publicationStatus !== publicationFilter) return false;
+      if (!query) return true;
+      const title = entry.draft?.title || entry.version?.title || entry.master.code;
+      const summary = entry.draft?.summary || entry.version?.summary || '';
+      return [entry.master.code, title, summary].some(value => value.toLocaleLowerCase('de-DE').includes(query));
+    })
+    .sort((left, right) => {
+      const leftTitle = left.draft?.title || left.version?.title || left.master.code;
+      const rightTitle = right.draft?.title || right.version?.title || right.master.code;
+      if (sort === 'title') return leftTitle.localeCompare(rightTitle, 'de-DE') || left.master.code.localeCompare(right.master.code, 'de-DE');
+      if (sort === 'updated') {
+        const leftTime = Date.parse(left.master.updatedIso);
+        const rightTime = Date.parse(right.master.updatedIso);
+        const leftValue = Number.isFinite(leftTime) ? leftTime : Number.NEGATIVE_INFINITY;
+        const rightValue = Number.isFinite(rightTime) ? rightTime : Number.NEGATIVE_INFINITY;
+        return rightValue - leftValue || left.master.code.localeCompare(right.master.code, 'de-DE');
+      }
+      return left.master.code.localeCompare(right.master.code, 'de-DE');
+    });
+}
 function apiErrorMessage(value?: string): string {
   switch (value) {
     case 'ACADEMY_CODE_INVALID': return 'Die Kennung muss mit einem Buchstaben oder einer Zahl beginnen und darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten.';
@@ -102,6 +132,9 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [formError, setFormError] = useState<string[]>([]);
+  const [managementSearch, setManagementSearch] = useState('');
+  const [publicationFilter, setPublicationFilter] = useState<'all' | 'draft' | 'published' | 'archived'>('all');
+  const [managementSort, setManagementSort] = useState<'code' | 'title' | 'updated'>('code');
   const [courseMaster, setCourseMaster] = useState<AcademyCourseMasterDoc | null>(null);
   const [courseDraft, setCourseDraft] = useState<AcademyCourseDraftDoc | null>(null);
   const [currentCourseVersion, setCurrentCourseVersion] = useState<AcademyCourseVersionDoc | null>(null);
@@ -145,8 +178,14 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       item.master.availability === 'available' && Boolean(item.version)),
     [courses]
   );
-  const listedCourses = useMemo(() => [...courses].sort((a, b) => a.master.code.localeCompare(b.master.code, 'de-DE')), [courses]);
-  const listedPrograms = useMemo(() => [...programs].sort((a, b) => a.master.code.localeCompare(b.master.code, 'de-DE')), [programs]);
+  const listedCourses = useMemo(
+    () => filterAndSortEntries(courses, managementSearch, publicationFilter, managementSort),
+    [courses, managementSearch, publicationFilter, managementSort]
+  );
+  const listedPrograms = useMemo(
+    () => filterAndSortEntries(programs, managementSearch, publicationFilter, managementSort),
+    [programs, managementSearch, publicationFilter, managementSort]
+  );
 
   const resetEditor = () => {
     setCourseMaster(null); setCourseDraft(null); setCurrentCourseVersion(null); setCourseCode(''); setCourseTitle(''); setCourseSummary('');
@@ -406,12 +445,43 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             </div>
           </header>
           {loadError && <div role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">{loadError} <button type="button" className="underline" onClick={() => void load()}>Erneut laden</button></div>}
+          <section className={panel + ' academy-authoring-controls space-y-3'} aria-labelledby="academy-authoring-controls-heading">
+            <h3 id="academy-authoring-controls-heading" className="font-semibold text-slate-900 dark:text-white">Verwaltung durchsuchen</h3>
+            <div className="grid gap-3 md:grid-cols-[minmax(16rem,1.5fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)]">
+              <div>
+                <label htmlFor="academy-authoring-search" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Kurse und Lehrgänge durchsuchen</label>
+                <input id="academy-authoring-search" type="search" className={field + ' min-h-[44px]'} value={managementSearch} onChange={event => setManagementSearch(event.target.value)} aria-describedby="academy-authoring-search-hint" />
+                <p id="academy-authoring-search-hint" className="mt-1 text-xs text-slate-500 dark:text-slate-400">Titel, Kennung und Kurzbeschreibung</p>
+              </div>
+              <div>
+                <label htmlFor="academy-authoring-publication-filter" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Veröffentlichungsstatus</label>
+                <select id="academy-authoring-publication-filter" className={field + ' min-h-[44px]'} value={publicationFilter} onChange={event => setPublicationFilter(event.target.value as typeof publicationFilter)}>
+                  <option value="all">Alle Status</option>
+                  <option value="draft">Entwurf</option>
+                  <option value="published">Veröffentlicht</option>
+                  <option value="archived">Archiviert</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="academy-authoring-sort" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sortieren nach</label>
+                <select id="academy-authoring-sort" className={field + ' min-h-[44px]'} value={managementSort} onChange={event => setManagementSort(event.target.value as typeof managementSort)}>
+                  <option value="code">Kennung A–Z</option>
+                  <option value="title">Titel A–Z</option>
+                  <option value="updated">Zuletzt geändert</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300" role="status" aria-live="polite">{listedCourses.length} von {courses.length} Kursen und {listedPrograms.length} von {programs.length} Lehrgängen</p>
+              {(managementSearch || publicationFilter !== 'all' || managementSort !== 'code') && <button type="button" className={secondary} onClick={() => { setManagementSearch(''); setPublicationFilter('all'); setManagementSort('code'); }}>Suche und Filter zurücksetzen</button>}
+            </div>
+          </section>
           <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-courses-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 id="academy-author-courses-heading" className="font-semibold text-slate-900 dark:text-white">Kurse</h3>
-              <span className="text-xs text-slate-500 dark:text-slate-400">{listedCourses.length} Einträge</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{listedCourses.length} von {courses.length} Einträgen</span>
             </div>
-            {listedCourses.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kurse vorhanden.</p> : (
+            {courses.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kurse vorhanden.</p> : listedCourses.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Keine Kurse entsprechen der Suche oder dem ausgewählten Veröffentlichungsstatus.</p> : (
               <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                 {listedCourses.map(entry => (
                   <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -451,9 +521,9 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
           <section className={panel + ' academy-authoring-list-panel'} aria-labelledby="academy-author-programs-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 id="academy-author-programs-heading" className="font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
-              <span className="text-xs text-slate-500 dark:text-slate-400">{listedPrograms.length} Einträge</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{listedPrograms.length} von {programs.length} Einträgen</span>
             </div>
-            {listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lehrgänge vorhanden.</p> : (
+            {programs.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lehrgänge vorhanden.</p> : listedPrograms.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Keine Lehrgänge entsprechen der Suche oder dem ausgewählten Veröffentlichungsstatus.</p> : (
               <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                 {listedPrograms.map(entry => (
                   <li key={entry.master.id} className="academy-authoring-list-item flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
