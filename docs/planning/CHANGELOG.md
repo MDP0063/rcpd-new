@@ -562,3 +562,18 @@
 - Lehrgangsdetails erhalten verständliche Fallbacks für fehlende Kurzbeschreibung und leere Lernziele.
 - Kurs-Suchhinweis sichtbar; Suchlösch-/Filteraktionen auf mindestens 44 px Zielhöhe.
 - Keine Änderung an API, Rollen, Berechtigungen, Nachweisregeln oder Datenmodell.
+
+
+## 2026-11-15 – Kursdetail und Nachweisaktion (PR #300)
+
+- Nachweiserfassung bleibt bis zum Abschluss des Detail-Refreshs gesperrt; ein zusätzlicher Handler-Guard weist Requests während eines laufenden Speichervorgangs ab.
+- Bei fehlgeschlagenem Refresh wird die alte Aktion nicht erneut angeboten; stattdessen wird der vorhandene Teilnahme-Neuladepfad angezeigt.
+- Lehrgangsdetails erhalten verständliche Fallbacks für fehlende Kurzbeschreibung und leere Lernziele.
+- Kurs-Suchhinweis sichtbar; Suchlösch-/Filteraktionen auf mindestens 44 px Zielhöhe.
+- PR #300 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+## 2026-11-15 – Lehrgangsdetail: fehlende Kursreferenzen
+
+- Fehlende Kursreferenzen zeigen keine internen IDs mehr.
+- Fehlende Fortschrittsdatensätze in bestehenden Lehrgangsteilnahmen werden nicht als „Noch nicht begonnen“ fehlinterpretiert.
+- „Zum Kurs“ wird nur bei vorhandenem Katalogeintrag angeboten; keine künstlichen Masterdaten oder erfundenen Statuswerte.
