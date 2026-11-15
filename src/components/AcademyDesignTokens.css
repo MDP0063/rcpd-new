@@ -178,3 +178,16 @@
 .academy-center-root :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) {
   min-height: 2.75rem;
 }
+
+
+/* Navigation and segmented controls keep a consistent touch target without enlarging compact metadata chips. */
+.academy-center-root :is(
+  .academy-main-nav button,
+  .academy-exam-section-nav button,
+  .academy-library-mode-nav button,
+  .academy-course-mode-nav button,
+  .academy-material-content-view button,
+  .academy-library-filters summary
+) {
+  min-height: 2.75rem;
+}
