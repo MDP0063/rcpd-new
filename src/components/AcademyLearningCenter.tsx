@@ -857,7 +857,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <button type="button" className={`${secondary} academy-note-cancel`} onClick={cancelNoteEdit} disabled={saving}>← Zurück zu meinen Notizen</button>
               </header>
               {noteSaveError && (
-                <div className="academy-note-save-message" role="alert">
+                <div className={`academy-note-save-message ${noteConflictNote ? "academy-note-save-message--conflict" : ""}`} role="alert">
                   <div>
                     <p className="font-semibold">{noteConflictNote ? 'Diese Notiz wurde inzwischen geändert.' : 'Die Notiz konnte nicht gespeichert werden.'}</p>
                     <p>{noteConflictNote
@@ -989,7 +989,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         </p>
                       </div>
                     ) : filteredNotes.map(note => {
-                      const sourceCount = note.sources?.length || 1;
                       return (
                         <article key={note.id} className="academy-note-card p-4 space-y-2">
                           <div className="academy-note-card-main">
@@ -1027,7 +1026,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               noteId={note.id}
                               sources={note.sources?.length ? note.sources : [{ materialId: note.materialId, materialVersionId: note.materialVersionId }]}
                             />
-                            <span>{sourceCount} {sourceCount === 1 ? 'Materialfassung verknüpft' : 'Materialfassungen verknüpft'}</span>
                           </div>
                         </article>
                       );
