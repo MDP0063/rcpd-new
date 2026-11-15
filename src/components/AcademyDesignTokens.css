@@ -82,16 +82,16 @@
 
   --academy-state-success-text: #86efac;
   --academy-state-success-bg: #14291d;
-  --academy-state-success-border: #276749;
+  --academy-state-success-border: #4ade80;
   --academy-state-warning-text: #fcd34d;
   --academy-state-warning-bg: #2d2414;
-  --academy-state-warning-border: #785b20;
+  --academy-state-warning-border: #fcd34d;
   --academy-state-danger-text: #fca5a5;
   --academy-state-danger-bg: #2b1c1c;
-  --academy-state-danger-border: #7f1d1d;
+  --academy-state-danger-border: #fca5a5;
   --academy-state-info-text: #cbd5e1;
   --academy-state-info-bg: #1e293b;
-  --academy-state-info-border: #475569;
+  --academy-state-info-border: #94a3b8;
 }
 
 /* One predictable keyboard-focus treatment, independent of the current area accent. */
