@@ -1270,3 +1270,9 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Die gemeldete White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsstörung ist ausdrücklich **nicht** Teil dieses Schritts und bleibt für eine separate Reproduktion/Ursachenanalyse vorgemerkt.
 - CI auf PR-Head `682348df7e60f5864f00318307478545d053c273` erfolgreich: `bun run lint`, Produktionsbuild und `bun run test` bestanden ([Workflow](https://github.com/MDP0063/rcpd-new/actions/runs/43428990832)). Der optionale Render-Deploy-Hook wurde übersprungen; kein Deployment ausgelöst. Browser-/Responsive-/Keyboard-Abnahme steht weiterhin aus.
 - Ergänzende Accessibility-Prüfung: Tastaturfokusmarkierungen in der Materialverwaltung sind im Dark Mode jetzt heller und klarer erkennbar. CI für den aktualisierten Branchstand wird erneut geprüft; Browser-/Screenreader-Abnahme bleibt offen.
+
+## 15.11.2026 – PR-Branch mit aktuellem main abgeglichen
+
+- PR #289 wurde nach den Merges von #286–#288 mit dem aktuellen `main` zusammengeführt. Die Editor-/Taxonomie-CSS-Änderungen und die Dokumentationsstände beider Branches sind erhalten.
+- Der Synchronisations-Commit verwendet `main` und den vorherigen Feature-Head als Eltern; keine History-Rewrite-/Force-Push-Aktion.
+- Die CI läuft auf dem synchronisierten Stand erneut. Browser-/Responsive-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen Academy-QA.
