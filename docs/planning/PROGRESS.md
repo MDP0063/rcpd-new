@@ -1431,5 +1431,6 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 - Kategorien- und Dokumenttypverwaltung erhalten dieselbe Bedienlogik: Suche nach Name/Beschreibung, Filter nach Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
 - Suchfelder verwenden sichtbare Labels und Hinweistexte statt Platzhalter als einzige Suchanleitung; Statusfilter bleiben optional.
+- Such-/Formularfelder und Aktionen erhalten mindestens 44 px Zielhöhe; die spätere reale Viewport-/Touch-QA bleibt dennoch erforderlich.
 - Es werden nur vorhandene Taxonomiestatus verwendet. Archivieren/Reaktivieren, stabile Kennungen, Revisionskonflikte, Schutz bestehender Zuordnungen und serverseitige Löschprüfung bleiben unverändert.
 - Arbeitsbranch: `redesign/academy-material-taxonomy-controls`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
