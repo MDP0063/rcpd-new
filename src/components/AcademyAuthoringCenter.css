@@ -211,3 +211,77 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Authoring uses the same neutral work surfaces and action hierarchy as learner views. */
+.academy-authoring-heading h2,
+.academy-authoring-editor-heading h2,
+.academy-authoring-list-panel h3,
+.academy-authoring-form-section > h3,
+.academy-authoring-form-section > div:first-child h3,
+.academy-authoring-list-item > div:first-child > p:first-child {
+  color: var(--academy-text-primary);
+}
+.academy-authoring-list-panel,
+.academy-authoring-form-section {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+  box-shadow: 0 5px 16px rgba(15,23,42,0.035);
+}
+.academy-authoring-list-panel > div:first-child,
+.academy-authoring-editor-heading,
+.academy-authoring-form-section > div:first-child,
+.academy-authoring-chapter > div:first-child,
+.academy-authoring-chapter > div:last-child,
+.academy-authoring-chapter li {
+  border-color: var(--academy-border) !important;
+}
+.academy-authoring-list-item {
+  border-color: var(--academy-border);
+}
+.academy-authoring-form-section input:not([type="checkbox"]),
+.academy-authoring-form-section textarea,
+.academy-authoring-form-section select {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+}
+.academy-authoring-objective,
+.academy-authoring-chapter {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-subtle);
+}
+.dark .academy-authoring-heading h2,
+.dark .academy-authoring-editor-heading h2,
+.dark .academy-authoring-list-panel h3,
+.dark .academy-authoring-form-section > h3,
+.dark .academy-authoring-form-section > div:first-child h3,
+.dark .academy-authoring-list-item > div:first-child > p:first-child {
+  color: var(--academy-text-primary);
+}
+.dark .academy-authoring-list-panel,
+.dark .academy-authoring-form-section {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+  box-shadow: none;
+}
+.dark .academy-authoring-list-panel > div:first-child,
+.dark .academy-authoring-editor-heading,
+.dark .academy-authoring-form-section > div:first-child,
+.dark .academy-authoring-list-item,
+.dark .academy-authoring-chapter > div:first-child,
+.dark .academy-authoring-chapter > div:last-child,
+.dark .academy-authoring-chapter li {
+  border-color: var(--academy-border) !important;
+}
+.dark .academy-authoring-form-section input:not([type="checkbox"]),
+.dark .academy-authoring-form-section textarea,
+.dark .academy-authoring-form-section select {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-page) !important;
+  color: var(--academy-text-primary) !important;
+}
+.dark .academy-authoring-objective,
+.dark .academy-authoring-chapter {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-subtle);
+}
