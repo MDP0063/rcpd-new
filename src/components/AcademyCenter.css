@@ -1414,8 +1414,6 @@ main.academy-main-viewport {
    keeping the catalog and long-form reader visually quiet. */
  .academy-library-area {
   --library-accent: #6841b8;
-  --library-accent-strong: #56349d;
-  --library-accent-soft: #f5f1fb;
   --library-focus: var(--academy-focus-color);
 }
 .academy-library-area .academy-library-topic-card {
