@@ -447,3 +447,4 @@
 - PR #197 wurde geschlossen, weil Entscheidungsfreiheit und Recherchepflicht bereits im aktuellen Planungsstand verankert waren.
 - PR #244 wurde geschlossen, weil sein Validierungs-/Accessibility-Fix bereits im aktuellen `main` enthalten war.
 - Abschließende GitHub-API-Abfrage am 12.11.2026: keine offenen PRs. Noch offene fachliche und technische Arbeiten verbleiben in OPEN-QUESTIONS.md/PROGRESS.md und sind nicht durch das Schließen der Alt-PRs erledigt.
+- Ergänzende Accessibility-Korrektur in PR #287: sichtbare Tastatur-Fokusmarkierung für die beiden Gruppen der Prüfungs-Unter-Navigation ergänzt.
