@@ -666,3 +666,16 @@ Jeder größere Teilbereich erhält:
 7. Regressionstestplan, Berechtigungs-/Datenschutzprüfung und offene QA-Punkte.
 
 Diese Freigabe erlaubt die eigenständige Ausarbeitung der Academy-UX, nicht das stille Ändern ihrer fachlichen Bedeutung.
+
+
+## 15.11.2026 – Erweiterte Gestaltungs- und Merge-Freigabe für das Academy-Redesign
+
+Der Nutzer hat ausdrücklich freigegeben:
+- Das gesamte Academy-Portal einschließlich aller fünf Untermodule, Unterseiten und Bedienelemente darf umfassend neu gestaltet und technisch umgesetzt werden.
+- Bestehende, ausdrücklich beschlossene IA-, Datenschutz-, Status-, Rollen-, Prüfungs- und Designgrundlagen bleiben verbindliche Leitplanken und dürfen nicht eigenmächtig aufgehoben werden.
+- Innerhalb dieser Leitplanken darf die Umsetzung selbstständig neue, recherchierte UX-Lösungen entwickeln, bestehende schlechte Interaktionsmuster ersetzen und die zugehörigen Repository-Dokumente fortschreiben.
+- PRs dürfen erstellt, aktualisiert, aufgeräumt und nach sorgfältiger Diff-/Sicherheitsprüfung sowie erfolgreicher CI selbstständig gemergt werden.
+- Browser-/Responsive-/Screenreader-Abnahme erfolgt später als gemeinsame QA; sie darf nicht als bereits erfolgt dargestellt werden. Kritische Datenintegritäts-, Berechtigungs- oder Prüfungsabläufe benötigen weiterhin ihre spezifischen statischen und automatisierten Prüfungen.
+- Keine kostenpflichtigen Dienste, Abhängigkeiten oder ungeplanten Kosten.
+
+Die Designarbeit muss auf nachvollziehbarer Recherche und expliziter Abwägung beruhen. Priorität haben Bedienbarkeit, Orientierung, Verständlichkeit, Barrierefreiheit und semantisch korrekte Status-/Farbkommunikation. Die freigegebenen visuellen Grundlagen der Academy-Einstiegsseite (fünf farbige Kacheln, horizontale Innen-Navigation, Bereichsfarben und matte blaue Wellenform) bleiben erhalten.

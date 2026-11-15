@@ -358,3 +358,13 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Nicht automatisch zu übernehmen:** Ein älterer Branch `redesign/academy-notes-workspace` enthält abweichende Notizenfilter/-sortierung. Er ist kein aktueller freigegebener PR-Stand. Vor einer Übernahme müssen Nutzen, Informationsdichte, tatsächliche Felder und die bereits beschlossene Reader-Erstellungslogik separat geprüft werden.
 - **Weiter offen:** konsolidierte semantische CSS-Tokens; konsistente Controls über alle Academy-Bereiche; gezielter Notizen-/Prüfungs-/Examiner-Audit; Status-/Fokus-/Fehlerfeedback; mobile Arbeitsansichten.
 - **Merge-Gates:** Routine-UX-PRs können nach aktuellem Diffreview und erfolgreicher CI gemergt werden, ohne die spätere gemeinsame Browser-QA vorwegzunehmen. Änderungen an Autosave/Notizen, Prüfungsversuchen, Claims, Berechtigungen oder sensiblen Projektionen benötigen weiterhin die jeweils vorgesehenen spezifischen Integritäts-/Sicherheitsprüfungen. Die Browserabnahme bleibt als separate gemeinsame QA verbindlich.
+
+
+## 15.11.2026 – Interaktionssystem: Status und nächste Auditpunkte
+
+- **In Arbeit:** Branch `redesign/academy-control-system` führt gemeinsame semantische Tokens und Aktionsvarianten ein und neutralisiert Bereichsfarben in Aktionen/Auswahl.
+- **Vor PR-Merge noch zu prüfen:** alle verbliebenen amber/green/red/area-accent Verwendungen in Academy und Exam-Submodulen; Fokuskontrast auf tatsächlichen Nachbarflächen; CSS-Duplikate und Spezifität; Dark-Mode-Formulare; 44px-Zielgrößen; TypeScript/Build/Servertests.
+- **Nach dem Token-Grundschritt:** Bibliothek und Reader besonders tief prüfen: Suchverhalten, Filterzustände, Trefferhierarchie, Reader-Rückkehr, Tabellen/Code/Blockquotes, Versionskontext, private Textanker und leere/Fehlerzustände.
+- **Danach:** Prüfungsrunner und Prüferarbeitsplätze, Notizen/Autosave/Privatheit, Kurs-/Lehrgangsdetails, Materialeditor/Taxonomie, Übersicht und globale Integration.
+- **Gezielte Browser-QA später:** Frage-Navigation muss „beantwortet“ sichtbar und per Screenreader ausweisen, ohne „richtig“ zu suggerieren; Timerwarnung (Amber ≤5 Minuten/Rot ≤1 Minute), 44px-Zielgrößen und Fokuskontrast auf tatsächlichen Oberflächen prüfen.
+- **Nicht Ziel dieser PR:** Änderungen an Kurs-/Prüfungsregeln, Rollen, Berechtigungen, Datenmodell, Veröffentlichungsworkflow oder privaten Notizen. Dafür bleibt separate fachliche Freigabe erforderlich.

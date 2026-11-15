@@ -1,0 +1,199 @@
+/* Shared semantic design tokens for every Academy submodule.
+   Area accents identify sections; they are not action, focus, or lifecycle-state colors. */
+.academy-center-root {
+  color-scheme: light;
+  --academy-text-primary: #1e293b;
+  --academy-text-secondary: #526477;
+  --academy-text-muted: #64748b;
+
+  --academy-surface-page: #f7f9fb;
+  --academy-surface-card: #ffffff;
+  --academy-surface-subtle: #f8fafc;
+  --academy-surface-hover: #f1f5f9;
+  --academy-surface-selected: #eaf0f6;
+
+  --academy-border: #d6dee7;
+  --academy-border-strong: #94a3b8;
+
+  --academy-action-primary-bg: #1e293b;
+  --academy-action-primary-text: #ffffff;
+  --academy-action-primary-hover: #334155;
+  --academy-action-secondary-bg: #ffffff;
+  --academy-action-secondary-text: #334155;
+  --academy-action-secondary-hover: #f1f5f9;
+
+  --academy-focus-color: #536f8d;
+  --academy-focus-width: 3px;
+  --academy-focus-offset: 3px;
+
+  --academy-state-success-text: #166534;
+  --academy-state-success-bg: #f0fdf4;
+  --academy-state-success-border: #15803d;
+  --academy-state-warning-text: #92400e;
+  --academy-state-warning-bg: #fffbeb;
+  --academy-state-warning-border: #b45309;
+  --academy-state-danger-text: #991b1b;
+  --academy-state-danger-bg: #fef2f2;
+  --academy-state-danger-border: #b91c1c;
+  --academy-state-info-text: #334155;
+  --academy-state-info-bg: #f1f5f9;
+  --academy-state-info-border: #64748b;
+
+  --academy-area-overview: #2864d9;
+  --academy-area-overview-foreground: #2864d9;
+  --academy-area-courses: #087f8c;
+  --academy-area-courses-foreground: #087f8c;
+  --academy-area-library: #6841b8;
+  --academy-area-library-foreground: #6841b8;
+  --academy-area-exams: #a33370;
+  --academy-area-exams-foreground: #a33370;
+  --academy-area-notes: #287a45;
+  --academy-area-notes-foreground: #287a45;
+}
+
+.dark .academy-center-root {
+  color-scheme: dark;
+  --academy-text-primary: #f1f5f9;
+  --academy-text-secondary: #cbd5e1;
+  --academy-text-muted: #94a3b8;
+
+  --academy-surface-page: #0f172a;
+  --academy-surface-card: #1e293b;
+  --academy-surface-subtle: #172334;
+  --academy-surface-hover: #29384a;
+  --academy-surface-selected: #334155;
+
+  --academy-border: #334155;
+  --academy-border-strong: #64748b;
+
+  --academy-action-primary-bg: #f1f5f9;
+  --academy-action-primary-text: #0f172a;
+  --academy-action-primary-hover: #ffffff;
+  --academy-action-secondary-bg: #1e293b;
+  --academy-action-secondary-text: #e2e8f0;
+  --academy-action-secondary-hover: #334155;
+
+  --academy-focus-color: #b8c6d5;
+  --academy-area-overview-foreground: #93b7ff;
+  --academy-area-courses-foreground: #75c8cb;
+  --academy-area-library-foreground: #bda5eb;
+  --academy-area-exams-foreground: #d995b8;
+  --academy-area-notes-foreground: #8ac49a;
+
+  --academy-state-success-text: #86efac;
+  --academy-state-success-bg: #14291d;
+  --academy-state-success-border: #4ade80;
+  --academy-state-warning-text: #fcd34d;
+  --academy-state-warning-bg: #2d2414;
+  --academy-state-warning-border: #fcd34d;
+  --academy-state-danger-text: #fca5a5;
+  --academy-state-danger-bg: #2b1c1c;
+  --academy-state-danger-border: #fca5a5;
+  --academy-state-info-text: #cbd5e1;
+  --academy-state-info-bg: #1e293b;
+  --academy-state-info-border: #94a3b8;
+}
+
+/* One predictable keyboard-focus treatment, independent of the current area accent. */
+.academy-center-root :is(button, input, select, textarea, a[href], summary):focus-visible {
+  outline: var(--academy-focus-width) solid var(--academy-focus-color) !important;
+  outline-offset: var(--academy-focus-offset) !important;
+}
+
+@media (forced-colors: active) {
+  .academy-center-root :is(button, input, select, textarea, a[href], summary):focus-visible {
+    outline-color: Highlight !important;
+  }
+}
+
+
+/* Reusable action variants: one primary action, neutral secondary actions, explicit destructive actions. */
+.academy-center-root .academy-action-primary,
+.academy-center-root .academy-action-secondary,
+.academy-center-root .academy-action-danger {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.65rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.academy-center-root .academy-action-primary {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
+.academy-center-root .academy-action-primary:hover:not(:disabled) {
+  border-color: var(--academy-action-primary-hover) !important;
+  background: var(--academy-action-primary-hover) !important;
+}
+.academy-center-root .academy-action-secondary {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-action-secondary-bg) !important;
+  color: var(--academy-action-secondary-text) !important;
+}
+.academy-center-root .academy-action-secondary:hover:not(:disabled) {
+  background: var(--academy-action-secondary-hover) !important;
+}
+.academy-center-root .academy-action-danger {
+  border-color: var(--academy-state-danger-border) !important;
+  background: var(--academy-state-danger-bg) !important;
+  color: var(--academy-state-danger-text) !important;
+}
+.academy-center-root .academy-action-danger:hover:not(:disabled) {
+  border-color: var(--academy-state-danger-text) !important;
+  background: var(--academy-state-danger-bg) !important;
+}
+.academy-center-root :is(.academy-action-primary, .academy-action-secondary, .academy-action-danger):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .academy-center-root :is(.academy-action-primary, .academy-action-secondary, .academy-action-danger) {
+    transition: none;
+  }
+}
+
+
+/* Saturated Academy entry tiles need a light inner focus ring for contrast on every tile color. */
+.academy-center-root .academy-entry-tile:focus-visible {
+  outline: 3px solid rgba(255,255,255,0.96) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(40,100,217,0.42), 0 12px 28px rgba(15,23,42,0.18) !important;
+}
+
+
+/* Form controls remain comfortably targetable on touch screens. */
+.academy-center-root :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) {
+  min-height: 2.75rem;
+}
+
+
+/* Navigation and segmented controls keep a consistent touch target without enlarging compact metadata chips. */
+.academy-center-root :is(
+  .academy-main-nav button,
+  .academy-exam-section-nav button,
+  .academy-library-mode-nav button,
+  .academy-course-mode-nav button,
+  .academy-material-content-view button,
+  .academy-library-filters summary,
+  .academy-library-sidebar button,
+  .academy-library-reader-heading button,
+  .academy-library-clear-search,
+  .academy-library-criteria-chip,
+  .academy-library-clear-criteria,
+  .academy-courses-clear-search
+) {
+  min-height: 2.75rem;
+}

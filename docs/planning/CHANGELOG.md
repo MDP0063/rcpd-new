@@ -488,3 +488,10 @@
 ## 15.11.2026 – Academy-Farbsemantik und Markdown-Navigation
 - Interne Markdown-Links und Textanker bleiben im selben Tab; nur externe HTTP(S)-Links öffnen einen neuen Tab.
 - Die Notizen-Bereichsfarbe Grün wird auf einen zurückhaltenden Identitätsakzent begrenzt. Speicheraktion, Eingabefokus und Flächen erhalten neutrale Aktions-/Oberflächenfarben; die destruktive Löschaktion bleibt als solche unterscheidbar.
+
+
+## 15.11.2026 – Gemeinsame Academy-Interaktionsbasis
+- Gemeinsame semantische Design-Tokens und Aktionsvarianten eingeführt; Bereichsfarben sind von Aktionen, Auswahl, Fokus und Lebenszyklusstatus getrennt.
+- Kurs-, Bibliotheks-, Materialverwaltungs-, Authoring- und Prüfungsbedienelemente auf neutrale Primär-/Sekundär-/Destruktivaktionen umgestellt.
+- Archivierte Materialien, Entwürfe und ausstehende Bewertungen werden neutral statt irreführend amber/grün dargestellt.
+- Prüfungsrunner: beantwortete Fragen sind mit Häkchen und Screenreader-Text erkennbar, nicht nur grün; Fortschritt neutral; Zeitwarnung abgestuft (Amber bei fünf Minuten, Rot bei einer Minute).

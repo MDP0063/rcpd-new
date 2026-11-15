@@ -43,11 +43,10 @@ const errorFieldTargets: Record<string, string> = {
   general: 'academy-material-general'
 };
 
-const field = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const field = 'w-full min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const fieldError = 'border-rose-500 dark:border-rose-500';
-const primary = 'inline-flex items-center justify-center rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
-const secondary = 'inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-sky-600';
-const danger = 'inline-flex items-center justify-center rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-rose-600';
+const primary = 'academy-action-primary';
+const secondary = 'academy-action-secondary';
 
 const roleOptions: Array<{ value: OfficerRole; label: string }> = [
   { value: 'trainee', label: 'Trainee' },
@@ -684,7 +683,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               {editingMaster && globalManager && editingMaster.publicationStatus !== 'archived' && (
                 <div className="academy-material-form-destructive-actions">
                   <div><strong>Material stilllegen</strong><p>Das Material wird archiviert und nicht mehr neu angeboten. Historische Kursreferenzen bleiben erhalten.</p></div>
-                  <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
+                  <button type="button" className={secondary} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
                 </div>
               )}
             </div>
@@ -692,7 +691,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Es gibt keine unveröffentlichte Änderung. Bearbeite und speichere den Entwurf, bevor du eine neue Version veröffentlichen kannst.</p>
             )}
             {editingMaster && editingMaster.publicationStatus === 'archived' && (
-              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">Dieses Material ist archiviert. Seine veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Dieses Material ist archiviert. Seine veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.</p>
             )}
           </form>
 
