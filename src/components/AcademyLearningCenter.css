@@ -677,3 +677,11 @@
     transform: none;
   }
 }
+
+.academy-courses-catalog :is(input, select, button):focus-visible {
+  outline: 3px solid #536f8d;
+  outline-offset: 3px;
+}
+.dark .academy-courses-catalog :is(input, select, button):focus-visible {
+  outline-color: #b8c6d5;
+}
