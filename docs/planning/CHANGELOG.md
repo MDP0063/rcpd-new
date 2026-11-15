@@ -474,3 +474,12 @@
 - UI-Filter, Suche, Sortierung und Gruppierung dürfen anhand bestehender, zugänglicher Daten und fachlich bereits definierter Zustände verbessert werden; keine neuen Geschäfts-/Status-/Berechtigungsregeln.
 - Die fünf Academy-Einstiegskacheln und die fünfteilige Hauptnavigation, bestehende Bereichsfarben, Illustrationen, Datenschutz-, Versions-, Veröffentlichungs- und Prüfungsregeln bleiben geschützt.
 - Ausführliche Zielkonzeption, Farb-/Statussemantik, Bedienmuster, Responsive-/Accessibility-Regeln, Risiken und Umsetzungskosten sind in den zugehörigen Academy-Planungsdokumenten festgehalten.
+
+## 2026-11-15 – Academy-Usability-Redesign: Bibliothek, Reader und Kurskatalog
+
+- Bibliothekssuche, Sortierbenennungen, sichtbare aktive Kriterien, Filterrücksetzung und keine-Treffer-Meldung verbessert.
+- Größere Materialkacheln als kompakte vertikale Trefferliste neu strukturiert; Materialnavigation im Reader ist optional und hält die Ergebnisreihenfolge/Suche/Filter konsistent.
+- Eine gemeinsame sichere Markdown-Darstellung für Bibliotheksreader, Kursmaterialreader, Materialeditorvorschau und private Notizvorschau eingeführt. Hell-/Dunkelkontraste für Tabellen, Inline-Code, Blockquotes und Links sind explizit.
+- Kurskatalog um UI-Filter für die vorhandenen Teilnahmezustände und Sortierung nach Titel bzw. veröffentlichtem Datum ergänzt.
+- Bereichspetrol der Kurse von Statusmarkern und Aktionen getrennt; Archiviert/nicht verfügbar wird neutral beschrieben.
+- Umsetzung befindet sich auf `redesign/academy-usability-system`; CI und manuelle QA sind noch ausstehend.
