@@ -1438,7 +1438,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 ## 15.11.2026 – Kursdetail und Nachweisaktion
 
-- Die Erfassung eines Fortschrittsnachweises hält die Aktion bis zum Abschluss des Detail-Refreshs gesperrt. Bei fehlgeschlagenem Refresh wird die veraltete Nachweisaktion nicht erneut angeboten; stattdessen erscheint der vorhandene Wiederholungs-Ladeweg für die Teilnahme.
+- Die Erfassung eines Fortschrittsnachweises hält die Aktion bis zum Abschluss des Detail-Refreshs gesperrt; der Handler weist zusätzliche Requests ab, solange bereits gespeichert wird. Bei fehlgeschlagenem Refresh wird die veraltete Nachweisaktion nicht erneut angeboten; stattdessen erscheint der vorhandene Wiederholungs-Ladeweg für die Teilnahme.
 - Lehrgangsdetails zeigen bei fehlender Kurzbeschreibung und leeren Lernzielen einen verständlichen Zustand statt eines leeren Textbereichs.
 - Kurs-Suche erhält einen sichtbaren Hinweissatz statt eines Platzhalters als alleinige Suchanleitung. Suchlösch-, Filter- und Zurücksetzungsaktionen werden auf mindestens 44 px Zielhöhe angehoben.
 - Keine Änderung an Nachweisregeln, Statuslogik, API, Rollen oder Datenmodell.
