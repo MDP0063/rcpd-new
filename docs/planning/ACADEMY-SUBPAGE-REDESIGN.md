@@ -621,5 +621,66 @@ Ein Untermodul wird erst nach eigenem Diff-/Regressionreview und vollständigen 
 - [GOV.UK – Button](https://design-system.service.gov.uk/components/button/): riskante Aktionen werden nicht allein über Rot kommuniziert; Text und Kontext benennen die Folge.
 - [Canvas – Module als Teilnehmer](https://community.instructure.com/en/instructure/kb/articles/661313-how-do-i-view-modules-as-a-student): Inhaltsmodule und Anforderungen sind getrennt erkennbar; Fortschritts-/Sperrsymbole werden erklärt. Für RCPD wird keine lineare Reihenfolge übernommen, wo die vorhandenen Kursregeln keine erzwingen.
 - [Khan Academy – Student Dashboard](https://support.khanacademy.org/hc/en-us/articles/46935588089997-How-do-I-use-the-student-dashboard): Lernaufgaben werden nach echten Fälligkeiten priorisiert. Für RCPD ist dies nur bei tatsächlich vorhandenen Fristdaten übertragbar; künstliche Fristen, Streaks oder Gamification werden nicht ergänzt.
+- [Moodle – My courses / Course overview](https://docs.moodle.org/503/en/Course_overview): Filter nach vorhandenen Kurszuständen, Sortierung nach letztem Zugriff oder Name und alternative Karten-/Listenansichten. Übertragbar sind Suche, Sortierung und Filterung nach realen Zuständen; zusätzliche Ansichtsumschalter werden nur eingeführt, wenn sie nachweisbar helfen.
+- [Moodle – Course homepage](https://docs.moodle.org/503/en/Course_homepage): Kursindex, Inhaltsabschnitte und Position im Kurs werden klar voneinander unterschieden; der Index kann ein-/ausgeblendet werden. Übertragbar ist ein optionaler, positionstreuer Reader-Inhaltsindex – nicht eine dauerhaft sichtbare zweite Navigation.
+- [Moodle – Activity completion](https://docs.moodle.org/503/en/Using_Activity_completion): Checklisten und Fortschrittsindikatoren sind an tatsächlich konfigurierte Abschlussbedingungen gekoppelt; Kursfortschritt darf nicht mit Kursabschluss gleichgesetzt werden. Das bestätigt RCPDs explizite Evidenz-/Abschlussregeln.
 
 Diese Quellen sind die Begründungsbasis für Muster, keine Vorlagen zum Kopieren. Die Übertragung orientiert sich an den bereits beschlossenen RCPD-Daten-, Rollen-, Status- und Navigationsregeln.
+
+
+### 16.14 Vergleichende Recherche-Synthese und verworfene Alternativen
+
+Die Quellen werden nicht als UI-Vorlage kopiert. Für RCPD gelten folgende übertragene Muster und bewusste Abweichungen:
+
+| Referenz | Beobachtetes Muster | Übernahme für RCPD | Bewusste Abweichung |
+|---|---|---|---|
+| Moodle My courses | Filter nach Kurszustand, Sortierung nach Zugriff/Titel, alternative Ansichten | reale Teilnahmezustände filtern, Suche und sinnvolle Sortierung | kein zusätzlicher Karten-/Listen-Umschalter ohne nachgewiesenen Mehrwert; keine künstlichen Zustände wie „future“ ohne echte Datengrundlage |
+| Moodle Course homepage | Kursindex mit Positionsmarkierung und ein-/ausblendbaren Abschnitten | optionaler Reader-Inhaltsindex, der Leseposition und Rückkehrziel erhält | keine permanente linke Kursnavigation zusätzlich zur beschlossenen Academy-Hauptnavigation |
+| Moodle Activity completion | Fortschritt aus konfigurierten Bedingungen/Checklisten | explizite, erklärbare Nachweise und Anforderungen | keine Prozentanzeige aus beliebigen Aktivitäten; Kursabschluss bleibt von Prüfungsbestehen getrennt |
+| Canvas Modules | Module und Anforderungen in nachvollziehbarer Reihenfolge; sichtbare Erfüllung | erforderliche und empfohlene Inhalte unterscheiden; echte Voraussetzungen sichtbar machen | keine starre lineare Progression, wenn die RCPD-Kursregeln sie nicht verlangen |
+| Open edX | Status-/Titel-Sortierung im Kursdashboard | kompakte Sortierung und Filter nach vorhandenen Zuständen | keine neuen Rollen-, Kurs- oder Teilnahmezustände nur für die UI |
+| Khan Academy | Aufgabenpriorisierung anhand echter Fälligkeiten | nur reale Fristen/konkrete nächste Aktionen dürfen priorisieren | keine Streaks, Punkte, künstliche Deadlines oder Gamification |
+| GOV.UK / USWDS | klare Labels, verständliche Status-Tags, einfache Suche, gute Fehlererklärungen und Disclosure | Suchfeld mit dauerhaftem Label; Fehler direkt am Feld und mit Korrekturhinweis; optionale Filter kompakt | keine verschachtelten Accordions, keine Statusinformation nur durch Farbe, keine versteckten handlungsrelevanten Bedingungen |
+
+**Bibliothek – gewählte Struktur**
+1. Standardsuche über alle zugänglichen veröffentlichten Materialien als erster und prominentester Einstieg.
+2. Suchbegriff bleibt beim Öffnen eines Materials und bei Rückkehr zur Trefferliste erhalten.
+3. Sortierung und wenige Filter ergänzen die Suche; Filter sind sekundär und können kompakt sein. Aktive Filter bleiben sichtbar und einzeln entfernbar.
+4. Treffer zeigen Titel, Typ/Kategorie, kurze Beschreibung und Versions-/Aktualitätskontext in einer konsistenten, gut scannbaren Hierarchie.
+5. Reader ist eine eigene Ansicht mit klarer Rückkehr zur Trefferliste, erhaltener Auswahl/Scrollposition und optionalem Inhaltsindex. Kein automatisches Öffnen des ersten Dokuments.
+6. Lange Tabellen bleiben horizontal innerhalb ihres Inhaltsbereichs scrollbar; der übrige Reader bleibt einspaltig und reflowfähig.
+
+**Kurse – gewählte Struktur**
+- Lehrgänge und Kurse bleiben getrennte, klar benannte Gruppen.
+- Suche ist global; Teilnahmefilter beziehen sich nur auf tatsächlich vorhandene Teilnahmezustände.
+- Kursdetail zeigt Version, Kurzbeschreibung, Verfügbarkeit, Anforderungen und nächste gültige Handlung in dieser Reihenfolge.
+- Empfohlene und erforderliche Inhalte sind textlich getrennt. Ein Fortschrittswert erscheint nur, wenn die zugrundeliegenden Abschlussbedingungen vollständig und real sind.
+- Archiviert/nicht verfügbar ist ein neutraler Lebenszyklus-/Verfügbarkeitszustand, keine Warnung.
+
+**Prüfungen – gewählte Struktur**
+- Teilnehmerwege und Prüferaufgaben bleiben getrennte Navigationsgruppen.
+- Prüfungsrunner ist eine fokussierte Arbeitsansicht: Aufgabeninhalt, Antwort, Fortschritt und verbleibende Zeit; sekundäre Metadaten bleiben zurückhaltend.
+- Ausstehende Bewertung/Freigabe sind neutrale Prozesszustände; bestanden/nicht bestanden sind echte Ergebniszustände.
+- Primäre Aktionen bleiben neutral; die explizite Startbestätigung erklärt tatsächliche Zeit-/Versuchsfolgen.
+
+**Meine Notizen – gewählte Struktur**
+- Listenansicht und fokussierter Editor statt gleichzeitiger überladener Zweispaltenbearbeitung.
+- Quelle/Version und privater Status bleiben sichtbar, aber nicht als große Warnfläche.
+- Speichern ist neutral primär; Löschen ist ausdrücklich destruktiv. Bereichsgrün bleibt Identität, nicht Erfolgssignal.
+- Neue Notizen bleiben an die beschlossene Reader-Erstellung gebunden; private Notizen bleiben owner-only.
+
+**Verwaltung – gewählte Struktur**
+- Materialeditor und Taxonomie bleiben getrennte Arbeitsmodi mit einer klaren Liste-zu-Editor-Führung.
+- Entwurf, Veröffentlichung, Archivierung und endgültiges Löschen bleiben unterschiedliche Aktionen/Zustände.
+- Archivieren/Reaktivieren ist neutral; endgültiges Löschen ist destruktiv und räumlich getrennt.
+- Berechtigungen, Versionierung und Veröffentlichungsgates werden durch das Redesign nicht gelockert.
+
+**Aufwand / Reihenfolge**
+- Gemeinsame Tokens und Action-Varianten: mittel, sehr hoher Wiederverwendungswert.
+- Bibliothek/Reader und Materialverwaltung: hoch, größte Dichte und stärkster Bedienbarkeitshebel.
+- Kurse/Lehrgänge: mittel bis hoch, starke Daten-/Statusabhängigkeiten.
+- Prüfungen/Prüferarbeitsplätze: hoch, wegen Versuchsdaten, Claims, Ergebnisfreigabe und Revisionen.
+- Notizen: mittel, besonders sorgfältige Prüfung von Autosave, Versionbindung und Privatheit.
+- Übersicht/Integration: mittel; erst nach Harmonisierung der Untermodule finalisieren.
+
+Die gemeinsame Browser-/Screenreader-/Rollen-QA bleibt ein eigener Abnahmeschritt. Bis dahin werden Änderungen durch Code-/Diffreview, TypeScript, Produktionsbuild, Servertests und – wo möglich – gezielte automatisierte Tests abgesichert.
