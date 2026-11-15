@@ -593,3 +593,11 @@
 - Ein neues Prüfungsziel im bereits aktiven Prüfungsbereich löst keine ungefragte Fokusverschiebung aus.
 - Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
 - Keine Änderung an Navigation, Berechtigungen oder Seitenstruktur.
+
+
+## 2026-11-15 – Academy-Navigation: Fokus nach Bereichswechsel (PR #302)
+
+- Nach Auswahl einer Startkachel Fokus auf den aktiven Hauptnavigationsbutton setzen; bei Rückkehr zur Kachelansicht Fokus auf die zuletzt verwendete Einstiegskachel zurückführen.
+- Externe Navigation in den Prüfungsbereich berücksichtigt dieselbe Fokusweitergabe; ein neues Prüfungsziel im bereits aktiven Prüfungsbereich löst keine ungefragte Fokusverschiebung aus.
+- Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
+- PR #302 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
