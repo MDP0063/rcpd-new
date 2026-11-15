@@ -505,3 +505,12 @@
 - Notizeditor erhält sichtbare Save-/Conflict-Rückmeldung. Bei 409 wird die aktuelle owner-private Fassung geladen, während lokale Eingaben erhalten bleiben; Übernahme nur nach expliziter Bestätigung.
 - Notiz löschen und Lesezeichen entfernen werden getrennt benannt. Keine neuen Berechtigungen, API-Verträge oder Datenmodelle.
 - Umsetzung auf `redesign/academy-notes-workspace`; CI und manuelle Browser-QA stehen noch aus.
+
+
+## 2026-11-15 – Kurs- und Lehrgangsverwaltung: Katalogbedienung
+
+- Gemeinsame Suche über Kurs-/Lehrgangstitel, Kennungen und Kurzbeschreibungen ergänzt.
+- Veröffentlichungsfilter verwendet nur die vorhandenen Zustände Entwurf, Veröffentlicht und Archiviert; keine Status- oder Verfügbarkeitsänderung.
+- Sortierung nach Kennung, Titel oder vorhandenem Änderungszeitpunkt ergänzt; ungültige Zeitstempel landen am Ende.
+- Ergebniszahlen, getrennte Leerzustände und gemeinsames Zurücksetzen der Such-/Filterkriterien ergänzt.
+- Keine Backend-, Berechtigungs-, Datenmodell- oder Infrastrukturänderung.
