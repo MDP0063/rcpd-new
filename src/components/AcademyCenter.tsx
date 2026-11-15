@@ -1069,7 +1069,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           Erneut versuchen
                         </button>
                       )}
-                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                     </div>
                   )
                 ) : currentModule && (
@@ -1093,7 +1093,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
                     <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
+                        <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-300 font-semibold">
                           <span>{currentModule.code}</span>
                           <span>·</span>
                           <span>{currentModule.category}</span>
@@ -1106,7 +1106,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                         <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                           {isLibraryNavigationOpen ? 'Materialnavigation ausblenden' : 'Materialnavigation anzeigen'}
                         </button>
