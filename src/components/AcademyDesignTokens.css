@@ -187,7 +187,13 @@
   .academy-library-mode-nav button,
   .academy-course-mode-nav button,
   .academy-material-content-view button,
-  .academy-library-filters summary
+  .academy-library-filters summary,
+  .academy-library-sidebar button,
+  .academy-library-reader-heading button,
+  .academy-library-clear-search,
+  .academy-library-criteria-chip,
+  .academy-library-clear-criteria,
+  .academy-courses-clear-search
 ) {
   min-height: 2.75rem;
 }
