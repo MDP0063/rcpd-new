@@ -374,17 +374,29 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       method: 'POST',
       body: JSON.stringify({ requirementId })
     });
-    setSaving(false);
     if (!response.ok) {
+      setSaving(false);
       onStatusToast(response.error || 'Der Fortschrittsnachweis konnte nicht gespeichert werden.');
       return;
     }
+    let detailUpdated = false;
     if (detailRequestIdRef.current === requestId) {
       const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(participationId));
-      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setCourseDetail(detail.data);
+      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) {
+        setCourseDetail(detail.data);
+        detailUpdated = true;
+      } else if (detailRequestIdRef.current === requestId) {
+        // Keep the retry state visible instead of leaving an actionable stale evidence button.
+        setCourseDetail(null);
+      }
     }
     await refreshLearningDataIfActive();
-    if (detailRequestIdRef.current === requestId) onStatusToast('Fortschrittsnachweis wurde gespeichert.');
+    setSaving(false);
+    if (detailRequestIdRef.current === requestId) {
+      onStatusToast(detailUpdated
+        ? 'Fortschrittsnachweis wurde gespeichert.'
+        : 'Nachweis gespeichert, aber die Teilnahmedetails konnten nicht aktualisiert werden. Bitte lade die Teilnahme erneut.');
+    }
   };
 
   const startProgram = async () => {
@@ -769,7 +781,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedProgram.master.code} · {programDetail ? `Version ${programDetail.version.versionNumber}` : selectedProgram.version ? `Version ${selectedProgram.version.versionNumber}` : 'Entwurf'}</p>
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{programDetail?.version.title || selectedProgram.version?.title || selectedProgram.master.code}</h2>
-                <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary}</p>
+                <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary || 'Keine Kurzbeschreibung hinterlegt.'}</p>
               </header>
               {(programDetail?.version || selectedProgram.version) && (() => {
                 const version = programDetail?.version || selectedProgram.version!;
@@ -790,9 +802,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                     <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
-                      <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
-                        {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
-                      </ul>
+                      {version.learningObjectives.length > 0 ? (
+                        <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
+                          {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
+                        </ul>
+                      ) : <p className={muted}>Für diesen Lehrgang wurden noch keine veröffentlichten Lernziele bereitgestellt.</p>}
                     </div>
                     <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Erforderliche Kurse</h3>
