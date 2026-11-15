@@ -95,3 +95,61 @@
     outline-color: Highlight !important;
   }
 }
+
+
+/* Reusable action variants: one primary action, neutral secondary actions, explicit destructive actions. */
+.academy-center-root .academy-action-primary,
+.academy-center-root .academy-action-secondary,
+.academy-center-root .academy-action-danger {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.65rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.academy-center-root .academy-action-primary {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
+.academy-center-root .academy-action-primary:hover:not(:disabled) {
+  border-color: var(--academy-action-primary-hover) !important;
+  background: var(--academy-action-primary-hover) !important;
+}
+.academy-center-root .academy-action-secondary {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-action-secondary-bg) !important;
+  color: var(--academy-action-secondary-text) !important;
+}
+.academy-center-root .academy-action-secondary:hover:not(:disabled) {
+  background: var(--academy-action-secondary-hover) !important;
+}
+.academy-center-root .academy-action-danger {
+  border-color: var(--academy-state-danger-border) !important;
+  background: var(--academy-state-danger-bg) !important;
+  color: var(--academy-state-danger-text) !important;
+}
+.academy-center-root .academy-action-danger:hover:not(:disabled) {
+  border-color: var(--academy-state-danger-text) !important;
+  background: var(--academy-state-danger-bg) !important;
+}
+.academy-center-root :is(.academy-action-primary, .academy-action-secondary, .academy-action-danger):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .academy-center-root :is(.academy-action-primary, .academy-action-secondary, .academy-action-danger) {
+    transition: none;
+  }
+}
