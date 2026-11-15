@@ -7,7 +7,7 @@ interface Props {
   onStatusToast: (message: string) => void;
 }
 
-const inputClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const inputClass = 'w-full min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const primaryButton = 'academy-action-primary';
 const secondaryButton = 'academy-action-secondary';
 const dangerButton = 'academy-action-danger';
@@ -291,12 +291,12 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
           <div className="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,0.55fr)]">
             <div className="space-y-1.5">
               <label htmlFor="academy-category-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategorien durchsuchen</label>
-              <input id="academy-category-search" type="search" className={inputClass + ' min-h-[44px]'} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-category-search-hint" />
+              <input id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-category-search-hint" />
               <p id="academy-category-search-hint" className="text-xs text-slate-500 dark:text-slate-400">Name oder Beschreibung</p>
             </div>
             <div className="space-y-1.5">
               <label htmlFor="academy-category-status-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Status</label>
-              <select id="academy-category-status-filter" className={inputClass + ' min-h-[44px]'} value={categoryStatusFilter} onChange={event => setCategoryStatusFilter(event.target.value as typeof categoryStatusFilter)}>
+              <select id="academy-category-status-filter" className={inputClass} value={categoryStatusFilter} onChange={event => setCategoryStatusFilter(event.target.value as typeof categoryStatusFilter)}>
                 <option value="all">Alle Statuswerte</option>
                 <option value="active">Aktiv</option>
                 <option value="archived">Archiviert</option>
