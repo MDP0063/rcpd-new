@@ -578,3 +578,17 @@
 - Interne Kurs-IDs bleiben auf technische Schlüssel-/Lookup-Verwendung beschränkt und werden nicht als sichtbarer Fallback ausgegeben.
 - Fehlende Fortschrittsdatensätze in bestehenden Lehrgangsteilnahmen werden nicht als „Noch nicht begonnen“ fehlinterpretiert.
 - „Zum Kurs“ wird nur bei vorhandenem Katalogeintrag angeboten; keine künstlichen Masterdaten oder erfundenen Statuswerte.
+
+
+## 2026-11-15 – Lehrgangsdetail: fehlende Kursreferenzen (PR #301)
+
+- Fehlende Kursreferenzen zeigen keine internen IDs; fehlender Fortschritt in einer bestehenden Teilnahme wird nicht als „Noch nicht begonnen“ fehlinterpretiert.
+- „Zum Kurs“ wird nur bei vorhandenem Katalogeintrag angeboten; keine künstlichen Masterdaten oder erfundenen Statuswerte.
+- PR #301 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+## 2026-11-15 – Academy-Navigation: Fokus nach Bereichswechsel
+
+- Nach Auswahl einer Startkachel Fokus auf den aktiven Hauptnavigationsbutton setzen; bei Rückkehr zur Kachelansicht Fokus auf die erste Kachel zurückführen.
+- Externe Navigation in den Prüfungsbereich berücksichtigt dieselbe Fokusweitergabe.
+- Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
+- Keine Änderung an Navigation, Berechtigungen oder Seitenstruktur.
