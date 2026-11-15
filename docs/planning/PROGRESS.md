@@ -1461,3 +1461,4 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Umsetzung folgt aktueller Accessibility-Guidance für dynamische Navigation und Fokusreihenfolge: Home Office Accessibility Standard (WCAG 2.4.3) und VA.gov SPA-Fokusmanagement.
 - Quellen: https://design.homeoffice.gov.uk/accessibility/standard/operable ; https://design.va.gov/accessibility/focus-management
 - **PR #302 ist am 15.11.2026 gemergt** (Merge-Commit `5b87d423fa74a196b4ee2bb777e0303e96b36e4a`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+- Diese Statussynchronisierung ist eine reine Dokumentationsänderung und verändert keinen Laufzeitcode.
