@@ -13,7 +13,7 @@
   --academy-surface-selected: #eaf0f6;
 
   --academy-border: #d6dee7;
-  --academy-border-strong: #aebdcc;
+  --academy-border-strong: #94a3b8;
 
   --academy-action-primary-bg: #1e293b;
   --academy-action-primary-text: #ffffff;
@@ -28,16 +28,16 @@
 
   --academy-state-success-text: #166534;
   --academy-state-success-bg: #f0fdf4;
-  --academy-state-success-border: #bbf7d0;
+  --academy-state-success-border: #15803d;
   --academy-state-warning-text: #92400e;
   --academy-state-warning-bg: #fffbeb;
-  --academy-state-warning-border: #fde68a;
+  --academy-state-warning-border: #b45309;
   --academy-state-danger-text: #991b1b;
   --academy-state-danger-bg: #fef2f2;
-  --academy-state-danger-border: #fecaca;
+  --academy-state-danger-border: #b91c1c;
   --academy-state-info-text: #334155;
   --academy-state-info-bg: #f1f5f9;
-  --academy-state-info-border: #cbd5e1;
+  --academy-state-info-border: #64748b;
 
   --academy-area-overview: #2864d9;
   --academy-area-overview-foreground: #2864d9;
