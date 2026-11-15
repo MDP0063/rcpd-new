@@ -463,7 +463,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
         tags: noteTags.split(',').map(tag => tag.trim()).filter(Boolean)
       })
     });
-    setSaving(false);
     if (!response.ok || !response.data) {
       const message = response.error || 'Die Notiz konnte nicht gespeichert werden.';
       setNoteSaveError(message);
@@ -481,9 +480,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
           setNoteSaveError('Die Notiz wurde zwischenzeitlich geändert. Deine lokalen Änderungen bleiben erhalten; die aktuelle Fassung konnte aber nicht geladen werden.');
         }
       }
+      setSaving(false);
       onStatusToast(message);
       return;
     }
+    setSaving(false);
     setNotes(previous => previous.map(item => item.id === response.data!.note.id ? response.data!.note : item));
     setEditingNote(null);
     setNoteSaveError('');
@@ -492,7 +493,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const deleteNote = async (note: AcademyPrivateNoteDoc) => {
-    if (!window.confirm('Diese private Notiz endgültig löschen?')) return;
+    const confirmation = note.kind === 'bookmark'
+      ? 'Dieses Lesezeichen endgültig entfernen?'
+      : 'Diese private Notiz endgültig löschen?';
+    if (!window.confirm(confirmation)) return;
     setSaving(true);
     const response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + `/${encodeURIComponent(note.id)}`, { method: 'DELETE' });
     setSaving(false);
@@ -864,7 +868,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <div className="academy-note-conflict-details">
                       <p><strong>Aktuell gespeichert:</strong> {noteConflictNote.title || 'Notiz ohne Titel'} · {dateLabel(noteConflictNote.updatedIso)}</p>
                       {noteConflictNote.content && <p className="academy-note-conflict-preview">{noteConflictNote.content.slice(0, 260)}{noteConflictNote.content.length > 260 ? '…' : ''}</p>}
-                      <button type="button" className="academy-note-conflict-load" onClick={loadLatestNoteConflict}>
+                      <button type="button" className="academy-note-conflict-load" onClick={loadLatestNoteConflict} disabled={saving}>
                         Aktuelle Fassung übernehmen
                       </button>
                     </div>
