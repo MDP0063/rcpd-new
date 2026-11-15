@@ -1,8 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './AcademyCenter.css';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
 import {
   BookOpen,
   ExternalLink,
@@ -36,6 +33,7 @@ import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
+import { AcademyMarkdownRenderer } from './AcademyMarkdownRenderer';
 import type { AcademyPrivateNoteTextAnchor, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { createTextAnchorFromRange, resolveTextAnchorInElement } from '../lib/academyTextAnchors';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
@@ -520,32 +518,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   };
 
   const renderVersionedMaterialMarkdown = (markdown: string) => (
-    <div className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
-        components={{
-          h1: ({ children }) => <h1 className="pt-3 pb-2 border-b border-slate-200 dark:border-slate-800 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{children}</h1>,
-          h2: ({ children }) => <h2 className="pt-3 pb-1 border-b border-slate-100 dark:border-slate-800 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h2>,
-          h3: ({ children }) => <h3 className="pt-3 pb-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h3>,
-          h4: ({ children }) => <h4 className="pt-2 text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{children}</h4>,
-          p: ({ children }) => <p className="my-3 leading-7">{children}</p>,
-          ul: ({ children }) => <ul className="my-3 list-disc space-y-1 pl-6">{children}</ul>,
-          ol: ({ children }) => <ol className="my-3 list-decimal space-y-1 pl-6">{children}</ol>,
-          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-          blockquote: ({ children }) => <blockquote className="my-4 border-l-4 border-slate-300 pl-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
-          a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
-          pre: ({ children }) => <pre className="my-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">{children}</pre>,
-          code: ({ children, className }) => <code className={className || 'rounded bg-slate-100 px-1 py-0.5 text-sm dark:bg-slate-800'}>{children}</code>,
-          table: ({ children }) => <div className="my-4 overflow-x-auto"><table className="min-w-full border-collapse text-sm">{children}</table></div>,
-          th: ({ children }) => <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
-          td: ({ children }) => <td className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>,
-          img: ({ alt }) => <span role="note" className="inline-block rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Externes Bild nicht geladen{alt ? ' (' + alt + ')' : ''}.</span>
-        }}
-      >
-        {markdown}
-      </ReactMarkdown>
-    </div>
+    <AcademyMarkdownRenderer content={markdown} />
   );
 
   return (
