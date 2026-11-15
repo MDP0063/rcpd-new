@@ -349,3 +349,12 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 6. Kurs-/Lehrgangs- und Materialverwaltung – Formulare, Listen, Versionen, Taxonomie und Aktionen.
 7. Übersicht und modulübergreifende Integration.
 8. Gemeinsame manuelle Browser-/Accessibility-/Live-Firestore-QA.
+
+
+## 15.11.2026 – Status nach PR #290 und nächster Redesign-Abschnitt
+
+- **Erledigt/in main:** PR #290 integriert die erste größere Bibliotheks-/Reader-/Kurskatalog-Verbesserung einschließlich sicherer gemeinsamer Markdown-Darstellung. Die CI war erfolgreich; die manuelle Browserabnahme bleibt offen.
+- **In Arbeit:** neutrale Farbsemantik im Bereich „Meine Notizen“ und korrektes Öffnen interner Markdown-Textanker/Links im aktuellen Tab. Branch: `redesign/academy-notes-color-semantics`.
+- **Nicht automatisch zu übernehmen:** Ein älterer Branch `redesign/academy-notes-workspace` enthält abweichende Notizenfilter/-sortierung. Er ist kein aktueller freigegebener PR-Stand. Vor einer Übernahme müssen Nutzen, Informationsdichte, tatsächliche Felder und die bereits beschlossene Reader-Erstellungslogik separat geprüft werden.
+- **Weiter offen:** konsolidierte semantische CSS-Tokens; konsistente Controls über alle Academy-Bereiche; gezielter Notizen-/Prüfungs-/Examiner-Audit; Status-/Fokus-/Fehlerfeedback; mobile Arbeitsansichten.
+- **Merge-Gates:** Routine-UX-PRs können nach aktuellem Diffreview und erfolgreicher CI gemergt werden, ohne die spätere gemeinsame Browser-QA vorwegzunehmen. Änderungen an Autosave/Notizen, Prüfungsversuchen, Claims, Berechtigungen oder sensiblen Projektionen benötigen weiterhin die jeweils vorgesehenen spezifischen Integritäts-/Sicherheitsprüfungen. Die Browserabnahme bleibt als separate gemeinsame QA verbindlich.
