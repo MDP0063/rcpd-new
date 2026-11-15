@@ -588,7 +588,7 @@
 
 ## 2026-11-15 – Academy-Navigation: Fokus nach Bereichswechsel
 
-- Nach Auswahl einer Startkachel Fokus auf den aktiven Hauptnavigationsbutton setzen; bei Rückkehr zur Kachelansicht Fokus auf die erste Kachel zurückführen.
+- Nach Auswahl einer Startkachel Fokus auf den aktiven Hauptnavigationsbutton setzen; bei Rückkehr zur Kachelansicht Fokus auf die zuletzt verwendete Einstiegskachel zurückführen.
 - Externe Navigation in den Prüfungsbereich berücksichtigt dieselbe Fokusweitergabe.
 - Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
 - Keine Änderung an Navigation, Berechtigungen oder Seitenstruktur.
