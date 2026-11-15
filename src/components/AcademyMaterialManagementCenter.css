@@ -430,3 +430,7 @@
   }
 }
 
+/* Preserve a clearly visible keyboard focus indicator on dark editor surfaces. */
+.dark .academy-material-management :is(input, textarea, select, button):focus-visible {
+  outline-color: #b8a3df;
+}
