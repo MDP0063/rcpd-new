@@ -84,8 +84,8 @@ type SubmitResponse = { submission: PublicSubmission; expired: boolean; alreadyS
 
 const cardClass = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
 const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
-const primaryButton = buttonClass + ' academy-exam-primary-button bg-sky-600 text-white hover:bg-sky-500 academy-action-primary';
-const secondaryButton = buttonClass + ' border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 academy-action-secondary';
+const primaryButton = buttonClass + ' academy-exam-primary-button academy-action-primary';
+const secondaryButton = buttonClass + ' academy-action-secondary';
 
 function formatDuration(seconds: number): string {
   const safe = Math.max(0, seconds);
