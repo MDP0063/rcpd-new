@@ -318,3 +318,16 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Die Unter-Navigation gruppiert die Teilnehmerwege sichtbar unter „Teilnahme“ und rollenabhängige Arbeitsaufgaben unter „Prüferaufgaben“; die Prüfergruppe erscheint nur für berechtigte Rollen. Auf schmalen Viewports werden die Gruppen untereinander angeordnet.
 - Die Änderung korrigiert Gruppierung und Beschriftung; Rollen, Rechte, API-Aufrufe und tatsächliche Aktionen bleiben unverändert.
 - TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf dem aktuellen Implementierungsstand `b6cc35c` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43391193711). Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus; keine Berechtigungs- oder Workflowänderung.
+
+## 14. Lernbibliothek – visuelle Verfeinerung (13.11.2026)
+
+**Umsetzung in PR #288:** https://github.com/MDP0063/rcpd-new/pull/288
+
+- Der bestätigte violette Bereichsakzent (#6841B8) wird in Themenbereichen, Materialmetadaten, Fokuszuständen und primären Reader-Aktionen konsistent verwendet. Die Farbe bleibt ein Bereichsakzent und wird nicht als Statusfarbe eingesetzt.
+- Themenbereichs- und Materialkarten erhalten eine ruhigere, konsistente Oberflächenhierarchie mit klarer Hover-/Fokus-Rückmeldung; der Tastaturfokus nutzt eine durchgezogene, kontrastreiche Violettkontur.
+- Kategorie und Dokumenttyp werden auf Materialkarten als kompakte Metadaten-Chips dargestellt.
+- Beschreibungen in Karten werden auf maximal drei Zeilen begrenzt, damit Katalogkarten bei längeren Texten vergleichbar bleiben; der vollständige Inhalt bleibt im Reader zugänglich.
+- Reader-Navigation, Kopfbereich und Materialaktion werden dezent auf die Bibliotheksidentität abgestimmt. Die Lesefläche selbst bleibt neutral und lesefokussiert.
+- Mobile Karten und Such-/Sortierflächen erhalten ausreichend große Aktionen und volle verfügbare Breite.
+- Keine Änderung an Katalogdaten, Suche, Filtern, Sortierung, Materialzugriff, Versionierung, Notizen, Textankern oder Verwaltung. Keine neuen Abhängigkeiten und keine PDF-Infrastruktur.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Implementierungs-Commit `4dca74f` erfolgreich. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43427744171); [PR-Vorlagenprüfung](https://github.com/MDP0063/rcpd-new/actions/runs/43427744279) erfolgreich. Die nachfolgenden Änderungen betreffen nur die Dokumentation. Browser-/Accessibility-Prüfung steht noch aus.
