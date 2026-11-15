@@ -1308,3 +1308,35 @@ Alle vier Build/Testworkflows haben TypeScript/Produktionsbuild und Server-Tests
 ### QA-Grenze
 
 Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme findet bewusst später statt. CI-Erfolg und statischer Code-Review werden davon getrennt ausgewiesen. Keine manuelle Browserprüfung wird hier als erfolgt behauptet.
+
+## 15.11.2026 – Erste Umsetzung des vollständigen Academy-Usability-Redesigns
+
+Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach den Merges #286–#289.
+
+### Lernbibliothek / Reader
+- Erste Suchebene verbessert: klarere Beschriftung, explizite Suchlöschung und genaue Erklärung, welche Metadaten durchsucht werden. Der vollständige Materialtext wird derzeit bewusst nicht als durchsuchbar ausgegeben, weil der Katalog nur Metadatenindexwerte bereitstellt.
+- Sortieroptionen fachlich korrekt benannt: Titel A–Z und Veröffentlichungs-/Aktualisierungszeit, dazu Relevanz mit Titel-A–Z-Fallback ohne Suchbegriff.
+- Aktive Suche und aktive Filter erscheinen sichtbar und einzeln entfernbar; eine gemeinsame Rücksetzfunktion ist vorhanden.
+- Keine-Treffer-Zustand benennt Suche und Filter statt fälschlich nur die Suche.
+- Materialkarten bleiben größere eigenständige Kacheln, sind aber jetzt als gut vergleichbare vertikale Trefferliste mit stabiler Informationsreihenfolge, natürlicher Höhe und eindeutiger Aktion angelegt. Bereichsakzent und Primäraktion sind farblich getrennt.
+- Reader-Navigation öffnet beim direkten Öffnen eines Materials nicht automatisch eine breite Seitenleiste. Sie kann explizit zugeschaltet werden. Wenn sie geöffnet ist, verwendet sie dieselbe Sortierreihenfolge, Suchanfrage und die aktiven Filter; Such-/Filterbedingungen sind dort löschbar.
+- Rückkehr zur Bibliothek erhält Suche, Filter und Sortierung.
+- Versionierter Reader nutzt eine Lesebreite bis 68ch.
+
+### Gemeinsame Markdown-Darstellung
+- Neue lokale `AcademyMarkdownRenderer.tsx` mit ReactMarkdown, GFM und `rehype-sanitize`; kein Raw-HTML-Durchlauf, Code bleibt Text und wird nicht ausgeführt, externe Bilder werden nicht gerendert.
+- Renderer wird im versionierten Bibliotheksreader, im Kursmaterialreader, in der Materialeditorvorschau und in privaten Notizvorschauen verwendet.
+- Überschriften mit Textanker-IDs im Kursreader bleiben als optionale Komponentenüberschreibung erhalten.
+- Tabellenzellen, Inline-Code, Blockquotes, Links und Codeblöcke bekommen explizite Light-/Dark-Farben statt impliziter Theme-Vererbung.
+
+### Kurse / Lehrgänge
+- Globaler Suchbegriff hat eine sichtbare Löschaktion.
+- Der Kurskatalog kann anhand der bestehenden Teilnahmezustände gefiltert werden: Nicht begonnen (kein persönlicher Teilnahme-Datensatz), In Bearbeitung, Abgeschlossen, Freiwillig beendet, Administrativ beendet.
+- Sortierung nach Titel A–Z oder tatsächlichem Veröffentlichungszeitpunkt. Die Sortierung verwendet nur vorhandene `publishedIso`-Werte; fehlende/ungültige Zeitstempel werden als älteste behandelt.
+- Der Teilnahmefilter beeinflusst ausschließlich die Kursliste, nicht die Lehrgänge. Er ändert keine fachlichen Zustände und erzeugt keine neuen Backendwerte.
+- Petrol bleibt Kursbereichsidentität. Teilnahmezustände, Verfügbarkeits-/Archivhinweise und Buttons wurden neutralisiert, damit sie keine Erfolg-/Warn- oder Statusbedeutung vortäuschen.
+
+### Prüfstatus
+- Diese Änderungen sind noch auf dem Redesign-Branch und werden erst nach der PR-CI als gemergt geführt.
+- TypeScript-/Build-/Server-Testworkflows laufen nach Erstellung der PR.
+- Browser-, Responsive-, Tastatur-, Screenreader- und Live-Firestore-QA bleiben wie vereinbart offen und werden später gemeinsam durchgeführt.
