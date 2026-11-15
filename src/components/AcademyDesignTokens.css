@@ -1,0 +1,97 @@
+/* Shared semantic design tokens for every Academy submodule.
+   Area accents identify sections; they are not action, focus, or lifecycle-state colors. */
+.academy-center-root {
+  color-scheme: light;
+  --academy-text-primary: #1e293b;
+  --academy-text-secondary: #526477;
+  --academy-text-muted: #64748b;
+
+  --academy-surface-page: #f7f9fb;
+  --academy-surface-card: #ffffff;
+  --academy-surface-subtle: #f8fafc;
+  --academy-surface-hover: #f1f5f9;
+  --academy-surface-selected: #eaf0f6;
+
+  --academy-border: #d6dee7;
+  --academy-border-strong: #aebdcc;
+
+  --academy-action-primary-bg: #1e293b;
+  --academy-action-primary-text: #ffffff;
+  --academy-action-primary-hover: #334155;
+  --academy-action-secondary-bg: #ffffff;
+  --academy-action-secondary-text: #334155;
+  --academy-action-secondary-hover: #f1f5f9;
+
+  --academy-focus-color: #536f8d;
+  --academy-focus-width: 3px;
+  --academy-focus-offset: 3px;
+
+  --academy-state-success-text: #166534;
+  --academy-state-success-bg: #f0fdf4;
+  --academy-state-success-border: #bbf7d0;
+  --academy-state-warning-text: #92400e;
+  --academy-state-warning-bg: #fffbeb;
+  --academy-state-warning-border: #fde68a;
+  --academy-state-danger-text: #991b1b;
+  --academy-state-danger-bg: #fef2f2;
+  --academy-state-danger-border: #fecaca;
+  --academy-state-info-text: #334155;
+  --academy-state-info-bg: #f1f5f9;
+  --academy-state-info-border: #cbd5e1;
+
+  --academy-area-overview: #2864d9;
+  --academy-area-courses: #087f8c;
+  --academy-area-library: #6841b8;
+  --academy-area-exams: #a33370;
+  --academy-area-notes: #287a45;
+}
+
+.dark .academy-center-root {
+  color-scheme: dark;
+  --academy-text-primary: #f1f5f9;
+  --academy-text-secondary: #cbd5e1;
+  --academy-text-muted: #94a3b8;
+
+  --academy-surface-page: #0f172a;
+  --academy-surface-card: #1e293b;
+  --academy-surface-subtle: #172334;
+  --academy-surface-hover: #29384a;
+  --academy-surface-selected: #334155;
+
+  --academy-border: #334155;
+  --academy-border-strong: #64748b;
+
+  --academy-action-primary-bg: #f1f5f9;
+  --academy-action-primary-text: #0f172a;
+  --academy-action-primary-hover: #ffffff;
+  --academy-action-secondary-bg: #1e293b;
+  --academy-action-secondary-text: #e2e8f0;
+  --academy-action-secondary-hover: #334155;
+
+  --academy-focus-color: #b8c6d5;
+
+  --academy-state-success-text: #86efac;
+  --academy-state-success-bg: #14291d;
+  --academy-state-success-border: #276749;
+  --academy-state-warning-text: #fcd34d;
+  --academy-state-warning-bg: #2d2414;
+  --academy-state-warning-border: #785b20;
+  --academy-state-danger-text: #fca5a5;
+  --academy-state-danger-bg: #2b1c1c;
+  --academy-state-danger-border: #7f1d1d;
+  --academy-state-info-text: #cbd5e1;
+  --academy-state-info-bg: #1e293b;
+  --academy-state-info-border: #475569;
+}
+
+/* One predictable keyboard-focus treatment, independent of the current area accent. */
+.academy-center-root :is(button, input, select, textarea, a[href], summary):focus-visible {
+  outline: var(--academy-focus-width) solid var(--academy-focus-color) !important;
+  outline-offset: var(--academy-focus-offset) !important;
+}
+
+@media (forced-colors: active) {
+  .academy-center-root :is(button, input, select, textarea, a[href], summary):focus-visible {
+    outline-color: Highlight !important;
+  }
+}
