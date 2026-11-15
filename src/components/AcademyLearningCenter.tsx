@@ -505,7 +505,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               <div className="flex justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Entwurf'}</p>
-                                  {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
+                                  {availabilityNotice(entry.master) && <p className="academy-course-availability mt-1 text-xs font-medium">{availabilityNotice(entry.master)}</p>}
                                   <h4 className="mt-1 font-semibold text-slate-900 dark:text-white">{entry.version?.title || entry.draft?.title || entry.master.code}</h4>
                                   <p className={`mt-1 ${muted}`}>{entry.version ? (entry.version.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Noch keine veröffentlichte Lehrgangsversion.'}</p>
                                 </div>
@@ -563,7 +563,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             <div key={entry.master.id} className="academy-course-row flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
                               <div className="min-w-0">
                                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{entry.master.code} · {entry.version ? `Version ${entry.version.versionNumber}` : 'Keine Veröffentlichung'}</p>
-                                {availabilityNotice(entry.master) && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">{availabilityNotice(entry.master)}</p>}
+                                {availabilityNotice(entry.master) && <p className="academy-course-availability mt-1 text-xs font-medium">{availabilityNotice(entry.master)}</p>}
                                 <h4 className="font-medium text-slate-900 dark:text-white">{entry.version?.title || entry.master.code}</h4>
                                 <p className={`mt-1 ${muted}`}>{entry.version ? (entry.version.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Noch keine veröffentlichte Kursversion.'}</p>
                                 <p className="academy-course-status mt-2 text-xs text-slate-600 dark:text-slate-300">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
@@ -588,7 +588,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <p className={muted}>{courseDetail?.version || selectedCourse.version ? (courseDetail?.version?.summary || selectedCourse.version?.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Für diesen Kurs liegt noch keine veröffentlichte Version vor.'}</p>
               </header>
               {availabilityNotice(selectedCourse.master) && (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200" role="status">
+                <p className="academy-course-availability academy-course-availability--detail rounded-lg px-3 py-2 text-sm" role="status">
                   {availabilityNotice(selectedCourse.master)}
                 </p>
               )}
