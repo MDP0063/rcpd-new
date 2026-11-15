@@ -75,8 +75,8 @@
   background: var(--academy-surface-subtle) !important;
 }
 .academy-exam-attempt-header .text-sky-700 { color: #842657 !important; }
-.academy-exam-attempt-card > .h-1\.5 { background: #f2e7ed !important; }
-.academy-exam-attempt-card > .h-1\.5 > div { background: #a33370 !important; }
+.academy-exam-attempt-card > .h-1\.5 { background: var(--academy-surface-hover) !important; }
+.academy-exam-attempt-card > .h-1\.5 > div { background: var(--academy-state-info-text) !important; }
 .academy-exam-question-nav > div:first-child { color: var(--academy-text-secondary); }
 .academy-exam-question-nav button:focus-visible {
   outline: 3px solid var(--academy-focus-color);
@@ -135,7 +135,7 @@
   border-bottom-color: var(--academy-border) !important;
   background: var(--academy-surface-subtle) !important;
 }
-.dark .academy-exam-attempt-card > .h-1\.5 { background: #47313f !important; }
+.dark .academy-exam-attempt-card > .h-1\.5 { background: var(--academy-surface-hover) !important; }
 .dark .academy-exam-question-nav > div:first-child { color: var(--academy-text-secondary); }
 .dark .academy-exam-question-panel label.border-sky-500 {
   border-color: var(--academy-border-strong) !important; background: var(--academy-surface-selected) !important;
