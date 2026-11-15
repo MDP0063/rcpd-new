@@ -445,11 +445,11 @@ export const ExamParticipantRunner: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {saveState === 'saved' ? <Cloud className="h-4 w-4 text-emerald-600" /> : saveState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin text-sky-600" /> : <CloudOff className="h-4 w-4 text-rose-600" />}
+                {saveState === 'saved' ? <Cloud className="h-4 w-4 text-emerald-600" /> : saveState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin text-slate-500 dark:text-slate-400" /> : <CloudOff className="h-4 w-4 text-rose-600" />}
                 {saveState === 'saved' ? 'Gespeichert' : saveState === 'saving' ? 'Speichert …' : 'Speicherfehler'}
               </div>
               {remainingSeconds !== null && (
-                <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-sm font-bold tabular-nums ${remainingSeconds <= 300 ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white'}`}>
+                <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-sm font-bold tabular-nums ${remainingSeconds <= 60 ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300' : remainingSeconds <= 300 ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white'}`}>
                   <Clock3 className="h-4 w-4" /> {formatDuration(remainingSeconds)}
                 </div>
               )}
@@ -468,13 +468,14 @@ export const ExamParticipantRunner: React.FC = () => {
                     (typeof value !== 'string' || value.trim().length > 0) &&
                     (!Array.isArray(value) || value.length > 0);
                   return (
-                    <button key={question.id} type="button" disabled={submitting} onClick={() => {
+                    <button key={question.id} type="button" disabled={submitting} aria-label={`Frage ${index + 1}${answered ? ', beantwortet' : ', noch nicht beantwortet'}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
                       if (debounceRef.current) clearTimeout(debounceRef.current);
                       debounceRef.current = null;
                       void enqueueSave();
                       setCurrentQuestionIndex(index);
-                    }} className={`flex h-10 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-sky-600 bg-sky-600 text-white' : answered ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
+                    }} className={`relative flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                       {index + 1}
+                      {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
                     </button>
                   );
                 })}
@@ -482,7 +483,7 @@ export const ExamParticipantRunner: React.FC = () => {
               <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
                 <div className="flex justify-between"><span>Fortschritt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${progressPercent}%` }} />
+                  <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
                 </div>
               </div>
             </aside>
