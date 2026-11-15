@@ -546,3 +546,4 @@
 - Suche nach Name/Beschreibung ohne Platzhalter als einzige Suchanleitung; sichtbare Labels und Hinweistexte.
 - Optionale Statusfilter für Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
 - Keine Änderung an Taxonomie-API, Statuswerten, Revisionen oder Schutz bestehender Materialzuordnungen.
+- Such-/Formularfelder und Aktionen auf mindestens 44 px Zielhöhe vereinheitlicht.
