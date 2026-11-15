@@ -1253,3 +1253,9 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Ausschließlich CSS-/Designänderungen; keine Änderung an Daten, Berechtigungen, Suche, Filter, Sortierung, Versionierung, Notizen oder PDF-Infrastruktur.
 - TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Implementierungs-Commit `4dca74f` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43427744171). Die nachfolgenden Änderungen betreffen nur Dokumentation. Browser-/Accessibility-Prüfung steht noch aus. Kein Merge und kein Deployment.
 - Ergänzende Accessibility-/Dark-Mode-Prüfung: Karten-Fokusindikatoren erhalten im Dark Mode eine helle, kontrastreiche Kontur. Die Materialeditor-Markdownvorschau hebt Blockquotes im Dark Mode jetzt ebenfalls ausreichend vom dunklen Hintergrund ab. CI für den finalen Branchstand wird nach diesen Korrekturen erneut geprüft; Browser-/Screenreader-Abnahme bleibt offen.
+
+## 15.11.2026 – PR-Branch mit aktuellem main abgeglichen
+
+- PR #288 wurde nach den Merges von #286 und #287 mit dem aktuellen `main` zusammengeführt. Die Bibliotheks-CSS-Ergänzungen und die Prüfungsnavigation wurden konfliktfrei kombiniert; die kollidierende Abschnittsnummer in der Unterseiten-Dokumentation wurde fortlaufend auf 14 gesetzt.
+- Der Synchronisations-Commit bewahrt den bisherigen PR-Head und `main` als Eltern. Keine History-Rewrite- oder Force-Push-Aktion.
+- Die CI wird auf dem kombinierten Stand erneut ausgeführt. Browser-/Responsive-/Screenreader-Abnahme bleibt für die spätere gemeinsame QA vorgesehen.
