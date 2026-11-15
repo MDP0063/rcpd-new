@@ -576,3 +576,12 @@ Bewegung dient höchstens der Orientierung bei einem Übergang; sie darf keine S
 - [GOV.UK Tag](https://design-system.service.gov.uk/components/tag/): Statusbeschreibungen sind nicht interaktiv; Tags dürfen nicht wie Buttons aussehen.
 - [USWDS Typography](https://designsystem.digital.gov/components/typography/): Lesemaß 45–90 Zeichen, bei langen Texten Zielgröße um 66 Zeichen.
 - [W3C Focus Not Obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum): Sticky-/Overlay-Layouts dürfen den Tastaturfokus nicht verdecken.
+
+
+### 15.10 Ergänzende Recherche – Suche, Disclosure und Fehlerfeedback (15.11.2026)
+
+- **USWDS Search:** Ein dauerhaft sichtbares Label, ausreichend breite Suchfelder (Richtwert mindestens 27 Zeichen), persistente Suchbegriffe in Ergebnissen und eine einfache Standardsuche verbessern Wiedererkennung und Korrektur der Eingabe. Eine erweiterte Suche darf nicht die Standardbedienung dominieren. Übertragung: Die Bibliothek zeigt Suchumfang und Löschaktion klar; Suchbegriff bleibt bei Rückkehr erhalten.
+- **GOV.UK Details/Accordion:** Disclosure ist für optionale Zusatzinformationen sinnvoll, nicht zum Verbergen von Informationen, die die meisten Nutzer für ihre Aufgabe brauchen. Übertragung: Filter dürfen kompakt eingeklappt sein; aktive Filter bleiben sichtbar. Voraussetzungen, Prüfungsfolgen, Zugriffsbeschränkungen und Abschlussbedingungen bleiben direkt sichtbar, wenn sie die nächste Handlung bestimmen.
+- **GOV.UK Error message:** Fehlermeldungen müssen erklären, was passiert ist und wie es korrigiert werden kann. Eingaben bleiben erhalten; Farbe allein reicht nicht. Übertragung: Formularfehler werden dem Feld zugeordnet und bei umfangreicheren Formularen zusätzlich oben zusammengefasst. Speicher-/Konfliktfehler dürfen nicht als leere Liste oder bloß roter Rand erscheinen.
+- **GOV.UK Button guidance:** Eine riskante Aktion darf nicht allein durch Rot als gefährlich erkennbar sein; der konkrete Buttontext und der Kontext müssen die Folge erklären. Übertragung: „Endgültig löschen“ bleibt ausdrücklich benannt und räumlich von Speichern/Veröffentlichen getrennt.
+- **W3C WCAG 2.2:** SC 1.4.1 untersagt Farbe als alleinigen Informationsträger; SC 1.4.3 verlangt mindestens 4,5:1 für normalen Text; SC 2.5.8 definiert 24×24 CSS-Pixel als Mindestzielgröße mit Ausnahmen. Primäre Touch-Aktionen zielen weiterhin großzügiger auf etwa 44×44 CSS-Pixel.
