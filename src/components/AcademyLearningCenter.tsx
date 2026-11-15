@@ -817,13 +817,18 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         return (
                           <div key={reference.courseId} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
                             <div>
-                              <p className="text-sm font-medium">{progressItem?.version.title || courseEntry?.version?.title || courseEntry?.master.code || reference.courseId}</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{progressItem?.participation ? statusLabel(progressItem.participation.status) : 'Noch nicht begonnen'}</p>
+                              <p className="text-sm font-medium">{progressItem?.version.title || courseEntry?.version?.title || courseEntry?.master.code || 'Kurs nicht im aktuellen Katalog verfügbar'}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {programDetail
+                                  ? progressItem
+                                    ? progressItem.participation ? statusLabel(progressItem.participation.status) : 'Noch nicht begonnen'
+                                    : 'Fortschritt nicht verfügbar'
+                                  : 'Noch nicht begonnen'}
+                              </p>
                             </div>
-                            <button type="button" className={secondary} onClick={() => {
-                              const found = courseEntry || ({ master: { id: reference.courseId, code: reference.courseId } } as unknown as CourseEntry);
-                              void openCourse(found);
-                            }}>Zum Kurs</button>
+                            {courseEntry
+                              ? <button type="button" className={secondary} onClick={() => void openCourse(courseEntry)}>Zum Kurs</button>
+                              : <span className="text-xs text-slate-500 dark:text-slate-400">Kurs derzeit nicht im Katalog verfügbar</span>}
                           </div>
                         );
                       })}
@@ -834,7 +839,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <h3 className="font-semibold text-slate-900 dark:text-white">Empfohlene Kurse</h3>
                         {version.courseReferences.filter(item => item.requirement === 'recommended').sort((a,b) => a.order-b.order).map(reference => {
                           const courseEntry = courses.find(item => item.master.id === reference.courseId);
-                          return <div key={reference.courseId} className="border-t border-slate-200 pt-3 dark:border-slate-800"><p className="text-sm font-medium">{courseEntry?.version?.title || courseEntry?.master.code || reference.courseId}</p><p className="text-xs text-slate-500 dark:text-slate-400">Freiwillige Ergänzung – blockiert den Lehrgangsabschluss nicht.</p></div>;
+                          return <div key={reference.courseId} className="border-t border-slate-200 pt-3 dark:border-slate-800"><p className="text-sm font-medium">{courseEntry?.version?.title || courseEntry?.master.code || 'Kurs nicht im aktuellen Katalog verfügbar'}</p><p className="text-xs text-slate-500 dark:text-slate-400">Freiwillige Ergänzung – blockiert den Lehrgangsabschluss nicht.</p></div>;
                         })}
                       </div>
                     )}
