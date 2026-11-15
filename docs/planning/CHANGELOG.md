@@ -483,3 +483,12 @@
 - Kurskatalog um UI-Filter für die vorhandenen Teilnahmezustände und Sortierung nach Titel bzw. veröffentlichtem Datum ergänzt.
 - Bereichspetrol der Kurse von Statusmarkern und Aktionen getrennt; Archiviert/nicht verfügbar wird neutral beschrieben.
 - Umsetzung befindet sich auf `redesign/academy-usability-system`; CI und manuelle QA sind noch ausstehend.
+
+## 2026-11-15 – Private Notizen: bessere Suche, Filter und sichere Konfliktbehandlung
+
+- Notizenübersicht nach Eintragsart filterbar und nach letzter Änderung oder Titel sortierbar; Suche kann einzeln gelöscht werden und aktive Bedingungen werden sichtbar angezeigt.
+- Notiz-/Bookmark-Karten erhalten eine besser lesbare Informationshierarchie mit neutralen Typmarkierungen, gekürzter Inhaltsvorschau und Schlagwörtern.
+- Material-/Versions-IDs werden nicht mehr als Quellenbezeichnung angezeigt, wenn die bestehende API nur IDs und Status liefert.
+- Notizeditor erhält sichtbare Save-/Conflict-Rückmeldung. Bei 409 wird die aktuelle owner-private Fassung geladen, während lokale Eingaben erhalten bleiben; Übernahme nur nach expliziter Bestätigung.
+- Notiz löschen und Lesezeichen entfernen werden getrennt benannt. Keine neuen Berechtigungen, API-Verträge oder Datenmodelle.
+- Umsetzung auf `redesign/academy-notes-workspace`; CI und manuelle Browser-QA stehen noch aus.
