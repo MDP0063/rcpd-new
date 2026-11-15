@@ -685,3 +685,28 @@ Die Quellen werden nicht als UI-Vorlage kopiert. Für RCPD gelten folgende über
 - Übersicht/Integration: mittel; erst nach Harmonisierung der Untermodule finalisieren.
 
 Die gemeinsame Browser-/Screenreader-/Rollen-QA bleibt ein eigener Abnahmeschritt. Bis dahin werden Änderungen durch Code-/Diffreview, TypeScript, Produktionsbuild, Servertests und – wo möglich – gezielte automatisierte Tests abgesichert.
+
+### 16.9a Notizenliste und Editor – konkrete Bedienausarbeitung
+
+Die Notizenübersicht wird als persönlicher, durchsuchbarer Arbeitsbestand behandelt – nicht als zweiter Erstellungsort und nicht als administrative Liste.
+
+- Suchfeld durchsucht weiterhin Titel, Inhalt und Schlagwörter. Der Suchtext ist sichtbar löschbar.
+- Filter „Alle Einträge / Nur Notizen / Nur Lesezeichen“ arbeitet ausschließlich mit dem bestehenden Feld `kind`.
+- Standardreihenfolge ist „Zuletzt geändert“ (absteigend anhand des tatsächlichen `updatedIso`), alternativ „Titel A–Z“. Ungültige/fehlende Zeitstempel werden hinter gültigen Datumswerten geführt; sie werden nicht künstlich ersetzt.
+- Trefferzahl zeigt angezeigte und gesamte private Einträge. Aktive Suche und Artfilter bleiben sichtbar, einzeln entfernbar und gemeinsam zurücksetzbar.
+- Leerer Datenbestand, keine Treffer durch Suche/Filter und Ladefehler sind voneinander getrennte Zustände.
+- Karten zeigen Titel, neutrale Eintragsart, letztes Änderungsdatum, gekürzte Inhaltsvorschau und Schlagwörter. Quellenstatus ist sekundär und eingeklappt; die Liste lädt ihn nicht ungefragt für jede Notiz.
+- Notizen bleiben bearbeitbar; Lesezeichen können entfernt, aber nicht wie eine Textnotiz bearbeitet werden. Die Beschriftung und Bestätigung benennt deshalb die tatsächliche Aktion.
+- Neue Notizen und Lesezeichen werden weiterhin nur im Reader erstellt; die Notizenübersicht bekommt keinen zusätzlichen Erstellungsbutton.
+
+**Konfliktschutz im Editor:** Speichern verwendet weiter die bestehende erwartete Revision. Bei HTTP 409 bleibt der lokale Entwurf geöffnet und unverändert. Die UI lädt zusätzlich – ausschließlich über die owner-isolierte `GET /notes`-Route – die aktuelle private Fassung zum Vergleich. Erst nach ausdrücklich bestätigter Übernahme wird der lokale Entwurf durch den aktuellen Serverstand ersetzt. Ein automatisches „last write wins“ oder stilles Aktualisieren der erwarteten Revision ist ausgeschlossen. Bei anderen Speicherfehlern bleibt der Entwurf ebenfalls geöffnet und kann erneut gespeichert werden.
+
+**Quellenstatus:** Die bestehende owner-isolierte Statusroute liefert aktuell nur Referenz-IDs und `available/restricted/unavailable`, keine sichtbaren Materialtitel. Die UI zeigt deshalb keine internen IDs, sondern neutrale, nummerierte Materialfassungen mit Textstatus. Ein sicherer, leseberechtigungsabhängiger Titel-/Kennungsrücklauf wäre eine eigene API-Änderung und ist nicht Teil dieses Frontend-Abschnitts.
+
+### 16.9b Semantik von Notizaktionen und privaten Zuständen
+
+- Grün bleibt ein kleiner Notizenbereichs-Akzent; Speichern und Bearbeiten verwenden keine Bereichsfarbe.
+- „Alle Änderungen gespeichert“, „Ungespeicherte Änderungen“ und „Speichert …“ werden textlich unterschieden, neutral dargestellt und programmatisch angekündigt.
+- Ein echter Revisionskonflikt erhält eine sachliche Warnfläche, weil er eine bewusste Entscheidung erfordert. Normale private/notizbezogene Zustände erhalten keine positive Statusfarbe.
+- Löschen einer Notiz bleibt destruktiv rot. Das Entfernen eines Lesezeichens wird als genau diese Aktion benannt.
+- Private Inhalte bleiben owner-only. Kein neues Teilen, keine administrative Vorschau und keine gemeinsame Notizsuche.
