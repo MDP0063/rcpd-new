@@ -360,8 +360,8 @@
 .academy-courses-section > div:first-child > span {
   padding: 0.25rem 0.55rem;
   border-radius: 999px;
-  background: rgba(8,127,140,0.08);
-  color: #42666d;
+  background: var(--academy-surface-subtle);
+  color: var(--academy-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 .academy-program-card {
@@ -391,8 +391,8 @@
 .academy-note-editor textarea { line-height: 1.6; }
 .academy-notes-search input { width: 100%; }
 .dark .academy-courses-section > div:first-child > span {
-  background: rgba(117,200,203,0.12);
-  color: #b7d8da;
+  background: var(--academy-surface-hover);
+  color: var(--academy-text-secondary);
 }
 @media (max-width: 640px) {
   .academy-program-card > button { width: 100%; align-self: stretch; }
