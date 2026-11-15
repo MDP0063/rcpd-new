@@ -1248,3 +1248,18 @@
   background: var(--academy-state-warning-bg);
   color: var(--academy-state-warning-text);
 }
+
+
+/* Saving is the single neutral primary action in the focused note editor. */
+.academy-note-editor-actions .academy-note-save,
+.academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
+.dark .academy-note-editor-actions .academy-note-save,
+.dark .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
