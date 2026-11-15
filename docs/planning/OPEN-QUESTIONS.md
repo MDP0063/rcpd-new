@@ -416,3 +416,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **PR #301:** Lehrgangsdetails zeigen bei fehlenden Kursreferenzen keine internen IDs mehr; fehlender Fortschritt wird nicht fälschlich als „Noch nicht begonnen“ dargestellt. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
 - **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
 - **Aktueller Arbeitszweig:** Fokusmanagement beim Wechsel von Academy-Kacheln in einen Bereich und zurück. Keine Änderung an Navigationsstruktur oder Berechtigungen.
+
+
+## 15.11.2026 – Status nach PR #302
+
+- **PR #302:** Fokusmanagement bei Wechseln zwischen Academy-Kachelansicht und Hauptbereichen ist gemergt. Fokus kehrt zur zuletzt verwendeten Einstiegskachel zurück; externe Navigation in Prüfungsbewertungen wird berücksichtigt. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Manuelle Keyboard-/Screenreader-Abnahme bleibt offen.
+- **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
+- **Nächster offener Bereich:** weitere dynamische Academy-Übergänge und die abschließende funktionsübergreifende QA; keine Änderung der beschlossenen Navigation/IA ohne erneute Prüfung.
