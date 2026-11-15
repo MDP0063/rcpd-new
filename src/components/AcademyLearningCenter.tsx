@@ -506,7 +506,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
     setNotes(previous => previous.filter(item => item.id !== note.id));
     if (editingNote?.id === note.id) setEditingNote(null);
-    onStatusToast('Private Notiz gelöscht.');
+    onStatusToast(note.kind === 'bookmark' ? 'Lesezeichen entfernt.' : 'Private Notiz gelöscht.');
   };
 
   return (
