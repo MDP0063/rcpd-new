@@ -373,3 +373,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Danach:** Prüfungsrunner und Prüferarbeitsplätze, Notizen/Autosave/Privatheit, Kurs-/Lehrgangsdetails, Materialeditor/Taxonomie, Übersicht und globale Integration.
 - **Gezielte Browser-QA später:** Frage-Navigation muss „beantwortet“ sichtbar und per Screenreader ausweisen, ohne „richtig“ zu suggerieren; Timerwarnung (Amber ≤5 Minuten/Rot ≤1 Minute), 44px-Zielgrößen und Fokuskontrast auf tatsächlichen Oberflächen prüfen.
 - **Nicht Ziel dieser PR:** Änderungen an Kurs-/Prüfungsregeln, Rollen, Berechtigungen, Datenmodell, Veröffentlichungsworkflow oder privaten Notizen. Dafür bleibt separate fachliche Freigabe erforderlich.
+
+
+## 15.11.2026 – Statuskorrektur nach PR-Bereinigung
+
+- **PR #267:** geschlossen und durch PR #296 auf aktuellem `main` ersetzt. PR #296 bleibt Draft. CI ist erfolgreich; unabhängige Sicherheitsprüfung der Autorisierungs-, sensiblen Datenzugriffs- und Benachrichtigungsänderungen ist weiterhin erforderlich. Kein Merge bis zum Abschluss dieses Reviews.
+- **PR #284:** geschlossen und durch PR #295 ersetzt. PR #295 ist gemergt; die zeitabhängigen Autosave-/Unmount-/Netzwerkfehler-Szenarien bleiben Teil der späteren manuellen Browser-QA. Die bekannte Best-effort-Grenze beim Unmount wird nicht durch lokale Speicherung privater Notizen umgangen.
+- **PRs #293, #294 und #295:** gemergt; CI und PR-Vorlagenprüfungen erfolgreich. Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
+- **Aktueller Routine-UX-Arbeitszweig:** Kurs-/Lehrgangsverwaltung mit clientseitiger Suche, Veröffentlichungsfilter und Sortierung. Es werden ausschließlich bereits vorhandene Felder verwendet; keine neue fachliche Status- oder Berechtigungslogik.
