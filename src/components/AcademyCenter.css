@@ -1380,7 +1380,7 @@ main.academy-main-viewport {
 }
 .academy-exam-nav-group-label {
   padding-left: 0.25rem;
-  color: #806779;
+  color: var(--academy-text-secondary);
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -1395,16 +1395,16 @@ main.academy-main-viewport {
 }
 .academy-exam-nav-group--review {
   padding-left: 1rem;
-  border-left: 1px solid #e5d7e0;
+  border-left: 1px solid var(--academy-border);
 }
-.dark .academy-exam-nav-group-label { color: #c7aebe; }
-.dark .academy-exam-nav-group--review { border-color: #493442; }
+.dark .academy-exam-nav-group-label { color: var(--academy-text-secondary); }
+.dark .academy-exam-nav-group--review { border-color: var(--academy-border); }
 @media (max-width: 640px) {
   .academy-exam-nav-group--review {
     width: 100%;
     padding-top: 0.65rem;
     padding-left: 0;
-    border-top: 1px solid #e5d7e0;
+    border-top: 1px solid var(--academy-border);
     border-left: 0;
   }
   .dark .academy-exam-nav-group--review { border-color: #493442; }
