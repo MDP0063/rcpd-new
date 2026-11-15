@@ -1133,12 +1133,6 @@ export async function getReleasedPassingFinalExam(
   return proofs.sort((left, right) => right.releasedAtIso.localeCompare(left.releasedAtIso))[0] ?? null;
 }
 
-export type ExamParticipantReviewHistoryEvent = Omit<ExamReviewClaimHistoryEntry, 'feedback' | 'previousGrades' | 'nextGrades'> & {
-  feedback?: Array<{ questionId: string; feedback: string; label: string }>;
-  previousGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
-  nextGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
-};
-
 export type ExamParticipantReviewHistoryEvent = Omit<ExamReviewClaimHistoryEntry, 'feedback' | 'previousGrades' | 'nextGrades' | 'recipientUids' | 'notificationDeliveredTo' | 'notificationRequired'> & {
   feedback?: Array<{ questionId: string; feedback: string; label: string }>;
   previousGrades?: Array<{ questionId: string; pointsEarnedMilli: number; maxPointsMilli: number; label: string }>;
