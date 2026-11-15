@@ -495,3 +495,13 @@
 - Kurs-, Bibliotheks-, Materialverwaltungs-, Authoring- und Prüfungsbedienelemente auf neutrale Primär-/Sekundär-/Destruktivaktionen umgestellt.
 - Archivierte Materialien, Entwürfe und ausstehende Bewertungen werden neutral statt irreführend amber/grün dargestellt.
 - Prüfungsrunner: beantwortete Fragen sind mit Häkchen und Screenreader-Text erkennbar, nicht nur grün; Fortschritt neutral; Zeitwarnung abgestuft (Amber bei fünf Minuten, Rot bei einer Minute).
+
+
+## 2026-11-15 – Private Notizen: bessere Suche, Filter und sichere Konfliktbehandlung
+
+- Notizenübersicht nach Eintragsart filterbar und nach letzter Änderung oder Titel sortierbar; Suche kann einzeln gelöscht werden und aktive Bedingungen werden sichtbar angezeigt.
+- Notiz-/Bookmark-Karten erhalten eine besser lesbare Informationshierarchie mit neutralen Typmarkierungen, gekürzter Inhaltsvorschau und Schlagwörtern.
+- Material-/Versions-IDs werden nicht mehr als Quellenbezeichnung angezeigt, wenn die bestehende API nur IDs und Status liefert.
+- Notizeditor erhält sichtbare Save-/Conflict-Rückmeldung. Bei 409 wird die aktuelle owner-private Fassung geladen, während lokale Eingaben erhalten bleiben; Übernahme nur nach expliziter Bestätigung.
+- Notiz löschen und Lesezeichen entfernen werden getrennt benannt. Keine neuen Berechtigungen, API-Verträge oder Datenmodelle.
+- Umsetzung auf `redesign/academy-notes-workspace`; CI und manuelle Browser-QA stehen noch aus.
