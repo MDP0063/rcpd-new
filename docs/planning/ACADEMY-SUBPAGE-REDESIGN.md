@@ -308,3 +308,13 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Archivierte und vorübergehend nicht verfügbare Kurse zeigen ihren vorhandenen Zustand auch in der Detailansicht. Der Start wird clientseitig deaktiviert, wenn der bestehende serverseitige Veröffentlichungs-/Verfügbarkeits-Gate einen neuen Start ablehnt.
 - Die Änderung betrifft nur die bestehende Darstellung und Aktivierung der Startaktion. Serverprüfung, Version-Pinning, Berechtigungen, bestehende Teilnahmen und Nachweislogik bleiben unverändert.
 - TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Commit `9975db5` erfolgreich; die PR-Vorlagenprüfung ist ebenfalls erfolgreich. Der optionale Render-Deploy-Hook wurde übersprungen. Die gezielte Browser-/Responsive-/Accessibility-Prüfung steht noch aus; der PR bleibt Draft und es wurde kein Deployment ausgelöst.
+
+## 13. Prüfungs-Unter-Navigation – rollenpräzise Aktionsbezeichnung (13.11.2026)
+
+**PR #287 – in Arbeit:** https://github.com/MDP0063/rcpd-new/pull/287
+
+- Admins sehen für den bestehenden Korrektur-/Freigabebereich die Bezeichnung „Korrekturen & Freigaben“.
+- Colonels sehen „Bewertungskorrekturen“, da die vorhandene Komponente Ergebnisfreigaben ausschließlich für Admins lädt und anbietet (`canReleaseResults={currentUser.role === 'admin'}`).
+- Die Unter-Navigation gruppiert die Teilnehmerwege sichtbar unter „Teilnahme“ und rollenabhängige Arbeitsaufgaben unter „Prüferaufgaben“; die Prüfergruppe erscheint nur für berechtigte Rollen. Auf schmalen Viewports werden die Gruppen untereinander angeordnet.
+- Die Änderung korrigiert Gruppierung und Beschriftung; Rollen, Rechte, API-Aufrufe und tatsächliche Aktionen bleiben unverändert.
+- TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf dem aktuellen Implementierungsstand `b6cc35c` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43391193711). Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus; keine Berechtigungs- oder Workflowänderung.
