@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue), #297 (Kurs-/Lehrgangsverwaltung) und #298 (Materialverwaltungskatalog) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue), #297 (Kurs-/Lehrgangsverwaltung), #298 (Materialverwaltungskatalog) und #299 (Taxonomieverwaltung) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `871b1296be2d2eb71ecdcd222008f8e1768bf4f6` (PR #298). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295, Kurs-/Lehrgangsfilter aus #297 und die Materialverwaltungsfilter aus #298.
+**Aktueller Basisstand:** `main` bei `092113f384413c87be70a0269e29f26c38e1e39e` (PR #299). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295, Kurs-/Lehrgangsfilter aus #297, Materialverwaltungsfilter aus #298 und Taxonomie-Suche/Statusfilter aus #299.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295, #297 und #298 sind gemergt. Für #297 und #298 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#299 sind gemergt. Für #297–#299 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1427,10 +1427,19 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **PR #298 ist am 15.11.2026 gemergt** (Merge-Commit `871b1296be2d2eb71ecdcd222008f8e1768bf4f6`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
 
 
-## 15.11.2026 – Taxonomieverwaltung: Kategorien und Dokumenttypen
+## 15.11.2026 – Taxonomieverwaltung: Kategorien und Dokumenttypen (PR #299)
 
-- Kategorien- und Dokumenttypverwaltung erhalten dieselbe Bedienlogik: Suche nach Name/Beschreibung, Filter nach Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
+- Kategorien- und Dokumenttypverwaltung mit Suche nach Name/Beschreibung, optionalem Filter Aktiv/Archiviert, alphabetischer Sortierung, Trefferzahl und gemeinsamem Zurücksetzen.
 - Suchfelder verwenden sichtbare Labels und Hinweistexte statt Platzhalter als einzige Suchanleitung; Statusfilter bleiben optional.
-- Such-/Formularfelder und Aktionen erhalten mindestens 44 px Zielhöhe; die spätere reale Viewport-/Touch-QA bleibt dennoch erforderlich.
+- Such-/Formularfelder und Aktionen haben mindestens 44 px Zielhöhe.
 - Es werden nur vorhandene Taxonomiestatus verwendet. Archivieren/Reaktivieren, stabile Kennungen, Revisionskonflikte, Schutz bestehender Zuordnungen und serverseitige Löschprüfung bleiben unverändert.
-- Arbeitsbranch: `redesign/academy-material-taxonomy-controls`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
+- **PR #299 ist am 15.11.2026 gemergt** (Merge-Commit `092113f384413c87be70a0269e29f26c38e1e39e`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
+
+
+## 15.11.2026 – Kursdetail und Nachweisaktion
+
+- Die Erfassung eines Fortschrittsnachweises hält die Aktion bis zum Abschluss des Detail-Refreshs gesperrt; der Handler weist zusätzliche Requests ab, solange bereits gespeichert wird. Bei fehlgeschlagenem Refresh wird die veraltete Nachweisaktion nicht erneut angeboten; stattdessen erscheint der vorhandene Wiederholungs-Ladeweg für die Teilnahme.
+- Lehrgangsdetails zeigen bei fehlender Kurzbeschreibung und leeren Lernzielen einen verständlichen Zustand statt eines leeren Textbereichs.
+- Kurs-Suche erhält einen sichtbaren Hinweissatz statt eines Platzhalters als alleinige Suchanleitung. Suchlösch-, Filter- und Zurücksetzungsaktionen werden auf mindestens 44 px Zielhöhe angehoben.
+- Keine Änderung an Nachweisregeln, Statuslogik, API, Rollen oder Datenmodell.
+- Arbeitsbranch: `fix/academy-learning-course-evidence-refresh`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.

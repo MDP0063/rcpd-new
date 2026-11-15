@@ -364,7 +364,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const recordEvidence = async (requirementId: string, label: string) => {
-    if (!courseDetail) return;
+    if (!courseDetail || saving) return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = window.confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`);
@@ -374,17 +374,29 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       method: 'POST',
       body: JSON.stringify({ requirementId })
     });
-    setSaving(false);
     if (!response.ok) {
+      setSaving(false);
       onStatusToast(response.error || 'Der Fortschrittsnachweis konnte nicht gespeichert werden.');
       return;
     }
+    let detailUpdated = false;
     if (detailRequestIdRef.current === requestId) {
       const detail = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(participationId));
-      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) setCourseDetail(detail.data);
+      if (detailRequestIdRef.current === requestId && detail.ok && detail.data) {
+        setCourseDetail(detail.data);
+        detailUpdated = true;
+      } else if (detailRequestIdRef.current === requestId) {
+        // Keep the retry state visible instead of leaving an actionable stale evidence button.
+        setCourseDetail(null);
+      }
     }
     await refreshLearningDataIfActive();
-    if (detailRequestIdRef.current === requestId) onStatusToast('Fortschrittsnachweis wurde gespeichert.');
+    setSaving(false);
+    if (detailRequestIdRef.current === requestId) {
+      onStatusToast(detailUpdated
+        ? 'Fortschrittsnachweis wurde gespeichert.'
+        : 'Nachweis gespeichert, aber die Teilnahmedetails konnten nicht aktualisiert werden. Bitte lade die Teilnahme erneut.');
+    }
   };
 
   const startProgram = async () => {
@@ -538,9 +550,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <div className="academy-courses-search">
                 <label htmlFor="academy-courses-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</label>
                 <div className="academy-courses-search-controls">
-                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
+                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-courses-search-hint" />
                   {Boolean(search.trim()) && <button type="button" className="academy-courses-clear-search" onClick={() => setSearch('')}>Suche löschen</button>}
                 </div>
+                <p id="academy-courses-search-hint" className={`mt-1 ${muted}`}>Titel, Kennung oder Kurzbeschreibung</p>
               </div>
               {loading ? <p className={muted} role="status">Lehrgänge und Kurse werden geladen …</p> : loadError ? (
                 <div className={`${panel} p-4 space-y-3`} role="alert">
@@ -769,7 +782,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedProgram.master.code} · {programDetail ? `Version ${programDetail.version.versionNumber}` : selectedProgram.version ? `Version ${selectedProgram.version.versionNumber}` : 'Entwurf'}</p>
                 <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{programDetail?.version.title || selectedProgram.version?.title || selectedProgram.master.code}</h2>
-                <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary}</p>
+                <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary || 'Keine Kurzbeschreibung hinterlegt.'}</p>
               </header>
               {(programDetail?.version || selectedProgram.version) && (() => {
                 const version = programDetail?.version || selectedProgram.version!;
@@ -790,9 +803,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     )}
                     <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
-                      <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
-                        {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
-                      </ul>
+                      {version.learningObjectives.length > 0 ? (
+                        <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
+                          {version.learningObjectives.map(item => <li key={item.id}>{item.description}</li>)}
+                        </ul>
+                      ) : <p className={muted}>Für diesen Lehrgang wurden noch keine veröffentlichten Lernziele bereitgestellt.</p>}
                     </div>
                     <div className={`${panel} academy-program-panel p-4 space-y-3`}>
                       <h3 className="font-semibold text-slate-900 dark:text-white">Erforderliche Kurse</h3>
