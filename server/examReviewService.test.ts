@@ -7,7 +7,7 @@ import { createJsonExamRepository } from './examRepository.ts';
 import { startExamAttempt } from './examAttemptService.ts';
 import { saveExamAttemptAnswers } from './examAutosaveService.ts';
 import { submitExamAttempt } from './examSubmitService.ts';
-import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
+import { claimExamReview, markExamReviewDisconnected, recordExamReviewActivity, releaseExamReviewClaim, saveExamReviewDraft, transferExamReviewClaim, reassignExamReviewClaim, listPendingExamReviewNotifications, markExamReviewNotificationDelivered, correctCompletedExamReview, getReleasedPassingFinalExam, gradeExamAttempt, listCompletedManualReviews, listCompletedManualReviewSummaries, listPendingExamReviewRevisionRequests, requestExamReviewRevision, resolveExamReviewRevisionRequest, listExamParticipantReviewHistory, listExamReviews, listOwnExamResults, listPendingExamResultReleases, releaseExamResult } from './examReviewService.ts';
 
 test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüfling als Ergebnis gezeigt werden', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'rcpd-exam-review-'));
