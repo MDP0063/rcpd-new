@@ -305,7 +305,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                         <span className="font-medium text-sm text-slate-900 dark:text-white">{category.name}</span>
                         <span className={category.status === 'active'
                           ? 'rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200'
-                          : 'rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200'}>
+                          : 'rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200'}>
                           {category.status === 'active' ? 'Aktiv' : 'Archiviert'}
                         </span>
                       </div>
