@@ -61,7 +61,7 @@
 }
 .academy-material-taxonomy-form button,
 .academy-material-taxonomy-list button {
-  min-height: 2.45rem;
+  min-height: 2.75rem;
   border-radius: 0.7rem;
 }
 .academy-material-taxonomy-form button:focus-visible,
@@ -89,7 +89,7 @@
   line-height: 1.5;
 }
 .academy-material-taxonomy-actions button {
-  min-height: 2.3rem;
+  min-height: 2.75rem;
 }
 .dark .academy-material-taxonomy-heading h2 {
   color: var(--academy-text-primary);
