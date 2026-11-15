@@ -1441,3 +1441,93 @@ Bei der Rückgabe einer abgeschlossenen manuellen Bewertung zur Revision gilt:
 5. Die Rückgabe erzeugt keinen neuen Prüfungsversuch. Vorhandene Bewertungs-Drafts und die zuletzt freigegebene Teilnehmer-Ergebnisversion bleiben erhalten. Nach der Entscheidung erfolgt die erneute Bewertung durch einen beliebigen aktuell kursberechtigten Prüfer gemäß den bestehenden Claim-Regeln.
 
 Diese Empfängerregel ändert weder die bestehende Kursberechtigung noch die Claim-/Reassignment-Regeln. Die serverseitige Autorisierung muss sowohl die aktuelle Prüferberechtigung als auch die Zuständigkeit der Action-Request-Empfänger durchsetzen.
+
+## Ergänzung 15.11.2026 – Verbindliche Präsentations- und Bedienebene für das Academy-Redesign
+
+Dieses Kapitel ergänzt die vorhandenen fachlichen Spezifikationen um die Oberflächen- und Bedienregeln. Es ersetzt keine Geschäftsregel und ändert weder Datenmodell noch Rollen, Berechtigungen, Statusübergänge oder API-Verträge. Bei widersprüchlichen Formulierungen bleibt der explizite fachliche Beschluss maßgeblich; dieses Kapitel regelt ausschließlich, wie vorhandene Informationen verständlich dargestellt und bedient werden.
+
+### A. Gemeinsames Ansichtsmuster
+
+Jede Academy-Ansicht muss einen eindeutigen Zweck, einen sichtbaren Titel, eine verständliche Position in der Academy und eine direkte Rückkehr zur Academy-Kachelstartseite besitzen. Unteransichten innerhalb eines Bereichs erhalten einen aufgabenbezogenen Rückweg (z. B. zurück zur Such-/Katalogansicht), ohne den übergeordneten Kachel-Rückweg zu ersetzen.
+
+Ein Wechsel zwischen unterschiedlichen Zielen ist Navigation. Ein Wechsel zwischen Darstellungen desselben Objekts (z. B. Bearbeiten/Vorschau) ist ein lokaler Ansichtsumschalter. Filter und Sortierung sind eigene Steuerungen. Diese drei Muster dürfen visuell und semantisch nicht vermischt werden.
+
+Eine Ansicht hat eine Hauptaktion, wenn die aktuelle Aufgabe eine solche besitzt. Die Primäraktion wird durch Position, Größe und Beschriftung erkennbar, nicht durch eine zusätzliche Statusfarbe. Mehrere gleichrangige Buttons sind nur dann angemessen, wenn tatsächlich gleichwertige Handlungen bestehen.
+
+### B. Präsentationsregeln für vorhandene Zustände
+
+Die folgenden Dimensionen sind unabhängig und müssen unabhängig dargestellt bleiben:
+
+| Fachliche Dimension | Tatsächlich relevante Aussage | Darstellungsregel |
+|---|---|---|
+| Material-/Kursveröffentlichung | Entwurf, veröffentlicht, archiviert | Lebenszyklus-/Veröffentlichungsstatus; nicht mit persönlicher Teilnahme verbinden |
+| Verfügbarkeit | verfügbar oder derzeit nicht verfügbar | separat beschreiben; nicht aus Archivierung oder Rangstatus ableiten |
+| Zugriff | zugänglich, nicht zugänglich oder nicht mehr verfügbar | kurze Erklärung nur soweit die vorhandene Berechtigung dies erlaubt |
+| persönliche Teilnahme | nicht begonnen, in Bearbeitung, abgeschlossen, freiwillig beendet, administrativ beendet | Teilnahmezustand; Abschluss ist nicht gleich bestanden |
+| Lehrgangsfortschritt | bestehende Werte `not_started`, `in_progress`, `completed` auf Basis erforderlicher Kurse | Berechnung und vorhandene Pflichtkursdefinition beibehalten |
+| Prüfungsversuch | laufend, abgegeben bzw. vorhandene Versuchszustände | Versuchszustand getrennt von Bewertung und Ergebnisfreigabe |
+| Bewertung | offen/pending review oder abgeschlossen gemäß vorhandenem Reviewmodell | interne Bewertung nicht als Teilnehmerergebnis ausgeben |
+| Ergebnisfreigabe | noch nicht freigegeben oder offiziell freigegeben | ausschließlich tatsächlichen freigegebenen Stand als Teilnehmerergebnis markieren |
+| Revision | offene Anfrage, angenommen, abgelehnt, erneute Bewertung gemäß Option 2 | bisherige Historie/Snapshot erhalten; Wirksamkeit als Abschlussnachweis genau gemäß bestehender Regel |
+
+Die Tabelle ist eine Darstellungszuordnung. Sie schafft keine zusätzlichen Statuswerte. Falls ein Zustand in der jeweiligen Projektion nicht verlässlich vorhanden ist, darf die UI ihn nicht erraten.
+
+### C. Kataloge und Filter
+
+UI-seitige Filter, Sortierungen und Gruppen dürfen auf den vorhandenen serverseitig zugänglichen Daten aufsetzen. Ihre Auswahl verändert nur die Darstellung und niemals den gespeicherten Zustand. Es gelten folgende Regeln:
+
+- Filterwerte entsprechen exakt den bestehenden fachlichen Zuständen und sind in verständlicher deutscher Sprache beschriftet.
+- Suchbegriff, Filter und Sortierung bleiben sichtbar, wenn sie aktiv sind. Einzeln entfernen und alles zurücksetzen ist möglich.
+- Ergebnisanzahlen werden aus der tatsächlich angezeigten Ergebnisliste berechnet.
+- Ladefehler, Teilfehler, leere Datenbestände und „keine Treffer“ sind verschiedene Ansichten.
+- Keine Filteroption wird angeboten, wenn die zugehörigen Daten nicht vollständig oder zuverlässig in der Teilnehmerprojektion vorhanden sind.
+- Sortierung nach Datum verwendet nur das tatsächliche Feld für den angegebenen Zeitpunkt; keine Ersetzung durch Erstellungsdatum, wenn „aktualisiert“ behauptet wird.
+- Kein künstliches Ranking, keine Popularität, keine geschätzte Lesezeit und keine erfundene Priorität.
+
+### D. Bibliothek und Reader
+
+**Katalog:** globale Suche nach allen zugänglichen veröffentlichten Materialien; Relevanz als Standardsortierung bei Suchanfragen; alternative Sortierung nach Titel und echtem Aktualisierungsdatum; kompakte eingeklappte Filter; einzeln entfernbare aktive Filter. Die bereits beschlossenen größeren Themen- und Materialkacheln bleiben bestehen, werden aber kompakt und vergleichbar strukturiert.
+
+**Materialkarte:** Titel zuerst; Kategorie und Dokumenttyp als neutrale Metadaten; kurze Beschreibung; Materialcode und tatsächlich verfügbare Versions-/Aktualitätsinformation sekundär; eine klare Aktion „Material öffnen“. Metadaten sind keine interaktiven Chips, solange sie keinen echten Filter auslösen.
+
+**Reader:** großzügige neutrale Lesefläche; Lesebreite um 68ch und Fließtext-Größe ab 16 px als Ziel; vertikales Lesen als Standard; optionale, standardmäßig eingeklappte Navigation/Tools; Rückkehr zu den vorherigen Such-/Filterergebnissen. Markdown, Tabellen, Inline-Code, Codeblöcke, Blockquotes und Dark Mode müssen dieselbe Lesbarkeit und sichere Darstellung gewährleisten. Code wird nie ausgeführt.
+
+**Notizen im Reader:** Notizen/Lesezeichen bleiben versionsgebunden, privat und synchronisiert. Speicher-/Konfliktfeedback wird sichtbar und verständlich kommuniziert. Nur der Besitzer sieht private Inhalte; die Adminrolle ändert daran nichts.
+
+### E. Kurs- und Lehrgangsoberflächen
+
+Der gemeinsame Katalog trennt Lehrgänge und unabhängige Kurse als zwei fachliche Gruppen. UI-Filter dürfen die bereits gespeicherten Teilnahmezustände verwenden: nicht begonnen, in Bearbeitung, abgeschlossen, freiwillig beendet, administrativ beendet. Sie dürfen keine fachlich neue Stufe erzeugen.
+
+Kursdetails zeigen die echte ausgewählte veröffentlichte Version, Lernziele, Kapitel, vorhandene Materialien, reale Abschlussbedingungen und tatsächliche Teilnahme. Nach dem Start bleiben Lernziele und Kapitel sichtbar. Veröffentlichung/Verfügbarkeit und persönliche Teilnahme bleiben separate Statusdimensionen.
+
+Lehrgangdetails stellen Pflicht- und Empfehlungskurse getrennt dar. Der Fortschritt bezieht sich nur auf die bereits definierten Pflichtkursregeln; er suggeriert keine lineare Reihenfolge, wo fachlich keine besteht.
+
+### F. Teilnehmerprüfung und Examiner
+
+Teilnehmeransicht und Prüferaufgaben sind innerhalb der bestehenden Prüfungsnavigation unterscheidbare Arbeitsmodi. Die Prüfungsstartbestätigung bleibt unverändert im fachlichen Umfang. Laufende Prüfungsversuche priorisieren Frage, bestätigten Speicherstatus, Timer und Fragenübersicht. Abgabe und Ergebnisfreigabe sind getrennte Schritte.
+
+Die ältere Übungstest-/Abschlussprüfungsfamilie darf nicht ohne gesonderte Daten-/Workflowanalyse in den neuen versionierten Prüfungsrunner zusammengeführt oder entfernt werden.
+
+Examiner-Arbeitslisten verwenden nur die bestehenden Aufgaben-/Statusdaten und die beschlossenen Filter. Öffnen eines Vorgangs bleibt vom Claim getrennt. Claims, Schreibsperren, Rollen, Freigabe, Korrekturen, Revision und Ergebnis-Snapshot behalten ihre fachlichen Regeln. Das UI darf einen internen Bewertungsstand nie als freigegebenes Teilnehmerergebnis darstellen.
+
+### G. Meine Notizen
+
+Notizenliste und Editor bleiben getrennte Ansichten. Suche über Titel, Inhalt und Tags bleibt verfügbar. Ein Eintrag macht Notiz-/Lesezeichenart, Titel, Vorschau, Tags, letztes Änderungsdatum und Quellenstatus erfassbar, soweit diese Daten bereits geliefert werden. Neue Notizen und Lesezeichen entstehen weiterhin im Reader, nicht zusätzlich in der Notizenübersicht.
+
+Privatsphäre ist als verständlicher, unaufgeregter Hinweis erkennbar. Quellenstatus wird für jede Quelle getrennt dargestellt und gewährt niemals Zugriff auf ein nicht zugängliches Material.
+
+### H. Verwaltung und Formulare
+
+Kurs-/Lehrgangsverwaltung, Materialverwaltung, Kategorien und Dokumenttypen bleiben durch bestehende Rollen getrennte Arbeitsaufgaben. Liste und Editor werden nicht gleichzeitig als konkurrierende Hauptarbeitsflächen angezeigt. Formularfelder werden in fachlich passender Reihenfolge gruppiert, mit Feldlabels, Hilfetexten, Fehlerzuordnung und Schutz vor versehentlichem Verwerfen.
+
+Speichern eines Entwurfs, Veröffentlichen, Archivieren/Reaktivieren und endgültiges Löschen sind unterschiedliche Aktionen. Die vorhandene Freigabe-/Archivierungs-/Löschlogik und serverseitige Validierung bleiben verbindlich.
+
+### I. Accessibility und Responsive Darstellung
+
+- WCAG 2.2 AA ist die Mindestanforderung; 24×24 CSS-Pixel gemäß SC 2.5.8 ist die formale Zielgrößenuntergrenze mit ihren Ausnahmen. Primäre Touch-Aktionen sollen großzügiger, etwa 44×44 CSS-Pixel, gestaltet werden.
+- Textkontrast, nicht-textueller Kontrast, sichtbarer Fokus, Tastaturbedienung, Reflow, Fokus nicht verdecken, Formfehler, Screenreader-Ankündigungen und Reduced Motion sind pro Muster zu prüfen.
+- Bei 320 CSS-Pixeln und 400 % Zoom darf die gesamte Seite keine horizontale Scrollfläche benötigen. Tabellen und Code dürfen eigene begründete Scrollbereiche erhalten.
+- Bei 320, 375, 768, 1024 und 1440 CSS-Pixeln sind die zentralen Katalog-/Reader-/Form-/Prüfungszustände zu prüfen.
+- Bereichsfarbe, Statusfarbe und Aktionsfarbe sind unterschiedliche Tokenrollen; ein Farbton ist nie der einzige Informationsträger.
+
+Diese Präsentationsregeln ändern keine fachlichen Beschlüsse. Die konkrete Ausarbeitung pro Untermodul, Entwicklungsreihenfolge und Recherchebegründung befindet sich in `ACADEMY-SUBPAGE-REDESIGN.md` und `DESIGN-SYSTEM-CONCEPT.md`.
