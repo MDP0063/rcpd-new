@@ -172,3 +172,9 @@
   outline-offset: 3px !important;
   box-shadow: 0 0 0 6px rgba(40,100,217,0.42), 0 12px 28px rgba(15,23,42,0.18) !important;
 }
+
+
+/* Form controls remain comfortably targetable on touch screens. */
+.academy-center-root :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) {
+  min-height: 2.75rem;
+}
