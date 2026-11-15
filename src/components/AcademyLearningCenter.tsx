@@ -130,7 +130,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [courseStatusFilter, setCourseStatusFilter] = useState<'all' | 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended'>('all');
   const [courseSortOrder, setCourseSortOrder] = useState<'title' | 'newest'>('title');
   const [noteSearch, setNoteSearch] = useState('');
+  const [noteKindFilter, setNoteKindFilter] = useState<'all' | 'note' | 'bookmark'>('all');
+  const [noteSortOrder, setNoteSortOrder] = useState<'updated' | 'title'>('updated');
   const [editingNote, setEditingNote] = useState<AcademyPrivateNoteDoc | null>(null);
+  const [noteSaveError, setNoteSaveError] = useState('');
+  const [noteConflictNote, setNoteConflictNote] = useState<AcademyPrivateNoteDoc | null>(null);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteTags, setNoteTags] = useState('');
@@ -272,10 +276,26 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   }, [programs, search]);
   const filteredNotes = useMemo(() => {
     const value = noteSearch.trim().toLocaleLowerCase('de-DE');
-    if (!value) return notes;
-    return notes.filter(note => [note.title || '', note.content || '', ...note.tags]
-      .some(candidate => candidate.toLocaleLowerCase('de-DE').includes(value)));
-  }, [notes, noteSearch]);
+    return notes
+      .filter(note => noteKindFilter === 'all' || note.kind === noteKindFilter)
+      .filter(note => !value || [note.title || '', note.content || '', ...note.tags]
+        .some(candidate => candidate.toLocaleLowerCase('de-DE').includes(value)))
+      .slice()
+      .sort((a, b) => {
+        if (noteSortOrder === 'title') {
+          const titleA = a.title || (a.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel');
+          const titleB = b.title || (b.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel');
+          return titleA.localeCompare(titleB, 'de-DE', { sensitivity: 'base' });
+        }
+        const dateA = a.updatedIso ? Date.parse(a.updatedIso) : Number.NaN;
+        const dateB = b.updatedIso ? Date.parse(b.updatedIso) : Number.NaN;
+        const validA = Number.isFinite(dateA);
+        const validB = Number.isFinite(dateB);
+        if (validA && validB && dateA !== dateB) return dateB - dateA;
+        if (validA !== validB) return validA ? -1 : 1;
+        return (a.title || '').localeCompare(b.title || '', 'de-DE', { sensitivity: 'base' });
+      });
+  }, [notes, noteSearch, noteKindFilter, noteSortOrder]);
 
   const openCourse = async (entry: CourseEntry) => {
     const requestId = ++detailRequestIdRef.current;
@@ -415,11 +435,25 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     if (saving) return;
     if (noteHasUnsavedChanges && !window.confirm('Nicht gespeicherte Änderungen an dieser privaten Notiz verwerfen?')) return;
     setEditingNote(null);
+    setNoteSaveError('');
+    setNoteConflictNote(null);
+  };
+
+  const loadLatestNoteConflict = () => {
+    if (!noteConflictNote) return;
+    if (noteHasUnsavedChanges && !window.confirm('Deine lokalen Änderungen verwerfen und die aktuell gespeicherte Fassung laden?')) return;
+    setEditingNote(noteConflictNote);
+    setNoteTitle(noteConflictNote.title || '');
+    setNoteContent(noteConflictNote.content || '');
+    setNoteTags(noteConflictNote.tags.join(', '));
+    setNoteSaveError('');
+    setNoteConflictNote(null);
   };
 
   const saveNote = async () => {
     if (!editingNote || saving || !noteHasUnsavedChanges) return;
     setSaving(true);
+    setNoteSaveError('');
     const response = await apiFetch<{ note: AcademyPrivateNoteDoc }>(API_ENDPOINTS.ACADEMY_NOTES + `/${encodeURIComponent(editingNote.id)}`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -431,11 +465,29 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     });
     setSaving(false);
     if (!response.ok || !response.data) {
-      onStatusToast(response.error || 'Die Notiz konnte nicht gespeichert werden.');
+      const message = response.error || 'Die Notiz konnte nicht gespeichert werden.';
+      setNoteSaveError(message);
+      if (response.status === 409) {
+        const latestResponse = await apiFetch<{ notes: AcademyPrivateNoteDoc[] }>(API_ENDPOINTS.ACADEMY_NOTES);
+        if (latestResponse.ok && latestResponse.data) {
+          const latest = latestResponse.data.notes.find(item => item.id === editingNote.id);
+          if (latest) {
+            setNoteConflictNote(latest);
+            setNotes(previous => previous.map(item => item.id === latest.id ? latest : item));
+          } else {
+            setNoteSaveError('Diese Notiz ist nicht mehr vorhanden. Deine lokalen Änderungen bleiben geöffnet.');
+          }
+        } else {
+          setNoteSaveError('Die Notiz wurde zwischenzeitlich geändert. Deine lokalen Änderungen bleiben erhalten; die aktuelle Fassung konnte aber nicht geladen werden.');
+        }
+      }
+      onStatusToast(message);
       return;
     }
     setNotes(previous => previous.map(item => item.id === response.data!.note.id ? response.data!.note : item));
     setEditingNote(null);
+    setNoteSaveError('');
+    setNoteConflictNote(null);
     onStatusToast('Private Notiz gespeichert.');
   };
 
@@ -859,7 +911,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{note.kind === 'bookmark' ? 'Lesezeichen' : 'Private Notiz'} · {dateLabel(note.updatedIso)}</p>
                           </div>
                           <div className="academy-note-card-actions flex flex-wrap gap-2">
-                            {note.kind === 'note' && <button type="button" className={secondary} onClick={() => { setEditingNote(note); setNoteTitle(note.title || ''); setNoteContent(note.content || ''); setNoteTags(note.tags.join(', ')); }}>Bearbeiten</button>}
+                            {note.kind === 'note' && <button type="button" className={secondary} onClick={() => { setEditingNote(note); setNoteTitle(note.title || ''); setNoteContent(note.content || ''); setNoteTags(note.tags.join(', ')); setNoteSaveError(''); setNoteConflictNote(null); }}>Bearbeiten</button>}
                             <button type="button" className="academy-note-delete" disabled={saving} onClick={() => void deleteNote(note)}>Löschen</button>
                           </div>
                         </div>
