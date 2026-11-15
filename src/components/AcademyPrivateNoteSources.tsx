@@ -56,17 +56,15 @@ export const AcademyPrivateNoteSources: React.FC<Props> = ({ noteId, sources }) 
     >
       <summary className="cursor-pointer">Verknüpfte Quellen ({sources.length}) – Zugriffsstatus anzeigen</summary>
       <div className="space-y-2 pt-1">
-        {sources.map(source => {
+        {sources.map((source, index) => {
           const status = statuses?.find(item =>
             item.materialId === source.materialId && item.materialVersionId === source.materialVersionId
           );
           return (
             <div key={source.materialId + '::' + source.materialVersionId}>
-              <p>Material {source.materialId} · Fassung {source.materialVersionId}</p>
-              <p className={status?.status === 'restricted' || status?.status === 'unavailable'
-                ? 'font-medium text-amber-700 dark:text-amber-300'
-                : 'text-slate-500 dark:text-slate-400'}>
-                {status ? statusLabels[status.status] : loading ? 'Status wird geprüft …' : error ? 'Status nicht geprüft' : 'Noch nicht geprüft'}
+              <p className="academy-private-note-source-label">Materialfassung {index + 1}</p>
+              <p className="academy-private-note-source-status" data-status={status?.status || 'unknown'}>
+                {status ? statusLabels[status.status] : loading ? 'Zugriff wird geprüft …' : error ? 'Status nicht geprüft' : 'Noch nicht geprüft'}
               </p>
             </div>
           );
