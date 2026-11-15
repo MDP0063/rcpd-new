@@ -40,10 +40,15 @@
   --academy-state-info-border: #cbd5e1;
 
   --academy-area-overview: #2864d9;
+  --academy-area-overview-foreground: #2864d9;
   --academy-area-courses: #087f8c;
+  --academy-area-courses-foreground: #087f8c;
   --academy-area-library: #6841b8;
+  --academy-area-library-foreground: #6841b8;
   --academy-area-exams: #a33370;
+  --academy-area-exams-foreground: #a33370;
   --academy-area-notes: #287a45;
+  --academy-area-notes-foreground: #287a45;
 }
 
 .dark .academy-center-root {
@@ -69,6 +74,11 @@
   --academy-action-secondary-hover: #334155;
 
   --academy-focus-color: #b8c6d5;
+  --academy-area-overview-foreground: #93b7ff;
+  --academy-area-courses-foreground: #75c8cb;
+  --academy-area-library-foreground: #bda5eb;
+  --academy-area-exams-foreground: #d995b8;
+  --academy-area-notes-foreground: #8ac49a;
 
   --academy-state-success-text: #86efac;
   --academy-state-success-bg: #14291d;
