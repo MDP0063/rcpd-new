@@ -692,7 +692,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Es gibt keine unveröffentlichte Änderung. Bearbeite und speichere den Entwurf, bevor du eine neue Version veröffentlichen kannst.</p>
             )}
             {editingMaster && editingMaster.publicationStatus === 'archived' && (
-              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">Dieses Material ist archiviert. Seine veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Dieses Material ist archiviert. Seine veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.</p>
             )}
           </form>
 
