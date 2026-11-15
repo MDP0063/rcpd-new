@@ -1932,7 +1932,7 @@ async function startServer() {
       const revisionRecipientStillEligible = !revisionNotification || Boolean(
         recipient && isEligibleExamReviewerAccount(recipient) &&
         (event.action === 'revision_requested'
-          ? recipient.role === 'admin' || recipient.role === 'colonel'
+          ? recipient.publicProfile.role === 'admin' || recipient.publicProfile.role === 'colonel'
           : canBeAssignedExamReviewer(recipient, item.courseCode))
       );
       const notificationId = `exam-review-${item.attemptId}-${item.eventIndex}-${item.recipientUid}`;
