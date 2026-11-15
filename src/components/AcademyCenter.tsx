@@ -1043,7 +1043,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       {displayedVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{displayedVersionedMaterial.description}</p>}
                       {displayedVersionedMaterial.contentFormat === 'markdown'
                         ? (
-                          <div ref={versionedMaterialMarkdownRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
+                          <div ref={versionedMaterialMarkdownRef} className="mx-auto w-full max-w-[68ch]" onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
                             {renderVersionedMaterialMarkdown(displayedVersionedMaterial.content)}
                           </div>
                         )
