@@ -585,3 +585,26 @@ Bewegung dient höchstens der Orientierung bei einem Übergang; sie darf keine S
 - **GOV.UK Error message:** Fehlermeldungen müssen erklären, was passiert ist und wie es korrigiert werden kann. Eingaben bleiben erhalten; Farbe allein reicht nicht. Übertragung: Formularfehler werden dem Feld zugeordnet und bei umfangreicheren Formularen zusätzlich oben zusammengefasst. Speicher-/Konfliktfehler dürfen nicht als leere Liste oder bloß roter Rand erscheinen.
 - **GOV.UK Button guidance:** Eine riskante Aktion darf nicht allein durch Rot als gefährlich erkennbar sein; der konkrete Buttontext und der Kontext müssen die Folge erklären. Übertragung: „Endgültig löschen“ bleibt ausdrücklich benannt und räumlich von Speichern/Veröffentlichen getrennt.
 - **W3C WCAG 2.2:** SC 1.4.1 untersagt Farbe als alleinigen Informationsträger; SC 1.4.3 verlangt mindestens 4,5:1 für normalen Text; SC 2.5.8 definiert 24×24 CSS-Pixel als Mindestzielgröße mit Ausnahmen. Primäre Touch-Aktionen zielen weiterhin großzügiger auf etwa 44×44 CSS-Pixel.
+
+
+### 15.11 Gemeinsame semantische Interaktionsbasis – Implementierungsstandard
+
+Die neue Datei `src/components/AcademyDesignTokens.css` ist die gemeinsame Quelle für:
+- Primär-/Sekundärtext, Seiten-/Karten-/Hover-/Auswahlflächen und neutrale Trennlinien
+- neutrale Primäraktion, Sekundäraktion und explizit destruktive Aktion
+- globalen Tastaturfokus mit 3px Kontur und 3px Offset
+- echte Erfolgs-, Warn-, Fehler- und Informationszustände
+- fünf Bereichsidentitäten plus jeweils themengerechte Vordergrundfarbe für Dark Mode
+
+**Farbregeln**
+- Bereichsfarben bleiben auf Kicker, kleine Marker oder dezente Identitätselemente begrenzt. Sie färben nicht primäre Aktionen, aktive Auswahl, Fokus oder beliebige Statusanzeigen.
+- Veröffentlichungs-/Lebenszykluszustände wie Entwurf, veröffentlicht und archiviert werden neutral dargestellt. „Archiviert“ ist ein historischer Zustand, kein Warnsignal.
+- „Bewertung ausstehend“ und „Ergebnisfreigabe ausstehend“ sind neutrale Workflowzustände. Grün kennzeichnet nur echte erfolgreiche Ergebnisse/Speicherbestätigungen; Rot nur echte Fehler, Nichtbestehen oder destruktive Aktionen; Amber echte Warnungen/Blockaden.
+- Auswahl wird durch neutrale Fläche, Kontur und Text kommuniziert, nicht durch die Bereichsfarbe. Fokus ist ein eigener, theme-aware Indikator.
+- Die farbigen Einstiegskacheln sind die gezielte Ausnahme: Ihr Fokusindikator nutzt eine helle Innenkontur plus äußeren Ring, damit er auf allen gesättigten Kachelflächen sichtbar bleibt.
+
+**Interaktionsregeln**
+- `academy-action-primary`, `academy-action-secondary` und `academy-action-danger` definieren eine konsistente Aktionshierarchie. Pro Arbeitsansicht soll nur eine primäre Aktion visuell dominieren.
+- Primäre/sekundäre/destruktive Aktionsflächen und wichtige Navigations-/Segmentsteuerungen haben mindestens 44px Höhe. Normale Eingabefelder und Selects ebenfalls mindestens 44px; Checkboxen/Radio-Controls bleiben von dieser Regel ausgenommen.
+- Reduzierte Bewegung und Forced-Colors-Modus werden berücksichtigt.
+- Kontrastberechnung für die gemeinsamen Fokusfarben: Hellmodus `#536f8d` auf Weiß ca. 5,22:1; Dunkelmodus `#b8c6d5` auf `#0f172a` ca. 10,27:1. Die tatsächlichen Nachbarflächen müssen in der späteren Browser-QA zusätzlich geprüft werden.
