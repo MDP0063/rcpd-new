@@ -178,3 +178,55 @@
     transform: none !important;
   }
 }
+
+/* Taxonomy management: make item identity and destructive actions distinct. */
+.academy-material-taxonomy-item {
+  border-color: #eee8f5;
+  transition: background-color 140ms ease;
+}
+.academy-material-taxonomy-item:hover {
+  background: #fbf9fd;
+}
+.academy-material-taxonomy-item > div:first-child > div:first-child {
+  row-gap: .45rem;
+}
+.academy-material-taxonomy-item > div:first-child > div:first-child span:first-child {
+  font-size: .9rem;
+}
+.academy-material-taxonomy-actions {
+  align-items: center;
+}
+.academy-material-taxonomy-actions button:first-child {
+  border-color: #d7c8eb;
+  color: #51377e;
+  background: #faf8fd;
+}
+.academy-material-taxonomy-actions button:last-child {
+  border-color: #e7bcbc;
+  background: #fffafa;
+}
+.dark .academy-material-taxonomy-item:hover {
+  background: #211a2b;
+}
+.dark .academy-material-taxonomy-actions button:first-child {
+  border-color: #62517f;
+  color: #e2d4f5;
+  background: #292137;
+}
+.dark .academy-material-taxonomy-actions button:last-child {
+  border-color: #70434a;
+  background: #2a1b22;
+}
+@media (max-width: 640px) {
+  .academy-material-taxonomy-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .academy-material-taxonomy-actions button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-material-taxonomy-item { transition: none; }
+}
+
