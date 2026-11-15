@@ -1,13 +1,13 @@
 .academy-material-taxonomy-manager {
-  --academy-library-accent: #6841b8;
-  --academy-library-line: #e4dcf1;
+  --academy-library-accent: var(--academy-area-library);
+  --academy-library-line: var(--academy-border);
   min-width: 0;
 }
 .academy-material-taxonomy-heading {
   padding: 0.2rem 0 0.45rem;
 }
 .academy-material-taxonomy-heading h2 {
-  color: #39265f;
+  color: var(--academy-text-primary);
   font-size: clamp(1.3rem, 2vw, 1.6rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -24,8 +24,8 @@
   min-width: 0;
   border-color: var(--academy-library-line) !important;
   border-radius: 1rem !important;
-  background: rgba(255,255,255,0.96) !important;
-  box-shadow: 0 6px 18px rgba(55,34,91,0.04);
+  background: var(--academy-surface-card) !important;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
 }
 .academy-material-taxonomy-form {
   padding: 1.25rem !important;
@@ -36,28 +36,28 @@
 }
 .academy-material-taxonomy-form > div:first-child h3,
 .academy-material-taxonomy-list h3 {
-  color: #49326e;
+  color: var(--academy-text-primary);
   font-size: 0.98rem;
   font-weight: 750;
 }
 .academy-material-taxonomy-form label,
 .academy-material-taxonomy-list label {
-  color: #4b405b;
+  color: var(--academy-text-secondary);
   line-height: 1.5;
 }
 .academy-material-taxonomy-form input,
 .academy-material-taxonomy-form textarea,
 .academy-material-taxonomy-list input {
-  border-color: #d8cce9 !important;
+  border-color: var(--academy-border) !important;
   border-radius: 0.7rem !important;
-  background: #fff !important;
+  background: var(--academy-surface-card) !important;
 }
 .academy-material-taxonomy-form input:focus-visible,
 .academy-material-taxonomy-form textarea:focus-visible,
 .academy-material-taxonomy-list input:focus-visible {
-  outline: 3px solid rgba(104,65,184,0.2);
-  outline-offset: 2px;
-  border-color: #6841b8 !important;
+  outline: 3px solid var(--academy-focus-color);
+  outline-offset: 3px;
+  border-color: var(--academy-focus-color) !important;
 }
 .academy-material-taxonomy-form button,
 .academy-material-taxonomy-list button {
@@ -66,8 +66,8 @@
 }
 .academy-material-taxonomy-form button:focus-visible,
 .academy-material-taxonomy-list button:focus-visible {
-  outline: 3px solid rgba(104,65,184,0.22);
-  outline-offset: 2px;
+  outline: 3px solid var(--academy-focus-color);
+  outline-offset: 3px;
 }
 .academy-material-taxonomy-list > div:first-child {
   padding-bottom: 0.8rem;
@@ -78,10 +78,10 @@
 }
 .academy-material-taxonomy-item {
   padding: 0.9rem 0 !important;
-  border-color: #eee8f5;
+  border-color: var(--academy-border);
 }
 .academy-material-taxonomy-item > div:first-child > div:first-child span:first-child {
-  color: #382a52;
+  color: var(--academy-text-primary);
   font-weight: 700;
 }
 .academy-material-taxonomy-item > div:first-child > p {
@@ -92,34 +92,34 @@
   min-height: 2.3rem;
 }
 .dark .academy-material-taxonomy-heading h2 {
-  color: #e6dcf8;
+  color: var(--academy-text-primary);
 }
 .dark .academy-material-taxonomy-form,
 .dark .academy-material-taxonomy-list {
-  border-color: #49395e !important;
-  background: #1b1722 !important;
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
   box-shadow: none;
 }
 .dark .academy-material-taxonomy-form > div:first-child,
 .dark .academy-material-taxonomy-list > div:first-child,
 .dark .academy-material-taxonomy-item {
-  border-color: #49395e;
+  border-color: var(--academy-border);
 }
 .dark .academy-material-taxonomy-form > div:first-child h3,
 .dark .academy-material-taxonomy-list h3,
 .dark .academy-material-taxonomy-item > div:first-child > div:first-child span:first-child {
-  color: #e6dcf8;
+  color: var(--academy-text-primary);
 }
 .dark .academy-material-taxonomy-form label,
 .dark .academy-material-taxonomy-list label {
-  color: #d4c8e3;
+  color: var(--academy-text-secondary);
 }
 .dark .academy-material-taxonomy-form input,
 .dark .academy-material-taxonomy-form textarea,
 .dark .academy-material-taxonomy-list input {
-  border-color: #5a496e !important;
-  background: #15111b !important;
-  color: #f6f1fb !important;
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-page) !important;
+  color: var(--academy-text-primary) !important;
 }
 @media (max-width: 640px) {
   .academy-material-taxonomy-form,
@@ -181,11 +181,11 @@
 
 /* Taxonomy management: make item identity and destructive actions distinct. */
 .academy-material-taxonomy-item {
-  border-color: #eee8f5;
+  border-color: var(--academy-border);
   transition: background-color 140ms ease;
 }
 .academy-material-taxonomy-item:hover {
-  background: #fbf9fd;
+  background: var(--academy-surface-hover);
 }
 .academy-material-taxonomy-item > div:first-child > div:first-child {
   row-gap: .45rem;
@@ -197,21 +197,21 @@
   align-items: center;
 }
 .academy-material-taxonomy-actions button:first-child {
-  border-color: #d7c8eb;
-  color: #51377e;
-  background: #faf8fd;
+  border-color: var(--academy-border-strong);
+  color: var(--academy-action-secondary-text);
+  background: var(--academy-action-secondary-bg);
 }
 .academy-material-taxonomy-actions button:last-child {
   border-color: #e7bcbc;
   background: #fffafa;
 }
 .dark .academy-material-taxonomy-item:hover {
-  background: #211a2b;
+  background: var(--academy-surface-hover);
 }
 .dark .academy-material-taxonomy-actions button:first-child {
-  border-color: #62517f;
-  color: #e2d4f5;
-  background: #292137;
+  border-color: var(--academy-border-strong);
+  color: var(--academy-action-secondary-text);
+  background: var(--academy-action-secondary-bg);
 }
 .dark .academy-material-taxonomy-actions button:last-child {
   border-color: #70434a;
