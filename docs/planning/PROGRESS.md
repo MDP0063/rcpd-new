@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#301 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#302 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `44dcc3e487ff8e4747e264a4710bb3737fff0037` (PR #301). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300 und Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301.
+**Aktueller Basisstand:** `main` bei `5b87d423fa74a196b4ee2bb777e0303e96b36e4a` (PR #302). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#301 sind gemergt. Für #297–#301 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#302 sind gemergt. Für #297–#302 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1453,11 +1453,11 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **PR #301 ist am 15.11.2026 gemergt** (Merge-Commit `44dcc3e487ff8e4747e264a4710bb3737fff0037`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
 
 
-## 15.11.2026 – Academy-Navigation: Fokus nach Bereichswechsel
+## 15.11.2026 – Academy-Navigation: Fokus nach Bereichswechsel (PR #302)
 
-- Nach Auswahl einer Startkachel erhält das aktive Element der Academy-Hauptnavigation den Fokus. Nach Rückkehr zur Kachelansicht erhält die zuletzt verwendete Einstiegskachel den Fokus.
+- Nach Auswahl einer Startkachel erhält der aktive Button der Academy-Hauptnavigation den Fokus. Nach Rückkehr zur Kachelansicht erhält die zuletzt verwendete Einstiegskachel den Fokus zurück.
 - Dieselbe Fokusweitergabe wird für externe Sprünge in den Prüfungsbereich verwendet; normale Wechsel innerhalb der bestehenden Hauptnavigation behalten den Fokus auf dem ausgelösten Navigationsbutton.
 - Bei einem neuen Prüfungsziel innerhalb des bereits aktiven Prüfungsbereichs wird der Fokus nicht ungefragt erneut verschoben.
-- Umsetzung folgt den aktuellen Empfehlungen für dynamische Navigation und Fokusreihenfolge: Home Office Accessibility Standard (WCAG 2.4.3; dynamische Controls dürfen Fokus nicht verlieren) und VA.gov SPA-Fokusmanagement (Fokus auf ein kontextgebendes interaktives Element bei clientseitigem Seitenwechsel).
+- Umsetzung folgt aktueller Accessibility-Guidance für dynamische Navigation und Fokusreihenfolge: Home Office Accessibility Standard (WCAG 2.4.3) und VA.gov SPA-Fokusmanagement.
 - Quellen: https://design.homeoffice.gov.uk/accessibility/standard/operable ; https://design.va.gov/accessibility/focus-management
-- Arbeitsbranch: `a11y/academy-navigation-focus-management`. CI nach PR-Erstellung; manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #302 ist am 15.11.2026 gemergt** (Merge-Commit `5b87d423fa74a196b4ee2bb777e0303e96b36e4a`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
