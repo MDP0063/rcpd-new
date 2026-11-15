@@ -1,9 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 13.11.2026 – Der systematische Funktions-/Fehleraudit der Academy läuft; PR-Bereinigung und verifizierte Befunde sind ergänzt. Academy-Audit und Redesign werden unter ausdrücklicher eigenständiger Umsetzungs- und Merge-Ermächtigung des Projektinhabers fortgeführt. PRs #246, #247, #248, #250, #251, #252, #253 und #255 sind zusätzlich gemergt. Die visuelle und funktionale Bestandsprüfung aller Academy-Unterseiten läuft. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich) und #295 (Reader-Notiz-Speicherqueue) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` nach PR #281 (Merge-Commit `fe90829c4f080cd601eb569b186ae325f3d14b21`; enthält zusätzlich die mobilen Academy-Navigation-/Shell-Korrekturen, Examiner-Teilnehmerakte und Arbeitslisten, einheitliche Kursabschlussprüfungs-Terminologie, Reader-Lesebreite, serverseitige Notizanker-Validierung und den Availability-Gate-Fix für Lehrgangs-Pins; enthält die dokumentierte Academy-Autonomie, den vollständigen Unterseiten-Redesign-Audit, den fokussierten Notizeditor, konsistente Lehrgang-Terminologie, Kursdetail-Korrekturen, informierte Prüfungsstartbestätigung und verbesserte Examiner-Accessibility). PR #246–#248 sind ebenfalls enthalten.
-**Aktueller Umsetzungsstand:** PR #149/#150 (persistente Examiner-Claims und Bewertungs-Drafts), PR #152 (Übergabe, administrative Neuzuweisung und Benachrichtigungen), PR #185 (serverseitige Reviewer-Whitelist-Prüfung), PR #187 (Sortierung nach tatsächlichem Bewertungsabschluss), PR #189 (Erhalt des zuletzt freigegebenen Ergebnisses während Korrekturen) und PR #190 (unveränderter ursprünglicher Bewertungsabschlusszeitpunkt und Prüfer bei Korrekturen) sind gemergt. Für PR #150/#152 sind TypeScript-Prüfung, Produktionsbuild, 453/453 Tests und PR-Vorlagenprüfung dokumentiert. Der optionale Render-Deploy-Hook wurde bei diesen PR-Läufen übersprungen; der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert. Eine gemeinsame manuelle Browser-/Live-Firestore-Abnahme steht weiterhin aus.
+**Aktueller Basisstand:** `main` bei `460bdf508153cd56b01090fc64c9bfa5cb09c984` (PR #295). Enthalten sind unter anderem die Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, die gemeinsame semantische Academy-Control-/Status-/Focus-Basis aus #293, die Notizenübersicht und Konfliktbehandlung aus #294 sowie die Reader-Notiz-Save-Queue aus #295.
+
+**Aktueller Umsetzungsstand:** PRs #293–#295 sind gemergt. TypeScript, Produktionsbuild, Servertests und PR-Vorlagenprüfungen waren für diese PRs erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. PR #296 hat auf seinem finalen Stand erfolgreiche TypeScript-/Build-/Servertests und PR-Vorlagenprüfung, bleibt aber wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1404,3 +1405,13 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Datenschutz, Notiz-Eigentümer, Source-Status-API, private Quellenbindung und Datenmodell wurden nicht geändert.
 
 **Noch offen:** TypeScript/Build/Servertests und PR-Vorlagenprüfung auf dem finalen PR-Head. Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA folgt der später vereinbarten gemeinsamen Academy-QA.
+
+
+## 15.11.2026 – Kurs- und Lehrgangsverwaltung: Katalogbedienung
+
+- Die Verwaltungslisten für Kurse und Lehrgänge erhalten eine gemeinsame Suche über Titel, Kennung und Kurzbeschreibung.
+- Ein gemeinsamer Veröffentlichungsfilter nutzt ausschließlich die vorhandenen Werte Entwurf, Veröffentlicht und Archiviert. Er verändert weder Status noch Verfügbarkeit oder persönliche Teilnahme.
+- Sortierung ist nach Kennung A–Z (bestehende Standardreihenfolge), Titel A–Z oder tatsächlichem Änderungszeitpunkt möglich. Fehlende/ungültige Änderungszeitpunkte werden bei der Sortierung „Zuletzt geändert“ hinter gültigen Werten geführt.
+- Ergebniszahlen unterscheiden angezeigte und gesamte Datensätze; leere Datenbestände und leere Such-/Filtertreffer werden getrennt erklärt. Kriterien lassen sich gemeinsam zurücksetzen.
+- Umsetzung bleibt vollständig clientseitig auf den bereits geladenen Verwaltungsdaten. Keine neue API, Berechtigung, Statusdimension, Datenmigration oder Abhängigkeit.
+- Arbeitsbranch: `redesign/academy-authoring-catalog-controls`. TypeScript/Build/Servertests und PR-Vorlagenprüfung laufen erst nach PR-Erstellung über CI; Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt Teil der späteren gemeinsamen Abnahme.
