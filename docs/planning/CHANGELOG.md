@@ -531,3 +531,19 @@
 - Suche/Filter-Rücksetzung und aussagekräftiger keine-Treffer-Zustand.
 - Zeit-Sortierung im Kurs-/Lehrgangs-Authoring ebenfalls auf den neuesten Entwurfs-/Master-Zeitstempel korrigiert.
 - Keine API-, Rollen-, Berechtigungs- oder Datenmodelländerung.
+
+
+## 2026-11-15 – Materialverwaltung: Katalogbedienung (PR #298)
+
+- Materialliste mit Veröffentlichungs-/Entwurfsfilter, alphabetischer Titel-/Kennungssortierung und Sortierung nach neuestem tatsächlichen Zeitstempel aus Entwurf und Master.
+- Veröffentlicht mit neuer Arbeitsfassung bleibt ein aus bestehenden Revisionsdaten abgeleiteter Filterzustand, kein neuer Geschäftsstatus.
+- Suche/Filter-Rücksetzung und differenzierte keine-Treffer-Meldung.
+- Kurs-/Lehrgangs-Authoring verwendet für „Zuletzt geändert“ ebenfalls den neuesten Wert aus Entwurf und Master.
+- PR #298 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+## 2026-11-15 – Taxonomieverwaltung: Kategorien und Dokumenttypen
+
+- Suche nach Name/Beschreibung ohne Platzhalter als einzige Suchanleitung; sichtbare Labels und Hinweistexte.
+- Optionale Statusfilter für Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
+- Keine Änderung an Taxonomie-API, Statuswerten, Revisionen oder Schutz bestehender Materialzuordnungen.
+- Such-/Formularfelder und Aktionen auf mindestens 44 px Zielhöhe vereinheitlicht.

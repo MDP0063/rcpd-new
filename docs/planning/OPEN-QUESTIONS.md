@@ -388,3 +388,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **PR #297:** Kurs-/Lehrgangsverwaltung ist gemergt; Suche, Veröffentlichungsfilter, Sortierung und getrennte Leerzustände sind enthalten. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
 - **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen. Nicht mit Routine-UX-Arbeit vermischen oder ohne Review mergen.
 - **Aktueller Arbeitszweig:** Materialverwaltungskatalog mit Filtern auf bestehende Veröffentlichungs-/Revisionsdaten und korrekter Zeit-Sortierung. Keine neue API- oder Berechtigungslogik.
+
+
+## 15.11.2026 – Status nach PR #298 und Taxonomieverwaltung
+
+- **PR #298:** Materialverwaltungskatalog ist gemergt; Filter für Entwurf/Veröffentlichung/Archivierung, Sortierung nach neuestem Entwurfs-/Master-Zeitstempel, Titel und Kennung. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
+- **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
+- **Aktueller Arbeitszweig:** Taxonomieverwaltung für Kategorien und Dokumenttypen. Suche, Statusfilter, alphabetische Sortierung und Rücksetzung; keine Änderungen an API, Berechtigungen oder Datenmodell.
