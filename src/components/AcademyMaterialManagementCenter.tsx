@@ -684,7 +684,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               {editingMaster && globalManager && editingMaster.publicationStatus !== 'archived' && (
                 <div className="academy-material-form-destructive-actions">
                   <div><strong>Material stilllegen</strong><p>Das Material wird archiviert und nicht mehr neu angeboten. Historische Kursreferenzen bleiben erhalten.</p></div>
-                  <button type="button" className={danger} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
+                  <button type="button" className={secondary} onClick={() => void archiveMaterial()} disabled={busy || formDirty}>Material archivieren</button>
                 </div>
               )}
             </div>
