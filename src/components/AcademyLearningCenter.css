@@ -447,7 +447,7 @@
   background: var(--academy-action-secondary-hover) !important;
 }
 .academy-note-card .academy-note-delete {
-  border: 1px solid #e5c9c9 !important;
+  border: 1px solid var(--academy-state-danger-border) !important;
   background: var(--academy-surface-card) !important;
   color: var(--academy-state-danger-text) !important;
 }
@@ -471,13 +471,13 @@
   background: var(--academy-action-primary-bg) !important;
   color: var(--academy-action-primary-text) !important;
 }
-.dark .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
+ .dark .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
   border-color: var(--academy-action-primary-hover) !important;
-  background: var(--academy-surface-card) !important;
+  background: var(--academy-action-primary-hover) !important;
 }
-.dark .academy-note-editor-actions .academy-note-cancel {
+ .dark .academy-note-editor-actions .academy-note-cancel {
   border-color: var(--academy-border-strong) !important;
-  background: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-secondary-bg) !important;
   color: var(--academy-action-secondary-text) !important;
 }
 .dark .academy-note-card .academy-note-delete {
