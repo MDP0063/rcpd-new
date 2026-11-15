@@ -519,7 +519,7 @@
   position: absolute;
   top: 50%;
   right: .4rem;
-  min-height: 2.2rem;
+  min-height: 2.75rem;
   padding: .35rem .65rem;
   transform: translateY(-50%);
   border: 1px solid #d5dee7;
@@ -554,10 +554,10 @@
   font-weight: 650;
 }
 .academy-course-filter-control select {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
 }
 .academy-course-filter-reset {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   padding: .55rem .35rem;
   color: #53677e;
   font-size: .78rem;
