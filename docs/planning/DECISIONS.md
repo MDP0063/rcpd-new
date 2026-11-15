@@ -666,3 +666,12 @@ Jeder größere Teilbereich erhält:
 7. Regressionstestplan, Berechtigungs-/Datenschutzprüfung und offene QA-Punkte.
 
 Diese Freigabe erlaubt die eigenständige Ausarbeitung der Academy-UX, nicht das stille Ändern ihrer fachlichen Bedeutung.
+
+## 15.11.2026 – Private Notizen: Bedienregeln und Konfliktfeedback
+
+- **BESCHLOSSEN:** Die Notizenliste darf nach vorhandener Eintragsart (`note` / `bookmark`) filtern und nach vorhandenem Änderungsdatum oder Titel sortieren. Die Suche bleibt auf bereits vorhandene Titel-, Inhalts- und Tagfelder beschränkt.
+- **BESCHLOSSEN:** Das Erstellen neuer Notizen und Lesezeichen bleibt ausschließlich im Reader. In „Meine Notizen“ entsteht keine zweite Erstellungsaktion.
+- **BESCHLOSSEN:** Private Notiz- und Lesezeicheninhalte bleiben owner-only; die UI darf keine Administrator- oder Teilenansicht hinzufügen.
+- **BESCHLOSSEN:** Bei Revisionskonflikten bleibt der lokale Editorinhalt erhalten. Die aktuelle owner-eigene Fassung darf zusätzlich zum Vergleich geladen werden; das Übernehmen dieser Fassung erfordert eine ausdrückliche Aktion mit Bestätigung, die lokale Änderungen sichtbar verwirft.
+- **BESCHLOSSEN:** Die aktuelle Quellenstatus-API liefert keine Materialtitel. Daher werden keine technischen IDs angezeigt. Bis zu einer separat überprüften API-Erweiterung werden Quellen neutral nummeriert und mit dem tatsächlich zurückgelieferten Zugriffsstatus beschriftet.
+- **BESCHLOSSEN:** Bereichsgrün ist nur Identitätsakzent, nicht Speichern-/Erfolgsfarbe. Löschen einer Notiz ist destruktiv; das Entfernen eines Lesezeichens wird als eigene, korrekt benannte Aktion behandelt.
