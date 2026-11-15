@@ -291,7 +291,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setModuleDocumentTypeFilter('');
   };
 
-  const openVersionedMaterial = (materialId: string) => {
+  const openVersionedMaterial = (materialId: string, keepNavigationOpen = false) => {
     if (activeVersionedMaterialId === materialId) {
       setIsLibraryNavigationOpen(true);
       return;
@@ -305,7 +305,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setVersionedMaterialRetryable(false);
     setSelectedVersionedMaterialAnchor(null);
     setActiveVersionedMaterialId(materialId);
-    setIsLibraryNavigationOpen(true);
+    setIsLibraryNavigationOpen(keepNavigationOpen);
   };
 
   const currentModule = modules.find(module => module.id === activeModuleId) || null;
@@ -877,7 +877,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               </div>
               <details className="academy-library-filters rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
                 <summary className="cursor-pointer select-none text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Filter {hasActiveLibraryFilters ? '· aktiv' : ''}
+                  Filter {hasActiveLibraryFilters ? `· ${Number(Boolean(moduleCategoryFilter)) + Number(Boolean(moduleDocumentTypeFilter))} aktiv` : ''}
                 </summary>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                   <div>
@@ -896,32 +896,73 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   </div>
                 </div>
               </details>
-              {hasActiveLibraryFilters && (
-                <div className="flex flex-wrap items-center gap-2" aria-label="Aktive Bibliotheksfilter">
+              {(Boolean(moduleSearchQuery.trim()) || hasActiveLibraryFilters) && (
+                <div className="academy-library-active-criteria" aria-label="Aktive Suchbedingungen">
+                  {moduleSearchQuery.trim() && (
+                    <button type="button" onClick={() => setModuleSearchQuery('')} className="academy-library-criteria-chip">
+                      Suche: {moduleSearchQuery.trim()} <span aria-hidden="true">×</span><span className="sr-only"> Suchbegriff entfernen</span>
+                    </button>
+                  )}
                   {moduleCategoryFilter && (
-                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
-                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="academy-library-criteria-chip">
+                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> Kategoriefilter entfernen</span>
                     </button>
                   )}
                   {moduleDocumentTypeFilter && (
-                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
-                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="academy-library-criteria-chip">
+                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> Dokumenttypfilter entfernen</span>
                     </button>
                   )}
-                  <button type="button" onClick={clearLibraryFilters} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-300">Alle Filter zurücksetzen</button>
+                  <button type="button" onClick={() => { setModuleSearchQuery(''); setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }} className="academy-library-clear-criteria">
+                    Alle Suchbedingungen zurücksetzen
+                  </button>
                 </div>
               )}
               {sortedLibraryEntries.length === 0 ? (
                 versionedMaterialsLoading || versionedMaterialsError ? null : (
-                  <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
+                  <p role="status" className="academy-library-no-results border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">
+                    Keine Materialien passen zu deiner Suche oder den aktiven Filtern. Ändere den Suchbegriff oder entferne einen Filter.
+                  </p>
                 )
               ) : (
-                <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
-{sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
-<div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
-<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); setIsLibraryNavigationOpen(true); } else { openVersionedMaterial(entry.id); } }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
-</article>)}
-</div>
+                <>
+                  <div className="academy-library-results-heading">
+                    <h3>Materialien</h3>
+                    <p>{sortedLibraryEntries.length} {sortedLibraryEntries.length === 1 ? 'Treffer' : 'Treffer'}</p>
+                  </div>
+                  <div className="academy-library-results" role="list" aria-label="Bibliotheksmaterialien">
+                    {sortedLibraryEntries.map(entry => (
+                      <article key={entry.kind + ':' + entry.id} className="academy-library-material-card" role="listitem">
+                        <div className="academy-library-material-card-content">
+                          <div className="academy-library-material-meta">
+                            {entry.category && <span>{entry.category}</span>}
+                            {entry.category && entry.documentTypeName && <span aria-hidden="true">·</span>}
+                            {entry.documentTypeName && <span>{entry.documentTypeName}</span>}
+                          </div>
+                          <h3 className="academy-library-material-title">{entry.title}</h3>
+                          {entry.description && <p className="academy-library-material-description">{entry.description}</p>}
+                          {entry.code && <p className="academy-library-material-code">{entry.code}</p>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (entry.kind === 'legacy') {
+                              setActiveVersionedMaterialId(null);
+                              setActiveModuleId(entry.id);
+                              setIsLibraryNavigationOpen(false);
+                            } else {
+                              openVersionedMaterial(entry.id);
+                            }
+                          }}
+                          aria-label={`Material öffnen: ${entry.title}`}
+                          className="academy-library-open-button"
+                        >
+                          Material öffnen <span aria-hidden="true">→</span>
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           ) : (
@@ -940,7 +981,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                    <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{versionedMaterialsLoading ? 'Materialien werden geladen …' : versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + (filteredLibraryEntries.length === 1 ? ' Material' : ' Materialien')}</p>
                   {filteredLibraryEntries.length === 0 ? (versionedMaterialsLoading || versionedMaterialsError ? null : <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p>) : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {filteredLibraryEntries.map(entry => {
+                      {sortedLibraryEntries.map(entry => {
                         const isSelected = entry.kind === 'legacy'
                           ? currentModule?.id === entry.id
                           : activeVersionedMaterialId === entry.id;
@@ -949,7 +990,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             setActiveVersionedMaterialId(null);
                             setActiveModuleId(entry.id);
                           } else {
-                            openVersionedMaterial(entry.id);
+                            openVersionedMaterial(entry.id, true);
                           }
                         }} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
                           <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{entry.code}</span>
