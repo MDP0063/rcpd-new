@@ -483,3 +483,8 @@
 - Kurskatalog um UI-Filter für die vorhandenen Teilnahmezustände und Sortierung nach Titel bzw. veröffentlichtem Datum ergänzt.
 - Bereichspetrol der Kurse von Statusmarkern und Aktionen getrennt; Archiviert/nicht verfügbar wird neutral beschrieben.
 - Umsetzung befindet sich auf `redesign/academy-usability-system`; CI und manuelle QA sind noch ausstehend.
+
+
+## 15.11.2026 – Academy-Farbsemantik und Markdown-Navigation
+- Interne Markdown-Links und Textanker bleiben im selben Tab; nur externe HTTP(S)-Links öffnen einen neuen Tab.
+- Die Notizen-Bereichsfarbe Grün wird auf einen zurückhaltenden Identitätsakzent begrenzt. Speicheraktion, Eingabefokus und Flächen erhalten neutrale Aktions-/Oberflächenfarben; die destruktive Löschaktion bleibt als solche unterscheidbar.
