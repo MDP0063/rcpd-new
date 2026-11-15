@@ -48,10 +48,10 @@ export const AdminExamWorkshopGovernance: React.FC<{ onOpenExam: (id: string) =>
         {request.status === 'pending' ? <div className="space-y-2 border-t border-slate-200 pt-3">
           <textarea value={reason} onChange={event => setReason(event.target.value)} rows={2} maxLength={1000} placeholder="Begründung für Rückgabe, Ablehnung oder Archivierung…" className="w-full rounded border border-slate-300 bg-transparent p-2 text-sm"/>
           <div className="flex flex-wrap gap-2">
-            <button disabled={busyId === request.id} onClick={() => void decide(request, 'approve')} className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 academy-action-primary"><Check size={14}/>Freigeben & veröffentlichen</button>
-            <button disabled={busyId === request.id} onClick={() => void decide(request, 'returned')} className="inline-flex items-center gap-1 rounded bg-amber-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 academy-action-secondary"><RotateCcw size={14}/>Zur Überarbeitung</button>
-            <button disabled={busyId === request.id} onClick={() => void decide(request, 'rejected')} className="inline-flex items-center gap-1 rounded bg-rose-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 academy-action-danger"><X size={14}/>Ablehnen</button>
-            <button disabled={busyId === request.id} onClick={() => void decide(request, 'archived')} className="inline-flex items-center gap-1 rounded bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 academy-action-secondary"><Archive size={14}/>Archivieren</button>
+            <button disabled={busyId === request.id} onClick={() => void decide(request, 'approve')} className="academy-action-primary disabled:opacity-50"><Check size={14}/>Freigeben & veröffentlichen</button>
+            <button disabled={busyId === request.id} onClick={() => void decide(request, 'returned')} className="academy-action-secondary disabled:opacity-50"><RotateCcw size={14}/>Zur Überarbeitung</button>
+            <button disabled={busyId === request.id} onClick={() => void decide(request, 'rejected')} className="academy-action-danger disabled:opacity-50"><X size={14}/>Ablehnen</button>
+            <button disabled={busyId === request.id} onClick={() => void decide(request, 'archived')} className="academy-action-secondary disabled:opacity-50"><Archive size={14}/>Archivieren</button>
           </div>
         </div> : <p className="border-t border-slate-200 pt-3 text-xs text-slate-600">{request.reviewedByName || 'Admin'} · {request.reviewedAtIso ? new Date(request.reviewedAtIso).toLocaleString('de-DE') : ''}{request.reviewComment ? ` · ${request.reviewComment}` : ''}</p>}
       </article>)}</div>}
