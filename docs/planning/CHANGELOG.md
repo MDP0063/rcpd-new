@@ -452,3 +452,10 @@
 
 - 13.11.2026: Lernbibliothek-Designverfeinerung (PR #288): violette Bereichsidentität in Katalogkarten, Metadaten, Fokus- und Primäraktionen konsistent umgesetzt; Kartenbeschreibungen kompakt gehalten, Reader neutral und lesefokussiert; mobile Such-/Sortierflächen und Aktionen verbessert. Keine Funktions-, Daten- oder Berechtigungsänderung.
 - Ergänzende Prüfung in PR #288: Dark-Mode-Fokusindikatoren der Bibliothekskarten und Blockquote-Kontrast in der Materialeditorvorschau korrigiert; keine Funktions- oder Datenänderung.
+
+## 13.11.2026 – Materialeditor und Taxonomie
+
+- Visuelle Hierarchie des bestehenden Materialeditors und der Kategorie-/Dokumenttypverwaltung nachgeschärft.
+- Inhaltliche und technische Abläufe bleiben unverändert; keine Berechtigungs-, Datenmodell- oder API-Änderungen.
+- White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsfehler wird separat untersucht, nicht durch diese CSS-Verfeinerung überdeckt.
+- Ergänzende Prüfung in PR #289: Dark-Mode-Fokusindikator der Materialverwaltung kontrastreicher gestaltet; keine Funktions-, Daten- oder Berechtigungsänderung.

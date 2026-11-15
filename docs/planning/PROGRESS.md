@@ -1259,3 +1259,14 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - PR #288 wurde nach den Merges von #286 und #287 mit dem aktuellen `main` zusammengeführt. Die Bibliotheks-CSS-Ergänzungen und die Prüfungsnavigation wurden konfliktfrei kombiniert; die kollidierende Abschnittsnummer in der Unterseiten-Dokumentation wurde fortlaufend auf 14 gesetzt.
 - Der Synchronisations-Commit bewahrt den bisherigen PR-Head und `main` als Eltern. Keine History-Rewrite- oder Force-Push-Aktion.
 - Die CI wird auf dem kombinierten Stand erneut ausgeführt. Browser-/Responsive-/Screenreader-Abnahme bleibt für die spätere gemeinsame QA vorgesehen.
+
+## 13.11.2026 – Materialverwaltung und Editor: visuelle Hierarchie
+
+- Separater Arbeitsschritt in Branch `design/academy-material-editor-hierarchy`.
+- Der bestehende Materialeditor erhält eine klarere visuelle Trennung seiner bereits vorhandenen Gruppen „Grunddaten und Zuordnung“ sowie „Inhalt und Darstellung“.
+- Bearbeiten/Vorschau werden als zusammengehörige Ansichtsumschaltung gestaltet; Speichern, Veröffentlichen und Verwerfen bleiben als bestehende Aktionen erkennbar. Die Archivierung bleibt eine visuell getrennte administrative Aktion.
+- Kategorie- und Dokumenttypverwaltung erhalten eine klarere Gewichtung zwischen Bearbeiten, Archivieren/Reaktivieren und endgültigem Löschen.
+- Ausschließlich CSS/Präsentation; keine Änderung an Formularfeldern, Pflichtangaben, Rollen-/Kursrechten, Veröffentlichungs- oder Versionslogik, Taxonomie-Lebenszyklus oder Materialinhalten.
+- Die gemeldete White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsstörung ist ausdrücklich **nicht** Teil dieses Schritts und bleibt für eine separate Reproduktion/Ursachenanalyse vorgemerkt.
+- CI auf PR-Head `682348df7e60f5864f00318307478545d053c273` erfolgreich: `bun run lint`, Produktionsbuild und `bun run test` bestanden ([Workflow](https://github.com/MDP0063/rcpd-new/actions/runs/43428990832)). Der optionale Render-Deploy-Hook wurde übersprungen; kein Deployment ausgelöst. Browser-/Responsive-/Keyboard-Abnahme steht weiterhin aus.
+- Ergänzende Accessibility-Prüfung: Tastaturfokusmarkierungen in der Materialverwaltung sind im Dark Mode jetzt heller und klarer erkennbar. CI für den aktualisierten Branchstand wird erneut geprüft; Browser-/Screenreader-Abnahme bleibt offen.
