@@ -827,7 +827,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <div className="flex flex-wrap items-center gap-3 text-sm text-rose-700 dark:text-rose-300">
                   <p>{versionedMaterialsError}</p>
                   {versionedMaterialsRetryable && (
-                    <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>
+                    <button type="button" className="academy-library-open-button academy-action-secondary" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>
                       Erneut versuchen
                     </button>
                   )}
@@ -956,7 +956,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             }
                           }}
                           aria-label={`Material öffnen: ${entry.title}`}
-                          className="academy-library-open-button"
+                          className="academy-library-open-button academy-action-secondary"
                         >
                           Material öffnen <span aria-hidden="true">→</span>
                         </button>
@@ -971,7 +971,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
               {versionedMaterialsError && (
                 <div className="col-span-full flex flex-wrap items-center gap-3 rounded-md border border-rose-200 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300">
                   <p>{versionedMaterialsError}</p>
-                  {versionedMaterialsRetryable && <button type="button" className="academy-library-open-button" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>Erneut versuchen</button>}
+                  {versionedMaterialsRetryable && <button type="button" className="academy-library-open-button academy-action-secondary" onClick={() => setVersionedMaterialsLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialsLoading}>Erneut versuchen</button>}
                 </div>
               )}
               {isLibraryNavigationOpen && (
