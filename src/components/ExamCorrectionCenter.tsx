@@ -232,7 +232,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
       <div className="exam-release-heading"><h3 className="font-bold text-slate-900 dark:text-white">Ausstehende Ergebnisfreigaben</h3><p className="mt-1 text-xs text-slate-500">Nur endgültig bewertete Ergebnisse können hier offiziell für Teilnehmer freigegeben werden. Korrekturen nach einer früheren Freigabe erfordern eine erneute Freigabe.</p></div>
       {releaseLoadError ? <div role="alert" className="text-sm text-rose-700 dark:text-rose-300">{releaseLoadError}</div> : filteredPendingReleases.length === 0 ? <p className="text-sm text-slate-500">{pendingReleases.length ? 'Keine Freigaben entsprechen den gewählten Filtern.' : 'Keine ausstehenden Ergebnisfreigaben.'}</p> : filteredPendingReleases.map(item => <div key={item.id} className="exam-release-item flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
         <div className="exam-release-details"><p className="font-semibold text-slate-900 dark:text-white">{item.examTitle} · {item.attemptCourseCode}</p><p className="text-xs text-slate-500">{item.userName} · {item.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · {new Date(item.submittedAtIso).toLocaleString('de-DE')}</p><p className="text-xs text-slate-500">{item.status === 'passed' ? 'Bestanden' : 'Nicht bestanden'} · {formatScore(item.finalScoreBasisPoints)}{item.resultReleaseStatus === 'pending_rerelease' ? ' · erneute Freigabe nach Korrektur' : ''}</p>{item.resultReleaseHistory.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Vorherige Freigaben: {item.resultReleaseHistory.map(entry => `${new Date(entry.releasedAtIso).toLocaleString('de-DE')} (${entry.releasedByUid})`).join(' · ')}</p>}</div>
-        <button type="button" disabled={Boolean(savingId)} onClick={() => void release(item)} className="exam-release-button academy-action-primary rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{savingId === item.id ? 'Gibt frei …' : 'Ergebnis freigeben'}</button>
+        <button type="button" disabled={Boolean(savingId)} onClick={() => void release(item)} className="exam-release-button academy-action-primary disabled:opacity-50">{savingId === item.id ? 'Gibt frei …' : 'Ergebnis freigeben'}</button>
       </div>)}
     </section>}
 
@@ -269,7 +269,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
             <textarea className={fieldClass + ' mt-1 min-h-24'} maxLength={1000} disabled={savingId === review.id} value={reasons[review.id] || ''} onChange={event => setReasons(current => ({ ...current, [review.id]: event.target.value }))} placeholder="Warum muss die ursprüngliche Bewertung geändert werden?"/>
           </label>
           <div className="flex justify-end">
-            <button type="button" disabled={Boolean(savingId) || (reasons[review.id] || '').trim().length < 10} onClick={() => void submit(review)} className="academy-action-primary rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingId === review.id ? 'Speichert …' : 'Korrektur speichern'}</button>
+            <button type="button" disabled={Boolean(savingId) || (reasons[review.id] || '').trim().length < 10} onClick={() => void submit(review)} className="academy-action-primary disabled:opacity-50">{savingId === review.id ? 'Speichert …' : 'Korrektur speichern'}</button>
           </div>
         </div>
 
