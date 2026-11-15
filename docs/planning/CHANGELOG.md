@@ -575,5 +575,6 @@
 ## 2026-11-15 – Lehrgangsdetail: fehlende Kursreferenzen
 
 - Fehlende Kursreferenzen zeigen keine internen IDs mehr.
+- Interne Kurs-IDs bleiben auf technische Schlüssel-/Lookup-Verwendung beschränkt und werden nicht als sichtbarer Fallback ausgegeben.
 - Fehlende Fortschrittsdatensätze in bestehenden Lehrgangsteilnahmen werden nicht als „Noch nicht begonnen“ fehlinterpretiert.
 - „Zum Kurs“ wird nur bei vorhandenem Katalogeintrag angeboten; keine künstlichen Masterdaten oder erfundenen Statuswerte.
