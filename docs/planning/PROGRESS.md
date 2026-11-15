@@ -1360,3 +1360,31 @@ Historischer Implementierungsbranch: `redesign/academy-usability-system`; seine 
 - Die branchbezogenen Angaben aus dem ersten Arbeitsprotokoll vor PR #290 sind historisch. PR #290 ist gemergt; der damalige Feature-Branch wurde durch den Merge ersetzt. Der aktuelle Arbeitszweig ist oben angegeben.
 
 - **PR #292** ist erstellt; der finale Branchstand wartet auf den durch den PR-Synchronisationslauf ausgelösten TypeScript-/Build-/Servertest- und PR-Vorlagenworkflow. Kein Render-Deploy-Hook und keine Browserprüfung wurden ausgeführt.
+
+
+## 15.11.2026 – Gemeinsames semantisches Academy-Interaktionssystem
+
+### Ausgangsbefund
+Der Farbaudit über alle Untermodule zeigte, dass Bereichsfarben wiederholt als Aktions-/Auswahlfarbe verwendet wurden: Petrol in Kursaktionen, Violett in Bibliotheks-/Materialverwaltung, Beerenton in Prüfungsaktionen und Grün in Notizen. Zusätzlich wurden neutrale Lebenszyklus-/Workflowzustände (archiviert, Entwurf, Bewertung/Freigabe ausstehend) teilweise wie Warn-/Erfolgszustände eingefärbt.
+
+### Umsetzung auf `redesign/academy-control-system`
+- Neue gemeinsame Token-Datei `src/components/AcademyDesignTokens.css`, eingebunden in `AcademyCenter.tsx`.
+- Semantische Tokens für Text, Oberflächen, Auswahl, Rahmen, Fokus, Primär-/Sekundär-/destruktive Aktionen sowie echte Erfolgs-/Warn-/Fehler-/Infozustände.
+- Theme-aware Bereichs-Vordergrundfarben für Dark Mode; die genehmigten fünf Bereichsfarben und Einstiegskacheln bleiben erhalten.
+- Einheitliche `academy-action-primary`, `academy-action-secondary`, `academy-action-danger`-Varianten; mindestens 44px Zielhöhe für diese Aktionen sowie wichtige Unter-Navigation/Segmentsteuerungen und Eingabefelder.
+- Globaler 3px-Tastaturfokus mit 3px Offset; gesättigte Einstiegskacheln behalten eine kontrastreiche helle Innenkontur.
+- Kurskarten, Kursaktionen, Kursstatusflächen und Kursdetailbedienung neutralisiert; echte Kursidentität bleibt ein kleiner Petrol-Akzent.
+- Bibliotheks-/Materialverwaltungsnavigation, Auswahlzustände, Such-/Formoberflächen und Reader-Controls neutralisiert; Violett bleibt ein kleiner Bibliotheksakzent.
+- Prüfungsrunner: Primäraktion, ausgewählte Fragen/Antworten und Fortschrittsanzeige neutral; Berry bleibt Bereichsidentität. Ausstehende Bewertung/Freigabe ist neutral, bestanden/nicht bestanden bleiben echte Ergebnisfarben.
+- Prüferaktionen erhalten einheitliche Primär-/Sekundär-/Destruktiv-Hierarchie; Übergabeinformationen sind neutral, Warnungen vor Inaktivitäts-/Verwerfungsfolgen bleiben amber.
+- Exam-Workshop-Lebenszyklusstatus (Entwurf/veröffentlicht/archiviert) neutral; Governance-Aktionen nach Wirkung unterschieden.
+- Taxonomie: Archivieren/Reaktivieren neutral, endgültiges Löschen destruktiv.
+- Materialeditor: neutrale Flächen, Felder und Auswahl; Archivierung neutral; Speichern primär.
+- Kursauthoring: neutrale Arbeitsflächen; echte Blockaden/ungespeicherte Änderungen bleiben Warnhinweise.
+- Notizen: gemeinsame Tokens; Speichern neutral primär, Löschen destruktiv, Bereichsgrün nur Identitätsakzent.
+
+### Qualitätssicherung / offene Punkte
+- Noch keine CI für diesen Branch; vollständige Diffprüfung und TypeScript-/Build-/Servertests stehen aus.
+- Browser-/Responsive-/Screenreader-Abnahme bleibt später.
+- Vor PR-Erstellung werden CSS-Duplikate, Kontrastwerte, alle verbliebenen Bereichsfarb-Verwendungen und Statussemantik nochmals geprüft.
+- Nach Merge dieses Token-Grundschritts folgt eine gezielte Bibliotheks-/Reader-Bedienungsrunde; danach Prüfungs-/Notizen-/Verwaltungsdetails.
