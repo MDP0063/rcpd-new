@@ -293,7 +293,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
         const validB = Number.isFinite(dateB);
         if (validA && validB && dateA !== dateB) return dateB - dateA;
         if (validA !== validB) return validA ? -1 : 1;
-        return (a.title || '').localeCompare(b.title || '', 'de-DE', { sensitivity: 'base' });
+        const titleA = a.title || (a.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel');
+        const titleB = b.title || (b.kind === 'bookmark' ? 'Lesezeichen' : 'Notiz ohne Titel');
+        return titleA.localeCompare(titleB, 'de-DE', { sensitivity: 'base' });
       });
   }, [notes, noteSearch, noteKindFilter, noteSortOrder]);
 
