@@ -1414,7 +1414,6 @@ main.academy-main-viewport {
    keeping the catalog and long-form reader visually quiet. */
  .academy-library-area {
   --library-accent: #6841b8;
-  --library-focus: var(--academy-focus-color);
 }
 .academy-library-area .academy-library-topic-card {
   border-left-color: var(--academy-area-library);
@@ -1545,7 +1544,6 @@ main.academy-main-viewport {
 
 /* Academy library usability pass: make discovery and reading separate, predictable tasks. */
 .academy-library-area {
-  --library-focus: var(--academy-focus-color);
 }
 .academy-library-area .academy-library-search-controls {
   position: relative;
@@ -1712,16 +1710,15 @@ main.academy-main-viewport {
   color: var(--academy-text-primary);
 }
 .academy-library-area :is(button, input, select, summary):focus-visible {
-  outline: 3px solid var(--library-focus);
+  outline: 3px solid var(--academy-focus-color);
   outline-offset: 3px;
 }
 .academy-library-area .academy-library-topic-card:focus-visible,
 .academy-library-area .academy-library-material-card:focus-within {
-  outline: 3px solid var(--library-focus);
+  outline: 3px solid var(--academy-focus-color);
   outline-offset: 3px;
 }
 .dark .academy-library-area {
-  --library-focus: var(--academy-focus-color);
 }
 .dark .academy-library-search-hint,
 .dark .academy-library-results-heading p {
