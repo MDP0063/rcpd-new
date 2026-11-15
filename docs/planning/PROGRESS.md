@@ -1238,3 +1238,9 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 - Technischer Grund: `ExamCorrectionCenter` lädt Ergebnisfreigaben nur mit `canReleaseResults={currentUser.role === 'admin'}`; Colonels besitzen weiterhin die vorhandene Korrekturfunktion, aber keine Ergebnisfreigabe.
 - Keine Änderung an Berechtigungen, API, Datenmodell oder tatsächlichen Aktionen. TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf dem aktuellen Implementierungsstand `b6cc35c` erfolgreich; PR-Vorlagenprüfung ebenfalls. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43391193711). Der optionale Render-Deploy-Hook wurde übersprungen. Die Browserprüfung mit Admin- und Colonel-Rolle steht noch aus.
 - Ergänzende Tastaturprüfung: Beide Gruppen der Prüfungs-Unter-Navigation besitzen nun eine explizite, im Hell- und Dunkelmodus sichtbare `:focus-visible`-Kontur; keine Änderung an Rollen oder Aktionen.
+
+## 15.11.2026 – PR-Branch mit aktuellem main abgeglichen
+
+- PR #287 wurde nach dem Merge von #286 konfliktfrei inhaltlich mit dem neuen `main` zusammengeführt. Die geänderten Navigationskomponenten und beide Dokumentationsstände bleiben erhalten.
+- Der Synchronisations-Commit besitzt `main` und den bisherigen PR-Head als Eltern; keine Force-Push-/History-Rewrite-Aktion.
+- Die CI wird auf dem zusammengeführten Branchstand erneut ausgeführt. Browser-/Screenreader-Abnahme bleibt für die spätere gemeinsame QA vorgesehen.
