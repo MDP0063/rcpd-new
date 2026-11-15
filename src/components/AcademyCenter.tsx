@@ -293,7 +293,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
   const openVersionedMaterial = (materialId: string, keepNavigationOpen = false) => {
     if (activeVersionedMaterialId === materialId) {
-      setIsLibraryNavigationOpen(true);
+      setIsLibraryNavigationOpen(keepNavigationOpen);
       return;
     }
     versionedMaterialRequestIdRef.current += 1;
@@ -858,7 +858,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     )}
                   </div>
                   <p id="academy-library-search-hint" className="academy-library-search-hint">
-                    Sucht in Titel, Kennung, Kategorie, Dokumenttyp und Beschreibung. Der vollständige Dokumentinhalt wird nicht durchsucht.
+                    Sucht in Titel, Kennung, Kategorie, Dokumenttyp, Beschreibung und – sofern vorhanden – verknüpftem Dateinamen. Der vollständige Dokumentinhalt wird nicht durchsucht.
                   </p>
                 </div>
                 <div className="academy-library-sort">
