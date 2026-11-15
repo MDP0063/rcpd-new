@@ -109,7 +109,7 @@
 .dark .academy-exam-option[aria-pressed="true"] h3,
 .dark .academy-exam-question-panel > div:first-child h3 { color: var(--academy-text-primary); }
 .dark .academy-exam-heading > div:first-child > div:first-child,
-.dark .academy-exam-attempt-header .text-sky-700 { color: #d995b8 !important; }
+.dark .academy-exam-attempt-header .text-sky-700 { color: var(--academy-area-exams-foreground) !important; }
 .dark .academy-exam-history,
 .dark .academy-exam-selection-panel,
 .dark .academy-exam-empty,
