@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue), #297 (Kurs-/Lehrgangsverwaltung), #298 (Materialverwaltungskatalog), #299 (Taxonomieverwaltung) und #300 (Kursnachweis-Doppelsubmit-Schutz) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#301 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `122de078f8e6336cb475b063c47ef19fca76e06d` (PR #300). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295, Kurs-/Lehrgangsfilter aus #297, Materialverwaltungsfilter aus #298, Taxonomie-Suche/Statusfilter aus #299 und der Nachweis-Doppelsubmit-Schutz aus #300.
+**Aktueller Basisstand:** `main` bei `44dcc3e487ff8e4747e264a4710bb3737fff0037` (PR #301). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300 und Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#300 sind gemergt. Für #297–#300 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#301 sind gemergt. Für #297–#301 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1445,10 +1445,19 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **PR #300 ist am 15.11.2026 gemergt** (Merge-Commit `122de078f8e6336cb475b063c47ef19fca76e06d`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
 
 
-## 15.11.2026 – Lehrgangsdetail: fehlende Kursreferenzen
+## 15.11.2026 – Lehrgangsdetail: fehlende Kursreferenzen (PR #301)
 
-- Pflicht- und Empfehlungskurse zeigen bei fehlendem Katalogeintrag einen verständlichen Hinweis statt der internen Kurs-ID.
-- Die interne Kurs-ID bleibt ausschließlich technischer Schlüssel/Lookup und wird nicht als sichtbarer Fallback ausgegeben.
+- Pflicht- und Empfehlungskurse zeigen bei fehlendem Katalogeintrag einen verständlichen Hinweis statt der internen Kurs-ID. Die interne Kurs-ID bleibt ausschließlich technischer Schlüssel/Lookup und wird nicht als sichtbarer Fallback ausgegeben.
 - Ein fehlender Fortschrittsdatensatz in einer bereits begonnenen Lehrgangsteilnahme wird nicht fälschlich als „Noch nicht begonnen“ ausgegeben; der Zustand wird als nicht verfügbar gekennzeichnet.
 - Die Aktion „Zum Kurs“ erscheint nur, wenn ein passender Katalogeintrag vorhanden ist. Keine künstliche Kurs-Master-Instanz und keine erfundenen Veröffentlichungs-/Verfügbarkeitswerte.
-- Arbeitsbranch: `fix/academy-program-course-reference-fallbacks`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
+- **PR #301 ist am 15.11.2026 gemergt** (Merge-Commit `44dcc3e487ff8e4747e264a4710bb3737fff0037`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
+
+
+## 15.11.2026 – Academy-Navigation: Fokus nach Bereichswechsel
+
+- Nach Auswahl einer Startkachel erhält das aktive Element der Academy-Hauptnavigation den Fokus. Nach Rückkehr zur Kachelansicht erhält die zuletzt verwendete Einstiegskachel den Fokus.
+- Dieselbe Fokusweitergabe wird für externe Sprünge in den Prüfungsbereich verwendet; normale Wechsel innerhalb der bestehenden Hauptnavigation behalten den Fokus auf dem ausgelösten Navigationsbutton.
+- Bei einem neuen Prüfungsziel innerhalb des bereits aktiven Prüfungsbereichs wird der Fokus nicht ungefragt erneut verschoben.
+- Umsetzung folgt den aktuellen Empfehlungen für dynamische Navigation und Fokusreihenfolge: Home Office Accessibility Standard (WCAG 2.4.3; dynamische Controls dürfen Fokus nicht verlieren) und VA.gov SPA-Fokusmanagement (Fokus auf ein kontextgebendes interaktives Element bei clientseitigem Seitenwechsel).
+- Quellen: https://design.homeoffice.gov.uk/accessibility/standard/operable ; https://design.va.gov/accessibility/focus-management
+- Arbeitsbranch: `a11y/academy-navigation-focus-management`. CI nach PR-Erstellung; manuelle Tastatur-/Screenreader-Abnahme später.
