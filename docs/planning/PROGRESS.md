@@ -1358,3 +1358,5 @@ Historischer Implementierungsbranch: `redesign/academy-usability-system`; seine 
 - Codeänderungen sind committed; CI und vollständige PR-Diffprüfung stehen für diesen Branch noch aus.
 - Als nächstes folgen die konsolidierte Academy-Control-/Tokenbasis und der gezielte Audit der Notizen- und Prüfungsbedienung. Die Bibliothek bleibt Schwerpunkt; bestehende Suche, Filter, Sortierung, Materialversionen, private Textanker und Readerpositionen sind Regression-Schutzbereiche.
 - Die branchbezogenen Angaben aus dem ersten Arbeitsprotokoll vor PR #290 sind historisch. PR #290 ist gemergt; der damalige Feature-Branch wurde durch den Merge ersetzt. Der aktuelle Arbeitszweig ist oben angegeben.
+
+- **PR #292** ist erstellt; der finale Branchstand wartet auf den durch den PR-Synchronisationslauf ausgelösten TypeScript-/Build-/Servertest- und PR-Vorlagenworkflow. Kein Render-Deploy-Hook und keine Browserprüfung wurden ausgeführt.
