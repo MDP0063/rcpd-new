@@ -547,3 +547,18 @@
 - Optionale Statusfilter für Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
 - Keine Änderung an Taxonomie-API, Statuswerten, Revisionen oder Schutz bestehender Materialzuordnungen.
 - Such-/Formularfelder und Aktionen auf mindestens 44 px Zielhöhe vereinheitlicht.
+
+
+## 2026-11-15 – Taxonomieverwaltung: Kategorien und Dokumenttypen (PR #299)
+
+- Suche nach Name/Beschreibung, Filter Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und Rücksetzung.
+- Such-/Formularfelder und Aktionen auf mindestens 44 px Zielhöhe.
+- PR #299 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+## 2026-11-15 – Kursdetail und Nachweisaktion
+
+- Nachweiserfassung bleibt bis zum Abschluss des Detail-Refreshs gesperrt, um doppelte Klicks auf veralteten Status zu verhindern.
+- Bei fehlgeschlagenem Refresh wird die alte Aktion nicht erneut angeboten; stattdessen wird der vorhandene Teilnahme-Neuladepfad angezeigt.
+- Lehrgangsdetails erhalten verständliche Fallbacks für fehlende Kurzbeschreibung und leere Lernziele.
+- Kurs-Suchhinweis sichtbar; Suchlösch-/Filteraktionen auf mindestens 44 px Zielhöhe.
+- Keine Änderung an API, Rollen, Berechtigungen, Nachweisregeln oder Datenmodell.
