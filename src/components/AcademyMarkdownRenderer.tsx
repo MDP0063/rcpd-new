@@ -50,9 +50,20 @@ const academyMarkdownComponents: Components = {
   blockquote: ({ children, node: _node, ...props }: any) => (
     <blockquote {...props} className="my-4 border-l-4 border-slate-300 pl-4 text-slate-700 dark:border-slate-600 dark:text-slate-300">{children}</blockquote>
   ),
-  a: ({ children, href, node: _node, ...props }: any) => (
-    <a {...props} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200">{children}</a>
-  ),
+  a: ({ children, href, node: _node, ...props }: any) => {
+    const opensExternalPage = typeof href === 'string' && /^https?:\/\//i.test(href);
+    return (
+      <a
+        {...props}
+        href={href}
+        target={opensExternalPage ? '_blank' : undefined}
+        rel={opensExternalPage ? 'noopener noreferrer' : undefined}
+        className="text-sky-700 underline underline-offset-2 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200"
+      >
+        {children}
+      </a>
+    );
+  },
   pre: ({ children, node: _node, ...props }: any) => (
     <pre {...props} className="my-4 overflow-x-auto rounded-lg border border-slate-200 bg-slate-950 p-4 text-sm leading-6 text-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">{children}</pre>
   ),

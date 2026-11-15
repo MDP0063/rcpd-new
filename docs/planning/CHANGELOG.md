@@ -482,4 +482,9 @@
 - Eine gemeinsame sichere Markdown-Darstellung für Bibliotheksreader, Kursmaterialreader, Materialeditorvorschau und private Notizvorschau eingeführt. Hell-/Dunkelkontraste für Tabellen, Inline-Code, Blockquotes und Links sind explizit.
 - Kurskatalog um UI-Filter für die vorhandenen Teilnahmezustände und Sortierung nach Titel bzw. veröffentlichtem Datum ergänzt.
 - Bereichspetrol der Kurse von Statusmarkern und Aktionen getrennt; Archiviert/nicht verfügbar wird neutral beschrieben.
-- Umsetzung befindet sich auf `redesign/academy-usability-system`; CI und manuelle QA sind noch ausstehend.
+- PR #290 ist am 15.11.2026 in `main` integriert (Merge-Commit `a223cd02bd5edd338390319abc7ee94d83f3cd10`); Build-/Testworkflow und PR-Vorlagenprüfung waren erfolgreich. Manuelle Browser-/Accessibility-QA bleibt offen.
+
+
+## 15.11.2026 – Academy-Farbsemantik und Markdown-Navigation
+- Interne Markdown-Links und Textanker bleiben im selben Tab; nur externe HTTP(S)-Links öffnen einen neuen Tab.
+- Die Notizen-Bereichsfarbe Grün wird auf einen zurückhaltenden Identitätsakzent begrenzt. Speicheraktion, Eingabefokus und Flächen erhalten neutrale Aktions-/Oberflächenfarben; die destruktive Löschaktion bleibt als solche unterscheidbar.

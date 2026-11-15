@@ -1311,7 +1311,7 @@ Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme findet 
 
 ## 15.11.2026 – Erste Umsetzung des vollständigen Academy-Usability-Redesigns
 
-Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach den Merges #286–#289.
+Historischer Implementierungsbranch: `redesign/academy-usability-system`; seine erste Umsetzungs-PR #290 ist inzwischen gemergt (siehe Statuskorrektur unten).
 
 ### Lernbibliothek / Reader
 - Erste Suchebene verbessert: klarere Beschriftung, explizite Suchlöschung und genaue Erklärung, welche Metadaten durchsucht werden. Der vollständige Materialtext wird derzeit bewusst nicht als durchsuchbar ausgegeben, weil der Katalog nur Metadatenindexwerte bereitstellt.
@@ -1337,6 +1337,26 @@ Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach
 - Petrol bleibt Kursbereichsidentität. Teilnahmezustände, Verfügbarkeits-/Archivhinweise und Buttons wurden neutralisiert, damit sie keine Erfolg-/Warn- oder Statusbedeutung vortäuschen.
 
 ### Prüfstatus
-- Diese Änderungen sind noch auf dem Redesign-Branch und werden erst nach der PR-CI als gemergt geführt.
-- TypeScript-/Build-/Server-Testworkflows laufen nach Erstellung der PR.
+- Diese Änderungen wurden in PR #290 zusammengeführt und am 15.11.2026 in `main` integriert; siehe Merge-Commit `a223cd02bd5edd338390319abc7ee94d83f3cd10`.
+- TypeScript, Produktionsbuild und Servertests waren im Build-/Testworkflow [43660044749](https://github.com/MDP0063/rcpd-new/actions/runs/43660044749) erfolgreich; PR-Vorlagenprüfung [43660044772](https://github.com/MDP0063/rcpd-new/actions/runs/43660044772) ebenfalls erfolgreich.
 - Browser-, Responsive-, Tastatur-, Screenreader- und Live-Firestore-QA bleiben wie vereinbart offen und werden später gemeinsam durchgeführt.
+
+
+## 15.11.2026 – Farbsemantik und Markdown-Navigation nach PR #290
+
+### Verifizierter Ausgangsstand
+- PR #290 „Academy: Bibliothek, Reader und Kurskatalog benutzerfreundlich überarbeiten“ ist in `main` integriert: Merge-Commit `a223cd02bd5edd338390319abc7ee94d83f3cd10`; PR-Head `5ece27d7f0bb8ae175cdaa085fa8528230586dbb`.
+- Build-/Testworkflow [43660044749](https://github.com/MDP0063/rcpd-new/actions/runs/43660044749) und PR-Beschreibungsprüfung [43660044772](https://github.com/MDP0063/rcpd-new/actions/runs/43660044772) erfolgreich. TypeScript, Produktionsbuild und Servertests liefen erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen.
+- Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme ist nicht erfolgt und bleibt Teil der späteren gemeinsamen QA.
+
+### Aktuelle Korrekturen auf `redesign/academy-notes-color-semantics`
+- Die gemeinsame Markdown-Darstellung öffnet nur absolute HTTP(S)-Links in einem neuen Tab. Relative Links und Textanker bleiben im aktuellen Tab, damit interne Navigation und Inhaltsverzeichnisse erwartbar funktionieren.
+- Die Notizen-Bereichsfarbe Grün wird nicht mehr als Speicher-/Primäraktionsfarbe oder großflächige Zustandsanmutung verwendet. Speichern nutzt die neutrale Primäraktion; Flächen, Eingaben, Fokus und Trennlinien folgen einer neutralen Oberfläche. Der kleine grüne Bereichskicker bleibt als Identitätsakzent erhalten; destruktives Löschen bleibt separat rot.
+- Keine neue fachliche Statusbedeutung, keine Berechtigungs-/API-/Datenmodelländerung, keine neue Abhängigkeit und keine Kosten.
+
+### Prüfstatus und nächste Schritte
+- Codeänderungen sind committed; CI und vollständige PR-Diffprüfung stehen für diesen Branch noch aus.
+- Als nächstes folgen die konsolidierte Academy-Control-/Tokenbasis und der gezielte Audit der Notizen- und Prüfungsbedienung. Die Bibliothek bleibt Schwerpunkt; bestehende Suche, Filter, Sortierung, Materialversionen, private Textanker und Readerpositionen sind Regression-Schutzbereiche.
+- Die branchbezogenen Angaben aus dem ersten Arbeitsprotokoll vor PR #290 sind historisch. PR #290 ist gemergt; der damalige Feature-Branch wurde durch den Merge ersetzt. Der aktuelle Arbeitszweig ist oben angegeben.
+
+- **PR #292** ist erstellt; der finale Branchstand wartet auf den durch den PR-Synchronisationslauf ausgelösten TypeScript-/Build-/Servertest- und PR-Vorlagenworkflow. Kein Render-Deploy-Hook und keine Browserprüfung wurden ausgeführt.
