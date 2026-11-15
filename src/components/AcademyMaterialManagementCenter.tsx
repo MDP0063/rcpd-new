@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialManagementCenter.css';
+import { AcademyMarkdownRenderer } from './AcademyMarkdownRenderer';
 import type {
   AcademyMaterialCategoryView,
   AcademyMaterialDocumentTypeView,
@@ -658,7 +656,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
                   <div className="academy-material-content-preview min-h-[22rem]" aria-label="Vorschau des Materialinhalts">
                     {!content.trim() ? <p className="text-sm text-slate-500">Noch kein Inhalt vorhanden.</p> : contentFormat === 'code'
                       ? <pre><code>{content}</code></pre>
-                      : <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>}
+                      : <AcademyMarkdownRenderer content={content} />}
                   </div>
                 )}
                 <p id="academy-material-content-hint" className="text-xs text-slate-500 dark:text-slate-400">

@@ -618,3 +618,51 @@ Wenn eine Detail-Spezifikation eine Entscheidung als offen markiert, darf sie ni
 - **TECHNISCHE SCHUTZGRENZEN:** Pro Versuch höchstens eine offene Revisionsanfrage; Antrag und Entscheidung werden append-only protokolliert und gegen konkurrierende Doppelanträge bzw. Doppelentscheidungen geschützt. Die bestehende nachträgliche Admin-/Colonel-Korrektur bleibt ein separater Prozess.
 
 Die zweistufige Freigabestufe wurde vom Projektinhaber am 13.11.2026 ausdrücklich als Option 2 bestätigt.
+
+## 15.11.2026 – Erweiterte Freigabe für das vollständige Academy-Usability-Redesign
+
+Der Projektinhaber hat ausdrücklich beauftragt, die **gesamte Academy einschließlich aller Unterbereiche, tieferen Arbeitsansichten und Bedienelemente** gründlich neu zu gestalten. Die früheren Grundsätze und Schutzentscheidungen bleiben bestehen; die aktuelle Freigabe erweitert die gestalterische Tiefe und die eigenständige UX-Entscheidungsbefugnis.
+
+### Umfang der eigenständigen UX-Freigabe
+
+- **BESCHLOSSEN:** Die gesamte Teilnehmer- und Verwaltungsoberfläche der Academy darf hinsichtlich Informationshierarchie, Seitengliederung, Navigation innerhalb eines bestehenden Hauptbereichs, Suche, Sortierung, Filter, Gruppierung, Listen-/Kartenpräsentation, Detailansichten, Formularführung, Aktionshierarchie, Rückmeldungen und responsiver Darstellung neu konzipiert und umgesetzt werden.
+- **BESCHLOSSEN:** UI-Steuerelemente dürfen ergänzt oder neu angeordnet werden, wenn sie ausschließlich vorhandene, serverseitig bereits zugängliche Daten und bestehende fachliche Zustände verwenden. Beispiele sind Filter nach vorhandenen Teilnahmezuständen, Sortierung nach belegten Datumsfeldern, sichtbare aktive Suchfilter und verständliche Ansichts-/Detailnavigation.
+- **BESCHLOSSEN:** Nutzerfreundlichkeit und Verständlichkeit haben Vorrang vor der bloßen Abbildung technischer Tabellen oder interner Komponenten. Die Gestaltung soll ohne Vorwissen verständlich sein, auch für jüngere Nutzer, ohne kindlich oder spielerisch zu wirken.
+- **BESCHLOSSEN:** Das Redesign muss alle vorhandenen Bedienelemente und Zustände berücksichtigen, nicht nur die sichtbaren Hauptseiten. Dazu gehören auch Reader, Notizbearbeitung, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomie, Prüfungsstart, laufende Prüfung, Ergebnisansicht, Prüferaufgaben, Revision, Korrektur und Freigabe.
+- **BESCHLOSSEN:** Größere Redesign-Schritte sind durch aktuelle Recherche, konkrete Nutzeraufgaben, echte Daten-/Zustandsmodelle, Alternativenvergleich, Entwicklungsaufwand, Risiken und Regressionserwartungen zu begründen und in den Repository-Dokumenten festzuhalten.
+
+### Unveränderliche Schutzgrenzen
+
+- Die fünf Academy-Hauptbereiche, ihre Reihenfolge und die horizontale Hauptnavigation bleiben bestehen: Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen.
+- Die fünf großen, farbigen Kachel-Einstiege einschließlich ihrer Illustrationen, Farben und Gestaltung bleiben unverändert. Sie sind der einzige Einstieg in diese fünf Bereiche; interne Seiten erhalten keine zweite Kachelstartseite.
+- Die direkte, konsistente Rückkehr zur Academy-Kachelstartseite bleibt aus allen internen Ansichten erreichbar.
+- Die bestehenden Bereichsakzente bleiben Identitätsfarben und dürfen keine Status- oder Warnbedeutung vortäuschen.
+- Fachliche Zustände, Geschäftsregeln, Rollen, Berechtigungen, Datenschutz, private Notizen, Versionierung, Veröffentlichung, Archivierung, Kursbindung, Prüfungs- und Ergebnislogik sowie Historienregeln bleiben unverändert.
+- UI-Filter und Sortierungen dürfen vorhandene Werte nicht umdeuten, zusammenlegen oder neue fachliche Zustände erzeugen. Fehlende Daten dürfen nicht durch abgeleitete Fantasie-Werte ersetzt werden.
+- Neue Datenmodelle, Statusübergänge, Berechtigungen, Authentifizierungs-/Autorisierungsänderungen, Datenprojektionen sensibler Informationen, Migrationen oder neue Backend-Funktionen sind nicht automatisch durch die Designfreigabe gedeckt. Sie benötigen eine getrennte technische Risiko- und Review-Stufe gemäß bestehender Arbeitsfreigabe.
+- Keine neuen bezahlten Dienste, Infrastruktur, Laufzeitabhängigkeiten oder externen Design-Assets.
+- Keine Änderungen an anderen Portalmodulen oder der globalen Portalidentität im Rahmen dieser Academy-Freigabe.
+- Browser-, Responsive-, Screenreader- und produktive Firestore-Abnahmen werden bewusst in einer späteren gemeinsamen QA-Runde durchgeführt. Code-/CI-Erfolg darf nicht als visuelle oder produktive Abnahme ausgegeben werden.
+
+### Verbindliche Qualitätsregel für Farbe und Status
+
+- **Bereichsfarbe beantwortet ausschließlich „In welchem Academy-Bereich befinde ich mich?“**
+- **Statusdarstellung beantwortet ausschließlich „Welcher tatsächliche fachliche Zustand liegt vor?“**
+- **Aktionsdarstellung beantwortet ausschließlich „Welche Handlung kann ich hier ausführen?“**
+- Bereichsakzente sind keine Statusfarben, keine pauschalen Primäraktionsfarben und keine Warnrahmen.
+- Status muss durch verständlichen Text und/oder ein geeignetes Symbol bzw. eine Form erkennbar sein; Farbe ist nie der einzige Informationsträger.
+- Warn-/Fehlerfarben bleiben tatsächlichen Warnungen, Fehlern, fehlgeschlagenen Zuständen und destruktiven Aktionen vorbehalten. Archiviert, nicht begonnen, nicht verfügbar, nicht zugänglich, in Bearbeitung, zur Bewertung offen und freigegeben sind keine austauschbaren Farbsynonyme.
+- Statusfarben dürfen erst auf Basis eines verifizierten Zustandsmodells zugeordnet werden. Unklare oder zusammengesetzte Zustände erhalten neutrale Textdarstellung und werden nicht durch eine vermeintlich eindeutige Badge-Farbe vereinfacht.
+
+### Qualitäts- und Dokumentationsanforderung
+
+Jeder größere Teilbereich erhält:
+1. verifizierten Ist-Zustand und relevante Daten-/Statusquellen;
+2. belegte Nutzeraufgaben und problematische Interaktionsstellen;
+3. Recherche mit Primärquellen und passenden Vergleichsplattformen;
+4. mindestens zwei ernsthafte Lösungsvarianten bei prägenden Layout-/Interaktionsfragen;
+5. begründete Entscheidung einschließlich Nachteilen und Entwicklungskosten;
+6. konkrete Komponenten-/Zustands-/Responsive-Spezifikation;
+7. Regressionstestplan, Berechtigungs-/Datenschutzprüfung und offene QA-Punkte.
+
+Diese Freigabe erlaubt die eigenständige Ausarbeitung der Academy-UX, nicht das stille Ändern ihrer fachlichen Bedeutung.

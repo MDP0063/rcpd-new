@@ -1,8 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './AcademyCenter.css';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
 import {
   BookOpen,
   ExternalLink,
@@ -36,6 +33,7 @@ import { AcademyMaterialCategoryManager } from './AcademyMaterialCategoryManager
 import { AcademyMaterialDocumentTypeManager } from './AcademyMaterialDocumentTypeManager';
 import { AcademyMaterialManagementCenter } from './AcademyMaterialManagementCenter';
 import { AcademyMaterialReaderNotes } from './AcademyMaterialReaderNotes';
+import { AcademyMarkdownRenderer } from './AcademyMarkdownRenderer';
 import type { AcademyPrivateNoteTextAnchor, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail } from '../types/academy';
 import { createTextAnchorFromRange, resolveTextAnchorInElement } from '../lib/academyTextAnchors';
 import { matchesLibrarySearch, sortLibraryEntries } from '../lib/academyLibrarySearch';
@@ -293,9 +291,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setModuleDocumentTypeFilter('');
   };
 
-  const openVersionedMaterial = (materialId: string) => {
+  const openVersionedMaterial = (materialId: string, keepNavigationOpen = false) => {
     if (activeVersionedMaterialId === materialId) {
-      setIsLibraryNavigationOpen(true);
+      setIsLibraryNavigationOpen(keepNavigationOpen);
       return;
     }
     versionedMaterialRequestIdRef.current += 1;
@@ -307,7 +305,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setVersionedMaterialRetryable(false);
     setSelectedVersionedMaterialAnchor(null);
     setActiveVersionedMaterialId(materialId);
-    setIsLibraryNavigationOpen(true);
+    setIsLibraryNavigationOpen(keepNavigationOpen);
   };
 
   const currentModule = modules.find(module => module.id === activeModuleId) || null;
@@ -520,32 +518,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   };
 
   const renderVersionedMaterialMarkdown = (markdown: string) => (
-    <div className="space-y-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
-        components={{
-          h1: ({ children }) => <h1 className="pt-3 pb-2 border-b border-slate-200 dark:border-slate-800 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{children}</h1>,
-          h2: ({ children }) => <h2 className="pt-3 pb-1 border-b border-slate-100 dark:border-slate-800 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h2>,
-          h3: ({ children }) => <h3 className="pt-3 pb-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">{children}</h3>,
-          h4: ({ children }) => <h4 className="pt-2 text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{children}</h4>,
-          p: ({ children }) => <p className="my-3 leading-7">{children}</p>,
-          ul: ({ children }) => <ul className="my-3 list-disc space-y-1 pl-6">{children}</ul>,
-          ol: ({ children }) => <ol className="my-3 list-decimal space-y-1 pl-6">{children}</ol>,
-          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-          blockquote: ({ children }) => <blockquote className="my-4 border-l-4 border-slate-300 pl-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">{children}</blockquote>,
-          a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2 dark:text-sky-300">{children}</a>,
-          pre: ({ children }) => <pre className="my-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">{children}</pre>,
-          code: ({ children, className }) => <code className={className || 'rounded bg-slate-100 px-1 py-0.5 text-sm dark:bg-slate-800'}>{children}</code>,
-          table: ({ children }) => <div className="my-4 overflow-x-auto"><table className="min-w-full border-collapse text-sm">{children}</table></div>,
-          th: ({ children }) => <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left dark:border-slate-700 dark:bg-slate-800">{children}</th>,
-          td: ({ children }) => <td className="border border-slate-300 px-3 py-2 dark:border-slate-700">{children}</td>,
-          img: ({ alt }) => <span role="note" className="inline-block rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Externes Bild nicht geladen{alt ? ' (' + alt + ')' : ''}.</span>
-        }}
-      >
-        {markdown}
-      </ReactMarkdown>
-    </div>
+    <AcademyMarkdownRenderer content={markdown} />
   );
 
   return (
@@ -865,23 +838,46 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 <div className="academy-library-topic-grid">
 {libraryCategories.map(category => { const count = libraryEntries.filter(entry => entry.category === category).length; return <button key={category} type="button" className="academy-library-topic-card" onClick={() => { setModuleCategoryFilter(category); setModuleDocumentTypeFilter(''); }}><span className="academy-library-topic-kicker">THEMENBEREICH</span><span className="academy-library-topic-title">{category}</span><span className="academy-library-topic-meta">{count} {count === 1 ? 'Material' : 'Materialien'}</span><span className="academy-library-topic-arrow" aria-hidden="true">Ansehen →</span></button>; })}
 </div></section>
-)}<div className="academy-library-toolbar grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3">
-                <div className="academy-library-search">
-                  <label htmlFor="academy-library-global-search" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bibliothek durchsuchen</label>
-                  <input id="academy-library-global-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Materialcode, Thema oder Beschreibung" className="w-full px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+)}<div className="academy-library-toolbar grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_15rem]">
+                <div className="academy-library-search min-w-0">
+                  <label htmlFor="academy-library-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Materialien suchen</label>
+                  <div className="academy-library-search-controls">
+                    <input
+                      id="academy-library-global-search"
+                      type="search"
+                      value={moduleSearchQuery}
+                      onChange={event => setModuleSearchQuery(event.target.value)}
+                      placeholder="Titel, Materialcode, Kategorie oder Beschreibung"
+                      aria-describedby="academy-library-search-hint"
+                      className="w-full px-3 py-3 text-base rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                    />
+                    {Boolean(moduleSearchQuery.trim()) && (
+                      <button type="button" className="academy-library-clear-search" onClick={() => setModuleSearchQuery('')}>
+                        Suche löschen
+                      </button>
+                    )}
+                  </div>
+                  <p id="academy-library-search-hint" className="academy-library-search-hint">
+                    Sucht in Titel, Kennung, Kategorie, Dokumenttyp, Beschreibung und – sofern vorhanden – verknüpftem Dateinamen. Der vollständige Dokumentinhalt wird nicht durchsucht.
+                  </p>
                 </div>
                 <div className="academy-library-sort">
-                  <label htmlFor="academy-library-sort" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sortieren</label>
-                  <select id="academy-library-sort" value={moduleSortOrder} onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')} className="w-full sm:w-auto px-3 py-2.5 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
-                    <option value="relevance">Relevanz</option>
-                    <option value="alphabetical">Alphabetisch</option>
-                    <option value="updated">Zuletzt aktualisiert</option>
+                  <label htmlFor="academy-library-sort" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sortieren</label>
+                  <select
+                    id="academy-library-sort"
+                    value={moduleSortOrder}
+                    onChange={event => setModuleSortOrder(event.target.value as 'relevance' | 'alphabetical' | 'updated')}
+                    className="w-full px-3 py-3 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                  >
+                    <option value="relevance">Relevanz (ohne Suche: A–Z)</option>
+                    <option value="alphabetical">Titel A–Z</option>
+                    <option value="updated">Zuletzt veröffentlicht / aktualisiert</option>
                   </select>
                 </div>
               </div>
               <details className="academy-library-filters rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
                 <summary className="cursor-pointer select-none text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Filter {hasActiveLibraryFilters ? '· aktiv' : ''}
+                  Filter {hasActiveLibraryFilters ? `· ${Number(Boolean(moduleCategoryFilter)) + Number(Boolean(moduleDocumentTypeFilter))} aktiv` : ''}
                 </summary>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                   <div>
@@ -900,32 +896,73 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   </div>
                 </div>
               </details>
-              {hasActiveLibraryFilters && (
-                <div className="flex flex-wrap items-center gap-2" aria-label="Aktive Bibliotheksfilter">
+              {(Boolean(moduleSearchQuery.trim()) || hasActiveLibraryFilters) && (
+                <div className="academy-library-active-criteria" aria-label="Aktive Suchbedingungen">
+                  {moduleSearchQuery.trim() && (
+                    <button type="button" onClick={() => setModuleSearchQuery('')} className="academy-library-criteria-chip">
+                      Suche: {moduleSearchQuery.trim()} <span aria-hidden="true">×</span><span className="sr-only"> Suchbegriff entfernen</span>
+                    </button>
+                  )}
                   {moduleCategoryFilter && (
-                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
-                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    <button type="button" onClick={() => setModuleCategoryFilter('')} className="academy-library-criteria-chip">
+                      Kategorie: {moduleCategoryFilter} <span aria-hidden="true">×</span><span className="sr-only"> Kategoriefilter entfernen</span>
                     </button>
                   )}
                   {moduleDocumentTypeFilter && (
-                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-slate-700 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200">
-                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> entfernen</span>
+                    <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="academy-library-criteria-chip">
+                      Dokumenttyp: {moduleDocumentTypeFilter} <span aria-hidden="true">×</span><span className="sr-only"> Dokumenttypfilter entfernen</span>
                     </button>
                   )}
-                  <button type="button" onClick={clearLibraryFilters} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-300">Alle Filter zurücksetzen</button>
+                  <button type="button" onClick={() => { setModuleSearchQuery(''); setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }} className="academy-library-clear-criteria">
+                    Alle Suchbedingungen zurücksetzen
+                  </button>
                 </div>
               )}
               {sortedLibraryEntries.length === 0 ? (
                 versionedMaterialsLoading || versionedMaterialsError ? null : (
-                  <p role="status" className="border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">Keine Materialien entsprechen deiner Suche. Ändere den Suchbegriff, um weitere Ergebnisse zu finden.</p>
+                  <p role="status" className="academy-library-no-results border border-slate-200 dark:border-slate-800 rounded-md p-5 text-sm text-slate-600 dark:text-slate-300">
+                    Keine Materialien passen zu deiner Suche oder den aktiven Filtern. Ändere den Suchbegriff oder entferne einen Filter.
+                  </p>
                 )
               ) : (
-                <div className="academy-library-results" aria-label="Bibliotheksmaterialien">
-{sortedLibraryEntries.map(entry => <article key={entry.kind + ':' + entry.id} className="academy-library-material-card">
-<div className="academy-library-material-card-content"><div className="academy-library-material-meta"><span>{entry.category}</span>{entry.documentTypeName && <><span aria-hidden="true">·</span><span>{entry.documentTypeName}</span></>}</div><h3 className="academy-library-material-title">{entry.title}</h3>{entry.description && <p className="academy-library-material-description">{entry.description}</p>}<p className="academy-library-material-code">{entry.code}</p></div>
-<button type="button" onClick={() => { if (entry.kind === 'legacy') { setActiveVersionedMaterialId(null); setActiveModuleId(entry.id); setIsLibraryNavigationOpen(true); } else { openVersionedMaterial(entry.id); } }} className="academy-library-open-button">Material öffnen <span aria-hidden="true">→</span></button>
-</article>)}
-</div>
+                <>
+                  <div className="academy-library-results-heading">
+                    <h3>Materialien</h3>
+                    <p>{sortedLibraryEntries.length} {sortedLibraryEntries.length === 1 ? 'Treffer' : 'Treffer'}</p>
+                  </div>
+                  <div className="academy-library-results" role="list" aria-label="Bibliotheksmaterialien">
+                    {sortedLibraryEntries.map(entry => (
+                      <article key={entry.kind + ':' + entry.id} className="academy-library-material-card" role="listitem">
+                        <div className="academy-library-material-card-content">
+                          <div className="academy-library-material-meta">
+                            {entry.category && <span>{entry.category}</span>}
+                            {entry.category && entry.documentTypeName && <span aria-hidden="true">·</span>}
+                            {entry.documentTypeName && <span>{entry.documentTypeName}</span>}
+                          </div>
+                          <h3 className="academy-library-material-title">{entry.title}</h3>
+                          {entry.description && <p className="academy-library-material-description">{entry.description}</p>}
+                          {entry.code && <p className="academy-library-material-code">{entry.code}</p>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (entry.kind === 'legacy') {
+                              setActiveVersionedMaterialId(null);
+                              setActiveModuleId(entry.id);
+                              setIsLibraryNavigationOpen(false);
+                            } else {
+                              openVersionedMaterial(entry.id);
+                            }
+                          }}
+                          aria-label={`Material öffnen: ${entry.title}`}
+                          className="academy-library-open-button"
+                        >
+                          Material öffnen <span aria-hidden="true">→</span>
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           ) : (
@@ -940,11 +977,21 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <aside id="academy-material-navigation" aria-label="Materialnavigation" className="academy-library-sidebar lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
-                  <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                  <div className="academy-library-sidebar-search">
+                    <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                    {Boolean(moduleSearchQuery.trim()) && <button type="button" onClick={() => setModuleSearchQuery('')} className="academy-library-sidebar-clear">Suche löschen</button>}
+                  </div>
+                  {(moduleCategoryFilter || moduleDocumentTypeFilter) && (
+                    <div className="academy-library-sidebar-criteria" aria-label="Aktive Bibliotheksfilter">
+                      {moduleCategoryFilter && <button type="button" onClick={() => setModuleCategoryFilter('')} className="academy-library-sidebar-filter">Kategorie: {moduleCategoryFilter} ×</button>}
+                      {moduleDocumentTypeFilter && <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="academy-library-sidebar-filter">Typ: {moduleDocumentTypeFilter} ×</button>}
+                      <button type="button" onClick={() => { setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }} className="academy-library-sidebar-reset">Filter zurücksetzen</button>
+                    </div>
+                  )}
                    <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{versionedMaterialsLoading ? 'Materialien werden geladen …' : versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + (filteredLibraryEntries.length === 1 ? ' Material' : ' Materialien')}</p>
                   {filteredLibraryEntries.length === 0 ? (versionedMaterialsLoading || versionedMaterialsError ? null : <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p>) : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {filteredLibraryEntries.map(entry => {
+                      {sortedLibraryEntries.map(entry => {
                         const isSelected = entry.kind === 'legacy'
                           ? currentModule?.id === entry.id
                           : activeVersionedMaterialId === entry.id;
@@ -953,7 +1000,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             setActiveVersionedMaterialId(null);
                             setActiveModuleId(entry.id);
                           } else {
-                            openVersionedMaterial(entry.id);
+                            openVersionedMaterial(entry.id, true);
                           }
                         }} aria-current={isSelected ? 'page' : undefined} className={`w-full text-left py-3 px-2 rounded-md ${isSelected ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-900'}`}>
                           <span className="block text-xs font-mono text-slate-500 dark:text-slate-400">{entry.code}</span>
@@ -987,7 +1034,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {displayedVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {displayedVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                             {isLibraryNavigationOpen ? 'Navigation ausblenden' : 'Materialnavigation anzeigen'}
                           </button>
@@ -996,7 +1043,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       {displayedVersionedMaterial.description && <p className="text-sm text-slate-600 dark:text-slate-300">{displayedVersionedMaterial.description}</p>}
                       {displayedVersionedMaterial.contentFormat === 'markdown'
                         ? (
-                          <div ref={versionedMaterialMarkdownRef} onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
+                          <div ref={versionedMaterialMarkdownRef} className="mx-auto w-full max-w-[68ch]" onMouseUp={event => captureVersionedMaterialAnchor(event, 'markdown')}>
                             {renderVersionedMaterialMarkdown(displayedVersionedMaterial.content)}
                           </div>
                         )
@@ -1022,7 +1069,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           Erneut versuchen
                         </button>
                       )}
-                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                     </div>
                   )
                 ) : currentModule && (
@@ -1046,7 +1093,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
                     <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-xs font-mono text-sky-700 dark:text-sky-400 font-bold">
+                        <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-300 font-semibold">
                           <span>{currentModule.code}</span>
                           <span>·</span>
                           <span>{currentModule.category}</span>
@@ -1059,7 +1106,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                         <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                           {isLibraryNavigationOpen ? 'Materialnavigation ausblenden' : 'Materialnavigation anzeigen'}
                         </button>

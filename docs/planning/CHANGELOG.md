@@ -459,3 +459,27 @@
 - Inhaltliche und technische Abläufe bleiben unverändert; keine Berechtigungs-, Datenmodell- oder API-Änderungen.
 - White-/Dark-Mode-/Materialinhalts-Sichtbarkeitsfehler wird separat untersucht, nicht durch diese CSS-Verfeinerung überdeckt.
 - Ergänzende Prüfung in PR #289: Dark-Mode-Fokusindikator der Materialverwaltung kontrastreicher gestaltet; keine Funktions-, Daten- oder Berechtigungsänderung.
+
+## 2026-11-15 – Academy-Unterseiten: Kursdetail, Prüfungsnavigation, Lernbibliothek und Materialverwaltung
+
+- **PR #286:** Kursdetail zeigt die tatsächliche veröffentlichte Kursversion sowie die unterschiedlichen Zustände Beschreibung fehlt / Veröffentlichung fehlt / archiviert / derzeit nicht verfügbar verständlich an. Startaktion bleibt an bestehende Veröffentlichungs- und Verfügbarkeitsregeln gebunden. Merge: `ca2fcb0c31d2d317c51a8c880ea639f0ecbbf896`.
+- **PR #287:** Prüfungsnavigation trennt Teilnehmerwege und Prüferaufgaben; Admin-/Colonel-Beschriftungen passen zu den vorhandenen Rechten. Sichtbare Tastatur-Fokusmarkierung ergänzt. Merge: `df4f73a172ab29b056fffde78196dd3cac23ed2f`.
+- **PR #288:** Bibliotheksbereichsakzent und Kartenhierarchie konsolidiert; Dark-Mode-Fokus der Themen-/Materialkarten und Blockquote-Kontrast der Materialvorschau verbessert. Merge: `d5b742363ff4cd0b4d7f8fb6b37eb5e7c576c8cf`.
+- **PR #289:** Materialeditor-Gruppen, Bearbeiten-/Vorschau-Umschaltung, Aktionshierarchie und Taxonomieaktionen überarbeitet; Dark-Mode-Fokus der Materialverwaltung verbessert. Merge: `8f25d303165f466f9b295a265caa5a07566209d6`.
+- Für alle vier PRs waren TypeScript/Produktionsbuild, Servertests und PR-Vorlagenprüfungen erfolgreich. Die optionalen Render-Deploy-Hooks wurden übersprungen. Manuelle Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
+
+## 2026-11-15 – Vollständiges Academy-Usability-Redesign gestartet
+
+- Die Academy-Redesign-Freigabe umfasst nun ausdrücklich alle Unterbereiche, tieferen Arbeitsansichten und Bedienelemente.
+- UI-Filter, Suche, Sortierung und Gruppierung dürfen anhand bestehender, zugänglicher Daten und fachlich bereits definierter Zustände verbessert werden; keine neuen Geschäfts-/Status-/Berechtigungsregeln.
+- Die fünf Academy-Einstiegskacheln und die fünfteilige Hauptnavigation, bestehende Bereichsfarben, Illustrationen, Datenschutz-, Versions-, Veröffentlichungs- und Prüfungsregeln bleiben geschützt.
+- Ausführliche Zielkonzeption, Farb-/Statussemantik, Bedienmuster, Responsive-/Accessibility-Regeln, Risiken und Umsetzungskosten sind in den zugehörigen Academy-Planungsdokumenten festgehalten.
+
+## 2026-11-15 – Academy-Usability-Redesign: Bibliothek, Reader und Kurskatalog
+
+- Bibliothekssuche, Sortierbenennungen, sichtbare aktive Kriterien, Filterrücksetzung und keine-Treffer-Meldung verbessert.
+- Größere Materialkacheln als kompakte vertikale Trefferliste neu strukturiert; Materialnavigation im Reader ist optional und hält die Ergebnisreihenfolge/Suche/Filter konsistent.
+- Eine gemeinsame sichere Markdown-Darstellung für Bibliotheksreader, Kursmaterialreader, Materialeditorvorschau und private Notizvorschau eingeführt. Hell-/Dunkelkontraste für Tabellen, Inline-Code, Blockquotes und Links sind explizit.
+- Kurskatalog um UI-Filter für die vorhandenen Teilnahmezustände und Sortierung nach Titel bzw. veröffentlichtem Datum ergänzt.
+- Bereichspetrol der Kurse von Statusmarkern und Aktionen getrennt; Archiviert/nicht verfügbar wird neutral beschrieben.
+- Umsetzung befindet sich auf `redesign/academy-usability-system`; CI und manuelle QA sind noch ausstehend.

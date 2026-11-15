@@ -450,3 +450,129 @@ Objektiv begründbare UX-/Accessibility-/Konsistenzdetails werden innerhalb der 
 Kritischere Entscheidungen werden nach der Analyse als Ergebnisblock präsentiert: Fragestellung, Recherche/Quellen, Optionen, Vor-/Nachteile, Risiken, Empfehlung und Entscheidung, Auswirkungen sowie gezielte Änderungsmöglichkeiten. Bei größeren Design-/UX-Arbeitsschritten werden die wesentlichen Zwischenstände gebündelt vorgestellt.
 
 Bestehende Beschlüsse, Sicherheits- und Datenschutzgrenzen, Datenintegrität, Kostenlimit und Architektur bleiben verbindlich. Prägende subjektive Grundsatzentscheidungen zur globalen visuellen Identität, grundlegenden Stil-/Formensprache und globalen Portalstruktur bleiben vorher zustimmungspflichtig. Implementierte Prototypen gelten nicht automatisch als abgenommen; Browser-, Responsive-, Accessibility- und Funktionsprüfung bleiben getrennte Prüfschritte.
+
+## 15.11.2026 – Academy Interaction Design System: verbindliche Ausarbeitungsrichtung
+
+Dieses Kapitel erweitert das visuelle Arbeitskonzept um die konkrete Bedienlogik. Es gilt für alle Academy-Unterseiten und tieferen Ansichten. Es ersetzt weder die fünfteilige Hauptnavigation noch die bestehende visuelle Identität. Die Kachelstartseite und ihre fünf Illustrationen bleiben außerhalb des Redesign-Scopes.
+
+### 15.1 Semantische Token-Schichten
+
+Die Implementierung soll Werte nach ihrer Bedeutung und nicht nach ihrer momentanen Farbe organisieren. Folgende Token-Gruppen sind zu trennen:
+
+| Token-Gruppe | Zweck | Darf nicht verwendet werden für |
+|---|---|---|
+| `--academy-area-*` | Bereichsidentität und sehr dezente Bereichsakzente | Erfolg, Warnung, Fehler, CTA-Farbe |
+| `--surface-*` | Seiten-, Karten-, Eingabe-, Reader- und ausgewählte Oberflächen | fachliche Statusaussage |
+| `--text-*` | primärer, sekundärer, unterstützender und deaktivierter Text | Status ohne Textlabel |
+| `--border-*` | Trennung, Eingabeumrandung und Gruppierung | farbige Statuscodierung |
+| `--action-primary-*` | wichtigste ausführbare Aktion im aktuellen Kontext | Bereichsidentität |
+| `--action-secondary-*` | unterstützende Aktionen und alternative Wege | irreversible Aktionen |
+| `--state-success-*` | nachweislicher Erfolg/Bestanden/Freigegeben | „veröffentlicht“ allein oder bloße Aktivität |
+| `--state-warning-*` | tatsächlicher Vorbehalt mit Handlungsrelevanz | Archivierung, normale Navigation |
+| `--state-error-*` | Fehler, fehlgeschlagene Aktion oder destruktives Feedback | gewöhnliche Nichtverfügbarkeit |
+| `--state-info-*` | sachliche Information und laufender Prozess | Erfolg oder Freigabe |
+| `--focus-*` | sichtbarer Tastaturfokus und Fokusabstand | gewöhnlicher Hoverzustand |
+
+Die endgültigen Hexwerte werden in einer eigenen konsolidierten Token-Datei bzw. einem klar abgegrenzten Academy-Token-Abschnitt festgelegt, nachdem Light-/Dark-Kontrast und bestehende globale Styles geprüft wurden. Ein Tokenname wie `--library-accent` darf nicht gleichzeitig als Warn-, Fehler- oder Primäraktionsfarbe benutzt werden.
+
+### 15.2 Bereichsfarben und Statussemantik
+
+Die folgenden Bereichsfarben bleiben unverändert:
+
+| Academy-Bereich | Identitätsakzent | Semantische Einschränkung |
+|---|---|---|
+| Übersicht | `#2864D9` | kein generischer Informations-/Erfolgsstatus |
+| Kurse | `#087F8C` | kein „in Bearbeitung“ oder „verfügbar“ allein |
+| Lernbibliothek | `#6841B8` | kein Warn-/Fehlerstatus |
+| Prüfungen | `#A33370` | kein Nicht-bestanden-/Fehlerrot |
+| Meine Notizen | `#287A45` | kein pauschales Speichern-/Erfolgsgrün |
+
+Die Bereichsfarbe wird vorrangig in der aktiven Hauptnavigation, einem kleinen Kicker/Marker und sehr zurückhaltenden Flächenakzenten eingesetzt. Normale Buttons, Eingaben, Status-Tags und destruktive Aktionen folgen dem gemeinsamen neutralen bzw. semantischen System.
+
+**Zustandsachsen dürfen nicht zusammengelegt werden.** Besonders in Kursen/Lehrgängen gelten mindestens getrennte Informationen für Veröffentlichungsstatus, Verfügbarkeit/Zugriff und persönliche Teilnahme. In Prüfungen sind Versuch, Bewertung, Ergebnis und Ergebnisfreigabe eigenständige Informationen.
+
+| Bestehender Zustand / Aussage | Visuelle Empfehlung | Begründung |
+|---|---|---|
+| Entwurf (nur Verwaltung) | neutraler, textlich beschrifteter Verwaltungsstatus | noch keine Teilnehmerfreigabe; keine Warnung |
+| Veröffentlicht | neutraler Veröffentlichungsstatus | Veröffentlichung ist kein persönlicher Erfolg |
+| Archiviert | neutral/muted mit ausgeschriebenem Label | historischer Lebenszyklus, nicht automatisch ein Fehler |
+| Derzeit nicht verfügbar | neutraler Status mit Erklärung; Warnakzent nur bei tatsächlich relevanter Handlungsfolge | Nichtverfügbarkeit ist nicht identisch mit Archivierung |
+| Nicht zugänglich / Rolle reicht nicht aus | neutraler Sperrhinweis mit verständlichem Grund, soweit freigegeben | keine Warnfarbe allein zur Hervorhebung einer Rangprüfung |
+| Nicht begonnen | neutraler Status | kein Problem und kein Fehlschlag |
+| In Bearbeitung | dezenter Informationsstatus, nur bei tatsächlicher Teilnahme | laufender Prozess |
+| Abgeschlossen | Erfolg nur bei bestätigter Erfüllung der Abschlussbedingungen | Abschluss ist nicht gleich Bestehen |
+| Freiwillig beendet / Administrativ beendet | neutraler historischer Status mit genauem Label | unterschiedliche fachliche Gründe dürfen nicht verschmolzen werden |
+| Bestanden | Erfolg | fachlich bestätigtes Prüfungsergebnis |
+| Nicht bestanden | Fehler-/negativer Ergebnisstatus mit Text | fachlich eindeutiges Ergebnis, nicht als Bereichsakzent codieren |
+| Bewertung offen / Ergebnis noch nicht freigegeben | Informations-/Wartestatus, nicht Erfolg | Versuch ist abgegeben, Ergebnis noch nicht offiziell |
+| Historischer Snapshot während Revision | neutraler historischer Hinweis | sichtbar, aber nicht aktueller Kursabschlussnachweis |
+
+Dies ist eine Designzuordnung, keine Änderung der fachlichen Zustände. Falls der Code einen Zustand nicht zuverlässig liefert, wird kein Statusbadge geraten oder aus einem anderen Zustand abgeleitet.
+
+### 15.3 Typografie, Lesedichte und Sprache
+
+- Die bestehende Schriftfamilie bleibt erhalten; keine neue Schriftabhängigkeit.
+- Gewöhnlicher UI- und Lerntext erhält 16 px als Zielwert. Kompakte Metadaten dürfen kleiner sein, dürfen aber keine handlungsrelevante Information allein tragen.
+- Überschriften werden durch Größe, Gewicht und Abstände unterschieden, nicht durch viele gleichzeitige Farben, Caps-Lock und dekorative Marker.
+- UI-Beschriftungen verwenden klare Satzschreibung und konkrete Verben. Ein Button benennt die Handlung und ggf. ihr Ziel („Material öffnen“), nicht nur einen abstrakten Zustand („Weiter“).
+- Fachbegriffe werden konsistent verwendet: Lehrgang statt Programm; Kurs bleibt eigenständige Lerneinheit; „Kursabschlussprüfung“ bleibt die Bezeichnung für den vorgesehenen Kursabschlussnachweis.
+- Hilfstexte werden nur dort eingesetzt, wo sie eine echte Unklarheit lösen. Ein Hilfstext soll eine kurze, konkrete Erklärung liefern, nicht den gesamten Prozess neben jedem Feld wiederholen.
+- Lange Leseinhalte werden nicht auf die Dichte eines Administrationsformulars reduziert.
+
+### 15.4 Abstands- und Oberflächenregeln
+
+- Grundlage ist eine begrenzte 4/8-basierte Abstandsskala. Eine kleine Skala ist wichtiger als die exakte Wahl einer fremden Designsystem-Skala.
+- Zusammengehörige Felder und Inhalte haben einen kleineren internen Abstand als zwei getrennte Arbeitsgruppen.
+- Jede Arbeitsfläche erhält nur so viele Rahmen/Flächen, wie für eine verständliche Gruppierung nötig sind.
+- Karten sind kein Standardcontainer für alles. Katalogkarten, Editorgruppen, Reader-Flächen, Statushinweise und Tabellen haben unterschiedliche Aufgaben.
+- Schatten sind optional und sparsam. Kontrast und Abgrenzung dürfen nicht ausschließlich vom Schatten abhängen.
+- Aktive Auswahl ist klar vom Tastaturfokus und von Status-Tags getrennt. Hover ist nie der einzige sichtbare Hinweis auf Interaktivität.
+
+### 15.5 Kontrolltypen – wann welches Muster verwendet wird
+
+| Zweck | Bevorzugtes Muster | Nicht verwenden, wenn |
+|---|---|---|
+| Wechsel zu einer anderen Academy-Ansicht | echte Navigation mit aktuellem Ziel | es nur eine lokale Ansichtsumschaltung ist |
+| Wechsel zwischen Bearbeiten und Vorschau desselben Inhalts | lokaler Segmented Control mit ausgewähltem Zustand | die Ziele eigentlich verschiedene Seiten/Arbeitsmodi sind |
+| Ein-/Ausblenden ergänzender Information | native Disclosure/Accordion | kritische Hauptinformationen dauerhaft verborgen würden |
+| wenige Filterwerte | beschriftetes Select oder Checkboxen, je nach Auswahlmodell | Auswahl-/Entfernungslogik unklar oder zu komplex wird |
+| mehrere gleichzeitig aktive Filter | kompakter Filterbereich plus sichtbare, entfern­bare Filterchips | Chips fälschlich wie reine Status-Tags gestaltet wären |
+| Suche in Katalog/Listen | sichtbar beschriftetes Search-Feld mit Clear-Aktion und Ergebnisfeedback | Suche nur einen kleinen lokalen Textblock betrifft |
+| Ausführung wichtiger Aktion | eindeutig priorisierter Button mit konkretem Verb | Aktion lediglich eine Ansicht auswählt |
+| unsichere/irreversible Aktion | getrennte destruktive Zone und konkrete Bestätigung | es sich um eine normale, reversible Ansicht oder Archivierung handelt |
+| mehrere gleichartige Verwaltungsdatensätze | strukturierte Liste mit festen Informationspositionen | Einträge sehr unterschiedlich und entdeckungsorientiert sind |
+
+ARIA-Rollen richten sich nach dem tatsächlichen Interaktionsmuster. Eine Navigation wird nicht als Tab-Widget ausgezeichnet. Ein lokaler Ansichtsumschalter erhält eine semantisch passende Gruppenbeschriftung und klaren ausgewählten Zustand. Native Disclosure-Elemente sind vorzuziehen, wenn sie das richtige Verhalten abbilden.
+
+### 15.6 Focus, Keyboard, Feedback
+
+- Alle ausführbaren Aktionen besitzen einen sichtbaren Fokuszustand, der sich klar vom aktiven Bereichsakzent und vom Hover unterscheidet.
+- Fokusindikatoren werden nicht abgeschnitten, hinter Sticky-Elementen versteckt oder nur durch eine minimale Farbänderung dargestellt.
+- Öffnen einer Inline-Region oder eines echten Dialogs führt Fokus gemäß dem Interaktionsmuster sinnvoll; beim Schließen kehrt Fokus an den Auslöser zurück.
+- Lade-, Erfolgs- und Fehlerrückmeldungen werden in der Oberfläche nahe an der betroffenen Aufgabe angezeigt und programmatisch angekündigt. Toasts ersetzen keine dauerhaft nötige Information.
+- Gespeichert, Speichert, nicht gespeichert, Konflikt und fehlende Berechtigung sind unterscheidbare Zustände. Sie werden nicht durch rein farbige Punkte oder Icons vermittelt.
+- Primäre Touch-Aktionen werden mit ungefähr 44×44 CSS-Pixeln geplant. Die WCAG-2.2-AA-Mindestanforderung 24×24 CSS-Pixel (SC 2.5.8) plus Ausnahmen bleibt die formale Untergrenze, nicht das Designziel.
+- Reflow, Zielgröße, Kontrast und Fokus sind bei 320/375/768/1024/1440 CSS-Pixeln sowie bei Zoom zu prüfen.
+
+### 15.7 Dark Mode und Reduced Motion
+
+Light und Dark Mode verwenden dasselbe semantische Tokenmodell. Bei dunklen Oberflächen benötigen Text, Eingabeflächen, Inline-Code, Tabellen, Blockquotes, Statusmarker und Fokusindikatoren jeweils eigene Kontrastprüfung. Das bloße Invertieren einer hellen Farbe genügt nicht.
+
+Bewegung dient höchstens der Orientierung bei einem Übergang; sie darf keine Statusänderung vermitteln, die ohne Animation unsichtbar wäre. Bei `prefers-reduced-motion: reduce` werden Übergänge und Bewegungsanimationen ausgeschaltet oder auf minimale nicht-bewegte Rückmeldung reduziert.
+
+### 15.8 Implementierungs- und Wartungsregeln
+
+- Gemeinsame Controls erhalten klar benannte Klassen-/Tokenrollen statt wiederholter Einzel-Overrides.
+- Bereichs-CSS und Status-/Action-CSS bleiben getrennte Schichten.
+- Pro Komponente soll es eine maßgebliche Styling-Regel geben. Mehrere konkurrierende CSS-Blöcke und späte Overrides sind bei Redesign-Schritten gezielt zu konsolidieren.
+- Wiederverwendete Markdown-Inhalte erhalten möglichst eine gemeinsame, sanitierte Renderer-Komponente, damit Reader und Editor-Vorschau nicht auseinanderlaufen. Anchor-/Heading-Funktionen werden als optionale, ausdrücklich übergebene Fähigkeiten erhalten; die gemeinsame Renderer-Komponente darf keine Textankerfunktion brechen.
+- Keine neue Abhängigkeit, wenn vorhandene React-/Tailwind-/CSS-Mittel genügen.
+- Jede visuelle Änderung wird auf Light/Dark, Fokus, Disabled, Loading, Empty, Error, Long Content und Mobile mit geprüft.
+
+### 15.9 Quellen
+
+- [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/): Mindestanforderungen für Kontrast, Reflow, Tastatur, Fokus und Zielgröße.
+- [GOV.UK Task list](https://design-system.service.gov.uk/components/task-list/): kurze Aufgabenbezeichnungen, Gruppierung und Statusführung.
+- [GOV.UK Tag](https://design-system.service.gov.uk/components/tag/): Statusbeschreibungen sind nicht interaktiv; Tags dürfen nicht wie Buttons aussehen.
+- [USWDS Typography](https://designsystem.digital.gov/components/typography/): Lesemaß 45–90 Zeichen, bei langen Texten Zielgröße um 66 Zeichen.
+- [W3C Focus Not Obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum): Sticky-/Overlay-Layouts dürfen den Tastaturfokus nicht verdecken.

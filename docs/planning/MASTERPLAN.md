@@ -376,3 +376,17 @@ Der Projektinhaber hat ChatGPT die Ausarbeitung des visuellen Designsystems und 
 - Relevante Änderungen und Plananpassungen sind in den zuständigen Dokumenten nachzuführen.
 
 Der aktuelle Arbeitsentwurf und seine Quellen stehen in [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-SYSTEM-CONCEPT.md). Diese Ergänzung hebt die bisherigen Architektur-, Funktions-, Audit- und Freigabegrenzen nicht auf.
+
+## 15.11.2026 – Vollständiges Academy-Usability-Redesign
+
+Der Projektinhaber hat die eigenständige Überarbeitung der gesamten Academy ausdrücklich beauftragt. Umfang sind alle fünf Bereiche, alle bestehenden Unteransichten und sämtliche Bedienelemente. Ziel ist eine sehr hohe Bedienbarkeit und Übersichtlichkeit für Nutzer ohne Vorwissen, ohne kindliche Anmutung und ohne Verlust früherer Fachentscheidungen.
+
+Die neue, detaillierte Ziel- und Umsetzungsspezifikation steht in:
+- ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt 16 – konkrete Seiten-/Interaktionskonzeption für Übersicht, Kurse/Lehrgänge, Bibliothek/Reader, Prüfungen/Examiner, Notizen und Verwaltung;
+- DESIGN-SYSTEM-CONCEPT.md, Abschnitt 15 – Bereichs-/Status-/Aktionssemantik, gemeinsame Controls, Typografie, Flächen, Fokus, Dark Mode und Responsive-Regeln;
+- ACADEMY-DETAILED-SPECIFICATION.md, Ergänzung 15.11.2026 – Präsentations-/Bedienebene unter Erhalt der fachlichen Regeln;
+- DECISIONS.md, Beschluss 15.11.2026 – ausdrückliche Erweiterung der Academy-UX-Freigabe.
+
+Die fünf Academy-Einstiegskacheln, ihre Illustrationen/Farben, die fünfteilige Hauptnavigation, direkte Kachel-Rückkehr sowie alle fachlichen, Rollen-, Datenschutz-, Versions- und Statusbeschlüsse bleiben geschützt. Die Freigabe umfasst UI-Steuerungen auf Basis vorhandener Daten, aber keine stillschweigende Einführung neuer Fachzustände, Rechte oder Backend-Verträge.
+
+Die Umsetzung erfolgt in kleinen, fachlich zusammenhängenden PRs. Bibliothek und Reader haben höchste UX-Priorität; danach folgen Kurse/Lehrgänge, Notizen, Prüfungen/Examiner und Verwaltungsoberflächen. Gemeinsame Browser-/Screenreader-/Live-Firestore-QA bleibt ein eigener späterer Abnahmeschritt.

@@ -65,3 +65,17 @@ Der aktuelle visuelle Arbeitsentwurf ist in [DESIGN-SYSTEM-CONCEPT.md](./DESIGN-
 ## Ergänzung vom 12.11.2026 – Academy-Arbeits- und Merge-Ermächtigung sowie Unterseiten-Redesign
 
 Der Projektinhaber hat ChatGPT ausdrücklich zur eigenständigen Umsetzung, Prüfung, Dokumentation und zum Merge Academy-bezogener PRs ermächtigt. Der genaue Geltungsbereich und die Schutzgrenzen stehen in [DECISIONS.md](./DECISIONS.md) sowie `AGENTS.md` und `CONTRIBUTOR_ROLES.md`. Die Ermächtigung gilt nicht für portalweite oder andere Moduländerungen. Die neue [ACADEMY-SUBPAGE-REDESIGN.md](./ACADEMY-SUBPAGE-REDESIGN.md) dokumentiert den recherchierten Bestandsaudit und die konzeptionelle Überarbeitung aller Academy-Unterseiten. Die fünf Kachel-Einstiege und die horizontale Fünf-Bereiche-Navigation bleiben verbindlich.
+
+## Ergänzung vom 15.11.2026 – Vollständiges Academy-Usability-Redesign
+
+Der Projektinhaber hat die gestalterische und funktionale UX-Freigabe auf die gesamte Academy einschließlich aller Unteransichten und Bedienelemente erweitert. UI-Suche, Filter, Sortierung, Gruppierung und lokale Darstellungssteuerungen dürfen auf vorhandenen, serverseitig zugänglichen Daten und bestehenden Zuständen beruhen. Die fachlichen Statuswerte, Rechte, Datenschutz- und Datenverträge werden dadurch nicht erweitert.
+
+Für die aktuelle verbindliche Ausarbeitung gilt folgende Lesereihenfolge:
+1. DECISIONS.md – Freigabe und Schutzgrenzen vom 15.11.2026.
+2. ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt 16 – Zielbild, konkrete Untermodul- und Interaktionskonzeption, Reihenfolge und Aufwand.
+3. DESIGN-SYSTEM-CONCEPT.md, Abschnitt 15 – semantisches Design-/Control-System.
+4. ACADEMY-DETAILED-SPECIFICATION.md, Ergänzung vom 15.11.2026 – UI-/Bedienebene im Verhältnis zu den weiterhin maßgeblichen Fachregeln.
+5. OPEN-QUESTIONS.md – verbleibende technische, Audit- und QA-Punkte.
+6. PROGRESS.md und CHANGELOG.md – tatsächliche Umsetzung, PRs, CI und Einschränkungen.
+
+Die Browser-/Responsive-/Screenreader- und Live-Firestore-Abnahme wird bewusst später gemeinsam durchgeführt. Ein grüner CI-Lauf gilt nicht als visuelle oder produktive Abnahme.

@@ -313,3 +313,39 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Entschieden:** Revisionsrückgaben dürfen von jeder aktuell kursberechtigten prüfenden Person ausgelöst werden; die resultierende Action Request geht ausschließlich an Admins und Colonels.
 - **Entschieden:** Der ursprüngliche Prüfer bleibt historisch sichtbar, erhält aber keinen Bearbeitungsvorrang. Es entsteht kein neuer Prüfungsversuch; Drafts und zuletzt freigegebener Ergebnis-Snapshot bleiben erhalten.
 - **Weiter offen:** Umsetzung der Revisionsrückgabe, Empfängerzustellung/Benachrichtigung und vollständige Browser-/Live-Firestore-Abnahme gemäß Academy-Spezifikation.
+
+## 15.11.2026 – Vollständiges Academy-Usability-Redesign: neuer Arbeitsstand
+
+### Durch die aktuelle Freigabe geklärt
+
+- **Entschieden:** Das Redesign umfasst alle Academy-Unterbereiche, tiefere Arbeitsansichten und ihre Bedienelemente – nicht nur visuelle Oberflächen.
+- **Entschieden:** UI-Suche, Sortierung, Filter, Gruppierung und Darstellungssteuerungen dürfen auf Basis vorhandener, serverseitig zugänglicher Daten und bestehender Zustandswerte eigenständig ergänzt werden. Es werden dadurch keine neuen fachlichen Statuswerte oder Geschäftsregeln eingeführt.
+- **Unverändert verbindlich:** fünf Hauptbereiche, Reihenfolge und horizontale Navigation; fünf Einstiegskacheln einschließlich Farben/Illustrationen; direkter Rückweg zur Kachelstartseite; bestehende Bereichsakzente; Rollen-/Berechtigungs-, Datenschutz-, Versionierungs-, Veröffentlichungs-, Kursabschluss- und Prüfungsregeln.
+- **Entschieden:** Bereichsidentität, fachlicher Status und Aktion werden durch getrennte visuelle Semantik dargestellt. Kein Bereichsakzent darf einen Erfolg, Fehler, Warnhinweis oder Buttonstatus vortäuschen.
+- **Entschieden:** Gemeinsame Browser-/Screenreader-/Live-Firestore-Abnahme erfolgt später als eigener QA-Schritt. Fehlende Browserprüfung darf nicht als erledigt markiert werden.
+
+### Neue verbindliche Arbeitsgrundlagen
+
+- ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt 16: vollständiges Zielbild für alle fünf Bereiche, Unteransichten, Controls, Statusdarstellung, Responsive-Verhalten, Entwicklungskosten und Reihenfolge.
+- DESIGN-SYSTEM-CONCEPT.md, Abschnitt 15: semantische Tokenrollen, Flächen-/Typografie-/Controlregeln, Status-/Bereichsfarben, Fokus und Dark Mode.
+- ACADEMY-DETAILED-SPECIFICATION.md, Ergänzung vom 15.11.2026: Präsentations-/Bedienebene unter Schutz der bestehenden fachlichen Spezifikation.
+
+### Verbleibende technische und fachliche Prüfpunkte
+
+- **PR #267 – Revisionsanfragen mit Admin-/Colonel-Gate:** weiterhin Draft und derzeit nicht mergebar. Vor Merge kontrollierter Abgleich mit aktuellem main, vollständige CI, unabhängiges Review der Autorisierungs-/Datenzugriffsänderungen und Prüfung der Transaktions-/Snapshot-/Benachrichtigungsgrenzen. Die beschlossene Option 2 wird nicht erneut zur Entscheidung gestellt.
+- **PR #284 – private Notizentwürfe beim Materialwechsel:** weiterhin Draft. Die Client-Save-Queue benötigt vor Merge die später vereinbarte Browserprüfung von Debounce, parallelen/in-flight Saves, Materialwechsel, Fehler/Retry, 409/Reload, Delete-Failure und Unmount/Remount. Ein erfolgreicher Serverbuild ersetzt diese Laufzeitprüfung nicht.
+- **Prüfungsdatenfamilien:** Legacy-Übungstests/Kursabschlussprüfungen und neuer versionierter Prüfungsrunner bleiben getrennt, bis Datenbestand, Nutzung, Ergebnisprojektionen und Migration abschließend geprüft sind.
+- **Gemeinsamer Academy-Funktionsaudit:** neben den neuen UI-Arbeiten weiterführen; CI, statische Befunde, Browser-/Screenreader- und Live-Firestore-Abnahmen getrennt protokollieren.
+- **Gemeinsame Browser-QA:** nach den wichtigsten Redesign-PRs über 320/375/768/1024/1440 CSS-Pixel, Light/Dark, Keyboard-only, Screenreader-Stichproben, Reduced Motion, echte Rollen, Fehler-/Leer-/Teilfehlerzustände und Navigation/State-Persistenz.
+- **Produktionsstatus:** Merge kann den vorhandenen Render-Autodeploy auslösen; übersprungene optionale GitHub-Action-Hooks bestätigen kein Deployment. Produktionszustand bleibt separat zu prüfen.
+
+### Priorität der nächsten Umsetzungsabschnitte
+
+1. Gemeinsame Academy-Control-/Status-/Focus-Basis und sichere Markdown-Darstellung vereinheitlichen.
+2. Lernbibliothek/Reader – Such-/Filterbedienung, Katalogvergleich, Navigation und Lesefläche.
+3. Lehrgänge/Kurse – Katalogfilter nach vorhandenen Teilnahmezuständen und Detailhierarchie.
+4. Meine Notizen – Liste, Quellenstatus, Editor und Save-Rückmeldung; Save-Queue schützen.
+5. Prüfungen/Examiner – Teilnehmerfluss, Ergebnis-/Freigabestatus und Prüferarbeitsplatz.
+6. Kurs-/Lehrgangs- und Materialverwaltung – Formulare, Listen, Versionen, Taxonomie und Aktionen.
+7. Übersicht und modulübergreifende Integration.
+8. Gemeinsame manuelle Browser-/Accessibility-/Live-Firestore-QA.

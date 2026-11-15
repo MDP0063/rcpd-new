@@ -1275,4 +1275,68 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 
 - PR #289 wurde nach den Merges von #286–#288 mit dem aktuellen `main` zusammengeführt. Die Editor-/Taxonomie-CSS-Änderungen und die Dokumentationsstände beider Branches sind erhalten.
 - Der Synchronisations-Commit verwendet `main` und den vorherigen Feature-Head als Eltern; keine History-Rewrite-/Force-Push-Aktion.
-- Die CI läuft auf dem synchronisierten Stand erneut. Browser-/Responsive-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen Academy-QA.
+- Die CI läuft auf dem synchronisierten Stand erneut. Browser-/Responsive-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen Academy-QA. 
+
+## 15.11.2026 – PR-Bestand bereinigt und vollständiges Academy-Usability-Redesign gestartet
+
+### In main gemergte Academy-PRs
+
+Die vier zuvor offenen Design-/UX-PRs wurden nach Prüfung und kontrolliertem Main-Abgleich gemergt:
+
+- **#286 – Kursdetail: Versions- und Verfügbarkeitskontext** – Merge-Commit `ca2fcb0c31d2d317c51a8c880ea639f0ecbbf896`. Build/Testworkflow [43390394174](https://github.com/MDP0063/rcpd-new/actions/runs/43390394174): TypeScript/Build und Tests erfolgreich; optionaler Render-Deploy-Hook übersprungen. PR-Vorlagenprüfung [43390460875](https://github.com/MDP0063/rcpd-new/actions/runs/43390460875) erfolgreich.
+- **#287 – rollenpräzise Prüfungsnavigation** – Merge-Commit `df4f73a172ab29b056fffde78196dd3cac23ed2f`. Branch kontrolliert mit #286/main abgeglichen, Navigationsfokus verbessert; Build/Testworkflow [43658139881](https://github.com/MDP0063/rcpd-new/actions/runs/43658139881) und PR-Vorlagenprüfung [43658144891](https://github.com/MDP0063/rcpd-new/actions/runs/43658144891) erfolgreich. Optionaler Render-Deploy-Hook übersprungen.
+- **#288 – Lernbibliothek visuell verfeinert** – Merge-Commit `d5b742363ff4cd0b4d7f8fb6b37eb5e7c576c8cf`. Branch kontrolliert mit dem aktualisierten main abgeglichen; Kartenfokus im Dark Mode und Blockquote-Kontrast in der Materialvorschau ergänzt. Build/Testworkflow [43658225571](https://github.com/MDP0063/rcpd-new/actions/runs/43658225571) und PR-Vorlagenprüfung [43658245646](https://github.com/MDP0063/rcpd-new/actions/runs/43658245646) erfolgreich. Optionaler Render-Deploy-Hook übersprungen.
+- **#289 – Materialeditor und Taxonomie** – Merge-Commit `8f25d303165f466f9b295a265caa5a07566209d6`. Branch kontrolliert mit dem aktualisierten main abgeglichen; Fokuskontrast der Materialverwaltung im Dark Mode verbessert. Build/Testworkflow [43658405643](https://github.com/MDP0063/rcpd-new/actions/runs/43658405643) und PR-Vorlagenprüfung [43658405654](https://github.com/MDP0063/rcpd-new/actions/runs/43658405654) erfolgreich. Optionaler Render-Deploy-Hook übersprungen.
+
+Alle vier Build/Testworkflows haben TypeScript/Produktionsbuild und Server-Tests erfolgreich abgeschlossen. Kein optionaler Render-Deploy-Hook wurde ausgeführt. Daraus wird kein erfolgreicher oder fehlgeschlagener Live-Produktionsdeploy abgeleitet. Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme steht weiterhin aus.
+
+### Vollständiges Academy-Usability-Redesign
+
+- Der Projektinhaber hat am 15.11.2026 ausdrücklich die vollständige eigenständige UX-/Bedienüberarbeitung aller Academy-Untermodule und Bedienelemente freigegeben.
+- UI-Filter, Sortierung, Suche, Gruppierung und Ansichtssteuerungen dürfen auf vorhandenen, serverseitig autorisierten Daten und bestehenden Statuswerten basieren. Fachliche Status-/Rollen-/Datenregeln bleiben unverändert.
+- Die fünfteilige Navigation, fünf Kachel-Einstiege, Illustrationen, Farben, direkte Kachel-Rückkehr und alle fachlichen Datenschutz-/Versionierungs-/Prüfungsbeschlüsse bleiben geschützt.
+- Detaillierte Konzeption: ACADEMY-SUBPAGE-REDESIGN.md Abschnitt 16; DESIGN-SYSTEM-CONCEPT.md Abschnitt 15; ACADEMY-DETAILED-SPECIFICATION.md Ergänzung 15.11.2026; DECISIONS.md Beschluss 15.11.2026.
+- Designschwerpunkt ist die Bedienbarkeit und Übersichtlichkeit, besonders Bibliothek/Reader. Bereichsidentität, fachlicher Status und ausführbare Aktion erhalten streng getrennte visuelle Semantik. Die größeren Bibliothekskacheln bleiben, werden aber wesentlich besser scan- und vergleichbar gemacht.
+- Aktueller Redesign-Branch: `redesign/academy-usability-system`, ausgehend von main nach Merge #289 (`8f25d303165f466f9b295a265caa5a07566209d6`). Bisherige Änderungen in diesem Branch sind Dokumentations-/Planungsarbeit; noch keine UI-Codeänderung in diesem neuen Arbeitszweig.
+- Nächster Implementierungsschwerpunkt: gemeinsame Status-/Control-/Focus-Basis und konsistente Markdown-Darstellung, danach Bibliothekskatalog und Reader.
+
+### Weiterhin offene PRs
+
+- **#267** – Revisionsworkflow Option 2. Bleibt Draft/nicht mergebar bis kontrollierte Aktualisierung auf aktuellen main, erneute vollständige CI und unabhängiges Review der Autorisierungs-/sensiblen Datenzugriffsänderungen abgeschlossen sind.
+- **#284** – Private Notiz-Save-Queue. Bleibt Draft bis zur späteren Browserprüfung der zeitabhängigen Autosave-/Race-Szenarien. Servertests ersetzen diese Prüfung nicht.
+
+### QA-Grenze
+
+Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme findet bewusst später statt. CI-Erfolg und statischer Code-Review werden davon getrennt ausgewiesen. Keine manuelle Browserprüfung wird hier als erfolgt behauptet.
+
+## 15.11.2026 – Erste Umsetzung des vollständigen Academy-Usability-Redesigns
+
+Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach den Merges #286–#289.
+
+### Lernbibliothek / Reader
+- Erste Suchebene verbessert: klarere Beschriftung, explizite Suchlöschung und genaue Erklärung, welche Metadaten durchsucht werden. Der vollständige Materialtext wird derzeit bewusst nicht als durchsuchbar ausgegeben, weil der Katalog nur Metadatenindexwerte bereitstellt.
+- Sortieroptionen fachlich korrekt benannt: Titel A–Z und Veröffentlichungs-/Aktualisierungszeit, dazu Relevanz mit Titel-A–Z-Fallback ohne Suchbegriff.
+- Aktive Suche und aktive Filter erscheinen sichtbar und einzeln entfernbar; eine gemeinsame Rücksetzfunktion ist vorhanden.
+- Keine-Treffer-Zustand benennt Suche und Filter statt fälschlich nur die Suche.
+- Materialkarten bleiben größere eigenständige Kacheln, sind aber jetzt als gut vergleichbare vertikale Trefferliste mit stabiler Informationsreihenfolge, natürlicher Höhe und eindeutiger Aktion angelegt. Bereichsakzent und Primäraktion sind farblich getrennt.
+- Reader-Navigation öffnet beim direkten Öffnen eines Materials nicht automatisch eine breite Seitenleiste. Sie kann explizit zugeschaltet werden. Wenn sie geöffnet ist, verwendet sie dieselbe Sortierreihenfolge, Suchanfrage und die aktiven Filter; Such-/Filterbedingungen sind dort löschbar.
+- Rückkehr zur Bibliothek erhält Suche, Filter und Sortierung.
+- Versionierter Reader nutzt eine Lesebreite bis 68ch.
+
+### Gemeinsame Markdown-Darstellung
+- Neue lokale `AcademyMarkdownRenderer.tsx` mit ReactMarkdown, GFM und `rehype-sanitize`; kein Raw-HTML-Durchlauf, Code bleibt Text und wird nicht ausgeführt, externe Bilder werden nicht gerendert.
+- Renderer wird im versionierten Bibliotheksreader, im Kursmaterialreader, in der Materialeditorvorschau und in privaten Notizvorschauen verwendet.
+- Überschriften mit Textanker-IDs im Kursreader bleiben als optionale Komponentenüberschreibung erhalten.
+- Tabellenzellen, Inline-Code, Blockquotes, Links und Codeblöcke bekommen explizite Light-/Dark-Farben statt impliziter Theme-Vererbung.
+
+### Kurse / Lehrgänge
+- Globaler Suchbegriff hat eine sichtbare Löschaktion.
+- Der Kurskatalog kann anhand der bestehenden Teilnahmezustände gefiltert werden: Nicht begonnen (kein persönlicher Teilnahme-Datensatz), In Bearbeitung, Abgeschlossen, Freiwillig beendet, Administrativ beendet.
+- Sortierung nach Titel A–Z oder tatsächlichem Veröffentlichungszeitpunkt. Die Sortierung verwendet nur vorhandene `publishedIso`-Werte; fehlende/ungültige Zeitstempel werden als älteste behandelt.
+- Der Teilnahmefilter beeinflusst ausschließlich die Kursliste, nicht die Lehrgänge. Er ändert keine fachlichen Zustände und erzeugt keine neuen Backendwerte.
+- Petrol bleibt Kursbereichsidentität. Teilnahmezustände, Verfügbarkeits-/Archivhinweise und Buttons wurden neutralisiert, damit sie keine Erfolg-/Warn- oder Statusbedeutung vortäuschen.
+
+### Prüfstatus
+- Diese Änderungen sind noch auf dem Redesign-Branch und werden erst nach der PR-CI als gemergt geführt.
+- TypeScript-/Build-/Server-Testworkflows laufen nach Erstellung der PR.
+- Browser-, Responsive-, Tastatur-, Screenreader- und Live-Firestore-QA bleiben wie vereinbart offen und werden später gemeinsam durchgeführt.
