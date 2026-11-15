@@ -62,9 +62,14 @@ function filterAndSortEntries<T extends CourseEntry | ProgramEntry>(
     .filter(entry => {
       if (publicationFilter !== 'all' && entry.master.publicationStatus !== publicationFilter) return false;
       if (!query) return true;
-      const title = entry.draft?.title || entry.version?.title || entry.master.code;
-      const summary = entry.draft?.summary || entry.version?.summary || '';
-      return [entry.master.code, title, summary].some(value => value.toLocaleLowerCase('de-DE').includes(query));
+      const searchableValues = [
+        entry.master.code,
+        entry.draft?.title || '',
+        entry.version?.title || '',
+        entry.draft?.summary || '',
+        entry.version?.summary || ''
+      ];
+      return searchableValues.some(value => value.toLocaleLowerCase('de-DE').includes(query));
     })
     .sort((left, right) => {
       const leftTitle = left.draft?.title || left.version?.title || left.master.code;
