@@ -507,3 +507,173 @@
   background: rgba(20,39,26,0.94) !important;
 }
 .dark .academy-note-source-context h3 { color: #c7dfcb; }
+
+/* Course usability pass: course identity stays petrol; actions and lifecycle states stay neutral. */
+.academy-courses-search-controls {
+  position: relative;
+}
+.academy-courses-search-controls .academy-courses-search-input {
+  min-height: 3rem;
+  padding-right: 7.4rem;
+}
+.academy-courses-clear-search {
+  position: absolute;
+  top: 50%;
+  right: .4rem;
+  min-height: 2.2rem;
+  padding: .35rem .65rem;
+  transform: translateY(-50%);
+  border: 1px solid #d5dee7;
+  border-radius: .45rem;
+  background: #f8fafc;
+  color: #354b63;
+  font-size: .78rem;
+  font-weight: 650;
+}
+.academy-courses-clear-search:hover {
+  background: #eef2f6;
+}
+.academy-course-list-controls {
+  display: grid;
+  gap: .75rem;
+}
+.academy-course-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .7rem;
+}
+.academy-course-filter-control {
+  display: grid;
+  flex: 1 1 13rem;
+  min-width: 0;
+  gap: .35rem;
+}
+.academy-course-filter-control > span {
+  color: #536477;
+  font-size: .76rem;
+  font-weight: 650;
+}
+.academy-course-filter-control select {
+  min-height: 2.65rem;
+}
+.academy-course-filter-reset {
+  min-height: 2.65rem;
+  padding: .55rem .35rem;
+  color: #53677e;
+  font-size: .78rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.academy-course-status {
+  border-color: #d6dee7;
+  background: #f4f6f8;
+  color: #40546a !important;
+  font-weight: 600;
+}
+.academy-course-availability {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  padding: .2rem .45rem;
+  border: 1px solid #d6dee7;
+  border-radius: .4rem;
+  background: #f4f6f8;
+  color: #536477 !important;
+  font-size: .76rem;
+  line-height: 1.4;
+}
+.academy-course-availability--detail {
+  display: block;
+  width: 100%;
+  padding: .65rem .8rem;
+}
+.academy-program-card button,
+.academy-course-action,
+.academy-course-requirement button,
+.academy-program-panel button,
+.academy-course-back {
+  border-color: #cbd5df !important;
+  color: #354b63 !important;
+  background: #fff !important;
+}
+.academy-program-card button:hover,
+.academy-course-action:hover,
+.academy-course-requirement button:hover,
+.academy-program-panel button:hover,
+.academy-course-back:hover {
+  border-color: #aebdcc !important;
+  color: #263b52 !important;
+  background: #eef2f6 !important;
+}
+.academy-course-detail-heading > p:first-child {
+  border-color: #d6dee7;
+  background: #f4f6f8;
+  color: #536477;
+}
+.academy-program-progress-track > div {
+  background: #536b83 !important;
+}
+.dark .academy-courses-clear-search {
+  border-color: #52647a;
+  background: #202d3d;
+  color: #dce5ef;
+}
+.dark .academy-courses-clear-search:hover {
+  background: #2a3a4d;
+}
+.dark .academy-course-filter-control > span,
+.dark .academy-course-filter-reset {
+  color: #c1cedc;
+}
+.dark .academy-course-status,
+.dark .academy-course-availability {
+  border-color: #46576c;
+  background: #202d3d;
+  color: #c7d2df !important;
+}
+.dark .academy-program-card button,
+.dark .academy-course-action,
+.dark .academy-course-requirement button,
+.dark .academy-program-panel button,
+.dark .academy-course-back {
+  border-color: #53677f !important;
+  color: #dce5ef !important;
+  background: #202d3d !important;
+}
+.dark .academy-program-card button:hover,
+.dark .academy-course-action:hover,
+.dark .academy-course-requirement button:hover,
+.dark .academy-program-panel button:hover,
+.dark .academy-course-back:hover {
+  border-color: #6c8198 !important;
+  background: #2a3b4e !important;
+}
+.dark .academy-course-detail-heading > p:first-child {
+  border-color: #46576c;
+  background: #202d3d;
+  color: #c7d2df;
+}
+.dark .academy-program-progress-track > div {
+  background: #8195aa !important;
+}
+@media (max-width: 640px) {
+  .academy-course-filter-row {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+  }
+  .academy-course-filter-reset {
+    justify-self: start;
+  }
+  .academy-courses-search-controls .academy-courses-search-input {
+    padding-right: 6.8rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-courses-clear-search {
+    transition: none;
+    transform: none;
+  }
+}
