@@ -557,7 +557,7 @@
 
 ## 2026-11-15 – Kursdetail und Nachweisaktion
 
-- Nachweiserfassung bleibt bis zum Abschluss des Detail-Refreshs gesperrt, um doppelte Klicks auf veralteten Status zu verhindern.
+- Nachweiserfassung bleibt bis zum Abschluss des Detail-Refreshs gesperrt; ein zusätzlicher Handler-Guard weist Requests während eines laufenden Speichervorgangs ab.
 - Bei fehlgeschlagenem Refresh wird die alte Aktion nicht erneut angeboten; stattdessen wird der vorhandene Teilnahme-Neuladepfad angezeigt.
 - Lehrgangsdetails erhalten verständliche Fallbacks für fehlende Kurzbeschreibung und leere Lernziele.
 - Kurs-Suchhinweis sichtbar; Suchlösch-/Filteraktionen auf mindestens 44 px Zielhöhe.
