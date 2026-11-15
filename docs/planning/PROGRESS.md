@@ -1340,3 +1340,17 @@ Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach
 - Diese Änderungen sind noch auf dem Redesign-Branch und werden erst nach der PR-CI als gemergt geführt.
 - TypeScript-/Build-/Server-Testworkflows laufen nach Erstellung der PR.
 - Browser-, Responsive-, Tastatur-, Screenreader- und Live-Firestore-QA bleiben wie vereinbart offen und werden später gemeinsam durchgeführt.
+
+## 15.11.2026 – „Meine Notizen“: erste UX- und Konfliktverbesserungen
+
+Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Merge #290.
+
+- Notizliste: Suche mit Clear-Aktion, Filter nach vorhandener Eintragsart (alle / nur Notizen / nur Lesezeichen), Sortierung nach letzter Änderung bzw. Titel A–Z, Trefferzahl und einzeln entfern-/gesamt zurücksetzbare Suchbedingungen.
+- Kartenstruktur: Titel, Eintragsart und Änderungsdatum in stabiler Hierarchie; kurze Textvorschau, neutrale Schlagwortchips sowie eingeklappter Quellenstatus. Kein zusätzlicher Erstellen-Button.
+- Bookmark-Entfernung und Notizlöschung haben eigene Aktionsbeschriftungen und Bestätigungstexte.
+- Quellenstatus zeigt keine technischen Material-/Versions-IDs mehr. Da die bestehende owner-isolierte API keine Titel/Materialkennungen zurückgibt, werden Quellen neutral als Materialfassung 1..n dargestellt.
+- Editor: Speicherzustand sichtbar; bei HTTP 409 bleibt der eigene lokale Entwurf unverändert erhalten. Die aktuelle Fassung wird über die owner-isolierte Notizenliste nachgeladen und erst nach bewusster Bestätigung übernommen. Keine stille Revisionsanhebung.
+- Bereichsgrün ist nicht mehr Farbe der allgemeinen Buttons oder Speicheraktion; Status und gewöhnliche Aktionen bleiben neutral, Löschen bleibt destruktiv.
+- Datenschutz, Notiz-Eigentümer, Source-Status-API, private Quellenbindung und Datenmodell wurden nicht geändert.
+
+**Noch offen:** TypeScript/Build/Servertests und PR-Vorlagenprüfung auf dem finalen PR-Head. Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA folgt der später vereinbarten gemeinsamen Academy-QA.
