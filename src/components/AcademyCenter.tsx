@@ -977,7 +977,17 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <aside id="academy-material-navigation" aria-label="Materialnavigation" className="academy-library-sidebar lg:col-span-4 border border-slate-300 dark:border-slate-700 rounded-md p-4 space-y-3">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Materialien</h2>
                   <label htmlFor="academy-library-search" className="block text-xs font-medium text-slate-700 dark:text-slate-300">Materialien durchsuchen</label>
-                  <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                  <div className="academy-library-sidebar-search">
+                    <input id="academy-library-search" type="search" value={moduleSearchQuery} onChange={event => setModuleSearchQuery(event.target.value)} placeholder="Titel, Kennung oder Thema" className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white" />
+                    {Boolean(moduleSearchQuery.trim()) && <button type="button" onClick={() => setModuleSearchQuery('')} className="academy-library-sidebar-clear">Suche löschen</button>}
+                  </div>
+                  {(moduleCategoryFilter || moduleDocumentTypeFilter) && (
+                    <div className="academy-library-sidebar-criteria" aria-label="Aktive Bibliotheksfilter">
+                      {moduleCategoryFilter && <button type="button" onClick={() => setModuleCategoryFilter('')} className="academy-library-sidebar-filter">Kategorie: {moduleCategoryFilter} ×</button>}
+                      {moduleDocumentTypeFilter && <button type="button" onClick={() => setModuleDocumentTypeFilter('')} className="academy-library-sidebar-filter">Typ: {moduleDocumentTypeFilter} ×</button>}
+                      <button type="button" onClick={() => { setModuleCategoryFilter(''); setModuleDocumentTypeFilter(''); }} className="academy-library-sidebar-reset">Filter zurücksetzen</button>
+                    </div>
+                  )}
                    <p role="status" aria-atomic="true" className="mt-1 text-xs text-slate-500 dark:text-slate-400">{versionedMaterialsLoading ? 'Materialien werden geladen …' : versionedMaterialsError ? 'Ergebnisse unvollständig.' : filteredLibraryEntries.length + (filteredLibraryEntries.length === 1 ? ' Material' : ' Materialien')}</p>
                   {filteredLibraryEntries.length === 0 ? (versionedMaterialsLoading || versionedMaterialsError ? null : <p className="text-xs text-slate-600 dark:text-slate-400 py-3">Keine passenden Materialien gefunden.</p>) : (
                     <div className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -1024,7 +1034,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {displayedVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {displayedVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zur Materialübersicht</button>
+                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                             {isLibraryNavigationOpen ? 'Navigation ausblenden' : 'Materialnavigation anzeigen'}
                           </button>
