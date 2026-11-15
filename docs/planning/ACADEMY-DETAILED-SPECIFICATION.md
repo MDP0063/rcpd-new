@@ -1531,3 +1531,13 @@ Speichern eines Entwurfs, Veröffentlichen, Archivieren/Reaktivieren und endgül
 - Bereichsfarbe, Statusfarbe und Aktionsfarbe sind unterschiedliche Tokenrollen; ein Farbton ist nie der einzige Informationsträger.
 
 Diese Präsentationsregeln ändern keine fachlichen Beschlüsse. Die konkrete Ausarbeitung pro Untermodul, Entwicklungsreihenfolge und Recherchebegründung befindet sich in `ACADEMY-SUBPAGE-REDESIGN.md` und `DESIGN-SYSTEM-CONCEPT.md`.
+
+## Ergänzung 15.11.2026 – Präsentation der privaten Notizen
+
+Die Notizenübersicht ist eine owner-private Such-/Arbeitsliste. UI-Filter dürfen nur zwischen bestehenden `note`- und `bookmark`-Einträgen unterscheiden. Sortierung nach `updatedIso` oder Titel verändert keine Notizdaten. Neue Einträge entstehen weiterhin ausschließlich im Material-Reader.
+
+Eine Notizkarte stellt vorhandene Angaben in der Reihenfolge Titel, Eintragsart, Änderungsdatum, Vorschau, Schlagwörter und Quellenkontext dar. Interne Material-/Versions-IDs sind keine nutzerverständlichen Bezeichnungen und werden nicht angezeigt. Die bestehende Quellenstatusroute bleibt owner-isoliert und zeigt weiterhin nur Zugriffsstatus; wenn sie keine Titel liefert, werden Quellen neutral nummeriert. Es wird kein Materialzugriff aus einer privaten Quellenreferenz abgeleitet.
+
+Der manuelle Notizeditor behält die serverseitige Revisionsprüfung. Bei HTTP 409 bleiben lokale Eingaben erhalten; die aktuelle Fassung wird zusätzlich über die owner-eigene Notizenliste geladen und erst nach ausdrücklicher Bestätigung übernommen. Keine automatische Revisionsanhebung oder stille Überschreibung.
+
+Statusfarben und Bereichsfarben bleiben getrennt. Die grüne Bereichsidentität ist keine Speicher-/Erfolgsfarbe. Destruktive Notizlöschung ist von Lesezeichenentfernung unterscheidbar.
