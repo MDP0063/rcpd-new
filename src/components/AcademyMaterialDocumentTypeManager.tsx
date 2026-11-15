@@ -7,7 +7,7 @@ interface Props {
   onStatusToast: (message: string) => void;
 }
 
-const inputClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const inputClass = 'w-full min-h-[44px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
 const primaryButton = 'academy-action-primary';
 const secondaryButton = 'academy-action-secondary';
 const dangerButton = 'academy-action-danger';
@@ -291,12 +291,12 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           <div className="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,0.55fr)]">
             <div className="space-y-1.5">
               <label htmlFor="academy-document-type-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypen durchsuchen</label>
-              <input id="academy-document-type-search" type="search" className={inputClass + ' min-h-[44px]'} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-document-type-search-hint" />
+              <input id="academy-document-type-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-document-type-search-hint" />
               <p id="academy-document-type-search-hint" className="text-xs text-slate-500 dark:text-slate-400">Name oder Beschreibung</p>
             </div>
             <div className="space-y-1.5">
               <label htmlFor="academy-document-type-status-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Status</label>
-              <select id="academy-document-type-status-filter" className={inputClass + ' min-h-[44px]'} value={documentTypeStatusFilter} onChange={event => setDocumentTypeStatusFilter(event.target.value as typeof documentTypeStatusFilter)}>
+              <select id="academy-document-type-status-filter" className={inputClass} value={documentTypeStatusFilter} onChange={event => setDocumentTypeStatusFilter(event.target.value as typeof documentTypeStatusFilter)}>
                 <option value="all">Alle Statuswerte</option>
                 <option value="active">Aktiv</option>
                 <option value="archived">Archiviert</option>
