@@ -258,7 +258,7 @@
 .academy-note-card {
   padding: 1.1rem 1.15rem !important;
 }
-.academy-note-card + .academy-note-card { border-top-color: #e5eee7; }
+.academy-note-card + .academy-note-card { border-top-color: #e2e8f0; }
 .academy-note-card > div:first-child > div:first-child p:first-child {
   color: #1e293b;
   font-size: 0.96rem;
@@ -418,9 +418,9 @@
   max-width: 58rem;
   margin-inline: auto;
 }
-.academy-notes-editor-heading {
+ .academy-notes-editor-heading {
   padding: 0.25rem 0 0.9rem;
-  border-bottom: 1px solid #dce9df;
+  border-bottom: 1px solid #d6dee7;
 }
 .academy-note-editor {
   padding: clamp(1rem, 2.4vw, 1.75rem) !important;
@@ -430,16 +430,16 @@
 }
 .academy-note-editor-actions .academy-note-save {
   min-width: 12rem;
-  border: 1px solid #287a45 !important;
+  border: 1px solid #1e293b !important;
   background: #1e293b !important;
-  color: #0f172a !important;
+  color: #fff !important;
 }
 .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
   border-color: #334155 !important;
   background: #334155 !important;
 }
 .academy-note-editor-actions .academy-note-cancel {
-  border: 1px solid #cbd5cf !important;
+  border: 1px solid #cbd5e1 !important;
   background: #fff !important;
   color: #334155 !important;
 }
@@ -466,7 +466,7 @@
   color: #1e293b;
 }
 .dark .academy-notes-eyebrow { color: #8ac49a; }
-.dark .academy-notes-editor-heading { border-color: #34513b; }
+.dark .academy-notes-editor-heading { border-color: #334155; }
 .dark .academy-note-editor-actions .academy-note-save {
   border-color: #f1f5f9 !important;
   background: #f1f5f9 !important;
