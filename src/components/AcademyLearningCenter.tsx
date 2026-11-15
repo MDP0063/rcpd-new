@@ -550,9 +550,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <div className="academy-courses-search">
                 <label htmlFor="academy-courses-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</label>
                 <div className="academy-courses-search-controls">
-                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Beschreibung" />
+                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-courses-search-hint" />
                   {Boolean(search.trim()) && <button type="button" className="academy-courses-clear-search" onClick={() => setSearch('')}>Suche löschen</button>}
                 </div>
+                <p id="academy-courses-search-hint" className={`mt-1 ${muted}`}>Titel, Kennung oder Kurzbeschreibung</p>
               </div>
               {loading ? <p className={muted} role="status">Lehrgänge und Kurse werden geladen …</p> : loadError ? (
                 <div className={`${panel} p-4 space-y-3`} role="alert">
