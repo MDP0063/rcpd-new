@@ -1455,7 +1455,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 ## 15.11.2026 – Academy-Navigation: Fokus nach Bereichswechsel
 
-- Nach Auswahl einer Startkachel erhält das aktive Element der Academy-Hauptnavigation den Fokus. Nach Rückkehr zur Kachelansicht erhält die erste Kachel den Fokus.
+- Nach Auswahl einer Startkachel erhält das aktive Element der Academy-Hauptnavigation den Fokus. Nach Rückkehr zur Kachelansicht erhält die zuletzt verwendete Einstiegskachel den Fokus.
 - Dieselbe Fokusweitergabe wird für externe Sprünge in den Prüfungsbereich verwendet; normale Wechsel innerhalb der bestehenden Hauptnavigation behalten den Fokus auf dem ausgelösten Navigationsbutton.
 - Umsetzung folgt den aktuellen Empfehlungen für dynamische Navigation und Fokusreihenfolge: Home Office Accessibility Standard (WCAG 2.4.3; dynamische Controls dürfen Fokus nicht verlieren) und VA.gov SPA-Fokusmanagement (Fokus auf ein kontextgebendes interaktives Element bei clientseitigem Seitenwechsel).
 - Quellen: https://design.homeoffice.gov.uk/accessibility/standard/operable ; https://design.va.gov/accessibility/focus-management
