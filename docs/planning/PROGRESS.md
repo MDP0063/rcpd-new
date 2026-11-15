@@ -1377,6 +1377,7 @@ Der Farbaudit über alle Untermodule zeigte, dass Bereichsfarben wiederholt als 
 - Bibliotheks-/Materialverwaltungsnavigation, Auswahlzustände, Such-/Formoberflächen und Reader-Controls neutralisiert; Violett bleibt ein kleiner Bibliotheksakzent.
 - Prüfungsrunner: Primäraktion, ausgewählte Fragen/Antworten und Fortschrittsanzeige neutral; Berry bleibt Bereichsidentität. Ausstehende Bewertung/Freigabe ist neutral, bestanden/nicht bestanden bleiben echte Ergebnisfarben.
 - Prüferaktionen erhalten einheitliche Primär-/Sekundär-/Destruktiv-Hierarchie; Übergabeinformationen sind neutral, Warnungen vor Inaktivitäts-/Verwerfungsfolgen bleiben amber.
+- Im Prüfungsrunner ist „beantwortet“ jetzt nicht mehr grün (das könnte fälschlich „richtig“ bedeuten): die Frage-Navigation nutzt neutrale Auswahlflächen plus Häkchen und Screenreader-Text. Der Fortschrittsbalken ist neutral; die Zeitwarnung ist in Amber (≤5 Minuten) und Rot (≤1 Minute) abgestuft.
 - Exam-Workshop-Lebenszyklusstatus (Entwurf/veröffentlicht/archiviert) neutral; Governance-Aktionen nach Wirkung unterschieden.
 - Taxonomie: Archivieren/Reaktivieren neutral, endgültiges Löschen destruktiv.
 - Materialeditor: neutrale Flächen, Felder und Auswahl; Archivierung neutral; Speichern primär.
