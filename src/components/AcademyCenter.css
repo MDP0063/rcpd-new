@@ -1861,3 +1861,7 @@ main.academy-main-viewport {
 .dark .academy-library-sidebar-reset {
   color: #c1d0df;
 }
+
+.academy-markdown-content.academy-note-markdown {
+  font-size: .9rem;
+}
