@@ -114,6 +114,7 @@
   line-height: 1.25;
   text-align: center;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
@@ -152,4 +153,12 @@
   .academy-center-root :is(.academy-action-primary, .academy-action-secondary, .academy-action-danger) {
     transition: none;
   }
+}
+
+
+/* Saturated Academy entry tiles need a light inner focus ring for contrast on every tile color. */
+.academy-center-root .academy-entry-tile:focus-visible {
+  outline: 3px solid rgba(255,255,255,0.96) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(40,100,217,0.42), 0 12px 28px rgba(15,23,42,0.18) !important;
 }
