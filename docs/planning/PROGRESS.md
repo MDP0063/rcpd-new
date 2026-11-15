@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue) und #297 (Kurs-/Lehrgangsverwaltung) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue), #297 (Kurs-/Lehrgangsverwaltung) und #298 (Materialverwaltungskatalog) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `e4a8103fca3d0e6baa12840f7d539bead666830e` (PR #297). Enthalten sind die Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, die gemeinsame semantische Academy-Control-/Status-/Focus-Basis aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295 sowie Suche, Veröffentlichungsfilter und Sortierung in der Kurs-/Lehrgangsverwaltung aus #297.
+**Aktueller Basisstand:** `main` bei `871b1296be2d2eb71ecdcd222008f8e1768bf4f6` (PR #298). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295, Kurs-/Lehrgangsfilter aus #297 und die Materialverwaltungsfilter aus #298.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297 sind gemergt. Für #297 waren `bun run lint`, `bun run build`, `bun run test` (455/455) und die PR-Vorlagenprüfung erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. PR #296 hat auf seinem finalen Stand erfolgreiche TypeScript-/Build-/Servertests und PR-Vorlagenprüfung, bleibt aber wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295, #297 und #298 sind gemergt. Für #297 und #298 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1417,11 +1417,19 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **PR #297 ist am 15.11.2026 gemergt** (Merge-Commit `e4a8103fca3d0e6baa12840f7d539bead666830e`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
 
 
-## 15.11.2026 – Materialverwaltung: Katalogbedienung
+## 15.11.2026 – Materialverwaltung: Katalogbedienung (PR #298)
 
-- Materialliste erhält neben der bestehenden Suche Filter für Entwürfe, veröffentlichte Materialien, veröffentlichte Materialien mit neuer Arbeitsfassung und archivierte Materialien. Die Filter unterscheiden vorhandene Veröffentlichungszustände und den bereits gespeicherten Revisionsvergleich; sie schreiben keine neuen Statuswerte.
+- Materialliste erhält neben der bestehenden Suche Filter für Entwürfe, veröffentlichte Materialien ohne neueren Entwurf, veröffentlichte Materialien mit neuer Arbeitsfassung und archivierte Materialien. Die Unterscheidung wird aus dem bestehenden Revisionsvergleich abgeleitet; keine neuen Statuswerte.
 - Sortierung nach letzter tatsächlicher Änderung, Titel oder Kennung; bei der Zeitreihenfolge wird der neueste gültige Zeitstempel aus Arbeitsentwurf und Master berücksichtigt.
 - Such-/Filterkriterien sind gemeinsam zurücksetzbar; Trefferzahl und keine-Treffer-Zustand benennen Suche und Filter.
 - Die vorhandene serverseitige Rollen-/Kursautorisierung und die Material-/Versionsdaten bleiben unverändert.
-- Parallel wird die Zeit-Sortierung im Kurs-/Lehrgangs-Authoring korrigiert: neuester Wert aus Arbeitsentwurf und Master statt blindem Vorrang eines älteren Entwurfszeitstempels.
-- Arbeitsbranch: `redesign/academy-material-catalog-controls`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
+- Parallel wurde die Zeit-Sortierung im Kurs-/Lehrgangs-Authoring korrigiert: neuester Wert aus Arbeitsentwurf und Master.
+- **PR #298 ist am 15.11.2026 gemergt** (Merge-Commit `871b1296be2d2eb71ecdcd222008f8e1768bf4f6`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
+
+
+## 15.11.2026 – Taxonomieverwaltung: Kategorien und Dokumenttypen
+
+- Kategorien- und Dokumenttypverwaltung erhalten dieselbe Bedienlogik: Suche nach Name/Beschreibung, Filter nach Aktiv/Archiviert, alphabetische Sortierung, Trefferzahl und gemeinsames Zurücksetzen.
+- Suchfelder verwenden sichtbare Labels und Hinweistexte statt Platzhalter als einzige Suchanleitung; Statusfilter bleiben optional.
+- Es werden nur vorhandene Taxonomiestatus verwendet. Archivieren/Reaktivieren, stabile Kennungen, Revisionskonflikte, Schutz bestehender Zuordnungen und serverseitige Löschprüfung bleiben unverändert.
+- Arbeitsbranch: `redesign/academy-material-taxonomy-controls`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
