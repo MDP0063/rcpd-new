@@ -71,8 +71,8 @@ function filterAndSortEntries<T extends CourseEntry | ProgramEntry>(
       const rightTitle = right.draft?.title || right.version?.title || right.master.code;
       if (sort === 'title') return leftTitle.localeCompare(rightTitle, 'de-DE') || left.master.code.localeCompare(right.master.code, 'de-DE');
       if (sort === 'updated') {
-        const leftTime = Date.parse(left.master.updatedIso);
-        const rightTime = Date.parse(right.master.updatedIso);
+        const leftTime = Date.parse(left.draft?.updatedIso || left.master.updatedIso);
+        const rightTime = Date.parse(right.draft?.updatedIso || right.master.updatedIso);
         const leftValue = Number.isFinite(leftTime) ? leftTime : Number.NEGATIVE_INFINITY;
         const rightValue = Number.isFinite(rightTime) ? rightTime : Number.NEGATIVE_INFINITY;
         return rightValue - leftValue || left.master.code.localeCompare(right.master.code, 'de-DE');
@@ -456,7 +456,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               <div>
                 <label htmlFor="academy-authoring-publication-filter" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Veröffentlichungsstatus</label>
                 <select id="academy-authoring-publication-filter" className={field + ' min-h-[44px]'} value={publicationFilter} onChange={event => setPublicationFilter(event.target.value as typeof publicationFilter)}>
-                  <option value="all">Alle Status</option>
+                  <option value="all">Alle Statuswerte</option>
                   <option value="draft">Entwurf</option>
                   <option value="published">Veröffentlicht</option>
                   <option value="archived">Archiviert</option>
