@@ -381,3 +381,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **PR #284:** geschlossen und durch PR #295 ersetzt. PR #295 ist gemergt; die zeitabhängigen Autosave-/Unmount-/Netzwerkfehler-Szenarien bleiben Teil der späteren manuellen Browser-QA. Die bekannte Best-effort-Grenze beim Unmount wird nicht durch lokale Speicherung privater Notizen umgangen.
 - **PRs #293, #294 und #295:** gemergt; CI und PR-Vorlagenprüfungen erfolgreich. Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 - **Aktueller Routine-UX-Arbeitszweig:** Kurs-/Lehrgangsverwaltung mit clientseitiger Suche, Veröffentlichungsfilter und Sortierung. Es werden ausschließlich bereits vorhandene Felder verwendet; keine neue fachliche Status- oder Berechtigungslogik.
+
+
+## 15.11.2026 – Status nach PR #297 und nächste Katalogarbeit
+
+- **PR #297:** Kurs-/Lehrgangsverwaltung ist gemergt; Suche, Veröffentlichungsfilter, Sortierung und getrennte Leerzustände sind enthalten. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
+- **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen. Nicht mit Routine-UX-Arbeit vermischen oder ohne Review mergen.
+- **Aktueller Arbeitszweig:** Materialverwaltungskatalog mit Filtern auf bestehende Veröffentlichungs-/Revisionsdaten und korrekter Zeit-Sortierung. Keine neue API- oder Berechtigungslogik.
