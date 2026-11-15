@@ -1448,6 +1448,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 ## 15.11.2026 – Lehrgangsdetail: fehlende Kursreferenzen
 
 - Pflicht- und Empfehlungskurse zeigen bei fehlendem Katalogeintrag einen verständlichen Hinweis statt der internen Kurs-ID.
+- Die interne Kurs-ID bleibt ausschließlich technischer Schlüssel/Lookup und wird nicht als sichtbarer Fallback ausgegeben.
 - Ein fehlender Fortschrittsdatensatz in einer bereits begonnenen Lehrgangsteilnahme wird nicht fälschlich als „Noch nicht begonnen“ ausgegeben; der Zustand wird als nicht verfügbar gekennzeichnet.
 - Die Aktion „Zum Kurs“ erscheint nur, wenn ein passender Katalogeintrag vorhanden ist. Keine künstliche Kurs-Master-Instanz und keine erfundenen Veröffentlichungs-/Verfügbarkeitswerte.
 - Arbeitsbranch: `fix/academy-program-course-reference-fallbacks`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.
