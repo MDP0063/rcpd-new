@@ -1533,10 +1533,10 @@ main.academy-main-viewport {
   }
 }
 
-/* Keep the newly added card focus indicators visible against dark library surfaces. */
+/* Library card focus uses the shared high-contrast theme token. */
 .dark .academy-library-area .academy-library-topic-card:focus-visible,
 .dark .academy-library-area .academy-library-material-card:focus-within {
-  outline-color: #b8a3df;
+  outline-color: var(--academy-focus-color);
 }
 
 /* Keep Markdown blockquotes readable in the dark material-editor preview. */
@@ -1547,9 +1547,7 @@ main.academy-main-viewport {
 
 /* Academy library usability pass: make discovery and reading separate, predictable tasks. */
 .academy-library-area {
-  --library-action: #354b63;
-  --library-action-hover: #263b52;
-  --library-focus: #536f8d;
+  --library-focus: var(--academy-focus-color);
 }
 .academy-library-area .academy-library-search-controls {
   position: relative;
