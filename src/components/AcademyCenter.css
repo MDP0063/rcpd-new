@@ -1489,3 +1489,9 @@ main.academy-main-viewport {
     min-height: 2.75rem;
   }
 }
+
+/* Keep the newly added card focus indicators visible against dark library surfaces. */
+.dark .academy-library-area .academy-library-topic-card:focus-visible,
+.dark .academy-library-area .academy-library-material-card:focus-within {
+  outline-color: #b8a3df;
+}
