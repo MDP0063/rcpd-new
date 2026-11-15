@@ -202,14 +202,14 @@
 
 /* Meine Notizen: personal, calm and privacy-forward; no admin-facing controls are introduced. */
 .academy-learning-center--notes {
-  --academy-notes-border: #d6dee7;
+  --academy-notes-border: var(--academy-border);
   min-width: 0;
 }
 .academy-notes-heading {
   padding: 0.35rem 0 0.6rem;
 }
 .academy-notes-heading h2 {
-  color: #1e293b;
+  color: var(--academy-text-primary);
   font-size: clamp(1.55rem, 2.4vw, 1.9rem);
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -217,10 +217,10 @@
 .academy-notes-heading > p {
   max-width: 58rem;
   padding: 0.75rem 0.9rem;
-  border-left: 3px solid #64748b;
+  border-left: 3px solid var(--academy-border-strong);
   border-radius: 0 0.7rem 0.7rem 0;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--academy-surface-subtle);
+  color: var(--academy-text-secondary);
   line-height: 1.65;
 }
 .academy-notes-search {
@@ -233,19 +233,19 @@
 .academy-notes-search > span {
   display: block;
   margin-bottom: 0.45rem;
-  color: #475569;
+  color: var(--academy-text-secondary);
   font-weight: 650;
 }
 .academy-notes-search input {
   min-height: 2.8rem;
-  border-color: #cbd5e1 !important;
+  border-color: var(--academy-border) !important;
   border-radius: 0.7rem !important;
-  background: #fff !important;
+  background: var(--academy-surface-card) !important;
 }
 .academy-notes-search input:focus-visible {
-  outline: 3px solid rgba(83,111,141,0.32) !important;
+  outline: 3px solid var(--academy-focus-color) !important;
   outline-offset: 2px;
-  border-color: #536f8d !important;
+  border-color: var(--academy-focus-color) !important;
 }
 .academy-notes-list {
   overflow: hidden;
@@ -259,7 +259,7 @@
 }
 .academy-note-card + .academy-note-card { border-top-color: #e2e8f0; }
 .academy-note-card > div:first-child > div:first-child p:first-child {
-  color: #1e293b;
+  color: var(--academy-text-primary);
   font-size: 0.96rem;
   font-weight: 700;
 }
@@ -270,15 +270,15 @@
 .academy-note-editor button {
   min-height: 2.4rem;
   border-radius: 0.65rem !important;
-  border-color: #cbd5e1 !important;
-  color: #334155 !important;
-  background: #fff;
+  border-color: var(--academy-border) !important;
+  color: var(--academy-action-secondary-text) !important;
+  background: var(--academy-surface-card);
   font-weight: 650;
 }
 .academy-note-card button:hover,
 .academy-note-editor button:hover {
-  border-color: #94a3b8 !important;
-  background: #f1f5f9 !important;
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-action-secondary-hover) !important;
 }
 .academy-note-editor,
 .academy-notes-reader-hint {
@@ -291,45 +291,45 @@
 .academy-notes-reader-hint h3 { color: #1e293b; }
 .academy-note-editor input,
 .academy-note-editor textarea {
-  border-color: #cbd5e1 !important;
+  border-color: var(--academy-border) !important;
   border-radius: 0.7rem !important;
 }
 .academy-note-editor input:focus-visible,
 .academy-note-editor textarea:focus-visible {
-  outline: 3px solid rgba(83,111,141,0.32) !important;
+  outline: 3px solid var(--academy-focus-color) !important;
   outline-offset: 2px;
-  border-color: #536f8d !important;
+  border-color: var(--academy-focus-color) !important;
 }
 .dark .academy-notes-heading h2,
 .dark .academy-note-card > div:first-child > div:first-child p:first-child,
 .dark .academy-note-editor h3,
 .dark .academy-notes-reader-hint h3 { color: #f1f5f9; }
 .dark .academy-notes-heading > p {
-  border-color: #64748b;
+  border-color: var(--academy-border-strong);
   background: rgba(30,41,59,0.72);
-  color: #cbd5e1;
+  color: var(--academy-text-secondary);
 }
 .dark .academy-notes-search,
 .dark .academy-notes-list,
 .dark .academy-note-editor,
 .dark .academy-notes-reader-hint {
-  border-color: #334155 !important;
-  background: rgba(15,23,42,0.94) !important;
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
   box-shadow: none;
 }
 .dark .academy-notes-search > span { color: #cbd5e1; }
 .dark .academy-notes-search input,
 .dark .academy-note-editor input,
 .dark .academy-note-editor textarea {
-  border-color: #475569 !important;
-  background: #0f172a !important;
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-page) !important;
 }
 .dark .academy-note-card + .academy-note-card { border-top-color: #334155; }
 .dark .academy-note-card button,
 .dark .academy-note-editor button {
-  border-color: #475569 !important;
+  border-color: var(--academy-border-strong) !important;
   color: #e2e8f0 !important;
-  background: #1e293b;
+  background: var(--academy-surface-card);
 }
 .dark .academy-note-card button:hover,
 .dark .academy-note-editor button:hover { background: #334155 !important; }
@@ -430,25 +430,25 @@
 .academy-note-editor-actions .academy-note-save {
   min-width: 12rem;
   border: 1px solid #1e293b !important;
-  background: #1e293b !important;
-  color: #fff !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
 }
 .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
-  border-color: #334155 !important;
-  background: #334155 !important;
+  border-color: var(--academy-border) !important;
+  background: var(--academy-action-primary-hover) !important;
 }
 .academy-note-editor-actions .academy-note-cancel {
   border: 1px solid #cbd5e1 !important;
-  background: #fff !important;
-  color: #334155 !important;
+  background: var(--academy-surface-card) !important;
+  color: var(--academy-action-secondary-text) !important;
 }
 .academy-note-editor-actions .academy-note-cancel:hover {
-  border-color: #94a3b8 !important;
-  background: #f1f5f9 !important;
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-action-secondary-hover) !important;
 }
 .academy-note-card .academy-note-delete {
   border: 1px solid #e5c9c9 !important;
-  background: #fff !important;
+  background: var(--academy-surface-card) !important;
   color: #a12f2f !important;
 }
 .academy-note-card .academy-note-delete:hover:not(:disabled) {
@@ -462,22 +462,22 @@
   justify-content: center;
 }
 .academy-notes-empty h3 {
-  color: #1e293b;
+  color: var(--academy-text-primary);
 }
 .dark .academy-notes-eyebrow { color: var(--academy-area-notes-foreground); }
 .dark .academy-notes-editor-heading { border-color: #334155; }
 .dark .academy-note-editor-actions .academy-note-save {
-  border-color: #f1f5f9 !important;
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-secondary-hover) !important;
+  color: var(--academy-action-primary-text) !important;
 }
 .dark .academy-note-editor-actions .academy-note-save:hover:not(:disabled) {
-  border-color: #fff !important;
-  background: #fff !important;
+  border-color: var(--academy-action-primary-hover) !important;
+  background: var(--academy-surface-card) !important;
 }
 .dark .academy-note-editor-actions .academy-note-cancel {
-  border-color: #475569 !important;
-  background: #1e293b !important;
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-action-primary-bg) !important;
   color: #e2e8f0 !important;
 }
 .dark .academy-note-card .academy-note-delete {
@@ -496,14 +496,14 @@
 }
 
 .academy-note-source-context {
-  border-color: #d6dee7 !important;
+  border-color: var(--academy-border) !important;
   border-radius: 0.9rem !important;
-  background: rgba(248,250,252,0.94) !important;
+  background: var(--academy-surface-subtle) !important;
 }
 .academy-note-source-context h3 { color: #475569; }
 .dark .academy-note-source-context {
-  border-color: #334155 !important;
-  background: rgba(15,23,42,0.94) !important;
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
 }
 .dark .academy-note-source-context h3 { color: #cbd5e1; }
 
@@ -524,7 +524,7 @@
   transform: translateY(-50%);
   border: 1px solid #d5dee7;
   border-radius: .45rem;
-  background: #f8fafc;
+  background: var(--academy-surface-subtle);
   color: #354b63;
   font-size: .78rem;
   font-weight: 650;
@@ -596,7 +596,7 @@
 .academy-course-back {
   border-color: #cbd5df !important;
   color: #354b63 !important;
-  background: #fff !important;
+  background: var(--academy-surface-card) !important;
 }
 .academy-program-card button:hover,
 .academy-course-action:hover,
