@@ -634,7 +634,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   if (['exam_center', 'tests', 'final_exams'].includes(item.id)) {
                     setExamSubmittedResult(null); setExamAnswers({}); setExamExplanations({});
                   }
-                }} aria-current={activeTab === item.id ? 'page' : undefined} className={`px-3 py-1.5 text-xs rounded-md border ${activeTab === item.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300'}`}>{item.label}</button>
+                }} aria-current={activeTab === item.id ? 'page' : undefined} className={`px-3 py-1.5 text-xs rounded-md border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:focus-visible:outline-sky-400 ${activeTab === item.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300'}`}>{item.label}</button>
               ))}
             </div>
           </div>
@@ -652,7 +652,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <button key={item.id} type="button" onClick={() => {
                     setIsAcademyHome(false);
                     setActiveTab(item.id);
-                  }} aria-current={activeTab === item.id ? 'page' : undefined} className={`px-3 py-1.5 text-xs rounded-md border ${activeTab === item.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300'}`}>{item.label}</button>
+                  }} aria-current={activeTab === item.id ? 'page' : undefined} className={`px-3 py-1.5 text-xs rounded-md border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:focus-visible:outline-sky-400 ${activeTab === item.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300'}`}>{item.label}</button>
                 ))}
               </div>
             </div>
