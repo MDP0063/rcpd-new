@@ -514,3 +514,20 @@
 - Sortierung nach Kennung, Titel oder vorhandenem Änderungszeitpunkt ergänzt; ungültige Zeitstempel landen am Ende.
 - Ergebniszahlen, getrennte Leerzustände und gemeinsames Zurücksetzen der Such-/Filterkriterien ergänzt.
 - Keine Backend-, Berechtigungs-, Datenmodell- oder Infrastrukturänderung.
+
+
+## 2026-11-15 – Kurs- und Lehrgangsverwaltung: Katalogbedienung (PR #297)
+
+- Gemeinsame Suche über Kennungen sowie Titel und Kurzbeschreibungen aus Entwürfen und veröffentlichten Fassungen.
+- Veröffentlichungsfilter nur über die vorhandenen Zustände Entwurf, Veröffentlicht und Archiviert.
+- Sortierung nach Kennung, Titel oder dem neuesten tatsächlichen Änderungszeitpunkt aus Entwurfs- und Master-Zeitstempel.
+- Ergebniszahlen, getrennte Leerzustände und gemeinsames Zurücksetzen.
+- PR #297 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+## 2026-11-15 – Materialverwaltung: Katalogbedienung
+
+- Veröffentlichungsfilter für Entwürfe, veröffentlichte Materialien, veröffentlichte Materialien mit neuem Entwurf und archivierte Materialien.
+- Sortierung nach tatsächlicher letzter Änderung (neuesten Zeitstempel aus Entwurf und Master), Titel oder Kennung.
+- Suche/Filter-Rücksetzung und aussagekräftiger keine-Treffer-Zustand.
+- Zeit-Sortierung im Kurs-/Lehrgangs-Authoring ebenfalls auf den neuesten Entwurfs-/Master-Zeitstempel korrigiert.
+- Keine API-, Rollen-, Berechtigungs- oder Datenmodelländerung.
