@@ -893,15 +893,15 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
-                  <input className={field} value={noteTitle} onChange={event => { const value = event.target.value; setNoteTitle(value); onUnsavedChangesChange?.(Boolean(editingNote && (value !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={200} />
+                  <input className={field} value={noteTitle} disabled={saving} onChange={event => { const value = event.target.value; setNoteTitle(value); onUnsavedChangesChange?.(Boolean(editingNote && (value !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={200} />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Inhalt</span>
-                  <textarea className={field} rows={12} value={noteContent} onChange={event => { const value = event.target.value; setNoteContent(value); onUnsavedChangesChange?.(Boolean(editingNote && (noteTitle !== (editingNote.title || '') || value !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={20000} />
+                  <textarea className={field} rows={12} value={noteContent} disabled={saving} onChange={event => { const value = event.target.value; setNoteContent(value); onUnsavedChangesChange?.(Boolean(editingNote && (noteTitle !== (editingNote.title || '') || value !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={20000} />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Schlagwörter</span>
-                  <input className={field} value={noteTags} onChange={event => { const value = event.target.value; setNoteTags(value); onUnsavedChangesChange?.(Boolean(editingNote && (noteTitle !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || value !== editingNote.tags.join(', ') || saving))); }} placeholder="Mit Kommas getrennt" />
+                  <input className={field} value={noteTags} disabled={saving} onChange={event => { const value = event.target.value; setNoteTags(value); onUnsavedChangesChange?.(Boolean(editingNote && (noteTitle !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || value !== editingNote.tags.join(', ') || saving))); }} placeholder="Mit Kommas getrennt" />
                   <span className="text-xs text-slate-500 dark:text-slate-400">Schlagwörter helfen dir, die Notiz später wiederzufinden.</span>
                 </label>
                 <div className="academy-note-editor-actions flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
