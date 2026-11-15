@@ -533,7 +533,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <label className="academy-course-filter-control">
                           <span>Teilnahmestatus</span>
                           <select className={field} value={courseStatusFilter} onChange={event => setCourseStatusFilter(event.target.value as typeof courseStatusFilter)}>
-                            <option value="all">Alle Teilnahmen</option>
+                            <option value="all">Alle Kurse</option>
                             <option value="not_started">Nicht begonnen</option>
                             <option value="in_progress">In Bearbeitung</option>
                             <option value="completed">Abgeschlossen</option>
