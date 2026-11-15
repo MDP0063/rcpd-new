@@ -509,11 +509,11 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               <p id="academy-material-search-hint" className="mt-1 text-xs text-slate-500 dark:text-slate-400">Titel, Kennung oder Kurszuständigkeit</p>
             </div>
             <div>
-              <label htmlFor="academy-material-publication-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Veröffentlichungsstand</label>
+              <label htmlFor="academy-material-publication-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Veröffentlichungs- und Entwurfsstand</label>
               <select id="academy-material-publication-filter" className={field + ' mt-1 min-h-[44px]'} value={publicationFilter} onChange={event => setPublicationFilter(event.target.value as typeof publicationFilter)}>
                 <option value="all">Alle Materialien</option>
                 <option value="draft">Entwürfe</option>
-                <option value="published">Veröffentlicht</option>
+                <option value="published">Veröffentlicht ohne neuen Entwurf</option>
                 <option value="published-with-draft">Veröffentlicht mit neuem Entwurf</option>
                 <option value="archived">Archiviert</option>
               </select>
