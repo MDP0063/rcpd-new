@@ -1711,8 +1711,9 @@ main.academy-main-viewport {
   font-size: .9rem;
 }
 .academy-library-area .academy-library-open-button:hover {
-  border-color: var(--library-action-hover);
-  background: var(--library-action-hover);
+  border-color: var(--academy-border-strong);
+  background: var(--academy-action-secondary-hover);
+  color: var(--academy-text-primary);
 }
 .academy-library-area :is(button, input, select, summary):focus-visible {
   outline: 3px solid var(--library-focus);
