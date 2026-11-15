@@ -409,3 +409,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **PR #300:** Kursnachweis-Doppelsubmit-Schutz und Fallbacks für Lehrgangsdetails sind gemergt. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
 - **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
 - **Aktueller Arbeitszweig:** Lehrgangsdetail-Referenzen – keine internen Kurs-IDs in Fallbacks, keine falschen „Noch nicht begonnen“-Aussagen bei fehlenden Fortschrittsdaten, keine künstlichen Kurs-Masterdaten.
+
+
+## 15.11.2026 – Status nach PR #301 und Navigation-Fokusarbeit
+
+- **PR #301:** Lehrgangsdetails zeigen bei fehlenden Kursreferenzen keine internen IDs mehr; fehlender Fortschritt wird nicht fälschlich als „Noch nicht begonnen“ dargestellt. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Screenreader-Abnahme bleibt offen.
+- **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
+- **Aktueller Arbeitszweig:** Fokusmanagement beim Wechsel von Academy-Kacheln in einen Bereich und zurück. Keine Änderung an Navigationsstruktur oder Berechtigungen.
