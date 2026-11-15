@@ -51,6 +51,13 @@ function statusName(status: string): string {
   return status;
 }
 
+function latestIsoTimestamp(...values: Array<string | undefined>): number {
+  const timestamps = values
+    .map(value => value ? Date.parse(value) : Number.NaN)
+    .filter(Number.isFinite);
+  return timestamps.length > 0 ? Math.max(...timestamps) : Number.NEGATIVE_INFINITY;
+}
+
 function filterAndSortEntries<T extends CourseEntry | ProgramEntry>(
   entries: T[],
   search: string,
@@ -76,10 +83,8 @@ function filterAndSortEntries<T extends CourseEntry | ProgramEntry>(
       const rightTitle = right.draft?.title || right.version?.title || right.master.code;
       if (sort === 'title') return leftTitle.localeCompare(rightTitle, 'de-DE') || left.master.code.localeCompare(right.master.code, 'de-DE');
       if (sort === 'updated') {
-        const leftTime = Date.parse(left.draft?.updatedIso || left.master.updatedIso);
-        const rightTime = Date.parse(right.draft?.updatedIso || right.master.updatedIso);
-        const leftValue = Number.isFinite(leftTime) ? leftTime : Number.NEGATIVE_INFINITY;
-        const rightValue = Number.isFinite(rightTime) ? rightTime : Number.NEGATIVE_INFINITY;
+        const leftValue = latestIsoTimestamp(left.draft?.updatedIso, left.master.updatedIso);
+        const rightValue = latestIsoTimestamp(right.draft?.updatedIso, right.master.updatedIso);
         return rightValue - leftValue || left.master.code.localeCompare(right.master.code, 'de-DE');
       }
       return left.master.code.localeCompare(right.master.code, 'de-DE');

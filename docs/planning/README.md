@@ -3,8 +3,8 @@
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`. Sie enthält nicht nur kurze Beschlusslisten, sondern auch ausführliche Ablaufregeln, Randbedingungen, Audit-Aufträge und nachvollziehbare offene Punkte.
 
 **Stand:** 15.11.2026  
-**Letzter verifizierter `main`-Stand:** `460bdf508153cd56b01090fc64c9bfa5cb09c984`  
-**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, privater Notizenarbeitsbereich, Reader-Save-Queue und Kurs-/Lehrgangsverwaltung (PR #293–#295 gemergt; neue Katalogbedienung in Arbeit) vom 15.11.2026.
+**Letzter verifizierter `main`-Stand:** `e4a8103fca3d0e6baa12840f7d539bead666830e`  
+**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue und Kurs-/Lehrgangsverwaltung (PR #293–#295 und #297 gemergt; Materialverwaltungskatalog in Arbeit) vom 15.11.2026.
 **Laufender Umsetzungs- und Abnahmestand:** siehe [PROGRESS.md](./PROGRESS.md).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
 

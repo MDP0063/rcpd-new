@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich) und #295 (Reader-Notiz-Speicherqueue) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293 (semantisches Interaktionssystem), #294 (privater Notizenarbeitsbereich), #295 (Reader-Notiz-Speicherqueue) und #297 (Kurs-/Lehrgangsverwaltung) sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `460bdf508153cd56b01090fc64c9bfa5cb09c984` (PR #295). Enthalten sind unter anderem die Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, die gemeinsame semantische Academy-Control-/Status-/Focus-Basis aus #293, die Notizenübersicht und Konfliktbehandlung aus #294 sowie die Reader-Notiz-Save-Queue aus #295.
+**Aktueller Basisstand:** `main` bei `e4a8103fca3d0e6baa12840f7d539bead666830e` (PR #297). Enthalten sind die Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, die gemeinsame semantische Academy-Control-/Status-/Focus-Basis aus #293, die Notizenübersicht und Konfliktbehandlung aus #294, die Reader-Notiz-Save-Queue aus #295 sowie Suche, Veröffentlichungsfilter und Sortierung in der Kurs-/Lehrgangsverwaltung aus #297.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 sind gemergt. TypeScript, Produktionsbuild, Servertests und PR-Vorlagenprüfungen waren für diese PRs erfolgreich; optionale Render-Deploy-Hooks wurden übersprungen. PR #296 hat auf seinem finalen Stand erfolgreiche TypeScript-/Build-/Servertests und PR-Vorlagenprüfung, bleibt aber wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297 sind gemergt. Für #297 waren `bun run lint`, `bun run build`, `bun run test` (455/455) und die PR-Vorlagenprüfung erfolgreich; der optionale Render-Deploy-Hook wurde übersprungen. PR #296 hat auf seinem finalen Stand erfolgreiche TypeScript-/Build-/Servertests und PR-Vorlagenprüfung, bleibt aber wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1407,11 +1407,21 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 **Noch offen:** TypeScript/Build/Servertests und PR-Vorlagenprüfung auf dem finalen PR-Head. Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA folgt der später vereinbarten gemeinsamen Academy-QA.
 
 
-## 15.11.2026 – Kurs- und Lehrgangsverwaltung: Katalogbedienung
+## 15.11.2026 – Kurs- und Lehrgangsverwaltung: Katalogbedienung (PR #297)
 
-- Die Verwaltungslisten für Kurse und Lehrgänge erhalten eine gemeinsame Suche über Titel, Kennung und Kurzbeschreibung.
-- Ein gemeinsamer Veröffentlichungsfilter nutzt ausschließlich die vorhandenen Werte Entwurf, Veröffentlicht und Archiviert. Er verändert weder Status noch Verfügbarkeit oder persönliche Teilnahme.
-- Sortierung ist nach Kennung A–Z (bestehende Standardreihenfolge), Titel A–Z oder tatsächlichem Änderungszeitpunkt möglich. Fehlende/ungültige Änderungszeitpunkte werden bei der Sortierung „Zuletzt geändert“ hinter gültigen Werten geführt.
-- Ergebniszahlen unterscheiden angezeigte und gesamte Datensätze; leere Datenbestände und leere Such-/Filtertreffer werden getrennt erklärt. Kriterien lassen sich gemeinsam zurücksetzen.
-- Umsetzung bleibt vollständig clientseitig auf den bereits geladenen Verwaltungsdaten. Keine neue API, Berechtigung, Statusdimension, Datenmigration oder Abhängigkeit.
-- Arbeitsbranch: `redesign/academy-authoring-catalog-controls`. TypeScript/Build/Servertests und PR-Vorlagenprüfung laufen erst nach PR-Erstellung über CI; Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt Teil der späteren gemeinsamen Abnahme.
+- Gemeinsame Suche über Kennungen sowie Titel und Kurzbeschreibungen aus Entwürfen und veröffentlichten Fassungen.
+- Veröffentlichungsfilter verwendet nur die vorhandenen Zustände Entwurf, Veröffentlicht und Archiviert; keine Status- oder Verfügbarkeitsänderung.
+- Sortierung nach Kennung, Titel oder dem neuesten tatsächlichen Änderungszeitpunkt aus Entwurfs- und Master-Zeitstempel.
+- Ergebniszahlen, getrennte Leerzustände und gemeinsames Zurücksetzen der Such-/Filterkriterien.
+- Keine Backend-, Berechtigungs-, Datenmodell- oder Infrastrukturänderung.
+- **PR #297 ist am 15.11.2026 gemergt** (Merge-Commit `e4a8103fca3d0e6baa12840f7d539bead666830e`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Browser-/Responsive-/Keyboard-/Screenreader-QA bleibt offen.
+
+
+## 15.11.2026 – Materialverwaltung: Katalogbedienung
+
+- Materialliste erhält neben der bestehenden Suche Filter für Entwürfe, veröffentlichte Materialien, veröffentlichte Materialien mit neuer Arbeitsfassung und archivierte Materialien. Die Filter unterscheiden vorhandene Veröffentlichungszustände und den bereits gespeicherten Revisionsvergleich; sie schreiben keine neuen Statuswerte.
+- Sortierung nach letzter tatsächlicher Änderung, Titel oder Kennung; bei der Zeitreihenfolge wird der neueste gültige Zeitstempel aus Arbeitsentwurf und Master berücksichtigt.
+- Such-/Filterkriterien sind gemeinsam zurücksetzbar; Trefferzahl und keine-Treffer-Zustand benennen Suche und Filter.
+- Die vorhandene serverseitige Rollen-/Kursautorisierung und die Material-/Versionsdaten bleiben unverändert.
+- Parallel wird die Zeit-Sortierung im Kurs-/Lehrgangs-Authoring korrigiert: neuester Wert aus Arbeitsentwurf und Master statt blindem Vorrang eines älteren Entwurfszeitstempels.
+- Arbeitsbranch: `redesign/academy-material-catalog-controls`. CI nach PR-Erstellung; Browser-/Responsive-/Keyboard-/Screenreader-QA später.

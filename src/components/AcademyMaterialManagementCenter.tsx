@@ -86,6 +86,13 @@ function statusLabel(master: AcademyMaterialMasterDoc, draft: Pick<AcademyMateri
   return 'Veröffentlicht';
 }
 
+function latestIsoTimestamp(...values: Array<string | undefined>): number {
+  const timestamps = values
+    .map(value => value ? Date.parse(value) : Number.NaN)
+    .filter(Number.isFinite);
+  return timestamps.length > 0 ? Math.max(...timestamps) : Number.NEGATIVE_INFINITY;
+}
+
 function formatDate(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -107,6 +114,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
+  const [publicationFilter, setPublicationFilter] = useState<'all' | 'draft' | 'published' | 'published-with-draft' | 'archived'>('all');
+  const [materialSort, setMaterialSort] = useState<'updated' | 'title' | 'code'>('updated');
   const [editingMaster, setEditingMaster] = useState<AcademyMaterialMasterDoc | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [draft, setDraft] = useState<AcademyMaterialDraftDoc | null>(null);
@@ -232,21 +241,41 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setBusy(false);
   };
 
-  const filteredMaterials = useMemo(() => materials.filter(item => {
+  const filteredMaterials = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('de-DE');
-    if (!query) return true;
-    const categoryId = item.draft?.categoryId || '';
-    const documentTypeId = item.draft?.documentTypeId || '';
-    return [
-      item.master.code,
-      item.master.responsibleCourseCode || '',
-      item.draft?.title || '',
-      item.currentVersion?.title || '',
-      categories.find(category => category.id === categoryId)?.name || '',
-      documentTypes.find(type => type.id === documentTypeId)?.name || '',
-      statusLabel(item.master, item.draft)
-    ].some(value => value.toLocaleLowerCase('de-DE').includes(query));
-  }), [materials, search, categories, documentTypes]);
+    return materials
+      .filter(item => {
+        const hasUnpublishedDraft = Boolean(
+          item.draft && item.master.publicationStatus !== 'archived' &&
+          item.draft.workingRevision > (item.master.lastPublishedWorkingRevision ?? 0)
+        );
+        if (publicationFilter === 'draft' && item.master.publicationStatus !== 'draft') return false;
+        if (publicationFilter === 'published' && (item.master.publicationStatus !== 'published' || hasUnpublishedDraft)) return false;
+        if (publicationFilter === 'published-with-draft' && (item.master.publicationStatus !== 'published' || !hasUnpublishedDraft)) return false;
+        if (publicationFilter === 'archived' && item.master.publicationStatus !== 'archived') return false;
+        if (!query) return true;
+        const categoryId = item.draft?.categoryId || '';
+        const documentTypeId = item.draft?.documentTypeId || '';
+        return [
+          item.master.code,
+          item.master.responsibleCourseCode || '',
+          item.draft?.title || '',
+          item.currentVersion?.title || '',
+          categories.find(category => category.id === categoryId)?.name || '',
+          documentTypes.find(type => type.id === documentTypeId)?.name || '',
+          statusLabel(item.master, item.draft)
+        ].some(value => value.toLocaleLowerCase('de-DE').includes(query));
+      })
+      .sort((left, right) => {
+        const leftTitle = left.draft?.title || left.currentVersion?.title || left.master.code;
+        const rightTitle = right.draft?.title || right.currentVersion?.title || right.master.code;
+        if (materialSort === 'title') return leftTitle.localeCompare(rightTitle, 'de-DE') || left.master.code.localeCompare(right.master.code, 'de-DE');
+        if (materialSort === 'code') return left.master.code.localeCompare(right.master.code, 'de-DE');
+        const leftValue = latestIsoTimestamp(left.draft?.updatedIso, left.master.updatedIso);
+        const rightValue = latestIsoTimestamp(right.draft?.updatedIso, right.master.updatedIso);
+        return rightValue - leftValue || left.master.code.localeCompare(right.master.code, 'de-DE');
+      });
+  }, [materials, search, categories, documentTypes, publicationFilter, materialSort]);
 
   const hasUnpublishedChanges = Boolean(
     editingMaster && draft && editingMaster.publicationStatus !== 'archived' &&
@@ -462,7 +491,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         {!isEditorOpen && <aside className="academy-material-list rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" aria-label="Materialliste">
           <div className="flex items-center justify-between gap-3">
             <h3 className="academy-material-list-title font-semibold text-slate-900 dark:text-white">Vorhandene Materialien</h3>
-            <span aria-hidden="true" className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length}</span>
+            <span aria-hidden="true" className="text-xs text-slate-500 dark:text-slate-400">{filteredMaterials.length} von {materials.length}</span>
           </div>
           <p className="sr-only" role="status" aria-atomic="true">
             {loading
@@ -470,15 +499,43 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               : !catalogsLoaded
                 ? ''
                 : filteredMaterials.length === 0
-                  ? materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'
+                  ? materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen der Suche oder den ausgewählten Filtern.'
                   : filteredMaterials.length + (filteredMaterials.length === 1 ? ' Material gefunden.' : ' Materialien gefunden.')}
           </p>
-          <label htmlFor="academy-material-search" className="mt-3 block text-sm font-medium text-slate-800 dark:text-slate-200">Materialien durchsuchen</label>
-          <input id="academy-material-search" type="search" className={field + ' academy-material-search-input mt-1'} value={search} onChange={event => setSearch(event.target.value)} placeholder="Titel, Kennung oder Kurs" />
+          <div className="mt-3 grid gap-3 md:grid-cols-[minmax(16rem,1.5fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)]">
+            <div>
+              <label htmlFor="academy-material-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Materialien durchsuchen</label>
+              <input id="academy-material-search" type="search" className={field + ' academy-material-search-input mt-1 min-h-[44px]'} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-material-search-hint" />
+              <p id="academy-material-search-hint" className="mt-1 text-xs text-slate-500 dark:text-slate-400">Titel, Kennung oder Kurszuständigkeit</p>
+            </div>
+            <div>
+              <label htmlFor="academy-material-publication-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Veröffentlichungs- und Entwurfsstand</label>
+              <select id="academy-material-publication-filter" className={field + ' mt-1 min-h-[44px]'} value={publicationFilter} onChange={event => setPublicationFilter(event.target.value as typeof publicationFilter)}>
+                <option value="all">Alle Materialien</option>
+                <option value="draft">Entwürfe</option>
+                <option value="published">Veröffentlicht ohne neuen Entwurf</option>
+                <option value="published-with-draft">Veröffentlicht mit neuem Entwurf</option>
+                <option value="archived">Archiviert</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="academy-material-sort" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Sortieren nach</label>
+              <select id="academy-material-sort" className={field + ' mt-1 min-h-[44px]'} value={materialSort} onChange={event => setMaterialSort(event.target.value as typeof materialSort)}>
+                <option value="updated">Zuletzt geändert</option>
+                <option value="title">Titel A–Z</option>
+                <option value="code">Kennung A–Z</option>
+              </select>
+            </div>
+          </div>
+          {(search || publicationFilter !== 'all' || materialSort !== 'updated') && (
+            <div className="mt-2 flex justify-end">
+              <button type="button" className={secondary} onClick={() => { setSearch(''); setPublicationFilter('all'); setMaterialSort('updated'); }}>Suche und Filter zurücksetzen</button>
+            </div>
+          )}
           {loading ? (
             <p className="py-5 text-sm text-slate-600 dark:text-slate-300">Materialien werden geladen …</p>
           ) : !catalogsLoaded ? null : filteredMaterials.length === 0 ? (
-            <p className="py-5 text-sm text-slate-600 dark:text-slate-300">{materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen deiner Suche.'}</p>
+            <p className="py-5 text-sm text-slate-600 dark:text-slate-300">{materials.length === 0 ? 'Noch keine Materialien angelegt.' : 'Keine Materialien entsprechen der Suche oder den ausgewählten Filtern.'}</p>
           ) : (
             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
               {filteredMaterials.map(item => (
