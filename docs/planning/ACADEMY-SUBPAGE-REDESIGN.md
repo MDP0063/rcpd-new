@@ -301,7 +301,7 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 
 ## 12. Kursdetail – Versions- und Verfügbarkeitskontext (13.11.2026)
 
-**PR #286 – in Arbeit:** https://github.com/MDP0063/rcpd-new/pull/286
+**PR #286 – am 15.11.2026 gemergt:** https://github.com/MDP0063/rcpd-new/pull/286 (Merge-Commit `ca2fcb0c31d2d317c51a8c880ea639f0ecbbf896`)
 
 - Bei nicht gestarteten Kursen zeigt die Detailkopfzeile die tatsächlich ausgewählte veröffentlichte Kursversion. Die Teilnahmehistorie wird nicht länger als Ersatz für Versionsmetadaten verwendet.
 - Fehlende Kurzbeschreibung und fehlende veröffentlichte Kursversion erhalten unterschiedliche, sachlich korrekte Hinweise.
@@ -311,7 +311,7 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 
 ## 13. Prüfungs-Unter-Navigation – rollenpräzise Aktionsbezeichnung (13.11.2026)
 
-**PR #287 – in Arbeit:** https://github.com/MDP0063/rcpd-new/pull/287
+**PR #287 – am 15.11.2026 gemergt:** https://github.com/MDP0063/rcpd-new/pull/287 (Merge-Commit `df4f73a172ab29b056fffde78196dd3cac23ed2f`)
 
 - Admins sehen für den bestehenden Korrektur-/Freigabebereich die Bezeichnung „Korrekturen & Freigaben“.
 - Colonels sehen „Bewertungskorrekturen“, da die vorhandene Komponente Ergebnisfreigaben ausschließlich für Admins lädt und anbietet (`canReleaseResults={currentUser.role === 'admin'}`).
@@ -321,7 +321,7 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 
 ## 14. Lernbibliothek – visuelle Verfeinerung (13.11.2026)
 
-**Umsetzung in PR #288:** https://github.com/MDP0063/rcpd-new/pull/288
+**PR #288 – am 15.11.2026 gemergt:** https://github.com/MDP0063/rcpd-new/pull/288 (Merge-Commit `d5b742363ff4cd0b4d7f8fb6b37eb5e7c576c8cf`)
 
 - Der bestätigte violette Bereichsakzent (#6841B8) wird in Themenbereichen, Materialmetadaten, Fokuszuständen und primären Reader-Aktionen konsistent verwendet. Die Farbe bleibt ein Bereichsakzent und wird nicht als Statusfarbe eingesetzt.
 - Themenbereichs- und Materialkarten erhalten eine ruhigere, konsistente Oberflächenhierarchie mit klarer Hover-/Fokus-Rückmeldung; der Tastaturfokus nutzt eine durchgezogene, kontrastreiche Violettkontur.
@@ -331,3 +331,288 @@ Claims, Übergabe, Neuzuweisung, Speichern, Freigabe, Korrektur und Auditdaten b
 - Mobile Karten und Such-/Sortierflächen erhalten ausreichend große Aktionen und volle verfügbare Breite.
 - Keine Änderung an Katalogdaten, Suche, Filtern, Sortierung, Materialzugriff, Versionierung, Notizen, Textankern oder Verwaltung. Keine neuen Abhängigkeiten und keine PDF-Infrastruktur.
 - TypeScript-Check, Produktionsbuild und 455/455 Servertests sind auf Implementierungs-Commit `4dca74f` erfolgreich. [Build-/Testworkflow](https://github.com/MDP0063/rcpd-new/actions/runs/43427744171); [PR-Vorlagenprüfung](https://github.com/MDP0063/rcpd-new/actions/runs/43427744279) erfolgreich. Die nachfolgenden Änderungen betreffen nur die Dokumentation. Browser-/Accessibility-Prüfung steht noch aus.
+
+## 15.11.2026 – Statuskorrektur der bereits integrierten Redesign-Schritte
+
+Die folgenden PRs sind seit dem vorherigen Dokumentstand in `main` integriert:
+
+- **PR #286 – Kursdetail: Versions- und Verfügbarkeitskontext**, Merge-Commit `ca2fcb0c31d2d317c51a8c880ea639f0ecbbf896`. Nicht gestartete Kurse zeigen die tatsächlich ausgewählte veröffentlichte Kursversion; fehlende Beschreibung und fehlende Veröffentlichung sind getrennt. Archivierte/nicht verfügbare Kurse werden benannt und können nicht über die UI neu gestartet werden.
+- **PR #287 – Rollenpräzise Prüfungsnavigation**, Merge-Commit `df4f73a172ab29b056fffde78196dd3cac23ed2f`. Teilnehmerwege und Prüferaufgaben sind gruppiert; die Aktionsbezeichnung richtet sich nach der tatsächlich vorhandenen Admin-/Colonel-Berechtigung. Die beiden Navigationsgruppen haben sichtbare Tastatur-Fokusmarkierungen.
+- **PR #288 – Lernbibliothek visuell verfeinern**, Merge-Commit `d5b742363ff4cd0b4d7f8fb6b37eb5e7c576c8cf`. Violetter Bibliotheksakzent, Themen-/Materialkarten, Metadaten, Reader-Kopfbereich und mobile Flächen wurden konsistenter. Dark-Mode-Kartenfokus und Blockquote-Kontrast der Materialvorschau wurden ergänzt.
+- **PR #289 – Materialeditor und Taxonomie**, Merge-Commit `8f25d303165f466f9b295a265caa5a07566209d6`. Die bestehenden Formulargruppen, Bearbeiten-/Vorschau-Umschaltung, Aktionen sowie Taxonomieelemente erhielten eine klarere Hierarchie; Dark-Mode-Fokus wurde ergänzt.
+
+Alle vier PRs durchliefen den jeweiligen TypeScript-/Build-/Server-Testworkflow und die PR-Vorlagenprüfung erfolgreich. Die optionalen Render-Deploy-Schritte wurden übersprungen. **Nicht behauptet** werden Browser-, Screenreader-, responsive oder Live-Firestore-Abnahmen; diese bleiben Bestandteil der späteren gemeinsamen Academy-QA.
+
+---
+
+## 16. Vollständiges Academy-Usability-Redesign – Zielbild vom 15.11.2026
+
+### 16.1 Ziel und Arbeitsprinzip
+
+Das Redesign adressiert nicht nur einzelne CSS-Abweichungen. Es soll die Bedienlogik der Academy für alle bestehenden Aufgaben verständlich und vorhersehbar machen. Nutzer sollen möglichst schnell erkennen:
+
+1. In welchem Bereich und welcher Ansicht sie sich befinden.
+2. Welches Objekt bzw. welcher Vorgang gerade betrachtet wird.
+3. Welcher Zustand tatsächlich vorliegt und was dieser Zustand bedeutet.
+4. Welche Handlung als Nächstes möglich und sinnvoll ist.
+5. Was beim Auslösen einer wichtigen Aktion geschieht und ob die Aktion erfolgreich gespeichert wurde.
+6. Wie sie sicher zur vorherigen Übersicht bzw. zur Academy-Kachelstartseite zurückkehren.
+
+Die Gestaltung wird nicht künstlich auf 14-Jährige zugeschnitten. Sie nutzt einfache, konkrete Sprache, stabile Muster, kurze Beschriftungen, sichtbare Rückmeldungen und eine klare Informationshierarchie. Fachbegriffe bleiben dort erhalten, wo sie tatsächlich wichtig sind; sie werden beim ersten Auftreten in verständlicher Sprache erklärt.
+
+**Grundprinzip:** Pro Ansicht gibt es eine klar erkennbare Hauptaufgabe. Sekundäre Informationen und seltene Aktionen bleiben erreichbar, konkurrieren aber nicht gleich stark mit dieser Aufgabe. Weniger sichtbare Elemente dürfen niemals fachlich notwendige Informationen oder Folgen verschweigen.
+
+### 16.2 Gemeinsame Academy-Seitenstruktur
+
+Jede interne Ansicht verwendet dieselbe Orientierungsstruktur:
+
+- **Academy-Rückweg:** Eine dauerhafte, eindeutig beschriftete Aktion führt direkt zur fünfteiligen Kachelstartseite zurück. Sie ist keine Breadcrumb-Ersatzlösung und darf bei tiefen Ansichten nicht verschwinden.
+- **Bereichsorientierung:** Die bestehende horizontale Fünf-Bereiche-Navigation bleibt der einzige Wechsel zwischen Übersicht, Kurse, Lernbibliothek, Prüfungen und Meine Notizen. Der aktive Bereich erhält einen deutlich sichtbaren, aber dezenten Bereichsakzent.
+- **Seitenkopf:** Ein konkreter Seitentitel beschreibt die aktuelle Aufgabe (z. B. „Lehrgänge und Kurse“, „Lernbibliothek“, „Meine Notizen“, „Verfügbare Prüfungen“). Eine kurze Einordnung erklärt nur dann etwas, wenn sie bei der Aufgabe hilft.
+- **Kontextnavigation:** Innerhalb eines Bereichs werden zusätzliche Ziele nur dann als Navigation dargestellt, wenn sie eigenständige Ansichten sind. Ansichtsumschalter für denselben Datensatz (z. B. Bearbeiten/Vorschau) sind dagegen lokale Steuerelemente und keine zweite Navigation.
+- **Arbeitsfläche:** Die aktuelle Hauptaufgabe erhält den größten Raum. Such-/Filtersteuerungen, Hilfstexte, Historien und Verwaltungsaktionen folgen ihrer tatsächlichen Bedeutung.
+- **Rückkehr und Zustandserhalt:** Ein Rückweg innerhalb des Moduls stellt nach Möglichkeit Suchbegriff, Filter, Sortierung, Auswahl und die relevante Scrollposition wieder her. Die direkte Academy-Kachel-Rückkehr bleibt davon unabhängig.
+
+Nicht jede Seite benötigt eine Karte oder ein Panel. Container werden nur eingesetzt, wenn sie zusammengehörige Inhalte visuell abgrenzen. Flächen, Rahmen und Schatten dürfen keine künstliche Hierarchie vortäuschen.
+
+### 16.3 Gemeinsame Bedienmuster und Steuerelemente
+
+**Buttons**
+- Primär: genau eine Hauptaktion pro Arbeitskontext, mit konkretem Verb („Kurs starten“, „Entwurf speichern“, „Prüfung verbindlich starten“).
+- Sekundär: unterstützende Aktion mit neutraler Outline-/Flächenbehandlung („Details ansehen“, „Zurück“, „Vorschau“).
+- Tertiär: seltene oder ergänzende Aktion als ruhiger Textbutton.
+- Destruktiv: Löschen und endgültiges Entfernen werden ausdrücklich benannt und räumlich von Speichern/Veröffentlichen getrennt. Archivieren ist nicht automatisch „rot“, weil es ein anderer, reversibler Lebenszyklusschritt ist.
+- Deaktivierte Aktion: nur deaktivieren, wenn der Grund direkt verständlich bleibt. Wo hilfreich steht eine kurze Erklärung unmittelbar daneben bzw. darunter. Eine nicht verfügbare Aktion darf nicht wie ein aktiver Button aussehen.
+
+**Suche**
+- Ein sichtbares Label statt ausschließlich eines Platzhalters.
+- Der Platzhalter ist ein Beispiel für Suchinhalte, keine Ersatzbeschriftung.
+- Suche ist klar auf ihren Bereich beschränkt; bei der Bibliothek bleibt sie ausdrücklich global für alle zugänglichen Materialien.
+- Suchbegriff lässt sich mit einer eindeutigen Aktion löschen. Aktive Filter werden getrennt als entfernbarer Zustand angezeigt.
+- Ergebniszahlen beziehen sich auf tatsächlich geladene und gefilterte Datensätze; Teilfehler werden als unvollständige Ergebnisse benannt, nicht als vollständige Trefferzahl.
+
+**Filter**
+- Filter bleiben sekundär und zunächst kompakt, solange ihre Anwendung nicht die Hauptaufgabe der Seite ist.
+- Aktive Filter bleiben außerhalb des eingeklappten Filterbereichs sichtbar und einzeln entfernbar; eine gemeinsame Zurücksetzen-Aktion ist vorhanden.
+- Filteroptionen werden nur aus verlässlichen Datenfeldern und bereits definierten Statuswerten angeboten. Kein Filter darf einen nicht vorhandenen fachlichen Zustand simulieren.
+- Filteränderungen dürfen die Auswahl oder Tastaturposition nicht unerwartet verlieren. Auf kleinen Viewports wird der Filterbereich in den Dokumentfluss eingeblendet, nicht als schwer kontrollierbares Overlay über Inhalte gelegt.
+
+**Sortierung**
+- Eine klar benannte Auswahl mit wenigen fachlich sinnvollen Optionen.
+- Standardreihenfolge muss zur Aufgabe passen: Relevanz bei einer Suche, eine nachvollziehbare stabile Reihenfolge beim normalen Durchstöbern.
+- Datumsbasierte Sortierung nur mit tatsächlich vorhandenen, fachlich richtigen Zeitstempeln. Keine „zuletzt aktiv“- oder „beliebt“-Sortierung aus nicht vorhandenen Daten.
+- Status und Sortierung sind unterschiedliche Steuerungen.
+
+**Statusdarstellung**
+- Ein Status ist eine beschreibende Information, kein Button. Klickbare Filter erhalten deshalb eine andere Form als ein Status-Tag.
+- Die sichtbare Beschriftung enthält die Bedeutung („In Bearbeitung“, „Ergebnis noch nicht freigegeben“, „Archiviert“), nicht nur ein farbiges Kürzel.
+- Mehrere unabhängige Zustände werden nicht zu einem einzigen Badge verdichtet. Veröffentlichung, Verfügbarkeit/Zugriff, persönliche Teilnahme und Ergebnisfreigabe bleiben unterscheidbar.
+- Wenn ein Zustand unklar, fehlend oder nur teilweise geladen ist, wird er neutral beschrieben und nicht in eine positive/negative Kategorie gezwungen.
+
+**Formulare**
+- Felder nach dem tatsächlichen Arbeitsablauf gruppieren, Pflichtangaben erkennbar kennzeichnen und Hinweise direkt am betroffenen Feld platzieren.
+- Fehler werden in verständlicher Sprache erklärt; Werte bleiben erhalten. Bei längeren Formularen erhält eine Fehlerzusammenfassung Fokus und verlinkt zu den Feldern.
+- Ungespeicherte Änderungen müssen sichtbar sein. Navigation, Wechsel in andere Ansichten und Abbruch dürfen Eingaben nicht still verwerfen.
+- Speichern, Veröffentlichen, Archivieren und Löschen sind fachlich getrennte Aktionen und dürfen nicht durch eine generische Aktionsgruppe verwischt werden.
+- Nur echte modale Prozesse werden als Dialog implementiert. Inline-Details bleiben normale beschriftete Regionen; Fokus wird bei Bedarf sinnvoll geführt und zurückgegeben.
+
+**Listen und Karten**
+- Karten dienen der Entdeckung unterscheidbarer Objekte (z. B. Lehrgänge und Bibliotheksthemen).
+- Gleichartige Einträge, die Nutzer vergleichen oder gezielt suchen, erhalten eine kompakte, wiedererkennbare Listen-/Kartenstruktur mit stabiler Informationsreihenfolge.
+- Eine Materialkarte bleibt gemäß Beschluss eine größere, eigenständige Kachel – sie wird aber in ihrer Höhe und Metadatenmenge so reduziert, dass mehrere Einträge schnell verglichen werden können.
+- Keine Karte bekommt eine künstliche Punktzahl, Fortschrittsgrafik, Lesezeit, Beliebtheit, Empfehlung oder Priorität, wenn die Daten dafür nicht verlässlich vorhanden sind.
+
+### 16.4 Farb- und Statussystem
+
+Die fünf bereits festgelegten Bereichsakzente bleiben bestehen. Sie kennzeichnen die Identität des Bereichs und erscheinen sparsam in kleinen Flächen, aktiven Navigationsmarkierungen, ausgewählten Überschriftakzenten oder kleinen Illustrations-/Kicker-Details. Sie sind kein allgemeines Aktions- oder Statussystem.
+
+Für alle Academy-Unterseiten gilt:
+- Neutrale Oberflächen bilden den Hauptteil der Arbeitsfläche.
+- Primäre Aktionen verwenden eine einheitliche, neutrale Aktionsfarbe und nicht automatisch die Farbe des Bereichs.
+- Sekundäre Aktionen bleiben neutral und unterscheidbar.
+- Statusfarben werden ausschließlich nach tatsächlicher fachlicher Bedeutung eingesetzt und werden stets mit verständlichem Text bzw. Symbol kombiniert.
+- Grün bedeutet nur einen nachweislich erfolgreichen/abgeschlossenen/freigegebenen Zustand.
+- Amber bedeutet tatsächlichen Handlungsbedarf oder einen fachlich relevanten Vorbehalt, nicht bloß eine normale Information.
+- Rot bedeutet tatsächlichen Fehler, nicht bestanden/fehlgeschlagen oder irreversible/destruktive Aktion; es ist keine Ersatzfarbe für Archivierung oder normale Navigation.
+- Blau/neutral kennzeichnet Information oder einen aktiven Zustand nur, wenn die fachliche Bedeutung dazu passt.
+- „Nicht begonnen“, „Archiviert“, „Derzeit nicht verfügbar“, „Nicht zugänglich“, „Bewertung offen“, „Ergebnis erwartet“ und „Ergebnis freigegeben“ müssen als unterschiedliche Aussagen erhalten bleiben. Es wird nicht jeder Zustand einer Farbe zugeordnet, nur um mehr Farbe auf dem Bildschirm zu haben.
+- Der Dark Mode erhält dieselbe Semantik. Farben werden neu auf den jeweiligen Oberflächenkontrast abgestimmt; es ist nicht zulässig, eine helle Statusfarbe ungeprüft in den Dark Mode zu übernehmen.
+
+### 16.5 Modul 1 – Übersicht
+
+**Aufgabe:** verstehen, wie die Academy aufgebaut ist und wie Lehrgänge, Kurse, Lernbibliothek, Prüfungen und private Notizen zusammenhängen.
+
+**Zielgestaltung:**
+- Kurzer Einstieg mit einem klaren Zweck und einer ruhigen Einordnung.
+- Der nicht-lineare Zusammenhang zwischen Lehrgang, eigenständigem Kurs und Bibliotheksmaterial wird durch eine leicht erfassbare Struktur erklärt.
+- Prüfungen werden als Rückmeldung/Nachweis eingeordnet, nicht als pauschale nächste Stufe.
+- Private Notizen werden als persönliches Werkzeug erklärt, nicht als administrative Ablage.
+- Der Hinweis, dass bloßes Öffnen keinen Abschluss erzeugt, bleibt sichtbar, aber nicht als Warnbanner.
+- Keine fünf Kacheln, keine zweite Bereichsnavigation, keine persönliche Kursliste, keine KPIs, kein Gesamtfortschrittsindex und keine duplizierten Dashboard-Aufgaben.
+
+**Entwicklungsaufwand:** niedrig bis mittel. Hauptsächlich Kompositions-/Typografie- und semantische Überarbeitung. Funktionale Datenänderungen sind nicht erforderlich.
+
+### 16.6 Modul 2 – Kurse und Lehrgänge
+
+**Katalog**
+- Lehrgänge und unabhängige Kurse bleiben zwei klar erkennbare Gruppen, aber innerhalb eines gemeinsamen Katalogs mit derselben Suche.
+- Lehrgänge erhalten eine etwas erklärendere Kartenstruktur, weil sie ein übergeordnetes Ausbildungsziel mit Pflicht- und Empfehlungskursen darstellen.
+- Kurse werden kompakter und vergleichbarer dargestellt: Titel, Kurskennung, Veröffentlichungs-/Verfügbarkeitsinformation, eigener Teilnahmestatus, kurze Beschreibung und genau eine Detailaktion.
+- Suchergebnisse, leere veröffentlichte Bestände, nicht verfügbare Einträge und Ladefehler werden getrennt behandelt.
+- UI-Filter für bestehende Teilnahmezustände können angeboten werden: Alle, Nicht begonnen, In Bearbeitung, Abgeschlossen, Freiwillig beendet, Administrativ beendet. Diese Werte stammen aus dem vorhandenen Statusmodell; der Filter ändert keine Teilnahme und erfindet keine Zwischenstufen.
+- Ein zusätzlicher Verfügbarkeitsfilter wird nur verwendet, wenn die Katalogdaten diese Dimension vollständig und verlässlich enthalten.
+- Bei Suche ist Relevanz sinnvoll, bei normaler Katalogansicht eine stabile, nachvollziehbare Reihenfolge. Es wird keine künstliche Priorität oder „empfohlen für dich“-Sortierung eingeführt.
+
+**Kursdetail**
+- Kopfbereich: Titel, Kurskennung und ausgewählte veröffentlichte Version. Fehlende Zusammenfassung ist eine andere Aussage als fehlende Veröffentlichung.
+- Statusinformationen werden getrennt: Veröffentlichung/Verfügbarkeit und persönliche Teilnahme. Ein Kurs kann veröffentlicht und verfügbar sein, ohne dass der Nutzer ihn begonnen hat.
+- Lernziele und Kapitel bleiben auch während einer begonnenen Teilnahme sichtbar.
+- Abschlussbedingungen und Nachweise werden in einer eigenen, klar benannten Gruppe erklärt. „Abgeschlossen“ und „Bestanden“ werden nicht gleichgesetzt.
+- Die primäre Aktion spiegelt den tatsächlichen Zustand: „Kurs starten“ oder „Teilnahme fortsetzen“, nur wenn die bestehenden serverseitigen Regeln dies zulassen.
+- Materialreader und Nachweise bleiben in derselben Kursversion sichtbar. Die Kursmaterialien verweisen weiter auf exakt gepinnte Materialversionen.
+- Historie und Korrekturen bleiben aufrufbar, aber konkurrieren nicht mit der aktuellen Lernaufgabe.
+
+**Lehrgangdetail**
+- Titel, Ziel und Version zuerst.
+- Pflichtkurse und empfohlene Kurse räumlich und sprachlich klar trennen.
+- Fortschritt nur anhand bereits gespeicherter, autoritativer Beteiligungs-/Abschlussdaten. Der Prozentwert wird erklärt und ist nicht die einzige Statusinformation.
+- Keine künstliche lineare Reihenfolge, keine pauschale Sperre empfohlener Kurse und keine neuen Voraussetzungen.
+- Fehlende, archivierte oder nicht verfügbare Teilkurse werden mit ihrem wirklichen Zustand erklärt.
+
+**Verwaltung**
+- Teilnehmerkatalog und Kurs-/Lehrgangsverwaltung bleiben getrennte Modi.
+- Kurseditor und Lehrgangseditor verwenden dieselbe Feldlogik, aber zeigen nur die für den jeweiligen Objekttyp relevanten Felder.
+- Gruppen: Grunddaten; Lernziele/Kapitel; Material- und Kurszuordnungen; Voraussetzungen/Abschlussregeln; Version/Veröffentlichung.
+- Speichern als Entwurf ist nicht Veröffentlichen. Veröffentlichte Fassungen bleiben unverändert; neue Fassungen und Versionshistorien sind ausdrücklich als solche dargestellt.
+- Status- und Versionsinformationen dürfen keine falsche Aktionserwartung erzeugen.
+
+**Entwicklungsaufwand:** mittel. UI-Filter und Sortierung können aus vorhandenen Katalog-/Teilnahmedaten abgeleitet werden. Detail-/Editor-Komposition ist vorwiegend Frontend. Vor Implementierung ist nachzuweisen, dass alle angezeigten Werte bereits in der Teilnehmerprojektion vorhanden sind; fehlende sensible Felder dürfen nicht über neue APIs nachgereicht werden.
+
+### 16.7 Modul 3 – Lernbibliothek und Reader
+
+**Bibliothekskatalog**
+- Der Einstieg beginnt mit „Lernbibliothek“ und der Beschreibung, dass alle zugänglichen veröffentlichten Materialien an einem Ort liegen.
+- Themenbereiche erscheinen nur, solange keine Suche oder Filter aktiv sind und nur wenn sie tatsächlich zugängliche Materialien enthalten. Die größere Themenkachel bleibt erhalten; sie ist aber visuell deutlich von der fünfteiligen Academy-Startkachel unterscheidbar.
+- Suchfeld ist die primäre Katalogsteuerung. Es durchsucht weiterhin global alle zugänglichen Materialien, nicht nur die sichtbare Kategorie.
+- Sortierung bietet Relevanz, Titel A–Z und tatsächliches Aktualisierungsdatum. Die Sortierung bleibt auf einer klaren Position neben der Suche.
+- Filter für Kategorie und Dokumenttyp bleiben eingeklappt; aktive Filter sind außerhalb des Filterbereichs als einzeln entfernbare Auswahl sichtbar. „Alle Filter zurücksetzen“ ist vorhanden.
+- Keine neuen Filterdimensionen wie Popularität, Schwierigkeit, Lesezeit oder Aktualitätsfenster ohne zuverlässige tatsächliche Metadaten.
+- Ergebnisanzahl bezieht sich auf die wirkliche Trefferliste. Wenn Legacy-/Versioned-Katalogdaten nur teilweise geladen sind, wird das klar als Teilfehler kommuniziert.
+- Materialeinträge bleiben größere Kacheln, werden aber deutlich kompakter und vergleichbarer: Titel zuerst; Kategorie/Dokumenttyp neutral als Metadaten; eine kurze Beschreibung mit maximal drei Zeilen; Materialcode sowie tatsächliche Versions-/Aktualitätsinformation sekundär; ein klarer Öffnungsbutton. Die Karte darf keine künstliche Mindesthöhe oder leeren Flächen erzeugen, wenn der Inhalt kurz ist.
+- Karten sollen in einer gut scannbaren vertikalen Liste erscheinen. Die vorhandene Kachel-/Card-Identität bleibt erhalten; ein Wechsel zu einer winzigen, dichten Tabelle ist nicht vorgesehen. Bei sehr breiten Viewports darf die Darstellung erst nach Prüfung der Vergleichbarkeit in mehrere Spalten wechseln; Standard bleibt gut lesbare vertikale Orientierung.
+- Eine vollständig leere Bibliothek, keine Treffer aufgrund von Such-/Filterbedingungen, Ladefehler und teilweise geladene Bestände sind vier unterschiedliche Zustände. Fehler dürfen nicht als „keine Materialien“ dargestellt werden.
+- Zurück aus einem geöffneten Material erhält Suchbegriff, Filter, Sortierung, Auswahl und den relevanten Listen-Kontext.
+
+**Reader**
+- Die Lesefläche ist neutral, großzügig und von Verwaltungselementen getrennt. Bereichsviolett darf im Kopfbereich und in kleinen Werkzeugmarkierungen auftauchen, nicht als große Lesefläche.
+- Inhaltstext nutzt 16 px als Ausgangspunkt und eine Lesebreite um 68ch; längere Zeilen werden begrenzt, Tabellen und Codeblöcke dürfen eigene horizontale Scrollbereiche erhalten.
+- Überschriftenhierarchie, Absätze, Listen, Blockquotes, Tabellen und Inline-Code müssen im Hell- und Dunkelmodus gut lesbar sein. Alle Elemente erhalten explizite, zum Theme passende Vordergrund-/Hintergrundfarben, statt von zufälliger Vererbung abzuhängen.
+- Die Material-/Versionsmetadaten bleiben erkennbar, aber klein und nachrangig gegenüber Titel und Inhalt.
+- Inhaltsübersicht und Materialnavigation bleiben optional und standardmäßig eingeklappt; die Lesefläche wird nicht unnötig eingeengt. Der Katalog-Rückweg ist jederzeit eindeutig.
+- Private Notizen und Lesezeichen bleiben am Reader und an der konkreten Materialversion gebunden. Speicherstatus, Konflikt und Wiederherstellung müssen verständlich und sichtbar sein. Die Privatsphäre wird ruhig als „Nur für dich sichtbar“ erklärt, nicht als grüne Statusauszeichnung.
+- Code bleibt Quelltext und wird niemals ausgeführt; Markdown bleibt sanitisiert. Externe Bilder werden nicht ungeprüft gerendert.
+
+**Verwaltung**
+- Teilnehmerkatalog, Materialverwaltung, Kategorien und Dokumenttypen bleiben rollenabhängig getrennte Aufgaben.
+- Materialliste/Editor, Taxonomieliste/Editor und Dokumenttyp-Liste/Editor konkurrieren nicht gleichzeitig um den Fokus.
+- Editorgruppen: Grunddaten und Zuordnung; Zugriff/Kurszuständigkeit (nur vorhandene Felder); Inhalt/Format; Vorschau; Versions-/Veröffentlichungszustand.
+- „Entwurf speichern“ ist die primäre Aktion; „Entwurf veröffentlichen“ wird nur angezeigt/aktiviert, wenn die vorhandene Logik es erlaubt. Archivierung und endgültige Löschung bleiben getrennt und klar erläutert.
+- Kategorie und Dokumenttyp werden als Metadaten erklärt; keine farbigen, interaktiven Status-Chips, die wie Filter oder Buttons aussehen, wenn sie keine sind.
+
+**Entwicklungsaufwand:** mittel bis hoch. CSS-Konsolidierung und gemeinsame Markdown-Darstellung haben hohen Wiederverwendungswert. Katalog- und Reader-Zustandserhalt sind wichtig, aber können Regressionen in Notiz-Textankern und Versionierung verursachen. Neue PDF-Infrastruktur bleibt ausgeschlossen.
+
+### 16.8 Modul 4 – Prüfungen und Examiner
+
+**Teilnehmer-Prüfungsübersicht**
+- Prüfungsnavigation bleibt in „Teilnahme“ und „Prüferaufgaben“ gruppiert.
+- Die Liste zeigt Prüfungstitel, Kursbezug, Prüfungstyp und tatsächliche Voraussetzungen bzw. verfügbare Regeln. Nicht freigegebene Prüfungen und interne Clearance-Daten werden nicht offengelegt.
+- Auswahl und Detailansicht sind klar getrennt. Eine ausgewählte Prüfung darf nicht wie eine bereits gestartete Prüfung aussehen.
+- Ergebnisse und Prüfungshistorie bleiben der Teilnehmeransicht zugeordnet; interne Review-/Freigabeschritte sind keine Teilnehmeraktionen.
+- Startbestätigung Option C bleibt vollständig bestehen und erklärt ausschließlich die wirklichen Konsequenzen.
+
+**Laufender Versuch**
+- Prüfungsinhalt erhält den größten Platz; Timer, Fortschritt, Fragenübersicht und Speicherzustand sind klar getrennte Hilfsinformationen.
+- Eine Frage wird nur als beantwortet angezeigt, wenn die serverseitige Speicherung bestätigt wurde. Ausstehende oder fehlgeschlagene Speicherung ist sichtbar.
+- Fragenübersicht unterscheidet aktuelle, beantwortete, offene und markierte Frage nicht allein über Farben.
+- Auf kleinen Viewports wird die Fragenübersicht bewusst eingeklappt; die eigentliche Frage bleibt im Fokus.
+- Abgabe zeigt vorab noch offene und markierte Fragen und fordert bewusste Bestätigung. Ein ungespeicherter Antwortstand darf nicht als sicher abgegeben gelten.
+
+**Ergebnisse**
+- Abgegeben, interne Bewertung offen, Ergebnisfreigabe ausstehend, bestanden/nicht bestanden und historischer Snapshot bleiben unterschiedliche Zustände.
+- Nur offiziell freigegebene Werte werden als Teilnehmer-Ergebnis ausgegeben. Ein sichtbarer Snapshot während Revision ist klar als historischer/derzeit nicht nachweiswirksamer Stand erklärbar, sobald der bestehende Workflow das so vorgibt.
+- Die Farben passen zum echten Zustand; Beerenton bleibt Prüfungs-Bereichsidentität und keine Fehler- oder Warnfarbe.
+
+**Examiner-Arbeitsplatz**
+- „Prüferaufgaben“ ist ein eigener Arbeitsmodus innerhalb der Prüfungsnavigation, kein sechster Academy-Hauptbereich.
+- Offene Bewertungen, Korrekturen/Freigaben und Revisionsanfragen bleiben fachlich getrennte Aufgaben. Ihre Berechtigung wird serverseitig durchgesetzt; die Navigation zeigt nur tatsächlich erlaubte Einstiege.
+- Aufgabenlisten verwenden die bereits beschlossenen Filter (Kurs, Prüfungstyp, Status, eigene Vorgänge und Teilnehmersuche). Sortierung basiert nur auf echten Zeit-/Fristfeldern. Keine künstliche Priorität.
+- Öffnen beansprucht nicht; Claim ist eine gesonderte Handlung und wird vor dem Start verständlich erklärt.
+- Ein aktueller Claim, Zuständigkeit, Schreibsperre, Speichern, Übergabe und Freigabe müssen unterscheidbar sein. Interne Teilnehmerantworten oder vertrauliche Bewertungsdaten werden nicht in allgemeine Listen projiziert.
+- Kontext- und Historienbereiche dürfen eingeklappt sein, aber bleiben ohne neue Navigationsebene erreichbar.
+- Der Grading Workspace priorisiert die Bewertung selbst; Kontextpanel bleibt optional. Tablet/Mobil erhält eine klare vertikale Reihenfolge.
+
+**Verbindliche Schutzgrenze:** Der neue ExamParticipantRunner und die älteren Übungstest-/Kursabschlussprüfungsansichten sind unterschiedliche Daten-/Workflow-Familien. Sie werden nicht allein aus Designgründen zusammengeführt oder entfernt. Die Daten-/Migrationsfrage ist ein eigener technischer Prüfpunkt.
+
+**Entwicklungsaufwand:** hoch. Prüfungsversuch, Autosave, Timer, Claim- und Freigabestatus sind sicherheits-/datenintegritätsrelevant. Vorrang haben visuelle Vereinheitlichung und Tastaturbedienung ohne Änderungen an Ablauf/Backend; jede funktionale Korrektur wird separat regressionsgetestet.
+
+### 16.9 Modul 5 – Meine Notizen
+
+- Der Bereich bleibt ein persönlicher Arbeitsbereich, kein zweiter Editor im Reader und keine neue Erstellungsoberfläche.
+- Liste und Editor bleiben getrennte Ansichten. Die Liste konzentriert sich auf Suche, Titel, Notiz-/Lesezeichenart, kurze Vorschau, Tags, Aktualisierungsdatum und Quellenstatus.
+- Suchbegriff filtert Titel, Inhalt und Tags wie bisher. Leere Liste und keine Treffer werden sprachlich getrennt.
+- Quellenstatus wird pro Quelle sachlich erläutert: verfügbar, nicht zugänglich oder nicht mehr verfügbar. Eine Quelle darf niemals selbst Zugriff gewähren.
+- Der Editor zeigt Titel, Inhalt, Tags, Speicherstatus und Quellen. Speichern/Autosave ist klar bestätigt; Konflikt/Retry/aktuelle Fassung laden sind unterscheidbare Wege.
+- Neu erstellen und Lesezeichen setzen bleiben ausschließlich im Reader. Die Notizenübersicht erhält keinen zweiten Erstellungsbutton.
+- Private Inhalte bleiben ausschließlich dem Eigentümer zugänglich; eine administrative Vorschau oder geteilte Notizenfunktion wird nicht eingeführt.
+
+**Entwicklungsaufwand:** mittel. Das Redesign nutzt vorhandene Funktionen und muss die bestehende Save Queue und Parent-/Child-Dirty-State-Logik ausdrücklich schützen.
+
+### 16.10 Gemeinsame responsive Regeln
+
+Die folgenden Breiten sind konkrete Prüfviewports und keine starren Layoutvorgaben: 320, 375, 768, 1024 und 1440 CSS-Pixel. Zusätzlich sind Zoom 200 % und 400 % sowie längere Überschriften/Fehlertexte zu prüfen.
+
+- Hauptnavigation bleibt im beschlossenen Muster. Bei engen Breiten werden Beschriftungen nicht abgeschnitten und nicht auf unverständliche Kürzel reduziert.
+- Such-/Filtergruppen stacken bei wenig Platz. Filter werden im Dokumentfluss eingeblendet und verdrängen Inhalte, statt eine dauerhaft überlappende Ebene zu bilden.
+- Listen und Karten bleiben auf Mobile vollständig nutzbar; Aktionen erhalten ausreichend große Touch-Ziele.
+- Reader und Prüfungsversuch erhalten eine klare lineare Priorität; sekundäre Navigation/Seitenleisten werden einklappbar.
+- Formulare werden einspaltig; Aktionsgruppen stapeln sich in sinnvoller Reihenfolge. Destruktive Aktionen bleiben separat und sind nicht direkt neben der primären Speichern-Aktion als gleichwertige Schaltfläche angeordnet.
+- Keine horizontale Seitenscrollfläche; nur Code, Tabellen oder ausdrücklich eigenständige Inhaltsbereiche dürfen intern horizontal scrollen.
+- Sticky-Elemente dürfen Fokus nicht verdecken. Fokus-/Aktivzustände bleiben auch bei 200–400 % Zoom erkennbar.
+
+### 16.11 Gemeinsame Design- und QA-Gates
+
+- WCAG 2.2 AA wird als Mindestmaßstab verwendet; zusätzlich wird bei den primären Touch-Aktionen auf ungefähr 44×44 CSS-Pixel gezielt, obwohl SC 2.5.8 mindestens 24×24 CSS-Pixel (mit definierten Ausnahmen) fordert.
+- Normale Textfarbe braucht mindestens 4,5:1; große Schrift mindestens 3:1. Interaktive Komponenten und Fokusindikatoren werden gesondert geprüft.
+- Kein Status, keine Auswahl und keine Fehlermeldung wird ausschließlich durch Farbe vermittelt.
+- Jede Interaktion ist per Tastatur erreichbar; Fokus ist sichtbar, logisch geordnet, nicht verdeckt und wird bei Inline-/Dialogaktionen korrekt geführt.
+- Screenreader erhalten korrekte Überschriften, Labels, Landmarken, Live-Statusmeldungen, Fehlerzuordnung und sinnvolle Namen.
+- Reduced Motion wird respektiert; Animation erklärt keinen Zustand, der nicht auch ohne Bewegung sichtbar ist.
+- Light/Dark Mode verwenden dieselbe Informations- und Farbbedeutung; Kontrast wird pro Oberfläche neu geprüft.
+- CI (TypeScript, Build, Servertests) und manuelle Browser-/Screenreader-/Live-Firestore-Abnahme werden getrennt ausgewiesen. Die manuelle Abnahme erfolgt später in der vereinbarten gemeinsamen QA.
+
+### 16.12 Umsetzungsreihenfolge und Aufwand
+
+1. **Gemeinsame Design-/Bediengrundlagen** – neutrale Aktionsstile, Statussemantik, Fokus, Feldlabels, Fehlermeldungen, Flächentokens und Markdown-Darstellung. Aufwand: mittel; hoher Wiederverwendungswert.
+2. **Lernbibliothek und Reader** – wichtigste Usability-Baustelle; Such-/Filter-/Ergebnisorientierung, kompakte größere Materialkacheln, klare Rückkehr, lesefokussierter Reader und Theme-konsistente Markdown-Elemente. Aufwand: hoch; Regressionrisiko bei Versionierung, Suche, Readerposition und privaten Textankern.
+3. **Kurse und Lehrgänge** – vorhandene Zustände nutzbar filterbar und Katalog-/Detailhierarchie. Aufwand: mittel; Filter nur aus bereits vorhandenen Teilnahmezuständen und sicheren Teilnehmerprojektionen.
+4. **Meine Notizen** – Liste/Detail/Editor, Quellenstatus und Save-Feedback. Aufwand: mittel; Save Queue und Owner-Isolation dürfen nicht regressieren.
+5. **Prüfungen und Examiner** – Teilnehmerkatalog, Prüfungsausführung, Ergebnisse und Arbeitswarteschlange konsistent gestalten. Aufwand: hoch; besonders hohe Testanforderungen wegen Timer, Autosave, Claims, Ergebnisfreigabe, Revision und Rollen.
+6. **Verwaltung** – Kurs-/Lehrgangs-, Material- und Taxonomieeditoren als klare Arbeitsmodi. Aufwand: mittel; Rechte und Lebenszyklusaktionen unverändert.
+7. **Übersicht und Gesamtintegration** – visuelle Harmonisierung, Lesbarkeit und Navigation, ohne Kennzahlen/Kachelduplikate. Aufwand: niedrig bis mittel.
+8. **Gemeinsame Abschluss-QA** – reale Daten und Rollen, Browsernavigation, Tastatur, Screenreader, Theme und Reflow. Aufwand: hoch und separat einzuplanen.
+
+Ein Untermodul wird erst nach eigenem Diff-/Regressionreview und vollständigen CI-Prüfungen gemergt. Große Module sollen in klar abgegrenzte PRs aufgeteilt werden; ein vollständiges Designziel bedeutet nicht einen riesigen, unreviewbaren Code-PR.
+
+### 16.13 Recherchequellen und konkrete Übertragbarkeit
+
+- [W3C – WCAG 2.2](https://www.w3.org/TR/WCAG22/): normative Grundlage für Kontrast, Farbsemantik, Tastatur, Reflow, Fokus und Zielgrößen.
+- [W3C – Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html): bei schmalen Viewports und Zoom muss Inhalt in einer Spalte nutzbar bleiben; horizontales Scrollen bleibt auf tatsächlich zweidimensionale Inhalte begrenzt.
+- [W3C – Target Size Minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum): 24×24 CSS-Pixel oder eine der spezifizierten Ausnahmen. Für primäre Touch-Aktionen wird bewusst großzügiger gestaltet.
+- [W3C – Focus Not Obscured](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum): Sticky-Header/Seitenleisten dürfen Tastaturfokus nicht vollständig verdecken.
+- [GOV.UK – Task list](https://design-system.service.gov.uk/components/task-list/): verständliche, kurz benannte Aufgaben, sinnvolle Gruppierung und getrennte Statusinformation. Übertragbar auf Kurs-/Lehrgangsschritte und Examiner-Arbeitslisten, aber nicht als starre lineare Kursreihenfolge.
+- [GOV.UK – Tag](https://design-system.service.gov.uk/components/tag/): Status-Tags sind beschreibend und nicht interaktiv; Verben in Tags können wie Aktionen wirken. Daher sind klickbare Filter sichtbar anders gestaltet.
+- [U.S. Web Design System – Typography](https://designsystem.digital.gov/components/typography/): 45–90 Zeichen als normale Zeilenlänge, etwa 66 Zeichen als Zielwert für längere Lesetexte. Das stützt die bereits beschlossene Readerbreite um 68ch.
+- [Canvas Student Dashboard](https://community.instructure.com/en/kb/articles/664361-how-do-i-use-the-dashboard-as-a-student): unterschiedliche Dashboard-Ansichten (Karten, Liste, aktuelle Aktivitäten) dienen verschiedenen Bedürfnissen; für RCPD wird daraus keine zusätzliche Dashboard-Kennzahl abgeleitet.
+- [Open edX – Course dashboard](https://docs.openedx.org/en/latest/educators/how-tos/course_development/manage_course/dashboard.html): Kurskatalog nach Status und Titel sortierbar; für RCPD ist das ein Muster für UI-Filtern nach vorhandenen Teilnahmezuständen, ohne neue fachliche Statuswerte zu erfinden.
+
+Diese Quellen sind die Begründungsbasis für Muster, keine Vorlagen zum Kopieren. Die Übertragung orientiert sich an den bereits beschlossenen RCPD-Daten-, Rollen-, Status- und Navigationsregeln.
