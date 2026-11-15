@@ -350,6 +350,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 7. Übersicht und modulübergreifende Integration.
 8. Gemeinsame manuelle Browser-/Accessibility-/Live-Firestore-QA.
 
+### Private Notizen – offene Darstellungsgrenze (15.11.2026)
+
+- Die bestehende owner-isolierte Quellenstatusroute liefert Referenz-IDs und Zugriffszustand, jedoch keine menschenlesbaren Materialtitel/-kennungen. Die aktuelle UI blendet deshalb IDs aus und nummeriert die Quellen neutral. Eine optionale, rollen-/zugriffsabhängige Titelprojektion könnte später sinnvoll sein; sie ist eine gesonderte API-/Privacy-Prüfung und wird nicht stillschweigend ergänzt.
+- Die neue Notizenoberfläche sowie 409-Konfliktanzeige benötigen später manuelle Browserprüfung: lokale Eingaben bei Konflikt erhalten, Vergleich mit der geladenen Serverfassung, ausdrückliches Übernehmen, Cancel/Discard, erfolgreiche Revision sowie Löschen eines Notiz-/Bookmark-Eintrags.
+
 
 ## 15.11.2026 – Status nach PR #290 und nächster Redesign-Abschnitt
 
