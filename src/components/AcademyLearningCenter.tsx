@@ -364,7 +364,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const recordEvidence = async (requirementId: string, label: string) => {
-    if (!courseDetail) return;
+    if (!courseDetail || saving) return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = window.confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`);
