@@ -434,3 +434,147 @@
 .dark .academy-material-management :is(input, textarea, select, button):focus-visible {
   outline-color: #b8a3df;
 }
+
+
+/* Shared semantic tokens override the legacy violet-heavy editor palette. */
+.academy-material-management-heading,
+.academy-material-management .academy-material-list,
+.academy-material-management .academy-material-form,
+.academy-material-management .academy-material-meta,
+.academy-material-management .academy-material-current-version {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+}
+.academy-material-management-heading {
+  background: var(--academy-surface-subtle) !important;
+}
+.academy-material-management-heading h2,
+.academy-material-list-title,
+.academy-material-form > div:first-child h3,
+.academy-material-current-version h3,
+.academy-material-meta > div:first-child p:first-child {
+  color: var(--academy-text-primary) !important;
+}
+.academy-material-list label,
+.academy-material-form-fields label {
+  color: var(--academy-text-secondary);
+}
+.academy-material-list > div:first-child,
+.academy-material-form > div:first-child,
+.academy-material-form-actions,
+.academy-material-form > div:first-child,
+.academy-material-form-section,
+.academy-material-content-view,
+.academy-material-content-view button,
+.academy-material-meta > div:nth-child(2),
+.academy-material-list-entry {
+  border-color: var(--academy-border) !important;
+}
+.academy-material-search-input,
+.academy-material-form-fields input:not([type="checkbox"]),
+.academy-material-form-fields select,
+.academy-material-form-fields textarea {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+  color: var(--academy-text-primary);
+}
+.academy-material-search-input:focus-visible,
+.academy-material-form-fields input:focus-visible,
+.academy-material-form-fields select:focus-visible,
+.academy-material-form-fields textarea:focus-visible {
+  border-color: var(--academy-focus-color) !important;
+}
+.academy-material-list-button[aria-pressed="true"],
+.academy-material-content-view button.is-active {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-selected) !important;
+  color: var(--academy-text-primary) !important;
+  box-shadow: none !important;
+}
+.academy-material-meta {
+  background: var(--academy-surface-subtle) !important;
+}
+.academy-material-meta li {
+  background: var(--academy-surface-card);
+}
+.academy-material-form-section {
+  border-left-color: var(--academy-area-library) !important;
+  background: var(--academy-surface-subtle) !important;
+}
+.academy-material-form-section h4,
+.academy-material-form-section p {
+  color: var(--academy-text-secondary);
+}
+.academy-material-content-view {
+  background: var(--academy-surface-subtle);
+}
+.academy-material-content-view button {
+  color: var(--academy-text-secondary);
+  background: transparent;
+}
+.academy-material-form-actions button[type="submit"] {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
+.academy-material-form-actions button[type="submit"]:hover:not(:disabled) {
+  background: var(--academy-action-primary-hover) !important;
+}
+.dark .academy-material-management-heading,
+.dark .academy-material-management .academy-material-list,
+.dark .academy-material-management .academy-material-form,
+.dark .academy-material-management .academy-material-meta,
+.dark .academy-material-management .academy-material-current-version {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-card) !important;
+}
+.dark .academy-material-management-heading {
+  background: var(--academy-surface-subtle) !important;
+}
+.dark .academy-material-management-heading h2,
+.dark .academy-material-list-title,
+.dark .academy-material-form > div:first-child h3,
+.dark .academy-material-current-version h3,
+.dark .academy-material-meta > div:first-child p:first-child {
+  color: var(--academy-text-primary) !important;
+}
+.dark .academy-material-list label,
+.dark .academy-material-form-fields label {
+  color: var(--academy-text-secondary);
+}
+.dark .academy-material-search-input,
+.dark .academy-material-form-fields input:not([type="checkbox"]),
+.dark .academy-material-form-fields select,
+.dark .academy-material-form-fields textarea {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-page) !important;
+  color: var(--academy-text-primary) !important;
+}
+.dark .academy-material-list-button[aria-pressed="true"],
+.dark .academy-material-content-view button.is-active {
+  border-color: var(--academy-border-strong) !important;
+  background: var(--academy-surface-selected) !important;
+  color: var(--academy-text-primary) !important;
+}
+.dark .academy-material-meta li {
+  background: var(--academy-surface-page);
+}
+.dark .academy-material-form-section {
+  border-color: var(--academy-border) !important;
+  border-left-color: var(--academy-area-library) !important;
+  background: var(--academy-surface-subtle) !important;
+}
+.dark .academy-material-form-section h4,
+.dark .academy-material-form-section p,
+.dark .academy-material-content-view button {
+  color: var(--academy-text-secondary);
+}
+.dark .academy-material-content-view {
+  border-color: var(--academy-border) !important;
+  background: var(--academy-surface-page);
+}
+.dark .academy-material-form-actions button[type="submit"] {
+  border-color: var(--academy-action-primary-bg) !important;
+  background: var(--academy-action-primary-bg) !important;
+  color: var(--academy-action-primary-text) !important;
+}
