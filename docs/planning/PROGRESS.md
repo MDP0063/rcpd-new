@@ -1311,7 +1311,7 @@ Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme findet 
 
 ## 15.11.2026 – Erste Umsetzung des vollständigen Academy-Usability-Redesigns
 
-Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach den Merges #286–#289.
+Historischer Implementierungsbranch: `redesign/academy-usability-system`; seine erste Umsetzungs-PR #290 ist inzwischen gemergt (siehe Statuskorrektur unten).
 
 ### Lernbibliothek / Reader
 - Erste Suchebene verbessert: klarere Beschriftung, explizite Suchlöschung und genaue Erklärung, welche Metadaten durchsucht werden. Der vollständige Materialtext wird derzeit bewusst nicht als durchsuchbar ausgegeben, weil der Katalog nur Metadatenindexwerte bereitstellt.
@@ -1337,8 +1337,8 @@ Aktueller Branch: `redesign/academy-usability-system`, ausgehend von `main` nach
 - Petrol bleibt Kursbereichsidentität. Teilnahmezustände, Verfügbarkeits-/Archivhinweise und Buttons wurden neutralisiert, damit sie keine Erfolg-/Warn- oder Statusbedeutung vortäuschen.
 
 ### Prüfstatus
-- Diese Änderungen sind noch auf dem Redesign-Branch und werden erst nach der PR-CI als gemergt geführt.
-- TypeScript-/Build-/Server-Testworkflows laufen nach Erstellung der PR.
+- Diese Änderungen wurden in PR #290 zusammengeführt und am 15.11.2026 in `main` integriert; siehe Merge-Commit `a223cd02bd5edd338390319abc7ee94d83f3cd10`.
+- TypeScript, Produktionsbuild und Servertests waren im Build-/Testworkflow [43660044749](https://github.com/MDP0063/rcpd-new/actions/runs/43660044749) erfolgreich; PR-Vorlagenprüfung [43660044772](https://github.com/MDP0063/rcpd-new/actions/runs/43660044772) ebenfalls erfolgreich.
 - Browser-, Responsive-, Tastatur-, Screenreader- und Live-Firestore-QA bleiben wie vereinbart offen und werden später gemeinsam durchgeführt.
 
 
