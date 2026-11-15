@@ -72,7 +72,7 @@
   border: 1px solid var(--academy-state-info-border); border-radius: 999px; background: var(--academy-state-info-bg); color: var(--academy-state-info-text); font-weight: 650;
 }
 .dark .academy-learning-center--courses { color: var(--academy-text-primary); }
-.dark .academy-courses-eyebrow { color: var(--academy-area-courses); }
+.dark .academy-courses-eyebrow { color: var(--academy-area-courses-foreground); }
 .dark .academy-courses-search { border-color: var(--academy-border); background: var(--academy-surface-card); box-shadow: none; }
 .dark .academy-courses-search-input { border-color: var(--academy-border-strong) !important; background: var(--academy-surface-page) !important; }
 .dark .academy-courses-section > div:first-child h3 { color: var(--academy-text-primary); }
@@ -464,7 +464,7 @@
 .academy-notes-empty h3 {
   color: #1e293b;
 }
-.dark .academy-notes-eyebrow { color: #8ac49a; }
+.dark .academy-notes-eyebrow { color: var(--academy-area-notes-foreground); }
 .dark .academy-notes-editor-heading { border-color: #334155; }
 .dark .academy-note-editor-actions .academy-note-save {
   border-color: #f1f5f9 !important;
