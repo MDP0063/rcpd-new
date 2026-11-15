@@ -35,6 +35,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
+  const [categoryStatusFilter, setCategoryStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [editing, setEditing] = useState<AcademyMaterialCategoryView | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
@@ -203,9 +204,12 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     onStatusToast(`Kategorie „${category.name}“ endgültig gelöscht.`);
   };
 
-  const visibleCategories = categories.filter(category =>
-    `${category.name} ${category.description || ''}`.toLocaleLowerCase('de-DE').includes(search.trim().toLocaleLowerCase('de-DE'))
-  );
+  const visibleCategories = categories
+    .filter(category =>
+      (categoryStatusFilter === 'all' || category.status === categoryStatusFilter) &&
+      `${category.name} ${category.description || ''}`.toLocaleLowerCase('de-DE').includes(search.trim().toLocaleLowerCase('de-DE'))
+    )
+    .sort((left, right) => left.name.localeCompare(right.name, 'de-DE'));
 
   return (
     <section className="academy-material-taxonomy-manager space-y-5" aria-labelledby="academy-category-heading">
@@ -284,16 +288,31 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
             <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="academy-category-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategorien durchsuchen</label>
-            <input id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Name oder Beschreibung" />
+          <div className="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,0.55fr)]">
+            <div className="space-y-1.5">
+              <label htmlFor="academy-category-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategorien durchsuchen</label>
+              <input id="academy-category-search" type="search" className={inputClass + ' min-h-[44px]'} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-category-search-hint" />
+              <p id="academy-category-search-hint" className="text-xs text-slate-500 dark:text-slate-400">Name oder Beschreibung</p>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="academy-category-status-filter" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Status</label>
+              <select id="academy-category-status-filter" className={inputClass + ' min-h-[44px]'} value={categoryStatusFilter} onChange={event => setCategoryStatusFilter(event.target.value as typeof categoryStatusFilter)}>
+                <option value="all">Alle Statuswerte</option>
+                <option value="active">Aktiv</option>
+                <option value="archived">Archiviert</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p role="status" aria-live="polite" className="text-xs text-slate-500 dark:text-slate-400">{visibleCategories.length} von {categories.length} Kategorien</p>
+            {(search || categoryStatusFilter !== 'all') && <button type="button" className={secondaryButton} onClick={() => { setSearch(''); setCategoryStatusFilter('all'); }}>Suche und Filter zurücksetzen</button>}
           </div>
 
           {loading ? (
             <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Kategorien werden geladen …</p>
           ) : loadError ? null : visibleCategories.length === 0 ? (
             <p role="status" className="rounded-md border border-dashed border-slate-300 p-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
-              {categories.length === 0 ? 'Noch keine Kategorien angelegt.' : 'Keine Kategorie entspricht deiner Suche.'}
+              {categories.length === 0 ? 'Noch keine Kategorien angelegt.' : 'Keine Kategorie entspricht der Suche oder dem ausgewählten Statusfilter.'}
             </p>
           ) : (
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
