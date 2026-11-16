@@ -601,3 +601,11 @@
 - Externe Navigation in den Prüfungsbereich berücksichtigt dieselbe Fokusweitergabe; ein neues Prüfungsziel im bereits aktiven Prüfungsbereich löst keine ungefragte Fokusverschiebung aus.
 - Quellen: Home Office Accessibility Standard (Fokusreihenfolge/dynamische Controls) und VA.gov SPA-Fokusmanagement.
 - PR #302 gemergt; `bun run lint`, `bun run build`, `bun run test` (455/455) und PR-Vorlagenprüfung erfolgreich.
+
+
+## 2026-11-16 – Kurs-/Lehrgangsdetail: Fokus nach dynamischem Ansichtswechsel
+
+- Beim Öffnen einer Kurs- oder Lehrgangsdetailansicht Fokus auf die Detailüberschrift setzen.
+- Bei Rückkehr zum Katalog den Fokus zum ursprünglichen Aktionsbutton wiederherstellen; falls dieser nicht mehr vorhanden ist, auf das Katalog-Suchfeld ausweichen.
+- Keine Änderung an Navigation, Inhalten, Kursregeln, Berechtigungen oder Datenmodell.
+- Arbeitsbranch: `a11y/academy-detail-focus-restoration`; CI/Review noch ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
