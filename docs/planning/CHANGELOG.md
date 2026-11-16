@@ -679,4 +679,11 @@
 
 - Beim Öffnen eines konkreten Bewertungsvorgangs aus dem Teilnehmer-/Prüfungskontext neben dem Scrollen auch dessen Überschrift fokussieren.
 - Keine Änderung an Review-Zuweisung, Berechtigungen, Notenentwürfen, Autosave, Freigabe oder Datenzugriff.
-- Arbeitsbranch: `a11y/exam-review-deep-link-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
+- **PR #313 gemergt** (Merge-Commit `4a416028431120d698667511460045f134afaa43`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Reviewer-Rollen-QA bleibt offen.
+
+
+## 2026-11-16 – Teilnehmerakte: Fokus beim Öffnen und Schließen
+
+- Beim Öffnen der Teilnehmerakte Fokus auf die Überschrift setzen; beim Schließen zum Teilnehmer-Suchfeld zurückführen.
+- Keine Änderung an Historieninhalten, Sichtbarkeitsregeln, Reviewer-Berechtigungen oder Datenzugriff.
+- Arbeitsbranch: `a11y/exam-participant-record-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
