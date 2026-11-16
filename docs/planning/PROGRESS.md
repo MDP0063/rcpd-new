@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#306 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#308 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `941c1a296961f5b457914f146222f20bf7dd9aac` (PR #306). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306.
+**Aktueller Basisstand:** `main` bei `12a3b74f4b5882230234e340aa030d40fc84e8a1` (PR #308). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307 und Kurs-/Lehrgangsautoreneditor aus #308.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#306 sind gemergt. Für #297–#302 und #304–#306 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#308 sind gemergt. Für #297–#302 und #304–#308 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1485,17 +1485,17 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
 - **PR #306 ist am 16.11.2026 gemergt** (Merge-Commit `941c1a296961f5b457914f146222f20bf7dd9aac`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
 
-## 16.11.2026 – Taxonomieverwaltung: Fokusführung in Kategorie- und Dokumenttypformularen (in Arbeit)
+## 16.11.2026 – Taxonomieverwaltung: Fokusführung in Kategorie- und Dokumenttypformularen (PR #307 gemergt)
 
 - Beim Öffnen eines Kategorie- oder Dokumenttypformulars wird das Namensfeld fokussiert.
 - Bei Rückkehr zur Übersicht wird der Fokus zum ursprünglichen Bearbeiten-Button zurückgeführt; beim Neuanlegen zur jeweiligen Neuanlegen-Schaltfläche. Falls der ursprüngliche Eintrag nicht mehr vorhanden ist, dient die Neuanlegen-Schaltfläche als Fallback; nur wenn diese nicht verfügbar ist, wird die Suche fokussiert.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
-- GitHub Actions: TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. Die PR-Vorlagenprüfung wird nach Synchronisierung des bereits gesetzten `fix`-Labels erneut ausgeführt. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- **PR #307 gemergt** (Merge-Commit `58b7abd47155e443b6e0316cb95d75e51aa4b2a9`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
 
-## 16.11.2026 – Kurs-/Lehrgangsverwaltung: Fokusführung im Autoreneditor (in Arbeit)
+## 16.11.2026 – Kurs-/Lehrgangsverwaltung: Fokusführung im Autoreneditor (PR #308 gemergt)
 
 - Beim Öffnen eines neuen oder bestehenden Kurs-/Lehrgangsentwurfs wird der Fokus auf die jeweilige Editorüberschrift gesetzt.
 - Bei Rückkehr zur Verwaltung oder nach erfolgreicher Veröffentlichung wird der Fokus zum ursprünglichen Auslöser zurückgeführt (Neuanlegen- oder „Entwurf bearbeiten“-Schaltfläche). Falls dieser nicht mehr vorhanden ist, wird die Verwaltungsüberschrift, danach die Suche fokussiert.
 - Validierungsfehler setzen den Fokus auf die fokussierbare Fehlersammlung, damit die konkreten Korrekturhinweise unmittelbar erreichbar sind.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichungsabläufen, Berechtigungen oder Datenmodell.
-- PR #308: `a11y/academy-authoring-focus-restoration`; TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. PR-Vorlagenprüfung und Review laufen noch; Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- **PR #308 gemergt** (Merge-Commit `12a3b74f4b5882230234e340aa030d40fc84e8a1`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
