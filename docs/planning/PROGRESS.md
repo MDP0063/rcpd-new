@@ -1531,4 +1531,4 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 - Wird eine konkrete Bewertung aus einem Teilnehmer-/Prüfungskontext geöffnet, scrollt die Review-Queue nicht nur zum passenden Vorgang, sondern fokussiert auch dessen Überschrift.
 - Die Änderung ist rein clientseitig; Review-Zuweisung, Berechtigungen, Notenentwürfe, Autosave, Freigabe und Datenzugriffe bleiben unverändert.
-- Umsetzung: Branch `a11y/exam-review-deep-link-focus`; CI/Review stehen noch aus. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.
+- PR #313: `a11y/exam-review-deep-link-focus`; das passende `fix`-Label ist gesetzt. GitHub Actions laufen; manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.
