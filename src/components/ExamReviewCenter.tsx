@@ -66,6 +66,7 @@ export const ExamReviewCenter: React.FC<{
   const inFlightDraftSaves = useRef<Record<string, { pending: { review: ReviewItem; question: ReviewQuestion; value: string }; promise: Promise<boolean> }>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
   const scrolledTargetRef = useRef<string | null>(null);
+  const reviewHeadingRefs = useRef<Record<string, HTMLHeadingElement | null>>({});
   const transferTriggerRef = useRef<HTMLButtonElement | null>(null);
   const releaseTriggerRef = useRef<HTMLButtonElement | null>(null);
   const transferDialogHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -80,9 +81,10 @@ export const ExamReviewCenter: React.FC<{
   }, [releaseDialogId]);
   useEffect(() => {
     if (!initialAttemptId || loading || scrolledTargetRef.current === initialAttemptId) return;
-    const target = document.getElementById(`exam-review-${initialAttemptId}`);
-    if (target) {
-      target.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    const targetHeading = reviewHeadingRefs.current[initialAttemptId];
+    if (targetHeading) {
+      targetHeading.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      targetHeading.focus({ preventScroll: true });
       scrolledTargetRef.current = initialAttemptId;
     }
   }, [initialAttemptId, loading, reviews]);
@@ -423,7 +425,7 @@ export const ExamReviewCenter: React.FC<{
     {error && <div role="alert" className="flex gap-2 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle size={17}/>{error}</div>}
     {notice && <div role="status" className="flex gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={17}/>{notice}</div>}
     {loading ? <div className="p-8 text-center text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={17}/>Bewertungen werden geladen …</div> : loadError ? null : filteredReviews.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">{reviews.length === 0 ? 'Keine offenen Freitextbewertungen.' : 'Keine Vorgänge entsprechen den gewählten Filtern.'}{reviews.length > 0 && hasActiveQueueFilters && <button type="button" onClick={resetQueueFilters} className="ml-2 font-semibold text-slate-700 underline dark:text-slate-200">Filter zurücksetzen</button>}</div> : filteredReviews.map(review => <article id={`exam-review-${review.id}`} key={review.id} className="exam-review-card space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <header className="exam-review-card-heading flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-900 dark:text-white">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
+      <header className="exam-review-card-heading flex flex-wrap items-center justify-between gap-2"><div><h3 ref={element => { reviewHeadingRefs.current[review.id] = element; }} tabIndex={-1} className="font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{review.examTitle}</h3><p className="text-xs text-slate-500">{review.userName} · {review.attemptCourseCode} · {new Date(review.submittedAtIso).toLocaleString('de-DE')}</p></div>
         {review.reviewClaim ? <div className="exam-review-claim-actions text-right text-xs text-slate-500"><p>{review.isClaimOwner ? 'Dir zugewiesen' : review.reviewClaim.isDisconnected ? 'Dein vorheriger Claim ist unterbrochen' : `In Bearbeitung durch ${review.reviewClaim.reviewerName}`}</p>{review.isClaimOwner && <><button type="button" disabled={Boolean(savingId)} onClick={event => { transferTriggerRef.current = event.currentTarget; openTransferDialog(review, 'transfer'); }} className="mt-1 mr-1 academy-action-secondary">Übergeben</button><button type="button" disabled={Boolean(savingId) || hasDraftSaveInFlight(review.id)} onClick={event => { releaseTriggerRef.current = event.currentTarget; setReleaseDialogId(review.id); }} className="mt-1 academy-action-secondary">Vorgang freigeben</button></>}{isSupervisor && review.reviewClaim && !review.isClaimOwner && <button type="button" disabled={Boolean(savingId)} onClick={event => { transferTriggerRef.current = event.currentTarget; openTransferDialog(review, 'reassign'); }} className="mt-1 academy-action-secondary">Administrativ neu zuweisen</button>}{review.canClaim && <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="mt-1 academy-action-primary disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : review.reviewClaim.isDisconnected ? 'Erneut beanspruchen' : 'Vorgang beanspruchen'}</button>}</div>
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="academy-action-primary disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
       </header>
