@@ -672,4 +672,11 @@
 - Nach erfolgreicher (auch automatischer) Abgabe den Ergebnistitel fokussieren; bei Rückkehr zur Prüfungsübersicht deren Überschrift.
 - Bei fehlgeschlagenem verbindlichem Start den Fokus zum Startbutton zurückführen.
 - Keine Änderung an Versuchs-, Zeitlimit-, Autosave-, Abgabe-, Bewertungs- oder Berechtigungslogik.
-- Arbeitsbranch: `a11y/exam-runner-question-focus`; CI/Review ausstehend, manuelle Abnahme mit echten Versuchen später.
+- **PR #312 gemergt** (Merge-Commit `d7f32c0e3ad29707baf604ea111d22d400ad757f`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Prüfung mit echten Versuchen bleibt offen.
+
+
+## 2026-11-16 – Prüfungsbewertungen: Fokus beim Öffnen aus Teilnehmerkontext
+
+- Beim Öffnen eines konkreten Bewertungsvorgangs aus dem Teilnehmer-/Prüfungskontext neben dem Scrollen auch dessen Überschrift fokussieren.
+- Keine Änderung an Review-Zuweisung, Berechtigungen, Notenentwürfen, Autosave, Freigabe oder Datenzugriff.
+- Arbeitsbranch: `a11y/exam-review-deep-link-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
