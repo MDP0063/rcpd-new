@@ -1490,4 +1490,4 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Beim Öffnen eines Kategorie- oder Dokumenttypformulars wird das Namensfeld fokussiert.
 - Bei Rückkehr zur Übersicht wird der Fokus zum ursprünglichen Bearbeiten-Button zurückgeführt; beim Neuanlegen zur jeweiligen Neuanlegen-Schaltfläche. Falls der ursprüngliche Eintrag nicht mehr vorhanden ist, dient die Neuanlegen-Schaltfläche als Fallback; nur wenn diese nicht verfügbar ist, wird die Suche fokussiert.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
-- Umsetzung: Branch `a11y/academy-taxonomy-form-focus-restoration`; CI/Review stehen noch aus. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- GitHub Actions: TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. Die PR-Vorlagenprüfung wird nach Synchronisierung des bereits gesetzten `fix`-Labels erneut ausgeführt. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
