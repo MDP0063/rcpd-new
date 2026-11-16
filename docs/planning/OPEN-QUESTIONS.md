@@ -463,7 +463,15 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Lernbibliothek: dynamischer Readerwechsel
 
-- **In Arbeit:** Fokus beim Öffnen eines Materials vom Katalog auf den geladenen Reader-Titel setzen; bei Ladefehlern die Fehlermeldung fokussieren. Bei Rückkehr zum Katalog den ursprünglichen Materialöffnen-Button wieder fokussieren; Suchfeld als Fallback.
-- Wechsel zwischen Materialien in der Reader-Seitenleiste soll den bestehenden Fokus erhalten.
+- **Erledigt in PR #310:** Fokus beim Öffnen eines Materials vom Katalog auf den geladenen Reader-Titel setzen; bei Ladefehlern die Fehlermeldung fokussieren. Bei Rückkehr zum Katalog den ursprünglichen Materialöffnen-Button wieder fokussieren; Suchfeld als Fallback.
+- Wechsel zwischen Materialien in der Reader-Seitenleiste erhält den bestehenden Fokus.
+- Auch zugriffsbeschränkte Legacy-Materialien besitzen einen ausdrücklichen Rückweg zur Bibliothek.
 - Keine Änderung an Zugriff, Rollen, Versionierung oder privaten Notizen.
-- **Noch offen:** CI/Review für Branch `a11y/library-reader-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #310.
+
+
+## 16.11.2026 – Kursmaterial-Reader: dynamischer Materialwechsel
+
+- **In Arbeit:** Fokus beim Öffnen eines Kursmaterials auf Ladezustand und anschließend Titel bzw. Fehlermeldung setzen; beim Zurückkehren den ursprünglichen Materialöffnen-Button wieder fokussieren. Der aktuell geöffnete Eintrag darf nicht als deaktivierter Button den Fokus verlieren.
+- Keine Änderung an Materialzugriff, Kursversion-Pinning, Readerposition, Textankern oder privaten Notizen.
+- **Noch offen:** CI/Review für Branch `a11y/course-reader-material-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.

@@ -655,3 +655,12 @@
 - Arbeitsbranch: `a11y/library-reader-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
 
 - Zugriffsbeschränkte Legacy-Materialien behalten ebenfalls einen expliziten Rückweg zur Bibliothek.
+
+
+## 2026-11-16 – Kursmaterial-Reader: Fokusführung beim Öffnen und Zurückkehren
+
+- Beim Öffnen eines Kursmaterials den Ladezustand, nach erfolgreichem Laden den Materialtitel und bei Fehlern die sichtbare Fehlermeldung fokussieren.
+- Den aktuell geöffneten Eintrag als nicht-interaktiven Zustand „Geöffnet“ darstellen, damit kein nativer deaktivierter Button den Fokus verliert.
+- Bei Rückkehr zur Materialliste Fokus zum ursprünglichen Materialöffnen-Button zurückführen; Überschrift als Fallback.
+- Keine Änderung an Zugriff, Version-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
+- Arbeitsbranch: `a11y/course-reader-material-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
