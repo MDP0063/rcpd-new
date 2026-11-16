@@ -501,7 +501,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Prüfungsreview-Queue: Aktionen und Rückkehrfokus
 
-- **In Arbeit:** Nach erfolgreichem Beanspruchen/Freigeben/Übergeben/Neuzuweisen den Fokus zum betroffenen Review-Vorgang zurückführen; nach Abschluss oder wenn der Vorgang aus der gefilterten Queue verschwindet, die Queue-Überschrift fokussieren.
-- Fokus erst nach abgeschlossenem Queue-Refresh setzen.
+- **Erledigt in PR #315:** Nach erfolgreichem Beanspruchen/Freigeben/Übergeben/Neuzuweisen wird der Fokus zum betroffenen Review-Vorgang zurückgeführt; nach Abschluss oder wenn der Vorgang aus der gefilterten Queue verschwindet, wird die Queue-Überschrift fokussiert.
+- Fokus wird erst nach abgeschlossenem Queue-Refresh gesetzt.
 - Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
-- **Noch offen:** CI/Review für Branch `a11y/exam-review-queue-action-focus`; spätere manuelle Reviewer-Rollen-QA.
+- **Noch offen:** spätere manuelle Reviewer-Rollen-QA für PR #315.
+
+
+## 16.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+
+- **In Arbeit:** „Beantwortet“ und Fortschritt dürfen nur den zuletzt serverbestätigten Antwort-Snapshot zählen. Lokale Abweichungen müssen als ausstehend/fehlgeschlagen erkennbar sein.
+- Autosave-Response muss gegen den gesendeten Snapshot geprüft werden; stale Response darf nur bei identischem bereits gespeichertem Snapshot als bestätigt gelten.
+- **Wichtig:** Datenintegritätsänderung. PR #316 bleibt Draft bis unabhängige Prüfung gemäß `CONTRIBUTOR_ROLES.md` abgeschlossen ist. Zusätzlich spätere manuelle Prüfung mit echten Versuchen.
