@@ -427,9 +427,9 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Dynamische Detailansichten
 
-- **In Arbeit:** Fokusmanagement beim Öffnen und Verlassen von Kurs- und Lehrgangsdetails. Fokus muss auf die Detailüberschrift wechseln und bei Rückkehr zum ursprünglichen Auslöser zurückkehren; Suchfeld als Fallback bei nicht mehr vorhandenem Auslöser.
+- **Erledigt in PR #304:** Fokusmanagement beim Öffnen und Verlassen von Kurs- und Lehrgangsdetails. Fokus muss auf die Detailüberschrift wechseln und bei Rückkehr zum ursprünglichen Auslöser zurückkehren; Suchfeld als Fallback bei nicht mehr vorhandenem Auslöser.
 - Keine Änderung an Navigation/IA oder fachlichen Kurs-/Lehrgangsregeln.
-- **Noch offen:** CI und Code-Review für Branch `a11y/academy-detail-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #304.
 
 
 ## 16.11.2026 – Private Notizen: dynamischer Editorwechsel
