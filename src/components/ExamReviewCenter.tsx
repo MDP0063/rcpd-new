@@ -66,6 +66,8 @@ export const ExamReviewCenter: React.FC<{
   const inFlightDraftSaves = useRef<Record<string, { pending: { review: ReviewItem; question: ReviewQuestion; value: string }; promise: Promise<boolean> }>>({});
   const reviewsRef = useRef<ReviewItem[]>([]);
   const scrolledTargetRef = useRef<string | null>(null);
+  const participantSearchRef = useRef<HTMLInputElement | null>(null);
+  const pendingParticipantSearchFocusRef = useRef(false);
   const reviewHeadingRefs = useRef<Record<string, HTMLHeadingElement | null>>({});
   const transferTriggerRef = useRef<HTMLButtonElement | null>(null);
   const releaseTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -79,6 +81,12 @@ export const ExamReviewCenter: React.FC<{
     if (releaseDialogId) releaseDialogHeadingRef.current?.focus();
     else releaseTriggerRef.current?.focus();
   }, [releaseDialogId]);
+  useEffect(() => {
+    if (selectedParticipant || !pendingParticipantSearchFocusRef.current) return;
+    pendingParticipantSearchFocusRef.current = false;
+    participantSearchRef.current?.focus();
+  }, [selectedParticipant]);
+
   useEffect(() => {
     if (!initialAttemptId || loading || scrolledTargetRef.current === initialAttemptId) return;
     const targetHeading = reviewHeadingRefs.current[initialAttemptId];
@@ -361,6 +369,7 @@ export const ExamReviewCenter: React.FC<{
         <label htmlFor="exam-participant-search" className="text-sm font-semibold text-slate-800 dark:text-slate-200">Teilnehmerakte öffnen</label>
       </div>
       <input
+        ref={participantSearchRef}
         id="exam-participant-search"
         type="search"
         value={participantQuery}
@@ -379,7 +388,7 @@ export const ExamReviewCenter: React.FC<{
       </ul>}
       {normalizedParticipantQuery.length >= 2 && !selectedParticipant && participantMatches.length === 0 && <p className="mt-2 text-xs text-slate-500">Keine passenden Teilnehmer im Verzeichnis gefunden.</p>}
     </div>
-    {selectedParticipant && <ExamParticipantRecord participant={selectedParticipant} onClose={() => { setSelectedParticipant(null); setParticipantQuery(''); }}/>}
+    {selectedParticipant && <ExamParticipantRecord participant={selectedParticipant} onClose={() => { pendingParticipantSearchFocusRef.current = true; setSelectedParticipant(null); setParticipantQuery(''); }}/>}
 
     <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Aktualisieren</button></div>
     {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
