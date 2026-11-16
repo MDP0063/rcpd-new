@@ -1553,5 +1553,6 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Fortschritt und beantwortete Fragen basieren ausschließlich auf dem zuletzt vom Server zurückgegebenen Antwortstand, nicht auf lokalen Eingaben.
 - Lokale Änderungen gegenüber dem bestätigten Stand werden pro Frage als ausstehend bzw. bei Speicherfehler als fehlgeschlagen sichtbar; bereits bestätigte Antworten bleiben als solche erkennbar, auch wenn eine neue Änderung aussteht.
 - Autosave-Antworten werden anhand des zurückgegebenen Server-Snapshots geprüft. Ein veralteter Request gilt nur dann als bestätigt, wenn der Server bereits exakt denselben Antwortstand enthält; andernfalls bleibt der lokale Stand ausdrücklich unbestätigt.
+- Bei einem abweichenden Serverstand werden auch bereits wartende Folge-Autosaves blockiert, damit lokale Eingaben nicht automatisch einen anderen Tab-/Serverstand überschreiben. Der Versuch muss anschließend mit dem aktuellen Serverstand fortgesetzt werden.
 - Reine clientseitige Fortschritts-/Speicherstatusdarstellung plus Tests für die Snapshot-Vergleichslogik. Server-Autosave-/Abgabe-/Bewertungslogik und Datenverträge werden nicht verändert.
 - PR #316 bleibt Draft und darf wegen Datenintegritätsbezug erst nach unabhängiger Prüfung gemäß `CONTRIBUTOR_ROLES.md` gemergt werden. Manuelle Prüfung mit echten Versuchen bleibt zusätzlich offen.
