@@ -643,4 +643,4 @@
 - Bei Rückkehr zur Verwaltung oder nach erfolgreicher Veröffentlichung Fokus zum ursprünglichen Auslöser zurückführen; Verwaltungsüberschrift und Suche als Fallback.
 - Bei Validierungsfehlern Fokus auf die Fehlersammlung setzen.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichung, Berechtigungen oder Datenmodell.
-- Arbeitsbranch: `a11y/academy-authoring-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- PR #308 offen; TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. PR-Vorlagenprüfung/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
