@@ -479,7 +479,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Prüfungsrunner: dynamische Frage- und Ergebniswechsel
 
-- **In Arbeit:** Beim Start/Fortsetzen und bei jeder Frageänderung Fokus auf die aktuelle Frageüberschrift setzen; nach Abgabe auf den Ergebnistitel; bei Rückkehr auf die Prüfungsübersicht auf deren Überschrift.
+- **Erledigt in PR #312:** Beim Start/Fortsetzen und bei jeder Frageänderung Fokus auf die aktuelle Frageüberschrift setzen; nach Abgabe auf den Ergebnistitel; bei Rückkehr auf die Prüfungsübersicht auf deren Überschrift.
 - Bei fehlgeschlagenem Start Fokus vom Bestätigungsbereich zurück zum Startbutton führen.
 - Keine Änderung an Start-/Versuchs-/Zeitlimit-/Autosave-/Abgabe-/Bewertungslogik oder Berechtigungen.
-- **Noch offen:** CI/Review für Branch `a11y/exam-runner-question-focus`; spätere manuelle Abnahme mit echten Versuchen.
+- **Noch offen:** spätere manuelle Abnahme mit echten Versuchen für PR #312.
+
+
+## 16.11.2026 – Prüfungsbewertungen: Deep-Link in die Review-Queue
+
+- **In Arbeit:** Beim Öffnen einer konkreten Bewertung aus einem Teilnehmer-/Prüfungskontext soll der Zielvorgang sowohl in die Ansicht gescrollt als auch dessen Überschrift fokussiert werden.
+- Keine Änderung an Review-Zuweisung, Berechtigungen, Notenentwürfen, Autosave, Freigabe oder Datenzugriff.
+- **Noch offen:** CI/Review für Branch `a11y/exam-review-deep-link-focus`; spätere manuelle Reviewer-Rollen-QA.
