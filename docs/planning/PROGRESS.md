@@ -4,7 +4,7 @@
 
 **Aktueller Basisstand:** `main` bei `0a12f05214e72340888ca7ad75d5e0b327775502` (PR #311). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#311 sind gemergt. Für #297–#302 und #304–#308 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#311 sind gemergt. Für #297–#302 und #304–#311 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1516,7 +1516,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der aktuell geöffnete Eintrag wird als nicht-interaktiver Zustand „Geöffnet“ angezeigt, statt den fokussierten Öffnen-Button nativ zu deaktivieren.
 - „Zur Materialliste“ führt den Fokus zum ursprünglichen Materialöffnen-Button zurück; falls dieser nicht mehr existiert, wird die Materiallistenüberschrift fokussiert.
 - Keine Änderung an Materialzugriff, Kursversion-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
-- PR #311: `a11y/course-reader-material-focus-restoration`; das passende `fix`-Label ist gesetzt. GitHub Actions laufen; manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- **PR #311 gemergt** (Merge-Commit `0a12f05214e72340888ca7ad75d5e0b327775502`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
 
 ## 16.11.2026 – Prüfungsrunner: Fokus bei Frage-, Abgabe- und Rückkehrwechseln (in Arbeit)
 
