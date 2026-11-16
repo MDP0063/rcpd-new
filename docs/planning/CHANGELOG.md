@@ -686,4 +686,12 @@
 
 - Beim Öffnen der Teilnehmerakte Fokus auf die Überschrift setzen; beim Schließen zum Teilnehmer-Suchfeld zurückführen.
 - Keine Änderung an Historieninhalten, Sichtbarkeitsregeln, Reviewer-Berechtigungen oder Datenzugriff.
-- Arbeitsbranch: `a11y/exam-participant-record-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
+- **PR #314 gemergt** (Merge-Commit `a2c869b26da66e6b7458adc3b9ad589cfb206438`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Reviewer-Rollen-QA bleibt offen.
+
+
+## 2026-11-16 – Prüfungsreview-Queue: Fokus nach Zuständigkeits- und Bewertungsaktionen
+
+- Nach erfolgreichem Beanspruchen/Freigeben/Übergeben/Neuzuweisen Fokus zum betroffenen Review-Vorgang zurückführen; nach Abschluss oder wenn er aus der gefilterten Queue verschwindet, die Queue-Überschrift fokussieren.
+- Fokus erst nach abgeschlossenem Queue-Refresh setzen.
+- Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
+- Arbeitsbranch: `a11y/exam-review-queue-action-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
