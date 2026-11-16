@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, Clock3, X } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { UserPublicProfile } from '../types/portal';
@@ -102,6 +102,11 @@ export const ExamParticipantRecord: React.FC<{
   const [history, setHistory] = useState<ParticipantHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const recordHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
+  useEffect(() => {
+    recordHeadingRef.current?.focus();
+  }, [participant.uid]);
 
   useEffect(() => {
     let active = true;
@@ -130,10 +135,10 @@ export const ExamParticipantRecord: React.FC<{
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Zentrale Teilnehmerakte · Prüfungen</p>
-        <h3 id="exam-participant-record-title" className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{participant.displayName}</h3>
+        <h3 ref={recordHeadingRef} tabIndex={-1} id="exam-participant-record-title" className="mt-1 text-lg font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{participant.displayName}</h3>
         <p className="mt-1 text-sm text-slate-500">{participant.badgeNumber} · {participant.callsign} · {participant.rank}</p>
       </div>
-      <button type="button" onClick={onClose} aria-label="Teilnehmerakte schließen" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+      <button type="button" onClick={onClose} aria-label="Teilnehmerakte schließen" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
         <X size={16}/> Schließen
       </button>
     </header>

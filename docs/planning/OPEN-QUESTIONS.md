@@ -487,6 +487,13 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Prüfungsbewertungen: Deep-Link in die Review-Queue
 
-- **In Arbeit:** Beim Öffnen einer konkreten Bewertung aus einem Teilnehmer-/Prüfungskontext soll der Zielvorgang sowohl in die Ansicht gescrollt als auch dessen Überschrift fokussiert werden.
+- **Erledigt in PR #313:** Beim Öffnen einer konkreten Bewertung aus einem Teilnehmer-/Prüfungskontext wird der Zielvorgang in die Ansicht gescrollt und dessen Überschrift fokussiert.
 - Keine Änderung an Review-Zuweisung, Berechtigungen, Notenentwürfen, Autosave, Freigabe oder Datenzugriff.
-- **Noch offen:** CI/Review für Branch `a11y/exam-review-deep-link-focus`; spätere manuelle Reviewer-Rollen-QA.
+- **Noch offen:** spätere manuelle Reviewer-Rollen-QA für PR #313.
+
+
+## 16.11.2026 – Teilnehmerakte: dynamischer Ein-/Ausblendwechsel
+
+- **In Arbeit:** Beim Öffnen der Teilnehmerakte Fokus auf deren Überschrift setzen und beim Schließen zum Teilnehmer-Suchfeld zurückführen.
+- Keine Änderung an Historieninhalten, Sichtbarkeitsregeln, Reviewer-Berechtigungen oder Datenzugriff.
+- **Noch offen:** CI/Review für Branch `a11y/exam-participant-record-focus`; spätere manuelle Reviewer-Rollen-QA.
