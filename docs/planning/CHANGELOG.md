@@ -634,7 +634,7 @@
 - Nach Abbruch oder erfolgreichem Speichern Fokus zum ursprünglichen Bearbeiten-Button bzw. zur Neuanlegen-Schaltfläche zurückführen.
 - Fallback auf Neuanlegen, falls der ursprüngliche Eintrag nicht mehr existiert; Suche nur als letzter Fallback.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
-- Arbeitsbranch: `a11y/academy-taxonomy-form-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #307 gemergt** (Merge-Commit `58b7abd47155e443b6e0316cb95d75e51aa4b2a9`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
 
 
 ## 2026-11-16 – Kurs-/Lehrgangsverwaltung: Fokusführung im Autoreneditor
@@ -643,4 +643,4 @@
 - Bei Rückkehr zur Verwaltung oder nach erfolgreicher Veröffentlichung Fokus zum ursprünglichen Auslöser zurückführen; Verwaltungsüberschrift und Suche als Fallback.
 - Bei Validierungsfehlern Fokus auf die Fehlersammlung setzen.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichung, Berechtigungen oder Datenmodell.
-- PR #308 offen; TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. PR-Vorlagenprüfung/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #308 gemergt** (Merge-Commit `12a3b74f4b5882230234e340aa030d40fc84e8a1`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
