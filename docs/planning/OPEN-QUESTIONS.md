@@ -472,6 +472,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Kursmaterial-Reader: dynamischer Materialwechsel
 
-- **In Arbeit:** Fokus beim Öffnen eines Kursmaterials auf Ladezustand und anschließend Titel bzw. Fehlermeldung setzen; beim Zurückkehren den ursprünglichen Materialöffnen-Button wieder fokussieren. Der aktuell geöffnete Eintrag darf nicht als deaktivierter Button den Fokus verlieren.
+- **Erledigt in PR #311:** Fokus beim Öffnen eines Kursmaterials auf Ladezustand und anschließend Titel bzw. Fehlermeldung setzen; beim Zurückkehren den ursprünglichen Materialöffnen-Button wieder fokussieren. Der aktuell geöffnete Eintrag wird als nicht-interaktiver Status angezeigt.
 - Keine Änderung an Materialzugriff, Kursversion-Pinning, Readerposition, Textankern oder privaten Notizen.
-- **Noch offen:** CI/Review für Branch `a11y/course-reader-material-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #311.
+
+
+## 16.11.2026 – Prüfungsrunner: dynamische Frage- und Ergebniswechsel
+
+- **In Arbeit:** Beim Start/Fortsetzen und bei jeder Frageänderung Fokus auf die aktuelle Frageüberschrift setzen; nach Abgabe auf den Ergebnistitel; bei Rückkehr auf die Prüfungsübersicht auf deren Überschrift.
+- Bei fehlgeschlagenem Start Fokus vom Bestätigungsbereich zurück zum Startbutton führen.
+- Keine Änderung an Start-/Versuchs-/Zeitlimit-/Autosave-/Abgabe-/Bewertungslogik oder Berechtigungen.
+- **Noch offen:** CI/Review für Branch `a11y/exam-runner-question-focus`; spätere manuelle Abnahme mit echten Versuchen.

@@ -145,6 +145,10 @@ export const ExamParticipantRunner: React.FC = () => {
   const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const wasStartConfirmationOpenRef = useRef(false);
   const restoreStartFocusRef = useRef(false);
+  const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const catalogHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const pendingCatalogFocusRef = useRef(false);
 
   useEffect(() => {
     if (startConfirmationOpen) {
@@ -161,6 +165,20 @@ export const ExamParticipantRunner: React.FC = () => {
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
   const answeredCount = attempt ? answerCount(attempt.questions, answers) : 0;
   const resultScore = submission?.finalScoreBasisPoints ?? submission?.preliminaryScoreBasisPoints ?? 0;
+
+  useEffect(() => {
+    if (attempt && activeQuestion) questionHeadingRef.current?.focus();
+  }, [attempt?.id, currentQuestionIndex]);
+
+  useEffect(() => {
+    if (submission) resultHeadingRef.current?.focus();
+  }, [submission?.id]);
+
+  useEffect(() => {
+    if (!pendingCatalogFocusRef.current || attempt || submission) return;
+    pendingCatalogFocusRef.current = false;
+    catalogHeadingRef.current?.focus();
+  }, [attempt?.id, submission?.id]);
 
   const loadCatalog = useCallback(async () => {
     setLoadingCatalog(true);
@@ -191,6 +209,7 @@ export const ExamParticipantRunner: React.FC = () => {
   }, [loadCatalog, loadResultHistory]);
 
   const clearRunner = useCallback(() => {
+    pendingCatalogFocusRef.current = true;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = null;
     attemptRef.current = null;
@@ -280,7 +299,7 @@ export const ExamParticipantRunner: React.FC = () => {
       setActiveAttemptPreview(null);
       applyAttempt(response.data.attempt);
     } else {
-      restoreStartFocusRef.current = false;
+      restoreStartFocusRef.current = true;
       setStartConfirmationOpen(false);
       setStartConfirmationState('idle');
       setActiveAttemptPreview(null);
@@ -493,7 +512,7 @@ export const ExamParticipantRunner: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Frage {currentQuestionIndex + 1} von {attempt.questions.length}</div>
-                      <h3 className="mt-2 text-lg font-semibold leading-relaxed text-slate-900 dark:text-white">{activeQuestion.question}</h3>
+                      <h3 ref={questionHeadingRef} tabIndex={-1} className="mt-2 text-lg font-semibold leading-relaxed text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{activeQuestion.question}</h3>
                     </div>
                     <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{formatPoints(activeQuestion.pointsMilli)} Pkt.</span>
                   </div>
@@ -594,7 +613,7 @@ export const ExamParticipantRunner: React.FC = () => {
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prüfung abgeschlossen · {submission.attemptCourseCode}</div>
-            <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{submission.title}</h2>
+            <h2 ref={resultHeadingRef} tabIndex={-1} className="mt-1 text-xl font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{submission.title}</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{awaitingRelease ? 'Deine Abgabe ist eingegangen. Das Bewertungsergebnis wird erst angezeigt, wenn es offiziell freigegeben wurde.' : pending ? 'Deine Antworten enthalten Freitext und werden von einem Ausbilder bewertet. Das endgültige Ergebnis folgt nach der Korrektur und Freigabe.' : passed ? 'Du hast die erforderliche Bestehensgrenze erreicht.' : 'Die erforderliche Bestehensgrenze wurde nicht erreicht.'}</p>
           </div>
         </div>
@@ -631,7 +650,7 @@ export const ExamParticipantRunner: React.FC = () => {
       <div className="academy-exam-heading flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Academy · Prüfungszentrum</div>
-          <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Verfügbare Prüfungen</h2>
+          <h2 ref={catalogHeadingRef} tabIndex={-1} className="mt-1 text-xl font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">Verfügbare Prüfungen</h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-300">Starte eine Prüfung oder setze einen begonnenen Versuch fort. Deine Antworten werden automatisch und revisionsgesichert gespeichert.</p>
         </div>
         <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog || startConfirmationOpen} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
