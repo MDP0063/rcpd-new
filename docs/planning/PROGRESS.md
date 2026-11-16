@@ -1491,3 +1491,11 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Bei Rückkehr zur Übersicht wird der Fokus zum ursprünglichen Bearbeiten-Button zurückgeführt; beim Neuanlegen zur jeweiligen Neuanlegen-Schaltfläche. Falls der ursprüngliche Eintrag nicht mehr vorhanden ist, dient die Neuanlegen-Schaltfläche als Fallback; nur wenn diese nicht verfügbar ist, wird die Suche fokussiert.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
 - GitHub Actions: TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. Die PR-Vorlagenprüfung wird nach Synchronisierung des bereits gesetzten `fix`-Labels erneut ausgeführt. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+
+## 16.11.2026 – Kurs-/Lehrgangsverwaltung: Fokusführung im Autoreneditor (in Arbeit)
+
+- Beim Öffnen eines neuen oder bestehenden Kurs-/Lehrgangsentwurfs wird der Fokus auf die jeweilige Editorüberschrift gesetzt.
+- Bei Rückkehr zur Verwaltung oder nach erfolgreicher Veröffentlichung wird der Fokus zum ursprünglichen Auslöser zurückgeführt (Neuanlegen- oder „Entwurf bearbeiten“-Schaltfläche). Falls dieser nicht mehr vorhanden ist, wird die Verwaltungsüberschrift, danach die Suche fokussiert.
+- Validierungsfehler setzen den Fokus auf die fokussierbare Fehlersammlung, damit die konkreten Korrekturhinweise unmittelbar erreichbar sind.
+- Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichungsabläufen, Berechtigungen oder Datenmodell.
+- Umsetzung: Branch `a11y/academy-authoring-focus-restoration`; CI/Review stehen noch aus. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
