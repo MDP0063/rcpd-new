@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialTaxonomyManager.css';
 import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryView } from '../types/academy';
@@ -38,6 +38,12 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
   const [categoryStatusFilter, setCategoryStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [editing, setEditing] = useState<AcademyMaterialCategoryView | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const createActionRef = useRef<HTMLButtonElement | null>(null);
+  const categoryEditActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const categoryOriginIdRef = useRef<string | null>(null);
+  const pendingFormFocusRef = useRef<'form' | 'list' | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -56,6 +62,20 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const pendingFocus = pendingFormFocusRef.current;
+    if (!pendingFocus) return;
+    pendingFormFocusRef.current = null;
+    if (pendingFocus === 'form') {
+      nameInputRef.current?.focus();
+    } else {
+      const originId = categoryOriginIdRef.current;
+      const origin = originId ? categoryEditActionRefs.current[originId] : null;
+      if (origin?.isConnected) origin.focus();
+      else createActionRef.current?.focus() || searchInputRef.current?.focus();
+    }
+  }, [formOpen, editing?.id]);
+
   useEffect(() => { void load(); }, [load]);
 
   const hasFormChanges = formOpen && (
@@ -73,12 +93,16 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
 
   const beginCreate = () => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue Kategorie beginnen?')) return;
+    categoryOriginIdRef.current = 'new';
+    pendingFormFocusRef.current = 'form';
     resetForm();
     setFormOpen(true);
   };
 
   const beginEdit = (category: AcademyMaterialCategoryView) => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere Kategorie bearbeiten?')) return;
+    categoryOriginIdRef.current = category.id;
+    pendingFormFocusRef.current = 'form';
     setEditing(category);
     setName(category.name);
     setDescription(category.description || '');
@@ -89,6 +113,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
 
   const cancelEdit = () => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
   };
@@ -144,6 +169,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     }
     const saved = response.data.category;
     await load();
+    pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
     setBusy(false);
@@ -238,6 +264,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
           <div className="space-y-1.5">
             <label htmlFor="academy-category-name" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategoriename</label>
             <input
+              ref={nameInputRef}
               id="academy-category-name"
               className={inputClass}
               value={name}
@@ -285,13 +312,13 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                 {categories.filter(item => item.status === 'active').length} aktiv · {categories.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
+            <button ref={createActionRef} type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neue Kategorie</button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,0.55fr)]">
             <div className="space-y-1.5">
               <label htmlFor="academy-category-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Kategorien durchsuchen</label>
-              <input id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-category-search-hint" />
+              <input ref={searchInputRef} id="academy-category-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-category-search-hint" />
               <p id="academy-category-search-hint" className="text-xs text-slate-500 dark:text-slate-400">Name oder Beschreibung</p>
             </div>
             <div className="space-y-1.5">
@@ -331,7 +358,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
                       {category.description && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{category.description}</p>}
                     </div>
                     <div className="academy-material-taxonomy-actions flex shrink-0 flex-wrap gap-2">
-                      <button type="button" className={secondaryButton} onClick={() => beginEdit(category)} disabled={busy}>Bearbeiten</button>
+                      <button ref={element => { categoryEditActionRefs.current[category.id] = element; }} type="button" className={secondaryButton} onClick={() => beginEdit(category)} disabled={busy}>Bearbeiten</button>
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(category)} disabled={busy}>
                         {category.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
                       </button>
