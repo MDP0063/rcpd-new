@@ -1498,4 +1498,4 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Bei Rückkehr zur Verwaltung oder nach erfolgreicher Veröffentlichung wird der Fokus zum ursprünglichen Auslöser zurückgeführt (Neuanlegen- oder „Entwurf bearbeiten“-Schaltfläche). Falls dieser nicht mehr vorhanden ist, wird die Verwaltungsüberschrift, danach die Suche fokussiert.
 - Validierungsfehler setzen den Fokus auf die fokussierbare Fehlersammlung, damit die konkreten Korrekturhinweise unmittelbar erreichbar sind.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichungsabläufen, Berechtigungen oder Datenmodell.
-- Umsetzung: Branch `a11y/academy-authoring-focus-restoration`; CI/Review stehen noch aus. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- PR #308: `a11y/academy-authoring-focus-restoration`; TypeScript/Lint, Produktionsbuild und 455/455 Tests erfolgreich. PR-Vorlagenprüfung und Review laufen noch; Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
