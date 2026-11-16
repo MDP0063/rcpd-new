@@ -1479,7 +1479,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 ## 16.11.2026 – Materialverwaltung: Fokusführung im Editor (in Arbeit)
 
-- Beim Öffnen eines vorhandenen Materials aus der Liste oder beim Anlegen eines neuen Materials soll der Fokus zum Titelfeld wechseln.
+- Beim Öffnen eines bearbeitbaren vorhandenen Materials aus der Liste oder beim Anlegen eines neuen Materials soll der Fokus zum Titelfeld wechseln; bei archivierten, schreibgeschützten Materialien auf die Editorüberschrift.
 - Bei Rückkehr zur Materialübersicht wird der Fokus auf den ursprünglichen Listeneintrag bzw. die Schaltfläche „Neues Material anlegen“ zurückgeführt; falls der Eintrag nicht mehr existiert, dient die Schaltfläche als Fallback.
 - Ein internes erneutes Laden des aktuell bearbeiteten Materials verschiebt den Fokus nicht ungefragt.
 - Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
