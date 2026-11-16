@@ -4,7 +4,7 @@
 
 **Stand:** 16.11.2026  
 **Letzter verifizierter `main`-Stand:** `941c1a296961f5b457914f146222f20bf7dd9aac`  
-**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung, Kurs-/Lehrgangsdetail-Korrekturen und Fokusführung in Kurs-/Lehrgangsdetails sowie im privaten Notizeditor und in der Materialverwaltung (PR #293–#295 und #297–#306 gemergt) vom 16.11.2026.
+**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung, Kurs-/Lehrgangsdetail-Korrekturen und Fokusführung in Kurs-/Lehrgangsdetails sowie im privaten Notizeditor und in der Materialverwaltung (PR #293–#295 und #297–#306 gemergt) vom 16.11.2026; Fokusarbeit im Kurs-/Lehrgangsautoreneditor läuft.
 **Laufender Umsetzungs- und Abnahmestand:** siehe [PROGRESS.md](./PROGRESS.md).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
 

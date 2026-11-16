@@ -452,3 +452,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **In Arbeit:** Fokus beim Öffnen von Kategorie-/Dokumenttypformularen auf das Namensfeld setzen und bei Rückkehr zur Übersicht zum ursprünglichen Auslöser zurückführen.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
 - **Noch offen:** CI/Review für Branch `a11y/academy-taxonomy-form-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+
+
+## 16.11.2026 – Kurs-/Lehrgangsverwaltung: dynamischer Autoreneditor
+
+- **In Arbeit:** Fokus beim Öffnen des Kurs-/Lehrgangseditors auf die Editorüberschrift setzen; bei Rückkehr/Veröffentlichung zum ursprünglichen Auslöser zurückführen. Validierungsfehler fokussieren die Fehlersammlung.
+- Keine Änderung an fachlichen Kurs-/Lehrgangsregeln oder Berechtigungen.
+- **Noch offen:** PR #308 und Review; spätere manuelle Keyboard-/Screenreader-QA.
