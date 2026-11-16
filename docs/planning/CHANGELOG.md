@@ -625,4 +625,13 @@
 - Bei Rückkehr zur Übersicht Fokus zum ursprünglichen Materialeintrag bzw. zur Schaltfläche „Neues Material anlegen“ zurückführen; Fallback auf „Neues Material anlegen“.
 - Interne Reloads des aktuell bearbeiteten Materials verschieben den Fokus nicht.
 - Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
-- Arbeitsbranch: `a11y/academy-material-editor-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #306 gemergt** (Merge-Commit `941c1a296961f5b457914f146222f20bf7dd9aac`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 2026-11-16 – Taxonomieverwaltung: Fokusführung in Formularen
+
+- Beim Öffnen eines Kategorie- oder Dokumenttypformulars Fokus auf das Namensfeld setzen.
+- Nach Abbruch oder erfolgreichem Speichern Fokus zum ursprünglichen Bearbeiten-Button bzw. zur Neuanlegen-Schaltfläche zurückführen.
+- Fallback auf Neuanlegen, falls der ursprüngliche Eintrag nicht mehr existiert; Suche nur als letzter Fallback.
+- Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
+- Arbeitsbranch: `a11y/academy-taxonomy-form-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
