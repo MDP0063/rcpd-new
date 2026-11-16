@@ -441,7 +441,7 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Materialverwaltung: dynamischer Editorwechsel
 
-- **In Arbeit:** Fokus beim Öffnen eines Materials/Neuanlegen auf das Titelfeld setzen; bei Rückkehr zur Übersicht ursprünglichen Listeneintrag bzw. Neuanlegen-Aktion fokussieren.
+- **In Arbeit:** Fokus beim Öffnen eines bearbeitbaren Materials/Neuanlegen auf das Titelfeld setzen; bei archivierten, schreibgeschützten Materialien auf die Editorüberschrift. Bei Rückkehr zur Übersicht ursprünglichen Listeneintrag bzw. Neuanlegen-Aktion fokussieren.
 - Interne Reloads im Editor sollen keine Fokusverschiebung auslösen.
 - Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
 - **Noch offen:** CI/Review für Branch `a11y/academy-material-editor-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
