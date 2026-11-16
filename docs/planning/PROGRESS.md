@@ -1504,6 +1504,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 - Beim Öffnen eines Legacy- oder versionierten Materials aus dem Bibliothekskatalog wird der Fokus auf den geladenen Reader-Titel gesetzt. Bei einem Ladefehler wird stattdessen die Fehlermeldung fokussiert.
 - Bei „Zurück zur Bibliothek“ kehrt der Fokus zum ursprünglich betätigten Materialöffnen-Button zurück; falls dieser nicht mehr vorhanden ist, wird das Suchfeld fokussiert.
+- Auch bei zugriffsbeschränkten Legacy-Materialien bleibt ein ausdrücklicher Rückweg zur Bibliothek verfügbar.
 - Die Auswahl eines anderen Materials innerhalb der Reader-Seitenleiste bleibt im bestehenden Reader-Kontext und verschiebt den Fokus nicht ungefragt.
 - Suchbegriff, Filter, Sortierung und vorhandene Reader-/Textankerlogik bleiben unverändert.
 - Keine Änderung an Materialzugriff, Rollen, Versionierung, privaten Notizen, Datenmodell oder PDF-Infrastruktur.
