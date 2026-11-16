@@ -430,3 +430,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **In Arbeit:** Fokusmanagement beim Öffnen und Verlassen von Kurs- und Lehrgangsdetails. Fokus muss auf die Detailüberschrift wechseln und bei Rückkehr zum ursprünglichen Auslöser zurückkehren; Suchfeld als Fallback bei nicht mehr vorhandenem Auslöser.
 - Keine Änderung an Navigation/IA oder fachlichen Kurs-/Lehrgangsregeln.
 - **Noch offen:** CI und Code-Review für Branch `a11y/academy-detail-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+
+
+## 16.11.2026 – Private Notizen: dynamischer Editorwechsel
+
+- **In Arbeit:** Fokus beim Öffnen des Notizeditors auf das Titelfeld setzen und beim Abbruch/erfolgreichen Speichern zum ursprünglichen Bearbeiten-Button zurückführen; Notizensuche als Fallback.
+- Keine Änderung an privater Datenspeicherung, Konfliktbehandlung oder Berechtigungen.
+- **Noch offen:** CI/Review für Branch `a11y/academy-notes-editor-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
