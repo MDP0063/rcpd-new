@@ -608,7 +608,7 @@
 - Beim Öffnen einer Kurs- oder Lehrgangsdetailansicht Fokus auf die Detailüberschrift setzen.
 - Bei Rückkehr zum Katalog den Fokus zum ursprünglichen Aktionsbutton wiederherstellen; falls dieser nicht mehr vorhanden ist, auf das Katalog-Suchfeld ausweichen.
 - Keine Änderung an Navigation, Inhalten, Kursregeln, Berechtigungen oder Datenmodell.
-- Arbeitsbranch: `a11y/academy-detail-focus-restoration`; CI/Review noch ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #304 gemergt** (Merge-Commit `2c6711c33d42ad40498138dfe97eec1ff317baf2`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
 
 
 ## 2026-11-16 – Private Notizen: Fokusführung im Editor
