@@ -423,3 +423,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **PR #302:** Fokusmanagement bei Wechseln zwischen Academy-Kachelansicht und Hauptbereichen ist gemergt. Fokus kehrt zur zuletzt verwendeten Einstiegskachel zurück; externe Navigation in Prüfungsbewertungen wird berücksichtigt. CI: Lint/Build und 455/455 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Manuelle Keyboard-/Screenreader-Abnahme bleibt offen.
 - **PR #296:** weiterhin Draft bis zum unabhängigen Review der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen.
 - **Nächster offener Bereich:** weitere dynamische Academy-Übergänge und die abschließende funktionsübergreifende QA; keine Änderung der beschlossenen Navigation/IA ohne erneute Prüfung.
+
+
+## 16.11.2026 – Dynamische Detailansichten
+
+- **In Arbeit:** Fokusmanagement beim Öffnen und Verlassen von Kurs- und Lehrgangsdetails. Fokus muss auf die Detailüberschrift wechseln und bei Rückkehr zum ursprünglichen Auslöser zurückkehren; Suchfeld als Fallback bei nicht mehr vorhandenem Auslöser.
+- Keine Änderung an Navigation/IA oder fachlichen Kurs-/Lehrgangsregeln.
+- **Noch offen:** CI und Code-Review für Branch `a11y/academy-detail-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
