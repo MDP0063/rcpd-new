@@ -118,6 +118,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [detailLoading, setDetailLoading] = useState(false);
   const contentLoadRequestIdRef = useRef(0);
   const areaRef = useRef(area);
+  const detailHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const catalogSearchRef = useRef<HTMLInputElement | null>(null);
+  const catalogActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const catalogOriginKeyRef = useRef<string | null>(null);
+  const pendingScreenFocusRef = useRef<'detail' | 'catalog' | null>(null);
   areaRef.current = area;
   const mountedRef = useRef(true);
   const [loadError, setLoadError] = useState('');
@@ -232,6 +237,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   }, [loadLearningData]);
 
   useEffect(() => {
+    const pendingFocus = pendingScreenFocusRef.current;
+    if (!pendingFocus) return;
+    pendingScreenFocusRef.current = null;
+    if (pendingFocus === 'detail') {
+      detailHeadingRef.current?.focus();
+    } else {
+      const originKey = catalogOriginKeyRef.current;
+      const origin = originKey ? catalogActionRefs.current[originKey] : null;
+      if (origin?.isConnected) origin.focus();
+      else catalogSearchRef.current?.focus();
+    }
+  }, [screen]);
+
+  useEffect(() => {
     mountedRef.current = true;
     // A section change or unmount invalidates any detail/list response still in flight.
     detailRequestIdRef.current += 1;
@@ -300,6 +319,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   }, [notes, noteSearch, noteKindFilter, noteSortOrder]);
 
   const openCourse = async (entry: CourseEntry) => {
+    catalogOriginKeyRef.current = `course:${entry.master.id}`;
+    pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     const pins = programPinByCourse.get(entry.master.id) || [];
     const pinnedVersionIds = [...new Set(pins.map(item => item.pin.courseVersionId))];
@@ -424,6 +445,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const openProgram = async (entry: ProgramEntry) => {
+    catalogOriginKeyRef.current = `program:${entry.master.id}`;
+    pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     setSelectedProgram(entry);
     setProgramDetail(null);
@@ -529,6 +552,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
         <>
           {screen !== 'catalog' && (
             <button type="button" className={`${secondary} academy-course-back`} onClick={() => {
+              pendingScreenFocusRef.current = 'catalog';
               detailRequestIdRef.current += 1;
               setDetailLoading(false);
               setCourseDetail(null);
@@ -550,7 +574,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <div className="academy-courses-search">
                 <label htmlFor="academy-courses-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Lehrgänge und Kurse durchsuchen</label>
                 <div className="academy-courses-search-controls">
-                  <input id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-courses-search-hint" />
+                  <input ref={catalogSearchRef} id="academy-courses-global-search" className={`${field} academy-courses-search-input`} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-courses-search-hint" />
                   {Boolean(search.trim()) && <button type="button" className="academy-courses-clear-search" onClick={() => setSearch('')}>Suche löschen</button>}
                 </div>
                 <p id="academy-courses-search-hint" className={`mt-1 ${muted}`}>Titel, Kennung oder Kurzbeschreibung</p>
@@ -586,7 +610,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {detail ? statusLabel(detail.progress.status) : 'Noch keine Teilnahme'}
                                 {entry.version ? ` · ${entry.version.courseReferences.filter(item => item.requirement === 'required').length} Pflichtkurse` : ''}
                               </p>
-                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openProgram(entry)}>Lehrgang ansehen</button>
+                              <button ref={element => { catalogActionRefs.current[`program:${entry.master.id}`] = element; }} type="button" className={`${secondary} academy-course-action`} onClick={() => void openProgram(entry)}>Lehrgang ansehen</button>
                             </article>
                           );
                         })}
@@ -639,7 +663,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 <p className={`mt-1 ${muted}`}>{entry.version ? (entry.version.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Noch keine veröffentlichte Kursversion.'}</p>
                                 <p className="academy-course-status mt-2 text-xs text-slate-600 dark:text-slate-300">{participation ? statusLabel(participation.status) : 'Nicht begonnen'}</p>
                               </div>
-                              <button type="button" className={`${secondary} academy-course-action`} onClick={() => void openCourse(entry)}>Kurs ansehen</button>
+                              <button ref={element => { catalogActionRefs.current[`course:${entry.master.id}`] = element; }} type="button" className={`${secondary} academy-course-action`} onClick={() => void openCourse(entry)}>Kurs ansehen</button>
                             </div>
                           );
                         })}
@@ -655,7 +679,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
             <section className="academy-course-detail space-y-5">
               <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedCourse.master.code} · {courseDetail?.version ? `Version ${courseDetail.version.versionNumber}` : selectedCourse.version ? `Version ${selectedCourse.version.versionNumber}` : 'Noch keine veröffentlichte Version'}</p>
-                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
+                <h2 ref={detailHeadingRef} tabIndex={-1} className="text-2xl font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{courseDetail?.version.title || selectedCourse.version?.title || selectedCourse.master.code}</h2>
                 <p className={muted}>{courseDetail?.version || selectedCourse.version ? (courseDetail?.version?.summary || selectedCourse.version?.summary || 'Keine Kurzbeschreibung hinterlegt.') : 'Für diesen Kurs liegt noch keine veröffentlichte Version vor.'}</p>
               </header>
               {availabilityNotice(selectedCourse.master) && (
@@ -781,7 +805,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
             <section className="academy-program-detail space-y-5">
               <header className="academy-course-detail-heading space-y-2">
                 <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedProgram.master.code} · {programDetail ? `Version ${programDetail.version.versionNumber}` : selectedProgram.version ? `Version ${selectedProgram.version.versionNumber}` : 'Entwurf'}</p>
-                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{programDetail?.version.title || selectedProgram.version?.title || selectedProgram.master.code}</h2>
+                <h2 ref={detailHeadingRef} tabIndex={-1} className="text-2xl font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{programDetail?.version.title || selectedProgram.version?.title || selectedProgram.master.code}</h2>
                 <p className={muted}>{programDetail?.version.summary || selectedProgram.version?.summary || 'Keine Kurzbeschreibung hinterlegt.'}</p>
               </header>
               {(programDetail?.version || selectedProgram.version) && (() => {

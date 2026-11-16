@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 15.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#302 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#303 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `5b87d423fa74a196b4ee2bb777e0303e96b36e4a` (PR #302). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302.
+**Aktueller Basisstand:** `main` bei `1466ce332c07c39d7cbaa23b56361a525964a6c7` (PR #303). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302 und Planungsstand-Synchronisierung aus #303.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#302 sind gemergt. Für #297–#302 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#303 sind gemergt. Für #297–#302 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1462,3 +1462,10 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Quellen: https://design.homeoffice.gov.uk/accessibility/standard/operable ; https://design.va.gov/accessibility/focus-management
 - **PR #302 ist am 15.11.2026 gemergt** (Merge-Commit `5b87d423fa74a196b4ee2bb777e0303e96b36e4a`). GitHub Actions: `bun run lint`, `bun run build`, `bun run test` mit 455/455 erfolgreich; PR-Vorlagenprüfung erfolgreich. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
 - Diese Statussynchronisierung ist eine reine Dokumentationsänderung und verändert keinen Laufzeitcode.
+
+## 16.11.2026 – Detailansichten in Kursen und Lehrgängen: Fokusführung (in Arbeit)
+
+- Beim Öffnen eines Kurses oder Lehrgangs soll der Fokus auf dessen Detailüberschrift gesetzt werden, damit Screenreader- und Tastaturnutzende den Ansichtswechsel unmittelbar mitbekommen.
+- Bei Rückkehr zum Katalog soll der Fokus zum zuvor aktivierten „Kurs ansehen“-/„Lehrgang ansehen“-Button zurückkehren. Falls der ursprüngliche Trigger nicht mehr im DOM vorhanden ist, dient das Suchfeld als Fallback.
+- Keine Änderung an Informationsarchitektur, Kurs-/Lehrgangsregeln, Such-/Filterzustand oder Berechtigungen.
+- Umsetzung: Branch `a11y/academy-detail-focus-restoration`; CI und PR-Review stehen noch aus. Manuelle Keyboard-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
