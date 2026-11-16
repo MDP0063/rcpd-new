@@ -20,7 +20,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
  const readerPositionReadyRef=useRef(false);
  const materialListHeadingRef=useRef<HTMLHeadingElement|null>(null);
  const readerTitleRef=useRef<HTMLHeadingElement|null>(null);
- const readerMessageRef=useRef<HTMLDivElement|HTMLParagraphElement|null>(null);
+ const readerMessageRef=useRef<HTMLParagraphElement|null>(null);
+ const readerErrorRef=useRef<HTMLDivElement|null>(null);
  const materialOpenActionRefs=useRef<Record<string,HTMLButtonElement|null>>({});
  const materialOriginKeyRef=useRef('');
  const pendingReaderFocusRef=useRef(false);
@@ -70,7 +71,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
    readerTitleRef.current?.focus();
   }else if(loadError){
    pendingReaderFocusRef.current=false;
-   readerMessageRef.current?.focus();
+   readerErrorRef.current?.focus();
   }
  },[selectedKey,loading,currentVersion,loadError]);
  useEffect(()=>{let active=true;setCurrentVersion(null);setLoadError('');setLoadRetryable(false);setSelectedAnchor(null);
@@ -175,7 +176,7 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
        {loading?<p ref={readerMessageRef} tabIndex={-1} className={muted+" focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600"} role="status">Material wird geladen …</p>
         :currentVersion?.contentFormat==='markdown'?<article ref={markdownContentRef} className="mx-auto w-full max-w-[68ch] text-base leading-relaxed" onMouseUp={event=>captureTextAnchor(event,'markdown')}><AcademyMarkdownRenderer content={currentVersion.content} components={components} /></article>
         :currentVersion?.contentFormat==='code'?<div className="space-y-2"><p className={muted}>Gespeicherter Quelltext · wird nicht ausgeführt{currentVersion.codeLanguage?' · '+currentVersion.codeLanguage:''}</p><pre ref={codeContentRef} onMouseUp={event=>captureTextAnchor(event,'code')} className="max-h-[70vh] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{currentVersion.content}</code></pre></div>:null}
-       <div ref={readerMessageRef} tabIndex={loadError?-1:undefined} role={loadError?'group':undefined} aria-label={loadError?'Material konnte nicht geladen werden':undefined} className={loadError?'space-y-3 rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600':'sr-only'}>
+       <div ref={readerErrorRef} tabIndex={loadError?-1:undefined} role={loadError?'group':undefined} aria-label={loadError?'Material konnte nicht geladen werden':undefined} className={loadError?'space-y-3 rounded-md border border-rose-300 p-3 text-sm text-rose-700 dark:border-rose-900 dark:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600':'sr-only'}>
         <p role="alert">{loadError}</p>
         {loadError&&loadRetryable?<button type="button" className={secondary} onClick={()=>setLoadAttempt(value=>value+1)}>Erneut versuchen</button>:null}
        </div>
