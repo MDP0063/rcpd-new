@@ -134,6 +134,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [moduleDocumentTypeFilter, setModuleDocumentTypeFilter] = useState('');
   const [isLibraryNavigationOpen, setIsLibraryNavigationOpen] = useState(false);
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+  const librarySearchRef = useRef<HTMLInputElement | null>(null);
+  const libraryReaderHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const libraryReaderMessageRef = useRef<HTMLDivElement | HTMLParagraphElement | null>(null);
+  const libraryOpenActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const libraryOriginKeyRef = useRef<string | null>(null);
+  const pendingLibraryFocusRef = useRef<'reader' | 'catalog' | null>(null);
   const [versionedMaterials, setVersionedMaterials] = useState<AcademyPublicMaterialCatalogItem[]>([]);
   const [versionedMaterialsLoading, setVersionedMaterialsLoading] = useState(false);
   const [versionedMaterialsError, setVersionedMaterialsError] = useState('');
@@ -337,6 +343,42 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   };
 
   const currentModule = modules.find(module => module.id === activeModuleId) || null;
+
+  const returnToLibrary = () => {
+    pendingLibraryFocusRef.current = 'catalog';
+    setActiveVersionedMaterialId(null);
+    setActiveModuleId(null);
+    setIsLibraryNavigationOpen(false);
+  };
+
+  useEffect(() => {
+    const pendingFocus = pendingLibraryFocusRef.current;
+    if (!pendingFocus || activeTab !== 'modules' || libraryAreaMode !== 'materials') return;
+    if (pendingFocus === 'reader') {
+      if (activeVersionedMaterialId) {
+        if (versionedMaterialLoading) return;
+        if (displayedVersionedMaterial) {
+          pendingLibraryFocusRef.current = null;
+          libraryReaderHeadingRef.current?.focus();
+          return;
+        }
+        if (versionedMaterialError) {
+          pendingLibraryFocusRef.current = null;
+          libraryReaderMessageRef.current?.focus();
+        }
+        return;
+      }
+      if (activeModuleId && currentModule) {
+        pendingLibraryFocusRef.current = null;
+        libraryReaderHeadingRef.current?.focus();
+      }
+      return;
+    }
+    pendingLibraryFocusRef.current = null;
+    const origin = libraryOriginKeyRef.current ? libraryOpenActionRefs.current[libraryOriginKeyRef.current] : null;
+    if (origin?.isConnected) origin.focus();
+    else librarySearchRef.current?.focus();
+  }, [activeTab, libraryAreaMode, activeModuleId, activeVersionedMaterialId, currentModule, displayedVersionedMaterial, versionedMaterialLoading, versionedMaterialError]);
 
   // PDFs werden erst beim Öffnen eines Handbuchs nachgeladen.
   const [pdfCache, setPdfCache] = useState<Record<string, string>>({});
@@ -874,6 +916,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                   <label htmlFor="academy-library-global-search" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Materialien suchen</label>
                   <div className="academy-library-search-controls">
                     <input
+                      ref={librarySearchRef}
                       id="academy-library-global-search"
                       type="search"
                       value={moduleSearchQuery}
@@ -975,8 +1018,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           {entry.code && <p className="academy-library-material-code">{entry.code}</p>}
                         </div>
                         <button
+                          ref={element => { libraryOpenActionRefs.current[entry.kind + ':' + entry.id] = element; }}
                           type="button"
                           onClick={() => {
+                            libraryOriginKeyRef.current = entry.kind + ':' + entry.id;
+                            pendingLibraryFocusRef.current = 'reader';
                             if (entry.kind === 'legacy') {
                               setActiveVersionedMaterialId(null);
                               setActiveModuleId(entry.id);
@@ -1049,7 +1095,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                 <p role="alert" className="sr-only">{versionedMaterialError}</p>
                 {activeVersionedMaterialId ? (
                   isVersionedMaterialLoading ? (
-                    <p role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300">Material wird geladen …</p>
+                    <p ref={libraryReaderMessageRef} tabIndex={-1} role="status" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-sm text-slate-600 dark:text-slate-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">Material wird geladen …</p>
                   ) : displayedVersionedMaterial ? (
                     <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
                       <div className="academy-library-reader-heading flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
@@ -1061,11 +1107,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                             <span>·</span>
                             <span>{displayedVersionedMaterial.documentTypeName}</span>
                           </div>
-                          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{displayedVersionedMaterial.title}</h2>
+                          <h2 ref={libraryReaderHeadingRef} tabIndex={-1} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{displayedVersionedMaterial.title}</h2>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Freigegeben ab: {displayedVersionedMaterial.requiredRole || 'Alle Ränge'} · Version {displayedVersionedMaterial.versionNumber}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
+                          <button type="button" onClick={returnToLibrary} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Zurück zur Bibliothek</button>
                           <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                             {isLibraryNavigationOpen ? 'Navigation ausblenden' : 'Materialnavigation anzeigen'}
                           </button>
@@ -1093,14 +1139,14 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(displayedVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
-                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3">
+                    <div ref={libraryReaderMessageRef} tabIndex={-1} className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">
                       <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
                       {versionedMaterialRetryable && (
                         <button type="button" onClick={() => setVersionedMaterialLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialLoading} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
                           Erneut versuchen
                         </button>
                       )}
-                      <button type="button" onClick={() => { setActiveVersionedMaterialId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
+                      <button type="button" onClick={returnToLibrary} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Zurück zur Bibliothek</button>
                     </div>
                   )
                 ) : currentModule && (
@@ -1110,7 +1156,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <div className="flex items-center gap-2 text-xs font-mono text-rose-600 dark:text-rose-400 font-semibold">
                         <Lock className="w-4 h-4" /> ZUGRIFF AUF DIESES HANDBUCH GESPERRT
                       </div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                      <h2 ref={libraryReaderHeadingRef} tabIndex={-1} className="text-xl font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">
                         „{currentModule.title}“ erfordert mindestens den Rang „{currentModule.requiredRole.toUpperCase()}“
                       </h2>
                       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1131,13 +1177,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                           <span>·</span>
                           <span className="uppercase">FREIGEGEBEN AB {currentModule.requiredRole}</span>
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        <h2 ref={libraryReaderHeadingRef} tabIndex={-1} className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">
                           {currentModule.title}
                         </h2>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button type="button" onClick={() => { setActiveModuleId(null); setIsLibraryNavigationOpen(false); }} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">Zurück zur Bibliothek</button>
+                        <button type="button" onClick={returnToLibrary} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Zurück zur Bibliothek</button>
                         <button type="button" onClick={() => setIsLibraryNavigationOpen(open => !open)} aria-expanded={isLibraryNavigationOpen} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200">
                           {isLibraryNavigationOpen ? 'Materialnavigation ausblenden' : 'Materialnavigation anzeigen'}
                         </button>
