@@ -1516,4 +1516,4 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der aktuell geöffnete Eintrag wird als nicht-interaktiver Zustand „Geöffnet“ angezeigt, statt den fokussierten Öffnen-Button nativ zu deaktivieren.
 - „Zur Materialliste“ führt den Fokus zum ursprünglichen Materialöffnen-Button zurück; falls dieser nicht mehr existiert, wird die Materiallistenüberschrift fokussiert.
 - Keine Änderung an Materialzugriff, Kursversion-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
-- Umsetzung: Branch `a11y/course-reader-material-focus-restoration`; CI/Review stehen noch aus. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+- PR #311: `a11y/course-reader-material-focus-restoration`; das passende `fix`-Label ist gesetzt. GitHub Actions laufen; manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
