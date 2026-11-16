@@ -459,3 +459,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Erledigt in PR #308:** Fokus beim Öffnen des Kurs-/Lehrgangseditors auf die Editorüberschrift setzen; bei Rückkehr/Veröffentlichung zum ursprünglichen Auslöser zurückführen. Validierungsfehler fokussieren die Fehlersammlung.
 - Keine Änderung an fachlichen Kurs-/Lehrgangsregeln oder Berechtigungen.
 - **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #308.
+
+
+## 16.11.2026 – Lernbibliothek: dynamischer Readerwechsel
+
+- **In Arbeit:** Fokus beim Öffnen eines Materials vom Katalog auf den geladenen Reader-Titel setzen; bei Ladefehlern die Fehlermeldung fokussieren. Bei Rückkehr zum Katalog den ursprünglichen Materialöffnen-Button wieder fokussieren; Suchfeld als Fallback.
+- Wechsel zwischen Materialien in der Reader-Seitenleiste soll den bestehenden Fokus erhalten.
+- Keine Änderung an Zugriff, Rollen, Versionierung oder privaten Notizen.
+- **Noch offen:** CI/Review für Branch `a11y/library-reader-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.

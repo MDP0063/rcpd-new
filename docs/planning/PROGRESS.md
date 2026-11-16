@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#308 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#309 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `12a3b74f4b5882230234e340aa030d40fc84e8a1` (PR #308); die Synchronisierung der Planungsdokumente erfolgt mit PR #309; der Änderungssatz enthält ausschließlich Projektdokumentation und keine Zugangsdaten oder Runtime-Konfiguration. Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307 und Kurs-/Lehrgangsautoreneditor aus #308.
+**Aktueller Basisstand:** `main` bei `1a92f58c832476b784aed0b5b9f48c8d7daeec6d` (PR #309). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307 und Kurs-/Lehrgangsautoreneditor aus #308.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#308 sind gemergt. Für #297–#302 und #304–#308 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#309 sind gemergt. Für #297–#302 und #304–#308 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1477,7 +1477,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Konflikt-, Save-, Lösch- und Privatheitslogik werden nicht verändert; keine private lokale Browserpersistenz.
 - **PR #305 ist am 16.11.2026 gemergt** (Merge-Commit `43b7e16505244563ac771c38d69abcb31693fd5f`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
 
-## 16.11.2026 – Materialverwaltung: Fokusführung im Editor (in Arbeit)
+## 16.11.2026 – Materialverwaltung: Fokusführung im Editor (PR #306 gemergt)
 
 - Beim Öffnen eines bearbeitbaren vorhandenen Materials aus der Liste oder beim Anlegen eines neuen Materials soll der Fokus zum Titelfeld wechseln; bei archivierten, schreibgeschützten Materialien auf die Editorüberschrift.
 - Bei Rückkehr zur Materialübersicht wird der Fokus auf den ursprünglichen Listeneintrag bzw. die Schaltfläche „Neues Material anlegen“ zurückgeführt; falls der Eintrag nicht mehr existiert, dient die Schaltfläche als Fallback.
@@ -1499,3 +1499,13 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Validierungsfehler setzen den Fokus auf die fokussierbare Fehlersammlung, damit die konkreten Korrekturhinweise unmittelbar erreichbar sind.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichungsabläufen, Berechtigungen oder Datenmodell.
 - **PR #308 gemergt** (Merge-Commit `12a3b74f4b5882230234e340aa030d40fc84e8a1`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
+
+## 16.11.2026 – Lernbibliothek: Fokusführung zwischen Katalog und Reader (in Arbeit)
+
+- Beim Öffnen eines Legacy- oder versionierten Materials aus dem Bibliothekskatalog wird der Fokus auf den geladenen Reader-Titel gesetzt. Bei einem Ladefehler wird stattdessen die Fehlermeldung fokussiert.
+- Bei „Zurück zur Bibliothek“ kehrt der Fokus zum ursprünglich betätigten Materialöffnen-Button zurück; falls dieser nicht mehr vorhanden ist, wird das Suchfeld fokussiert.
+- Auch bei zugriffsbeschränkten Legacy-Materialien bleibt ein ausdrücklicher Rückweg zur Bibliothek verfügbar.
+- Die Auswahl eines anderen Materials innerhalb der Reader-Seitenleiste bleibt im bestehenden Reader-Kontext und verschiebt den Fokus nicht ungefragt.
+- Suchbegriff, Filter, Sortierung und vorhandene Reader-/Textankerlogik bleiben unverändert.
+- Keine Änderung an Materialzugriff, Rollen, Versionierung, privaten Notizen, Datenmodell oder PDF-Infrastruktur.
+- Umsetzung: Branch `a11y/library-reader-focus-restoration`; CI/Review stehen noch aus. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.

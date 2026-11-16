@@ -644,3 +644,14 @@
 - Bei Validierungsfehlern Fokus auf die Fehlersammlung setzen.
 - Keine Änderung an Kurs-/Lehrgangsregeln, Veröffentlichung, Berechtigungen oder Datenmodell.
 - **PR #308 gemergt** (Merge-Commit `12a3b74f4b5882230234e340aa030d40fc84e8a1`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 2026-11-16 – Lernbibliothek: Fokusführung zwischen Katalog und Reader
+
+- Beim Öffnen eines Legacy- oder versionierten Materials Fokus auf den geladenen Reader-Titel setzen; bei Ladefehlern die Fehlermeldung fokussieren.
+- Bei Rückkehr zum Katalog Fokus zum ursprünglichen Materialöffnen-Button zurückführen; Suchfeld als Fallback, falls der Button nicht mehr existiert.
+- Wechsel zwischen Materialien innerhalb der Reader-Seitenleiste erhält den bestehenden Fokuskontext.
+- Keine Änderung an Zugriff, Rollen, Versionierung, privaten Notizen, Datenmodell oder PDF-Infrastruktur.
+- Arbeitsbranch: `a11y/library-reader-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+
+- Zugriffsbeschränkte Legacy-Materialien behalten ebenfalls einen expliziten Rückweg zur Bibliothek.
