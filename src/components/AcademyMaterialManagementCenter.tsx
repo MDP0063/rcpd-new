@@ -118,6 +118,12 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [materialSort, setMaterialSort] = useState<'updated' | 'title' | 'code'>('updated');
   const [editingMaster, setEditingMaster] = useState<AcademyMaterialMasterDoc | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const materialTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const materialEditorHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const newMaterialActionRef = useRef<HTMLButtonElement | null>(null);
+  const materialListActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const materialEditorOriginRef = useRef<string | null>(null);
+  const pendingMaterialFocusRef = useRef<'editor' | 'list' | null>(null);
   const [draft, setDraft] = useState<AcademyMaterialDraftDoc | null>(null);
   const [currentVersion, setCurrentVersion] = useState<AcademyMaterialVersionDoc | null>(null);
   const [versions, setVersions] = useState<AcademyMaterialVersionSummary[]>([]);
@@ -162,6 +168,24 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const pendingFocus = pendingMaterialFocusRef.current;
+    if (!pendingFocus) return;
+    pendingMaterialFocusRef.current = null;
+    if (pendingFocus === 'editor') {
+      const titleInput = materialTitleInputRef.current;
+      if (titleInput && !titleInput.disabled) titleInput.focus();
+      else materialEditorHeadingRef.current?.focus();
+    } else {
+      const originKey = materialEditorOriginRef.current;
+      const origin = originKey === 'new'
+        ? newMaterialActionRef.current
+        : originKey ? materialListActionRefs.current[originKey] : null;
+      if (origin?.isConnected) origin.focus();
+      else newMaterialActionRef.current?.focus();
+    }
+  }, [isEditorOpen]);
+
   useEffect(() => { void loadCatalogsAndMaterials(); }, [loadCatalogsAndMaterials]);
   useEffect(() => {
     if (Object.keys(errors).length > 0) errorSummaryRef.current?.focus();
@@ -190,6 +214,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
   const startNew = () => {
     if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein neues Material beginnen?')) return;
+    materialEditorOriginRef.current = 'new';
+    pendingMaterialFocusRef.current = 'editor';
     resetEditor();
     setIsEditorOpen(true);
   };
@@ -207,7 +233,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setHasMoreVersions(Boolean(response.data.hasMoreVersions)); setNextVersionOffset(response.data.nextVersionOffset ?? null);
   };
 
-  const openMaterial = async (materialId: string) => {
+  const openMaterial = async (materialId: string, focusEditor = false) => {
     if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein anderes Material öffnen?')) return;
     setBusy(true);
     versionHistoryMaterialIdRef.current = null;
@@ -220,6 +246,10 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
       return;
     }
     const { master, draft: loadedDraft, currentVersion: loadedCurrent, versions: loadedVersions } = response.data;
+    if (focusEditor) {
+      materialEditorOriginRef.current = master.id;
+      pendingMaterialFocusRef.current = 'editor';
+    }
     versionHistoryMaterialIdRef.current = master.id;
     setEditingMaster(master);
     setIsEditorOpen(true);
@@ -458,7 +488,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
               Hier pflegst du Materialien zentral: Entwürfe vorbereiten, veröffentlichte Fassungen nachvollziehen und Änderungen bewusst freigeben. Text und Markdown sowie Quelltext werden unterstützt.
             </p>
           </div>
-          {!isEditorOpen && <button type="button" className={primary} onClick={startNew} disabled={busy}>Neues Material anlegen</button>}
+          {!isEditorOpen && <button ref={newMaterialActionRef} type="button" className={primary} onClick={startNew} disabled={busy}>Neues Material anlegen</button>}
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Kennungen und Versionsnummern werden automatisch vergeben. Kategorie und Dokumenttyp sind erforderlich. Beschreibung und erforderlicher Rang sind optional.
@@ -540,8 +570,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
               {filteredMaterials.map(item => (
                 <li key={item.master.id} className="academy-material-list-entry py-3 first:pt-0 last:pb-0">
-                  <button type="button" aria-pressed={editingMaster?.id === item.master.id} className="academy-material-list-button w-full rounded-md p-2 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:hover:bg-slate-800"
-                    onClick={() => void openMaterial(item.master.id)} disabled={busy}>
+                  <button ref={element => { materialListActionRefs.current[item.master.id] = element; }} type="button" aria-pressed={editingMaster?.id === item.master.id} className="academy-material-list-button w-full rounded-md p-2 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:hover:bg-slate-800"
+                    onClick={() => void openMaterial(item.master.id, true)} disabled={busy}>
                     <span className="block break-all text-xs font-semibold text-slate-500 dark:text-slate-400">{item.master.code}</span>
                     <span className="mt-1 block text-sm font-medium text-slate-900 dark:text-white">
                       {item.draft?.title || item.currentVersion?.title || 'Ohne Titel'}
@@ -562,8 +592,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
         {isEditorOpen && <div className="academy-material-management-main space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
-            <button type="button" className={secondary} onClick={() => { if (formDirty && !window.confirm("Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?")) return; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 ref={materialEditorHeadingRef} tabIndex={-1} className="text-lg font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
+            <button type="button" className={secondary} onClick={() => { if (formDirty && !window.confirm("Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?")) return; pendingMaterialFocusRef.current = 'list'; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
           </div>
           {editingMaster && (
             <div className="academy-material-meta rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
@@ -606,7 +636,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
             <div className="academy-material-form-fields grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="academy-material-title" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Titel <span className="text-rose-600">*</span></label>
-                <input id="academy-material-title" className={field + (errors.title ? ' ' + fieldError : '')} value={title}
+                <input ref={materialTitleInputRef} id="academy-material-title" className={field + (errors.title ? ' ' + fieldError : '')} value={title}
                   onChange={event => { setTitle(event.target.value); setFormDirty(true); }}
                   maxLength={200} required disabled={busy || editingMaster?.publicationStatus === 'archived'}
                   aria-invalid={Boolean(errors.title)} aria-describedby={errors.title ? 'academy-material-title-error' : undefined} />

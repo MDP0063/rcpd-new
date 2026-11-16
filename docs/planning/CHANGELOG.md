@@ -616,4 +616,13 @@
 - Beim Öffnen einer privaten Notiz Fokus auf das Titelfeld setzen.
 - Nach Abbruch oder erfolgreichem Speichern Fokus zum ursprünglichen „Bearbeiten“-Button zurückführen; Suchfeld als Fallback, falls der Auslöser nicht mehr existiert.
 - Keine Änderung an privater Datenspeicherung, Konfliktbehandlung, Berechtigungen oder Datenmodell.
-- Arbeitsbranch: `a11y/academy-notes-editor-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #305 gemergt** (Merge-Commit `43b7e16505244563ac771c38d69abcb31693fd5f`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 2026-11-16 – Materialverwaltung: Fokusführung im Editor
+
+- Beim Öffnen eines bearbeitbaren Materials oder Anlegen eines neuen Materials Fokus auf das Titelfeld setzen; bei archivierten, schreibgeschützten Materialien auf die Editorüberschrift.
+- Bei Rückkehr zur Übersicht Fokus zum ursprünglichen Materialeintrag bzw. zur Schaltfläche „Neues Material anlegen“ zurückführen; Fallback auf „Neues Material anlegen“.
+- Interne Reloads des aktuell bearbeiteten Materials verschieben den Fokus nicht.
+- Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
+- Arbeitsbranch: `a11y/academy-material-editor-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
