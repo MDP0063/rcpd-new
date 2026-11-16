@@ -621,7 +621,7 @@
 
 ## 2026-11-16 – Materialverwaltung: Fokusführung im Editor
 
-- Beim Öffnen eines Materials oder Anlegen eines neuen Materials Fokus auf das Titelfeld setzen.
+- Beim Öffnen eines bearbeitbaren Materials oder Anlegen eines neuen Materials Fokus auf das Titelfeld setzen; bei archivierten, schreibgeschützten Materialien auf die Editorüberschrift.
 - Bei Rückkehr zur Übersicht Fokus zum ursprünglichen Materialeintrag bzw. zur Schaltfläche „Neues Material anlegen“ zurückführen; Fallback auf „Neues Material anlegen“.
 - Interne Reloads des aktuell bearbeiteten Materials verschieben den Fokus nicht.
 - Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
