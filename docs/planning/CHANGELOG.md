@@ -664,3 +664,12 @@
 - Bei Rückkehr zur Materialliste Fokus zum ursprünglichen Materialöffnen-Button zurückführen; Überschrift als Fallback.
 - Keine Änderung an Zugriff, Version-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
 - Arbeitsbranch: `a11y/course-reader-material-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+
+
+## 2026-11-16 – Prüfungsrunner: Fokus bei Frage-, Abgabe- und Rückkehrwechseln
+
+- Beim Start/Fortsetzen eines Versuchs und nach jedem Fragewechsel die aktuelle Frage fokussieren.
+- Nach erfolgreicher (auch automatischer) Abgabe den Ergebnistitel fokussieren; bei Rückkehr zur Prüfungsübersicht deren Überschrift.
+- Bei fehlgeschlagenem verbindlichem Start den Fokus zum Startbutton zurückführen.
+- Keine Änderung an Versuchs-, Zeitlimit-, Autosave-, Abgabe-, Bewertungs- oder Berechtigungslogik.
+- Arbeitsbranch: `a11y/exam-runner-question-focus`; CI/Review ausstehend, manuelle Abnahme mit echten Versuchen später.
