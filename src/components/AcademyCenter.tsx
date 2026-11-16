@@ -1139,7 +1139,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                       <p className="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400">Veröffentlicht am {new Date(displayedVersionedMaterial.publishedIso).toLocaleString('de-DE')}</p>
                     </article>
                   ) : (
-                    <div ref={libraryReaderMessageRef} tabIndex={-1} className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">
+                    <div ref={libraryReaderMessageRef} tabIndex={-1} role="group" aria-label="Material konnte nicht geladen werden" className="rounded-lg border border-slate-200 dark:border-slate-800 p-8 space-y-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">
                       <p className="text-sm text-slate-600 dark:text-slate-300">{versionedMaterialError || 'Dieses Material ist nicht mehr verfügbar oder dein Rang reicht nicht für den Zugriff aus.'}</p>
                       {versionedMaterialRetryable && (
                         <button type="button" onClick={() => setVersionedMaterialLoadAttempt(attempt => attempt + 1)} disabled={versionedMaterialLoading} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
@@ -1165,6 +1165,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                         erforderlichen Dienstgrad befördert wirst, wird dieses Lehrmodul automatisch
                         freigeschaltet.
                       </p>
+                      <button type="button" onClick={returnToLibrary} className="px-3 py-2 text-xs font-medium border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Zurück zur Bibliothek</button>
                     </div>
                   ) : (
                   <article className="academy-library-reader bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
