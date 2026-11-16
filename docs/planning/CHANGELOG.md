@@ -663,7 +663,7 @@
 - Den aktuell geöffneten Eintrag als nicht-interaktiven Zustand „Geöffnet“ darstellen, damit kein nativer deaktivierter Button den Fokus verliert.
 - Bei Rückkehr zur Materialliste Fokus zum ursprünglichen Materialöffnen-Button zurückführen; Überschrift als Fallback.
 - Keine Änderung an Zugriff, Version-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
-- Arbeitsbranch: `a11y/course-reader-material-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+- **PR #311 gemergt** (Merge-Commit `0a12f05214e72340888ca7ad75d5e0b327775502`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
 
 
 ## 2026-11-16 – Prüfungsrunner: Fokus bei Frage-, Abgabe- und Rückkehrwechseln
