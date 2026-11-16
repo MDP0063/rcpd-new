@@ -131,6 +131,7 @@ export const ExamParticipantRunner: React.FC = () => {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const revisionRef = useRef(0);
+  const saveConflictRef = useRef(false);
   const answersRef = useRef<AnswerMap>({});
   const attemptRef = useRef<PublicAttempt | null>(null);
   const saveQueueRef = useRef<CoalescedRequestRunner | null>(null);
@@ -219,6 +220,7 @@ export const ExamParticipantRunner: React.FC = () => {
     setSavedAnswers({});
     answersRef.current = {};
     revisionRef.current = 0;
+    saveConflictRef.current = false;
     setCurrentQuestionIndex(0);
     setRemainingSeconds(null);
     setRunnerError('');
@@ -233,6 +235,7 @@ export const ExamParticipantRunner: React.FC = () => {
     attemptRef.current = next;
     answersRef.current = restoredAnswers;
     revisionRef.current = next.currentRevision;
+    saveConflictRef.current = false;
     setAttempt(next);
     setAnswers(restoredAnswers);
     setSavedAnswers(restoredAnswers);
@@ -312,7 +315,7 @@ export const ExamParticipantRunner: React.FC = () => {
 
   const saveAnswers = useCallback(async (allowDuringSubmit = false, keepalive = false): Promise<boolean> => {
     const current = attemptRef.current;
-    if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
+    if (!current || saveConflictRef.current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
     const nextRevision = revisionRef.current + 1;
     setSaveState('saving');
@@ -328,17 +331,19 @@ export const ExamParticipantRunner: React.FC = () => {
       if (attemptRef.current?.id !== current.id) return false;
       const confirmedAnswers = response.data.attempt.answers;
       if (!confirmedAnswers || typeof confirmedAnswers !== 'object' || Array.isArray(confirmedAnswers)) {
+        saveConflictRef.current = true;
         setSaveState('error');
-        setRunnerError('Der Server hat keinen gültigen bestätigten Antwortstand zurückgegeben. Deine lokalen Eingaben bleiben erhalten.');
+        setRunnerError('Der Server hat keinen gültigen bestätigten Antwortstand zurückgegeben. Deine lokalen Eingaben bleiben erhalten. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.');
         return false;
       }
       revisionRef.current = Math.max(revisionRef.current, response.data.attempt.currentRevision);
       setSavedAnswers(confirmedAnswers);
       if (!areAnswerMapsEqual(snapshot, confirmedAnswers)) {
+        saveConflictRef.current = true;
         setSaveState('error');
         setRunnerError(response.data.stale
-          ? 'Der Server hat bereits einen neueren Antwortstand. Deine aktuelle Eingabe wurde nicht als gespeichert bestätigt.'
-          : 'Der Server hat den gesendeten Antwortstand nicht bestätigt. Deine lokalen Eingaben bleiben erhalten.');
+          ? 'Der Server hat bereits einen neueren Antwortstand. Deine lokalen Eingaben wurden nicht gespeichert, damit kein anderer Stand überschrieben wird. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.'
+          : 'Der Server hat den gesendeten Antwortstand nicht bestätigt. Deine lokalen Eingaben bleiben erhalten. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.');
         return false;
       }
       const latestDraftConfirmed = areAnswerMapsEqual(answersRef.current, confirmedAnswers);
@@ -360,7 +365,7 @@ export const ExamParticipantRunner: React.FC = () => {
     if (!targetAttemptId || submittingRef.current) return Promise.resolve();
     // One active save plus at most one trailing save of the newest answer snapshot.
     return saveQueueRef.current!.run(async () => {
-      if (attemptRef.current?.id !== targetAttemptId) return;
+      if (attemptRef.current?.id !== targetAttemptId || saveConflictRef.current) return;
       await saveAnswers();
     });
   }, [saveAnswers]);
@@ -419,6 +424,11 @@ export const ExamParticipantRunner: React.FC = () => {
     const next = { ...answersRef.current, [questionId]: value };
     answersRef.current = next;
     setAnswers(next);
+    if (saveConflictRef.current) {
+      setRunnerError('Deine lokalen Änderungen sind nicht gespeichert, weil ein anderer Serverstand erkannt wurde. Verlasse die Prüfung und setze den Versuch fort, um den aktuellen Serverstand zu laden.');
+      setSaveState('error');
+      return;
+    }
     setRunnerError('');
     setSaveState('saving');
     if (debounceRef.current) clearTimeout(debounceRef.current);
