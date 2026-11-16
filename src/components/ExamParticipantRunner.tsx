@@ -419,6 +419,7 @@ export const ExamParticipantRunner: React.FC = () => {
     const next = { ...answersRef.current, [questionId]: value };
     answersRef.current = next;
     setAnswers(next);
+    setRunnerError('');
     setSaveState('saving');
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => { void enqueueSave(); }, 700);
@@ -498,7 +499,7 @@ export const ExamParticipantRunner: React.FC = () => {
           </div>
           <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="academy-exam-question-nav space-y-3">
-              <div className="space-y-1"><div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div><p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Häkchen = serverbestätigt · Uhr = Änderung ausstehend · Wolke = Speicherfehler</p></div>
+              <div className="space-y-1"><div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div><p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Häkchen = serverbestätigt · Uhr = Änderung ausstehend · durchgestrichene Wolke = Speicherfehler</p></div>
               <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
                 {attempt.questions.map((question, index) => {
                   const confirmed = hasAnswer(savedAnswers[question.id]);
