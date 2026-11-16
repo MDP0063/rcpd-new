@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyAuthoringCenter.css';
 import { removeChapterMaterialReference, removeCourseChapter, updateCourseChapterTitle } from '../lib/academyCourseEditor';
@@ -135,6 +135,15 @@ function programValidation(code: string, title: string, objectives: AcademyLearn
 
 export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusToast }) => {
   const [mode, setMode] = useState<EditorMode>('list');
+  const courseEditorHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const programEditorHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const authoringSearchRef = useRef<HTMLInputElement | null>(null);
+  const newCourseActionRef = useRef<HTMLButtonElement | null>(null);
+  const newProgramActionRef = useRef<HTMLButtonElement | null>(null);
+  const courseEditActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const programEditActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const editorOriginRef = useRef<string | null>(null);
+  const pendingEditorFocusRef = useRef<'editor' | 'list' | null>(null);
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [materials, setMaterials] = useState<AcademyMaterialListItem[]>([]);
@@ -181,6 +190,29 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const pendingFocus = pendingEditorFocusRef.current;
+    if (!pendingFocus) return;
+    pendingEditorFocusRef.current = null;
+    if (pendingFocus === 'editor') {
+      if (mode === 'course' || mode === 'new-course') courseEditorHeadingRef.current?.focus();
+      else if (mode === 'program' || mode === 'new-program') programEditorHeadingRef.current?.focus();
+    } else {
+      const origin = editorOriginRef.current;
+      const target = origin === 'new-course'
+        ? newCourseActionRef.current
+        : origin === 'new-program'
+          ? newProgramActionRef.current
+          : origin?.startsWith('course:')
+            ? courseEditActionRefs.current[origin.slice('course:'.length)]
+            : origin?.startsWith('program:')
+              ? programEditActionRefs.current[origin.slice('program:'.length)]
+              : null;
+      if (target?.isConnected) target.focus();
+      else authoringSearchRef.current?.focus();
+    }
+  }, [mode]);
+
   useEffect(() => { void load(); }, [load]);
 
   const selectableCourses = useMemo(
@@ -205,15 +237,21 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   const openNewCourse = () => {
+    editorOriginRef.current = 'new-course';
+    pendingEditorFocusRef.current = 'editor';
     resetEditor();
     setMode('new-course');
   };
   const openNewProgram = () => {
+    editorOriginRef.current = 'new-program';
+    pendingEditorFocusRef.current = 'editor';
     resetEditor();
     setMode('new-program');
   };
   const openCourse = (entry: CourseEntry) => {
     if (!entry.draft || entry.master.publicationStatus === 'archived') return;
+    editorOriginRef.current = `course:${entry.master.id}`;
+    pendingEditorFocusRef.current = 'editor';
     resetEditor();
     setCourseMaster(entry.master); setCourseDraft(entry.draft); setCurrentCourseVersion(entry.version); setCourseCode(entry.master.code);
     setCourseTitle(entry.draft.title); setCourseSummary(entry.draft.summary);
@@ -224,6 +262,8 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
   const openProgram = (entry: ProgramEntry) => {
     if (!entry.draft || entry.master.publicationStatus === 'archived') return;
+    editorOriginRef.current = `program:${entry.master.id}`;
+    pendingEditorFocusRef.current = 'editor';
     resetEditor();
     setProgramMaster(entry.master); setProgramDraft(entry.draft); setCurrentProgramVersion(entry.version); setProgramCode(entry.master.code);
     setProgramTitle(entry.draft.title); setProgramSummary(entry.draft.summary);
@@ -280,6 +320,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setBusy(false);
     if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
     await load();
+    pendingEditorFocusRef.current = 'list';
     setMode('list');
     onStatusToast('Kursversion ' + response.data.version.versionNumber + ' wurde veröffentlicht.');
   };
@@ -369,6 +410,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setBusy(false);
     if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
     await load();
+    pendingEditorFocusRef.current = 'list';
     setMode('list');
     onStatusToast('Lehrgangsversion ' + response.data.version.versionNumber + ' wurde veröffentlicht.');
   };
@@ -432,6 +474,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const leaveEditor = () => {
     const hasUnsavedChanges = (isCourseEditor && courseDirty) || (isProgramEditor && programDirty);
     if (hasUnsavedChanges && !window.confirm('Es gibt ungespeicherte Änderungen. Möchtest du den Editor wirklich verlassen und diese Änderungen verwerfen?')) return;
+    pendingEditorFocusRef.current = 'list';
     setMode('list');
     setFormError([]);
   };
@@ -450,8 +493,8 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Entwürfe bearbeiten, neue Versionen vorbereiten und Veröffentlichungen bewusst auslösen.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={secondary} onClick={openNewCourse}>Neuen Kurs anlegen</button>
-              <button type="button" className={primary} onClick={openNewProgram}>Neuen Lehrgang anlegen</button>
+              <button ref={newCourseActionRef} type="button" className={secondary} onClick={openNewCourse}>Neuen Kurs anlegen</button>
+              <button ref={newProgramActionRef} type="button" className={primary} onClick={openNewProgram}>Neuen Lehrgang anlegen</button>
             </div>
           </header>
           {loadError && <div role="alert" className="rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">{loadError} <button type="button" className="underline" onClick={() => void load()}>Erneut laden</button></div>}
@@ -460,7 +503,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
             <div className="grid gap-3 md:grid-cols-[minmax(16rem,1.5fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)]">
               <div>
                 <label htmlFor="academy-authoring-search" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Kurse und Lehrgänge durchsuchen</label>
-                <input id="academy-authoring-search" type="search" className={field + ' min-h-[44px]'} value={managementSearch} onChange={event => setManagementSearch(event.target.value)} aria-describedby="academy-authoring-search-hint" />
+                <input ref={authoringSearchRef} id="academy-authoring-search" type="search" className={field + ' min-h-[44px]'} value={managementSearch} onChange={event => setManagementSearch(event.target.value)} aria-describedby="academy-authoring-search-hint" />
                 <p id="academy-authoring-search-hint" className="mt-1 text-xs text-slate-500 dark:text-slate-400">Titel, Kennung und Kurzbeschreibung</p>
               </div>
               <div>
@@ -521,7 +564,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                       )}
                     </div>
                     {entry.draft && entry.master.publicationStatus !== 'archived'
-                      ? <button type="button" className={secondary} onClick={() => openCourse(entry)}>Entwurf bearbeiten</button>
+                      ? <button ref={element => { courseEditActionRefs.current[entry.master.id] = element; }} type="button" className={secondary} onClick={() => openCourse(entry)}>Entwurf bearbeiten</button>
                       : <span className="text-xs text-slate-500 dark:text-slate-400">{entry.master.publicationStatus === 'archived' ? 'Archiviert – schreibgeschützt' : 'Kein bearbeitbarer Entwurf'}</span>}
                   </li>
                 ))}
@@ -547,7 +590,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                        </dl>
                     </div>
                     {entry.draft && entry.master.publicationStatus !== 'archived'
-                      ? <button type="button" className={secondary} onClick={() => openProgram(entry)}>Entwurf bearbeiten</button>
+                      ? <button ref={element => { programEditActionRefs.current[entry.master.id] = element; }} type="button" className={secondary} onClick={() => openProgram(entry)}>Entwurf bearbeiten</button>
                       : <span className="text-xs text-slate-500 dark:text-slate-400">{entry.master.publicationStatus === 'archived' ? 'Archiviert – schreibgeschützt' : 'Kein bearbeitbarer Entwurf'}</span>}
                   </li>
                 ))}
@@ -560,7 +603,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       {isCourseEditor && (
         <section className="academy-authoring-editor academy-authoring-editor--course mx-auto max-w-3xl space-y-5">
           <header className="academy-authoring-editor-heading flex items-start justify-between gap-3">
-            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Kursverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{courseMaster ? 'Kursentwurf bearbeiten' : 'Neuen Kurs anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{courseMaster ? courseCode + ' · Revision ' + courseDraft?.workingRevision : 'Ein neuer Kurs beginnt als unveröffentlichter Entwurf.'}</p></div>
+            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Kursverwaltung</p><h2 ref={courseEditorHeadingRef} tabIndex={-1} className="text-xl font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{courseMaster ? 'Kursentwurf bearbeiten' : 'Neuen Kurs anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{courseMaster ? courseCode + ' · Revision ' + courseDraft?.workingRevision : 'Ein neuer Kurs beginnt als unveröffentlichter Entwurf.'}</p></div>
             <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
@@ -622,7 +665,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       {isProgramEditor && (
         <section className="academy-authoring-editor academy-authoring-editor--program mx-auto max-w-3xl space-y-5">
           <header className="academy-authoring-editor-heading flex items-start justify-between gap-3">
-            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Lehrgangsverwaltung</p><h2 className="text-xl font-semibold text-slate-900 dark:text-white">{programMaster ? 'Lehrgangsentwurf bearbeiten' : 'Neuen Lehrgang anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neuer Lehrgang beginnt als unveröffentlichter Entwurf.'}</p></div>
+            <div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">Lehrgangsverwaltung</p><h2 ref={programEditorHeadingRef} tabIndex={-1} className="text-xl font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{programMaster ? 'Lehrgangsentwurf bearbeiten' : 'Neuen Lehrgang anlegen'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{programMaster ? programCode + ' · Revision ' + programDraft?.workingRevision : 'Ein neuer Lehrgang beginnt als unveröffentlichter Entwurf.'}</p></div>
             <button type="button" className={secondary} onClick={leaveEditor}>Zurück zur Verwaltung</button>
           </header>
           {formError.length > 0 && <div role="alert" aria-live="assertive" className="rounded-md border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"><p className="font-semibold">Bitte prüfe folgende Angaben:</p><ul className="mt-2 list-disc space-y-1 pl-5">{formError.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
