@@ -138,6 +138,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [noteKindFilter, setNoteKindFilter] = useState<'all' | 'note' | 'bookmark'>('all');
   const [noteSortOrder, setNoteSortOrder] = useState<'updated' | 'title'>('updated');
   const [editingNote, setEditingNote] = useState<AcademyPrivateNoteDoc | null>(null);
+  const noteTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const notesSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const noteEditActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const noteOriginIdRef = useRef<string | null>(null);
+  const pendingNoteFocusRef = useRef<'editor' | 'list' | null>(null);
   const [noteSaveError, setNoteSaveError] = useState('');
   const [noteConflictNote, setNoteConflictNote] = useState<AcademyPrivateNoteDoc | null>(null);
   const [noteTitle, setNoteTitle] = useState('');
@@ -148,6 +153,19 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     noteContent !== (editingNote.content || '') ||
     noteTags !== editingNote.tags.join(', ')
   ));
+  useEffect(() => {
+    const pendingFocus = pendingNoteFocusRef.current;
+    if (!pendingFocus) return;
+    pendingNoteFocusRef.current = null;
+    if (pendingFocus === 'editor') {
+      noteTitleInputRef.current?.focus();
+    } else {
+      const origin = noteOriginIdRef.current ? noteEditActionRefs.current[noteOriginIdRef.current] : null;
+      if (origin?.isConnected) origin.focus();
+      else notesSearchInputRef.current?.focus();
+    }
+  }, [editingNote?.id]);
+
   useEffect(() => {
     onUnsavedChangesChange?.(noteHasUnsavedChanges || saving);
   }, [noteHasUnsavedChanges, saving, onUnsavedChangesChange]);
@@ -471,6 +489,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const cancelNoteEdit = () => {
     if (saving) return;
     if (noteHasUnsavedChanges && !window.confirm('Nicht gespeicherte Änderungen an dieser privaten Notiz verwerfen?')) return;
+    pendingNoteFocusRef.current = 'list';
     setEditingNote(null);
     setNoteSaveError('');
     setNoteConflictNote(null);
@@ -523,6 +542,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
     setSaving(false);
     setNotes(previous => previous.map(item => item.id === response.data!.note.id ? response.data!.note : item));
+    pendingNoteFocusRef.current = 'list';
     setEditingNote(null);
     setNoteSaveError('');
     setNoteConflictNote(null);
@@ -947,7 +967,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Titel</span>
-                  <input className={field} value={noteTitle} disabled={saving} onChange={event => { const value = event.target.value; setNoteTitle(value); onUnsavedChangesChange?.(Boolean(editingNote && (value !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={200} />
+                  <input ref={noteTitleInputRef} className={field} value={noteTitle} disabled={saving} onChange={event => { const value = event.target.value; setNoteTitle(value); onUnsavedChangesChange?.(Boolean(editingNote && (value !== (editingNote.title || '') || noteContent !== (editingNote.content || '') || noteTags !== editingNote.tags.join(', ') || saving))); }} maxLength={200} />
                 </label>
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Inhalt</span>
@@ -982,7 +1002,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <div className="academy-notes-search-wrap">
                       <label htmlFor="academy-notes-search" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Notizen und Lesezeichen durchsuchen</label>
                       <div className="academy-notes-search-control">
-                        <input id="academy-notes-search" className={field} value={noteSearch} onChange={event => setNoteSearch(event.target.value)} placeholder="Titel, Inhalt oder Schlagwort" />
+                        <input ref={notesSearchInputRef} id="academy-notes-search" className={field} value={noteSearch} onChange={event => setNoteSearch(event.target.value)} placeholder="Titel, Inhalt oder Schlagwort" />
                         {Boolean(noteSearch.trim()) && (
                           <button type="button" className="academy-notes-clear-search" onClick={() => setNoteSearch('')}>Suche löschen</button>
                         )}
@@ -1055,7 +1075,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             </div>
                             <div className="academy-note-card-actions">
                               {note.kind === 'note' && (
-                                <button type="button" className={secondary} onClick={() => {
+                                <button ref={element => { noteEditActionRefs.current[note.id] = element; }} type="button" className={secondary} onClick={() => {
+                                  noteOriginIdRef.current = note.id;
+                                  pendingNoteFocusRef.current = 'editor';
                                   setEditingNote(note);
                                   setNoteTitle(note.title || '');
                                   setNoteContent(note.content || '');
