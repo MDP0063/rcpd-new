@@ -72,7 +72,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       const originId = categoryOriginIdRef.current;
       const origin = originId ? categoryEditActionRefs.current[originId] : null;
       if (origin?.isConnected) origin.focus();
-      else createActionRef.current?.focus() || searchInputRef.current?.focus();
+      else if (createActionRef.current?.isConnected) createActionRef.current.focus();
+      else searchInputRef.current?.focus();
     }
   }, [formOpen, editing?.id]);
 
