@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#311 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#312 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `0a12f05214e72340888ca7ad75d5e0b327775502` (PR #311). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311.
+**Aktueller Basisstand:** `main` bei `d7f32c0e3ad29707baf604ea111d22d400ad757f` (PR #312). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311 und Frage-/Ergebniswechsel im Prüfungsrunner aus #312.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#311 sind gemergt. Für #297–#302 und #304–#311 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#312 sind gemergt. Für #297–#302 und #304–#311 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1518,11 +1518,17 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Keine Änderung an Materialzugriff, Kursversion-Pinning, Readerposition, Textankern, Notizen oder Datenmodell.
 - **PR #311 gemergt** (Merge-Commit `0a12f05214e72340888ca7ad75d5e0b327775502`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Tastatur-/Screenreader-Abnahme bleibt Teil der späteren gemeinsamen QA.
 
-## 16.11.2026 – Prüfungsrunner: Fokus bei Frage-, Abgabe- und Rückkehrwechseln (in Arbeit)
+## 16.11.2026 – Prüfungsrunner: Fokus bei Frage-, Abgabe- und Rückkehrwechseln (PR #312 gemergt)
 
 - Beim Start/Fortsetzen eines Versuchs wird die aktuelle Frage fokussiert; beim Wechsel über Fragenübersicht, „Zurück“ oder „Nächste Frage“ wird die neue Frageüberschrift fokussiert.
 - Nach erfolgreicher Abgabe (auch automatischer Abgabe bei Zeitablauf) wird der Ergebnistitel fokussiert.
 - Bei Rückkehr zur Prüfungsübersicht wird deren Überschrift fokussiert.
 - Scheitert der verbindliche Start nach der Bestätigungsansicht, kehrt der Fokus zum Startbutton zurück.
 - Keine Änderung an Start-/Versuchs-/Zeitlimit-/Autosave-/Abgabe-/Bewertungslogik, Datenverträgen oder Berechtigungen.
-- Umsetzung: Branch `a11y/exam-runner-question-focus`; CI/Review stehen noch aus. Manuelle Prüfung mit echten Versuchen bleibt Teil der späteren QA.
+- **PR #312 gemergt** (Merge-Commit `d7f32c0e3ad29707baf604ea111d22d400ad757f`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Prüfung mit echten Versuchen bleibt Teil der späteren QA.
+
+## 16.11.2026 – Prüfungsbewertungen: Fokus beim Öffnen aus Teilnehmerkontext (in Arbeit)
+
+- Wird eine konkrete Bewertung aus einem Teilnehmer-/Prüfungskontext geöffnet, scrollt die Review-Queue nicht nur zum passenden Vorgang, sondern fokussiert auch dessen Überschrift.
+- Die Änderung ist rein clientseitig; Review-Zuweisung, Berechtigungen, Notenentwürfe, Autosave, Freigabe und Datenzugriffe bleiben unverändert.
+- Umsetzung: Branch `a11y/exam-review-deep-link-focus`; CI/Review stehen noch aus. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.
