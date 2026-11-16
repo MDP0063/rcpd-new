@@ -119,6 +119,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   const [editingMaster, setEditingMaster] = useState<AcademyMaterialMasterDoc | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const materialTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const materialEditorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const newMaterialActionRef = useRef<HTMLButtonElement | null>(null);
   const materialListActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const materialEditorOriginRef = useRef<string | null>(null);
@@ -172,7 +173,9 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     if (!pendingFocus) return;
     pendingMaterialFocusRef.current = null;
     if (pendingFocus === 'editor') {
-      materialTitleInputRef.current?.focus();
+      const titleInput = materialTitleInputRef.current;
+      if (titleInput && !titleInput.disabled) titleInput.focus();
+      else materialEditorHeadingRef.current?.focus();
     } else {
       const originKey = materialEditorOriginRef.current;
       const origin = originKey === 'new'
@@ -589,7 +592,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
         {isEditorOpen && <div className="academy-material-management-main space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 ref={materialEditorHeadingRef} tabIndex={-1} className="text-lg font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
             <button type="button" className={secondary} onClick={() => { if (formDirty && !window.confirm("Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?")) return; pendingMaterialFocusRef.current = 'list'; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
           </div>
           {editingMaster && (
