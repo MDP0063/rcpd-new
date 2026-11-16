@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#313 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 16.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PRs #293–#295 und #297–#314 sind in `main` integriert. PR #296 (zweistufige Prüfungsrevision) bleibt Draft, bis die vorgeschriebene unabhängige Prüfung der sensiblen Berechtigungs-, Datenzugriffs- und Benachrichtigungsänderungen abgeschlossen ist. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `4a416028431120d698667511460045f134afaa43` (PR #313). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311 und Frage-/Ergebniswechsel im Prüfungsrunner aus #312 sowie Deep-Link-Fokus in der Review-Queue aus #313.
+**Aktueller Basisstand:** `main` bei `a2c869b26da66e6b7458adc3b9ad589cfb206438` (PR #314). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311 und Frage-/Ergebniswechsel im Prüfungsrunner aus #312 sowie Deep-Link-Fokus in der Review-Queue aus #313 und Fokusführung beim Öffnen/Schließen der Teilnehmerakte aus #314.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#313 sind gemergt. Für #297–#302 und #304–#313 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PRs #293–#295 und #297–#314 sind gemergt. Für #297–#302 und #304–#314 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -1531,11 +1531,19 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 
 - Wird eine konkrete Bewertung aus einem Teilnehmer-/Prüfungskontext geöffnet, scrollt die Review-Queue nicht nur zum passenden Vorgang, sondern fokussiert auch dessen Überschrift.
 - Die Änderung ist rein clientseitig; Review-Zuweisung, Berechtigungen, Notenentwürfe, Autosave, Freigabe und Datenzugriffe bleiben unverändert.
-- **PR #313 gemergt** (Merge-Commit `4a416028431120d698667511460045f134afaa43`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.
+- **PR #313 gemergt** (Merge-Commit `4a416028431120d698667511460045f134afaa43`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.
 
-## 16.11.2026 – Teilnehmerakte: Fokus beim Öffnen und Schließen (in Arbeit)
+## 16.11.2026 – Teilnehmerakte: Fokus beim Öffnen und Schließen (PR #314 gemergt)
 
 - Beim Öffnen einer Teilnehmerakte wird deren Überschrift fokussiert, damit die dynamisch eingeblendete Historie direkt wahrgenommen wird.
 - Beim Schließen der Akte kehrt der Fokus zum Teilnehmer-Suchfeld zurück.
 - Keine Änderung an Teilnehmerhistorie, serverseitigen Sichtbarkeitsregeln, Reviewer-Berechtigungen oder Datenzugriff.
-- PR #314: `a11y/exam-participant-record-focus`; das passende `fix`-Label ist gesetzt. GitHub Actions laufen; manuelle Reviewer-Rollen-QA bleibt Teil der späteren Abnahme.
+- **PR #314 gemergt** (Merge-Commit `a2c869b26da66e6b7458adc3b9ad589cfb206438`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Reviewer-Rollen-QA bleibt Teil der späteren Abnahme.
+
+## 16.11.2026 – Prüfungsreview-Queue: Fokus nach Zuständigkeits- und Bewertungsaktionen (in Arbeit)
+
+- Nach erfolgreichem Beanspruchen oder Freigeben eines Vorgangs wird dessen Überschrift fokussiert. Dasselbe gilt nach Übergabe/administrativer Neuzuweisung, sofern der Vorgang weiterhin in der gefilterten Queue sichtbar ist.
+- Nach erfolgreichem Abschluss einer Bewertung oder wenn der betroffene Vorgang durch Filterung nicht mehr sichtbar ist, wird die Überschrift der Review-Queue fokussiert.
+- Fokus wird erst nach dem abgeschlossenen Queue-Refresh gesetzt, damit kein bereits veralteter oder gleich wieder entfernter Auslöser fokussiert wird.
+- Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
+- PR #315: `a11y/exam-review-queue-action-focus`; das passende `fix`-Label ist gesetzt. GitHub Actions laufen; manuelle Abnahme mit realen Reviewer-Rollen bleibt Teil der späteren QA.

@@ -59,6 +59,7 @@ export const ExamReviewCenter: React.FC<{
   const [examTypeFilter, setExamTypeFilter] = useState<'all' | 'test' | 'final_exam'>('all');
   const [workStatusFilter, setWorkStatusFilter] = useState<'all' | 'unclaimed' | 'claimed' | 'warning' | 'disconnected'>('all');
   const [onlyMyReviews, setOnlyMyReviews] = useState(false);
+  const [queueFocusRevision, setQueueFocusRevision] = useState(0);
   const isSupervisor = currentUser.role === 'admin' || currentUser.role === 'colonel';
   const activityTimers = useRef<Record<string, number>>({});
   const draftSaveTimers = useRef<Record<string, number>>({});
@@ -69,6 +70,8 @@ export const ExamReviewCenter: React.FC<{
   const participantSearchRef = useRef<HTMLInputElement | null>(null);
   const pendingParticipantSearchFocusRef = useRef(false);
   const reviewHeadingRefs = useRef<Record<string, HTMLHeadingElement | null>>({});
+  const reviewQueueHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const pendingQueueFocusRef = useRef<{ reviewId: string | null } | null>(null);
   const transferTriggerRef = useRef<HTMLButtonElement | null>(null);
   const releaseTriggerRef = useRef<HTMLButtonElement | null>(null);
   const transferDialogHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -264,6 +267,8 @@ export const ExamReviewCenter: React.FC<{
     if (!response.ok) { setError(response.error || 'Die Zuständigkeit konnte nicht geändert werden.'); return; }
     setNotice(action === 'claim' ? 'Der Prüfungsvorgang wurde dir zugewiesen.' : 'Du hast den Prüfungsvorgang freigegeben.');
     await load();
+    pendingQueueFocusRef.current = { reviewId: review.id };
+    setQueueFocusRevision(current => current + 1);
   };
 
   const openTransferDialog = (review: ReviewItem, mode: 'transfer' | 'reassign') => {
@@ -308,6 +313,8 @@ export const ExamReviewCenter: React.FC<{
       ? 'Der Prüfungsvorgang wurde übergeben. Deine Schreibrechte sind beendet.'
       : 'Der Prüfungsvorgang wurde administrativ neu zugewiesen.');
     await load();
+    pendingQueueFocusRef.current = { reviewId: review.id };
+    setQueueFocusRevision(current => current + 1);
   };
 
   const submit = async (review: ReviewItem) => {
@@ -332,6 +339,8 @@ export const ExamReviewCenter: React.FC<{
     if (!response.ok) { setError(response.error || 'Die Bewertung konnte nicht gespeichert werden.'); return; }
     setNotice('Die Freitextbewertung wurde abgeschlossen.');
     await load();
+    pendingQueueFocusRef.current = { reviewId: null };
+    setQueueFocusRevision(current => current + 1);
   };
 
   const normalizedParticipantQuery = participantQuery.trim().toLocaleLowerCase('de-DE');
@@ -362,6 +371,15 @@ export const ExamReviewCenter: React.FC<{
         member.displayName, member.badgeNumber, member.callsign, member.rank
       ].some(value => value.toLocaleLowerCase('de-DE').includes(normalizedParticipantQuery))).slice(0, 8);
 
+  useEffect(() => {
+    const pending = pendingQueueFocusRef.current;
+    if (!pending || queueFocusRevision === 0) return;
+    pendingQueueFocusRef.current = null;
+    const target = pending.reviewId ? reviewHeadingRefs.current[pending.reviewId] : null;
+    if (target?.isConnected) target.focus();
+    else reviewQueueHeadingRef.current?.focus();
+  }, [queueFocusRevision]);
+
   return <section className="exam-review-center space-y-5">
     <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center gap-2">
@@ -390,7 +408,7 @@ export const ExamReviewCenter: React.FC<{
     </div>
     {selectedParticipant && <ExamParticipantRecord participant={selectedParticipant} onClose={() => { pendingParticipantSearchFocusRef.current = true; setSelectedParticipant(null); setParticipantQuery(''); }}/>}
 
-    <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Aktualisieren</button></div>
+    <div className="exam-review-heading flex flex-wrap items-end justify-between gap-3"><div><h2 ref={reviewQueueHeadingRef} tabIndex={-1} className="text-xl font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">Offene Freitextbewertungen</h2><p className="mt-1 text-sm text-slate-500">Das Öffnen beansprucht einen Vorgang nicht. Zum Bearbeiten muss er ausdrücklich übernommen werden.</p></div><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading || Boolean(savingId)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">Aktualisieren</button></div>
     {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800"><span>{loadError}</span><button type="button" onClick={() => { setLoading(true); void load(); }} disabled={loading} className="rounded-lg border border-rose-400 px-3 py-1.5 font-semibold disabled:opacity-50">Erneut laden</button></div>}
     {!loading && !loadError && (reviews.length > 0 || hasActiveQueueFilters) && <section className="exam-review-filters" aria-label="Offene Bewertungen filtern">
       <div className="exam-review-filter-field">

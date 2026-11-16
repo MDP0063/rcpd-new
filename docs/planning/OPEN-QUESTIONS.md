@@ -494,6 +494,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Teilnehmerakte: dynamischer Ein-/Ausblendwechsel
 
-- **In Arbeit:** Beim Öffnen der Teilnehmerakte Fokus auf deren Überschrift setzen und beim Schließen zum Teilnehmer-Suchfeld zurückführen.
+- **Erledigt in PR #314:** Beim Öffnen der Teilnehmerakte Fokus auf deren Überschrift setzen und beim Schließen zum Teilnehmer-Suchfeld zurückführen.
 - Keine Änderung an Historieninhalten, Sichtbarkeitsregeln, Reviewer-Berechtigungen oder Datenzugriff.
-- **Noch offen:** CI/Review für Branch `a11y/exam-participant-record-focus`; spätere manuelle Reviewer-Rollen-QA.
+- **Noch offen:** spätere manuelle Reviewer-Rollen-QA für PR #314.
+
+
+## 16.11.2026 – Prüfungsreview-Queue: Aktionen und Rückkehrfokus
+
+- **In Arbeit:** Nach erfolgreichem Beanspruchen/Freigeben/Übergeben/Neuzuweisen den Fokus zum betroffenen Review-Vorgang zurückführen; nach Abschluss oder wenn der Vorgang aus der gefilterten Queue verschwindet, die Queue-Überschrift fokussieren.
+- Fokus erst nach abgeschlossenem Queue-Refresh setzen.
+- Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
+- **Noch offen:** CI/Review für Branch `a11y/exam-review-queue-action-focus`; spätere manuelle Reviewer-Rollen-QA.
