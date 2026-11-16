@@ -449,13 +449,13 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Taxonomieverwaltung: dynamische Formularwechsel
 
-- **In Arbeit:** Fokus beim Öffnen von Kategorie-/Dokumenttypformularen auf das Namensfeld setzen und bei Rückkehr zur Übersicht zum ursprünglichen Auslöser zurückführen.
+- **Erledigt in PR #307:** Fokus beim Öffnen von Kategorie-/Dokumenttypformularen auf das Namensfeld setzen und bei Rückkehr zur Übersicht zum ursprünglichen Auslöser zurückführen; Neuanlegen- und Suchfeld-Fallbacks sind vorhanden.
 - Keine Änderung an Taxonomie-, Archivierungs-, Lösch- oder Zuordnungsregeln.
-- **Noch offen:** CI/Review für Branch `a11y/academy-taxonomy-form-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #307.
 
 
 ## 16.11.2026 – Kurs-/Lehrgangsverwaltung: dynamischer Autoreneditor
 
-- **In Arbeit:** Fokus beim Öffnen des Kurs-/Lehrgangseditors auf die Editorüberschrift setzen; bei Rückkehr/Veröffentlichung zum ursprünglichen Auslöser zurückführen. Validierungsfehler fokussieren die Fehlersammlung.
+- **Erledigt in PR #308:** Fokus beim Öffnen des Kurs-/Lehrgangseditors auf die Editorüberschrift setzen; bei Rückkehr/Veröffentlichung zum ursprünglichen Auslöser zurückführen. Validierungsfehler fokussieren die Fehlersammlung.
 - Keine Änderung an fachlichen Kurs-/Lehrgangsregeln oder Berechtigungen.
-- **Noch offen:** PR #308 und Review; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #308.
