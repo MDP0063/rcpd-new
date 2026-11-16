@@ -694,4 +694,13 @@
 - Nach erfolgreichem Beanspruchen/Freigeben/Übergeben/Neuzuweisen Fokus zum betroffenen Review-Vorgang zurückführen; nach Abschluss oder wenn er aus der gefilterten Queue verschwindet, die Queue-Überschrift fokussieren.
 - Fokus erst nach abgeschlossenem Queue-Refresh setzen.
 - Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
-- Arbeitsbranch: `a11y/exam-review-queue-action-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
+- **PR #315 gemergt** (Merge-Commit `0f77b1dd0027f897520a63d6acdcff06da68c684`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Reviewer-Rollen-QA bleibt offen.
+
+
+## 2026-11-16 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+
+- Fortschritt und „beantwortet“-Status ausschließlich anhand des serverbestätigten Antwort-Snapshots berechnen.
+- Lokale Abweichungen pro Frage als ausstehend/fehlgeschlagen anzeigen; bereits gespeicherte Antwort von noch nicht bestätigten Änderungen unterscheiden.
+- Autosave-Antworten anhand des zurückgegebenen Server-Snapshots verifizieren, einschließlich veralteter Requests.
+- Clientseitige Änderung; Server-Autosave-/Abgabe-/Bewertungslogik und Datenverträge unverändert.
+- PR #316 bleibt Draft bis unabhängige Datenintegritätsprüfung nach `CONTRIBUTOR_ROLES.md` erfolgt ist.
