@@ -425,7 +425,7 @@ export const ExamParticipantRunner: React.FC = () => {
     answersRef.current = next;
     setAnswers(next);
     if (saveConflictRef.current) {
-      setRunnerError('Deine lokalen Änderungen sind nicht gespeichert, weil ein anderer Serverstand erkannt wurde. Verlasse die Prüfung und setze den Versuch fort, um den aktuellen Serverstand zu laden.');
+      setRunnerError('Deine lokalen Änderungen sind nicht bestätigt. Verlasse die Prüfung und setze den Versuch fort, um den aktuellen Serverstand zu laden.');
       setSaveState('error');
       return;
     }
