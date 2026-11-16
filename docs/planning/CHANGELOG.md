@@ -653,3 +653,5 @@
 - Wechsel zwischen Materialien innerhalb der Reader-Seitenleiste erhält den bestehenden Fokuskontext.
 - Keine Änderung an Zugriff, Rollen, Versionierung, privaten Notizen, Datenmodell oder PDF-Infrastruktur.
 - Arbeitsbranch: `a11y/library-reader-focus-restoration`; CI/Review ausstehend, manuelle Tastatur-/Screenreader-Abnahme später.
+
+- Zugriffsbeschränkte Legacy-Materialien behalten ebenfalls einen expliziten Rückweg zur Bibliothek.
