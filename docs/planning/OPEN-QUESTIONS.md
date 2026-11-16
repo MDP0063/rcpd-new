@@ -434,6 +434,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 16.11.2026 – Private Notizen: dynamischer Editorwechsel
 
-- **In Arbeit:** Fokus beim Öffnen des Notizeditors auf das Titelfeld setzen und beim Abbruch/erfolgreichen Speichern zum ursprünglichen Bearbeiten-Button zurückführen; Notizensuche als Fallback.
+- **Erledigt in PR #305:** Fokus beim Öffnen des Notizeditors auf das Titelfeld setzen und beim Abbruch/erfolgreichen Speichern zum ursprünglichen Bearbeiten-Button zurückführen; Notizensuche als Fallback. CI erfolgreich; manuelle Keyboard-/Screenreader-QA bleibt offen.
 - Keine Änderung an privater Datenspeicherung, Konfliktbehandlung oder Berechtigungen.
-- **Noch offen:** CI/Review für Branch `a11y/academy-notes-editor-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #305.
+
+
+## 16.11.2026 – Materialverwaltung: dynamischer Editorwechsel
+
+- **In Arbeit:** Fokus beim Öffnen eines Materials/Neuanlegen auf das Titelfeld setzen; bei Rückkehr zur Übersicht ursprünglichen Listeneintrag bzw. Neuanlegen-Aktion fokussieren.
+- Interne Reloads im Editor sollen keine Fokusverschiebung auslösen.
+- Keine Änderung an Materialversionen, Veröffentlichung, Berechtigungen oder Datenmodell.
+- **Noch offen:** CI/Review für Branch `a11y/academy-material-editor-focus-restoration`; spätere manuelle Keyboard-/Screenreader-QA.
