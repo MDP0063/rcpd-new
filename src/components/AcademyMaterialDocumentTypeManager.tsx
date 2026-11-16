@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialTaxonomyManager.css';
 import type { AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeView } from '../types/academy';
@@ -38,6 +38,12 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
   const [documentTypeStatusFilter, setDocumentTypeStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [editing, setEditing] = useState<AcademyMaterialDocumentTypeView | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const createActionRef = useRef<HTMLButtonElement | null>(null);
+  const documentTypeEditActionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const documentTypeOriginIdRef = useRef<string | null>(null);
+  const pendingFormFocusRef = useRef<'form' | 'list' | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
@@ -56,6 +62,21 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const pendingFocus = pendingFormFocusRef.current;
+    if (!pendingFocus) return;
+    pendingFormFocusRef.current = null;
+    if (pendingFocus === 'form') {
+      nameInputRef.current?.focus();
+    } else {
+      const originId = documentTypeOriginIdRef.current;
+      const origin = originId ? documentTypeEditActionRefs.current[originId] : null;
+      if (origin?.isConnected) origin.focus();
+      else if (createActionRef.current?.isConnected) createActionRef.current.focus();
+      else searchInputRef.current?.focus();
+    }
+  }, [formOpen, editing?.id]);
+
   useEffect(() => { void load(); }, [load]);
 
   const hasFormChanges = formOpen && (
@@ -73,12 +94,16 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
   const beginCreate = () => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen neuen Dokumenttyp beginnen?')) return;
+    documentTypeOriginIdRef.current = 'new';
+    pendingFormFocusRef.current = 'form';
     resetForm();
     setFormOpen(true);
   };
 
   const beginEdit = (documentType: AcademyMaterialDocumentTypeView) => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen anderen Dokumenttyp bearbeiten?')) return;
+    documentTypeOriginIdRef.current = documentType.id;
+    pendingFormFocusRef.current = 'form';
     setEditing(documentType);
     setName(documentType.name);
     setDescription(documentType.description || '');
@@ -89,6 +114,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
   const cancelEdit = () => {
     if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
   };
@@ -144,6 +170,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     }
     const saved = response.data.documentType;
     await load();
+    pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
     setBusy(false);
@@ -238,6 +265,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
           <div className="space-y-1.5">
             <label htmlFor="academy-document-type-name" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypname</label>
             <input
+              ref={nameInputRef}
               id="academy-document-type-name"
               className={inputClass}
               value={name}
@@ -285,13 +313,13 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
                 {documentTypes.filter(item => item.status === 'active').length} aktiv · {documentTypes.filter(item => item.status === 'archived').length} archiviert
               </p>
             </div>
-            <button type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neuer Dokumenttyp</button>
+            <button ref={createActionRef} type="button" className={primaryButton} onClick={beginCreate} disabled={busy}>Neuer Dokumenttyp</button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,0.55fr)]">
             <div className="space-y-1.5">
               <label htmlFor="academy-document-type-search" className="block text-sm font-medium text-slate-800 dark:text-slate-200">Dokumenttypen durchsuchen</label>
-              <input id="academy-document-type-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-document-type-search-hint" />
+              <input ref={searchInputRef} id="academy-document-type-search" type="search" className={inputClass} value={search} onChange={event => setSearch(event.target.value)} aria-describedby="academy-document-type-search-hint" />
               <p id="academy-document-type-search-hint" className="text-xs text-slate-500 dark:text-slate-400">Name oder Beschreibung</p>
             </div>
             <div className="space-y-1.5">
@@ -331,7 +359,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
                       {documentType.description && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{documentType.description}</p>}
                     </div>
                     <div className="academy-material-taxonomy-actions flex shrink-0 flex-wrap gap-2">
-                      <button type="button" className={secondaryButton} onClick={() => beginEdit(documentType)} disabled={busy}>Bearbeiten</button>
+                      <button ref={element => { documentTypeEditActionRefs.current[documentType.id] = element; }} type="button" className={secondaryButton} onClick={() => beginEdit(documentType)} disabled={busy}>Bearbeiten</button>
                       <button type="button" className={secondaryButton} onClick={() => void changeArchiveState(documentType)} disabled={busy}>
                         {documentType.status === 'active' ? 'Archivieren' : 'Reaktivieren'}
                       </button>
