@@ -710,3 +710,17 @@
 - **PR #318 gemergt** (Merge-Commit `cce5ff444a82a93ad10332fea521293b9e7bc645`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen.
 - Nach erfolgreicher Neuanlage eines Kurses oder Lehrgangs wird der Fokus auf die Editorüberschrift gesetzt.
 - Manuelle Tastatur-/Screenreader-QA bleibt offen.
+
+
+## 2026-11-17 – Kurs-/Lehrgangsautoren: Fokus nach Entfernen dynamischer Einträge
+
+- **PR #319 gemergt** (Merge-Commit `1cecfa6b864bf92e9cd2cd34b52f64114b0652bc`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen.
+- Beim Entfernen von Lernzielen, Kapiteln, Kapitelmaterialien und Kurszuordnungen wird der Fokus zum nächsten/vorherigen Eintrag oder zum passenden Auswahl-/Hinzufügenfeld zurückgeführt.
+- Manuelle Tastatur-/Screenreader-QA bleibt offen.
+
+## 2026-11-17 – Prüfungsrunner: serverbestätigter Antwortfortschritt (PR #320, Draft)
+
+- Der beantwortete Fortschritt wird aus dem serverbestätigten Antwort-Snapshot berechnet.
+- Lokale Abweichungen werden als ausstehend/fehlgeschlagen dargestellt; Autosave-Responses werden gegen den gesendeten Snapshot geprüft.
+- Bei einem abweichenden Serverstand werden weitere automatische Saves blockiert, bis der Versuch mit dem aktuellen Serverstand neu geladen wurde.
+- **Nicht gemergt:** unabhängige Datenintegritätsprüfung gemäß `CONTRIBUTOR_ROLES.md` erforderlich; spätere manuelle Prüfung mit echten Versuchen zusätzlich offen.
