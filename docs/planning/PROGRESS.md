@@ -1592,7 +1592,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der endgültige Bestätigungsbutton löst weiterhin den vorhandenen serverseitigen Save-/Submit-Ablauf aus. Automatische Zeitablauf-Abgabe bleibt ohne zusätzliche Bestätigung, da die Deadline serverseitig verbindlich ist.
 - Bei fehlgeschlagener Speicherung/Abgabe bleibt der Dialog mit Fehlermeldung offen; eine erneute Abgabe ist möglich. Abbruch per Escape oder „Weiter prüfen“ führt den Fokus zur auslösenden Abgabeaktion zurück.
 - Keine Änderung an Bewertung, Punkteberechnung, Versuchsregeln oder Datenverträgen.
-- Umsetzung: Branch `feat/exam-submission-confirmation`; CI/Review ausstehend. Spätere Keyboard-/Screenreader-/Mobil-QA bleibt offen.
+- **PR #323 ist am 17.11.2026 gemergt** (Merge-Commit `508d50bde6b256ba7d95da9cf0eb83fd7164a3c2`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Spätere Keyboard-/Screenreader-/Mobil-QA bleibt offen.
 
 
 ## 17.11.2026 – Fragenübersicht: responsive Disclosure und Markierungen (in Arbeit)
