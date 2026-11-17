@@ -113,14 +113,21 @@ function answerCount(questions: PublicQuestion[], answers: AnswerMap): number {
 
 interface ExamParticipantRunnerProps {
   onAttemptActiveChange?: (active: boolean) => void;
+  initialExamId?: string | null;
+  initialCourseCode?: string | null;
 }
 
-export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ onAttemptActiveChange }) => {
+export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
+  onAttemptActiveChange,
+  initialExamId = null,
+  initialCourseCode = null
+}) => {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [catalogError, setCatalogError] = useState('');
   const [selectedExamId, setSelectedExamId] = useState('');
   const [selectedCourseCode, setSelectedCourseCode] = useState('');
+  const [contextNavigationMessage, setContextNavigationMessage] = useState('');
   const [attempt, setAttempt] = useState<PublicAttempt | null>(null);
   const [submission, setSubmission] = useState<PublicSubmission | null>(null);
   const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
@@ -148,6 +155,11 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const submittingRef = useRef(false);
   const autoSubmitRef = useRef(false);
   const startCheckRequestIdRef = useRef(0);
+  const selectedExamIdRef = useRef('');
+  const selectedCourseCodeRef = useRef('');
+  const initialExamSelectionHandledRef = useRef(false);
+  const pendingExamSelectionFocusRef = useRef(false);
+  const selectedExamHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const startButtonRef = useRef<HTMLButtonElement | null>(null);
   const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const startConfirmationDialogRef = useRef<HTMLElement | null>(null);
@@ -212,6 +224,13 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const resultScore = submission?.finalScoreBasisPoints ?? submission?.preliminaryScoreBasisPoints ?? 0;
 
   useEffect(() => {
+    if (pendingExamSelectionFocusRef.current && selectedExam) {
+      pendingExamSelectionFocusRef.current = false;
+      selectedExamHeadingRef.current?.focus();
+    }
+  }, [selectedExamId, catalog]);
+
+  useEffect(() => {
     if (attempt && activeQuestion) questionHeadingRef.current?.focus();
   }, [attempt?.id, currentQuestionIndex]);
 
@@ -235,13 +254,49 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
       setCatalogError(response.error || 'Der Prüfungskatalog konnte nicht geladen werden.');
       setCatalog([]);
     } else {
-      setCatalog(response.data.exams);
-      setSelectedExamId(current => current && response.data!.exams.some(exam => exam.id === current)
-        ? current
-        : response.data!.exams[0]?.id || '');
+      const exams = response.data.exams;
+      setCatalog(exams);
+      const shouldApplyCourseTarget = Boolean(initialExamId) && !initialExamSelectionHandledRef.current;
+      if (shouldApplyCourseTarget && initialExamId) {
+        const linkedExam = exams.find(exam => exam.id === initialExamId);
+        if (!linkedExam) {
+          setSelectedExamId('');
+          setSelectedCourseCode('');
+          selectedExamIdRef.current = '';
+          selectedCourseCodeRef.current = '';
+          setContextNavigationMessage('Die im Kurs hinterlegte Kursabschlussprüfung ist derzeit nicht in deinem verfügbaren Prüfungskatalog. Die Verfügbarkeit wird ausschließlich anhand deines aktuellen Zugriffs angezeigt.');
+        } else if (initialCourseCode && !linkedExam.assignedCourseCodes.includes(initialCourseCode)) {
+          initialExamSelectionHandledRef.current = true;
+          setSelectedExamId('');
+          setSelectedCourseCode('');
+          selectedExamIdRef.current = '';
+          selectedCourseCodeRef.current = '';
+          setContextNavigationMessage('Die verknüpfte Prüfung ist nicht dem aktuellen Kurskontext zugeordnet. Bitte wende dich an die Kursverwaltung.');
+        } else {
+          const courseCode = initialCourseCode || linkedExam.assignedCourseCodes[0] || '';
+          initialExamSelectionHandledRef.current = true;
+          setSelectedExamId(linkedExam.id);
+          setSelectedCourseCode(courseCode);
+          selectedExamIdRef.current = linkedExam.id;
+          selectedCourseCodeRef.current = courseCode;
+          setContextNavigationMessage('');
+          pendingExamSelectionFocusRef.current = true;
+        }
+      } else if (!shouldApplyCourseTarget) {
+        const preservedExam = exams.find(exam => exam.id === selectedExamIdRef.current);
+        const defaultExam = preservedExam || exams[0] || null;
+        const courseCode = defaultExam?.assignedCourseCodes.includes(selectedCourseCodeRef.current)
+          ? selectedCourseCodeRef.current
+          : defaultExam?.assignedCourseCodes[0] || '';
+        setSelectedExamId(defaultExam?.id || '');
+        setSelectedCourseCode(courseCode);
+        selectedExamIdRef.current = defaultExam?.id || '';
+        selectedCourseCodeRef.current = courseCode;
+        setContextNavigationMessage('');
+      }
     }
     setLoadingCatalog(false);
-  }, []);
+  }, [initialExamId, initialCourseCode]);
 
   const loadResultHistory = useCallback(async () => {
     const response = await apiFetch<{ results: PublicSubmission[] }>(API_ENDPOINTS.ACADEMY_EXAM_RESULTS, { cache: 'no-store' });
@@ -796,6 +851,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
         <button type="button" onClick={() => void loadCatalog()} disabled={loadingCatalog || startConfirmationOpen} className={secondaryButton}><Loader2 className={`h-4 w-4 ${loadingCatalog ? 'animate-spin' : 'hidden'}`} /> Aktualisieren</button>
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
+      {contextNavigationMessage && <div role="status" className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">{contextNavigationMessage}</div>}
       {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
       {loadingCatalog ? (
         <div className={cardClass + ' flex items-center justify-center gap-3 p-12 text-sm text-slate-500'}><Loader2 className="h-5 w-5 animate-spin" />Prüfungen werden geladen …</div>
@@ -810,8 +866,12 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
           <div className="space-y-3">
             {catalog.map(exam => (
               <button key={exam.id} type="button" disabled={startConfirmationOpen} onClick={() => {
+                initialExamSelectionHandledRef.current = true;
+                selectedExamIdRef.current = exam.id;
+                selectedCourseCodeRef.current = exam.assignedCourseCodes[0] || '';
                 setSelectedExamId(exam.id);
                 setSelectedCourseCode(exam.assignedCourseCodes[0] || '');
+                setContextNavigationMessage('');
                 setRunnerError('');
               }} aria-pressed={selectedExamId === exam.id}
                 className={`academy-exam-option w-full rounded-xl border p-4 text-left transition-colors ${selectedExamId === exam.id ? 'border-sky-500 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'}`}>
@@ -832,7 +892,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
               <>
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">Ausgewählte Prüfung</div>
-                  <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{selectedExam.title}</h3>
+                  <h3 ref={selectedExamHeadingRef} tabIndex={-1} className="mt-1 text-lg font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{selectedExam.title}</h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedExam.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'}</p>
                 </div>
                 <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
@@ -841,7 +901,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                 </div>
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
-                  <select value={selectedCourseCode} disabled={startConfirmationOpen} onChange={event => setSelectedCourseCode(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                  <select value={selectedCourseCode} disabled={startConfirmationOpen} onChange={event => { selectedCourseCodeRef.current = event.target.value; setSelectedCourseCode(event.target.value); }} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     {selectedExam.assignedCourseCodes.map(code => <option key={code} value={code}>{code}</option>)}
                   </select>
                 </label>
