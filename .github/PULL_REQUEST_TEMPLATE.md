@@ -8,7 +8,9 @@
 - [ ] `enhancement` – Verbesserung einer bestehenden Funktion
 - [ ] `fix` – Fehlerbehebung
 - [ ] `security` – Sicherheitsrelevante Änderung
-- [ ] `documentation` / `refactor` / `dependencies` – Technische Wartung oder Dokumentation
+- [ ] `documentation` – Dokumentationsänderung
+- [ ] `refactor` – Technische Bereinigung
+- [ ] `dependencies` – Abhängigkeitsänderung
 - [ ] `skip-changelog` – Keine Release-Information
 
 ## 📣 Release-Zusammenfassung
