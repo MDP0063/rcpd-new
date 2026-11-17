@@ -734,3 +734,11 @@
 - Die ältere `AcademyExamDoc`-Prüfungsfamilie bleibt gemäß bestehender Architekturentscheidung bis zur separaten Daten-/Workflowanalyse eigenständig.
 - Grundlage: WCAG 2.2, insbesondere Tastaturbedienbarkeit, sichtbarer Fokus, nicht verdeckter Fokus und ausreichende Zeit: https://www.w3.org/TR/WCAG22/
 - Branch `feat/exam-focus-mode-navigation-lock`; CI/Review und spätere manuelle QA ausstehend.
+
+
+## 2026-11-17 – Prüfungsabgabe: verbindliche Bestätigung
+
+- Manuelle Abgabeaktionen öffnen einen blockierenden Bestätigungsdialog mit beantworteten/unbeantworteten Fragen und Hinweis auf die Endgültigkeit der Abgabe.
+- Bei Speicher-/Abgabefehlern bleibt der Dialog mit Fehlerhinweis geöffnet; die Abgabe kann erneut versucht oder abgebrochen werden.
+- Automatische Abgabe bei abgelaufenem serverseitigem Zeitlimit bleibt unverändert.
+- Keine Änderung an Bewertung oder Datenmodell. Branch `feat/exam-submission-confirmation`; CI/Review ausstehend.
