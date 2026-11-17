@@ -145,6 +145,21 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const editorOriginRef = useRef<{ type: 'new-course' | 'new-program' | 'course' | 'program'; id?: string } | null>(null);
   const pendingFocusRef = useRef<'editor' | 'list' | null>(null);
   const formErrorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const courseObjectiveAddRef = useRef<HTMLButtonElement | null>(null);
+  const courseChapterAddRef = useRef<HTMLButtonElement | null>(null);
+  const programObjectiveAddRef = useRef<HTMLButtonElement | null>(null);
+  const programCourseAddRef = useRef<HTMLButtonElement | null>(null);
+  const chapterMaterialSelectRefs = useRef<Record<string, HTMLSelectElement | null>>({});
+  const courseObjectiveRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const courseChapterRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const programObjectiveRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const programCourseRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const chapterMaterialRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const pendingDynamicRemovalFocusRef = useRef<{
+    collection: 'course-objectives' | 'course-chapters' | 'program-objectives' | 'program-courses' | 'chapter-materials';
+    targetId: string | null;
+    chapterId?: string;
+  } | null>(null);
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [materials, setMaterials] = useState<AcademyMaterialListItem[]>([]);
@@ -207,6 +222,34 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     else if (listHeadingRef.current?.isConnected) listHeadingRef.current.focus();
     else listSearchRef.current?.focus();
   }, [mode]);
+
+  useEffect(() => {
+    const pending = pendingDynamicRemovalFocusRef.current;
+    if (!pending) return;
+    pendingDynamicRemovalFocusRef.current = null;
+
+    const target = pending.collection === 'course-objectives'
+      ? pending.targetId ? courseObjectiveRemoveRefs.current[pending.targetId] : null
+      : pending.collection === 'course-chapters'
+        ? pending.targetId ? courseChapterRemoveRefs.current[pending.targetId] : null
+        : pending.collection === 'program-objectives'
+          ? pending.targetId ? programObjectiveRemoveRefs.current[pending.targetId] : null
+          : pending.collection === 'program-courses'
+            ? pending.targetId ? programCourseRemoveRefs.current[pending.targetId] : null
+            : pending.targetId ? chapterMaterialRemoveRefs.current[pending.targetId] : null;
+
+    if (target?.isConnected) {
+      target.focus();
+      return;
+    }
+
+    const fallback = pending.collection === 'course-objectives' ? courseObjectiveAddRef.current
+      : pending.collection === 'course-chapters' ? courseChapterAddRef.current
+      : pending.collection === 'program-objectives' ? programObjectiveAddRef.current
+      : pending.collection === 'program-courses' ? programCourseAddRef.current
+      : pending.chapterId ? chapterMaterialSelectRefs.current[pending.chapterId] : null;
+    fallback?.focus();
+  }, [courseObjectives.length, courseChapters, programObjectives.length, programReferences.length]);
 
   useEffect(() => {
     if (formError.length > 0) formErrorSummaryRef.current?.focus();
@@ -419,6 +462,16 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   const addCourseObjective = () => { setCourseObjectives(items => [...items, { id: newId('objective'), description: '' }]); setCourseDirty(true); };
+  const removeCourseObjectiveById = (objectiveId: string) => {
+    const index = courseObjectives.findIndex(item => item.id === objectiveId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'course-objectives',
+      targetId: courseObjectives[index + 1]?.id || courseObjectives[index - 1]?.id || null
+    };
+    setCourseObjectives(items => items.filter(item => item.id !== objectiveId));
+    setCourseDirty(true);
+  };
   const addCourseChapter = () => {
     setCourseChapters(items => [...items, { id: newId('chapter'), title: '', description: '', materialReferences: [], required: false, order: items.length }]);
     setCourseDirty(true);
@@ -431,17 +484,52 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setCourseDirty(true);
   };
   const removeChapterMaterial = (chapterId: string, materialId: string) => {
+    const chapter = courseChapters.find(item => item.id === chapterId);
+    const index = chapter?.materialReferences.findIndex(item => item.materialId === materialId) ?? -1;
+    if (!chapter || index < 0) return;
+    const nextReference = chapter.materialReferences[index + 1] || chapter.materialReferences[index - 1];
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'chapter-materials',
+      targetId: nextReference ? `${chapterId}:${nextReference.materialId}` : null,
+      chapterId
+    };
     const result = removeChapterMaterialReference(courseChapters, courseRequirements, chapterId, materialId);
     setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
   };
   const removeCourseChapterById = (chapterId: string) => {
+    const index = courseChapters.findIndex(item => item.id === chapterId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'course-chapters',
+      targetId: courseChapters[index + 1]?.id || courseChapters[index - 1]?.id || null
+    };
     const result = removeCourseChapter(courseChapters, courseRequirements, chapterId);
     setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
   };
   const addProgramObjective = () => { if (programObjectives.length < 6) setProgramObjectives(items => [...items, { id: newId('objective'), description: '' }]); setProgramDirty(true); };
+  const removeProgramObjectiveById = (objectiveId: string) => {
+    const index = programObjectives.findIndex(item => item.id === objectiveId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'program-objectives',
+      targetId: programObjectives[index + 1]?.id || programObjectives[index - 1]?.id || null
+    };
+    setProgramObjectives(items => items.filter(item => item.id !== objectiveId));
+    setProgramDirty(true);
+  };
   const addProgramCourse = () => {
     if (!programCourseToAdd || programReferences.some(item => item.courseId === programCourseToAdd)) return;
-    setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]);
+    setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]));
+    setProgramDirty(true);
+  };
+  const removeProgramCourseById = (courseId: string) => {
+    const index = programReferences.findIndex(item => item.courseId === courseId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'program-courses',
+      targetId: programReferences[index + 1]?.courseId || programReferences[index - 1]?.courseId || null
+    };
+    setProgramReferences(items => items.filter(item => item.courseId !== courseId).map((item, order) => ({ ...item, order })));
     setProgramDirty(true);
   };
   const setChapterTitle = (chapterId: string, title: string) => {
