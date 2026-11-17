@@ -564,7 +564,8 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
                   </div>
-                  <div className="mt-2 flex items-center gap-1.5"><Flag aria-hidden="true" className="h-3 w-3 text-amber-700 dark:text-amber-300" />{markedQuestionIds.length} zur späteren Kontrolle markiert</div>
+                  <div className="mt-2 flex items-center gap-1.5"><Flag aria-hidden="true" className="h-3 w-3 text-slate-600 dark:text-slate-300" />{markedQuestionIds.length} zur späteren Kontrolle markiert</div>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Markierungen gelten nur für diese geöffnete Prüfungssitzung.</p>
                 </div>
               </div>
             </details>
@@ -582,6 +583,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                         type="button"
                         aria-pressed={markedQuestionIds.includes(activeQuestion.id)}
                         aria-label={markedQuestionIds.includes(activeQuestion.id) ? 'Markierung für diese Frage entfernen' : 'Diese Frage zur späteren Kontrolle markieren'}
+                        title="Markierung gilt nur für diese geöffnete Prüfungssitzung"
                         onClick={() => setMarkedQuestionIds(current => current.includes(activeQuestion.id)
                           ? current.filter(id => id !== activeQuestion.id)
                           : [...current, activeQuestion.id])}
@@ -714,7 +716,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                 </div>
                 <div className={cardClass + ' space-y-2 rounded-lg p-4 text-sm'}>
                   <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Beantwortete Fragen</span><strong className="tabular-nums text-slate-900 dark:text-white">{answeredCount} / {attempt.questions.length}</strong></div>
-                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
                   {attempt.questions.length - answeredCount > 0
                     ? <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">Unbeantwortete Fragen werden ohne Antwort eingereicht. Prüfe, ob du diese Fragen wirklich offenlassen möchtest.</p>
                     : <p className="text-xs text-slate-600 dark:text-slate-300">Alle Fragen enthalten eine Antwort. Prüfe deine Auswahl vor der endgültigen Abgabe.</p>}
