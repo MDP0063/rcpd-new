@@ -1,13 +1,24 @@
 ## 📝 Beschreibung
-<!-- Pflicht: Was wird geändert und warum? Beschreibe das Problem bzw. Ziel in eigenen Worten. -->
+<!-- Pflicht: Was wird geändert und warum? Beschreibe Problem, Ziel und fachlichen Hintergrund. Die vollständige technische Umsetzung gehört weiterhin hierher. -->
 [Beschreibung und Hintergrund]
 
 ## 🏷️ Release-Kategorie
-<!-- Pflicht: Zusätzlich genau ein passendes GitHub-Label setzen: feature, enhancement, fix, documentation, refactor, dependencies oder skip-changelog. -->
-- [ ] `feature` / `enhancement` – Neue Funktion oder Erweiterung
+<!-- Pflicht: Genau eine Kategorie auswählen und das entsprechende GitHub-Label setzen. -->
+- [ ] `feature` – Neue Funktion
+- [ ] `enhancement` – Verbesserung einer bestehenden Funktion
 - [ ] `fix` – Fehlerbehebung
-- [ ] `documentation` / `refactor` / `dependencies` – Wartung, Doku oder technische Bereinigung
-- [ ] `skip-changelog` – Soll nicht in den Release Notes erscheinen
+- [ ] `security` – Sicherheitsrelevante Änderung
+- [ ] `documentation` / `refactor` / `dependencies` – Technische Wartung oder Dokumentation
+- [ ] `skip-changelog` – Keine Release-Information
+
+## 📣 Release-Zusammenfassung
+<!-- Pflicht: Genau eine Auswahl treffen. Diese Zusammenfassung wird – sofern aufgenommen – später in den Release-Entwurf übernommen. -->
+- [ ] In Release aufnehmen
+- [ ] Nicht aufnehmen
+
+**Zusammenfassung für Benutzer:**
+<!-- Nur das fertige Ergebnis beschreiben: Was ist nach dieser Änderung neu, besser oder behoben? 1–3 kurze Sätze. Keine Bearbeitungsschritte, Dateinamen, Tests, Commit-Historie oder Namen. Bei "Nicht aufnehmen" kann dieses Feld leer bleiben. -->
+[Kurze, verständliche Beschreibung des fertigen Ergebnisses oder leer lassen]
 
 ## 🛠️ Art der Änderung
 <!-- Pflicht: Mindestens eine passende Art auswählen. -->
