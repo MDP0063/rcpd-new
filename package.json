@@ -39,5 +39,8 @@
     "tailwindcss": "4.3.4",
     "tsx": ">=4.19.0",
     "typescript": ">=5.6.0"
+  },
+  "overrides": {
+    "csstype": "3.2.3"
   }
 }
