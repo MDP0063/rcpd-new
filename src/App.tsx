@@ -241,6 +241,13 @@ export default function App() {
   // Command Palette (Ctrl+K) & Live Notification Center Popover
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (examAttemptActive) {
+      setIsCommandPaletteOpen(false);
+      setIsNotifPopoverOpen(false);
+    }
+  }, [examAttemptActive]);
   const [academyReviewNavigationTarget, setAcademyReviewNavigationTarget] = useState<{ examId: string; attemptId: string } | null>(null);
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initialLoadCompleteRef = useRef<boolean>(false);
