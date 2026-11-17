@@ -758,4 +758,12 @@
 - Offene Kursabschlussprüfungs-Nachweise erhalten eine kontextuelle Aktion zum Prüfungszentrum.
 - Prüfung und Kurskontext werden exakt übergeben; der Teilnehmerkatalog prüft erneut, ob die Prüfung für den Nutzer verfügbar und dem Kurs zugeordnet ist.
 - Automatische Vorauswahl setzt nun auch den zugehörigen Kurskontext; damit ist der Startbutton nach der Katalog-Vorauswahl korrekt nutzbar.
-- Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend.
+- **PR #325 gemergt** (Merge-Commit `30736b88a2f9cee8432ec8b8b5ddcf7e35a0255c`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle QA bleibt offen.
+
+
+## 2026-11-17 – Kursabschlussprüfung aus Kursbedingungen öffnen
+
+- Offene Kursabschlussbedingungen führen kontextuell zum exakt verknüpften Prüfungseintrag und Kurskontext.
+- Der Teilnehmerkatalog prüft erneut Verfügbarkeit, Prüfungsstufe und Kurszuordnung; bei Abweichungen wird kein anderer Kurskontext gewählt.
+- Katalog-Vorauswahl setzt nun auch einen gültigen Kurskontext.
+- PR #325 gemergt; CI mit 455/455 Tests erfolgreich. Manuelle Navigationstest später.
