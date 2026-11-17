@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './AcademyCenter.css';
 import {
   BookOpen,
@@ -86,6 +86,11 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const activeAreaNavFocusRef = useRef<HTMLButtonElement | null>(null);
   const pendingAcademyFocusRef = useRef<'home' | 'area' | null>(null);
   const [hasUnsavedNoteChanges, setHasUnsavedNoteChanges] = useState(false);
+  const [examAttemptActive, setExamAttemptActive] = useState(false);
+  const handleExamAttemptActiveChange = useCallback((active: boolean) => {
+    setExamAttemptActive(active);
+    onExamAttemptActiveChange?.(active);
+  }, [onExamAttemptActiveChange]);
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams'
   >('overview');
@@ -612,7 +617,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         className={!isAcademyHome ? 'academy-content-enter' : undefined}
       >
       {!isAcademyHome && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div inert={examAttemptActive} className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => {
@@ -665,7 +670,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
       {['exam_center', 'tests', 'final_exams', 'exam_reviews', 'exam_corrections'].includes(activeTab) && (
-        <nav aria-label="Prüfungsbereiche" className="academy-exam-section-nav">
+        <nav inert={examAttemptActive} aria-label="Prüfungsbereiche" className="academy-exam-section-nav">
           <div className="academy-exam-nav-group" role="group" aria-label="Teilnahme">
             <span className="academy-exam-nav-group-label">Teilnahme</span>
             <div className="academy-exam-nav-group-items">
@@ -1270,7 +1275,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
 
-      {activeTab === 'exam_center' && <ExamParticipantRunner onAttemptActiveChange={onExamAttemptActiveChange} />}
+      {activeTab === 'exam_center' && <ExamParticipantRunner onAttemptActiveChange={handleExamAttemptActiveChange} />}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 
