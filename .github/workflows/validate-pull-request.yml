@@ -48,17 +48,54 @@ jobs:
             }
 
             const category = section('🏷️ Release-Kategorie');
-            if (!/^- \[x\] /im.test(category)) {
-              errors.push('Wähle mindestens eine **Release-Kategorie** in der PR-Vorlage aus.');
+            const selectedCategories = category.match(/^- \[x\] /gim) || [];
+            if (selectedCategories.length !== 1) {
+              errors.push('Wähle genau eine **Release-Kategorie** aus.');
             }
 
             const allowedLabels = new Set([
-              'feature', 'enhancement', 'fix', 'documentation',
-              'refactor', 'dependencies', 'skip-changelog'
+              'feature', 'enhancement', 'fix', 'security',
+              'documentation', 'refactor', 'dependencies', 'skip-changelog'
             ]);
             const labels = pr.labels.map(label => label.name.toLowerCase());
-            if (!labels.some(label => allowedLabels.has(label))) {
-              errors.push('Setze zusätzlich mindestens ein passendes GitHub-Label: feature, enhancement, fix, documentation, refactor, dependencies oder skip-changelog.');
+            const categoryLine = category.split(/\r?\n/).find(line => /^- \[x\] /.test(line));
+            const categoryLabelMatch = categoryLine && categoryLine.match(/`([a-z-]+)`/);
+            const selectedLabel = categoryLabelMatch ? categoryLabelMatch[1] : '';
+            const selectedAllowedLabels = labels.filter(label => allowedLabels.has(label));
+
+            if (selectedAllowedLabels.length !== 1) {
+              errors.push('Setze genau ein passendes GitHub-Label: feature, enhancement, fix, security, documentation, refactor, dependencies oder skip-changelog.');
+            } else if (selectedLabel && !labels.includes(selectedLabel)) {
+              errors.push('Das ausgewählte Release-Kategorie-Label (' + selectedLabel + ') fehlt am Pull Request.');
+            } else if (selectedLabel && selectedAllowedLabels[0] !== selectedLabel) {
+              errors.push('Das ausgewählte Release-Kategorie-Label muss mit dem einzigen Release-Kategorie-Label des Pull Requests übereinstimmen.');
+            }
+
+            const releaseSection = section('📣 Release-Zusammenfassung');
+            const releaseChoices = releaseSection.match(/^- \[x\] /gim) || [];
+            const includeRelease = /^- \[x\] In Release aufnehmen$/im.test(releaseSection);
+            const excludeRelease = /^- \[x\] Nicht aufnehmen$/im.test(releaseSection);
+
+            if (releaseChoices.length !== 1 || includeRelease === excludeRelease) {
+              errors.push('Wähle genau eine Option für die **Release-Zusammenfassung** aus.');
+            }
+
+            if (includeRelease) {
+              const summaryMatch = releaseSection.match(/\*\*Zusammenfassung für Benutzer:\*\*\s*([\s\S]*)/i);
+              const summary = summaryMatch
+                ? summaryMatch[1].replace(/<!--[\s\S]*?-->/g, '').trim()
+                : '';
+              const normalizedSummary = summary.replace(/^\[[^\]]*\]$/, '').trim();
+              if (!normalizedSummary || normalizedSummary.length > 500) {
+                errors.push('Für aufgenommene Änderungen ist eine verständliche Release-Zusammenfassung mit maximal 500 Zeichen erforderlich.');
+              }
+              if (selectedLabel === 'skip-changelog') {
+                errors.push('Bei der Kategorie skip-changelog muss "Nicht aufnehmen" ausgewählt werden.');
+              }
+            }
+
+            if (excludeRelease && selectedLabel !== 'skip-changelog') {
+              errors.push('Wenn die Änderung nicht in Release Notes erscheinen soll, wähle die Kategorie skip-changelog und setze das entsprechende Label.');
             }
 
             const changeType = section('🛠️ Art der Änderung');
