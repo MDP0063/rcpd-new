@@ -1602,4 +1602,13 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Die Abgabebestätigung zeigt zusätzlich Anzahl und Nummern markierter Fragen. Markierungen sind Merkhilfen, keine Antworten.
 - **Begrenzung:** Markierungen werden derzeit nur im Speicher der geöffneten Prüfungsansicht gehalten und nicht serverseitig persistiert. Sie gehen bei Neuladen/Neustart/erneuter Fortsetzung verloren; dies wird in der Oberfläche kenntlich gemacht. Keine Datenmodelländerung ohne gesonderten Beschluss.
 - Forschungsgrundlage: WCAG 2.2 Keyboard (2.1.1), Focus Visible (2.4.7), Focus Not Obscured (2.4.11) und Target Size Minimum (2.5.8): https://www.w3.org/TR/WCAG22/
-- Umsetzung: Branch `feat/exam-question-marking-responsive-nav`; CI/Review ausstehend. Manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA später.
+- **PR #324 ist am 17.11.2026 gemergt** (Merge-Commit `58a8c17af4ab73c9725f3fdea270ba20bc742e23`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA später.
+
+
+## 17.11.2026 – Kursabschlussprüfung direkt aus Kursbedingungen öffnen (in Arbeit)
+
+- Bei einer offenen `required_assessment`-Abschlussbedingung führt eine kontextuelle Aktion direkt in das Prüfungszentrum.
+- Die exakte Prüfungs-ID und der Kurscode werden übergeben. Der Prüfungsrunner wählt nur dann automatisch aus, wenn die Prüfung im aktuellen freigegebenen Teilnehmerkatalog enthalten und genau diesem Kurskontext zugeordnet ist.
+- Nicht verfügbare oder falsch zugeordnete Prüfungen werden neutral erklärt; es wird keine nicht freigegebene Prüfung offengelegt und kein anderer Kurskontext stillschweigend verwendet.
+- Nebenbei wird ein vorhandener Katalogfehler behoben: Bei automatischer Vorauswahl einer Prüfung wird der erste gültige Kurskontext direkt mitgesetzt, damit „Prüfung starten / fortsetzen“ nicht ohne manuelle Neuauswahl deaktiviert bleibt.
+- Umsetzung: Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend. Manuelle Kurs-/Prüfungsnavigation später.
