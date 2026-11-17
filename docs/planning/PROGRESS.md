@@ -1592,4 +1592,14 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der endgültige Bestätigungsbutton löst weiterhin den vorhandenen serverseitigen Save-/Submit-Ablauf aus. Automatische Zeitablauf-Abgabe bleibt ohne zusätzliche Bestätigung, da die Deadline serverseitig verbindlich ist.
 - Bei fehlgeschlagener Speicherung/Abgabe bleibt der Dialog mit Fehlermeldung offen; eine erneute Abgabe ist möglich. Abbruch per Escape oder „Weiter prüfen“ führt den Fokus zur auslösenden Abgabeaktion zurück.
 - Keine Änderung an Bewertung, Punkteberechnung, Versuchsregeln oder Datenverträgen.
-- Umsetzung: Branch `feat/exam-submission-confirmation`; CI/Review ausstehend. Spätere Keyboard-/Screenreader-/Mobil-QA bleibt offen.
+- **PR #323 ist am 17.11.2026 gemergt** (Merge-Commit `508d50bde6b256ba7d95da9cf0eb83fd7164a3c2`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Spätere Keyboard-/Screenreader-/Mobil-QA bleibt offen.
+
+
+## 17.11.2026 – Fragenübersicht: responsive Disclosure und Markierungen (in Arbeit)
+
+- Unter 1024 CSS-Pixeln wird die Fragenübersicht als native `details/summary`-Disclosure zunächst eingeklappt. Nach Auswahl einer Frage klappt sie auf kleinen Viewports wieder zu; die Frage bleibt im Fokus. Ab 1024 CSS-Pixeln bleibt die Übersicht als offene Seitenleiste sichtbar.
+- Fragen können für die spätere Kontrolle markiert und entmarkiert werden. Die Übersicht zeigt Markierung und Beantwortungsstatus unabhängig voneinander und nicht ausschließlich über Farbe; Screenreader-Beschriftungen enthalten beide Zustände.
+- Die Abgabebestätigung zeigt zusätzlich Anzahl und Nummern markierter Fragen. Markierungen sind Merkhilfen, keine Antworten.
+- **Begrenzung:** Markierungen werden derzeit nur im Speicher der geöffneten Prüfungsansicht gehalten und nicht serverseitig persistiert. Sie gehen bei Neuladen/Neustart/erneuter Fortsetzung verloren; dies wird in der Oberfläche kenntlich gemacht. Keine Datenmodelländerung ohne gesonderten Beschluss.
+- Forschungsgrundlage: WCAG 2.2 Keyboard (2.1.1), Focus Visible (2.4.7), Focus Not Obscured (2.4.11) und Target Size Minimum (2.5.8): https://www.w3.org/TR/WCAG22/
+- Umsetzung: Branch `feat/exam-question-marking-responsive-nav`; CI/Review ausstehend. Manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA später.

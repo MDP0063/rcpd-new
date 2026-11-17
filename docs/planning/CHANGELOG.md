@@ -741,4 +741,13 @@
 - Manuelle Abgabeaktionen öffnen einen blockierenden Bestätigungsdialog mit beantworteten/unbeantworteten Fragen und Hinweis auf die Endgültigkeit der Abgabe.
 - Bei Speicher-/Abgabefehlern bleibt der Dialog mit Fehlerhinweis geöffnet; die Abgabe kann erneut versucht oder abgebrochen werden.
 - Automatische Abgabe bei abgelaufenem serverseitigem Zeitlimit bleibt unverändert.
-- Keine Änderung an Bewertung oder Datenmodell. Branch `feat/exam-submission-confirmation`; CI/Review ausstehend.
+- Keine Änderung an Bewertung oder Datenmodell. **PR #323 gemergt** (Merge-Commit `508d50bde6b256ba7d95da9cf0eb83fd7164a3c2`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle QA bleibt offen.
+
+
+## 2026-11-17 – Prüfungsfragen: Markierungen und mobile Navigation
+
+- Fragenübersicht wird unter 1024 CSS-Pixeln einklappbar und schließt nach Auswahl einer Frage; Desktop behält die sichtbare Seitenleiste.
+- Fragen lassen sich zur späteren Kontrolle markieren. Markierung und Beantwortungsstatus sind unabhängig und nicht nur farblich unterschieden.
+- Die finale Abgabebestätigung zeigt auch markierte Fragen und ihre Nummern.
+- Markierungen bleiben vorerst sitzungsgebundene Merkhilfen und werden nicht serverseitig gespeichert.
+- Branch `feat/exam-question-marking-responsive-nav`; CI/Review ausstehend.

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './ExamParticipantRunner.css';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock3,
+  AlertCircle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock3, Flag,
   Cloud, CloudOff, Loader2, LockKeyhole, Send, ShieldCheck
 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
@@ -126,6 +126,8 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [markedQuestionIds, setMarkedQuestionIds] = useState<string[]>([]);
+  const [questionNavigatorExpanded, setQuestionNavigatorExpanded] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startConfirmationOpen, setStartConfirmationOpen] = useState(false);
   const [startConfirmationState, setStartConfirmationState] = useState<'idle' | 'checking' | 'new' | 'resume' | 'error'>('idle');
@@ -158,6 +160,14 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const resultHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const catalogHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const pendingCatalogFocusRef = useRef(false);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 1024px)');
+    const syncNavigator = () => setQuestionNavigatorExpanded(desktopQuery.matches);
+    syncNavigator();
+    desktopQuery.addEventListener('change', syncNavigator);
+    return () => desktopQuery.removeEventListener('change', syncNavigator);
+  }, []);
 
   useEffect(() => {
     onAttemptActiveChange?.(Boolean(attempt));
@@ -251,6 +261,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
     setAttempt(null);
     setSubmission(null);
     setAnswers({});
+    setMarkedQuestionIds([]);
     answersRef.current = {};
     revisionRef.current = 0;
     setCurrentQuestionIndex(0);
@@ -269,6 +280,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
     revisionRef.current = next.currentRevision;
     setAttempt(next);
     setAnswers(restoredAnswers);
+    setMarkedQuestionIds([]);
     setSubmission(null);
     setCurrentQuestionIndex(0);
     setServerOffsetMs(new Date(next.serverTimeIso).getTime() - Date.now());
@@ -515,43 +527,74 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
             <div className="h-full bg-sky-600 transition-all" style={{ width: `${progressPercent}%` }} />
           </div>
           <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="academy-exam-question-nav space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div>
-              <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
-                {attempt.questions.map((question, index) => {
-                  const value = answers[question.id];
-                  const answered = value !== undefined && value !== null &&
-                    (typeof value !== 'string' || value.trim().length > 0) &&
-                    (!Array.isArray(value) || value.length > 0);
-                  return (
-                    <button key={question.id} type="button" disabled={submitting} aria-label={`Frage ${index + 1}${answered ? ', beantwortet' : ', noch nicht beantwortet'}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
-                      if (debounceRef.current) clearTimeout(debounceRef.current);
-                      debounceRef.current = null;
-                      void enqueueSave();
-                      setCurrentQuestionIndex(index);
-                    }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
-                      {index + 1}
-                      {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                <div className="flex justify-between"><span>Fortschritt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                  <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
+            <details
+              className="academy-exam-question-nav space-y-3"
+              open={questionNavigatorExpanded}
+              onToggle={event => setQuestionNavigatorExpanded(event.currentTarget.open)}
+            >
+              <summary className="academy-exam-question-nav-summary">
+                <span>Fragenübersicht</span>
+                <span className="academy-exam-question-nav-summary-meta">{answeredCount}/{attempt.questions.length} beantwortet · {markedQuestionIds.length} markiert</span>
+              </summary>
+              <div className="academy-exam-question-nav-content space-y-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div>
+                <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
+                  {attempt.questions.map((question, index) => {
+                    const value = answers[question.id];
+                    const answered = value !== undefined && value !== null &&
+                      (typeof value !== 'string' || value.trim().length > 0) &&
+                      (!Array.isArray(value) || value.length > 0);
+                    const marked = markedQuestionIds.includes(question.id);
+                    return (
+                      <button key={question.id} type="button" disabled={submitting} data-marked={marked || undefined} aria-label={`Frage ${index + 1}${answered ? ', beantwortet' : ', noch nicht beantwortet'}${marked ? ', zur späteren Kontrolle markiert' : ''}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
+                        if (debounceRef.current) clearTimeout(debounceRef.current);
+                        debounceRef.current = null;
+                        void enqueueSave();
+                        setCurrentQuestionIndex(index);
+                        if (window.matchMedia('(max-width: 1023px)').matches) setQuestionNavigatorExpanded(false);
+                      }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
+                        {index + 1}
+                        {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
+                        {marked && <Flag aria-hidden="true" className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-sm bg-white p-px text-slate-600 dark:bg-slate-900 dark:text-slate-300" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                  <div className="flex justify-between"><span>Fortschritt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                    <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5"><Flag aria-hidden="true" className="h-3 w-3 text-slate-600 dark:text-slate-300" />{markedQuestionIds.length} zur späteren Kontrolle markiert</div>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Markierungen gelten nur für diese geöffnete Prüfungssitzung.</p>
                 </div>
               </div>
-            </aside>
+            </details>
             <section className="academy-exam-question-panel min-w-0 space-y-5">
               {activeQuestion && (
                 <>
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Frage {currentQuestionIndex + 1} von {attempt.questions.length}</div>
                       <h3 ref={questionHeadingRef} tabIndex={-1} className="mt-2 text-lg font-semibold leading-relaxed text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{activeQuestion.question}</h3>
                     </div>
-                    <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{formatPoints(activeQuestion.pointsMilli)} Pkt.</span>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{formatPoints(activeQuestion.pointsMilli)} Pkt.</span>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        aria-pressed={markedQuestionIds.includes(activeQuestion.id)}
+                        aria-label={markedQuestionIds.includes(activeQuestion.id) ? 'Markierung für diese Frage entfernen' : 'Diese Frage zur späteren Kontrolle markieren'}
+                        title="Markierung gilt nur für diese geöffnete Prüfungssitzung"
+                        onClick={() => setMarkedQuestionIds(current => current.includes(activeQuestion.id)
+                          ? current.filter(id => id !== activeQuestion.id)
+                          : [...current, activeQuestion.id])}
+                        className="academy-exam-question-mark-button inline-flex min-h-9 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold"
+                      >
+                        <Flag aria-hidden="true" className="h-3.5 w-3.5" />
+                        {markedQuestionIds.includes(activeQuestion.id) ? 'Markiert' : 'Frage markieren'}
+                      </button>
+                    </div>
                   </div>
                   {activeQuestion.imageUrl && <img src={activeQuestion.imageUrl} alt="Abbildung zur Frage" className="max-h-80 max-w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700" />}
                   {activeQuestion.type === 'single_choice' && (
@@ -675,7 +718,9 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                 </div>
                 <div className={cardClass + ' space-y-2 rounded-lg p-4 text-sm'}>
                   <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Beantwortete Fragen</span><strong className="tabular-nums text-slate-900 dark:text-white">{answeredCount} / {attempt.questions.length}</strong></div>
-                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Zur Kontrolle markiert</span><strong className="tabular-nums text-slate-900 dark:text-white">{markedQuestionIds.length}</strong></div>
+                  {markedQuestionIds.length > 0 && <p className="text-xs text-slate-600 dark:text-slate-300">Markierte Fragen: {attempt.questions.map((question, index) => markedQuestionIds.includes(question.id) ? index + 1 : null).filter((number): number is number => number !== null).join(', ')}. Markierungen sind nur Merkhilfen und keine Antworten.</p>}
                   {attempt.questions.length - answeredCount > 0
                     ? <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">Unbeantwortete Fragen werden ohne Antwort eingereicht. Prüfe, ob du diese Fragen wirklich offenlassen möchtest.</p>
                     : <p className="text-xs text-slate-600 dark:text-slate-300">Alle Fragen enthalten eine Antwort. Prüfe deine Auswahl vor der endgültigen Abgabe.</p>}
