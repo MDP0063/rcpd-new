@@ -161,6 +161,16 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   }, [attempt?.id, onAttemptActiveChange]);
 
   useEffect(() => {
+    if (!attempt) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [attempt?.id]);
+
+  useEffect(() => {
     if (startConfirmationOpen) {
       wasStartConfirmationOpenRef.current = true;
       startConfirmationHeadingRef.current?.focus();
@@ -747,12 +757,13 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                           event.currentTarget.focus();
                           return;
                         }
+                        const activeIndex = focusable.indexOf(document.activeElement as HTMLElement);
                         const first = focusable[0];
                         const last = focusable[focusable.length - 1];
-                        if (event.shiftKey && document.activeElement === first) {
+                        if (event.shiftKey && activeIndex <= 0) {
                           event.preventDefault();
                           last.focus();
-                        } else if (!event.shiftKey && document.activeElement === last) {
+                        } else if (!event.shiftKey && (activeIndex === -1 || activeIndex === focusable.length - 1)) {
                           event.preventDefault();
                           first.focus();
                         }
