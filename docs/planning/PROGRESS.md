@@ -1582,7 +1582,7 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **Fachlich offen:** Prüfungen mit `timeLimitMinutes = 0` haben keine serverseitige Deadline und können aktuell nach einer Unterbrechung später fortgesetzt werden. Ein verbindliches Ende bei Unterbrechung bzw. eine maximale Fortsetzungsfrist benötigt eine gesonderte fachliche Festlegung; keine willkürliche Frist wird eingeführt.
 - Die ältere `AcademyExamDoc`-Übungstest-/Abschlussprüfungsfamilie bleibt getrennt. Die Planung verbietet eine Zusammenführung/Entfernung ohne eigene Daten-/Workflowanalyse (siehe ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt Prüfungszentrum).
 - Forschungsgrundlage für Tastatur-/Dialogverhalten: WCAG 2.2 SC 2.1.1 (Keyboard), 2.4.7 (Focus Visible), 2.4.11 (Focus Not Obscured – Minimum) und 2.2 (Enough Time): https://www.w3.org/TR/WCAG22/
-- Umsetzung: Branch `feat/exam-focus-mode-navigation-lock`; CI und Review ausstehend. Manuelle Prüfung mit Tastatur, Screenreader, Mobilansicht und echten Prüfungsversuchen bleibt Teil der späteren QA.
+- **PR #322 ist am 17.11.2026 gemergt** (Merge-Commit `aedc1f647fd53ce5e18747688c17f4c15d7a6801`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle Prüfung mit Tastatur, Screenreader, Mobilansicht und echten Prüfungsversuchen bleibt Teil der späteren QA.
 
 
 ## 17.11.2026 – Verbindliche Abgabebestätigung im Prüfungsrunner (in Arbeit)
