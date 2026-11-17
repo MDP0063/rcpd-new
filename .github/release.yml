@@ -1,13 +1,18 @@
 changelog:
   categories:
-    - title: "🚀 Neue Funktionen"
+    - title: "✨ Neue Funktionen"
       labels:
         - "feature"
+    - title: "🔧 Verbesserungen"
+      labels:
         - "enhancement"
     - title: "🐛 Fehlerbehebungen"
       labels:
         - "fix"
-    - title: "🧰 Wartung & Performance"
+    - title: "🔒 Sicherheit"
+      labels:
+        - "security"
+    - title: "⚙️ Technische Änderungen"
       labels:
         - "documentation"
         - "refactor"
