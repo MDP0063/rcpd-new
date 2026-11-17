@@ -7,7 +7,6 @@
 - [ ] `feature` – Neue Funktion
 - [ ] `enhancement` – Verbesserung einer bestehenden Funktion
 - [ ] `fix` – Fehlerbehebung
-- [ ] `security` – Sicherheitsrelevante Änderung
 - [ ] `documentation` – Dokumentationsänderung
 - [ ] `refactor` – Technische Bereinigung
 - [ ] `dependencies` – Abhängigkeitsänderung
