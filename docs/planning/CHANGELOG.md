@@ -724,3 +724,13 @@
 - Lokale Abweichungen werden als ausstehend/fehlgeschlagen dargestellt; Autosave-Responses werden gegen den gesendeten Snapshot geprüft.
 - Bei einem abweichenden Serverstand werden weitere automatische Saves blockiert, bis der Versuch mit dem aktuellen Serverstand neu geladen wurde.
 - **Nicht gemergt:** unabhängige Datenintegritätsprüfung gemäß `CONTRIBUTOR_ROLES.md` erforderlich; spätere manuelle Prüfung mit echten Versuchen zusätzlich offen.
+
+
+## 2026-11-17 – Prüfungsmodus: Navigation und Startbestätigung
+
+- Die vorhandene Startbestätigung wird zu einem blockierenden Dialog mit Fokusbindung und Escape-Abbruch ausgebaut.
+- Die globale Portalnavigation, mobilen Schnellzugriffe und Command Palette werden während eines aktiven Prüfungsversuchs gesperrt.
+- Vor Browser-Schließen/Neuladen warnt `beforeunload`; dies verhindert keinen absichtlichen Abbruch und ersetzt keine serverseitige Ablaufregel.
+- Die ältere `AcademyExamDoc`-Prüfungsfamilie bleibt gemäß bestehender Architekturentscheidung bis zur separaten Daten-/Workflowanalyse eigenständig.
+- Grundlage: WCAG 2.2, insbesondere Tastaturbedienbarkeit, sichtbarer Fokus, nicht verdeckter Fokus und ausreichende Zeit: https://www.w3.org/TR/WCAG22/
+- Branch `feat/exam-focus-mode-navigation-lock`; CI/Review und spätere manuelle QA ausstehend.
