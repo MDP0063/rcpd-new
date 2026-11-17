@@ -750,4 +750,12 @@
 - Fragen lassen sich zur späteren Kontrolle markieren. Markierung und Beantwortungsstatus sind unabhängig und nicht nur farblich unterschieden.
 - Die finale Abgabebestätigung zeigt auch markierte Fragen und ihre Nummern.
 - Markierungen bleiben vorerst sitzungsgebundene Merkhilfen und werden nicht serverseitig gespeichert.
-- Branch `feat/exam-question-marking-responsive-nav`; CI/Review ausstehend.
+- **PR #324 gemergt** (Merge-Commit `58a8c17af4ab73c9725f3fdea270ba20bc742e23`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle QA bleibt offen.
+
+
+## 2026-11-17 – Kursdetails: direkter Weg zur verknüpften Abschlussprüfung
+
+- Offene Kursabschlussprüfungs-Nachweise erhalten eine kontextuelle Aktion zum Prüfungszentrum.
+- Prüfung und Kurskontext werden exakt übergeben; der Teilnehmerkatalog prüft erneut, ob die Prüfung für den Nutzer verfügbar und dem Kurs zugeordnet ist.
+- Automatische Vorauswahl setzt nun auch den zugehörigen Kurskontext; damit ist der Startbutton nach der Katalog-Vorauswahl korrekt nutzbar.
+- Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend.
