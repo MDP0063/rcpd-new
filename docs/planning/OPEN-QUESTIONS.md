@@ -528,7 +528,14 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 17.11.2026 – Prüfungsunterbrechung und Prüfungsmodus
 
-- **In Arbeit:** Während eines aktiven Versuchs globale Navigation, mobile Schnellzugriffe und Command Palette sperren; Start-/Fortsetzungsbestätigung als zugänglichen blockierenden Dialog umsetzen; versehentliches Browser-Verlassen mit Warnung absichern.
+- **Erledigt in PR #322:** Während eines aktiven Versuchs sind globale Navigation, mobile Schnellzugriffe und Command Palette gesperrt; Start-/Fortsetzungsbestätigung ist ein zugänglicher blockierender Dialog; versehentliches Browser-Verlassen wird mit Warnung abgesichert.
 - **Fachliche Entscheidung offen:** Bei Prüfungen ohne Zeitlimit (`timeLimitMinutes = 0`) kann ein Versuch nach einer Unterbrechung später fortgesetzt werden. Soll es dafür eine serverseitige maximale Fortsetzungsfrist geben oder soll das Unterbrechen/Verlassen den Versuch beenden? Eine konkrete Frist oder automatische Abgabe wird nicht ohne Beschluss erfunden.
 - **Nicht zusammenführen:** Alte `AcademyExamDoc`-Prüfungsfamilie und neuer versionierter Prüfungsrunner bleiben getrennt, bis Daten-/Workflowanalyse und Entscheidung abgeschlossen sind.
-- **Noch offen:** CI/Code-Review für Branch `feat/exam-focus-mode-navigation-lock`; manuelle Keyboard-/Screenreader-/Mobil-QA später.
+- **Noch offen:** manuelle Keyboard-/Screenreader-/Mobil-QA für PR #322.
+
+
+## 17.11.2026 – Prüfungsabgabe bestätigen
+
+- **In Arbeit:** Manuelle Abgabe darf nicht unmittelbar beim Klick erfolgen. Bestätigungsdialog soll beantwortete/unbeantwortete Fragen zeigen, Endgültigkeit erklären und Speichern/Abgeben erst nach ausdrücklicher Bestätigung auslösen.
+- Automatische Abgabe bei abgelaufenem Zeitlimit bleibt servergesteuert und benötigt keine Teilnehmerbestätigung.
+- **Noch offen:** CI/Review für Branch `feat/exam-submission-confirmation`; spätere Keyboard-/Screenreader-/Mobil-QA.

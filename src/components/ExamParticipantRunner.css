@@ -234,3 +234,39 @@
 @media (prefers-reduced-motion: reduce) {
   .academy-exam-start-dialog-backdrop { backdrop-filter: none; }
 }
+
+
+/* Final submission confirmation: clear, blocking and responsive. */
+.academy-exam-submit-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  background: rgb(15 23 42 / 0.68);
+  backdrop-filter: blur(2px);
+}
+.academy-exam-submit-confirmation {
+  width: min(100%, 36rem);
+  max-height: min(88dvh, 44rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 24px 80px rgb(15 23 42 / 0.34);
+}
+.academy-exam-submit-confirmation :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid var(--academy-focus-color);
+  outline-offset: 3px;
+}
+.academy-exam-submit-confirmation h3:focus-visible {
+  outline: 2px solid var(--academy-focus-color);
+  outline-offset: 4px;
+}
+@media (max-width: 640px) {
+  .academy-exam-submit-dialog-backdrop { align-items: end; padding: 0.75rem; }
+  .academy-exam-submit-confirmation { max-height: 88dvh; border-radius: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-exam-submit-dialog-backdrop { backdrop-filter: none; }
+}
