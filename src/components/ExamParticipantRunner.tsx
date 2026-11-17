@@ -235,7 +235,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
     <section className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950" aria-label="Prüfungsvoraussetzungen">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Voraussetzungen</h4>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-        {exam.prerequisites.map(prerequisite => <li key={prerequisite.examId}>{describeExamPrerequisite(prerequisite, catalog)}</li>)}
+        {exam.prerequisites.map(prerequisite => <li key={`${prerequisite.examId}:${prerequisite.mode}:${prerequisite.minScoreBasisPoints ?? ''}`}>{describeExamPrerequisite(prerequisite, catalog)}</li>)}
       </ul>
       <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Die Erfüllung wird beim verbindlichen Start serverseitig geprüft.</p>
     </section>
