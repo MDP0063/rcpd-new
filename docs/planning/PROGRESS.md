@@ -1611,4 +1611,12 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Die exakte Prüfungs-ID und der Kurscode werden übergeben. Der Prüfungsrunner wählt nur dann automatisch aus, wenn die Prüfung im aktuellen freigegebenen Teilnehmerkatalog enthalten und genau diesem Kurskontext zugeordnet ist.
 - Nicht verfügbare oder falsch zugeordnete Prüfungen werden neutral erklärt; es wird keine nicht freigegebene Prüfung offengelegt und kein anderer Kurskontext stillschweigend verwendet.
 - Nebenbei wird ein vorhandener Katalogfehler behoben: Bei automatischer Vorauswahl einer Prüfung wird der erste gültige Kurskontext direkt mitgesetzt, damit „Prüfung starten / fortsetzen“ nicht ohne manuelle Neuauswahl deaktiviert bleibt.
-- Umsetzung: Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend. Manuelle Kurs-/Prüfungsnavigation später.
+- **PR #325 ist am 17.11.2026 gemergt** (Merge-Commit `30736b88a2f9cee8432ec8b8b5ddcf7e35a0255c`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle Kurs-/Prüfungsnavigation später.
+
+
+## 17.11.2026 – Prüfungsvoraussetzungen verständlich anzeigen (in Arbeit)
+
+- Die Prüfungsdetailansicht und Start-/Fortsetzungsbestätigung zeigen konkrete Voraussetzungen statt nur „werden beim Start geprüft“.
+- Für verfügbare Vorprüfungen wird der Titel angezeigt; wenn die Voraussetzung nicht im sichtbaren Katalog enthalten ist, bleibt die Bezeichnung generisch und legt keine nicht verfügbaren Prüfungen offen.
+- Abschlussmodus („abgeschlossen“ oder „bestanden“) und gegebenenfalls Mindestpunktzahl werden verständlich formuliert. Die tatsächliche Erfüllung bleibt serverseitig geprüft.
+- Umsetzung: Branch `feat/exam-prerequisite-explanation`; CI/Review ausstehend.
