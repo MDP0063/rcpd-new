@@ -505,3 +505,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - Fokus erst nach abgeschlossenem Queue-Refresh setzen.
 - Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
 - **Noch offen:** CI/Review für Branch `a11y/exam-review-queue-action-focus`; spätere manuelle Reviewer-Rollen-QA.
+
+
+## 17.11.2026 – Kurs-/Lehrgangsautoren: Fokus nach erfolgreicher Neuanlage
+
+- **In Arbeit:** Nach dem erfolgreichen Erstellen eines Kurses oder Lehrgangs den Fokus auf die Editorüberschrift setzen, wenn der Modus vom Neuanlageformular zum gespeicherten Entwurf wechselt.
+- Keine Änderung an Validierung, API, Entwurfsstatus, Veröffentlichung oder fachlichen Regeln.
+- **Noch offen:** CI/Review für Branch `a11y/academy-new-entry-focus-current-main`; spätere manuelle Keyboard-/Screenreader-QA.

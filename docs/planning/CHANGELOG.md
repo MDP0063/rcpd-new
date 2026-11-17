@@ -695,3 +695,11 @@
 - Fokus erst nach abgeschlossenem Queue-Refresh setzen.
 - Keine Änderung an Zuständigkeiten, Rollen, Berechtigungen, Autosave, Noten, Freigabe oder Datenzugriff.
 - Arbeitsbranch: `a11y/exam-review-queue-action-focus`; CI/Review ausstehend, manuelle Reviewer-Rollen-QA später.
+
+
+## 2026-11-17 – Kurs-/Lehrgangsautoren: Fokus nach Neuanlage
+
+- Nach erfolgreicher Neuanlage eines Kurses oder Lehrgangs wechselt der Editor vom Neuanlage- in den regulären Entwurfsmodus.
+- Der Fokus wird nach diesem dynamischen Moduswechsel auf die Editorüberschrift gesetzt, statt auf einem möglicherweise ausgetauschten Submit-Button zu verbleiben.
+- Keine Änderung an API, Entwurfs-/Veröffentlichungsstatus oder Kurs-/Lehrgangsregeln.
+- Arbeitsbranch: `a11y/academy-new-entry-focus-current-main`; CI/Review ausstehend, manuelle Keyboard-/Screenreader-QA später.
