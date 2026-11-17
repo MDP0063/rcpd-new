@@ -205,3 +205,32 @@
 .dark .academy-exam-runner :is(button,input,select,textarea):focus-visible {
   outline-color: var(--academy-focus-color);
 }
+
+
+/* Start confirmation is a true blocking dialog, not an inline panel. */
+.academy-exam-start-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  background: rgb(15 23 42 / 0.64);
+  backdrop-filter: blur(2px);
+}
+.academy-exam-start-confirmation {
+  width: min(100%, 38rem);
+  max-height: min(88dvh, 46rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 24px 80px rgb(15 23 42 / 0.32);
+}
+.academy-exam-start-confirmation:focus { outline: none; }
+@media (max-width: 640px) {
+  .academy-exam-start-dialog-backdrop { align-items: end; padding: 0.75rem; }
+  .academy-exam-start-confirmation { max-height: 88dvh; border-radius: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-exam-start-dialog-backdrop { backdrop-filter: none; }
+}

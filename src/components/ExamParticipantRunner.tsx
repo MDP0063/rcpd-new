@@ -111,7 +111,11 @@ function answerCount(questions: PublicQuestion[], answers: AnswerMap): number {
   }).length;
 }
 
-export const ExamParticipantRunner: React.FC = () => {
+interface ExamParticipantRunnerProps {
+  onAttemptActiveChange?: (active: boolean) => void;
+}
+
+export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ onAttemptActiveChange }) => {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [catalogError, setCatalogError] = useState('');
@@ -143,12 +147,28 @@ export const ExamParticipantRunner: React.FC = () => {
   const startCheckRequestIdRef = useRef(0);
   const startButtonRef = useRef<HTMLButtonElement | null>(null);
   const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const startConfirmationDialogRef = useRef<HTMLElement | null>(null);
   const wasStartConfirmationOpenRef = useRef(false);
   const restoreStartFocusRef = useRef(false);
   const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const resultHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const catalogHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const pendingCatalogFocusRef = useRef(false);
+
+  useEffect(() => {
+    onAttemptActiveChange?.(Boolean(attempt));
+    return () => onAttemptActiveChange?.(false);
+  }, [attempt?.id, onAttemptActiveChange]);
+
+  useEffect(() => {
+    if (!attempt) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [attempt?.id]);
 
   useEffect(() => {
     if (startConfirmationOpen) {
@@ -458,6 +478,7 @@ export const ExamParticipantRunner: React.FC = () => {
                 {attempt.assessmentStage === 'final_exam' ? 'Kursabschlussprüfung' : 'Übungstest'} · {attempt.attemptCourseCode}
               </div>
               <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{attempt.title}</h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Prüfungsmodus · Portalnavigation gesperrt</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Versuch {attempt.attemptNumber} · {attempt.questions.length} Fragen · {answeredCount} beantwortet
               </p>
@@ -593,7 +614,7 @@ export const ExamParticipantRunner: React.FC = () => {
             </section>
           </div>
           <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Deine Antworten werden automatisch gespeichert. Bei einer Unterbrechung kannst du den Versuch fortsetzen.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Deine Antworten werden automatisch gespeichert. Bei einem versehentlichen Verlassen bleibt der letzte serverbestätigte Stand erhalten. Ein vorhandenes Zeitlimit läuft weiter.</p>
             <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Abgabe abschließen</button>
           </div>
         </div>
@@ -713,10 +734,44 @@ export const ExamParticipantRunner: React.FC = () => {
                     <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Vor dem Start werden der aktuelle Versuch und die für diese Prüfung geltenden Folgen geprüft. Noch wird kein Versuch begonnen.</p>
                   </>
                 ) : (
-                  <section className="academy-exam-start-confirmation space-y-3 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/30" aria-labelledby="academy-exam-start-confirmation-heading">
+                  <div className="academy-exam-start-dialog-backdrop">
+                    <section
+                      ref={startConfirmationDialogRef}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="academy-exam-start-confirmation-heading"
+                      aria-describedby="academy-exam-start-confirmation-description"
+                      className="academy-exam-start-confirmation space-y-3 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/30"
+                      onKeyDown={event => {
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          if (!starting) cancelStartConfirmation();
+                          return;
+                        }
+                        if (event.key !== 'Tab') return;
+                        const focusable = Array.from(
+                          event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')
+                        ).filter(element => !element.hasAttribute('hidden'));
+                        if (focusable.length === 0) {
+                          event.preventDefault();
+                          event.currentTarget.focus();
+                          return;
+                        }
+                        const activeIndex = focusable.indexOf(document.activeElement as HTMLElement);
+                        const first = focusable[0];
+                        const last = focusable[focusable.length - 1];
+                        if (event.shiftKey && activeIndex <= 0) {
+                          event.preventDefault();
+                          last.focus();
+                        } else if (!event.shiftKey && (activeIndex === -1 || activeIndex === focusable.length - 1)) {
+                          event.preventDefault();
+                          first.focus();
+                        }
+                      }}
+                    >
                     <div>
                       <h4 ref={startConfirmationHeadingRef} tabIndex={-1} id="academy-exam-start-confirmation-heading" className="font-bold text-slate-900 outline-none dark:text-white">Verbindliche Startbestätigung</h4>
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Es wird erst gestartet oder fortgesetzt, wenn du die abschließende Aktion bestätigst.</p>
+                      <p id="academy-exam-start-confirmation-description" className="mt-1 text-xs text-slate-600 dark:text-slate-300">Es wird erst gestartet oder fortgesetzt, wenn du die abschließende Aktion bestätigst. Die übrige Seite bleibt bis zu deiner Entscheidung gesperrt.</p>
                     </div>
                     {startConfirmationState === 'checking' && (
                       <p role="status" className="text-sm text-slate-600 dark:text-slate-300">Wir prüfen, ob bereits ein laufender Versuch besteht. Es wird noch nichts gestartet.</p>
@@ -765,7 +820,8 @@ export const ExamParticipantRunner: React.FC = () => {
                         </button>
                       )}
                     </div>
-                  </section>
+                    </section>
+                  </div>
                 )}
               </>
             ) : <p className="text-sm text-slate-500">Wähle eine Prüfung aus der Liste.</p>}

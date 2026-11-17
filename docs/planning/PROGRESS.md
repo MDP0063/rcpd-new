@@ -1571,3 +1571,15 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Autosave-Antworten werden mit dem gesendeten Snapshot verglichen. Bei einem abweichenden neueren Serverstand werden weitere automatische Saves blockiert, damit ein anderer Tab-/Serverstand nicht überschrieben wird.
 - Die Änderung betrifft clientseitige Darstellung und Save-Queue-Verhalten; Server-Autosave, Abgabe, Bewertung und Datenverträge bleiben unverändert.
 - **PR #320 bleibt Draft**, da dies eine Datenintegritätsänderung ist und gemäß `CONTRIBUTOR_ROLES.md` vor Merge eine unabhängige Prüfung durch eine andere beteiligte Instanz oder den Projektinhaber benötigt. Manuelle Prüfung mit echten Versuchen bleibt zusätzlich offen.
+
+
+## 17.11.2026 – Prüfungsmodus und verbindliche Startbestätigung (in Arbeit)
+
+- Der Start-/Fortsetzungsdialog des versionierten Prüfungsrunners wird als blockierender Dialog mit `role=dialog`, `aria-modal`, Fokusbindung, Escape-Abbruch und sichtbarer Rückkehraktion umgesetzt; Hintergrundinteraktionen sind während der Entscheidung überlagert.
+- Während eines aktiven Versuchs wird die globale Portalnavigation gesperrt: Sidebar ist inert, mobile Schnellnavigation und Command Palette sind deaktiviert, Tastenkürzel öffnen keine globale Suche, und Navigationscallbacks blockieren Bereichswechsel.
+- Beim Verlassen/Neuladen der Browserseite erscheint eine Browserwarnung. Das ist eine Schutzmaßnahme gegen versehentliches Verlassen, keine technisch garantierte Sperre gegen bewusstes Schließen oder einen Geräte-/Browserabbruch.
+- Vorhandene serverseitige Autosaves und Zeitlimits bleiben maßgeblich. Der Versuch wird nicht durch bloßes Verlassen zurückgesetzt.
+- **Fachlich offen:** Prüfungen mit `timeLimitMinutes = 0` haben keine serverseitige Deadline und können aktuell nach einer Unterbrechung später fortgesetzt werden. Ein verbindliches Ende bei Unterbrechung bzw. eine maximale Fortsetzungsfrist benötigt eine gesonderte fachliche Festlegung; keine willkürliche Frist wird eingeführt.
+- Die ältere `AcademyExamDoc`-Übungstest-/Abschlussprüfungsfamilie bleibt getrennt. Die Planung verbietet eine Zusammenführung/Entfernung ohne eigene Daten-/Workflowanalyse (siehe ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt Prüfungszentrum).
+- Forschungsgrundlage für Tastatur-/Dialogverhalten: WCAG 2.2 SC 2.1.1 (Keyboard), 2.4.7 (Focus Visible), 2.4.11 (Focus Not Obscured – Minimum) und 2.2 (Enough Time): https://www.w3.org/TR/WCAG22/
+- Umsetzung: Branch `feat/exam-focus-mode-navigation-lock`; CI und Review ausstehend. Manuelle Prüfung mit Tastatur, Screenreader, Mobilansicht und echten Prüfungsversuchen bleibt Teil der späteren QA.
