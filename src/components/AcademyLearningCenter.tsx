@@ -25,6 +25,7 @@ interface Props {
   area: 'courses' | 'notes';
   onStatusToast: (message: string) => void;
   onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
+  onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
 type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
@@ -105,7 +106,7 @@ function availabilityNotice(master: { publicationStatus: string; availability: s
   return null;
 }
 
-export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast, onUnsavedChangesChange }) => {
+export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast, onUnsavedChangesChange, onNavigateToExam }) => {
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
@@ -761,7 +762,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
                             )}
-                            {requirement.type === 'required_assessment' && <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>}
+                            {requirement.type === 'required_assessment' && (
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>
+                                {!assessmentProof && onNavigateToExam && (
+                                  <button
+                                    type="button"
+                                    className={secondary}
+                                    onClick={() => onNavigateToExam(requirement.targetId, selectedCourse.master.code)}
+                                  >
+                                    Zur Kursabschlussprüfung <span aria-hidden="true">→</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                             {['practical_task', 'instructor_confirmation'].includes(requirement.type) && !matching.length && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Nachweis muss von einem berechtigten Ausbilder erfasst werden.</p>
                             )}
