@@ -289,7 +289,10 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       setBusy(false);
       if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
       setCourseMaster(response.data.master); setCourseDraft(response.data.draft); setCourseCode(response.data.master.code);
-      setCourseDirty(false); setMode('course'); await load();
+      setCourseDirty(false);
+      pendingFocusRef.current = 'editor';
+      setMode('course');
+      await load();
       onStatusToast('Kursentwurf wurde angelegt. Er ist noch nicht veröffentlicht.');
       return;
     }
@@ -379,7 +382,10 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
       setBusy(false);
       if (!response.ok || !response.data) { setFormError([apiErrorMessage(response.error)]); return; }
       setProgramMaster(response.data.master); setProgramDraft(response.data.draft); setProgramCode(response.data.master.code);
-      setProgramDirty(false); setMode('program'); await load();
+      setProgramDirty(false);
+      pendingFocusRef.current = 'editor';
+      setMode('program');
+      await load();
       onStatusToast('Lehrgangsentwurf wurde angelegt. Er ist noch nicht veröffentlicht.');
       return;
     }
