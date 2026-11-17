@@ -509,6 +509,12 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 17.11.2026 – Kurs-/Lehrgangsautoren: Fokus nach erfolgreicher Neuanlage
 
-- **In Arbeit:** Nach dem erfolgreichen Erstellen eines Kurses oder Lehrgangs den Fokus auf die Editorüberschrift setzen, wenn der Modus vom Neuanlageformular zum gespeicherten Entwurf wechselt.
+- **Erledigt in PR #318:** Nach dem erfolgreichen Erstellen eines Kurses oder Lehrgangs wird der Fokus auf die Editorüberschrift gesetzt, wenn der Modus vom Neuanlageformular zum gespeicherten Entwurf wechselt.
 - Keine Änderung an Validierung, API, Entwurfsstatus, Veröffentlichung oder fachlichen Regeln.
-- **Noch offen:** CI/Review für Branch `a11y/academy-new-entry-focus-current-main`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #318.
+
+## 17.11.2026 – Kurs-/Lehrgangsautoren: Fokus nach Entfernen dynamischer Einträge
+
+- **In Arbeit:** Nach dem Entfernen von Lernzielen, Kapiteln, Kapitelmaterialien oder Kurszuordnungen den Fokus zum nächsten/vorherigen Eintrag zurückführen; wenn keiner verbleibt, zum zugehörigen Hinzufügen-/Auswahlfeld.
+- Keine Änderung an fachlichen Validierungs-, Zuordnungs-, Abschluss- oder Datenregeln.
+- **Noch offen:** CI/Review für Branch `a11y/academy-dynamic-row-removal-focus`; spätere manuelle Keyboard-/Screenreader-QA.
