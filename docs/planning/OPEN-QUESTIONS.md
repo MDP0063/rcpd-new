@@ -554,4 +554,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 - **In Arbeit:** Offene Kursabschlussprüfungs-Nachweise sollen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum führen, mit exakter Kurskennung. Der Zielvorgang darf nur ausgewählt werden, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurskontext zugeordnet ist.
 - Katalog-Vorauswahl muss sowohl Prüfungs-ID als auch gültigen Kurskontext setzen; kein stiller Fallback auf eine andere Kurszuordnung.
-- **Noch offen:** CI/Review für Branch `feat/course-to-exam-context-navigation`; manuelle Kurs-/Prüfungsnavigation später.
+- **Erledigt in PR #325:** Offene Kursabschlussbedingungen führen kontextuell zur exakt verknüpften Abschlussprüfung; Verfügbarkeit, Prüfungsstufe und Kurszuordnung werden geprüft. Der Katalog setzt bei Vorauswahl den Kurskontext mit.
+- **Noch offen:** manuelle Kurs-/Prüfungsnavigation für PR #325.
+
+
+## 17.11.2026 – Prüfungsvoraussetzungen
+
+- **In Arbeit:** Die Teilnehmeransicht soll konkrete Voraussetzungen und Mindestpunktzahlen anzeigen, statt nur pauschal auf die Prüfung beim Start hinzuweisen. Nicht im Teilnehmerkatalog sichtbare Prüfungen dürfen nicht über ihre Titel offengelegt werden.
+- **Noch offen:** CI/Review für Branch `feat/exam-prerequisite-explanation`.
