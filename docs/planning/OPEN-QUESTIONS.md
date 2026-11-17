@@ -539,3 +539,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **In Arbeit:** Manuelle Abgabe darf nicht unmittelbar beim Klick erfolgen. Bestätigungsdialog soll beantwortete/unbeantwortete Fragen zeigen, Endgültigkeit erklären und Speichern/Abgeben erst nach ausdrücklicher Bestätigung auslösen.
 - Automatische Abgabe bei abgelaufenem Zeitlimit bleibt servergesteuert und benötigt keine Teilnehmerbestätigung.
 - **Noch offen:** CI/Review für Branch `feat/exam-submission-confirmation`; spätere Keyboard-/Screenreader-/Mobil-QA.
+
+
+## 17.11.2026 – Fragenübersicht und Markierungen
+
+- **In Arbeit:** Fragenübersicht unter 1024 CSS-Pixeln als Disclosure einklappen und nach Auswahl einer Frage wieder schließen; Desktop-Seitenleiste bleibt offen.
+- Fragen für spätere Kontrolle markieren/entmarkieren; Abgabedialog zeigt Anzahl und Nummern markierter Fragen.
+- **Begrenzung offen:** Markierungen sind aktuell nur sitzungsgebunden und werden nicht über Reload/Fortsetzen hinweg gespeichert. Serverseitige Persistenz würde Datenmodell-/Autosave-Änderungen berühren und benötigt gesonderten Beschluss.
+- **Noch offen:** CI/Review für Branch `feat/exam-question-marking-responsive-nav`; manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA.
