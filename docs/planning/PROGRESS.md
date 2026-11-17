@@ -1583,3 +1583,13 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Die ältere `AcademyExamDoc`-Übungstest-/Abschlussprüfungsfamilie bleibt getrennt. Die Planung verbietet eine Zusammenführung/Entfernung ohne eigene Daten-/Workflowanalyse (siehe ACADEMY-SUBPAGE-REDESIGN.md, Abschnitt Prüfungszentrum).
 - Forschungsgrundlage für Tastatur-/Dialogverhalten: WCAG 2.2 SC 2.1.1 (Keyboard), 2.4.7 (Focus Visible), 2.4.11 (Focus Not Obscured – Minimum) und 2.2 (Enough Time): https://www.w3.org/TR/WCAG22/
 - Umsetzung: Branch `feat/exam-focus-mode-navigation-lock`; CI und Review ausstehend. Manuelle Prüfung mit Tastatur, Screenreader, Mobilansicht und echten Prüfungsversuchen bleibt Teil der späteren QA.
+
+
+## 17.11.2026 – Verbindliche Abgabebestätigung im Prüfungsrunner (in Arbeit)
+
+- Beide manuellen Abgabeaktionen öffnen denselben Bestätigungsdialog. Eine direkte manuelle Abgabe ohne Bestätigung ist nicht mehr möglich.
+- Der Dialog zeigt die Zahl beantworteter und unbeantworteter Fragen und weist ausdrücklich darauf hin, dass unbeantwortete Fragen ohne Antwort eingereicht werden und nach Abgabe keine Änderungen mehr möglich sind.
+- Der endgültige Bestätigungsbutton löst weiterhin den vorhandenen serverseitigen Save-/Submit-Ablauf aus. Automatische Zeitablauf-Abgabe bleibt ohne zusätzliche Bestätigung, da die Deadline serverseitig verbindlich ist.
+- Bei fehlgeschlagener Speicherung/Abgabe bleibt der Dialog mit Fehlermeldung offen; eine erneute Abgabe ist möglich. Abbruch per Escape oder „Weiter prüfen“ führt den Fokus zur auslösenden Abgabeaktion zurück.
+- Keine Änderung an Bewertung, Punkteberechnung, Versuchsregeln oder Datenverträgen.
+- Umsetzung: Branch `feat/exam-submission-confirmation`; CI/Review ausstehend. Spätere Keyboard-/Screenreader-/Mobil-QA bleibt offen.
