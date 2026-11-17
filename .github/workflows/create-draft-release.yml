@@ -53,16 +53,18 @@ jobs:
               if (error.status !== 404) throw error;
             }
 
-            const comparison = await github.paginate(
-              github.rest.repos.compareCommitsWithBasehead,
-              {
-                owner,
-                repo,
-                basehead: previousTag + '...' + target,
-                per_page: 100
-              }
-            );
-            const includedCommitShas = new Set(comparison.map(commit => commit.sha.toLowerCase()));
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: previousTag + '...' + target,
+              per_page: 100
+            });
+            const comparedCommits = comparison.data.commits || [];
+            if (comparison.data.total_commits > comparedCommits.length) {
+              core.setFailed('Der Release-Zeitraum umfasst mehr als 100 Commits. Bitte den Zeitraum in kleinere Releases aufteilen, damit keine PRs stillschweigend fehlen.');
+              return;
+            }
+            const includedCommitShas = new Set(comparedCommits.map(commit => commit.sha.toLowerCase()));
 
             if (includedCommitShas.size === 0) {
               core.setFailed('Zwischen vorherigem Tag und Zielbranch wurden keine Commits gefunden.');
