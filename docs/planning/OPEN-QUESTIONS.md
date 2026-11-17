@@ -524,3 +524,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **In Arbeit in PR #320:** Beantwortete Fragen und Fortschritt ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnen; lokale Abweichungen als ausstehend/fehlgeschlagen darstellen.
 - Autosave-Responses mit dem gesendeten Snapshot vergleichen und bei abweichendem Serverstand weitere automatische Saves blockieren.
 - **Merge gesperrt:** Datenintegritätsänderung; unabhängige Prüfung durch eine andere beteiligte Instanz oder den Projektinhaber gemäß `CONTRIBUTOR_ROLES.md` erforderlich. Manuelle Prüfung mit echten Versuchen bleibt zusätzlich offen.
+
+
+## 17.11.2026 – Prüfungsunterbrechung und Prüfungsmodus
+
+- **In Arbeit:** Während eines aktiven Versuchs globale Navigation, mobile Schnellzugriffe und Command Palette sperren; Start-/Fortsetzungsbestätigung als zugänglichen blockierenden Dialog umsetzen; versehentliches Browser-Verlassen mit Warnung absichern.
+- **Fachliche Entscheidung offen:** Bei Prüfungen ohne Zeitlimit (`timeLimitMinutes = 0`) kann ein Versuch nach einer Unterbrechung später fortgesetzt werden. Soll es dafür eine serverseitige maximale Fortsetzungsfrist geben oder soll das Unterbrechen/Verlassen den Versuch beenden? Eine konkrete Frist oder automatische Abgabe wird nicht ohne Beschluss erfunden.
+- **Nicht zusammenführen:** Alte `AcademyExamDoc`-Prüfungsfamilie und neuer versionierter Prüfungsrunner bleiben getrennt, bis Daten-/Workflowanalyse und Entscheidung abgeschlossen sind.
+- **Noch offen:** CI/Code-Review für Branch `feat/exam-focus-mode-navigation-lock`; manuelle Keyboard-/Screenreader-/Mobil-QA später.
