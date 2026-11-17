@@ -132,6 +132,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const [startConfirmationError, setStartConfirmationError] = useState('');
   const [activeAttemptPreview, setActiveAttemptPreview] = useState<PublicAttempt | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitConfirmationOpen, setSubmitConfirmationOpen] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
   const [runnerError, setRunnerError] = useState('');
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -148,6 +149,9 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
   const startButtonRef = useRef<HTMLButtonElement | null>(null);
   const startConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const startConfirmationDialogRef = useRef<HTMLElement | null>(null);
+  const submitConfirmationHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const submitConfirmationOriginRef = useRef<HTMLButtonElement | null>(null);
+  const wasSubmitConfirmationOpenRef = useRef(false);
   const wasStartConfirmationOpenRef = useRef(false);
   const restoreStartFocusRef = useRef(false);
   const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -169,6 +173,17 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
     window.addEventListener('beforeunload', warnBeforeLeaving);
     return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
   }, [attempt?.id]);
+
+  useEffect(() => {
+    if (submitConfirmationOpen) {
+      wasSubmitConfirmationOpenRef.current = true;
+      submitConfirmationHeadingRef.current?.focus();
+    } else if (wasSubmitConfirmationOpenRef.current) {
+      wasSubmitConfirmationOpenRef.current = false;
+      if (submitConfirmationOriginRef.current?.isConnected) submitConfirmationOriginRef.current.focus();
+      submitConfirmationOriginRef.current = null;
+    }
+  }, [submitConfirmationOpen]);
 
   useEffect(() => {
     if (startConfirmationOpen) {
@@ -399,6 +414,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
         { method: 'POST', body: JSON.stringify({}) }
       );
       if ((response.ok || response.status === 409) && response.data?.submission) {
+        setSubmitConfirmationOpen(false);
         setSubmission(response.data.submission);
         void loadResultHistory();
         attemptRef.current = null;
@@ -604,7 +620,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                     {currentQuestionIndex < attempt.questions.length - 1 ? (
                       <button type="button" disabled={submitting} onClick={() => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null; void enqueueSave(); setCurrentQuestionIndex(index => Math.min(attempt.questions.length - 1, index + 1)); }} className={primaryButton}>Nächste Frage <ArrowRight className="h-4 w-4" /></button>
                     ) : (
-                      <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Prüfung abgeben</button>
+                      <button type="button" disabled={submitting} onClick={event => { submitConfirmationOriginRef.current = event.currentTarget; setSubmitConfirmationOpen(true); }} className={primaryButton}><Send className="h-4 w-4" /> Prüfung abgeben</button>
                     )}
                   </div>
                 </>
@@ -615,8 +631,66 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
           </div>
           <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500 dark:text-slate-400">Deine Antworten werden automatisch gespeichert. Bei einem versehentlichen Verlassen bleibt der letzte serverbestätigte Stand erhalten. Ein vorhandenes Zeitlimit läuft weiter.</p>
-            <button type="button" disabled={submitting} onClick={() => void submitAttempt(false)} className={primaryButton}><Send className="h-4 w-4" /> Abgabe abschließen</button>
+            <button type="button" disabled={submitting} onClick={event => { submitConfirmationOriginRef.current = event.currentTarget; setSubmitConfirmationOpen(true); }} className={primaryButton}><Send className="h-4 w-4" /> Abgabe abschließen</button>
           </div>
+          {submitConfirmationOpen && (
+            <div className="academy-exam-submit-dialog-backdrop">
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="academy-exam-submit-confirmation-heading"
+                aria-describedby="academy-exam-submit-confirmation-description"
+                className="academy-exam-submit-confirmation space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:p-6"
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    if (!submitting) setSubmitConfirmationOpen(false);
+                    return;
+                  }
+                  if (event.key !== 'Tab') return;
+                  const focusable = Array.from(
+                    event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')
+                  ).filter(element => !element.hasAttribute('hidden'));
+                  if (focusable.length === 0) {
+                    event.preventDefault();
+                    event.currentTarget.focus();
+                    return;
+                  }
+                  const activeIndex = focusable.indexOf(document.activeElement as HTMLElement);
+                  const first = focusable[0];
+                  const last = focusable[focusable.length - 1];
+                  if (event.shiftKey && activeIndex <= 0) {
+                    event.preventDefault();
+                    last.focus();
+                  } else if (!event.shiftKey && (activeIndex === -1 || activeIndex === focusable.length - 1)) {
+                    event.preventDefault();
+                    first.focus();
+                  }
+                }}
+              >
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prüfungsabgabe</div>
+                  <h3 ref={submitConfirmationHeadingRef} tabIndex={-1} id="academy-exam-submit-confirmation-heading" className="mt-1 text-lg font-bold text-slate-900 outline-none dark:text-white">Prüfung verbindlich abgeben?</h3>
+                  <p id="academy-exam-submit-confirmation-description" className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">Nach der Abgabe kannst du deine Antworten nicht mehr ändern. Der gespeicherte Antwortstand wird zur Bewertung eingereicht.</p>
+                </div>
+                <div className={cardClass + ' space-y-2 rounded-lg p-4 text-sm'}>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Beantwortete Fragen</span><strong className="tabular-nums text-slate-900 dark:text-white">{answeredCount} / {attempt.questions.length}</strong></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
+                  {attempt.questions.length - answeredCount > 0
+                    ? <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">Unbeantwortete Fragen werden ohne Antwort eingereicht. Prüfe, ob du diese Fragen wirklich offenlassen möchtest.</p>
+                    : <p className="text-xs text-slate-600 dark:text-slate-300">Alle Fragen enthalten eine Antwort. Prüfe deine Auswahl vor der endgültigen Abgabe.</p>}
+                </div>
+                {runnerError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{runnerError}</div>}
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button type="button" className={secondaryButton} onClick={() => setSubmitConfirmationOpen(false)} disabled={submitting}>Weiter prüfen</button>
+                  <button type="button" className={primaryButton} onClick={() => void submitAttempt(false)} disabled={submitting}>
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {submitting ? 'Abgabe wird verarbeitet …' : runnerError ? 'Erneut verbindlich abgeben' : 'Prüfung verbindlich abgeben'}
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
         </div>
       </div>
     );
