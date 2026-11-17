@@ -270,7 +270,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
           setSelectedCourseCode('');
           selectedExamIdRef.current = '';
           selectedCourseCodeRef.current = '';
-          setContextNavigationMessage('Die verknüpfte Prüfung ist nicht dem aktuellen Kurskontext zugeordnet. Bitte wende dich an die Kursverwaltung.');
+          setContextNavigationMessage('Die verknüpfte Prüfung ist nicht als Kursabschlussprüfung für diesen Kurs freigegeben. Bitte wende dich an die Kursverwaltung.');
         } else {
           const courseCode = initialCourseCode || linkedExam.assignedCourseCodes[0] || '';
           initialExamSelectionHandledRef.current = true;
