@@ -634,7 +634,10 @@ export default function App() {
       clearPortalData();
       initialLoadCompleteRef.current = false;
       seenNotificationIdsRef.current.clear();
-      navigateToSection('dashboard');
+      setExamAttemptActive(false);
+      setActiveSection('dashboard');
+      setIsCommandPaletteOpen(false);
+      setIsNotifPopoverOpen(false);
       if (isAutoTimeout) {
         setAuthError(
           'SICHERHEITS-TIMEOUT: Du wurdest nach 15 Minuten Inaktivität automatisch abgemeldet, um unbefugten Zugriff Dritter zu verhindern.'
@@ -1288,6 +1291,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsNotifPopoverOpen(prev => !prev)}
+              disabled={examAttemptActive}
               className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-slate-800 dark:bg-slate-900 text-slate-200 border-slate-700 dark:border-slate-800 hover:bg-slate-700 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="System-Benachrichtigungen"
             >
@@ -2009,7 +2013,7 @@ export default function App() {
                 </div>
 
                 <div
-                  onClick={() => navigateToSection('calendar')} disabled={examAttemptActive}
+                  onClick={() => navigateToSection('calendar')}
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-lg p-5 shadow-xs flex flex-col justify-between cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
