@@ -109,7 +109,18 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     else activeAreaNavFocusRef.current?.focus();
   }, [activeTab, isAcademyHome]);
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
+  const [courseExamNavigationTarget, setCourseExamNavigationTarget] = useState<{ examId: string; courseCode: string } | null>(null);
   const processedReviewNavigationRef = useRef<string | null>(null);
+  const navigateToCourseExam = useCallback((examId: string, courseCode: string) => {
+    setCourseExamNavigationTarget({ examId, courseCode });
+    lastHomeAreaRef.current = 'exam_center';
+    pendingAcademyFocusRef.current = 'area';
+    setIsAcademyHome(false);
+    setActiveTab('exam_center');
+  }, []);
+  useEffect(() => {
+    if (activeTab !== 'exam_center' && courseExamNavigationTarget) setCourseExamNavigationTarget(null);
+  }, [activeTab, courseExamNavigationTarget]);
   useEffect(() => {
     if (!reviewNavigationTarget) {
       processedReviewNavigationRef.current = null;
@@ -847,7 +858,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           )}
           {courseAreaMode === 'management' && canAuthorCourses
             ? <AcademyAuthoringCenter currentUser={currentUser} onStatusToast={onStatusToast} />
-            : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
+            : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} onNavigateToExam={navigateToCourseExam} />}
         </section>
       )}
       {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} onUnsavedChangesChange={setHasUnsavedNoteChanges} />}
@@ -1275,7 +1286,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
 
-      {activeTab === 'exam_center' && <ExamParticipantRunner onAttemptActiveChange={handleExamAttemptActiveChange} />}
+      {activeTab === 'exam_center' && (
+        <ExamParticipantRunner
+          onAttemptActiveChange={handleExamAttemptActiveChange}
+          initialExamId={courseExamNavigationTarget?.examId || null}
+          initialCourseCode={courseExamNavigationTarget?.courseCode || null}
+        />
+      )}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 

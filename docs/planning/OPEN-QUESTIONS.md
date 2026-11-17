@@ -546,4 +546,12 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **In Arbeit:** Fragenübersicht unter 1024 CSS-Pixeln als Disclosure einklappen und nach Auswahl einer Frage wieder schließen; Desktop-Seitenleiste bleibt offen.
 - Fragen für spätere Kontrolle markieren/entmarkieren; Abgabedialog zeigt Anzahl und Nummern markierter Fragen.
 - **Begrenzung offen:** Markierungen sind aktuell nur sitzungsgebunden und werden nicht über Reload/Fortsetzen hinweg gespeichert. Serverseitige Persistenz würde Datenmodell-/Autosave-Änderungen berühren und benötigt gesonderten Beschluss.
-- **Noch offen:** CI/Review für Branch `feat/exam-question-marking-responsive-nav`; manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA.
+- **Erledigt in PR #324:** Fragenübersicht unter 1024 CSS-Pixeln einklappbar, nach Auswahl auf kleinen Viewports automatisch geschlossen; Fragenmarkierungen und Abgabeübersicht ergänzt.
+- **Noch offen:** manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA für PR #324.
+
+
+## 17.11.2026 – Kurs-/Prüfungsnavigation
+
+- **In Arbeit:** Offene Kursabschlussprüfungs-Nachweise sollen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum führen, mit exakter Kurskennung. Der Zielvorgang darf nur ausgewählt werden, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurskontext zugeordnet ist.
+- Katalog-Vorauswahl muss sowohl Prüfungs-ID als auch gültigen Kurskontext setzen; kein stiller Fallback auf eine andere Kurszuordnung.
+- **Noch offen:** CI/Review für Branch `feat/course-to-exam-context-navigation`; manuelle Kurs-/Prüfungsnavigation später.
