@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialTaxonomyManager.css';
 import type { AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeView } from '../types/academy';
@@ -30,6 +31,7 @@ function errorMessage(code?: string): string {
 }
 
 export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusToast }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const [documentTypes, setDocumentTypes] = useState<AcademyMaterialDocumentTypeView[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -92,16 +94,16 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     setFormErrorField(null);
   };
 
-  const beginCreate = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen neuen Dokumenttyp beginnen?')) return;
+  const beginCreate = async () => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen und einen neuen Dokumenttyp beginnen?', { title: 'Neuen Dokumenttyp beginnen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     documentTypeOriginIdRef.current = 'new';
     pendingFormFocusRef.current = 'form';
     resetForm();
     setFormOpen(true);
   };
 
-  const beginEdit = (documentType: AcademyMaterialDocumentTypeView) => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und einen anderen Dokumenttyp bearbeiten?')) return;
+  const beginEdit = async (documentType: AcademyMaterialDocumentTypeView) => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen und einen anderen Dokumenttyp bearbeiten?', { title: 'Anderen Dokumenttyp bearbeiten?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     documentTypeOriginIdRef.current = documentType.id;
     pendingFormFocusRef.current = 'form';
     setEditing(documentType);
@@ -112,8 +114,8 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
     setFormOpen(true);
   };
 
-  const cancelEdit = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+  const cancelEdit = async () => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen?', { title: 'Änderungen verwerfen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
@@ -179,10 +181,11 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
 
   const changeArchiveState = async (documentType: AcademyMaterialDocumentTypeView) => {
     const archive = documentType.status === 'active';
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       archive
         ? `Dokumenttyp „${documentType.name}“ archivieren? Bestehende Dokumentverweise bleiben erhalten; der Dokumenttyp kann anschließend nicht mehr für neue Materialien ausgewählt werden.`
-        : `Dokumenttyp „${documentType.name}“ wieder aktivieren?`
+        : `Dokumenttyp „${documentType.name}“ wieder aktivieren?`,
+      { title: archive ? 'Dokumenttyp archivieren?' : 'Dokumenttyp wieder aktivieren?', confirmLabel: archive ? 'Dokumenttyp archivieren' : 'Dokumenttyp aktivieren', danger: archive }
     );
     if (!confirmed) return;
     setBusy(true);
@@ -197,14 +200,16 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
       return;
     }
     await load();
-    if (editing?.id === documentType.id) beginCreate();
+    if (editing?.id === documentType.id) await beginCreate();
     setBusy(false);
     onStatusToast(archive ? `Dokumenttyp „${documentType.name}“ archiviert.` : `Dokumenttyp „${documentType.name}“ wieder aktiviert.`);
   };
 
   const deleteDocumentType = async (documentType: AcademyMaterialDocumentTypeView) => {
-    const typedName = window.prompt(
-      `Dokumenttyp „${documentType.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf ihn verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
+    const typedName = await prompt(
+      `Dokumenttyp „${documentType.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf ihn verweist. Bitte gib den Dokumenttypnamen exakt ein.`,
+      { label: 'Dokumenttypname', exactValue: documentType.name, exactMatchMessage: 'Der Dokumenttypname stimmt nicht überein.', maxLength: 80 },
+      { title: 'Dokumenttyp endgültig löschen?', confirmLabel: 'Löschen', danger: true }
     );
     if (typedName === null) return;
     if (typedName.trim() !== documentType.name) {
@@ -225,7 +230,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
       await load();
       return;
     }
-    if (editing?.id === documentType.id) beginCreate();
+    if (editing?.id === documentType.id) await beginCreate();
     await load();
     setBusy(false);
     onStatusToast(`Dokumenttyp „${documentType.name}“ endgültig gelöscht.`);
@@ -379,6 +384,7 @@ export const AcademyMaterialDocumentTypeManager: React.FC<Props> = ({ onStatusTo
       <p className="text-xs text-slate-500 dark:text-slate-400">
         Archivierte Dokumenttypen bleiben für bestehende Verweise nachvollziehbar und können nicht neuen Materialien zugewiesen werden. Endgültiges Löschen ist nur ohne bestehende Materialzuordnungen möglich; der Server prüft das unmittelbar beim Löschversuch.
       </p>
+      {academyDialog}
     </section>
   );
 };

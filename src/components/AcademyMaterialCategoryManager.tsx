@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialTaxonomyManager.css';
 import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryView } from '../types/academy';
@@ -30,6 +31,7 @@ function errorMessage(code?: string): string {
 }
 
 export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const [categories, setCategories] = useState<AcademyMaterialCategoryView[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -92,16 +94,16 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setFormErrorField(null);
   };
 
-  const beginCreate = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine neue Kategorie beginnen?')) return;
+  const beginCreate = async () => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen und eine neue Kategorie beginnen?', { title: 'Neue Kategorie beginnen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     categoryOriginIdRef.current = 'new';
     pendingFormFocusRef.current = 'form';
     resetForm();
     setFormOpen(true);
   };
 
-  const beginEdit = (category: AcademyMaterialCategoryView) => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen und eine andere Kategorie bearbeiten?')) return;
+  const beginEdit = async (category: AcademyMaterialCategoryView) => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen und eine andere Kategorie bearbeiten?', { title: 'Andere Kategorie bearbeiten?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     categoryOriginIdRef.current = category.id;
     pendingFormFocusRef.current = 'form';
     setEditing(category);
@@ -112,8 +114,8 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
     setFormOpen(true);
   };
 
-  const cancelEdit = () => {
-    if (hasFormChanges && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+  const cancelEdit = async () => {
+    if (hasFormChanges && !(await confirm('Ungespeicherte Änderungen verwerfen?', { title: 'Änderungen verwerfen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     pendingFormFocusRef.current = 'list';
     resetForm();
     setFormOpen(false);
@@ -179,10 +181,11 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
 
   const changeArchiveState = async (category: AcademyMaterialCategoryView) => {
     const archive = category.status === 'active';
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       archive
         ? `Kategorie „${category.name}“ archivieren? Bestehende Dokumentverweise bleiben erhalten; die Kategorie kann anschließend nicht mehr für neue Materialien ausgewählt werden.`
-        : `Kategorie „${category.name}“ wieder aktivieren?`
+        : `Kategorie „${category.name}“ wieder aktivieren?`,
+      { title: archive ? 'Kategorie archivieren?' : 'Kategorie wieder aktivieren?', confirmLabel: archive ? 'Kategorie archivieren' : 'Kategorie aktivieren', danger: archive }
     );
     if (!confirmed) return;
     setBusy(true);
@@ -197,14 +200,16 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       return;
     }
     await load();
-    if (editing?.id === category.id) beginCreate();
+    if (editing?.id === category.id) await beginCreate();
     setBusy(false);
     onStatusToast(archive ? `Kategorie „${category.name}“ archiviert.` : `Kategorie „${category.name}“ wieder aktiviert.`);
   };
 
   const deleteCategory = async (category: AcademyMaterialCategoryView) => {
-    const typedName = window.prompt(
-      `Kategorie „${category.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf sie verweist. Zum Bestätigen bitte den Namen exakt eingeben:`
+    const typedName = await prompt(
+      `Kategorie „${category.name}“ endgültig löschen? Das ist nur möglich, wenn kein Material mehr auf sie verweist. Bitte gib den Kategorienamen exakt ein.`,
+      { label: 'Kategoriename', exactValue: category.name, exactMatchMessage: 'Der Kategoriename stimmt nicht überein.', maxLength: 80 },
+      { title: 'Kategorie endgültig löschen?', confirmLabel: 'Löschen', danger: true }
     );
     if (typedName === null) return;
     if (typedName.trim() !== category.name) {
@@ -225,7 +230,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       await load();
       return;
     }
-    if (editing?.id === category.id) beginCreate();
+    if (editing?.id === category.id) await beginCreate();
     await load();
     setBusy(false);
     onStatusToast(`Kategorie „${category.name}“ endgültig gelöscht.`);
@@ -379,6 +384,7 @@ export const AcademyMaterialCategoryManager: React.FC<Props> = ({ onStatusToast 
       <p className="text-xs text-slate-500 dark:text-slate-400">
         Archivierte Kategorien bleiben für bestehende Verweise nachvollziehbar und können nicht neuen Materialien zugewiesen werden. Endgültiges Löschen ist nur ohne bestehende Materialzuordnungen möglich; der Server prüft das unmittelbar beim Löschversuch.
       </p>
+      {academyDialog}
     </section>
   );
 };

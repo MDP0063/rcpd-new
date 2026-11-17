@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyAuthoringCenter.css';
 import { removeChapterMaterialReference, removeCourseChapter, updateCourseChapterTitle } from '../lib/academyCourseEditor';
@@ -134,6 +135,7 @@ function programValidation(code: string, title: string, objectives: AcademyLearn
 }
 
 export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusToast }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const [mode, setMode] = useState<EditorMode>('list');
   const editorHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const listHeadingRef = useRef<HTMLHeadingElement | null>(null);
@@ -355,7 +357,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     if (!courseMaster || !courseDraft || courseDirty || busy || !courseHasUnpublishedChanges) return;
     const errors = courseValidation(courseCode, courseTitle, courseObjectives, courseChapters);
     if (errors.length) { setFormError(errors); return; }
-    if (!window.confirm('Möchtest du den gespeicherten Kursentwurf jetzt als neue veröffentlichte Kursversion bereitstellen? Teilnehmende, die bereits begonnen haben, behalten ihre fest zugeordnete Version.')) return;
+    if (!(await confirm('Möchtest du den gespeicherten Kursentwurf jetzt als neue veröffentlichte Kursversion bereitstellen? Teilnehmende, die bereits begonnen haben, behalten ihre fest zugeordnete Version.', { title: 'Kursversion veröffentlichen?', confirmLabel: 'Kursversion veröffentlichen' }))) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyCourseMasterDoc; version: AcademyCourseVersionDoc }>(API_ENDPOINTS.ACADEMY_COURSE(courseMaster.id) + '/publish', {
       method: 'POST',
@@ -377,7 +379,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     const explanation = decision === 'keep_available'
       ? 'Die bisherige Kursversion wird nach Abschluss aller offenen Materialprüfungen wieder für neue Teilnehmende verfügbar.'
       : 'Der Kurs bleibt offline. Veröffentliche zuerst eine aktualisierte Kursversion und aktiviere ihn danach ausdrücklich wieder.';
-    if (!window.confirm(`Materialprüfung für ${entry.master.code} abschließen? ${explanation}`)) return;
+    if (!(await confirm(`Materialprüfung für ${entry.master.code} abschließen? ${explanation}`, { title: 'Materialprüfung abschließen?', confirmLabel: 'Prüfung abschließen' }))) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyCourseMasterDoc }>(
       API_ENDPOINTS.ACADEMY_COURSE(entry.master.id) + '/material-review',
@@ -395,7 +397,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
 
   const setCourseAvailability = async (entry: CourseEntry, availability: 'available' | 'unavailable') => {
     if (availability === 'available' &&
-        !window.confirm(`Soll der Kurs ${entry.master.code} nach Prüfung wieder für neue Teilnehmende verfügbar sein?`)) return;
+        !(await confirm(`Soll der Kurs ${entry.master.code} nach Prüfung wieder für neue Teilnehmende verfügbar sein?`, { title: 'Kurs wieder verfügbar machen?', confirmLabel: 'Verfügbarkeit aktivieren' }))) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyCourseMasterDoc }>(
       API_ENDPOINTS.ACADEMY_COURSE(entry.master.id) + '/availability',
@@ -448,7 +450,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     if (!programMaster || !programDraft || programDirty || busy || !programHasUnpublishedChanges) return;
     const errors = programValidation(programCode, programTitle, programObjectives, programReferences);
     if (errors.length) { setFormError(errors); return; }
-    if (!window.confirm('Möchtest du den gespeicherten Lehrgangsentwurf jetzt als neue Lehrgangsversion veröffentlichen? Bei einer Teilnahme werden die Pflichtkursversionen zu diesem Zeitpunkt fest zugeordnet.')) return;
+    if (!(await confirm('Möchtest du den gespeicherten Lehrgangsentwurf jetzt als neue Lehrgangsversion veröffentlichen? Bei einer Teilnahme werden die Pflichtkursversionen zu diesem Zeitpunkt fest zugeordnet.', { title: 'Lehrgangsversion veröffentlichen?', confirmLabel: 'Lehrgangsversion veröffentlichen' }))) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyProgramMasterDoc; version: AcademyProgramVersionDoc }>(API_ENDPOINTS.ACADEMY_PROGRAM(programMaster.id) + '/publish', {
       method: 'POST',
@@ -563,9 +565,9 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     JSON.stringify(programDraft.courseReferences) !== JSON.stringify(currentProgramVersion.courseReferences)));
   const isCourseEditor = mode === 'new-course' || mode === 'course';
   const isProgramEditor = mode === 'new-program' || mode === 'program';
-  const leaveEditor = () => {
+  const leaveEditor = async () => {
     const hasUnsavedChanges = (isCourseEditor && courseDirty) || (isProgramEditor && programDirty);
-    if (hasUnsavedChanges && !window.confirm('Es gibt ungespeicherte Änderungen. Möchtest du den Editor wirklich verlassen und diese Änderungen verwerfen?')) return;
+    if (hasUnsavedChanges && !(await confirm('Es gibt ungespeicherte Änderungen. Möchtest du den Editor wirklich verlassen und diese Änderungen verwerfen?', { title: 'Editor verlassen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     pendingFocusRef.current = 'list';
     setMode('list');
     setFormError([]);
@@ -789,6 +791,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
           </form>
         </section>
       )}
+      {academyDialog}
     </div>
   );
 };
