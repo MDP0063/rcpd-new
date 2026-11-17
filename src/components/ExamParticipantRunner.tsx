@@ -6,6 +6,13 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { CoalescedRequestRunner } from '../lib/coalescedRequest';
+import {
+  answerPersistenceState,
+  areAnswerMapsEqual,
+  countConfirmedAnswers,
+  countPendingAnswers,
+  hasAnswer
+} from '../lib/examAnswerProgress';
 
 type AssessmentStage = 'test' | 'final_exam';
 type AnswerValue = string | string[] | boolean | Array<{ pairId: string; targetId: string }> | null;
@@ -79,7 +86,7 @@ interface PublicSubmission {
   }>;
 }
 
-type SaveResponse = { attempt: { currentRevision: number }; saved: boolean; stale: boolean };
+type SaveResponse = { attempt: { currentRevision: number; answers: AnswerMap } | null; saved: boolean; stale: boolean; expired?: boolean };
 type SubmitResponse = { submission: PublicSubmission; expired: boolean; alreadySubmitted: boolean };
 
 const cardClass = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
@@ -101,16 +108,6 @@ function formatPoints(milli: number): string {
   return (milli / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
 }
 
-function answerCount(questions: PublicQuestion[], answers: AnswerMap): number {
-  return questions.filter(question => {
-    const answer = answers[question.id];
-    if (answer === undefined || answer === null) return false;
-    if (typeof answer === 'string') return answer.trim().length > 0;
-    if (Array.isArray(answer)) return answer.length > 0;
-    return typeof answer === 'boolean';
-  }).length;
-}
-
 export const ExamParticipantRunner: React.FC = () => {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
@@ -122,6 +119,7 @@ export const ExamParticipantRunner: React.FC = () => {
   const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [savedAnswers, setSavedAnswers] = useState<AnswerMap>({});
   const [starting, setStarting] = useState(false);
   const [startConfirmationOpen, setStartConfirmationOpen] = useState(false);
   const [startConfirmationState, setStartConfirmationState] = useState<'idle' | 'checking' | 'new' | 'resume' | 'error'>('idle');
@@ -133,6 +131,7 @@ export const ExamParticipantRunner: React.FC = () => {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const revisionRef = useRef(0);
+  const saveConflictRef = useRef(false);
   const answersRef = useRef<AnswerMap>({});
   const attemptRef = useRef<PublicAttempt | null>(null);
   const saveQueueRef = useRef<CoalescedRequestRunner | null>(null);
@@ -163,7 +162,9 @@ export const ExamParticipantRunner: React.FC = () => {
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
-  const answeredCount = attempt ? answerCount(attempt.questions, answers) : 0;
+  const questionIds = attempt?.questions.map(question => question.id) || [];
+  const answeredCount = countConfirmedAnswers(questionIds, savedAnswers);
+  const pendingAnswerCount = countPendingAnswers(questionIds, answers, savedAnswers);
   const resultScore = submission?.finalScoreBasisPoints ?? submission?.preliminaryScoreBasisPoints ?? 0;
 
   useEffect(() => {
@@ -216,8 +217,10 @@ export const ExamParticipantRunner: React.FC = () => {
     setAttempt(null);
     setSubmission(null);
     setAnswers({});
+    setSavedAnswers({});
     answersRef.current = {};
     revisionRef.current = 0;
+    saveConflictRef.current = false;
     setCurrentQuestionIndex(0);
     setRemainingSeconds(null);
     setRunnerError('');
@@ -232,8 +235,10 @@ export const ExamParticipantRunner: React.FC = () => {
     attemptRef.current = next;
     answersRef.current = restoredAnswers;
     revisionRef.current = next.currentRevision;
+    saveConflictRef.current = false;
     setAttempt(next);
     setAnswers(restoredAnswers);
+    setSavedAnswers(restoredAnswers);
     setSubmission(null);
     setCurrentQuestionIndex(0);
     setServerOffsetMs(new Date(next.serverTimeIso).getTime() - Date.now());
@@ -310,7 +315,7 @@ export const ExamParticipantRunner: React.FC = () => {
 
   const saveAnswers = useCallback(async (allowDuringSubmit = false, keepalive = false): Promise<boolean> => {
     const current = attemptRef.current;
-    if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
+    if (!current || saveConflictRef.current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
     const nextRevision = revisionRef.current + 1;
     setSaveState('saving');
@@ -324,8 +329,26 @@ export const ExamParticipantRunner: React.FC = () => {
     );
     if (response.ok && response.data?.attempt) {
       if (attemptRef.current?.id !== current.id) return false;
+      const confirmedAnswers = response.data.attempt.answers;
+      if (!confirmedAnswers || typeof confirmedAnswers !== 'object' || Array.isArray(confirmedAnswers)) {
+        saveConflictRef.current = true;
+        setSaveState('error');
+        setRunnerError('Der Server hat keinen gültigen bestätigten Antwortstand zurückgegeben. Deine lokalen Eingaben bleiben erhalten. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.');
+        return false;
+      }
       revisionRef.current = Math.max(revisionRef.current, response.data.attempt.currentRevision);
-      setSaveState('saved');
+      setSavedAnswers(confirmedAnswers);
+      if (!areAnswerMapsEqual(snapshot, confirmedAnswers)) {
+        saveConflictRef.current = true;
+        setSaveState('error');
+        setRunnerError(response.data.stale
+          ? 'Der Server hat bereits einen neueren Antwortstand. Deine lokalen Eingaben wurden nicht gespeichert, damit kein anderer Stand überschrieben wird. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.'
+          : 'Der Server hat den gesendeten Antwortstand nicht bestätigt. Deine lokalen Eingaben bleiben erhalten. Bitte verlasse die Prüfung und setze den Versuch mit dem aktuellen Serverstand fort.');
+        return false;
+      }
+      const latestDraftConfirmed = areAnswerMapsEqual(answersRef.current, confirmedAnswers);
+      setSaveState(latestDraftConfirmed ? 'saved' : 'saving');
+      if (latestDraftConfirmed) setRunnerError('');
       return true;
     }
     setSaveState('error');
@@ -342,7 +365,7 @@ export const ExamParticipantRunner: React.FC = () => {
     if (!targetAttemptId || submittingRef.current) return Promise.resolve();
     // One active save plus at most one trailing save of the newest answer snapshot.
     return saveQueueRef.current!.run(async () => {
-      if (attemptRef.current?.id !== targetAttemptId) return;
+      if (attemptRef.current?.id !== targetAttemptId || saveConflictRef.current) return;
       await saveAnswers();
     });
   }, [saveAnswers]);
@@ -383,6 +406,7 @@ export const ExamParticipantRunner: React.FC = () => {
         void loadResultHistory();
         attemptRef.current = null;
         setAttempt(null);
+        setSavedAnswers({});
         setSaveState('saved');
       } else {
         setRunnerError(response.error || 'Die Prüfung konnte nicht abgegeben werden. Bitte versuche es erneut.');
@@ -400,6 +424,12 @@ export const ExamParticipantRunner: React.FC = () => {
     const next = { ...answersRef.current, [questionId]: value };
     answersRef.current = next;
     setAnswers(next);
+    if (saveConflictRef.current) {
+      setRunnerError('Deine lokalen Änderungen sind nicht bestätigt. Verlasse die Prüfung und setze den Versuch fort, um den aktuellen Serverstand zu laden.');
+      setSaveState('error');
+      return;
+    }
+    setRunnerError('');
     setSaveState('saving');
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => { void enqueueSave(); }, 700);
