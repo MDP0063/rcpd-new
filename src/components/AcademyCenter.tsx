@@ -112,13 +112,12 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [courseExamNavigationTarget, setCourseExamNavigationTarget] = useState<{ examId: string; courseCode: string } | null>(null);
   const processedReviewNavigationRef = useRef<string | null>(null);
   const navigateToCourseExam = useCallback((examId: string, courseCode: string) => {
-    if (!canLeaveNotes()) return;
     setCourseExamNavigationTarget({ examId, courseCode });
     lastHomeAreaRef.current = 'exam_center';
     pendingAcademyFocusRef.current = 'area';
     setIsAcademyHome(false);
     setActiveTab('exam_center');
-  }, [activeTab, hasUnsavedNoteChanges]);
+  }, []);
   useEffect(() => {
     if (activeTab !== 'exam_center' && courseExamNavigationTarget) setCourseExamNavigationTarget(null);
   }, [activeTab, courseExamNavigationTarget]);
