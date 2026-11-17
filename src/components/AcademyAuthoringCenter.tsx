@@ -145,6 +145,22 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   const editorOriginRef = useRef<{ type: 'new-course' | 'new-program' | 'course' | 'program'; id?: string } | null>(null);
   const pendingFocusRef = useRef<'editor' | 'list' | null>(null);
   const formErrorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const courseObjectiveAddRef = useRef<HTMLButtonElement | null>(null);
+  const courseChapterAddRef = useRef<HTMLButtonElement | null>(null);
+  const programObjectiveAddRef = useRef<HTMLButtonElement | null>(null);
+  const programCourseAddRef = useRef<HTMLButtonElement | null>(null);
+  const programCourseSelectRef = useRef<HTMLSelectElement | null>(null);
+  const chapterMaterialSelectRefs = useRef<Record<string, HTMLSelectElement | null>>({});
+  const courseObjectiveRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const courseChapterRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const programObjectiveRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const programCourseRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const chapterMaterialRemoveRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const pendingDynamicRemovalFocusRef = useRef<{
+    collection: 'course-objectives' | 'course-chapters' | 'program-objectives' | 'program-courses' | 'chapter-materials';
+    targetId: string | null;
+    chapterId?: string;
+  } | null>(null);
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [materials, setMaterials] = useState<AcademyMaterialListItem[]>([]);
@@ -207,6 +223,34 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     else if (listHeadingRef.current?.isConnected) listHeadingRef.current.focus();
     else listSearchRef.current?.focus();
   }, [mode]);
+
+  useEffect(() => {
+    const pending = pendingDynamicRemovalFocusRef.current;
+    if (!pending) return;
+    pendingDynamicRemovalFocusRef.current = null;
+
+    const target = pending.collection === 'course-objectives'
+      ? pending.targetId ? courseObjectiveRemoveRefs.current[pending.targetId] : null
+      : pending.collection === 'course-chapters'
+        ? pending.targetId ? courseChapterRemoveRefs.current[pending.targetId] : null
+        : pending.collection === 'program-objectives'
+          ? pending.targetId ? programObjectiveRemoveRefs.current[pending.targetId] : null
+          : pending.collection === 'program-courses'
+            ? pending.targetId ? programCourseRemoveRefs.current[pending.targetId] : null
+            : pending.targetId ? chapterMaterialRemoveRefs.current[pending.targetId] : null;
+
+    if (target?.isConnected) {
+      target.focus();
+      return;
+    }
+
+    const fallback = pending.collection === 'course-objectives' ? courseObjectiveAddRef.current
+      : pending.collection === 'course-chapters' ? courseChapterAddRef.current
+      : pending.collection === 'program-objectives' ? programObjectiveAddRef.current
+      : pending.collection === 'program-courses' ? programCourseSelectRef.current
+      : pending.chapterId ? chapterMaterialSelectRefs.current[pending.chapterId] : null;
+    fallback?.focus();
+  }, [courseObjectives.length, courseChapters, programObjectives.length, programReferences.length]);
 
   useEffect(() => {
     if (formError.length > 0) formErrorSummaryRef.current?.focus();
@@ -419,6 +463,16 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
 
   const addCourseObjective = () => { setCourseObjectives(items => [...items, { id: newId('objective'), description: '' }]); setCourseDirty(true); };
+  const removeCourseObjectiveById = (objectiveId: string) => {
+    const index = courseObjectives.findIndex(item => item.id === objectiveId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'course-objectives',
+      targetId: courseObjectives[index + 1]?.id || courseObjectives[index - 1]?.id || null
+    };
+    setCourseObjectives(items => items.filter(item => item.id !== objectiveId));
+    setCourseDirty(true);
+  };
   const addCourseChapter = () => {
     setCourseChapters(items => [...items, { id: newId('chapter'), title: '', description: '', materialReferences: [], required: false, order: items.length }]);
     setCourseDirty(true);
@@ -431,17 +485,52 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
     setCourseDirty(true);
   };
   const removeChapterMaterial = (chapterId: string, materialId: string) => {
+    const chapter = courseChapters.find(item => item.id === chapterId);
+    const index = chapter?.materialReferences.findIndex(item => item.materialId === materialId) ?? -1;
+    if (!chapter || index < 0) return;
+    const nextReference = chapter.materialReferences[index + 1] || chapter.materialReferences[index - 1];
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'chapter-materials',
+      targetId: nextReference ? `${chapterId}:${nextReference.materialId}` : null,
+      chapterId
+    };
     const result = removeChapterMaterialReference(courseChapters, courseRequirements, chapterId, materialId);
     setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
   };
   const removeCourseChapterById = (chapterId: string) => {
+    const index = courseChapters.findIndex(item => item.id === chapterId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'course-chapters',
+      targetId: courseChapters[index + 1]?.id || courseChapters[index - 1]?.id || null
+    };
     const result = removeCourseChapter(courseChapters, courseRequirements, chapterId);
     setCourseChapters(result.chapters); setCourseRequirements(result.requirements); setCourseDirty(true);
   };
   const addProgramObjective = () => { if (programObjectives.length < 6) setProgramObjectives(items => [...items, { id: newId('objective'), description: '' }]); setProgramDirty(true); };
+  const removeProgramObjectiveById = (objectiveId: string) => {
+    const index = programObjectives.findIndex(item => item.id === objectiveId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'program-objectives',
+      targetId: programObjectives[index + 1]?.id || programObjectives[index - 1]?.id || null
+    };
+    setProgramObjectives(items => items.filter(item => item.id !== objectiveId));
+    setProgramDirty(true);
+  };
   const addProgramCourse = () => {
     if (!programCourseToAdd || programReferences.some(item => item.courseId === programCourseToAdd)) return;
     setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]);
+    setProgramDirty(true);
+  };
+  const removeProgramCourseById = (courseId: string) => {
+    const index = programReferences.findIndex(item => item.courseId === courseId);
+    if (index < 0) return;
+    pendingDynamicRemovalFocusRef.current = {
+      collection: 'program-courses',
+      targetId: programReferences[index + 1]?.courseId || programReferences[index - 1]?.courseId || null
+    };
+    setProgramReferences(items => items.filter(item => item.courseId !== courseId).map((item, order) => ({ ...item, order })));
     setProgramDirty(true);
   };
   const setChapterTitle = (chapterId: string, title: string) => {
@@ -618,24 +707,24 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               <div><label htmlFor="academy-course-summary" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Zusammenfassung</label><textarea id="academy-course-summary" className={field} value={courseSummary} onChange={event => { setCourseSummary(event.target.value); setCourseDirty(true); }} maxLength={2000} rows={4} /><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Bis zu 2.000 Zeichen</p></div>
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
-              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button type="button" className={secondary} onClick={addCourseObjective}>Lernziel hinzufügen</button></div>
+              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button ref={courseObjectiveAddRef} type="button" className={secondary} onClick={addCourseObjective}>Lernziel hinzufügen</button></div>
               {courseObjectives.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Lernziele angelegt.</p>}
-              {courseObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-course-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-course-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setCourseObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setCourseDirty(true); }} /><button type="button" className={danger} onClick={() => { setCourseObjectives(items => items.filter(current => current.id !== item.id)); setCourseDirty(true); }}>Lernziel entfernen</button></div>)}
+              {courseObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-course-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-course-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setCourseObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setCourseDirty(true); }} /><button ref={element => { courseObjectiveRemoveRefs.current[item.id] = element; }} type="button" className={danger} onClick={() => removeCourseObjectiveById(item.id)}>Lernziel entfernen</button></div>)}
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
-              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3><button type="button" className={secondary} onClick={addCourseChapter}>Kapitel hinzufügen</button></div>
+              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Kapitel</h3><button ref={courseChapterAddRef} type="button" className={secondary} onClick={addCourseChapter}>Kapitel hinzufügen</button></div>
               {courseChapters.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kapitel angelegt.</p>}
               {courseChapters.map((item, index) => {
                 const completionRequired = courseRequirements.some(requirement => requirement.type === 'required_chapter' && requirement.targetId === item.id && requirement.required);
                 return <div key={item.id} className="academy-authoring-chapter space-y-3 rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button type="button" className={danger} onClick={() => removeCourseChapterById(item.id)}>Kapitel entfernen</button></div>
+                  <div className="flex items-center justify-between gap-3"><h4 className="font-medium text-slate-900 dark:text-white">Kapitel {index + 1}</h4><button ref={element => { courseChapterRemoveRefs.current[item.id] = element; }} type="button" className={danger} onClick={() => removeCourseChapterById(item.id)}>Kapitel entfernen</button></div>
                   <div><label htmlFor={'academy-chapter-title-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kapiteltitel</label><input id={'academy-chapter-title-' + item.id} className={field} maxLength={200} value={item.title} onChange={event => setChapterTitle(item.id, event.target.value)} /></div>
                   <div><label htmlFor={'academy-chapter-description-' + item.id} className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Beschreibung</label><textarea id={'academy-chapter-description-' + item.id} className={field} rows={2} maxLength={1000} value={item.description || ''} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, description: event.target.value } : chapter)); setCourseDirty(true); }} /></div>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={item.required} onChange={event => { setCourseChapters(items => items.map(chapter => chapter.id === item.id ? { ...chapter, required: event.target.checked } : chapter)); setCourseDirty(true); }} className="mt-1" />Kapitel ist als Pflichtinhalt gekennzeichnet</label>
                   <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" checked={completionRequired} onChange={event => setChapterCompletionRequired(item.id, event.target.checked)} className="mt-1" />Für dieses Kapitel ist ein eigener Abschlussnachweis erforderlich</label>
                   <div className="space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
                     <label htmlFor={'academy-chapter-material-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Veröffentlichtes Material hinzufügen</label>
-                    <select id={'academy-chapter-material-' + item.id} className={field} value="" onChange={event => { if (event.target.value) addChapterMaterial(item.id, event.target.value); }}>
+                    <select ref={element => { chapterMaterialSelectRefs.current[item.id] = element; }} id={'academy-chapter-material-' + item.id} className={field} value="" onChange={event => { if (event.target.value) addChapterMaterial(item.id, event.target.value); }}>
                       <option value="">Material auswählen …</option>
                       {materials.filter(m => m.master.publicationStatus === 'published' && m.currentVersion && !item.materialReferences.some(r => r.materialId === m.master.id))
                         .sort((a,b)=>(a.currentVersion?.title||'').localeCompare(b.currentVersion?.title||'','de-DE'))
@@ -646,7 +735,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
                         return <li key={reference.materialId} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-white">{current?.title||reference.title||'Historische Materialfassung'}</p><p className="text-xs text-slate-500 dark:text-slate-400">{m?.master.code||reference.materialId} · {current?.versionNumber||reference.versionNumber?'Version '+(current?.versionNumber||reference.versionNumber):reference.materialVersionId}</p></div>
                           <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={reference.required} onChange={event=>{setCourseChapters(items=>items.map(ch=>ch.id!==item.id?ch:{...ch,materialReferences:ch.materialReferences.map(v=>v.materialId===reference.materialId?{...v,required:event.target.checked}:v)}));setCourseDirty(true);}}/>Erforderlich</label>
-                            <button type="button" className={danger} onClick={()=>removeChapterMaterial(item.id,reference.materialId)}>Entfernen</button></div>
+                            <button ref={element => { chapterMaterialRemoveRefs.current[`${item.id}:${reference.materialId}`] = element; }} type="button" className={danger} onClick={()=>removeChapterMaterial(item.id,reference.materialId)}>Entfernen</button></div>
                         </li>;
                       })}
                     </ul>}
@@ -680,17 +769,17 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
               <div><label htmlFor="academy-program-summary" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Zusammenfassung</label><textarea id="academy-program-summary" className={field} value={programSummary} onChange={event => { setProgramSummary(event.target.value); setProgramDirty(true); }} maxLength={2000} rows={4} /></div>
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
-              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button type="button" className={secondary} onClick={addProgramObjective} disabled={programObjectives.length >= 6}>Lernziel hinzufügen</button></div>
+              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3><button ref={programObjectiveAddRef} type="button" className={secondary} onClick={addProgramObjective} disabled={programObjectives.length >= 6}>Lernziel hinzufügen</button></div>
               <p className="text-xs text-slate-500 dark:text-slate-400">Ein Lehrgang benötigt drei bis sechs konkrete Lernziele.</p>
-              {programObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-program-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-program-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setProgramObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setProgramDirty(true); }} /><button type="button" className={danger} onClick={() => { setProgramObjectives(items => items.filter(current => current.id !== item.id)); setProgramDirty(true); }}>Lernziel entfernen</button></div>)}
+              {programObjectives.map((item, index) => <div key={item.id} className="academy-authoring-objective space-y-2 rounded-md border border-slate-200 p-3 dark:border-slate-700"><label htmlFor={'academy-program-objective-' + item.id} className="block text-sm font-medium text-slate-800 dark:text-slate-200">Lernziel {index + 1}</label><textarea id={'academy-program-objective-' + item.id} className={field} rows={2} maxLength={500} value={item.description} onChange={event => { setProgramObjectives(items => items.map(current => current.id === item.id ? { ...current, description: event.target.value } : current)); setProgramDirty(true); }} /><button ref={element => { programObjectiveRemoveRefs.current[item.id] = element; }} type="button" className={danger} onClick={() => removeProgramObjectiveById(item.id)}>Lernziel entfernen</button></div>)}
             </section>
             <section className={panel + ' academy-authoring-form-section space-y-4'}>
               <h3 className="font-semibold text-slate-900 dark:text-white">Kurszuordnung</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">Du kannst veröffentlichte, verfügbare Kurse als Pflicht- oder Empfehlungskurse aufnehmen. Die genaue Kursversion wird bei einer Lehrgangsteilnahme fest zugeordnet.</p>
-              <div className="flex flex-col gap-2 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="academy-program-course-select" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurs auswählen</label><select id="academy-program-course-select" className={field} value={programCourseToAdd} onChange={event => setProgramCourseToAdd(event.target.value)}><option value="">Kurs auswählen</option>{selectableCourses.filter(item => !programReferences.some(reference => reference.courseId === item.master.id)).map(item => <option key={item.master.id} value={item.master.id}>{item.master.code} · {item.version?.title || item.master.code}</option>)}</select></div><button type="button" className={secondary + ' self-end'} onClick={addProgramCourse} disabled={!programCourseToAdd}>Kurs hinzufügen</button></div>
+              <div className="flex flex-col gap-2 sm:flex-row"><div className="min-w-0 flex-1"><label htmlFor="academy-program-course-select" className="mb-1 block text-sm font-medium text-slate-800 dark:text-slate-200">Kurs auswählen</label><select ref={programCourseSelectRef} id="academy-program-course-select" className={field} value={programCourseToAdd} onChange={event => setProgramCourseToAdd(event.target.value)}><option value="">Kurs auswählen</option>{selectableCourses.filter(item => !programReferences.some(reference => reference.courseId === item.master.id)).map(item => <option key={item.master.id} value={item.master.id}>{item.master.code} · {item.version?.title || item.master.code}</option>)}</select></div><button ref={programCourseAddRef} type="button" className={secondary + ' self-end'} onClick={addProgramCourse} disabled={!programCourseToAdd}>Kurs hinzufügen</button></div>
               {programReferences.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">Noch keine Kurse zugeordnet.</p> : <ul className="divide-y divide-slate-200 dark:divide-slate-800">{programReferences.map(reference => {
                 const course = courses.find(item => item.master.id === reference.courseId);
-                return <li key={reference.courseId} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="font-medium text-slate-900 dark:text-white">{course?.master.code || reference.courseId} · {course?.version?.title || course?.draft?.title || 'Kursreferenz'}</p><p className="text-xs text-slate-500 dark:text-slate-400">Reihenfolge {reference.order + 1}</p></div><div className="flex flex-wrap items-center gap-2"><label className="text-xs text-slate-600 dark:text-slate-300" htmlFor={'academy-program-requirement-' + reference.courseId}>Einstufung</label><select id={'academy-program-requirement-' + reference.courseId} className={field + ' min-w-36'} value={reference.requirement} onChange={event => { setProgramReferences(items => items.map(item => item.courseId === reference.courseId ? { ...item, requirement: event.target.value as 'required' | 'recommended' } : item)); setProgramDirty(true); }}><option value="required">Erforderlich</option><option value="recommended">Empfohlen</option></select><button type="button" className={danger} onClick={() => { setProgramReferences(items => items.filter(item => item.courseId !== reference.courseId).map((item, index) => ({ ...item, order: index }))); setProgramDirty(true); }}>Entfernen</button></div></li>;
+                return <li key={reference.courseId} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="font-medium text-slate-900 dark:text-white">{course?.master.code || reference.courseId} · {course?.version?.title || course?.draft?.title || 'Kursreferenz'}</p><p className="text-xs text-slate-500 dark:text-slate-400">Reihenfolge {reference.order + 1}</p></div><div className="flex flex-wrap items-center gap-2"><label className="text-xs text-slate-600 dark:text-slate-300" htmlFor={'academy-program-requirement-' + reference.courseId}>Einstufung</label><select id={'academy-program-requirement-' + reference.courseId} className={field + ' min-w-36'} value={reference.requirement} onChange={event => { setProgramReferences(items => items.map(item => item.courseId === reference.courseId ? { ...item, requirement: event.target.value as 'required' | 'recommended' } : item)); setProgramDirty(true); }}><option value="required">Erforderlich</option><option value="recommended">Empfohlen</option></select><button ref={element => { programCourseRemoveRefs.current[reference.courseId] = element; }} type="button" className={danger} onClick={() => removeProgramCourseById(reference.courseId)}>Entfernen</button></div></li>;
               })}</ul>}
               {selectableCourses.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">Es gibt noch keine veröffentlichten und verfügbaren Kurse, die zugeordnet werden können.</p>}
             </section>

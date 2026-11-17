@@ -703,3 +703,10 @@
 - Der Fokus wird nach diesem dynamischen Moduswechsel auf die Editorüberschrift gesetzt, statt auf einem möglicherweise ausgetauschten Submit-Button zu verbleiben.
 - Keine Änderung an API, Entwurfs-/Veröffentlichungsstatus oder Kurs-/Lehrgangsregeln.
 - Arbeitsbranch: `a11y/academy-new-entry-focus-current-main`; CI/Review ausstehend, manuelle Keyboard-/Screenreader-QA später.
+
+
+## 2026-11-17 – Kurs-/Lehrgangsautoren: Fokus nach Neuanlage
+
+- **PR #318 gemergt** (Merge-Commit `cce5ff444a82a93ad10332fea521293b9e7bc645`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen.
+- Nach erfolgreicher Neuanlage eines Kurses oder Lehrgangs wird der Fokus auf die Editorüberschrift gesetzt.
+- Manuelle Tastatur-/Screenreader-QA bleibt offen.
