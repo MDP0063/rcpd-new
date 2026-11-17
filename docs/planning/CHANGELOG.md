@@ -733,7 +733,7 @@
 - Vor Browser-Schließen/Neuladen warnt `beforeunload`; dies verhindert keinen absichtlichen Abbruch und ersetzt keine serverseitige Ablaufregel.
 - Die ältere `AcademyExamDoc`-Prüfungsfamilie bleibt gemäß bestehender Architekturentscheidung bis zur separaten Daten-/Workflowanalyse eigenständig.
 - Grundlage: WCAG 2.2, insbesondere Tastaturbedienbarkeit, sichtbarer Fokus, nicht verdeckter Fokus und ausreichende Zeit: https://www.w3.org/TR/WCAG22/
-- Branch `feat/exam-focus-mode-navigation-lock`; CI/Review und spätere manuelle QA ausstehend.
+- **PR #322 gemergt** (Merge-Commit `aedc1f647fd53ce5e18747688c17f4c15d7a6801`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich. Render-Deploy-Hook übersprungen. Manuelle QA bleibt offen.
 
 
 ## 2026-11-17 – Prüfungsabgabe: verbindliche Bestätigung
