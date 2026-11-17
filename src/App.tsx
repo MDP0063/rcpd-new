@@ -216,6 +216,12 @@ export default function App() {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserPublicProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
+  const [examAttemptActive, setExamAttemptActive] = useState(false);
+  const navigateToSection = useCallback((section: ActiveSection) => {
+    if (examAttemptActive && section !== 'academy') return;
+    setActiveSection(section);
+    setIsCommandPaletteOpen(false);
+  }, [examAttemptActive]);
   const [statusToast, setStatusToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -337,7 +343,7 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsCommandPaletteOpen(prev => !prev);
+        if (!examAttemptActive) setIsCommandPaletteOpen(prev => !prev);
       } else if (e.key === 'Escape') {
         setIsCommandPaletteOpen(false);
         setIsNotifPopoverOpen(false);
@@ -345,7 +351,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [examAttemptActive]);
 
   const fetchPortalState = useCallback(
     async (uidToLoad?: string | null) => {
@@ -593,7 +599,7 @@ export default function App() {
     setSessionUid(loggedInUser.uid);
     setCurrentUserProfile(loggedInUser);
     setIsAdmin(Boolean(res.data.isAdmin));
-    setActiveSection('dashboard');
+    navigateToSection('dashboard');
     triggerToast(
       `Angemeldet als ${loggedInUser.displayName} (Rang: ${loggedInUser.role.toUpperCase()}).`
     );
@@ -621,7 +627,7 @@ export default function App() {
       clearPortalData();
       initialLoadCompleteRef.current = false;
       seenNotificationIdsRef.current.clear();
-      setActiveSection('dashboard');
+      navigateToSection('dashboard');
       if (isAutoTimeout) {
         setAuthError(
           'SICHERHEITS-TIMEOUT: Du wurdest nach 15 Minuten Inaktivität automatisch abgemeldet, um unbefugten Zugriff Dritter zu verhindern.'
@@ -738,7 +744,7 @@ export default function App() {
         ? { examId: notif.linkTarget.examId, attemptId: notif.linkTarget.attemptId }
         : null
     );
-    setActiveSection(notif.linkSection);
+    navigateToSection(notif.linkSection);
     setIsNotifPopoverOpen(false);
     await fetchPortalState(currentUserProfile.uid);
   };
@@ -948,7 +954,7 @@ export default function App() {
       <CommandPaletteModal
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
-        onNavigate={section => setActiveSection(section)}
+        onNavigate={section => navigateToSection(section)}
         modules={modules}
         exams={exams}
         roster={roster}
@@ -1198,7 +1204,7 @@ export default function App() {
             href="#dashboard"
             onClick={e => {
               e.preventDefault();
-              setActiveSection('dashboard');
+              navigateToSection('dashboard');
             }}
             className="flex items-center gap-2.5 text-base font-bold tracking-tight text-white whitespace-nowrap shrink-0"
           >
@@ -1223,7 +1229,7 @@ export default function App() {
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => setIsCommandPaletteOpen(true)}
+            onClick={() => setIsCommandPaletteOpen(true)} disabled={examAttemptActive}
             className="inline-flex items-center gap-3 px-3 py-1.5 rounded-md bg-slate-800 dark:bg-slate-900 hover:bg-slate-700 dark:hover:bg-slate-800 border border-slate-700 dark:border-slate-800 text-xs text-slate-300 transition-colors cursor-pointer"
             title="Schnellsuche öffnen (Strg+K)"
           >
@@ -1351,7 +1357,7 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setActiveSection('calendar')}
+            onClick={() => navigateToSection('calendar')} disabled={examAttemptActive}
             title="Kalender & Einsätze"
             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer ${
               activeSection === 'calendar'
@@ -1365,7 +1371,7 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setActiveSection('messages')}
+            onClick={() => navigateToSection('messages')} disabled={examAttemptActive}
             title="Direktnachrichten"
             className={`relative inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer ${
               activeSection === 'messages'
@@ -1396,7 +1402,7 @@ export default function App() {
         {/* ==========================================================================
             HAUPTNAVIGATION / SIDEBAR (Fixed Left Navigation Sidebar)
             ========================================================================== */}
-        <aside className="w-64 shrink-0 bg-slate-900 text-slate-200 border-r border-slate-800 p-5 hidden lg:flex flex-col justify-between sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto">
+        <aside inert={examAttemptActive} aria-hidden={examAttemptActive || undefined} className={`w-64 shrink-0 bg-slate-900 text-slate-200 border-r border-slate-800 p-5 hidden lg:flex flex-col justify-between sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto ${examAttemptActive ? 'pointer-events-none opacity-50' : ''}`}>
           <div className="space-y-6">
             {/* Officer Identity Summary Card */}
             <div className="pb-4 border-b border-slate-800 space-y-1.5">
@@ -1435,7 +1441,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('dashboard')}
+                  onClick={() => navigateToSection('dashboard')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'dashboard'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1450,7 +1456,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('announcements')}
+                  onClick={() => navigateToSection('announcements')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'announcements'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1470,7 +1476,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('messages')}
+                  onClick={() => navigateToSection('messages')} disabled={examAttemptActive}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'messages'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1490,7 +1496,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('requests')}
+                  onClick={() => navigateToSection('requests')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'requests'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1510,7 +1516,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('calendar')}
+                  onClick={() => navigateToSection('calendar')} disabled={examAttemptActive}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'calendar'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1533,7 +1539,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('academy')}
+                  onClick={() => navigateToSection('academy')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'academy'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1552,7 +1558,7 @@ export default function App() {
                 {canManageUsers && (
                   <button
                     type="button"
-                    onClick={() => setActiveSection('reports')}
+                    onClick={() => navigateToSection('reports')}
                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                       activeSection === 'reports'
                         ? 'bg-sky-600 text-white font-semibold'
@@ -1568,7 +1574,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('whitelist')}
+                  onClick={() => navigateToSection('whitelist')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'whitelist'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1583,7 +1589,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSection('settings')}
+                  onClick={() => navigateToSection('settings')}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                     activeSection === 'settings'
                       ? 'bg-sky-600 text-white font-semibold'
@@ -1607,7 +1613,7 @@ export default function App() {
                   {canAccessExamWorkshop && !canManageUsers && (
                     <button
                       type="button"
-                      onClick={() => setActiveSection('exam_workshop')}
+                      onClick={() => navigateToSection('exam_workshop')}
                       className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                         activeSection === 'exam_workshop'
                           ? 'bg-sky-600 text-white font-semibold'
@@ -1623,7 +1629,7 @@ export default function App() {
                     <>
                       <button
                         type="button"
-                        onClick={() => setActiveSection('exam_workshop')}
+                        onClick={() => navigateToSection('exam_workshop')}
                         className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'exam_workshop'
                             ? 'bg-sky-600 text-white font-semibold'
@@ -1636,7 +1642,7 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => setActiveSection('personnel')}
+                        onClick={() => navigateToSection('personnel')}
                         className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'personnel'
                             ? 'bg-sky-600 text-white font-semibold'
@@ -1649,7 +1655,7 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => setActiveSection('audit')}
+                        onClick={() => navigateToSection('audit')}
                         className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                           activeSection === 'audit'
                             ? 'bg-sky-600 text-white font-semibold'
@@ -1670,7 +1676,7 @@ export default function App() {
                   {canViewTech && (
                     <button
                       type="button"
-                      onClick={() => setActiveSection('deployment')}
+                      onClick={() => navigateToSection('deployment')}
                       className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                         activeSection === 'deployment'
                           ? 'bg-sky-600 text-white font-semibold'
@@ -1720,7 +1726,7 @@ export default function App() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveSection(tab.id)}
+                onClick={() => navigateToSection(tab.id)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap cursor-pointer ${
                   activeSection === tab.id
                     ? 'bg-slate-900 dark:bg-sky-600 text-white'
@@ -1767,7 +1773,7 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsCommandPaletteOpen(true)}
+                    onClick={() => setIsCommandPaletteOpen(true)} disabled={examAttemptActive}
                     className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <Search className="w-3.5 h-3.5 text-slate-500" />
@@ -1776,7 +1782,7 @@ export default function App() {
 
                   <button
                     type="button"
-                    onClick={() => setActiveSection('calendar')}
+                    onClick={() => navigateToSection('calendar')} disabled={examAttemptActive}
                     className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
@@ -1785,7 +1791,7 @@ export default function App() {
 
                   <button
                     type="button"
-                    onClick={() => setActiveSection('requests')}
+                    onClick={() => navigateToSection('requests')}
                     className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <FilePlus2 className="w-3.5 h-3.5 text-slate-500" />
@@ -1795,7 +1801,7 @@ export default function App() {
                   {canEditAcademy && (
                     <button
                       type="button"
-                      onClick={() => setActiveSection('academy')}
+                      onClick={() => navigateToSection('academy')}
                       className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-slate-900 dark:bg-slate-800 text-white rounded-md hover:bg-slate-800 dark:hover:bg-slate-700 border border-transparent dark:border-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       <FileUp className="w-3.5 h-3.5 text-sky-400" />
@@ -1806,7 +1812,7 @@ export default function App() {
                   {canManageUsers && (
                     <button
                       type="button"
-                      onClick={() => setActiveSection('personnel')}
+                      onClick={() => navigateToSection('personnel')}
                       className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
@@ -1872,7 +1878,7 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => setActiveSection('messages')}
+                        onClick={() => navigateToSection('messages')} disabled={examAttemptActive}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 rounded-md transition-colors cursor-pointer"
                       >
                         <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
@@ -1886,7 +1892,7 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => setActiveSection('audit')}
+                        onClick={() => navigateToSection('audit')}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 rounded-md transition-colors cursor-pointer"
                       >
                         <History className="w-3.5 h-3.5 text-slate-300" />
@@ -1978,7 +1984,7 @@ export default function App() {
                 </div>
 
                 <div
-                  onClick={() => setActiveSection('academy')}
+                  onClick={() => navigateToSection('academy')}
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-lg p-5 shadow-xs flex flex-col justify-between cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
@@ -1996,7 +2002,7 @@ export default function App() {
                 </div>
 
                 <div
-                  onClick={() => setActiveSection('calendar')}
+                  onClick={() => navigateToSection('calendar')} disabled={examAttemptActive}
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-lg p-5 shadow-xs flex flex-col justify-between cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
@@ -2014,7 +2020,7 @@ export default function App() {
                 </div>
 
                 <div
-                  onClick={() => setActiveSection('requests')}
+                  onClick={() => navigateToSection('requests')}
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-lg p-5 shadow-xs flex flex-col justify-between cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
@@ -2167,7 +2173,7 @@ export default function App() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => setActiveSection(task.targetSection)}
+                            onClick={() => navigateToSection(task.targetSection)}
                             className="px-3 py-1.5 text-xs font-semibold bg-slate-900 dark:bg-sky-600 hover:bg-slate-800 dark:hover:bg-sky-500 text-white rounded-md whitespace-nowrap shrink-0 cursor-pointer"
                           >
                             {task.buttonLabel}
@@ -2185,7 +2191,7 @@ export default function App() {
                 modules={modules}
                 exams={exams}
                 userProgress={userProgress}
-                onNavigateAcademy={() => setActiveSection('academy')}
+                onNavigateAcademy={() => navigateToSection('academy')}
               />
 
               {/* TABELLEN- UND LISTENANSICHTEN */}
@@ -2203,7 +2209,7 @@ export default function App() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setActiveSection('requests')}
+                      onClick={() => navigateToSection('requests')}
                       className="px-3 py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded cursor-pointer"
                     >
                       Alle Anträge
@@ -2320,7 +2326,7 @@ export default function App() {
                           <button
                             key={item.id}
                             type="button"
-                            onClick={() => setActiveSection(item.targetSection)}
+                            onClick={() => navigateToSection(item.targetSection)}
                             className="w-full text-left px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-start justify-between gap-3 cursor-pointer group"
                           >
                             <div className="space-y-1 min-w-0">
@@ -2476,6 +2482,7 @@ export default function App() {
               onStatusToast={triggerToast}
               reviewNavigationTarget={academyReviewNavigationTarget}
               onReviewNavigationConsumed={() => setAcademyReviewNavigationTarget(null)}
+              onExamAttemptActiveChange={setExamAttemptActive}
             />
           )}
 
@@ -2654,7 +2661,7 @@ export default function App() {
                       möchtest, nutze bitte das Modul{' '}
                       <button
                         type="button"
-                        onClick={() => setActiveSection('requests')}
+                        onClick={() => navigateToSection('requests')}
                         className="text-sky-400 underline cursor-pointer font-semibold"
                       >
                         Anträge &amp; Anforderungen
