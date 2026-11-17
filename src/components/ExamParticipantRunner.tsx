@@ -551,6 +551,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                         debounceRef.current = null;
                         void enqueueSave();
                         setCurrentQuestionIndex(index);
+                        if (window.matchMedia('(max-width: 1023px)').matches) setQuestionNavigatorExpanded(false);
                       }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                         {index + 1}
                         {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
@@ -581,6 +582,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                       <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{formatPoints(activeQuestion.pointsMilli)} Pkt.</span>
                       <button
                         type="button"
+                        disabled={submitting}
                         aria-pressed={markedQuestionIds.includes(activeQuestion.id)}
                         aria-label={markedQuestionIds.includes(activeQuestion.id) ? 'Markierung für diese Frage entfernen' : 'Diese Frage zur späteren Kontrolle markieren'}
                         title="Markierung gilt nur für diese geöffnete Prüfungssitzung"
@@ -717,6 +719,8 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                 <div className={cardClass + ' space-y-2 rounded-lg p-4 text-sm'}>
                   <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Beantwortete Fragen</span><strong className="tabular-nums text-slate-900 dark:text-white">{answeredCount} / {attempt.questions.length}</strong></div>
                   <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Noch unbeantwortet</span><strong className={attempt.questions.length - answeredCount > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}>{attempt.questions.length - answeredCount}</strong></div>
+                  <div className="flex items-center justify-between gap-3"><span className="text-slate-600 dark:text-slate-300">Zur Kontrolle markiert</span><strong className="tabular-nums text-slate-900 dark:text-white">{markedQuestionIds.length}</strong></div>
+                  {markedQuestionIds.length > 0 && <p className="text-xs text-slate-600 dark:text-slate-300">Markierte Fragen: {attempt.questions.map((question, index) => markedQuestionIds.includes(question.id) ? index + 1 : null).filter((number): number is number => number !== null).join(', ')}. Markierungen sind nur Merkhilfen und keine Antworten.</p>}
                   {attempt.questions.length - answeredCount > 0
                     ? <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">Unbeantwortete Fragen werden ohne Antwort eingereicht. Prüfe, ob du diese Fragen wirklich offenlassen möchtest.</p>
                     : <p className="text-xs text-slate-600 dark:text-slate-300">Alle Fragen enthalten eine Antwort. Prüfe deine Auswahl vor der endgültigen Abgabe.</p>}
