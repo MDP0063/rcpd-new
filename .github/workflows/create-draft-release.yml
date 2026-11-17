@@ -91,7 +91,6 @@ jobs:
               feature: 'feature',
               enhancement: 'enhancement',
               fix: 'fix',
-              security: 'security',
               documentation: 'technical',
               refactor: 'technical',
               dependencies: 'technical'
@@ -157,9 +156,14 @@ jobs:
                 continue;
               }
 
-              const selectedCategory = labels
-                .map(label => categoryByLabel[label])
-                .find(Boolean);
+              const changeTypeStart = lines.findIndex(line => line.trim() === '## 🛠️ Art der Änderung');
+              const changeTypeSection = changeTypeStart === -1
+                ? ''
+                : lines.slice(changeTypeStart + 1).join('\n').split(/^## /m)[0];
+              const isSecurityChange = /^- \[x\] Sicherheit \/ Secrets \/ Configs$/im.test(changeTypeSection);
+              const selectedCategory = isSecurityChange
+                ? 'security'
+                : labels.map(label => categoryByLabel[label]).find(Boolean);
 
               if (!selectedCategory) {
                 skipped.push('#' + pr.number + ' (kein gültiges Release-Kategorie-Label)');
