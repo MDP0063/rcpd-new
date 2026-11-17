@@ -51,6 +51,7 @@ interface AcademyCenterProps {
   onStatusToast: (msg: string) => void;
   reviewNavigationTarget?: { examId: string; attemptId: string } | null;
   onReviewNavigationConsumed?: () => void;
+  onExamAttemptActiveChange?: (active: boolean) => void;
 }
 
 export const AcademyCenter: React.FC<AcademyCenterProps> = ({
@@ -62,7 +63,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   onRefreshState,
   onStatusToast,
   reviewNavigationTarget = null,
-  onReviewNavigationConsumed
+  onReviewNavigationConsumed,
+  onExamAttemptActiveChange
 }) => {
   const rolePermissions = ROLE_HIERARCHY[currentUser.role] || ROLE_HIERARCHY.trainee;
   const assignedCourses = currentUser.granularPermissions?.assignedCourseCodes || [];
@@ -1268,7 +1270,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
 
-      {activeTab === 'exam_center' && <ExamParticipantRunner />}
+      {activeTab === 'exam_center' && <ExamParticipantRunner onAttemptActiveChange={onExamAttemptActiveChange} />}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 
