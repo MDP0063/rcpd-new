@@ -520,7 +520,7 @@ export const AcademyAuthoringCenter: React.FC<Props> = ({ currentUser, onStatusT
   };
   const addProgramCourse = () => {
     if (!programCourseToAdd || programReferences.some(item => item.courseId === programCourseToAdd)) return;
-    setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]));
+    setProgramReferences(items => [...items, { courseId: programCourseToAdd, requirement: 'required', order: items.length }]);
     setProgramDirty(true);
   };
   const removeProgramCourseById = (courseId: string) => {
