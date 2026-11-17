@@ -489,7 +489,7 @@ export const ExamParticipantRunner: React.FC = () => {
               </div>
               <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{attempt.title}</h2>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Versuch {attempt.attemptNumber} · {attempt.questions.length} Fragen · {answeredCount} beantwortet
+                Versuch {attempt.attemptNumber} · {attempt.questions.length} Fragen · {answeredCount} gespeichert
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -509,28 +509,35 @@ export const ExamParticipantRunner: React.FC = () => {
           </div>
           <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="academy-exam-question-nav space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div>
+              <div className="space-y-1"><div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div><p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Häkchen = serverbestätigt · Uhr = Änderung ausstehend · durchgestrichene Wolke = Speicherfehler</p></div>
               <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
                 {attempt.questions.map((question, index) => {
-                  const value = answers[question.id];
-                  const answered = value !== undefined && value !== null &&
-                    (typeof value !== 'string' || value.trim().length > 0) &&
-                    (!Array.isArray(value) || value.length > 0);
+                  const confirmed = hasAnswer(savedAnswers[question.id]);
+                  const persistence = answerPersistenceState(answers[question.id], savedAnswers[question.id], saveState);
+                  const statusLabel = persistence === 'saved'
+                    ? 'beantwortet und gespeichert'
+                    : persistence === 'pending'
+                      ? confirmed ? 'gespeicherte Antwort, Änderung ausstehend' : 'Antwort noch nicht serverbestätigt'
+                      : persistence === 'error'
+                        ? confirmed ? 'gespeicherte Antwort, Änderung nicht gespeichert' : 'Antwort nicht gespeichert'
+                        : 'noch nicht beantwortet';
                   return (
-                    <button key={question.id} type="button" disabled={submitting} aria-label={`Frage ${index + 1}${answered ? ', beantwortet' : ', noch nicht beantwortet'}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
+                    <button key={question.id} type="button" disabled={submitting} aria-label={`Frage ${index + 1}, ${statusLabel}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
                       if (debounceRef.current) clearTimeout(debounceRef.current);
                       debounceRef.current = null;
                       void enqueueSave();
                       setCurrentQuestionIndex(index);
-                    }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
+                    }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : confirmed ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                       {index + 1}
-                      {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
+                      {confirmed && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
+                      {persistence === 'pending' && <Clock3 aria-hidden="true" className="absolute -left-1 -top-1 h-3 w-3 text-amber-600" />}
+                      {persistence === 'error' && <CloudOff aria-hidden="true" className="absolute -left-1 -top-1 h-3 w-3 text-rose-600" />}
                     </button>
                   );
                 })}
               </div>
               <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                <div className="flex justify-between"><span>Fortschritt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
+                <div className="flex justify-between"><span>Serverbestätigt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>{pendingAnswerCount > 0 && <p role="status" aria-live="polite" className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">{pendingAnswerCount} Antwortänderung(en) noch nicht bestätigt.</p>}
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                   <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
                 </div>
