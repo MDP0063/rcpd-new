@@ -515,6 +515,12 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 17.11.2026 – Kurs-/Lehrgangsautoren: Fokus nach Entfernen dynamischer Einträge
 
-- **In Arbeit:** Nach dem Entfernen von Lernzielen, Kapiteln, Kapitelmaterialien oder Kurszuordnungen den Fokus zum nächsten/vorherigen Eintrag zurückführen; wenn keiner verbleibt, zum zugehörigen Hinzufügen-/Auswahlfeld.
+- **Erledigt in PR #319:** Nach dem Entfernen von Lernzielen, Kapiteln, Kapitelmaterialien oder Kurszuordnungen wird der Fokus zum nächsten/vorherigen Eintrag zurückgeführt; wenn keiner verbleibt, zum zugehörigen Hinzufügen-/Auswahlfeld.
 - Keine Änderung an fachlichen Validierungs-, Zuordnungs-, Abschluss- oder Datenregeln.
-- **Noch offen:** CI/Review für Branch `a11y/academy-dynamic-row-removal-focus`; spätere manuelle Keyboard-/Screenreader-QA.
+- **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #319.
+
+## 17.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+
+- **In Arbeit in PR #320:** Beantwortete Fragen und Fortschritt ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnen; lokale Abweichungen als ausstehend/fehlgeschlagen darstellen.
+- Autosave-Responses mit dem gesendeten Snapshot vergleichen und bei abweichendem Serverstand weitere automatische Saves blockieren.
+- **Merge gesperrt:** Datenintegritätsänderung; unabhängige Prüfung durch eine andere beteiligte Instanz oder den Projektinhaber gemäß `CONTRIBUTOR_ROLES.md` erforderlich. Manuelle Prüfung mit echten Versuchen bleibt zusätzlich offen.
