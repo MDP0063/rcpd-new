@@ -670,7 +670,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
               >
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prüfungsabgabe</div>
-                  <h3 ref={submitConfirmationHeadingRef} tabIndex={-1} id="academy-exam-submit-confirmation-heading" className="mt-1 text-lg font-bold text-slate-900 outline-none dark:text-white">Prüfung verbindlich abgeben?</h3>
+                  <h3 ref={submitConfirmationHeadingRef} tabIndex={-1} id="academy-exam-submit-confirmation-heading" className="mt-1 text-lg font-bold text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600 dark:text-white">Prüfung verbindlich abgeben?</h3>
                   <p id="academy-exam-submit-confirmation-description" className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">Nach der Abgabe kannst du deine Antworten nicht mehr ändern. Der gespeicherte Antwortstand wird zur Bewertung eingereicht.</p>
                 </div>
                 <div className={cardClass + ' space-y-2 rounded-lg p-4 text-sm'}>
