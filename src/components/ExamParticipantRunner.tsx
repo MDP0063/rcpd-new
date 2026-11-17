@@ -555,7 +555,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                       }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                         {index + 1}
                         {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
-                        {marked && <Flag aria-hidden="true" className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-sm bg-white p-px text-amber-700 dark:bg-slate-900 dark:text-amber-300" />}
+                        {marked && <Flag aria-hidden="true" className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-sm bg-white p-px text-slate-600 dark:bg-slate-900 dark:text-slate-300" />}
                       </button>
                     );
                   })}
