@@ -1619,4 +1619,5 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Die Prüfungsdetailansicht und Start-/Fortsetzungsbestätigung zeigen konkrete Voraussetzungen statt nur „werden beim Start geprüft“.
 - Für verfügbare Vorprüfungen wird der Titel angezeigt; wenn die Voraussetzung nicht im sichtbaren Katalog enthalten ist, bleibt die Bezeichnung generisch und legt keine nicht verfügbaren Prüfungen offen.
 - Abschlussmodus („abgeschlossen“ oder „bestanden“) und gegebenenfalls Mindestpunktzahl werden verständlich formuliert. Die tatsächliche Erfüllung bleibt serverseitig geprüft.
+- Die Oberfläche zeigt ausdrücklich keinen individuellen Erfüllungsstatus, weil der Katalog diesen nicht zuverlässig liefert; die serverseitige Startprüfung bleibt maßgeblich.
 - Umsetzung: Branch `feat/exam-prerequisite-explanation`; CI/Review ausstehend.
