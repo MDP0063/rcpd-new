@@ -54,7 +54,7 @@ jobs:
             }
 
             const allowedLabels = new Set([
-              'feature', 'enhancement', 'fix', 'security',
+              'feature', 'enhancement', 'fix',
               'documentation', 'refactor', 'dependencies', 'skip-changelog'
             ]);
             const labels = pr.labels.map(label => label.name.toLowerCase());
@@ -64,7 +64,7 @@ jobs:
             const selectedAllowedLabels = labels.filter(label => allowedLabels.has(label));
 
             if (selectedAllowedLabels.length !== 1) {
-              errors.push('Setze genau ein passendes GitHub-Label: feature, enhancement, fix, security, documentation, refactor, dependencies oder skip-changelog.');
+              errors.push('Setze genau ein passendes GitHub-Label: feature, enhancement, fix, documentation, refactor, dependencies oder skip-changelog.');
             } else if (selectedLabel && !labels.includes(selectedLabel)) {
               errors.push('Das ausgewählte Release-Kategorie-Label (' + selectedLabel + ') fehlt am Pull Request.');
             } else if (selectedLabel && selectedAllowedLabels[0] !== selectedLabel) {
