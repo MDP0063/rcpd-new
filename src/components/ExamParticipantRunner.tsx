@@ -844,7 +844,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({ on
                       }}
                     >
                     <div>
-                      <h4 ref={startConfirmationHeadingRef} tabIndex={-1} id="academy-exam-start-confirmation-heading" className="font-bold text-slate-900 outline-none dark:text-white">Verbindliche Startbestätigung</h4>
+                      <h4 ref={startConfirmationHeadingRef} tabIndex={-1} id="academy-exam-start-confirmation-heading" className="font-bold text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600 dark:text-white">Verbindliche Startbestätigung</h4>
                       <p id="academy-exam-start-confirmation-description" className="mt-1 text-xs text-slate-600 dark:text-slate-300">Es wird erst gestartet oder fortgesetzt, wenn du die abschließende Aktion bestätigst. Die übrige Seite bleibt bis zu deiner Entscheidung gesperrt.</p>
                     </div>
                     {startConfirmationState === 'checking' && (
