@@ -6,6 +6,13 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { CoalescedRequestRunner } from '../lib/coalescedRequest';
+import {
+  answerPersistenceState,
+  areAnswerMapsEqual,
+  countConfirmedAnswers,
+  countPendingAnswers,
+  hasAnswer
+} from '../lib/examAnswerProgress';
 
 type AssessmentStage = 'test' | 'final_exam';
 type AnswerValue = string | string[] | boolean | Array<{ pairId: string; targetId: string }> | null;
@@ -79,7 +86,7 @@ interface PublicSubmission {
   }>;
 }
 
-type SaveResponse = { attempt: { currentRevision: number }; saved: boolean; stale: boolean };
+type SaveResponse = { attempt: { currentRevision: number; answers: AnswerMap } | null; saved: boolean; stale: boolean; expired?: boolean };
 type SubmitResponse = { submission: PublicSubmission; expired: boolean; alreadySubmitted: boolean };
 
 const cardClass = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
@@ -99,16 +106,6 @@ function formatDuration(seconds: number): string {
 
 function formatPoints(milli: number): string {
   return (milli / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
-}
-
-function answerCount(questions: PublicQuestion[], answers: AnswerMap): number {
-  return questions.filter(question => {
-    const answer = answers[question.id];
-    if (answer === undefined || answer === null) return false;
-    if (typeof answer === 'string') return answer.trim().length > 0;
-    if (Array.isArray(answer)) return answer.length > 0;
-    return typeof answer === 'boolean';
-  }).length;
 }
 
 interface ExamParticipantRunnerProps {
@@ -133,6 +130,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
   const [resultHistory, setResultHistory] = useState<PublicSubmission[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [savedAnswers, setSavedAnswers] = useState<AnswerMap>({});
   const [markedQuestionIds, setMarkedQuestionIds] = useState<string[]>([]);
   const [questionNavigatorExpanded, setQuestionNavigatorExpanded] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -147,6 +145,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const revisionRef = useRef(0);
+  const saveConflictRef = useRef(false);
   const answersRef = useRef<AnswerMap>({});
   const attemptRef = useRef<PublicAttempt | null>(null);
   const saveQueueRef = useRef<CoalescedRequestRunner | null>(null);
@@ -220,7 +219,9 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
-  const answeredCount = attempt ? answerCount(attempt.questions, answers) : 0;
+  const questionIds = attempt?.questions.map(question => question.id) || [];
+  const answeredCount = countConfirmedAnswers(questionIds, savedAnswers);
+  const pendingAnswerCount = countPendingAnswers(questionIds, answers, savedAnswers);
   const resultScore = submission?.finalScoreBasisPoints ?? submission?.preliminaryScoreBasisPoints ?? 0;
 
   useEffect(() => {
@@ -315,9 +316,11 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
     setAttempt(null);
     setSubmission(null);
     setAnswers({});
+    setSavedAnswers({});
     setMarkedQuestionIds([]);
     answersRef.current = {};
     revisionRef.current = 0;
+    saveConflictRef.current = false;
     setCurrentQuestionIndex(0);
     setRemainingSeconds(null);
     setRunnerError('');
@@ -332,8 +335,10 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
     attemptRef.current = next;
     answersRef.current = restoredAnswers;
     revisionRef.current = next.currentRevision;
+    saveConflictRef.current = false;
     setAttempt(next);
     setAnswers(restoredAnswers);
+    setSavedAnswers(restoredAnswers);
     setMarkedQuestionIds([]);
     setSubmission(null);
     setCurrentQuestionIndex(0);
@@ -411,7 +416,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
 
   const saveAnswers = useCallback(async (allowDuringSubmit = false, keepalive = false): Promise<boolean> => {
     const current = attemptRef.current;
-    if (!current || (submittingRef.current && !allowDuringSubmit)) return false;
+    if (!current || saveConflictRef.current || (submittingRef.current && !allowDuringSubmit)) return false;
     const snapshot = answersRef.current;
     const nextRevision = revisionRef.current + 1;
     setSaveState('saving');
@@ -425,8 +430,28 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
     );
     if (response.ok && response.data?.attempt) {
       if (attemptRef.current?.id !== current.id) return false;
-      revisionRef.current = Math.max(revisionRef.current, response.data.attempt.currentRevision);
-      setSaveState('saved');
+      const confirmedAnswers = response.data.attempt.answers;
+      const confirmedRevision = response.data.attempt.currentRevision;
+      if (!confirmedAnswers || typeof confirmedAnswers !== 'object' || Array.isArray(confirmedAnswers) ||
+          !Number.isSafeInteger(confirmedRevision) || confirmedRevision < 0) {
+        saveConflictRef.current = true;
+        setSaveState('error');
+        setRunnerError('Der Server hat keinen gültigen bestätigten Antwortstand zurückgegeben. Deine lokalen Eingaben bleiben erhalten. Bitte lade den aktuellen Versuch neu, bevor du weiterarbeitest.');
+        return false;
+      }
+      revisionRef.current = Math.max(revisionRef.current, confirmedRevision);
+      setSavedAnswers(confirmedAnswers);
+      if (!areAnswerMapsEqual(snapshot, confirmedAnswers)) {
+        saveConflictRef.current = true;
+        setSaveState('error');
+        setRunnerError(response.data.stale
+          ? 'Der Server hat bereits einen neueren Antwortstand. Deine lokalen Eingaben wurden nicht gespeichert, damit kein anderer Stand überschrieben wird. Bitte lade den aktuellen Versuch neu, bevor du weiterarbeitest.'
+          : 'Der Server hat den gesendeten Antwortstand nicht bestätigt. Deine lokalen Eingaben bleiben erhalten. Bitte lade den aktuellen Versuch neu, bevor du weiterarbeitest.');
+        return false;
+      }
+      const latestDraftConfirmed = areAnswerMapsEqual(answersRef.current, confirmedAnswers);
+      setSaveState(latestDraftConfirmed ? 'saved' : 'saving');
+      if (latestDraftConfirmed) setRunnerError('');
       return true;
     }
     setSaveState('error');
@@ -440,10 +465,10 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
 
   const enqueueSave = useCallback(() => {
     const targetAttemptId = attemptRef.current?.id;
-    if (!targetAttemptId || submittingRef.current) return Promise.resolve();
+    if (!targetAttemptId || submittingRef.current || saveConflictRef.current) return Promise.resolve();
     // One active save plus at most one trailing save of the newest answer snapshot.
     return saveQueueRef.current!.run(async () => {
-      if (attemptRef.current?.id !== targetAttemptId) return;
+      if (attemptRef.current?.id !== targetAttemptId || saveConflictRef.current) return;
       await saveAnswers();
     });
   }, [saveAnswers]);
@@ -485,6 +510,8 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
         void loadResultHistory();
         attemptRef.current = null;
         setAttempt(null);
+        setSavedAnswers({});
+        saveConflictRef.current = false;
         setSaveState('saved');
       } else {
         setRunnerError(response.error || 'Die Prüfung konnte nicht abgegeben werden. Bitte versuche es erneut.');
@@ -502,6 +529,12 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
     const next = { ...answersRef.current, [questionId]: value };
     answersRef.current = next;
     setAnswers(next);
+    if (saveConflictRef.current) {
+      setRunnerError('Deine lokalen Änderungen sind nicht bestätigt. Lade den aktuellen Versuch neu, um mit dem Serverstand fortzufahren.');
+      setSaveState('error');
+      return;
+    }
+    setRunnerError('');
     setSaveState('saving');
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => { void enqueueSave(); }, 700);
@@ -562,7 +595,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
               <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{attempt.title}</h2>
               <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Prüfungsmodus · Portalnavigation gesperrt</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Versuch {attempt.attemptNumber} · {attempt.questions.length} Fragen · {answeredCount} beantwortet
+                Versuch {attempt.attemptNumber} · {attempt.questions.length} Fragen · {answeredCount} gespeichert
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -588,34 +621,42 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
             >
               <summary className="academy-exam-question-nav-summary">
                 <span>Fragenübersicht</span>
-                <span className="academy-exam-question-nav-summary-meta">{answeredCount}/{attempt.questions.length} beantwortet · {markedQuestionIds.length} markiert</span>
+                <span className="academy-exam-question-nav-summary-meta">{answeredCount}/{attempt.questions.length} gespeichert · {markedQuestionIds.length} markiert</span>
               </summary>
               <div className="academy-exam-question-nav-content space-y-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fragenübersicht</div>
                 <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
                   {attempt.questions.map((question, index) => {
-                    const value = answers[question.id];
-                    const answered = value !== undefined && value !== null &&
-                      (typeof value !== 'string' || value.trim().length > 0) &&
-                      (!Array.isArray(value) || value.length > 0);
+                    const confirmed = hasAnswer(savedAnswers[question.id]);
+                    const persistence = answerPersistenceState(answers[question.id], savedAnswers[question.id], saveState);
+                    const statusLabel = persistence === 'saved'
+                      ? 'beantwortet und gespeichert'
+                      : persistence === 'pending'
+                        ? confirmed ? 'gespeicherte Antwort, Änderung ausstehend' : 'Antwort noch nicht serverbestätigt'
+                        : persistence === 'error'
+                          ? confirmed ? 'gespeicherte Antwort, Änderung nicht gespeichert' : 'Antwort nicht gespeichert'
+                          : 'noch nicht beantwortet';
                     const marked = markedQuestionIds.includes(question.id);
                     return (
-                      <button key={question.id} type="button" disabled={submitting} data-marked={marked || undefined} aria-label={`Frage ${index + 1}${answered ? ', beantwortet' : ', noch nicht beantwortet'}${marked ? ', zur späteren Kontrolle markiert' : ''}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
+                      <button key={question.id} type="button" disabled={submitting} data-marked={marked || undefined} aria-label={`Frage ${index + 1}, ${statusLabel}${marked ? ', zur späteren Kontrolle markiert' : ''}`} aria-current={index === currentQuestionIndex ? 'step' : undefined} onClick={() => {
                         if (debounceRef.current) clearTimeout(debounceRef.current);
                         debounceRef.current = null;
                         void enqueueSave();
                         setCurrentQuestionIndex(index);
                         if (window.matchMedia('(max-width: 1023px)').matches) setQuestionNavigatorExpanded(false);
-                      }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : answered ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
+                      }} className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${index === currentQuestionIndex ? 'border-slate-700 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900' : confirmed ? 'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                         {index + 1}
-                        {answered && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
+                        {confirmed && <CheckCircle2 aria-hidden="true" className="absolute -right-1 -top-1 h-3 w-3" />}
+                        {persistence === 'pending' && <Clock3 aria-hidden="true" className="absolute -left-1 -top-1 h-3 w-3 text-amber-600" />}
+                        {persistence === 'error' && <CloudOff aria-hidden="true" className="absolute -left-1 -top-1 h-3 w-3 text-rose-600" />}
                         {marked && <Flag aria-hidden="true" className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-sm bg-white p-px text-slate-600 dark:bg-slate-900 dark:text-slate-300" />}
                       </button>
                     );
                   })}
                 </div>
                 <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                  <div className="flex justify-between"><span>Fortschritt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
+                  <div className="flex justify-between"><span>Serverbestätigt</span><strong>{answeredCount}/{attempt.questions.length}</strong></div>
+                  {pendingAnswerCount > 0 && <p role="status" aria-live="polite" className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">{pendingAnswerCount} Antwortänderung(en) noch nicht bestätigt.</p>}
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div className="h-full rounded-full bg-slate-700 dark:bg-slate-300" style={{ width: `${progressPercent}%` }} />
                   </div>
