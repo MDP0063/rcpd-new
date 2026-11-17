@@ -536,9 +536,9 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 17.11.2026 – Prüfungsabgabe bestätigen
 
-- **In Arbeit:** Manuelle Abgabe darf nicht unmittelbar beim Klick erfolgen. Bestätigungsdialog soll beantwortete/unbeantwortete Fragen zeigen, Endgültigkeit erklären und Speichern/Abgeben erst nach ausdrücklicher Bestätigung auslösen.
+- **Erledigt in PR #323:** Manuelle Abgabe wird vor dem Einreichen bestätigt; unbeantwortete Fragen und Endgültigkeit werden angezeigt.
 - Automatische Abgabe bei abgelaufenem Zeitlimit bleibt servergesteuert und benötigt keine Teilnehmerbestätigung.
-- **Noch offen:** CI/Review für Branch `feat/exam-submission-confirmation`; spätere Keyboard-/Screenreader-/Mobil-QA.
+- **Noch offen:** spätere Keyboard-/Screenreader-/Mobil-QA für PR #323.
 
 
 ## 17.11.2026 – Fragenübersicht und Markierungen
