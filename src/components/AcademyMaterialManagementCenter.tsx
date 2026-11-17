@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './AcademyMaterialManagementCenter.css';
 import { AcademyMarkdownRenderer } from './AcademyMarkdownRenderer';
@@ -103,6 +104,7 @@ function isGlobalMaterialManager(user: UserPublicProfile): boolean {
 }
 
 export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, onStatusToast }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const globalManager = isGlobalMaterialManager(currentUser);
   const assignedCourseCodes = currentUser.granularPermissions?.assignedCourseCodes || [];
   const canEditAnyAssignedCourse = Boolean(currentUser.granularPermissions?.canGradeAssignedCourses);
@@ -212,8 +214,8 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
     setFormDirty(false);
   };
 
-  const startNew = () => {
-    if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein neues Material beginnen?')) return;
+  const startNew = async () => {
+    if (formDirty && !(await confirm('Ungespeicherte Änderungen verwerfen und ein neues Material beginnen?', { title: 'Neues Material beginnen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     materialEditorOriginRef.current = 'new';
     pendingMaterialFocusRef.current = 'editor';
     resetEditor();
@@ -234,7 +236,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
   };
 
   const openMaterial = async (materialId: string, focusEditor = false) => {
-    if (formDirty && !window.confirm('Ungespeicherte Änderungen verwerfen und ein anderes Material öffnen?')) return;
+    if (formDirty && !(await confirm('Ungespeicherte Änderungen verwerfen und ein anderes Material öffnen?', { title: 'Anderes Material öffnen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     setBusy(true);
     versionHistoryMaterialIdRef.current = null;
     const response = await apiFetch<MaterialDetailResponse>(API_ENDPOINTS.ACADEMY_MATERIAL(materialId));
@@ -408,10 +410,11 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
   const publishDraft = async () => {
     if (!editingMaster || !draft || !hasUnpublishedChanges || busy) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       'Material „' + editingMaster.code + ' – ' + title.trim() + '“, Version ' +
       (editingMaster.latestVersionNumber + 1) +
-      ' jetzt veröffentlichen? Die neue Fassung wird im Bibliotheksbestand verfügbar. Bereits veröffentlichte Kursversionen behalten ihre bisherigen Materialreferenzen.'
+      ' jetzt veröffentlichen? Die neue Fassung wird im Bibliotheksbestand verfügbar. Bereits veröffentlichte Kursversionen behalten ihre bisherigen Materialreferenzen.',
+      { title: 'Materialversion veröffentlichen?', confirmLabel: 'Version veröffentlichen' }
     );
     if (!confirmed) return;
     setBusy(true);
@@ -440,15 +443,17 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
 
   const archiveMaterial = async () => {
     if (!editingMaster || !globalManager || editingMaster.publicationStatus === 'archived' || busy) return;
-    const reason = window.prompt(
-      'Warum wird „' + editingMaster.code + ' – ' + (title || editingMaster.code) + '“ archiviert? Bitte mindestens 10 Zeichen eingeben.'
+    const reason = await prompt(
+      'Warum wird „' + editingMaster.code + ' – ' + (title || editingMaster.code) + '“ archiviert? Bitte beschreibe den Grund nachvollziehbar.',
+      { label: 'Archivierungsgrund', type: 'textarea', minLength: 10, maxLength: 1000, helperText: 'Mindestens 10 Zeichen.' },
+      { title: 'Material archivieren', confirmLabel: 'Weiter' }
     );
     if (reason === null) return;
     if (reason.trim().length < 10) {
       onStatusToast('Die Begründung muss mindestens 10 Zeichen enthalten. Das Material wurde nicht archiviert.');
       return;
     }
-    const confirmed = window.confirm('Material „' + editingMaster.code + '“ endgültig archivieren? Die veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.');
+    const confirmed = await confirm('Material „' + editingMaster.code + '“ endgültig archivieren? Die veröffentlichten Versionen und historischen Kursreferenzen bleiben erhalten.', { title: 'Archivierung bestätigen', confirmLabel: 'Material archivieren', danger: true });
     if (!confirmed) return;
     setBusy(true);
     const response = await apiFetch<{ master: AcademyMaterialMasterDoc }>(
@@ -593,7 +598,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
         {isEditorOpen && <div className="academy-material-management-main space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Materialverwaltung</p><h3 ref={materialEditorHeadingRef} tabIndex={-1} className="text-lg font-semibold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{editingMaster ? title || editingMaster.code : "Neues Material"}</h3></div>
-            <button type="button" className={secondary} onClick={() => { if (formDirty && !window.confirm("Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?")) return; pendingMaterialFocusRef.current = 'list'; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
+            <button type="button" className={secondary} onClick={async () => { if (formDirty && !(await confirm('Ungespeicherte Änderungen verwerfen und zur Materialübersicht zurückkehren?', { title: 'Zur Materialübersicht wechseln?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return; pendingMaterialFocusRef.current = 'list'; resetEditor(); setIsEditorOpen(false); }} disabled={busy}>Zur Materialübersicht</button>
           </div>
           {editingMaster && (
             <div className="academy-material-meta rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
@@ -791,6 +796,7 @@ export const AcademyMaterialManagementCenter: React.FC<Props> = ({ currentUser, 
           )}
         </div>}
       </div>
+      {academyDialog}
     </section>
   );
 };

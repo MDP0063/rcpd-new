@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import './AcademyLearningCenter.css';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import { mapWithConcurrency } from '../lib/async';
@@ -25,6 +26,7 @@ interface Props {
   area: 'courses' | 'notes';
   onStatusToast: (message: string) => void;
   onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
+  onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
 type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
@@ -105,7 +107,8 @@ function availabilityNotice(master: { publicationStatus: string; availability: s
   return null;
 }
 
-export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast, onUnsavedChangesChange }) => {
+export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onStatusToast, onUnsavedChangesChange, onNavigateToExam }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
@@ -406,7 +409,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     if (!courseDetail || saving) return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
-    const confirmed = window.confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`);
+    const confirmed = await confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`, { title: 'Fortschrittsnachweis erfassen', confirmLabel: 'Nachweis erfassen' });
     if (!confirmed) return;
     setSaving(true);
     const response = await apiFetch(API_ENDPOINTS.ACADEMY_COURSE_EVIDENCE(participationId), {
@@ -486,18 +489,18 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
   };
 
-  const cancelNoteEdit = () => {
+  const cancelNoteEdit = async () => {
     if (saving) return;
-    if (noteHasUnsavedChanges && !window.confirm('Nicht gespeicherte Änderungen an dieser privaten Notiz verwerfen?')) return;
+    if (noteHasUnsavedChanges && !(await confirm('Nicht gespeicherte Änderungen an dieser privaten Notiz verwerfen?', { title: 'Notizänderungen verwerfen?', confirmLabel: 'Änderungen verwerfen', danger: true }))) return;
     pendingNoteFocusRef.current = 'list';
     setEditingNote(null);
     setNoteSaveError('');
     setNoteConflictNote(null);
   };
 
-  const loadLatestNoteConflict = () => {
+  const loadLatestNoteConflict = async () => {
     if (!noteConflictNote) return;
-    if (noteHasUnsavedChanges && !window.confirm('Deine lokalen Änderungen verwerfen und die aktuell gespeicherte Fassung laden?')) return;
+    if (noteHasUnsavedChanges && !(await confirm('Deine lokalen Änderungen verwerfen und die aktuell gespeicherte Fassung laden?', { title: 'Aktuelle Serverfassung laden?', confirmLabel: 'Fassung laden', danger: true }))) return;
     setEditingNote(noteConflictNote);
     setNoteTitle(noteConflictNote.title || '');
     setNoteContent(noteConflictNote.content || '');
@@ -553,7 +556,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const confirmation = note.kind === 'bookmark'
       ? 'Dieses Lesezeichen endgültig entfernen?'
       : 'Diese private Notiz endgültig löschen?';
-    if (!window.confirm(confirmation)) return;
+    if (!(await confirm(confirmation, { title: note.kind === 'bookmark' ? 'Lesezeichen entfernen?' : 'Private Notiz löschen?', confirmLabel: note.kind === 'bookmark' ? 'Lesezeichen entfernen' : 'Notiz löschen', danger: true }))) return;
     setSaving(true);
     const response = await apiFetch(API_ENDPOINTS.ACADEMY_NOTES + `/${encodeURIComponent(note.id)}`, { method: 'DELETE' });
     setSaving(false);
@@ -761,7 +764,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
                             )}
-                            {requirement.type === 'required_assessment' && <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>}
+                            {requirement.type === 'required_assessment' && (
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>
+                                {!assessmentProof && onNavigateToExam && (
+                                  <button
+                                    type="button"
+                                    className={secondary}
+                                    onClick={() => onNavigateToExam(requirement.targetId, selectedCourse.master.code)}
+                                  >
+                                    Zur Kursabschlussprüfung <span aria-hidden="true">→</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                             {['practical_task', 'instructor_confirmation'].includes(requirement.type) && !matching.length && (
                               <p className="text-xs text-slate-500 dark:text-slate-400">Dieser Nachweis muss von einem berechtigten Ausbilder erfasst werden.</p>
                             )}
@@ -1117,6 +1133,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
           )}
         </section>
       )}
+      {academyDialog}
     </div>
   );
 };

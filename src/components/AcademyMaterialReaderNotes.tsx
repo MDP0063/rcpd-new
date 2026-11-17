@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import type { Components } from 'react-markdown';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import type { AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor } from '../types/academy';
@@ -52,6 +53,7 @@ const markdownComponents = {
 } satisfies Components;
 
 export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materialVersionId, selectedAnchor, onJumpToAnchor }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [notesLoaded, setNotesLoaded] = useState(false);
@@ -557,7 +559,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const reloadSelectedNote = async () => {
     if (!selectedNote || saveStatus !== 'error' || savingAction ||
         savingDraftIdRef.current === selectedNote.id || operationLockedIdsRef.current.has(selectedNote.id)) return;
-    if (!window.confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?')) return;
+    if (!(await confirm('Die nicht gespeicherten Änderungen dieser Notiz verwerfen und die aktuelle Serverfassung laden?', { title: 'Aktuelle Serverfassung laden?', confirmLabel: 'Serverfassung laden', danger: true }))) return;
     const noteId = selectedNote.id;
     const draftToKeep = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
       ? draft
@@ -608,7 +610,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   const deleteSelectedNote = async () => {
     if (!selectedNote || savingDraftIdRef.current === selectedNote.id ||
         operationLockedIdsRef.current.has(selectedNote.id) ||
-        !window.confirm('Diese private Notiz endgültig löschen?')) return;
+        !(await confirm('Diese private Notiz endgültig löschen?', { title: 'Private Notiz löschen?', confirmLabel: 'Notiz löschen', danger: true }))) return;
     const noteId = selectedNote.id;
     const draftToRestore = currentDraftRef.current?.id === noteId && hasUnsavedChanges && draft
       ? draft
@@ -653,6 +655,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
   };
 
   return (
+    <>
     <details className="rounded-lg border border-slate-200 dark:border-slate-800">
       <summary className="cursor-pointer px-3 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 marker:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
         Persönliche Notizen und Lesezeichen
@@ -797,5 +800,7 @@ export const AcademyMaterialReaderNotes: React.FC<Props> = ({ materialId, materi
         ) : null}
       </div>
     </details>
+    {academyDialog}
+    </>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useAcademyActionDialog } from './AcademyActionDialog';
 import './AcademyCenter.css';
 import {
   BookOpen,
@@ -66,6 +67,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   onReviewNavigationConsumed,
   onExamAttemptActiveChange
 }) => {
+  const { confirm, prompt, dialog: academyDialog } = useAcademyActionDialog();
   const rolePermissions = ROLE_HIERARCHY[currentUser.role] || ROLE_HIERARCHY.trainee;
   const assignedCourses = currentUser.granularPermissions?.assignedCourseCodes || [];
   const hasScopedCourseRights =
@@ -94,7 +96,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'modules' | 'notes' | 'exam_center' | 'exam_reviews' | 'exam_corrections' | 'tests' | 'final_exams'
   >('overview');
-  const canLeaveNotes = () => activeTab !== 'notes' || !hasUnsavedNoteChanges || window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?');
+  const canLeaveNotes = async () => activeTab !== 'notes' || !hasUnsavedNoteChanges || await confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du den Bereich wirklich verlassen?', { title: 'Notizänderungen verwerfen?', confirmLabel: 'Bereich verlassen', danger: true });
   const openAcademyArea = (tab: AcademyHomeArea) => {
     lastHomeAreaRef.current = tab;
     pendingAcademyFocusRef.current = 'area';
@@ -109,7 +111,18 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     else activeAreaNavFocusRef.current?.focus();
   }, [activeTab, isAcademyHome]);
   const [initialReviewAttemptId, setInitialReviewAttemptId] = useState<string | null>(null);
+  const [courseExamNavigationTarget, setCourseExamNavigationTarget] = useState<{ examId: string; courseCode: string } | null>(null);
   const processedReviewNavigationRef = useRef<string | null>(null);
+  const navigateToCourseExam = useCallback((examId: string, courseCode: string) => {
+    setCourseExamNavigationTarget({ examId, courseCode });
+    lastHomeAreaRef.current = 'exam_center';
+    pendingAcademyFocusRef.current = 'area';
+    setIsAcademyHome(false);
+    setActiveTab('exam_center');
+  }, []);
+  useEffect(() => {
+    if (activeTab !== 'exam_center' && courseExamNavigationTarget) setCourseExamNavigationTarget(null);
+  }, [activeTab, courseExamNavigationTarget]);
   useEffect(() => {
     if (!reviewNavigationTarget) {
       processedReviewNavigationRef.current = null;
@@ -118,7 +131,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     const targetKey = `${reviewNavigationTarget.examId}:${reviewNavigationTarget.attemptId}`;
     if (processedReviewNavigationRef.current === targetKey) return;
     processedReviewNavigationRef.current = targetKey;
-    if (activeTab === 'notes' && hasUnsavedNoteChanges && !window.confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du die Notiz verlassen und zur Bewertung wechseln?')) {
+    void (async () => {
+      if (activeTab === 'notes' && hasUnsavedNoteChanges && !(await confirm('Deine privaten Notizänderungen sind noch nicht abgeschlossen. Möchtest du die Notiz verlassen und zur Bewertung wechseln?', { title: 'Zur Bewertung wechseln?', confirmLabel: 'Notiz verlassen', danger: true }))) {
       onReviewNavigationConsumed?.();
       return;
     }
@@ -128,8 +142,9 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     setIsAcademyHome(false);
     setActiveTab('exam_reviews');
     setInitialReviewAttemptId(reviewNavigationTarget.attemptId);
-    onReviewNavigationConsumed?.();
-  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId, activeTab, hasUnsavedNoteChanges, onReviewNavigationConsumed]);
+      onReviewNavigationConsumed?.();
+    })();
+  }, [reviewNavigationTarget?.examId, reviewNavigationTarget?.attemptId, activeTab, hasUnsavedNoteChanges, onReviewNavigationConsumed, confirm]);
   const [courseAreaMode, setCourseAreaMode] = useState<'learning' | 'management'>('learning');
   const [libraryAreaMode, setLibraryAreaMode] = useState<'materials' | 'categories' | 'documentTypes' | 'versionedMaterials'>('materials');
   const canAuthorCourses = currentUser.role === 'admin' || currentUser.role === 'colonel';
@@ -505,7 +520,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
   const handleDeleteExam = async (id: string) => {
     if (currentUser.role !== 'admin') return;
-    const reason = window.prompt('Begründung für die Archivierung dieser älteren Prüfung:');
+    const reason = await prompt('Gib einen nachvollziehbaren Grund für die Archivierung dieser älteren Prüfung an.', { label: 'Archivierungsgrund', type: 'textarea', minLength: 3, maxLength: 1000 }, { title: 'Prüfung archivieren', confirmLabel: 'Weiter' });
     if (reason === null) return;
     if (reason.trim().length < 3) {
       onStatusToast('Bitte gib einen nachvollziehbaren Archivierungsgrund ein.');
@@ -620,8 +635,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         <div inert={examAttemptActive} className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => {
-              if (!canLeaveNotes()) return;
+            onClick={async () => {
+              if (!(await canLeaveNotes())) return;
               setHasUnsavedNoteChanges(false);
               pendingAcademyFocusRef.current = 'home';
               setIsAcademyHome(true);
@@ -650,8 +665,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
                     : activeTab === item.id;
               return <button key={item.id} type="button"
                 ref={selected ? activeAreaNavFocusRef : undefined}
-                onClick={() => {
-                  if (!canLeaveNotes()) return;
+                onClick={async () => {
+                  if (!(await canLeaveNotes())) return;
                   setHasUnsavedNoteChanges(false);
                   lastHomeAreaRef.current = item.id;
                   setActiveTab(item.id);
@@ -847,7 +862,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           )}
           {courseAreaMode === 'management' && canAuthorCourses
             ? <AcademyAuthoringCenter currentUser={currentUser} onStatusToast={onStatusToast} />
-            : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} />}
+            : <AcademyLearningCenter currentUser={currentUser} area="courses" onStatusToast={onStatusToast} onNavigateToExam={navigateToCourseExam} />}
         </section>
       )}
       {activeTab === 'notes' && <AcademyLearningCenter currentUser={currentUser} area="notes" onStatusToast={onStatusToast} onUnsavedChangesChange={setHasUnsavedNoteChanges} />}
@@ -1275,7 +1290,13 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
         </div>
       )}
 
-      {activeTab === 'exam_center' && <ExamParticipantRunner onAttemptActiveChange={handleExamAttemptActiveChange} />}
+      {activeTab === 'exam_center' && (
+        <ExamParticipantRunner
+          onAttemptActiveChange={handleExamAttemptActiveChange}
+          initialExamId={courseExamNavigationTarget?.examId || null}
+          initialCourseCode={courseExamNavigationTarget?.courseCode || null}
+        />
+      )}
       {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />}
 
@@ -1502,6 +1523,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
 
 
       </div>
+      {academyDialog}
     </div>
   );
 };
