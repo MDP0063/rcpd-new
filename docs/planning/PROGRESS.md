@@ -1612,3 +1612,10 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Nicht verfügbare oder falsch zugeordnete Prüfungen werden neutral erklärt; es wird keine nicht freigegebene Prüfung offengelegt und kein anderer Kurskontext stillschweigend verwendet.
 - Nebenbei wird ein vorhandener Katalogfehler behoben: Bei automatischer Vorauswahl einer Prüfung wird der erste gültige Kurskontext direkt mitgesetzt, damit „Prüfung starten / fortsetzen“ nicht ohne manuelle Neuauswahl deaktiviert bleibt.
 - Umsetzung: Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend. Manuelle Kurs-/Prüfungsnavigation später.
+
+
+## 17.11.2026 – CI-Abhängigkeit csstype (in Arbeit)
+
+- GitHub Actions konnte die transitive Abhängigkeit `csstype-3.2.4.tgz` wiederholt nicht laden (npm-Registry HTTP 404).
+- Gezielter Override auf veröffentlichte Version `3.2.3`; keine Laufzeitänderung.
+- PR #327; CI-Installations-/Build-Wiederholung steht aus.
