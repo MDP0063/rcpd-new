@@ -265,7 +265,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
           selectedExamIdRef.current = '';
           selectedCourseCodeRef.current = '';
           setContextNavigationMessage('Die verknüpfte Kursabschlussprüfung ist aktuell nicht in deinem Prüfungskatalog verfügbar. Prüfe die Freigabe oder wende dich an die Kursverwaltung.');
-        } else if (initialCourseCode && !linkedExam.assignedCourseCodes.includes(initialCourseCode)) {
+        } else if (linkedExam.assessmentStage !== 'final_exam' || (initialCourseCode && !linkedExam.assignedCourseCodes.includes(initialCourseCode))) {
           setSelectedExamId('');
           setSelectedCourseCode('');
           selectedExamIdRef.current = '';
