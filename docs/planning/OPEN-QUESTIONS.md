@@ -521,9 +521,10 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 17.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt
 
-- **In Arbeit in PR #320:** Beantwortete Fragen und Fortschritt ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnen; lokale Abweichungen als ausstehend/fehlgeschlagen darstellen.
-- Autosave-Responses mit dem gesendeten Snapshot vergleichen und bei abweichendem Serverstand weitere automatische Saves blockieren.
-- **Merge gesperrt:** Datenintegritätsänderung; unabhängige Prüfung durch eine andere beteiligte Instanz oder den Projektinhaber gemäß `CONTRIBUTOR_ROLES.md` erforderlich. Manuelle Prüfung mit echten Versuchen bleibt zusätzlich offen.
+- **In Arbeit auf aktuellem main:** Der beantwortete Fortschritt wird ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnet; lokale Abweichungen erscheinen als ausstehend oder fehlgeschlagen.
+- Autosave-Antworten werden mit dem gesendeten Snapshot und der bestätigten Revision verglichen. Bei einem abweichenden Serverstand werden weitere automatische Saves blockiert, damit ein neuerer Tab-/Serverstand nicht überschrieben wird.
+- Die Clientoberfläche kennzeichnet bereits gespeicherte Antworten weiterhin als gespeichert, auch wenn eine spätere Änderung fehlschlägt. Boolean-Antworten `false` bleiben gültige Antworten; leere Texte und leere Auswahlmengen gelten als unbeantwortet.
+- **Noch offen:** CI, Review und unabhängige Prüfung auf dem neu aufgebauten Branch; danach manuelle Prüfung mit echten Versuchen in der gemeinsamen Academy-Abnahme.
 
 
 ## 17.11.2026 – Prüfungsunterbrechung und Prüfungsmodus
@@ -550,8 +551,8 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Noch offen:** manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA für PR #324.
 
 
-## 17.11.2026 – Kurs-/Prüfungsnavigation
+## 17.11.2026 – Kurs-/Prüfungsnavigation (PR #325 gemergt)
 
-- **In Arbeit:** Offene Kursabschlussprüfungs-Nachweise sollen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum führen, mit exakter Kurskennung. Der Zielvorgang darf nur ausgewählt werden, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurskontext zugeordnet ist.
-- Katalog-Vorauswahl muss sowohl Prüfungs-ID als auch gültigen Kurskontext setzen; kein stiller Fallback auf eine andere Kurszuordnung.
-- **Noch offen:** CI/Review für Branch `feat/course-to-exam-context-navigation`; manuelle Kurs-/Prüfungsnavigation später.
+- **Erledigt:** Offene Kursabschlussprüfungs-Nachweise führen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum, mit exakter Kurskennung und validiertem Kurskontext.
+- Der Zielvorgang wird nur gewählt, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurs zugeordnet ist. Kein stiller Fallback auf eine andere Kurszuordnung.
+- **PR #325 gemergt;** manuelle Kurs-/Prüfungsnavigation bleibt Teil der späteren Academy-Abnahme.

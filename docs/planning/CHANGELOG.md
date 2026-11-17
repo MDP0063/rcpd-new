@@ -759,3 +759,11 @@
 - Prüfung und Kurskontext werden exakt übergeben; der Teilnehmerkatalog prüft erneut, ob die Prüfung für den Nutzer verfügbar und dem Kurs zugeordnet ist.
 - Automatische Vorauswahl setzt nun auch den zugehörigen Kurskontext; damit ist der Startbutton nach der Katalog-Vorauswahl korrekt nutzbar.
 - Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend.
+
+
+## 2026-11-17 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+
+- Die Zahl beantworteter Fragen basiert künftig nur auf dem zuletzt vom Server zurückgegebenen Antwortstand.
+- Lokale Änderungen werden je Frage als noch nicht bestätigt bzw. fehlgeschlagen kenntlich gemacht; bereits gespeicherte Antworten bleiben erhalten und sichtbar.
+- Bei einem abweichenden oder neueren Serverstand blockiert der Runner weitere automatische Saves statt einen fremden Stand zu überschreiben.
+- **Arbeitsstand:** Neuaufbau auf dem aktuellen `main` nach PR #325, #327 und #329. CI und Review stehen aus; echte Versuche bleiben Teil der abschließenden manuellen Academy-QA.

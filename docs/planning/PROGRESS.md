@@ -1605,17 +1605,25 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **PR #324 ist am 17.11.2026 gemergt** (Merge-Commit `58a8c17af4ab73c9725f3fdea270ba20bc742e23`). GitHub Actions: TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung erfolgreich; Render-Deploy-Hook übersprungen. Manuelle 320/375/768/1024px-, Keyboard- und Screenreader-QA später.
 
 
-## 17.11.2026 – Kursabschlussprüfung direkt aus Kursbedingungen öffnen (in Arbeit)
+## 17.11.2026 – Kursabschlussprüfung direkt aus Kursbedingungen öffnen (PR #325 gemergt)
 
 - Bei einer offenen `required_assessment`-Abschlussbedingung führt eine kontextuelle Aktion direkt in das Prüfungszentrum.
 - Die exakte Prüfungs-ID und der Kurscode werden übergeben. Der Prüfungsrunner wählt nur dann automatisch aus, wenn die Prüfung im aktuellen freigegebenen Teilnehmerkatalog enthalten und genau diesem Kurskontext zugeordnet ist.
 - Nicht verfügbare oder falsch zugeordnete Prüfungen werden neutral erklärt; es wird keine nicht freigegebene Prüfung offengelegt und kein anderer Kurskontext stillschweigend verwendet.
-- Nebenbei wird ein vorhandener Katalogfehler behoben: Bei automatischer Vorauswahl einer Prüfung wird der erste gültige Kurskontext direkt mitgesetzt, damit „Prüfung starten / fortsetzen“ nicht ohne manuelle Neuauswahl deaktiviert bleibt.
-- Umsetzung: Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend. Manuelle Kurs-/Prüfungsnavigation später.
+- Bei automatischer Vorauswahl wird der erste gültige Kurskontext mitgesetzt, damit „Prüfung starten / fortsetzen“ direkt nutzbar bleibt.
+- **PR #325 ist am 17.11.2026 gemergt** (Merge-Commit `30736b88a2f9cee8432ec8b8b5ddcf7e35a0255c`); TypeScript/Lint, Produktionsbuild, 455/455 Tests und PR-Vorlagenprüfung waren erfolgreich. Render-Deploy-Hook übersprungen. Manuelle Kurs-/Prüfungsnavigation bleibt offen.
 
 
-## 17.11.2026 – CI-Abhängigkeit csstype (in Arbeit)
+## 17.11.2026 – CI-Abhängigkeit csstype (PR #327 gemergt)
 
 - GitHub Actions konnte die transitive Abhängigkeit `csstype-3.2.4.tgz` wiederholt nicht laden (npm-Registry HTTP 404).
 - Gezielter Override auf veröffentlichte Version `3.2.3`; keine Laufzeitänderung.
-- PR #327; CI-Installations-/Build-Wiederholung steht aus.
+- **PR #327 ist am 17.11.2026 gemergt**; der nachfolgende Build-/Testlauf von PR #329 auf dem resultierenden `main`-Stand war erfolgreich. Keine Laufzeitänderung.
+
+
+## 17.11.2026 – Einheitliche Academy-Aktionsdialoge (PR #329 gemergt)
+
+- Sämtliche in den Academy-Oberflächen gefundenen nativen `window.confirm`-/`window.prompt`-Aufrufe wurden durch einen gemeinsamen In-App-Dialog ersetzt.
+- Betroffen sind Academy-Navigation, Lernfortschritt, private Notizen, Materialverwaltung, Kategorien, Dokumenttypen, Kurs-/Lehrgangsverwaltung und Prüfungswerkstatt.
+- Eingaben wie Archivierungsgründe und die exakte Namensbestätigung erhalten Inline-Validierung; Escape bricht ab. Der native HTML-Dialog sperrt den Hintergrund und stellt einen Fokuskontext bereit.
+- **PR #329 ist am 17.11.2026 gemergt** (Merge-Commit `c9d31aac2ca11c31caeee587ca0ef406c0959a12`). TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung waren erfolgreich. Die manuelle Keyboard-/Screenreader-/Mobilabnahme bleibt Teil der Gesamtabnahme.
