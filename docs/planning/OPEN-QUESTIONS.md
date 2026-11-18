@@ -48,7 +48,7 @@
 ### Prüfungen und Examiner
 - Die serverseitigen Bewertungs-Drafts sowie Claim-, Inaktivitäts-, Disconnect-, Übergabe- und Neuzuweisungslogik sind in PR #149/#150/#152 umgesetzt. Ihre tatsächlichen Laufzeit-/Browserzustände bleiben Teil der gemeinsamen Academy-Abnahme.
 - Noch offen: vollständige einsehbare Claim-/Übergabehistorie in der UI.
-- Revisions-Action-Request und zweistufiges Admin-/Colonel-Gate entsprechen der am 13.11.2026 bestätigten Option 2. Die Implementierung wurde nach den späteren Academy-Merges auf einem frischen Branch feat/exam-review-revision-requests-current-main neu aufgebaut; aktuelle CI, Sicherheitsreview und unabhängige Prüfung bleiben offen.
+- Revisions-Action-Request und zweistufiges Admin-/Colonel-Gate entsprechen der am 13.11.2026 bestätigten Option 2. Die Implementierung wurde nach den späteren Academy-Merges auf einem frischen Branch feat/exam-review-revision-requests-main-2026-11-18 neu aufgebaut und als PR #332 geöffnet; aktuelle CI ist erfolgreich, unabhängiges Sicherheitsreview bleibt offen.
 - Die Revisionsberechtigung Option A bleibt maßgeblich: jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben. Die Action Request geht ausschließlich an Admins/Colonels; erst nach Annahme wird derselbe Versuch für die gemeinsame Prüferliste freigegeben. Kein neuer Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten.
 - Die konkrete Historienanzeige muss die Sichtbarkeitsregeln aus Abschnitt 15.7 einhalten. Historische Korrekturen sind lesbar Fragen/Bewertungsschritten zuzuordnen.
 - Sonderfälle bei Prüfungsstart, Autosave, Resume, Abgabe, Bewertung und Ergebnisfreigabe sowie Sortierung nach tatsächlichem Bewertungsabschlussdatum bleiben im abschließenden technischen/Browser-Audit zu prüfen.
@@ -332,7 +332,7 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ### Verbleibende technische und fachliche Prüfpunkte
 
-- **PR #267 – Revisionsanfragen mit Admin-/Colonel-Gate:** weiterhin Draft und derzeit nicht mergebar. Vor Merge kontrollierter Abgleich mit aktuellem main, vollständige CI, unabhängiges Review der Autorisierungs-/Datenzugriffsänderungen und Prüfung der Transaktions-/Snapshot-/Benachrichtigungsgrenzen. Die beschlossene Option 2 wird nicht erneut zur Entscheidung gestellt.
+- **PR #332 – Revisionsanfragen mit Admin-/Colonel-Gate:** auf aktuellem main neu aufgebaut; CI für den neuen Stand ist erfolgreich. Der PR bleibt Draft bis zur unabhängigen Sicherheitsprüfung der Autorisierungs-/Datenzugriffsänderungen und der Transaktions-/Snapshot-/Benachrichtigungsgrenzen. Die beschlossene Option 2 wird nicht erneut zur Entscheidung gestellt.
 - **PR #284 – private Notizentwürfe beim Materialwechsel:** weiterhin Draft. Die Client-Save-Queue benötigt vor Merge die später vereinbarte Browserprüfung von Debounce, parallelen/in-flight Saves, Materialwechsel, Fehler/Retry, 409/Reload, Delete-Failure und Unmount/Remount. Ein erfolgreicher Serverbuild ersetzt diese Laufzeitprüfung nicht.
 - **Prüfungsdatenfamilien:** Legacy-Übungstests/Kursabschlussprüfungen und neuer versionierter Prüfungsrunner bleiben getrennt, bis Datenbestand, Nutzung, Ergebnisprojektionen und Migration abschließend geprüft sind.
 - **Gemeinsamer Academy-Funktionsaudit:** neben den neuen UI-Arbeiten weiterführen; CI, statische Befunde, Browser-/Screenreader- und Live-Firestore-Abnahmen getrennt protokollieren.
@@ -377,7 +377,7 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 15.11.2026 – Statuskorrektur nach PR-Bereinigung
 
-- **PR #267:** geschlossen und durch PR #296 auf aktuellem `main` ersetzt. PR #296 bleibt Draft. CI ist erfolgreich; unabhängige Sicherheitsprüfung der Autorisierungs-, sensiblen Datenzugriffs- und Benachrichtigungsänderungen ist weiterhin erforderlich. Kein Merge bis zum Abschluss dieses Reviews.
+- **PR #267:** geschlossen. Der daraus hervorgegangene PR #296 basierte später auf einem veralteten `main` und wurde durch den aktuellen, auf `main` neu aufgebauten Draft PR #332 ersetzt. CI auf dem neuen Head ist erfolgreich; unabhängige Sicherheitsprüfung der Autorisierungs-, sensiblen Datenzugriffs- und Benachrichtigungsänderungen ist weiterhin erforderlich. Kein Merge bis zum Abschluss dieses Reviews.
 - **PR #284:** geschlossen und durch PR #295 ersetzt. PR #295 ist gemergt; die zeitabhängigen Autosave-/Unmount-/Netzwerkfehler-Szenarien bleiben Teil der späteren manuellen Browser-QA. Die bekannte Best-effort-Grenze beim Unmount wird nicht durch lokale Speicherung privater Notizen umgangen.
 - **PRs #293, #294 und #295:** gemergt; CI und PR-Vorlagenprüfungen erfolgreich. Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 - **Aktueller Routine-UX-Arbeitszweig:** Kurs-/Lehrgangsverwaltung mit clientseitiger Suche, Veröffentlichungsfilter und Sortierung. Es werden ausschließlich bereits vorhandene Felder verwendet; keine neue fachliche Status- oder Berechtigungslogik.

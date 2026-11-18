@@ -519,7 +519,7 @@
 - Zweistufige Revisions-Action-Request nach bestätigter Option 2: Antrag durch aktuell kursberechtigte Prüfer; Annahme/Ablehnung ausschließlich durch Admins/Colonels; erst nach Annahme Rückkehr desselben Versuchs in die gemeinsame Prüferliste.
 - Zuletzt freigegebenes Ergebnis bleibt als Snapshot sichtbar, zählt während der Revision aber nicht als aktueller Kursabschlussnachweis; neue Freigabe stellt den Nachweis wieder her.
 - Revisionsbenachrichtigungen prüfen Empfängerstatus und aktuelle Rolle/Kursberechtigung erneut bei Zustellung.
-- Umsetzung auf feat/exam-review-revision-requests-current-main; unabhängige Sicherheitsprüfung und aktuelle CI vor Merge erforderlich. Noch nicht als produktiv freigegeben betrachten.
+- Nachfolgeimplementierung auf aktuellem main: PR #332 auf Branch feat/exam-review-revision-requests-main-2026-11-18. Aktuelle CI erfolgreich; unabhängige Sicherheitsprüfung vor Merge erforderlich. Noch nicht als produktiv freigegeben betrachten.
 
 
 ## 2026-11-15 – Kurs- und Lehrgangsverwaltung: Katalogbedienung
@@ -791,3 +791,11 @@
 - Die UI behauptet nicht, dass eine Voraussetzung individuell erfüllt ist. Die tatsächliche Freigabe bleibt serverseitig.
 - Tests decken Abschlussmodus, Bestehensmodus, Mindestpunktzahl und nicht sichtbare Vorprüfungen ab.
 - Branch `feat/exam-prerequisites-current-main`; CI/Review ausstehend.
+
+
+## 2026-11-18 – Prüfungsvoraussetzungen vor Start und Fortsetzung (PR #331 gemergt)
+
+- Konkrete Abschluss-/Bestehensvoraussetzungen und Mindestpunktzahlen werden in Detailansicht und Start-/Fortsetzungsbestätigung angezeigt.
+- Prüfungstitel werden ausschließlich aus dem sichtbaren Teilnehmerkatalog aufgelöst; nicht sichtbare Vorprüfungen bleiben generisch.
+- Die UI leitet keinen individuellen Erfüllungsstatus ab; die serverseitige Startprüfung bleibt autoritativ.
+- **PR #331 am 18.11.2026 gemergt** (Merge-Commit `cf3ca0a9fe88ad21e8c2554e644183b2381f9707`); GitHub Actions inklusive Build-/Test- und Render-Autodeploy-Workflow erfolgreich.
