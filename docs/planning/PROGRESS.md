@@ -1636,3 +1636,12 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der Modus „abgeschlossen“ oder „bestanden“ sowie eine konfigurierte Mindestpunktzahl werden verständlich formuliert.
 - Die UI leitet daraus keinen individuellen Erfüllungsstatus ab. Der Server bleibt für die tatsächliche Startfreigabe autoritativ.
 - Umsetzung auf aktuellem `main`, Branch `feat/exam-prerequisites-current-main`; CI/Review ausstehend.
+
+
+## 17.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt (PR #330 gemergt)
+
+- Der Fortschritt zählt nur Antworten aus dem bestätigten Server-Snapshot. Lokale Änderungen werden getrennt als ausstehend/fehlgeschlagen dargestellt.
+- Autosave-Antworten werden mit dem gesendeten Snapshot verglichen. Bei einem abweichenden/neuerem Serverstand werden weitere automatische Saves blockiert, damit kein fremder Stand überschrieben wird.
+- Bereits gespeicherte Antworten bleiben sichtbar, wenn eine spätere Änderung fehlschlägt; boolesches `false` ist eine gültige Antwort, leere Texte/Listen sind unbeantwortet.
+- **PR #330 ist am 17.11.2026 gemergt** (Merge-Commit `a1c20706616332b26d7b4dfa6002cbf3fa0d76b1`). GitHub Actions: TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich. Kein Render-Deploy-Hook durch PR-Merge.
+- **Noch offen:** manuelle echte Versuche, parallele Tabs, Netzwerkunterbrechung und Fortsetzung; diese Szenarien gehören zur abschließenden Academy-Abnahme.
