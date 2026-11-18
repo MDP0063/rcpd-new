@@ -777,9 +777,10 @@ test('HTTP: Werkstatt-Master schützt Lösungsschlüssel für Delegierte, erhäl
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'accept' }) }
     );
     assert.equal(acceptedRevisionResponse.status, 200, JSON.stringify(acceptedRevisionResponse.body));
-    const requesterDecisionState = await jsonRequest('/api/portal/state?uid=http-second-reviewer', secondReviewer.token);
-    assert.equal(requesterDecisionState.body.notifications.some((item: Record<string, any>) =>
-      item.title === 'Revisionsanfrage angenommen' && item.linkTarget?.attemptId === attemptToGrade.id
+    const requesterDecisionState = JSON.parse(await readFile(path.join(dataDirectory, 'portal-db-v3.json'), 'utf8'));
+    assert.equal(requesterDecisionState.notifications.some((item: Record<string, any>) =>
+      item.recipientUid === 'http-second-reviewer' && item.title === 'Revisionsanfrage angenommen' &&
+      item.linkTarget?.attemptId === attemptToGrade.id
     ), false, 'a requester who lost current course eligibility must not receive a delayed revision notification');
     const acceptedRevisionQueue = await jsonRequest('/api/academy/exam-reviews', courseReviewer.token);
     assert.equal(acceptedRevisionQueue.status, 200);
