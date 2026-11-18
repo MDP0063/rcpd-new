@@ -761,9 +761,18 @@
 - Branch `feat/course-to-exam-context-navigation`; CI/Review ausstehend.
 
 
-## 2026-11-17 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+## 2026-11-17 – Prüfungsrunner: serverbestätigter Antwortfortschritt (PR #330 gemergt)
 
-- Die Zahl beantworteter Fragen basiert künftig nur auf dem zuletzt vom Server zurückgegebenen Antwortstand.
+- Die Zahl beantworteter Fragen basiert ausschließlich auf dem zuletzt vom Server bestätigten Antwortstand.
 - Lokale Änderungen werden je Frage als noch nicht bestätigt bzw. fehlgeschlagen kenntlich gemacht; bereits gespeicherte Antworten bleiben erhalten und sichtbar.
 - Bei einem abweichenden oder neueren Serverstand blockiert der Runner weitere automatische Saves statt einen fremden Stand zu überschreiben.
-- **Arbeitsstand:** Neuaufbau auf dem aktuellen `main` nach PR #325, #327 und #329. CI und Review stehen aus; echte Versuche bleiben Teil der abschließenden manuellen Academy-QA.
+- **PR #330 gemergt** (Merge-Commit `a1c20706616332b26d7b4dfa6002cbf3fa0d76b1`); TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich. Manuelle Prüfung mit echten Versuchen bleibt Teil der gemeinsamen Academy-QA.
+
+
+## 2026-11-18 – Konkrete Prüfungsvoraussetzungen vor dem Start
+
+- Die Detailansicht und die verbindliche Start-/Fortsetzungsbestätigung nennen konkrete Vorprüfungen, Abschluss-/Bestehensbedingungen und konfigurierte Mindestpunktzahlen.
+- Vorprüfungstitel werden nur aus dem Teilnehmerkatalog aufgelöst; nicht sichtbare Prüfungen werden nicht über ihre Namen offengelegt.
+- Die UI behauptet nicht, dass eine Voraussetzung individuell erfüllt ist. Die tatsächliche Freigabe bleibt serverseitig.
+- Tests decken Abschlussmodus, Bestehensmodus, Mindestpunktzahl und nicht sichtbare Vorprüfungen ab.
+- Branch `feat/exam-prerequisites-current-main`; CI/Review ausstehend.

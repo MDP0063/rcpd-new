@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { describeExamPrerequisite } from '../src/lib/examPrerequisites.ts';
 import { evaluatePrerequisites } from './examPrerequisites.ts';
 import { attempt } from './examTestFixtures.ts';
 import type { LegacyProgressRecord, LegacyVerificationDoc } from './examTypes.ts';
@@ -98,4 +99,45 @@ test('Legacy-Nachweise gelten nur im gleichen Lehrgang; fehlender Lehrgangscode 
   assert.ok(evaluatePrerequisites(pre, ctx({ legacyProgress: [same] })).met);
   assert.ok(!evaluatePrerequisites(pre, ctx({ legacyProgress: [other] })).met);
   assert.ok(evaluatePrerequisites(pre, ctx({ legacyProgress: [legacyPassed] })).met);
+});
+
+
+const visiblePrerequisiteExams = [
+  { id: 'basic', title: 'Grundausbildungsprüfung' },
+  { id: 'advanced', title: 'Fortgeschrittenenprüfung' }
+];
+
+test('Darstellung: completed prerequisite uses a visible exam title', () => {
+  assert.equal(
+    describeExamPrerequisite({ examId: 'basic', mode: 'completed' }, visiblePrerequisiteExams),
+    'Grundausbildungsprüfung muss abgeschlossen sein.'
+  );
+});
+
+test('Darstellung: passed prerequisite includes its configured minimum score', () => {
+  assert.equal(
+    describeExamPrerequisite({ examId: 'basic', mode: 'passed', minScoreBasisPoints: 8750 }, visiblePrerequisiteExams),
+    'Grundausbildungsprüfung muss bestanden sein (mindestens 87,5%).'
+  );
+});
+
+test('Darstellung: passed prerequisite without a minimum does not invent one', () => {
+  assert.equal(
+    describeExamPrerequisite({ examId: 'advanced', mode: 'passed' }, visiblePrerequisiteExams),
+    'Fortgeschrittenenprüfung muss bestanden sein.'
+  );
+});
+
+test('Darstellung: hidden prerequisite titles are not disclosed', () => {
+  assert.equal(
+    describeExamPrerequisite({ examId: 'hidden-exam', mode: 'completed' }, visiblePrerequisiteExams),
+    'Eine vorherige Prüfung muss abgeschlossen sein.'
+  );
+});
+
+test('Darstellung: invalid minimum scores are not rendered as percentages', () => {
+  assert.equal(
+    describeExamPrerequisite({ examId: 'basic', mode: 'passed', minScoreBasisPoints: 12_000 }, visiblePrerequisiteExams),
+    'Grundausbildungsprüfung muss bestanden sein.'
+  );
 });

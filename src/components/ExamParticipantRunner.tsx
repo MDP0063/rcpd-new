@@ -13,6 +13,7 @@ import {
   countPendingAnswers,
   hasAnswer
 } from '../lib/examAnswerProgress';
+import { describeExamPrerequisite } from '../lib/examPrerequisites';
 
 type AssessmentStage = 'test' | 'final_exam';
 type AnswerValue = string | string[] | boolean | Array<{ pairId: string; targetId: string }> | null;
@@ -218,6 +219,15 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
   }, [startConfirmationOpen]);
 
   const selectedExam = catalog.find(exam => exam.id === selectedExamId) || null;
+  const renderPrerequisites = (exam: CatalogEntry) => exam.prerequisites.length > 0 ? (
+    <section className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950" aria-label="Prüfungsvoraussetzungen">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Voraussetzungen</h4>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+        {exam.prerequisites.map(prerequisite => <li key={`${prerequisite.examId}:${prerequisite.mode}:${prerequisite.minScoreBasisPoints ?? ''}`}>{describeExamPrerequisite(prerequisite, catalog)}</li>)}
+      </ul>
+      <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Die Erfüllung wird beim verbindlichen Start serverseitig geprüft.</p>
+    </section>
+  ) : null;
   const activeQuestion = attempt?.questions[currentQuestionIndex] || null;
   const questionIds = attempt?.questions.map(question => question.id) || [];
   const answeredCount = countConfirmedAnswers(questionIds, savedAnswers);
@@ -939,6 +949,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
                   <div className="flex justify-between gap-2"><span>Maximale Versuche</span><strong>{selectedExam.maxAttempts === null || selectedExam.maxAttempts === 0 ? 'Unbegrenzt' : selectedExam.maxAttempts}</strong></div>
                   <div className="flex justify-between gap-2"><span>Bestehensgrenze</span><strong>{(selectedExam.passingScoreBasisPoints / 100).toLocaleString('de-DE')}%</strong></div>
                 </div>
+                {renderPrerequisites(selectedExam)}
                 <label className="block space-y-1.5">
                   <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kurskontext</span>
                   <select value={selectedCourseCode} disabled={startConfirmationOpen} onChange={event => { selectedCourseCodeRef.current = event.target.value; setSelectedCourseCode(event.target.value); }} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
@@ -1011,6 +1022,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
                           ? <p>Es gibt keine feste Begrenzung der Versuche. Ein neuer Versuch wird dennoch als eigener Versuch gespeichert.</p>
                           : <p>Dieser Start legt einen neuen Versuch an und zählt auf das Limit von {selectedExam.maxAttempts} Versuchen. Ob noch ein Versuch verfügbar ist, prüft der Server beim verbindlichen Start.</p>}
                         <p>Wenn du die Seite verlässt, wird der Versuch nicht zurückgesetzt. Du kannst ihn im selben Kurskontext fortsetzen; ein vorhandenes Zeitlimit läuft währenddessen weiter. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                        {renderPrerequisites(selectedExam)}
                       </div>
                     )}
                     {startConfirmationState === 'resume' && activeAttemptPreview && (
@@ -1022,6 +1034,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
                           ? <p>Das Zeitlimit läuft weiter und endet am {new Date(activeAttemptPreview.deadlineIso).toLocaleString('de-DE')}. Das Fortsetzen setzt die Frist nicht zurück.</p>
                           : <p>Für diesen laufenden Versuch ist kein Zeitlimit festgelegt.</p>}
                         <p>Der Versuch bleibt im selben Kurskontext fortsetzbar. Eine Pause oder ein Zurücksetzen durch Teilnehmer ist nicht vorgesehen.</p>
+                        {renderPrerequisites(selectedExam)}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-2">

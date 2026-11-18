@@ -519,12 +519,13 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - Keine Änderung an fachlichen Validierungs-, Zuordnungs-, Abschluss- oder Datenregeln.
 - **Noch offen:** spätere manuelle Keyboard-/Screenreader-QA für PR #319.
 
-## 17.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt
+## 17.11.2026 – Prüfungsrunner: serverbestätigter Antwortfortschritt (PR #330 gemergt)
 
-- **In Arbeit auf aktuellem main:** Der beantwortete Fortschritt wird ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnet; lokale Abweichungen erscheinen als ausstehend oder fehlgeschlagen.
+- **Erledigt:** Der beantwortete Fortschritt wird ausschließlich aus dem zuletzt bestätigten Server-Snapshot berechnet; lokale Abweichungen erscheinen als ausstehend oder fehlgeschlagen.
 - Autosave-Antworten werden mit dem gesendeten Snapshot und der bestätigten Revision verglichen. Bei einem abweichenden Serverstand werden weitere automatische Saves blockiert, damit ein neuerer Tab-/Serverstand nicht überschrieben wird.
-- Die Clientoberfläche kennzeichnet bereits gespeicherte Antworten weiterhin als gespeichert, auch wenn eine spätere Änderung fehlschlägt. Boolean-Antworten `false` bleiben gültige Antworten; leere Texte und leere Auswahlmengen gelten als unbeantwortet.
-- **Noch offen:** CI, Review und unabhängige Prüfung auf dem neu aufgebauten Branch; danach manuelle Prüfung mit echten Versuchen in der gemeinsamen Academy-Abnahme.
+- Bereits gespeicherte Antworten bleiben als gespeichert sichtbar, auch wenn eine spätere Änderung fehlschlägt. Boolean-Antworten `false` bleiben gültige Antworten; leere Texte und leere Auswahlmengen gelten als unbeantwortet.
+- **PR #330 am 17.11.2026 gemergt** (Merge-Commit `a1c20706616332b26d7b4dfa6002cbf3fa0d76b1`); GitHub Actions: TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich.
+- **Noch offen:** manuelle Prüfung mit echten Prüfungsversuchen, parallelen Tabs, Verbindungsabbruch und Wiederaufnahme in der gemeinsamen Academy-Abnahme.
 
 
 ## 17.11.2026 – Prüfungsunterbrechung und Prüfungsmodus
@@ -556,3 +557,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Erledigt:** Offene Kursabschlussprüfungs-Nachweise führen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum, mit exakter Kurskennung und validiertem Kurskontext.
 - Der Zielvorgang wird nur gewählt, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurs zugeordnet ist. Kein stiller Fallback auf eine andere Kurszuordnung.
 - **PR #325 gemergt;** manuelle Kurs-/Prüfungsnavigation bleibt Teil der späteren Academy-Abnahme.
+
+
+## 18.11.2026 – Prüfungsvoraussetzungen
+
+- **In Arbeit:** Die Prüfungsdetailansicht und die verbindliche Start-/Fortsetzungsbestätigung zeigen konkrete Voraussetzungen und Mindestpunktzahlen.
+- Prüfungstitel werden nur aus dem für den Teilnehmer sichtbaren Prüfungskatalog aufgelöst. Nicht sichtbare Vorprüfungen bleiben generisch bezeichnet.
+- Kein individueller Erfüllungsstatus wird aus der Konfiguration abgeleitet; die serverseitige Startprüfung bleibt maßgeblich.
+- **Noch offen:** CI/Review für Branch `feat/exam-prerequisites-current-main` und spätere manuelle Prüfung mit unterschiedlichen Rollen/Katalogsichtbarkeiten.
