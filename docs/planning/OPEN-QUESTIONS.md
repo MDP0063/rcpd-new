@@ -556,3 +556,11 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 - **Erledigt:** Offene Kursabschlussprüfungs-Nachweise führen direkt zum passenden Prüfungsdatensatz im Teilnehmer-Prüfungszentrum, mit exakter Kurskennung und validiertem Kurskontext.
 - Der Zielvorgang wird nur gewählt, wenn er im aktuellen Teilnehmerkatalog verfügbar und dem Kurs zugeordnet ist. Kein stiller Fallback auf eine andere Kurszuordnung.
 - **PR #325 gemergt;** manuelle Kurs-/Prüfungsnavigation bleibt Teil der späteren Academy-Abnahme.
+
+
+## 18.11.2026 – Prüfungsvoraussetzungen
+
+- **In Arbeit:** Die Prüfungsdetailansicht und die verbindliche Start-/Fortsetzungsbestätigung zeigen konkrete Voraussetzungen und Mindestpunktzahlen.
+- Prüfungstitel werden nur aus dem für den Teilnehmer sichtbaren Prüfungskatalog aufgelöst. Nicht sichtbare Vorprüfungen bleiben generisch bezeichnet.
+- Kein individueller Erfüllungsstatus wird aus der Konfiguration abgeleitet; die serverseitige Startprüfung bleibt maßgeblich.
+- **Noch offen:** CI/Review für Branch `feat/exam-prerequisites-current-main` und spätere manuelle Prüfung mit unterschiedlichen Rollen/Katalogsichtbarkeiten.
