@@ -1407,6 +1407,16 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 **Noch offen:** TypeScript/Build/Servertests und PR-Vorlagenprüfung auf dem finalen PR-Head. Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA folgt der später vereinbarten gemeinsamen Academy-QA.
 
 
+## 15.11.2026 – PR-Bereinigung und Examiner-Revisionsworkflow
+
+- **PR #293** – gemeinsame Academy-Design-/Statussemantik – ist gemergt (Merge-Commit cb97e5f71fec93524920dfb835c3177f69347e9f). CI und PR-Vorlagenprüfung erfolgreich; Browser-QA bleibt offen.
+- **PR #291** wurde als veraltet geschlossen und durch **PR #294** ersetzt. PR #294 wurde auf aktuellem main neu aufgebaut, CI/TypeScript/Build/Servertests/PR-Vorlagenprüfung waren erfolgreich und der PR wurde gemergt.
+- **PR #284** wurde als veraltet geschlossen und durch **PR #295** ersetzt. PR #295 wurde auf aktuellem main neu aufgebaut, CI/TypeScript/Build/Servertests/PR-Vorlagenprüfung waren erfolgreich und der PR wurde gemergt. Die Reader-Unmount-/Netzwerkfehlergrenze bleibt ausdrücklich dokumentiert; keine private Browser-Draftpersistenz.
+- **PR #267** bleibt Draft und darf nicht auf seinem veralteten Branch gemergt werden (129 Commits voraus, 23 hinter dem damaligen main). Die Revisionsimplementierung wurde auf feat/exam-review-revision-requests-current-main kontrolliert neu aufgebaut. Ein Empfängerberechtigungscheck wurde ergänzt: Revision-Benachrichtigungen werden bei Zustellung erneut gegen aktuellen Accountstatus und aktuelle Rolle/Kursberechtigung geprüft.
+- Die Revisionsänderung betrifft sensible Prüfungsdaten und Admin-/Colonel-Autorisierung. Vor Merge sind aktuelle CI, vollständiges Diff-/Sicherheitsreview und eine unabhängige Prüfung erforderlich. Es wurde kein Produktionsdeploy ausgelöst.
+- Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme für die Academy bleibt ein separater späterer Schritt.
+
+
 ## 15.11.2026 – Kurs- und Lehrgangsverwaltung: Katalogbedienung (PR #297)
 
 - Gemeinsame Suche über Kennungen sowie Titel und Kurzbeschreibungen aus Entwürfen und veröffentlichten Fassungen.

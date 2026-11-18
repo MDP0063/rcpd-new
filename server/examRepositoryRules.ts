@@ -179,15 +179,17 @@ function isReviewNotificationDeliveryUpdate(previousValue: unknown, nextValue: u
     if (!isDeepStrictEqual(previousCore, nextCore) ||
         nextRecipients.length < previousRecipients.length ||
         !previousRecipients.every((uid, recipientIndex) => uid === nextRecipients[recipientIndex]) ||
-        nextRecipients.length > 2 ||
+        nextRecipients.length > (current.action === 'revision_requested' ? (Array.isArray(current.recipientUids) ? current.recipientUids.length : 0) : 2) ||
         nextRecipients.some((uid, recipientIndex) =>
           typeof uid !== 'string' || !uid.trim() || nextRecipients.indexOf(uid) !== recipientIndex
         )) return false;
     if (nextRecipients.length > previousRecipients.length) {
       changed = true;
-      const expectedRecipients = current.action === 'transferred' || current.action === 'reassigned'
-        ? [current.previousUid, current.targetUid]
-        : [current.targetUid];
+      const expectedRecipients = current.action === 'revision_requested'
+        ? (Array.isArray(current.recipientUids) ? current.recipientUids : [])
+        : current.action === 'transferred' || current.action === 'reassigned'
+          ? [current.previousUid, current.targetUid]
+          : [current.targetUid];
       if (current.notificationRequired !== true ||
           nextRecipients.some(uid => !expectedRecipients.includes(uid)) ||
           nextRecipients.length > expectedRecipients.length) return false;
@@ -206,6 +208,190 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     ) return;
   }
   if (existing.status === 'passed' || existing.status === 'failed') {
+    const previousClaimHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
+    const nextClaimHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
+    const revisionEvent = nextClaimHistory[nextClaimHistory.length - 1] as Record<string, unknown> | undefined;
+    const appendOnly = nextClaimHistory.length === previousClaimHistory.length + 1 &&
+      isDeepStrictEqual(nextClaimHistory.slice(0, -1), previousClaimHistory);
+    const stripHistory = (document: ExamDocument) =>
+      Object.fromEntries(Object.entries(document).filter(([key]) => key !== 'reviewClaimHistory'));
+
+    if (appendOnly && revisionEvent?.action === 'revision_requested' && next.status === existing.status) {
+      const previousRequestIndex = previousClaimHistory.map(event => event.action).lastIndexOf('revision_requested');
+      const previousRequestPending = previousRequestIndex >= 0 && !previousClaimHistory.some(event =>
+        event.revisionRequestIndex === previousRequestIndex &&
+        (event.action === 'revision_accepted' || event.action === 'revision_rejected' || event.action === 'revision_completed')
+      );
+      if (previousRequestPending) throw new Error('EXAM_REVIEW_REVISION_ALREADY_PENDING');
+      const questionIds = Array.isArray(revisionEvent.questionIds) ? revisionEvent.questionIds : [];
+      const feedback = Array.isArray(revisionEvent.feedback) ? revisionEvent.feedback : [];
+      const previousGrades = Array.isArray(revisionEvent.previousGrades) ? revisionEvent.previousGrades : [];
+      const recipients = Array.isArray(revisionEvent.recipientUids) ? revisionEvent.recipientUids : [];
+      const existingGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
+      const validQuestionIds = questionIds.length > 0 && questionIds.length <= 50 &&
+        questionIds.every((id, index) => typeof id === 'string' && id.trim() && id.length <= 128 && questionIds.indexOf(id) === index);
+      const validFeedback = feedback.length > 0 && feedback.length <= 50 && feedback.every((entry: any, index: number) =>
+        entry && typeof entry === 'object' && !Array.isArray(entry) &&
+        Object.keys(entry).sort().join(',') === 'feedback,questionId' &&
+        typeof entry.questionId === 'string' && questionIds.includes(entry.questionId) &&
+        typeof entry.feedback === 'string' && entry.feedback.trim().length >= 10 &&
+        entry.feedback.length <= 1000 &&
+        feedback.findIndex((candidate: any) => candidate?.questionId === entry.questionId) === index
+      );
+      const validPreviousGrades = previousGrades.length === questionIds.length &&
+        previousGrades.every((grade: any, index: number) =>
+          grade && typeof grade === 'object' && !Array.isArray(grade) &&
+          Object.keys(grade).sort().join(',') === 'maxPointsMilli,pointsEarnedMilli,questionId' &&
+          typeof grade.questionId === 'string' && questionIds.includes(grade.questionId) &&
+          previousGrades.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+          Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+          Number.isSafeInteger(grade.maxPointsMilli) && grade.maxPointsMilli > 0 &&
+          grade.pointsEarnedMilli <= grade.maxPointsMilli &&
+          existingGrades.some((current: any) =>
+            current?.questionId === grade.questionId &&
+            current.pointsEarnedMilli === grade.pointsEarnedMilli &&
+            current.maxPointsMilli === grade.maxPointsMilli &&
+            current.requiresManualReview === false
+          )
+        );
+      const validRecipients = recipients.length > 0 && recipients.length <= 1000 &&
+        recipients.every((uid: unknown, index: number) =>
+          typeof uid === 'string' && uid.trim() && uid.length <= 128 && recipients.indexOf(uid) === index
+        );
+      if (
+        (existing.reviewClaim !== null && existing.reviewClaim !== undefined) ||
+        !isDeepStrictEqual(stripHistory(existing), stripHistory(next)) ||
+        !validQuestionIds || !validFeedback || !validPreviousGrades || !validRecipients ||
+        !revisionEvent || Object.keys(revisionEvent).sort().join(',') !==
+          'action,actorUid,atIso,feedback,notificationRequired,previousGrades,previousReviewedAtIso,previousUid,questionIds,reason,recipientUids,revisionRequestIndex' ||
+        !Number.isSafeInteger(revisionEvent.revisionRequestIndex) || revisionEvent.revisionRequestIndex !== previousClaimHistory.length ||
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        revisionEvent.previousUid !== existing.reviewedByUid ||
+        revisionEvent.previousReviewedAtIso !== existing.reviewedAtIso ||
+        typeof revisionEvent.previousReviewedAtIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.previousReviewedAtIso)) ||
+        typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 || revisionEvent.reason.length > 1000 ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
+      ) throw new Error('EXAM_REVIEW_REVISION_INVALID');
+      return;
+    }
+
+    const requestIndex = previousClaimHistory.map(event => event.action).lastIndexOf('revision_requested');
+    const request = requestIndex >= 0 ? previousClaimHistory[requestIndex] as Record<string, unknown> : null;
+    const alreadyResolved = requestIndex >= 0 && previousClaimHistory.some(event =>
+      event.revisionRequestIndex === requestIndex &&
+      (event.action === 'revision_accepted' || event.action === 'revision_rejected' || event.action === 'revision_completed')
+    );
+    const requestQuestionIds = Array.isArray(request?.questionIds) ? request.questionIds : [];
+    const requestPreviousGrades = Array.isArray(request?.previousGrades) ? request.previousGrades : [];
+    const currentAttemptGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
+    const requestGradesStillCurrent = requestQuestionIds.length > 0 &&
+      requestPreviousGrades.length === requestQuestionIds.length &&
+      requestPreviousGrades.every((grade: any) => requestQuestionIds.includes(grade.questionId) &&
+        currentAttemptGrades.some(current => current.questionId === grade.questionId &&
+          current.pointsEarnedMilli === grade.pointsEarnedMilli &&
+          current.maxPointsMilli === grade.maxPointsMilli && current.requiresManualReview === false));
+    const isDecisionAppend = appendOnly &&
+      (revisionEvent?.action === 'revision_accepted' || revisionEvent?.action === 'revision_rejected') &&
+      request && !alreadyResolved && requestGradesStillCurrent && revisionEvent.revisionRequestIndex === requestIndex &&
+      revisionEvent.targetUid === request.actorUid &&
+      request.previousUid === existing.reviewedByUid &&
+      request.previousReviewedAtIso === existing.reviewedAtIso;
+
+    if (isDecisionAppend && revisionEvent?.action === 'revision_rejected' && next.status === existing.status) {
+      if (
+        !isDeepStrictEqual(stripHistory(existing), stripHistory(next)) ||
+        Object.keys(revisionEvent).sort().join(',') !==
+          'action,actorUid,atIso,notificationRequired,reason,revisionRequestIndex,targetUid' ||
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        typeof revisionEvent.reason !== 'string' || revisionEvent.reason.trim().length < 10 || revisionEvent.reason.length > 1000 ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
+      ) throw new Error('EXAM_REVIEW_REVISION_REJECTION_INVALID');
+      return;
+    }
+
+    if (isDecisionAppend && revisionEvent?.action === 'revision_accepted' && next.status === 'pending_review') {
+      const allowedMutable = new Set([
+        'status', 'reviewClaim', 'questionGrades', 'reviewClaimHistory',
+        'resultReleaseStatus', 'publishedResultSnapshot'
+      ]);
+      const strip = (document: ExamDocument) => Object.fromEntries(
+        Object.entries(document).filter(([key]) => !allowedMutable.has(key))
+      );
+      const questionIds = Array.isArray(request?.questionIds) ? request.questionIds : [];
+      const previousGrades = Array.isArray(request?.previousGrades) ? request.previousGrades : [];
+      const existingGrades = Array.isArray(existing.questionGrades) ? existing.questionGrades as Array<Record<string, unknown>> : [];
+      const nextGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
+      const gradesValid = questionIds.length > 0 && existingGrades.length === nextGrades.length &&
+        new Set(nextGrades.map((grade: any) => String(grade?.questionId || ''))).size === nextGrades.length &&
+        existingGrades.every((previous: any) => {
+          const updated = nextGrades.find((grade: any) => grade?.questionId === previous.questionId);
+          if (!updated) return false;
+          const { requiresManualReview: _previousManual, ...previousRest } = previous;
+          const { requiresManualReview: _nextManual, ...nextRest } = updated;
+          return isDeepStrictEqual(previousRest, nextRest) &&
+            (questionIds.includes(String(previous.questionId))
+              ? previous.requiresManualReview === false && updated.requiresManualReview === true
+              : isDeepStrictEqual(previous.requiresManualReview, updated.requiresManualReview));
+        });
+      const priorGradesValid = previousGrades.length === questionIds.length &&
+        previousGrades.every((grade: any) => existingGrades.some((current: any) =>
+          current?.questionId === grade.questionId &&
+          current.pointsEarnedMilli === grade.pointsEarnedMilli &&
+          current.maxPointsMilli === grade.maxPointsMilli &&
+          current.requiresManualReview === false
+        ));
+      const publishedSnapshot = next.publishedResultSnapshot as Record<string, unknown> | undefined;
+      const publishedSnapshotValid = existing.resultReleaseStatus === 'released'
+        ? Boolean(publishedSnapshot &&
+            Object.keys(publishedSnapshot).sort().join(',') === 'automaticallyEarnedPointsMilli,finalScoreBasisPoints,manuallyEarnedPointsMilli,preliminaryScoreBasisPoints,questionResults,status,totalPossiblePointsMilli' &&
+            publishedSnapshot.status === existing.status &&
+            publishedSnapshot.totalPossiblePointsMilli === existing.totalPossiblePointsMilli &&
+            publishedSnapshot.automaticallyEarnedPointsMilli === existing.automaticallyEarnedPointsMilli &&
+            publishedSnapshot.manuallyEarnedPointsMilli === existing.manuallyEarnedPointsMilli &&
+            publishedSnapshot.preliminaryScoreBasisPoints === existing.preliminaryScoreBasisPoints &&
+            publishedSnapshot.finalScoreBasisPoints === (existing.finalScoreBasisPoints ?? null) &&
+            Array.isArray(publishedSnapshot.questionResults) &&
+            (existing.assessmentStage === 'final_exam'
+              ? publishedSnapshot.questionResults.length === 0
+              : Array.isArray(existing.questionGrades) &&
+                publishedSnapshot.questionResults.length === existing.questionGrades.length &&
+                publishedSnapshot.questionResults.every((item: any, index: number, all: any[]) =>
+                  item && typeof item.questionId === 'string' &&
+                  Number.isSafeInteger(item.pointsEarnedMilli) && item.pointsEarnedMilli >= 0 &&
+                  Number.isSafeInteger(item.maxPointsMilli) && item.maxPointsMilli >= item.pointsEarnedMilli &&
+                  typeof item.requiresManualReview === 'boolean' &&
+                  all.findIndex(candidate => candidate?.questionId === item.questionId) === index &&
+                  Array.isArray(existing.questionGrades) &&
+                  existing.questionGrades.some((grade: any) =>
+                    grade?.questionId === item.questionId &&
+                    grade.pointsEarnedMilli === item.pointsEarnedMilli &&
+                    grade.maxPointsMilli === item.maxPointsMilli &&
+                    grade.requiresManualReview === item.requiresManualReview
+                  ) &&
+                  (item.correct === undefined || typeof item.correct === 'boolean') &&
+                  (item.explanation === undefined || typeof item.explanation === 'string')
+                )))
+        : isDeepStrictEqual(next.publishedResultSnapshot, existing.publishedResultSnapshot);
+      const releaseStateValid = existing.resultReleaseStatus === 'released'
+        ? next.resultReleaseStatus === 'pending_rerelease' && publishedSnapshotValid
+        : existing.resultReleaseStatus === 'pending_rerelease'
+          ? next.resultReleaseStatus === 'pending_rerelease' && publishedSnapshotValid
+          : isDeepStrictEqual(next.resultReleaseStatus, existing.resultReleaseStatus) && publishedSnapshotValid;
+      if (
+        next.reviewClaim !== null ||
+        !isDeepStrictEqual(strip(existing), strip(next)) ||
+        !gradesValid || !priorGradesValid || !releaseStateValid ||
+        Object.keys(revisionEvent).sort().join(',') !==
+          'action,actorUid,atIso,notificationRequired,revisionRequestIndex,targetUid' ||
+        typeof revisionEvent.actorUid !== 'string' || !revisionEvent.actorUid.trim() ||
+        revisionEvent.notificationRequired !== true ||
+        typeof revisionEvent.atIso !== 'string' || Number.isNaN(Date.parse(revisionEvent.atIso))
+      ) throw new Error('EXAM_REVIEW_REVISION_ACCEPTANCE_INVALID');
+      return;
+    }
+
     const previousReleaseHistory = Array.isArray(existing.resultReleaseHistory) ? existing.resultReleaseHistory : [];
     const nextReleaseHistory = Array.isArray(next.resultReleaseHistory) ? next.resultReleaseHistory : [];
     const releaseEntry = nextReleaseHistory[nextReleaseHistory.length - 1] as Record<string, unknown> | undefined;
@@ -505,6 +691,73 @@ export function assertExamAttemptUpdate(existing: ExamDocument, next: ExamDocume
     }
     return;
   }
+  if (existing.status === 'pending_review' && (next.status === 'passed' || next.status === 'failed')) {
+    const previousHistory = Array.isArray(existing.reviewClaimHistory) ? existing.reviewClaimHistory : [];
+    const nextHistory = Array.isArray(next.reviewClaimHistory) ? next.reviewClaimHistory : [];
+    const revisionRequestIndex = previousHistory.map(event => event.action).lastIndexOf('revision_requested');
+    const revisionAccepted = revisionRequestIndex >= 0 && previousHistory.some(event =>
+      event.action === 'revision_accepted' && event.revisionRequestIndex === revisionRequestIndex
+    );
+    const revisionCompleted = revisionRequestIndex >= 0 && previousHistory.some(event =>
+      event.action === 'revision_completed' && event.revisionRequestIndex === revisionRequestIndex
+    );
+    if (revisionRequestIndex >= 0 && !revisionAccepted) throw new Error('EXAM_REVIEW_REVISION_NOT_ACCEPTED');
+    const hasOpenRevision = revisionAccepted && !revisionCompleted;
+    if (hasOpenRevision) {
+      const request = previousHistory[revisionRequestIndex] as Record<string, unknown>;
+      const completion = nextHistory[nextHistory.length - 1] as Record<string, unknown> | undefined;
+      const questionIds = Array.isArray(request.questionIds) ? request.questionIds : [];
+      const nextGrades = Array.isArray(completion?.nextGrades) ? completion.nextGrades : [];
+      const attemptGrades = Array.isArray(next.questionGrades) ? next.questionGrades as Array<Record<string, unknown>> : [];
+      const allowedMutable = new Set([
+        'status', 'reviewClaim', 'reviewDraft', 'manuallyEarnedPointsMilli',
+        'preliminaryScoreBasisPoints', 'finalScoreBasisPoints', 'questionGrades',
+        'reviewClaimHistory', 'reviewedByUid', 'reviewedAtIso'
+      ]);
+      const strip = (document: ExamDocument) => Object.fromEntries(
+        Object.entries(document).filter(([key]) => !allowedMutable.has(key))
+      );
+      const validNextGrades = nextGrades.length === questionIds.length &&
+        nextGrades.every((grade: any, index: number) =>
+          grade && typeof grade === 'object' && !Array.isArray(grade) &&
+          Object.keys(grade).sort().join(',') === 'maxPointsMilli,pointsEarnedMilli,questionId' &&
+          typeof grade.questionId === 'string' && questionIds.includes(grade.questionId) &&
+          nextGrades.findIndex((candidate: any) => candidate?.questionId === grade.questionId) === index &&
+          Number.isSafeInteger(grade.pointsEarnedMilli) && grade.pointsEarnedMilli >= 0 &&
+          Number.isSafeInteger(grade.maxPointsMilli) && grade.maxPointsMilli > 0 &&
+          grade.pointsEarnedMilli <= grade.maxPointsMilli &&
+          attemptGrades.some((attemptGrade: any) =>
+            attemptGrade?.questionId === grade.questionId &&
+            attemptGrade.pointsEarnedMilli === grade.pointsEarnedMilli &&
+            attemptGrade.maxPointsMilli === grade.maxPointsMilli &&
+            attemptGrade.requiresManualReview === false
+          )
+        );
+      const draft = next.reviewDraft && typeof next.reviewDraft === 'object' && !Array.isArray(next.reviewDraft)
+        ? next.reviewDraft as Record<string, unknown> : null;
+      if (
+        nextHistory.length !== previousHistory.length + 1 ||
+        !isDeepStrictEqual(nextHistory.slice(0, -1), previousHistory) ||
+        !completion ||
+        Object.keys(completion).sort().join(',') !==
+          'action,actorUid,atIso,nextGrades,previousUid,revisionRequestIndex,revisionRequestedAtIso,targetUid' ||
+        completion.action !== 'revision_completed' ||
+        completion.revisionRequestIndex !== revisionRequestIndex ||
+        completion.revisionRequestedAtIso !== request.atIso ||
+        completion.previousUid !== request.previousUid ||
+        completion.targetUid !== request.actorUid ||
+        typeof completion.actorUid !== 'string' || completion.actorUid !== next.reviewedByUid ||
+        typeof completion.atIso !== 'string' || completion.atIso !== next.reviewedAtIso ||
+        Number.isNaN(Date.parse(completion.atIso)) ||
+        next.reviewClaim !== null ||
+        !draft || Object.keys(draft).length !== 0 ||
+        !validNextGrades ||
+        !isDeepStrictEqual(strip(existing), strip(next))
+      ) throw new Error('EXAM_REVIEW_REVISION_COMPLETION_INVALID');
+      return;
+    }
+  }
+
   if (existing.status !== 'in_progress' && existing.status !== 'pending_review') {
     throw new Error('EXAM_ATTEMPT_IMMUTABLE');
   }
