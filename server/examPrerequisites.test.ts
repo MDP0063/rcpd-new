@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { describeExamPrerequisite } from '../src/lib/examPrerequisites.ts';
 import { evaluatePrerequisites } from './examPrerequisites.ts';
 import { attempt } from './examTestFixtures.ts';
 import type { LegacyProgressRecord, LegacyVerificationDoc } from './examTypes.ts';
@@ -100,8 +101,6 @@ test('Legacy-Nachweise gelten nur im gleichen Lehrgang; fehlender Lehrgangscode 
   assert.ok(evaluatePrerequisites(pre, ctx({ legacyProgress: [legacyPassed] })).met);
 });
 
-
-import { describeExamPrerequisite } from '../src/lib/examPrerequisites.ts';
 
 const visiblePrerequisiteExams = [
   { id: 'basic', title: 'Grundausbildungsprüfung' },
