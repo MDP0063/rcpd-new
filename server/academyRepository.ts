@@ -1261,6 +1261,9 @@ export class AcademyRepository {
           course.currentPublishedVersionId !== version.id || course.materialReviewPending?.length ||
           course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       if (history.length >= 1000 || previousOrders.length >= 1000) throw new Error('ACADEMY_PARTICIPATION_HISTORY_LIMIT');
+      if (lock && (lock.id !== lockId || lock.userUid !== order.userUid || lock.courseId !== order.courseId || !lock.updatedIso)) {
+        throw new Error('ACADEMY_REQUALIFICATION_LOCK_INVALID');
+      }
       if (!priorCompletionParticipationId || !history.some(item => item.id === priorCompletionParticipationId &&
           item.courseId === order.courseId && item.userUid === order.userUid && item.kind !== 'requalification')) {
         throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
