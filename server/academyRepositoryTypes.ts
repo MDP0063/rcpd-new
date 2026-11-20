@@ -39,6 +39,7 @@ export const ACADEMY_BACKUP_COLLECTIONS = [
   'academy_program_versions',
   'academy_course_participations',
   'academy_requalification_orders',
+  'academy_requalification_locks',
   'academy_program_participations',
   'academy_progress_evidence',
   'academy_completion_corrections'
