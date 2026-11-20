@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
 import { resolveAcademyCourseCompletion } from './academyApi.ts';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc, AcademyRequalificationLockDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
   const directory = await mkdtemp(join(tmpdir(), 'academy-repository-'));
@@ -112,9 +112,9 @@ test('requalification creates a separate participation and preserves the origina
   const secondOrder = { ...order, id: 'requalification-order-2', participationId: 'requalification_participation_2', orderedIso: '2026-11-06T14:00:00.000Z' };
   const secondParticipation = { ...requalification, id: secondOrder.participationId, requalificationOrderId: secondOrder.id, createdIso: secondOrder.orderedIso, startedIso: secondOrder.orderedIso, lastActivityIso: secondOrder.orderedIso, updatedIso: secondOrder.orderedIso };
   await repository.createRequalificationOrder(secondOrder, secondParticipation, original.id);
-  const locks = await repository.list('academy_requalification_locks', { where: [{ field: 'userUid', value: 'learner-requal' }] });
+  const locks = await repository.list<AcademyRequalificationLockDoc>('academy_requalification_locks', { where: [{ field: 'userUid', value: 'learner-requal' }] });
   assert.equal(locks.length, 1);
-  assert.equal((locks[0] as { activeOrderId: string }).activeOrderId, secondOrder.id);
+  assert.equal(locks[0].activeOrderId, secondOrder.id);
 }));
 
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
