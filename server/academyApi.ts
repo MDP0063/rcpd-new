@@ -1264,8 +1264,11 @@ export function createAcademyApiRouter(
       const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
-      const participations = await repository.listCourseParticipations(course.id);
-      const eligibleUids = [...new Set(participations.filter(item => item.kind !== 'requalification' && item.status === 'completed').map(item => item.userUid))];
+      const [participations, existingOrders] = await Promise.all([
+        repository.listCourseParticipations(course.id), repository.listCourseRequalificationOrders(course.id)
+      ]);
+      const openUserUids = new Set(existingOrders.filter(item => item.status === 'open').map(item => item.userUid));
+      const eligibleUids = [...new Set(participations.filter(item => item.kind !== 'requalification' && item.status === 'completed' && !openUserUids.has(item.userUid)).map(item => item.userUid))];
       const candidates = eligibleUids.map(uid => {
         const profile = resolveParticipantLabel?.(uid);
         return profile ? { uid, ...profile } : null;
