@@ -392,6 +392,25 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
   };
 
+  const orderRequalification = async () => {
+    if (!selectedCourse || !requalificationCandidateUid || requalificationReason.trim().length < 10 || saving) return;
+    setSaving(true);
+    const response = await apiFetch<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }>(
+      API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
+      { method: 'POST', body: JSON.stringify({ userUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+    );
+    setSaving(false);
+    if (!response.ok || !response.data) {
+      onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
+      return;
+    }
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
+    if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
+    onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
+  };
   const openRequalification = async (order: AcademyRequalificationOrderDoc) => {
     const entry = courses.find(item => item.master.id === order.courseId);
     if (!entry) { onStatusToast('Der zugehörige Kurs ist derzeit nicht verfügbar.'); return; }
