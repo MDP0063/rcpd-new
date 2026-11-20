@@ -59,9 +59,10 @@
 - Korrektur-/Neufreigabe-, Idempotenz-, Nebenläufigkeits- und Benachrichtigungsfälle sowie die getrennte Academy-/Prüfungsrepository-Projektion müssen im gemeinsamen Abnahmetest verifiziert werden.
 
 ### Empfehlungen und Meldungen
-- Lebenszyklus: Rückzug, Ablauf, nicht verfügbare oder obsolet gewordene Empfehlungen; eigenständige neue Empfehlung definieren, soweit notwendig.
-- Fristen/Erinnerungen und Historie vs. Benachrichtigungshistorie nur bei tatsächlichem Bedarf konkretisieren.
-- Spätere kontextbezogene Meldefunktion als eigenes Vorhaben planen; Academy-Integrationspunkte berücksichtigen, aber noch keine Mechanik vorziehen.
+
+- **Technischer Befund vom 21.11.2026:** Im aktuellen `main` existiert noch keine persönliche Empfehlungsentität, API oder UI. Die bereits implementierten Pflicht-/Empfehlungskurs-Referenzen in Lehrgängen sind nicht dasselbe wie die beschlossene persönliche Empfehlungsliste. Die Regeln aus Abschnitt 8 sind weitgehend entschieden; vor der Umsetzung müssen noch Platzierung, konkrete automatische Auslöser/Abschlussnachweise je Lernobjekt und die genauen Erstellungs-/Empfängerrechte am vorhandenen Rollenmodell abgeglichen werden. Fristen-/Erinnerungsregeln bleiben ausdrücklich zurückgestellt.
+- **Kursmeldungen Option C:** Die Einzel-Lesestatusregeln und die dezente Kennzeichnung an Kurs, Prüfungsergebnis und Material sind beschlossen. Im aktuellen `main` existiert jedoch keine eigenständige Kursmeldungsentität, strukturierte Inhaltszuordnung oder zugehörige UI. Noch zu klären ist, aus welchen fachlichen Ereignissen bzw. Autoren Meldungen entstehen, wer sie veröffentlichen/zurücknehmen darf und wie sie an Kurs, Prüfungsergebnis oder Material gebunden werden. Bis dahin keine neue Datenkollektion oder Autorisierungsregel erfinden.
+- **Spätere kontextbezogene Meldefunktion:** bleibt ein eigenes Vorhaben; noch keine Mechanik vorziehen.
 
 ## 2. Cross-Module-Abhängigkeiten
 
