@@ -60,6 +60,7 @@ interface CourseParticipationDetail {
   corrections: ParticipantCorrectionView[];
   assessmentProofs: Record<string, { attemptId: string; releasedAtIso: string; finalScoreBasisPoints: number }>;
   materials: AcademyCourseMaterialReaderItem[];
+  requalificationOrder?: Pick<AcademyRequalificationOrderDoc, 'id' | 'reason' | 'dueIso' | 'orderedIso' | 'status'>;
 }
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
@@ -833,6 +834,17 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       </button>
                     </div>
                   )}
+                </section>
+              )}
+              {courseDetail?.participation.kind === 'requalification' && courseDetail.requalificationOrder && (
+                <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-requalification-detail-heading">
+                  <h3 id="academy-requalification-detail-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation</h3>
+                  <p className={muted}>Diese neue Teilnahme ist erforderlich, um deine Qualifikation erneut nachzuweisen. Dein früherer Kursabschluss bleibt unverändert in deiner Historie.</p>
+                  <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                    <p className="font-medium">Begründung</p>
+                    <p className="mt-1">{courseDetail.requalificationOrder.reason}</p>
+                  </div>
+                  {courseDetail.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(courseDetail.requalificationOrder.dueIso)}</p>}
                 </section>
               )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
