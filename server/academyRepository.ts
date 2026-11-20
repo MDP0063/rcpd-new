@@ -60,8 +60,7 @@ function validateAcademyBackupDocument(collection: typeof ACADEMY_BACKUP_COLLECT
     case 'academy_requalification_orders': assertValid(validateRequalificationOrder(document as AcademyRequalificationOrderDoc)); break;
     case 'academy_requalification_locks': {
       const lock = document as AcademyRequalificationLockDoc;
-      if (!lock.userUid?.trim() || !lock.courseId?.trim() || !lock.updatedIso?.trim() ||
-          lock.id !== `requalification_lock_${encodeURIComponent(lock.userUid)}_${encodeURIComponent(lock.courseId)}`) throw new Error('ACADEMY_REQUALIFICATION_LOCK_INVALID');
+      if (!lock.userUid?.trim() || !lock.courseId?.trim() || !lock.updatedIso?.trim()) throw new Error('ACADEMY_REQUALIFICATION_LOCK_INVALID');
       break;
     }
   }
