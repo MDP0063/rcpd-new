@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
 import { resolveAcademyCourseCompletion } from './academyApi.ts';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc, AcademyRequalificationLockDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc, AcademyRequalificationLockDoc, AcademyRequalificationOrderDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
   const directory = await mkdtemp(join(tmpdir(), 'academy-repository-'));
@@ -107,7 +107,7 @@ test('requalification creates a separate participation and preserves the origina
     sourceId: 'chapter-1', recordedByUid: 'learner-requal', recordedIso: '2026-11-06T13:00:00.000Z'
   }, 'learner-requal', false);
   assert.equal((await repository.getCourseParticipation(participationId))?.status, 'completed');
-  assert.equal((await repository.get('academy_requalification_orders', orderId))?.status, 'completed');
+  assert.equal((await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', orderId))?.status, 'completed');
   assert.equal((await repository.getCourseParticipation(original.id))?.completedIso, now);
   const secondOrder = { ...order, id: 'requalification-order-2', participationId: 'requalification_participation_2', orderedIso: '2026-11-06T14:00:00.000Z' };
   const secondParticipation = { ...requalification, id: secondOrder.participationId, requalificationOrderId: secondOrder.id, createdIso: secondOrder.orderedIso, startedIso: secondOrder.orderedIso, lastActivityIso: secondOrder.orderedIso, updatedIso: secondOrder.orderedIso };
