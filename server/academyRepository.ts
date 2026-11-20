@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyRequalificationLockDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
 import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateRequalificationOrder, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import { ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
@@ -8,6 +9,10 @@ import { JsonAcademyStorageAdapter } from './academyJsonAdapter.ts';
 import { FirestoreAcademyStorageAdapter } from './academyFirestoreAdapter.ts';
 import type { Firestore } from 'firebase-admin/firestore';
 
+function requalificationLockId(userUid: string, courseId: string): string {
+  const digest = createHash('sha256').update(`${userUid}\0${courseId}`).digest('hex');
+  return `requalification_lock_${digest}`;
+}
 function assertValid(result: { ok: boolean; code?: string }): void {
   if (!result.ok) throw new Error(result.code || 'ACADEMY_DOCUMENT_INVALID');
 }
@@ -1247,7 +1252,7 @@ export class AcademyRepository {
         participation.courseId !== order.courseId || participation.courseVersionId !== order.courseVersionId ||
         participation.status !== 'in_progress') throw new Error('ACADEMY_REQUALIFICATION_PARTICIPATION_MISMATCH');
     return this.runTransaction(async tx => {
-      const lockId = `requalification_lock_${encodeURIComponent(order.userUid)}_${encodeURIComponent(order.courseId)}`;
+      const lockId = requalificationLockId(order.userUid, order.courseId);
       const [course, version, history, previousOrders, existingParticipation, lock] = await Promise.all([
         tx.get<AcademyCourseMasterDoc>('academy_courses', order.courseId),
         tx.get<AcademyCourseVersionDoc>('academy_course_versions', order.courseVersionId),
