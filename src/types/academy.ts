@@ -375,6 +375,15 @@ export interface AcademyCourseParticipationDoc {
 export type AcademyRequalificationStatus = 'open' | 'completed' | 'cancelled';
 
 /** One central requalification requirement per person and qualification/course. */
+/** Deterministic per-user/per-course coordination record; preserves a single active order under concurrent writes. */
+export interface AcademyRequalificationLockDoc {
+  id: string;
+  userUid: string;
+  courseId: string;
+  activeOrderId?: string;
+  updatedIso: string;
+}
+
 export interface AcademyRequalificationOrderDoc {
   id: string;
   userUid: string;
@@ -490,6 +499,7 @@ export interface AcademyRepositoryBackupSnapshot {
     academy_program_versions: AcademyProgramVersionDoc[];
     academy_course_participations: AcademyCourseParticipationDoc[];
     academy_requalification_orders: AcademyRequalificationOrderDoc[];
+    academy_requalification_locks: AcademyRequalificationLockDoc[];
     academy_program_participations: AcademyProgramParticipationDoc[];
     academy_progress_evidence: AcademyProgressEvidenceDoc[];
     academy_completion_corrections: AcademyCompletionCorrectionDoc[];
