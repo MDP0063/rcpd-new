@@ -1,6 +1,6 @@
 # RCPD – Offene Fragen und Prüffelder
 
-**Stand:** 10.11.2026  
+**Stand:** 21.11.2026  
 **Wichtig:** Diese Liste ist kein Feature-Backlog und keine Genehmigung zur Umsetzung. Jeder Punkt ist auf tatsächliche Notwendigkeit zu prüfen. Keine Scope Creep. Die ausführlichen bereits festgelegten Regeln stehen in `PORTAL-REDESIGN-DETAILS.md` und `ACADEMY-DETAILED-SPECIFICATION.md`; hier bleiben nur echte offene Entscheidungen und Prüffelder.
 
 ## 1. Academy – verbleibende fachliche Klärungen
@@ -47,8 +47,8 @@
 
 ### Prüfungen und Examiner
 - Die serverseitigen Bewertungs-Drafts sowie Claim-, Inaktivitäts-, Disconnect-, Übergabe- und Neuzuweisungslogik sind in PR #149/#150/#152 umgesetzt. Ihre tatsächlichen Laufzeit-/Browserzustände bleiben Teil der gemeinsamen Academy-Abnahme.
-- Noch offen: vollständige einsehbare Claim-/Übergabehistorie in der UI.
-- Revisions-Action-Request und zweistufiges Admin-/Colonel-Gate entsprechen der am 13.11.2026 bestätigten Option 2. Die Implementierung wurde nach den späteren Academy-Merges auf einem frischen Branch feat/exam-review-revision-requests-main-2026-11-18 neu aufgebaut und als PR #332 geöffnet; aktuelle CI ist erfolgreich, unabhängiges Sicherheitsreview bleibt offen.
+- **Umgesetzt in PR #264:** die Teilnehmerakte zeigt die nachvollziehbare Claim-/Übergabehistorie mit Akteur, Zielperson, vorheriger Zuständigkeit, Zeitpunkt und Grund. Die Detailprojektion bleibt auf Vorgesetzte und tatsächlich beteiligte Prüfer begrenzt; die manuelle Prüfung realer Rollen bleibt Teil der Gesamtabnahme.
+- **Umgesetzt in PR #332 (gemergt am 21.11.2026):** zweistufiger Revisions-Action-Request nach bestätigter Option 2. CI und unabhängiger Code-/Sicherheitsreview sind abgeschlossen; die manuelle Rollen-/Browser-/Live-Firestore-Abnahme bleibt Teil des gemeinsamen Academy-Tests.
 - Die Revisionsberechtigung Option A bleibt maßgeblich: jede aktuell für den konkreten Kurs autorisierte prüfende Person darf eine abgeschlossene Bewertung zur Revision zurückgeben. Die Action Request geht ausschließlich an Admins/Colonels; erst nach Annahme wird derselbe Versuch für die gemeinsame Prüferliste freigegeben. Kein neuer Prüfungsversuch; gespeicherte Drafts und frühere Bewertungshistorie bleiben erhalten.
 - Die konkrete Historienanzeige muss die Sichtbarkeitsregeln aus Abschnitt 15.7 einhalten. Historische Korrekturen sind lesbar Fragen/Bewertungsschritten zuzuordnen.
 - Sonderfälle bei Prüfungsstart, Autosave, Resume, Abgabe, Bewertung und Ergebnisfreigabe sowie Sortierung nach tatsächlichem Bewertungsabschlussdatum bleiben im abschließenden technischen/Browser-Audit zu prüfen.
@@ -312,7 +312,7 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 - **Entschieden:** Revisionsrückgaben dürfen von jeder aktuell kursberechtigten prüfenden Person ausgelöst werden; die resultierende Action Request geht ausschließlich an Admins und Colonels.
 - **Entschieden:** Der ursprüngliche Prüfer bleibt historisch sichtbar, erhält aber keinen Bearbeitungsvorrang. Es entsteht kein neuer Prüfungsversuch; Drafts und zuletzt freigegebener Ergebnis-Snapshot bleiben erhalten.
-- **Weiter offen:** Umsetzung der Revisionsrückgabe, Empfängerzustellung/Benachrichtigung und vollständige Browser-/Live-Firestore-Abnahme gemäß Academy-Spezifikation.
+- **Umgesetzt in PR #332:** Revisionsrückgabe, Empfängerzustellung und Benachrichtigungen, Supervisorentscheidung, Wiederaufnahme desselben Versuchs, Historisierung und erneute Ergebnisfreigabe. **Weiter offen ist ausschließlich die praktische Abnahme** mit realen Rollen, Browsern und Firestore-Daten.
 
 ## 15.11.2026 – Vollständiges Academy-Usability-Redesign: neuer Arbeitsstand
 
@@ -377,7 +377,7 @@ Der breitere Bug-/Fehleraudit der übrigen Academy-Funktionen ist weiterhin offe
 
 ## 15.11.2026 – Statuskorrektur nach PR-Bereinigung
 
-- **PR #267:** geschlossen. Der daraus hervorgegangene PR #296 basierte später auf einem veralteten `main` und wurde durch den aktuellen, auf `main` neu aufgebauten Draft PR #332 ersetzt. CI auf dem neuen Head ist erfolgreich; unabhängige Sicherheitsprüfung der Autorisierungs-, sensiblen Datenzugriffs- und Benachrichtigungsänderungen ist weiterhin erforderlich. Kein Merge bis zum Abschluss dieses Reviews.
+- **PR #267:** geschlossen. Der daraus hervorgegangene PR #296 basierte auf einem veralteten `main` und wurde durch PR #332 ersetzt. PR #332 wurde am 21.11.2026 nach erfolgreicher CI und unabhängigem Code-/Sicherheitsreview gemergt; die praktische Rollen-/Browser-/Live-Firestore-Abnahme bleibt offen.
 - **PR #284:** geschlossen und durch PR #295 ersetzt. PR #295 ist gemergt; die zeitabhängigen Autosave-/Unmount-/Netzwerkfehler-Szenarien bleiben Teil der späteren manuellen Browser-QA. Die bekannte Best-effort-Grenze beim Unmount wird nicht durch lokale Speicherung privater Notizen umgangen.
 - **PRs #293, #294 und #295:** gemergt; CI und PR-Vorlagenprüfungen erfolgreich. Die gemeinsame Browser-/Responsive-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 - **Aktueller Routine-UX-Arbeitszweig:** Kurs-/Lehrgangsverwaltung mit clientseitiger Suche, Veröffentlichungsfilter und Sortierung. Es werden ausschließlich bereits vorhandene Felder verwendet; keine neue fachliche Status- oder Berechtigungslogik.

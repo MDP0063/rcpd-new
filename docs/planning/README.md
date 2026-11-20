@@ -2,9 +2,9 @@
 
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`. Sie enthält nicht nur kurze Beschlusslisten, sondern auch ausführliche Ablaufregeln, Randbedingungen, Audit-Aufträge und nachvollziehbare offene Punkte.
 
-**Stand:** 18.11.2026  
-**Letzter verifizierter `main`-Stand:** `cf3ca0a9fe88ad21e8c2554e644183b2381f9707`  
-**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung, Fokusführung und einheitliche Aktionsdialoge (PR #293–#325 sowie #327 und #329 gemergt); Kursabschlussprüfungen öffnen im korrekten Kurskontext. Prüfungsmodus, Abgabebestätigung, responsive Fragenübersicht, serverbestätigter Antwortfortschritt (PR #330) und konkrete Prüfungsvoraussetzungen (PR #331) sind integriert. Der zweistufige Revisionsworkflow ist in PR #332 auf aktuellem main neu aufgebaut und bleibt bis zur unabhängigen Sicherheitsprüfung Draft. Manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA bleibt für die gesamte Academy offen.
+**Stand:** 21.11.2026  
+**Letzter verifizierter `main`-Stand:** `55815b591bfdac5d144ca16a021e8dc89f446e71`  
+**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung, Fokusführung und einheitliche Aktionsdialoge (PR #293–#325 sowie #327 und #329 gemergt); Kursabschlussprüfungen öffnen im korrekten Kurskontext. Prüfungsmodus, Abgabebestätigung, responsive Fragenübersicht, serverbestätigter Antwortfortschritt (PR #330) und konkrete Prüfungsvoraussetzungen (PR #331) sind integriert. Der zweistufige Revisionsworkflow (PR #332) ist nach erfolgreicher CI und unabhängigem Code-/Sicherheitsreview in `main` integriert. Manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA bleibt für die gesamte Academy bis zum Ende der Implementierung zurückgestellt.
 **Laufender Umsetzungs- und Abnahmestand:** siehe [PROGRESS.md](./PROGRESS.md).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
 

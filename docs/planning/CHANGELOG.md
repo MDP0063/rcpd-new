@@ -799,3 +799,13 @@
 - Prüfungstitel werden ausschließlich aus dem sichtbaren Teilnehmerkatalog aufgelöst; nicht sichtbare Vorprüfungen bleiben generisch.
 - Die UI leitet keinen individuellen Erfüllungsstatus ab; die serverseitige Startprüfung bleibt autoritativ.
 - **PR #331 am 18.11.2026 gemergt** (Merge-Commit `cf3ca0a9fe88ad21e8c2554e644183b2381f9707`); GitHub Actions inklusive Build-/Test- und Render-Autodeploy-Workflow erfolgreich.
+
+
+## 2026-11-21 – Zweistufiger Examiner-Revisionsworkflow (PR #332 gemergt)
+
+- Revisionsanfragen können von jeder aktuell kursberechtigten prüfenden Person für eine abgeschlossene manuelle Bewertung gestellt werden; mindestens ein konkreter Bewertungsschritt muss mit Feedback begründet werden.
+- Ausschließlich aktive Admins/Colonels können die Anfrage annehmen oder begründet ablehnen. Erst nach Annahme kehrt derselbe Versuch ohne neuen Teilnehmerversuch in die gemeinsame Prüferliste zurück.
+- Ein bereits freigegebenes Ergebnis bleibt während der Neubewertung als historischer Snapshot sichtbar, zählt aber bis zur erneuten Freigabe nicht als aktueller Kursabschlussnachweis.
+- Antrag, Entscheidung, ursprüngliche und neue Bewertung sowie Ergebnisfreigabe bleiben nachvollziehbar historisiert. Supervisor-Inbox und Kursprüferübersicht verwenden datensparsame Projektionen; Benachrichtigungen prüfen den aktuellen Empfängerstatus und die aktuelle Berechtigung bei Zustellung erneut.
+- Korrektur nach Review: während eine angenommene Revision wieder auf einen Prüfer wartet, werden der alte Prüfer und alte Abschlusszeitpunkt nicht mehr als aktuelle Zuständigkeit dargestellt; beide bleiben in der Historie erhalten.
+- **PR #332 am 21.11.2026 gemergt** (Merge-Commit `55815b591bfdac5d144ca16a021e8dc89f446e71`). TypeScript/Lint, Produktionsbuild, Tests, PR-Vorlagenprüfung und Post-Merge-Build erfolgreich. Kein Produktionsdeployment behauptet; manuelle Browser-/Rollen-/Live-Firestore-Abnahme bleibt Teil des gemeinsamen Academy-Tests.

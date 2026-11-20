@@ -1,10 +1,10 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 18.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PR #293–#325, #327, #329, #330 und #331 sind in `main` integriert. Der zweistufige Prüfungsrevisionsworkflow wurde nach dem veralteten Draft #296 auf aktuellem main neu aufgebaut (PR #332); unabhängige Sicherheitsprüfung und erneute Prüfung der aktuellen CI stehen noch aus. Browser-/Responsive-/Screenreader-/Live-Firestore-QA ist wie vereinbart auf später verschoben. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 21.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PR #332 (zweistufige Revisionsanfragen für Prüfungsbewertungen) wurde am 21.11.2026 gemergt. Der Revisionsworkflow ist damit technisch integriert; die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt wie vereinbart bis zum Ende der Implementierungsphase zurückgestellt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `cf3ca0a9fe88ad21e8c2554e644183b2381f9707` (PR #331). Enthalten sind Bibliotheks-/Reader-/Kurskatalog-Verbesserungen aus #290, das semantische Academy-Interaktionssystem aus #293, Notizenübersicht und Reader-Save-Queue aus #294–#295, Kurs-/Lehrgangsverwaltung aus #297, Materialverwaltung aus #298, Taxonomieverwaltung aus #299, Nachweis-Doppelsubmit-Schutz aus #300, Fallbacks für fehlende Lehrgangs-Kursreferenzen aus #301 und Fokusmanagement für Academy-Bereichswechsel aus #302, Planungsstand-Synchronisierung aus #303 und Fokusführung in Kurs-/Lehrgangsdetails aus #304 und im privaten Notizeditor aus #305 sowie in der Materialverwaltung aus #306, Taxonomieverwaltung aus #307, Kurs-/Lehrgangsautoreneditor aus #308 und Fokusführung zwischen Bibliothekskatalog und Reader aus #310 sowie im kursgebundenen Materialreader aus #311 und Frage-/Ergebniswechsel im Prüfungsrunner aus #312 sowie Deep-Link-Fokus in der Review-Queue aus #313 und Fokusführung beim Öffnen/Schließen der Teilnehmerakte aus #314.
+**Aktueller Basisstand:** `main` bei `55815b591bfdac5d144ca16a021e8dc89f446e71` (PR #332). Die fünf Academy-Bereiche und die zuvor integrierten Kurs-/Lehrgangs-, Bibliotheks-, Notiz-, Prüfungs- und Examiner-Funktionen bleiben Grundlage. Der zweistufige Revisionsworkflow ergänzt diese um Antrag durch aktuell kursberechtigte Prüfer, Entscheidung ausschließlich durch aktive Admins/Colonels, Wiederaufnahme desselben Versuchs in der Prüferliste sowie nachvollziehbare Historie und erneute Ergebnisfreigabe.
 
-**Aktueller Umsetzungsstand:** PRs #293–#295, #297–#315 und #317–#319 sind gemergt. Für #297–#302, #304–#315 und #318–#319 waren `bun run lint`, `bun run build`, `bun run test` (jeweils 455/455) und die PR-Vorlagenprüfungen erfolgreich; die optionalen Render-Deploy-Hooks wurden übersprungen. PR #296 bleibt wegen der erforderlichen unabhängigen Sicherheitsprüfung und späteren manuellen Rollen-/Browserabnahme Draft. PR #316 bleibt wegen der sensiblen Fortschritts-/Datenintegritätslogik bis zur unabhängigen Prüfung Draft. Der tatsächliche Produktionsdeploymentstatus ist nicht verifiziert.
+**Aktueller Umsetzungsstand:** PR #332 wurde auf aktuellem `main` aufgebaut, unabhängig auf Session-/Rollenprüfungen, Datenminimierung, transaktionale Zustandsübergänge, Ergebnis-Snapshots und Benachrichtigungszustellung geprüft und nach erfolgreicher CI gemergt. TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung waren auf dem finalen PR-Head erfolgreich; auch der Post-Merge-Build auf `main` ist erfolgreich. Es wurde kein Produktionsdeployment behauptet. PR #277 wurde nicht gemergt und geschlossen; seine Nachfolgeimplementierung ist PR #295, der bereits in `main` integriert ist. Die zeitabhängigen Reader-/Autosave-Browserfälle bleiben Teil der späteren Gesamtabnahme.
 
 ## 0. Aktuelle Ausbaustufe der Lernbibliothek
 
@@ -971,10 +971,10 @@ Die bestehenden spezialisierten Styles für Kurs-/Programmerstellung, Examiner-B
 
 ### Nächster Auditfokus
 
-- Weitere Lade-/Fehleransagen in Reader und Taxonomie gegen die WAI-ARIA-Empfehlung für persistent gemountete Live-Regionen prüfen.
-- Private Notizen: Browser-/Live-Firestore-Abnahme der Autosave-, Konflikt-, Reload-, Mehrfachquellen- und Quellenstatusabläufe.
-- Materialverwaltung: Veröffentlichung, Versionshistorie, Archivierung und Kursreferenzprüfungen in realen Abläufen prüfen.
-- Danach Kurse/Lehrgänge, Academy-Übersicht und Prüfungen gegen die verbindliche Spezifikation und tatsächliche Datenflüsse prüfen.
+1. Die vollständige Academy-Spezifikation gegen den aktuellen Code abgleichen und echte Funktionslücken von bereits erledigten oder nur manuell zu prüfenden Punkten trennen.
+2. Beschlossene, noch fehlende Funktionen in Kursen/Lehrgängen, Lernbibliothek/Materialverwaltung, privaten Notizen und Prüfungs-/Examiner-Abläufen gezielt umsetzen; keine unbeschlossenen Autorisierungs- oder Datenmodellentscheidungen vorwegnehmen.
+3. Während der Umsetzung Regressionen, Rollen-/Datenschutzgrenzen und Datenintegrität mit gezielten Tests absichern.
+4. Erst nach Abschluss der Implementierung die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme vorbereiten und durchführen.
 
 
 ### PR #233 – Persistente Fehler-Live-Regionen in der Academy (12.11.2026)
@@ -1184,8 +1184,9 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 
 ### Noch offene PRs
 
-- **PR #332 – Revisionsanfragen mit Admin-/Colonel-Entscheidung:** aus dem alten Draft #296 auf aktuellem main neu aufgebaut. Aktuelle CI: TypeScript/Lint, Produktionsbuild und Tests erfolgreich; PR-Vorlagenprüfung wird nach Ergänzung des Release-Labels erneut ausgeführt. Ein zusätzlicher HTTP-Test prüft, dass ein zwischenzeitlich deaktivierter/entzogener Prüfer keine verspätete Benachrichtigung erhält. Wegen sensibler Prüfungsdaten und Autorisierungsänderungen bleibt PR #332 Draft bis zum unabhängigen Sicherheitsreview. Danach sind Diffreview und Rollen-/Firestore-Abnahme erforderlich.
-- **#277 – private Notiz-Autosave beim Materialwechsel:** auf aktuellem main aufgebaut; TypeScript-/Produktionsbuild, 455 Servertests und PR-Vorlagenprüfung erfolgreich. Der PR bleibt Draft, bis die zeitabhängigen Client-Szenarien im Browser geprüft wurden: Materialwechsel während Debounce/in-flight Save, mehrere Notizen, Fehler/Retry, 409/Reload, fehlgeschlagenes Löschen und Reader-Unmount/Remount. Es existiert derzeit kein Frontend-Test-Runner; Servertests decken diese Client-Races nicht ab.
+- **Stand 21.11.2026: keine offenen Pull Requests.**
+- **PR #332** wurde am 21.11.2026 gemergt. Der zweistufige Revisionsworkflow ist integriert; CI und unabhängiger Code-/Sicherheitsreview sind abgeschlossen. Die manuelle Rollen-/Browser-/Live-Firestore-Abnahme bleibt Teil des gemeinsamen Academy-Tests.
+- **PR #277** wurde geschlossen, nicht gemergt. Die Nachfolgeimplementierung **PR #295** ist gemergt; die verbleibenden zeitabhängigen Reader-Speicherfälle sind keine offene PR, sondern ein QA-Punkt für die spätere Browserabnahme.
 
 ### Verifizierte Befunde aus dem laufenden Audit
 
