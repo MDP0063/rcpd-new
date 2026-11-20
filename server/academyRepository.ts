@@ -1263,6 +1263,25 @@ export class AcademyRepository {
       return { order, participation };
     });
   }
+  async completeRequalificationOrder(orderId: string, participationId: string, completedIso: string): Promise<AcademyRequalificationOrderDoc> {
+    if (!orderId.trim() || !participationId.trim() || !Number.isFinite(Date.parse(completedIso))) throw new Error('ACADEMY_REQUALIFICATION_COMPLETION_INVALID');
+    return this.runTransaction(async tx => {
+      const [order, participation] = await Promise.all([
+        tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', orderId),
+        tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId)
+      ]);
+      if (!order || !participation || order.participationId !== participation.id ||
+          participation.kind !== 'requalification' || participation.requalificationOrderId !== order.id ||
+          participation.userUid !== order.userUid || participation.courseId !== order.courseId) {
+        throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+      }
+      if (order.status !== 'open') return order;
+      const next = { ...order, status: 'completed' as const, completedIso };
+      assertValid(validateRequalificationOrder(next));
+      await tx.update('academy_requalification_orders', order.id, next);
+      return next;
+    });
+  }
   async listOwnRequalificationOrders(userUid: string): Promise<AcademyRequalificationOrderDoc[]> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
     return this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
