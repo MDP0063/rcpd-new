@@ -1224,7 +1224,8 @@ export class AcademyRepository {
   }
   async createRequalificationOrder(
     order: AcademyRequalificationOrderDoc,
-    participation: AcademyCourseParticipationDoc
+    participation: AcademyCourseParticipationDoc,
+    priorCompletionParticipationId: string
   ): Promise<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }> {
     assertValid(validateRequalificationOrder(order));
     assertValid(validateCourseParticipation(participation));
@@ -1247,7 +1248,8 @@ export class AcademyRepository {
           course.currentPublishedVersionId !== version.id || course.materialReviewPending?.length ||
           course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       if (history.length >= 1000 || previousOrders.length >= 1000) throw new Error('ACADEMY_PARTICIPATION_HISTORY_LIMIT');
-      if (!history.some(item => item.courseId === order.courseId && item.status === 'completed' && item.kind !== 'requalification')) {
+      if (!priorCompletionParticipationId || !history.some(item => item.id === priorCompletionParticipationId &&
+          item.courseId === order.courseId && item.userUid === order.userUid && item.kind !== 'requalification')) {
         throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
       }
       if (previousOrders.some(item => item.courseId === order.courseId && item.status === 'open')) {
