@@ -1,4 +1,4 @@
-import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyPrivateNoteDoc, AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
+import type { AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyCourseParticipationDoc, AcademyProgramParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyRequalificationLockDoc, AcademyPrivateNoteDoc, AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 
 export const ACADEMY_COLLECTIONS = [
   'academy_material_categories',
@@ -16,6 +16,7 @@ export const ACADEMY_COLLECTIONS = [
   'academy_program_versions',
   'academy_course_participations',
   'academy_requalification_orders',
+  'academy_requalification_locks',
   'academy_program_participations',
   'academy_progress_evidence',
   'academy_completion_corrections',
@@ -79,6 +80,7 @@ export interface AcademyDocumentMap {
   academy_program_versions: AcademyProgramVersionDoc;
   academy_course_participations: AcademyCourseParticipationDoc;
   academy_requalification_orders: AcademyRequalificationOrderDoc;
+  academy_requalification_locks: AcademyRequalificationLockDoc;
   academy_program_participations: AcademyProgramParticipationDoc;
   academy_progress_evidence: AcademyProgressEvidenceDoc;
   academy_completion_corrections: AcademyCompletionCorrectionDoc;
