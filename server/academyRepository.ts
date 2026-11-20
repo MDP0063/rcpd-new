@@ -1620,6 +1620,12 @@ export class AcademyRepository {
         throw new Error('ACADEMY_COMPLETION_CORRECTION_CONFLICT');
       }
       if (correction.correctedStatus === current.status) throw new Error('ACADEMY_COMPLETION_CORRECTION_NOOP');
+      const requalificationOrder = current.kind === 'requalification' && current.requalificationOrderId
+        ? await tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', current.requalificationOrderId)
+        : null;
+      if (current.kind === 'requalification' && (!requalificationOrder || requalificationOrder.participationId !== current.id || requalificationOrder.status === 'cancelled')) {
+        throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+      }
       const evidence = await tx.list<AcademyProgressEvidenceDoc>('academy_progress_evidence', {
         where: [{ field: 'participationId', value: participationId }], limit: 1000
       });
@@ -1658,6 +1664,12 @@ export class AcademyRepository {
       assertValid(validateCourseParticipation(next));
       await tx.create('academy_completion_corrections', correction.id, correction);
       await tx.update('academy_course_participations', participationId, next);
+      if (requalificationOrder) {
+        const updatedOrder: AcademyRequalificationOrderDoc = correction.correctedStatus === 'completed'
+          ? { ...requalificationOrder, status: 'completed', completedIso: correction.correctedIso }
+          : (() => { const { completedIso: _completedIso, ...openOrder } = requalificationOrder; return { ...openOrder, status: 'open' as const }; })();
+        await tx.update('academy_requalification_orders', requalificationOrder.id, updatedOrder);
+      }
       return next;
     });
   }
