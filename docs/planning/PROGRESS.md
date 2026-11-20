@@ -102,23 +102,25 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Beschlossene Examiner-Restarbeiten abschließen: einsehbare Claim-/Übergabehistorie sowie wichtige Action Requests einschließlich Benachrichtigungen und Revisionsrückgabe.
-2. Gemeinsame Academy-Abnahme der implementierten Funktionen in realen Browser-/Live-Firestore-Szenarien; CI-Ergebnisse ersetzen diese Prüfung nicht.
-3. Die bestehende Academy-Spezifikation gegen den aktuellen Code abschließend auf echte Lücken, Regressionen, Datenschutz-/Berechtigungsfehler und inkonsistente Zustandsdarstellung prüfen. Bereits beschlossene UX-/Fachregeln nicht neu aufrollen.
-4. Danach die visuelle Academy-Gestaltung ausarbeiten und prototypisch validieren: gemeinsame Portal-Designgrundlagen, Screen-Kompositionen der fünf vorhandenen Bereiche, Examiner-Ansichten, Reader-Werkzeuge, responsive Layouts und Accessibility.
-5. Globale Portalgrundlagen und Abhängigkeiten so weit berücksichtigen, dass die Academy in das spätere Gesamtdesign passt; die vollständige Konzeption anderer Module erfolgt später in eigenen Abschnitten.
-6. PDF-Infrastruktur bleibt zurückgestellt. Sie ist kein Blocker für das aktuelle Text-/Code-basierte Academy-Visual-Redesign.
-7. Empfehlungen und sonstige noch offene fachliche Randregeln nur dann weiter konkretisieren, wenn sie für einen tatsächlich umgesetzten und jetzt zu gestaltenden Ablauf erforderlich sind. Keine Scope-Erweiterung aus bloßer Vollständigkeit.
+1. Die beschlossene Wiederqualifizierung ist noch nicht implementiert: das aktuelle Modell erlaubt nur eine Teilnahme pro Nutzer/Kurs und pro Nutzer/Lehrgang und besitzt keinen eigenständigen zentralen Qualifikations-/Wiederqualifizierungsvorgang.
+2. Die beschlossene persönliche Empfehlungsfunktion fehlt noch vollständig im aktuellen Code. Sie muss nach Abschnitt 8 der Academy-Spezifikation umgesetzt werden: manuelle und nachvollziehbar regelbasierte Empfehlungen, Deduplizierung, Priorisierung, Lebenszyklus, Ausblenden und Historie.
+3. Die Kursmeldungslogik aus Abschnitt 9 ist noch nicht implementiert. Die Option-C-Lesestatusregeln sind beschlossen; Quelle, Erstellung/Berechtigung und Lebenszyklus der Meldungen müssen vor einer neuen Datenmodellentscheidung geklärt werden.
+4. Den restlichen Funktions-/Fehleraudit für Kurse/Lehrgänge, Bibliothek/Materialverwaltung, private Notizen, Prüfungen und Examiner am aktuellen `main` abschließen. Bereits umgesetzte Funktionen nicht erneut bauen; nur nachgewiesene Lücken oder Fehler korrigieren.
+5. Die visuelle Academy-Gestaltung und die noch offenen Responsive-/Accessibility-Details anhand der verbindlichen Redesign-Spezifikation vervollständigen.
+6. Nach Abschluss aller Implementierungen die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme durchführen. Bis dahin werden diese Prüfungen nicht als erledigt ausgegeben.
+7. PDF-Infrastruktur sowie die ausdrücklich zurückgestellte kontextbezogene Meldefunktion bleiben außerhalb dieser Ausbaustufe.
 
 ## 6. Noch offene nächste Schritte
 
-1. Examiner-Historienansicht und Action-Request-/Revisionsworkflow gemäß `ACADEMY-DETAILED-SPECIFICATION.md` und den Beschlüssen vom 11.11.2026 implementieren und testen.
-2. Verbleibende technische/UX-Befunde aus dem Academy-Audit gezielt gegen die aktuelle Implementierung verifizieren. Nur nachgewiesene Fehler oder unvollständige Beschlüsse korrigieren.
-3. Gemeinsame Browser-/Live-Firestore-Abnahme der Academy-Funktionen einschließlich Rollen, Benachrichtigungen, Direktnavigation, Reader, Prüfungen und Ergebnisprojektionen durchführen.
-4. Visuelle Designphase beginnen: bestehende Academy-Struktur als verbindliche Grundlage nehmen; passende etablierte Websites/Designsysteme und Accessibility-Standards für konkrete UI-Entscheidungen recherchieren; Optionen mit Vor-/Nachteilen und RCPD-Begründung dokumentieren.
-5. Designsystem und globalen Portalrahmen als gemeinsame Grundlage berücksichtigen; andere Module erst in ihren späteren Redesign-Abschnitten vollständig konzipieren.
+1. Empfehlungsfunktion: fehlende Platzierung und präzise automatische Auslöser/Abschlussnachweise aus den bereits beschlossenen Regeln ableiten bzw. bei echten fachlichen Unklarheiten mit dem Projektinhaber klären.
+2. Kursmeldungen: zuerst Quelle und Erstellungs-/Rücknahmeregeln festlegen; danach den bereits beschlossenen Einzel-Lesestatus und die dezente Kennzeichnung an Kurs, Prüfungsergebnis und Material umsetzen.
+3. Kurs-/Lehrgangs-, Bibliotheks-/Notiz- und Prüfungsabläufe weiter gegen die Detail-Spezifikation prüfen und nur verifizierte Fehler beheben.
+4. Verbleibende UI-/Responsive-/Accessibility-Details im Rahmen der bestehenden Designfreigabe umsetzen.
+5. Nach Implementierungsabschluss die vollständige manuelle Academy-Abnahme mit realen Rollen und Firestore-Daten vorbereiten.
 
 Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen. Bereits entschiedene Fragen werden nicht erneut gestellt oder stillschweigend geändert.
+
+Die Empfehlungs- und Kursmeldungsfunktionen bleiben als explizite Restpunkte sichtbar, bis ihre noch fehlenden fachlichen Angaben geklärt und anschließend vollständig umgesetzt sind.
 
 ## 7. Technische Ausführung und Tests
 
