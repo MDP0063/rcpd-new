@@ -8,6 +8,7 @@ import type {
   AcademyCourseParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
+  AcademyRequalificationOrderDoc,
   AcademyProgramParticipationDoc,
   AcademyPrivateNoteDoc,
   AcademyMaterialCategoryDoc,
@@ -488,6 +489,44 @@ export function validateCourseParticipation(
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
       (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endReason))) {
     return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt Zeitpunkt und Begründung.');
+  }
+  if (participation.kind !== undefined && !['standard', 'requalification'].includes(participation.kind)) {
+    return invalid('ACADEMY_PARTICIPATION_KIND_INVALID', 'Die Teilnahmeart ist ungültig.');
+  }
+  if ((participation.kind === 'requalification') !== Boolean(participation.requalificationOrderId)) {
+    return invalid('ACADEMY_PARTICIPATION_REQUALIFICATION_REFERENCE_INVALID', 'Eine Wiederqualifizierung benötigt eine eindeutige Vorgangsreferenz.');
+  }
+  return { ok: true };
+}
+
+export function validateRequalificationOrder(order: AcademyRequalificationOrderDoc): AcademyValidationResult {
+  if (!isRecord(order) || !isNonEmpty(order.id) || !isNonEmpty(order.userUid) ||
+      !isNonEmpty(order.courseId) || !isNonEmpty(order.courseVersionId) ||
+      !isNonEmpty(order.participationId) || !isNonEmpty(order.orderedByUid) ||
+      !isNonEmpty(order.orderedIso) || !isNonEmpty(order.reason) ||
+      order.reason.trim().length < 10 || order.reason.length > 1000 ||
+      !Array.isArray(order.requiredEvidenceRequirementIds) ||
+      order.requiredEvidenceRequirementIds.length < 1 || order.requiredEvidenceRequirementIds.length > 100 ||
+      order.requiredEvidenceRequirementIds.some(id => !isNonEmpty(id)) ||
+      new Set(order.requiredEvidenceRequirementIds).size !== order.requiredEvidenceRequirementIds.length ||
+      !['open', 'completed', 'cancelled'].includes(order.status)) {
+    return invalid('ACADEMY_REQUALIFICATION_ORDER_INVALID', 'Die Wiederqualifizierungsanforderung enthält ungültige Angaben.');
+  }
+  if (order.dueIso !== undefined && (!isNonEmpty(order.dueIso) || !Number.isFinite(Date.parse(order.dueIso)))) {
+    return invalid('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID', 'Die Frist ist ungültig.');
+  }
+  if (order.status === 'completed' && !isNonEmpty(order.completedIso)) {
+    return invalid('ACADEMY_REQUALIFICATION_COMPLETION_MISSING', 'Ein abgeschlossener Vorgang benötigt einen Abschlusszeitpunkt.');
+  }
+  if (order.status === 'cancelled' && (!isNonEmpty(order.cancelledIso) || !isNonEmpty(order.cancelledByUid) ||
+      !isNonEmpty(order.cancellationReason) || order.cancellationReason.length > 1000)) {
+    return invalid('ACADEMY_REQUALIFICATION_CANCELLATION_AUDIT_MISSING', 'Eine aufgehobene Anforderung benötigt Zeitpunkt, verantwortliche Person und Begründung.');
+  }
+  if (order.status !== 'completed' && order.completedIso !== undefined) {
+    return invalid('ACADEMY_REQUALIFICATION_COMPLETION_STATE_INVALID', 'Der Abschlusszeitpunkt passt nicht zum Status.');
+  }
+  if (order.status !== 'cancelled' && (order.cancelledIso !== undefined || order.cancelledByUid !== undefined || order.cancellationReason !== undefined)) {
+    return invalid('ACADEMY_REQUALIFICATION_CANCELLATION_STATE_INVALID', 'Aufhebungsdaten sind nur bei aufgehobenen Anforderungen zulässig.');
   }
   return { ok: true };
 }
