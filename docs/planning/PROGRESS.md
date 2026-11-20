@@ -52,6 +52,17 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 
 Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. PR #142 ist gemergt; CI (TypeScript/Build und 451/451 Tests), PR-Vorlagenprüfung sowie Main-Workflow einschließlich Render-Deploy-Hook waren erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung bleibt offen.
 
+## 0.3 Wiederqualifizierung – laufende Umsetzung
+
+- Entwicklungsbranch: `feat/academy-requalification-records`; `main` bleibt unverändert.
+- Neue zentrale Vorgänge werden je Teilnehmer und Kurs/Qualifikation gespeichert und mit einer separaten neuen Kursteilnahme verknüpft. Reguläre historische Teilnahmen und ihre Nachweise bleiben erhalten.
+- Die Kursverwaltung kann berechtigten Verantwortlichen eine frühere Abschluss-Teilnahme auswählen lassen, eine Begründung verlangen und optional eine Frist setzen. Teilnehmer sehen eine verständliche Aufgabe mit Grund und Frist in der Kursübersicht; der Vorgang bleibt innerhalb der bestehenden Academy-Navigation.
+- Die API prüft Kurszuständigkeit und früheren Abschluss serverseitig. Die Repository-Transaktion pinnt eine konkrete veröffentlichte Kursversion, verhindert offene Doppelanforderungen und verwendet einen deterministischen Koordinationsdatensatz gegen konkurrierende Anordnungen.
+- Erforderliche Nachweise laufen über den vorhandenen Kursfortschritt. Bei Kursabschluss wird der zentrale Vorgang geschlossen; bei prüfungsabhängigem Abschluss wird der Status anhand des offiziell freigegebenen Prüfungsergebnisses beim Abruf synchronisiert.
+- JSON-Speicherschema v8 ergänzt die neue Sammlung rückwärtskompatibel. Backup-/Restore- und Anonymisierungswege werden berücksichtigt.
+- Tests für getrennte Historie, erneuten Vorgang nach Abschluss und konkurrierende Anordnungen sind ergänzt. CI und unabhängige Sicherheitsprüfung stehen noch aus; die Funktion ist nicht gemergt oder produktiv abgenommen.
+- Noch offen: Gruppenanordnung, vollständige Benachrichtigungs-Zustellgarantie und die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA.
+
 ## 1. Gesamtstatus
 
 - Das Redesign umfasst das gesamte Portal, nicht nur die Academy.
