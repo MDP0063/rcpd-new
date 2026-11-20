@@ -119,6 +119,8 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 Vor jeder Umsetzung sind passende Detail-Spezifikation, Entscheidungsregister, bestehende Berechtigungen, technische Architektur und UX-/Accessibility-Anforderungen abzugleichen. Bereits entschiedene Fragen werden nicht erneut gestellt oder stillschweigend geändert.
 
+Die Empfehlungs- und Kursmeldungsfunktionen bleiben als explizite Restpunkte sichtbar, bis ihre noch fehlenden fachlichen Angaben geklärt und anschließend vollständig umgesetzt sind.
+
 ## 7. Technische Ausführung und Tests
 
 - Diese Revision ändert ausschließlich Markdown-Planungsdokumente.
