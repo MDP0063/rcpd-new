@@ -1268,7 +1268,10 @@ export function createAcademyApiRouter(
         repository.listCourseParticipations(course.id), repository.listCourseRequalificationOrders(course.id)
       ]);
       const openUserUids = new Set(existingOrders.filter(item => item.status === 'open').map(item => item.userUid));
-      const eligibleUids = [...new Set(participations.filter(item => item.kind !== 'requalification' && item.status === 'completed' && !openUserUids.has(item.userUid)).map(item => item.userUid))];
+      const eligibleUids = [...new Set((await Promise.all(participations.filter(item => item.kind !== 'requalification' && !openUserUids.has(item.userUid)).map(async item => {
+        const completion = await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam);
+        return completion.participation.status === 'completed' ? item.userUid : null;
+      }))).filter((uid): uid is string => Boolean(uid)))];
       const candidates = eligibleUids.map(uid => {
         const profile = resolveParticipantLabel?.(uid);
         return profile ? { uid, ...profile } : null;
@@ -1300,6 +1303,13 @@ export function createAcademyApiRouter(
       const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', versionId);
       if (!version || version.courseId !== course.id) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       const requiredEvidenceRequirementIds = version.completionRequirements.filter(item => item.required).map(item => item.id);
+      const priorParticipations = (await repository.listCourseParticipations(course.id)).filter(item => item.userUid === userUid && item.kind !== 'requalification');
+      let priorCompletionParticipationId = '';
+      for (const prior of priorParticipations) {
+        const completion = await resolveAcademyCourseCompletion(repository, prior, resolveReleasedFinalExam);
+        if (completion.participation.status === 'completed') { priorCompletionParticipationId = prior.id; break; }
+      }
+      if (!priorCompletionParticipationId) throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
       const orderId = id('requalification');
       const participationId = `requalification_participation_${encodeURIComponent(orderId)}`;
       const order: AcademyRequalificationOrderDoc = {
@@ -1312,7 +1322,7 @@ export function createAcademyApiRouter(
         kind: 'requalification', requalificationOrderId: orderId,
         status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
       };
-      const created = await repository.createRequalificationOrder(order, participation);
+      const created = await repository.createRequalificationOrder(order, participation, priorCompletionParticipationId);
       await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
         `Wiederqualifizierung für Nutzer ${userUid} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
       if (notifyMaterialReview) {
