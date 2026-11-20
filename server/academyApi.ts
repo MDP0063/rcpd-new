@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc,
   AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc,
-  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc,
+  AcademyPrivateNoteDoc, AcademyPrivateNoteSource, AcademyPrivateNoteTextAnchor, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc,
   AcademyMaterialCategoryDoc, AcademyMaterialDocumentTypeDoc,
   AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc, AcademyMaterialVersionSummary, AcademyCourseMaterialReaderItem, AcademyMaterialReaderContent, AcademyPublicMaterialCatalogItem, AcademyPublicMaterialDetail
 } from '../src/types/academy.ts';
@@ -76,7 +76,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('REQUALIFICATION_ALREADY_OPEN') || code.includes('REQUALIFICATION_ORDER_CONFLICT') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('REQUALIFICATION_REQUIREMENTS_MISMATCH') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
       code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
       code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
@@ -1253,6 +1253,73 @@ export function createAcademyApiRouter(
       const participation = await repository.startCourseParticipation(actor.uid, req.params.courseId, new Date().toISOString());
       await recordAudit(actor.uid, 'Academy-Kursteilnahme begonnen', req.params.courseId, `Teilnahme an Kursversion ${participation.courseVersionId} begonnen.`, 'ACADEMY_PROGRESS');
       res.status(201).json({ participation });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/courses/:courseId/requalifications', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      const reason = boundedText(req.body?.reason, 1000);
+      if (!reason || reason.length < 10) throw new Error('ACADEMY_REQUALIFICATION_REASON_INVALID');
+      let dueIso: string | undefined;
+      if (req.body?.dueIso !== undefined && req.body.dueIso !== null && req.body.dueIso !== '') {
+        if (typeof req.body.dueIso !== 'string' || !Number.isFinite(Date.parse(req.body.dueIso))) throw new Error('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID');
+        dueIso = new Date(req.body.dueIso).toISOString();
+      }
+      const userUid = boundedText(req.body?.userUid, 160);
+      if (!userUid) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_REQUIRED');
+      const now = new Date().toISOString();
+      const versionId = course.currentPublishedVersionId;
+      if (!versionId) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
+      const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', versionId);
+      if (!version || version.courseId !== course.id) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
+      const requiredEvidenceRequirementIds = version.completionRequirements.filter(item => item.required).map(item => item.id);
+      const orderId = id('requalification');
+      const participationId = `requalification_participation_${encodeURIComponent(orderId)}`;
+      const order: AcademyRequalificationOrderDoc = {
+        id: orderId, userUid, courseId: course.id, courseVersionId: version.id,
+        participationId, reason, requiredEvidenceRequirementIds, ...(dueIso ? { dueIso } : {}),
+        status: 'open', orderedByUid: actor.uid, orderedIso: now
+      };
+      const participation: AcademyCourseParticipationDoc = {
+        id: participationId, userUid, courseId: course.id, courseVersionId: version.id,
+        kind: 'requalification', requalificationOrderId: orderId,
+        status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
+      };
+      const created = await repository.createRequalificationOrder(order, participation);
+      await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
+        `Wiederqualifizierung für Nutzer ${userUid} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+      if (notifyMaterialReview) {
+        try {
+          await notifyMaterialReview(userUid, `academy-requalification-${orderId}`, 'Erneute Qualifikation erforderlich',
+            `Für ${version.title} ist eine erneute Qualifikation erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.${dueIso ? ` Frist: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(dueIso))}.` : ''}`);
+        } catch { /* The persisted order remains visible in the participant's Academy task list. */ }
+      }
+      res.status(201).json(created);
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/requalifications', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const orders = await repository.listOwnRequalificationOrders(actor.uid);
+      res.json({ orders });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/courses/:courseId/requalifications', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      res.json({ orders: await repository.listCourseRequalificationOrders(course.id) });
     } catch (error) { fail(res, error, next); }
   });
 
