@@ -363,6 +363,17 @@ test('Freitextprüfung kann sicher manuell bewertet und nur dem eigenen Prüflin
       'acceptance snapshots the last released result before the new review begins');
     assert.equal((acceptedRevision.questionGrades as any[])?.find((grade: any) => grade.questionId === 'text')?.requiresManualReview, true);
     assert.equal((await listPendingExamReviewRevisionRequests(repository)).length, 0);
+    const historyDuringRevision = await listExamParticipantReviewHistory(repository, 'student-1', ['PC-101'], 'grader2', false);
+    const historyItemDuringRevision = historyDuringRevision.find(item => item.id === 'review-attempt');
+    assert.equal(historyItemDuringRevision?.status, 'pending_review');
+    assert.equal(historyItemDuringRevision?.responsibleReviewerUid, null,
+      'an accepted revision is unassigned until a reviewer claims it');
+    assert.equal(historyItemDuringRevision?.responsibleReviewerName, null);
+    assert.equal(historyItemDuringRevision?.reviewedAtIso, null,
+      'the prior completion timestamp remains in history, not in the current pending state');
+    assert.equal(historyItemDuringRevision?.claimHistory?.find(event => event.action === 'revision_requested')?.previousReviewedAtIso,
+      rereleasedAttempt.reviewedAtIso, 'the original review timestamp remains historically available');
+
     const revisionQueue = await listExamReviews(repository, ['PC-101'], 'grader2');
     assert.equal(revisionQueue.length, 1);
     assert.equal(revisionQueue[0].revisionRequest?.reason, 'Die ursprüngliche Punktevergabe passt nicht vollständig zur Bewertungsrubrik.');

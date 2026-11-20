@@ -1220,9 +1220,12 @@ export async function listExamParticipantReviewHistory(
       submittedAtIso: String(attempt.submittedAtIso || ''),
       assessmentStage: version.assessmentStage,
       status: attempt.status as ExamParticipantReviewHistoryItem['status'],
-      responsibleReviewerUid: attempt.reviewClaim?.reviewerUid || (typeof attempt.reviewedByUid === 'string' ? attempt.reviewedByUid : null),
+      // A revision acceptance returns the attempt to the unassigned queue. Keep the old
+      // reviewer/time in append-only claim history, but do not project them as current state.
+      responsibleReviewerUid: attempt.reviewClaim?.reviewerUid ||
+        (attempt.status === 'pending_review' ? null : (typeof attempt.reviewedByUid === 'string' ? attempt.reviewedByUid : null)),
       responsibleReviewerName: attempt.reviewClaim?.reviewerName || null,
-      reviewedAtIso: attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null,
+      reviewedAtIso: attempt.status === 'pending_review' ? null : (attempt.reviewedAtIso ? String(attempt.reviewedAtIso) : null),
       detailed,
       ...(detailed ? {
         claimHistory: claimHistory.map((event): ExamParticipantReviewHistoryEvent => {
