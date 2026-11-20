@@ -79,6 +79,7 @@ interface ProgramParticipationDetail {
   };
 }
 type Screen = 'catalog' | 'course' | 'program';
+interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string; role: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted = 'text-sm text-slate-600 dark:text-slate-300';
@@ -115,6 +116,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
   const [requalificationOrders, setRequalificationOrders] = useState<AcademyRequalificationOrderDoc[]>([]);
+  const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
+  const [requalificationCandidateUid, setRequalificationCandidateUid] = useState('');
+  const [requalificationReason, setRequalificationReason] = useState('');
+  const [requalificationDueDate, setRequalificationDueDate] = useState('');
   const [programParticipations, setProgramParticipations] = useState<AcademyProgramParticipationDoc[]>([]);
   const [programDetails, setProgramDetails] = useState<ProgramParticipationDetail[]>([]);
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
@@ -177,6 +182,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   useEffect(() => () => onUnsavedChangesChange?.(false), [onUnsavedChangesChange]);
 
   const canCreate = currentUser.role === 'admin' || currentUser.role === 'colonel';
+  const canOrderRequalificationForCourse = (courseCode: string) => {
+    if (currentUser.role === 'admin' || currentUser.role === 'colonel') return true;
+    const permissions = currentUser.granularPermissions;
+    const assigned = permissions?.assignedCourseCodes || [];
+    return permissions?.canGradeAssignedCourses === true && (assigned.includes('*') || assigned.some(code => code.toUpperCase() === courseCode.toUpperCase()));
+  };
   const ownCourseParticipationByCourse = useMemo(
     () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
@@ -354,6 +365,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       ? { ...entry, version: pins[0].version }
       : entry;
     setSelectedCourse(effectiveEntry);
+    setRequalificationCandidates([]);
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
+      const candidateResponse = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(effectiveEntry.master.id));
+      if (detailRequestIdRef.current === requestId && candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+    }
     setCourseDetail(null);
     setSelectedProgram(null);
     setProgramDetail(null);
