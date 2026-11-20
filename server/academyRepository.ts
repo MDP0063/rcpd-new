@@ -1222,6 +1222,59 @@ export class AcademyRepository {
       return participation;
     });
   }
+  async createRequalificationOrder(
+    order: AcademyRequalificationOrderDoc,
+    participation: AcademyCourseParticipationDoc
+  ): Promise<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }> {
+    assertValid(validateRequalificationOrder(order));
+    assertValid(validateCourseParticipation(participation));
+    if (participation.kind !== 'requalification' || participation.requalificationOrderId !== order.id ||
+        participation.id !== order.participationId || participation.userUid !== order.userUid ||
+        participation.courseId !== order.courseId || participation.courseVersionId !== order.courseVersionId ||
+        participation.status !== 'in_progress') throw new Error('ACADEMY_REQUALIFICATION_PARTICIPATION_MISMATCH');
+    return this.runTransaction(async tx => {
+      const [course, version, history, previousOrders, existingParticipation] = await Promise.all([
+        tx.get<AcademyCourseMasterDoc>('academy_courses', order.courseId),
+        tx.get<AcademyCourseVersionDoc>('academy_course_versions', order.courseVersionId),
+        tx.list<AcademyCourseParticipationDoc>('academy_course_participations', { where: [{ field: 'userUid', value: order.userUid }], limit: 1000 }),
+        tx.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', { where: [{ field: 'userUid', value: order.userUid }], limit: 1000 }),
+        tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participation.id)
+      ]);
+      if (!course || !version) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      assertValid(validateCourseMaster(course));
+      assertValid(validateCourseVersion(order.courseId, version));
+      if (course.publicationStatus !== 'published' || course.availability !== 'available' ||
+          course.currentPublishedVersionId !== version.id || course.materialReviewPending?.length ||
+          course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
+      if (history.length >= 1000 || previousOrders.length >= 1000) throw new Error('ACADEMY_PARTICIPATION_HISTORY_LIMIT');
+      if (!history.some(item => item.courseId === order.courseId && item.status === 'completed' && item.kind !== 'requalification')) {
+        throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
+      }
+      if (previousOrders.some(item => item.courseId === order.courseId && item.status === 'open')) {
+        throw new Error('ACADEMY_REQUALIFICATION_ALREADY_OPEN');
+      }
+      if (existingParticipation) throw new Error('ACADEMY_DOCUMENT_ALREADY_EXISTS');
+      const requiredIds = version.completionRequirements.filter(item => item.required).map(item => item.id).sort();
+      if (requiredIds.length === 0 || requiredIds.join('|') !== [...order.requiredEvidenceRequirementIds].sort().join('|')) {
+        throw new Error('ACADEMY_REQUALIFICATION_REQUIREMENTS_MISMATCH');
+      }
+      await tx.create('academy_requalification_orders', order.id, order);
+      await tx.create('academy_course_participations', participation.id, participation);
+      return { order, participation };
+    });
+  }
+  async listOwnRequalificationOrders(userUid: string): Promise<AcademyRequalificationOrderDoc[]> {
+    if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
+    return this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
+      where: [{ field: 'userUid', value: userUid }], limit: 1000, orderBy: 'orderedIso', orderDirection: 'desc'
+    });
+  }
+  async listCourseRequalificationOrders(courseId: string): Promise<AcademyRequalificationOrderDoc[]> {
+    if (!courseId.trim()) throw new Error('ACADEMY_COURSE_REQUIRED');
+    return this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
+      where: [{ field: 'courseId', value: courseId }], limit: 1000, orderBy: 'orderedIso', orderDirection: 'desc'
+    });
+  }
   async startProgramParticipation(userUid: string, programId: string, now: string): Promise<AcademyProgramParticipationDoc> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
     const participationId = `program_participation_${encodeURIComponent(userUid)}_${encodeURIComponent(programId)}`;
@@ -1471,8 +1524,16 @@ export class AcademyRepository {
         ...(isComplete ? { completedIso: evidence.recordedIso } : {})
       };
       assertValid(validateCourseParticipation(nextParticipation));
+      let completedOrder: AcademyRequalificationOrderDoc | null = null;
+      if (isComplete && participation.kind === 'requalification' && participation.requalificationOrderId) {
+        completedOrder = await tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId);
+        if (!completedOrder || completedOrder.participationId !== participation.id || completedOrder.status !== 'open') {
+          throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+        }
+      }
       await tx.create('academy_progress_evidence', evidence.id, evidence);
       await tx.update('academy_course_participations', participationId, nextParticipation);
+      if (completedOrder) await tx.update('academy_requalification_orders', completedOrder.id, { ...completedOrder, status: 'completed', completedIso: evidence.recordedIso });
       return { participation: nextParticipation, evidence };
     });
   }
