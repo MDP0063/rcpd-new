@@ -1254,6 +1254,9 @@ export class AcademyRepository {
         tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participation.id),
         tx.get<AcademyRequalificationLockDoc>('academy_requalification_locks', lockId)
       ]);
+      const activeOrder = lock?.activeOrderId
+        ? await tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', lock.activeOrderId)
+        : null;
       if (!course || !version) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       assertValid(validateCourseMaster(course));
       assertValid(validateCourseVersion(order.courseId, version));
@@ -1268,10 +1271,10 @@ export class AcademyRepository {
           item.courseId === order.courseId && item.userUid === order.userUid && item.kind !== 'requalification')) {
         throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
       }
-      if (lock?.activeOrderId) {
-        const activeOrder = previousOrders.find(item => item.id === lock.activeOrderId);
-        if (activeOrder?.status === 'open') throw new Error('ACADEMY_REQUALIFICATION_ALREADY_OPEN');
+      if (lock?.activeOrderId && (!activeOrder || activeOrder.userUid !== order.userUid || activeOrder.courseId !== order.courseId)) {
+        throw new Error('ACADEMY_REQUALIFICATION_LOCK_INVALID');
       }
+      if (activeOrder?.status === 'open') throw new Error('ACADEMY_REQUALIFICATION_ALREADY_OPEN');
       if (previousOrders.some(item => item.courseId === order.courseId && item.status === 'open')) {
         throw new Error('ACADEMY_REQUALIFICATION_ALREADY_OPEN');
       }
