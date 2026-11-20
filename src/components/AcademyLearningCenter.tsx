@@ -802,6 +802,38 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   {availabilityNotice(selectedCourse.master)}
                 </p>
               )}
+              {canOrderRequalificationForCourse(selectedCourse.master.code) && (
+                <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-order-requalification-heading">
+                  <div>
+                    <h3 id="academy-order-requalification-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation anordnen</h3>
+                    <p className={muted + ' mt-1'}>Wähle einen Teilnehmer mit früherem Kursabschluss. Sein bisheriger Abschluss bleibt erhalten; es wird eine neue Teilnahme angelegt.</p>
+                  </div>
+                  {requalificationCandidates.length === 0 ? (
+                    <p className={muted}>Aktuell gibt es keine Teilnehmer mit einem früheren Abschluss, für die eine neue Qualifikation angeordnet werden kann.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Teilnehmer</span>
+                        <select className={field} value={requalificationCandidateUid} onChange={event => setRequalificationCandidateUid(event.target.value)}>
+                          <option value="">Teilnehmer auswählen</option>
+                          {requalificationCandidates.map(candidate => <option key={candidate.uid} value={candidate.uid}>{candidate.displayName} · {candidate.badgeNumber}</option>)}
+                        </select>
+                      </label>
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Warum ist die erneute Qualifikation erforderlich?</span>
+                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Begründung für den Teilnehmer" />
+                      </label>
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Frist (optional)</span>
+                        <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
+                      </label>
+                      <button type="button" className={primary} disabled={saving || !requalificationCandidateUid || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
+                        {saving ? 'Wird angeordnet …' : 'Wiederqualifizierung anordnen'}
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
                 {courseDetail.version.learningObjectives.length > 0 && (
