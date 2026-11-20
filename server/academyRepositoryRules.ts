@@ -27,7 +27,7 @@ export function assertAcademyQuery(collection: AcademyCollection, query: Academy
 }
 
 export function assertAcademyCanUpdate(collection: AcademyCollection): void {
-  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections') {
+  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections' || collection === 'academy_requalification_orders') {
     throw new Error('ACADEMY_DOCUMENT_APPEND_ONLY');
   }
 }
