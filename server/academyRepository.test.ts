@@ -109,6 +109,12 @@ test('requalification creates a separate participation and preserves the origina
   assert.equal((await repository.getCourseParticipation(participationId))?.status, 'completed');
   assert.equal((await repository.get('academy_requalification_orders', orderId))?.status, 'completed');
   assert.equal((await repository.getCourseParticipation(original.id))?.completedIso, now);
+  const secondOrder = { ...order, id: 'requalification-order-2', participationId: 'requalification_participation_2', orderedIso: '2026-11-06T14:00:00.000Z' };
+  const secondParticipation = { ...requalification, id: secondOrder.participationId, requalificationOrderId: secondOrder.id, createdIso: secondOrder.orderedIso, startedIso: secondOrder.orderedIso, lastActivityIso: secondOrder.orderedIso, updatedIso: secondOrder.orderedIso };
+  await repository.createRequalificationOrder(secondOrder, secondParticipation, original.id);
+  const locks = await repository.list('academy_requalification_locks', { where: [{ field: 'userUid', value: 'learner-requal' }] });
+  assert.equal(locks.length, 1);
+  assert.equal((locks[0] as { activeOrderId: string }).activeOrderId, secondOrder.id);
 }));
 
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
