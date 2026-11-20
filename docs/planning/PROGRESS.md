@@ -102,12 +102,13 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Die beschlossene persönliche Empfehlungsfunktion fehlt noch vollständig im aktuellen Code. Sie muss nach Abschnitt 8 der Academy-Spezifikation umgesetzt werden: manuelle und nachvollziehbar regelbasierte Empfehlungen, Deduplizierung, Priorisierung, Lebenszyklus, Ausblenden und Historie.
-2. Die Kursmeldungslogik aus Abschnitt 9 ist noch nicht implementiert. Die Option-C-Lesestatusregeln sind beschlossen; Quelle, Erstellung/Berechtigung und Lebenszyklus der Meldungen müssen vor einer neuen Datenmodellentscheidung geklärt werden.
-3. Den restlichen Funktions-/Fehleraudit für Kurse/Lehrgänge, Bibliothek/Materialverwaltung, private Notizen, Prüfungen und Examiner am aktuellen `main` abschließen. Bereits umgesetzte Funktionen nicht erneut bauen; nur nachgewiesene Lücken oder Fehler korrigieren.
-4. Die visuelle Academy-Gestaltung und die noch offenen Responsive-/Accessibility-Details anhand der verbindlichen Redesign-Spezifikation vervollständigen.
-5. Nach Abschluss aller Implementierungen die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme durchführen. Bis dahin werden diese Prüfungen nicht als erledigt ausgegeben.
-6. PDF-Infrastruktur sowie die ausdrücklich zurückgestellte kontextbezogene Meldefunktion bleiben außerhalb dieser Ausbaustufe.
+1. Die beschlossene Wiederqualifizierung ist noch nicht implementiert: das aktuelle Modell erlaubt nur eine Teilnahme pro Nutzer/Kurs und pro Nutzer/Lehrgang und besitzt keinen eigenständigen zentralen Qualifikations-/Wiederqualifizierungsvorgang.
+2. Die beschlossene persönliche Empfehlungsfunktion fehlt noch vollständig im aktuellen Code. Sie muss nach Abschnitt 8 der Academy-Spezifikation umgesetzt werden: manuelle und nachvollziehbar regelbasierte Empfehlungen, Deduplizierung, Priorisierung, Lebenszyklus, Ausblenden und Historie.
+3. Die Kursmeldungslogik aus Abschnitt 9 ist noch nicht implementiert. Die Option-C-Lesestatusregeln sind beschlossen; Quelle, Erstellung/Berechtigung und Lebenszyklus der Meldungen müssen vor einer neuen Datenmodellentscheidung geklärt werden.
+4. Den restlichen Funktions-/Fehleraudit für Kurse/Lehrgänge, Bibliothek/Materialverwaltung, private Notizen, Prüfungen und Examiner am aktuellen `main` abschließen. Bereits umgesetzte Funktionen nicht erneut bauen; nur nachgewiesene Lücken oder Fehler korrigieren.
+5. Die visuelle Academy-Gestaltung und die noch offenen Responsive-/Accessibility-Details anhand der verbindlichen Redesign-Spezifikation vervollständigen.
+6. Nach Abschluss aller Implementierungen die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme durchführen. Bis dahin werden diese Prüfungen nicht als erledigt ausgegeben.
+7. PDF-Infrastruktur sowie die ausdrücklich zurückgestellte kontextbezogene Meldefunktion bleiben außerhalb dieser Ausbaustufe.
 
 ## 6. Noch offene nächste Schritte
 

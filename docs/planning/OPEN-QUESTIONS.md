@@ -11,6 +11,7 @@
 - Rückkehr zum vorherigen Kontext und Erhalt von Suche/Filter/Scrollposition.
 
 ### Kurse und Programme
+- **Technischer Befund vom 21.11.2026 – Wiederqualifizierung fehlt:** `startCourseParticipation` und `startProgramParticipation` verwenden stabile IDs pro Nutzer/Kurs bzw. Nutzer/Lehrgang und lehnen eine weitere Teilnahme ab, auch nach einem Abschluss. Ein eigenständiger zentraler Qualifikations-/Wiederqualifizierungsvorgang mit Anordnung, Zielgruppe, Grund, erforderlichem neuem Nachweis, optionaler Frist und Benachrichtigung existiert nicht. Die fachlichen Leitlinien aus Abschnitt 7.3/7.4 sind beschlossen, aber der konkrete Vorgang und seine Referenzierung durch mehrere Lehrgänge müssen vor Implementierung technisch präzisiert werden. Historische Abschlüsse dürfen dabei nicht überschrieben werden.
 - Detailregeln für Zustandsübergänge, Versionsveröffentlichung und laufende Teilnahmen.
 - Umgang mit geänderten Kurs-/Programmanforderungen für laufende Teilnehmer, soweit durch bestehende Beschlüsse noch nicht konkret abgedeckt.
 - Konkrete Nachweisarten und Admin-Workflows nur dort festlegen, wo fachlich erforderlich.
