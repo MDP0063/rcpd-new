@@ -32,7 +32,7 @@ export function assertAcademyCanUpdate(collection: AcademyCollection): void {
   }
 }
 export function assertAcademyCanDelete(collection: AcademyCollection): void {
-  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections' || collection === 'academy_requalification_orders') {
+  if (collection.endsWith('_versions') || collection === 'academy_progress_evidence' || collection === 'academy_completion_corrections' || collection === 'academy_requalification_orders' || collection === 'academy_requalification_locks') {
     throw new Error('ACADEMY_DOCUMENT_DELETE_FORBIDDEN');
   }
 }
