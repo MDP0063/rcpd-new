@@ -370,8 +370,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setRequalificationReason('');
     setRequalificationDueDate('');
     if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
-      const candidateResponse = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(effectiveEntry.master.id));
-      if (detailRequestIdRef.current === requestId && candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+      void apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(effectiveEntry.master.id)).then(candidateResponse => {
+        if (detailRequestIdRef.current === requestId && candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+      });
     }
     setCourseDetail(null);
     setSelectedProgram(null);
