@@ -70,6 +70,77 @@ test('Academy repository creates, reads and filters documents', async () => with
   await assert.rejects(repository.create('academy_courses', master.id, master), /ACADEMY_DOCUMENT_ALREADY_EXISTS/);
 }));
 
+test('requalification creates a separate participation and preserves the original completion', async () => withRepository(async repository => {
+  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
+  await repository.create('academy_course_versions', version.id, version);
+  const original = await repository.startCourseParticipation('learner-requal', master.id, now);
+  await repository.recordProgressEvidence(original.id, {
+    participationId: original.id, requirementId: 'req_chapter', evidenceType: 'required_chapter',
+    sourceId: 'chapter-1', recordedByUid: 'learner-requal', recordedIso: now
+  }, 'learner-requal', false);
+  const originalCompleted = await repository.getCourseParticipation(original.id);
+  assert.equal(originalCompleted?.status, 'completed');
+
+  const orderId = 'requalification-order-1';
+  const participationId = 'requalification_participation_requalification-order-1';
+  const order = {
+    id: orderId, userUid: 'learner-requal', courseId: master.id, courseVersionId: version.id,
+    participationId, reason: 'Die praktische Qualifikation muss erneut nachgewiesen werden.',
+    requiredEvidenceRequirementIds: ['req_chapter'], status: 'open' as const,
+    orderedByUid: 'manager-1', orderedIso: now
+  };
+  const requalification = {
+    id: participationId, userUid: 'learner-requal', courseId: master.id, courseVersionId: version.id,
+    kind: 'requalification' as const, requalificationOrderId: orderId,
+    status: 'in_progress' as const, startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
+  };
+  await repository.createRequalificationOrder(order, requalification);
+  assert.equal((await repository.getCourseParticipation(original.id))?.status, 'completed');
+  assert.equal((await repository.getCourseParticipation(participationId))?.kind, 'requalification');
+  assert.equal((await repository.listOwnRequalificationOrders('learner-requal')).length, 1);
+  await assert.rejects(repository.createRequalificationOrder({ ...order, id: 'requalification-order-2', participationId: 'requalification_participation_2' }, {
+    ...requalification, id: 'requalification_participation_2', requalificationOrderId: 'requalification-order-2'
+  }), /ACADEMY_REQUALIFICATION_ALREADY_OPEN/);
+
+  await repository.recordProgressEvidence(participationId, {
+    participationId, requirementId: 'req_chapter', evidenceType: 'required_chapter',
+    sourceId: 'chapter-1', recordedByUid: 'learner-requal', recordedIso: '2026-11-06T13:00:00.000Z'
+  }, 'learner-requal', false);
+  assert.equal((await repository.getCourseParticipation(participationId))?.status, 'completed');
+  assert.equal((await repository.get('academy_requalification_orders', orderId))?.status, 'completed');
+  assert.equal((await repository.getCourseParticipation(original.id))?.completedIso, now);
+}));
+
+test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
+  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
+  await repository.create('academy_course_versions', version.id, version);
+  const original = await repository.startCourseParticipation('learner-race', master.id, now);
+  await repository.recordProgressEvidence(original.id, {
+    participationId: original.id, requirementId: 'req_chapter', evidenceType: 'required_chapter',
+    sourceId: 'chapter-1', recordedByUid: 'learner-race', recordedIso: now
+  }, 'learner-race', false);
+  const makeOrder = (n: number) => {
+    const orderId = `requalification-race-${n}`;
+    const participationId = `requalification_participation_${n}`;
+    return {
+      order: { id: orderId, userUid: 'learner-race', courseId: master.id, courseVersionId: version.id,
+        participationId, reason: 'Erneuter Nachweis der Qualifikation ist erforderlich.',
+        requiredEvidenceRequirementIds: ['req_chapter'], status: 'open' as const,
+        orderedByUid: 'manager-1', orderedIso: now },
+      participation: { id: participationId, userUid: 'learner-race', courseId: master.id,
+        courseVersionId: version.id, kind: 'requalification' as const, requalificationOrderId: orderId,
+        status: 'in_progress' as const, startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now }
+    };
+  };
+  const results = await Promise.allSettled([1, 2].map(n => {
+    const item = makeOrder(n);
+    return repository.createRequalificationOrder(item.order, item.participation);
+  }));
+  assert.equal(results.filter(item => item.status === 'fulfilled').length, 1);
+  assert.equal(results.filter(item => item.status === 'rejected').length, 1);
+  assert.equal((await repository.listOwnRequalificationOrders('learner-race')).filter(item => item.status === 'open').length, 1);
+}));
+
 test('course publication atomically stores immutable version and advances master pointer', async () => withRepository(async repository => {
   await repository.create('academy_courses', master.id, master);
   await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
