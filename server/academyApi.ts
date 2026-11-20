@@ -1320,7 +1320,11 @@ export function createAcademyApiRouter(
       let priorCompletionParticipationId = '';
       for (const prior of priorParticipations) {
         const completion = await resolveAcademyCourseCompletion(repository, prior, resolveReleasedFinalExam);
-        if (completion.participation.status === 'completed') { priorCompletionParticipationId = prior.id; break; }
+        if (completion.participation.status === 'completed' && completion.participation.completedIso) {
+          const synchronized = await repository.syncResolvedCourseCompletion(prior.id, completion.participation.completedIso);
+          priorCompletionParticipationId = synchronized.id;
+          break;
+        }
       }
       if (!priorCompletionParticipationId) throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
       const orderId = id('requalification');
