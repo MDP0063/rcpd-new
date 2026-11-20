@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
-import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
+import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateRequalificationOrder, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import { ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
 import { assertAcademyDocument, assertAcademyDocumentId, assertAcademyQuery } from './academyRepositoryRules.ts';
@@ -57,6 +57,7 @@ function validateAcademyBackupDocument(collection: typeof ACADEMY_BACKUP_COLLECT
     case 'academy_program_participations': assertValid(validateProgramParticipation(document as AcademyProgramParticipationDoc)); break;
     case 'academy_progress_evidence': assertValid(validateProgressEvidence(document as AcademyProgressEvidenceDoc)); break;
     case 'academy_completion_corrections': assertValid(validateCompletionCorrection(document as AcademyCompletionCorrectionDoc)); break;
+    case 'academy_requalification_orders': assertValid(validateRequalificationOrder(document as AcademyRequalificationOrderDoc)); break;
   }
 }
 function validateAcademyBackupReferences(
@@ -231,6 +232,15 @@ function validateAcademyBackupReferences(
       requireReference(Boolean(item) && item!.participationId === correction.participationId,
         'ACADEMY_BACKUP_COMPLETION_CORRECTION_EVIDENCE_REFERENCE_INVALID');
     }
+  }
+  for (const order of collections.academy_requalification_orders) {
+    const participation = courseParticipations.get(order.participationId);
+    const version = courseVersions.get(order.courseVersionId);
+    requireReference(Boolean(participation) && participation!.kind === 'requalification' &&
+      participation!.requalificationOrderId === order.id && participation!.userUid === order.userUid &&
+      participation!.courseId === order.courseId && participation!.courseVersionId === order.courseVersionId &&
+      Boolean(version) && version!.courseId === order.courseId,
+      'ACADEMY_BACKUP_REQUALIFICATION_REFERENCE_INVALID');
   }
 }
 
