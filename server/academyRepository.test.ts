@@ -94,13 +94,13 @@ test('requalification creates a separate participation and preserves the origina
     kind: 'requalification' as const, requalificationOrderId: orderId,
     status: 'in_progress' as const, startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
   };
-  await repository.createRequalificationOrder(order, requalification);
+  await repository.createRequalificationOrder(order, requalification, original.id);
   assert.equal((await repository.getCourseParticipation(original.id))?.status, 'completed');
   assert.equal((await repository.getCourseParticipation(participationId))?.kind, 'requalification');
   assert.equal((await repository.listOwnRequalificationOrders('learner-requal')).length, 1);
   await assert.rejects(repository.createRequalificationOrder({ ...order, id: 'requalification-order-2', participationId: 'requalification_participation_2' }, {
     ...requalification, id: 'requalification_participation_2', requalificationOrderId: 'requalification-order-2'
-  }), /ACADEMY_REQUALIFICATION_ALREADY_OPEN/);
+  }, original.id), /ACADEMY_REQUALIFICATION_ALREADY_OPEN/);
 
   await repository.recordProgressEvidence(participationId, {
     participationId, requirementId: 'req_chapter', evidenceType: 'required_chapter',
@@ -134,7 +134,7 @@ test('concurrent requalification orders cannot create duplicate open requirement
   };
   const results = await Promise.allSettled([1, 2].map(n => {
     const item = makeOrder(n);
-    return repository.createRequalificationOrder(item.order, item.participation);
+    return repository.createRequalificationOrder(item.order, item.participation, original.id);
   }));
   assert.equal(results.filter(item => item.status === 'fulfilled').length, 1);
   assert.equal(results.filter(item => item.status === 'rejected').length, 1);
