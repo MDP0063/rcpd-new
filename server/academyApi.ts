@@ -312,7 +312,8 @@ export function createAcademyApiRouter(
   resolveActor: ActorResolver,
   recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>,
   notifyMaterialReview?: (recipientUid: string, notificationId: string, title: string, message: string) => Promise<void>,
-  resolveReleasedFinalExam?: FinalExamProofResolver
+  resolveReleasedFinalExam?: FinalExamProofResolver,
+  resolveParticipantLabel?: (uid: string) => { displayName: string; badgeNumber: string; role: OfficerRole } | null
 ) {
   const router = Router();
 
@@ -1253,6 +1254,24 @@ export function createAcademyApiRouter(
       const participation = await repository.startCourseParticipation(actor.uid, req.params.courseId, new Date().toISOString());
       await recordAudit(actor.uid, 'Academy-Kursteilnahme begonnen', req.params.courseId, `Teilnahme an Kursversion ${participation.courseVersionId} begonnen.`, 'ACADEMY_PROGRESS');
       res.status(201).json({ participation });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.get('/courses/:courseId/requalification-candidates', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
+      if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      const participations = await repository.listCourseParticipations(course.id);
+      const eligibleUids = [...new Set(participations.filter(item => item.kind !== 'requalification' && item.status === 'completed').map(item => item.userUid))];
+      const candidates = eligibleUids.map(uid => {
+        const profile = resolveParticipantLabel?.(uid);
+        return profile ? { uid, ...profile } : null;
+      }).filter((item): item is { uid: string; displayName: string; badgeNumber: string; role: OfficerRole } => Boolean(item));
+      candidates.sort((a, b) => a.displayName.localeCompare(b.displayName, 'de-DE'));
+      res.json({ candidates });
     } catch (error) { fail(res, error, next); }
   });
 
