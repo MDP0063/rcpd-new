@@ -329,6 +329,10 @@ Wiederqualifizierungsanforderungen werden zentral bei dem betroffenen Kurs bzw. 
 
 Ein neu erworbener Qualifikationsnachweis wird zentral dokumentiert und von Programmen referenziert, die ihn anerkennen. Frühere Nachweise und Programmabschlüsse bleiben historisch nachvollziehbar.
 
+**Umsetzungspräzisierung (21.11.2026):** Der zentrale Vorgang wird je Teilnehmer und Kurs/Qualifikation geführt, nicht je Lehrgang. Lehrgänge, die denselben Kurs voraussetzen, greifen damit auf dieselbe Wiederqualifizierungsanforderung zurück. Eine Anordnung erzeugt eine eigene neue Kursteilnahme mit eindeutiger Vorgangsreferenz und bindet sie an eine konkrete veröffentlichte Kursversion. Die frühere reguläre Teilnahme, ihre Nachweise und ihr Abschluss bleiben unverändert. Eine neue Anordnung ist erst möglich, wenn die vorherige für dieselbe Person und Qualifikation abgeschlossen oder anderweitig beendet ist. Die technische Koordination muss konkurrierende Anordnungen transaktional auf genau einen offenen Vorgang begrenzen.
+
+**Bedienung:** Verantwortliche wählen einen Teilnehmer mit einem nachgewiesenen früheren Abschluss aus, geben eine verständliche Begründung an und können eine Frist setzen. Teilnehmer sehen eine klar benannte Aufgabe mit Kurs, Grund, Frist und aktuellem Status. Die Aufgabe ist kein zusätzlicher Academy-Hauptbereich. Technische Vorgangs- und Verknüpfungsdetails bleiben der Verwaltung vorbehalten. Die Oberfläche muss ohne Kenntnis interner Datenbegriffe verständlich sein.
+
 ## 8. Empfehlungen
 
 ### 8.1 Entstehung – Option C beschlossen
