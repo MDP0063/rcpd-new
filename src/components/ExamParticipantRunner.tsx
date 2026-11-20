@@ -77,6 +77,7 @@ interface PublicSubmission {
   preliminaryScoreBasisPoints: number;
   finalScoreBasisPoints: number | null;
   requiresManualReview: boolean;
+  reviewInProgress?: boolean;
   questionResults: Array<{
     questionId: string;
     pointsEarnedMilli: number;
@@ -848,22 +849,23 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
 
   if (submission) {
     const passed = submission.status === 'passed';
+    const reviewInProgress = submission.reviewInProgress === true;
     const pending = submission.status === 'pending_review';
     const awaitingRelease = submission.status === 'awaiting_release';
     return (
       <div className={cardClass + ' academy-exam-runner academy-exam-runner--result academy-exam-result-card space-y-5 p-5 sm:p-7'}>
         <div className="flex items-start gap-3">
-          <div className={`rounded-xl p-3 ${pending || awaitingRelease ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}`}>
-            {pending || awaitingRelease ? <Clock3 className="h-6 w-6" /> : passed ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+          <div className={`rounded-xl p-3 ${pending || awaitingRelease || reviewInProgress ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}`}>
+            {pending || awaitingRelease || reviewInProgress ? <Clock3 className="h-6 w-6" /> : passed ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prüfung abgeschlossen · {submission.attemptCourseCode}</div>
             <h2 ref={resultHeadingRef} tabIndex={-1} className="mt-1 text-xl font-bold text-slate-900 dark:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600">{submission.title}</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{awaitingRelease ? 'Deine Abgabe ist eingegangen. Das Bewertungsergebnis wird erst angezeigt, wenn es offiziell freigegeben wurde.' : pending ? 'Deine Antworten enthalten Freitext und werden von einem Ausbilder bewertet. Das endgültige Ergebnis folgt nach der Korrektur und Freigabe.' : passed ? 'Du hast die erforderliche Bestehensgrenze erreicht.' : 'Die erforderliche Bestehensgrenze wurde nicht erreicht.'}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{reviewInProgress ? 'Deine Bewertung wird derzeit überprüft. Dein zuletzt freigegebenes Ergebnis bleibt sichtbar. Bis zur erneuten Freigabe zählt es nicht als aktueller Kursabschlussnachweis.' : awaitingRelease ? 'Deine Abgabe ist eingegangen. Das Bewertungsergebnis wird erst angezeigt, wenn es offiziell freigegeben wurde.' : pending ? 'Deine Antworten enthalten Freitext und werden von einem Ausbilder bewertet. Das endgültige Ergebnis folgt nach der Korrektur und Freigabe.' : passed ? 'Du hast die erforderliche Bestehensgrenze erreicht.' : 'Die erforderliche Bestehensgrenze wurde nicht erreicht.'}</p>
           </div>
         </div>
         {!awaitingRelease && <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Ergebnis</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{(resultScore / 100).toLocaleString('de-DE')}%</div></div>
+          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">{reviewInProgress ? 'Zuletzt freigegeben' : 'Ergebnis'}</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{(resultScore / 100).toLocaleString('de-DE')}%</div></div>
           <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Erreichte Punkte</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{formatPoints(submission.automaticallyEarnedPointsMilli + submission.manuallyEarnedPointsMilli)} / {formatPoints(submission.totalPossiblePointsMilli)}</div></div>
           <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><div className="text-xs text-slate-500">Versuch</div><div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">#{submission.attemptNumber}</div></div>
         </div>
@@ -902,7 +904,7 @@ export const ExamParticipantRunner: React.FC<ExamParticipantRunnerProps> = ({
       </div>
       {catalogError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{catalogError}</div>}
       {contextNavigationMessage && <div role="status" className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">{contextNavigationMessage}</div>}
-      {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Bewertungsergebnisse werden erst nach offizieller Freigabe angezeigt.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-rose-100 text-rose-800'}`}>{result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
+      {resultHistory.length > 0 && <section className={cardClass + ' academy-exam-history space-y-3 p-5'}><div><h3 className="font-bold text-slate-900 dark:text-white">Deine Prüfungsergebnisse</h3><p className="mt-1 text-xs text-slate-500">Deine eigenen Abgaben. Nur offiziell freigegebene Ergebnisse werden angezeigt. Während einer laufenden Überprüfung bleibt das zuletzt freigegebene Ergebnis sichtbar und wird entsprechend markiert.</p></div>{resultHistory.map(result => <div key={result.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800"><div><div className="font-semibold text-slate-800 dark:text-slate-200">{result.title} · {result.attemptCourseCode}</div><div className="text-xs text-slate-500">{new Date(result.submittedAtIso).toLocaleString('de-DE')} · Versuch {result.attemptNumber}</div></div><span className={`rounded-full px-2 py-1 text-xs font-bold ${result.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : result.reviewInProgress || result.status === 'pending_review' || result.status === 'awaiting_release' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-rose-100 text-rose-800'}`}>{result.reviewInProgress ? `In Überprüfung · zuletzt ${result.status === 'passed' ? 'bestanden' : 'nicht bestanden'}` : result.status === 'awaiting_release' ? 'Ergebnis noch nicht freigegeben' : result.status === 'passed' ? 'Bestanden' : result.status === 'pending_review' ? 'Bewertung offen' : 'Nicht bestanden'}{result.status !== 'awaiting_release' && result.finalScoreBasisPoints !== null ? ` · ${(result.finalScoreBasisPoints / 100).toLocaleString('de-DE')}%` : ''}</span></div>)}</section>}
       {loadingCatalog ? (
         <div className={cardClass + ' flex items-center justify-center gap-3 p-12 text-sm text-slate-500'}><Loader2 className="h-5 w-5 animate-spin" />Prüfungen werden geladen …</div>
       ) : catalog.length === 0 ? (

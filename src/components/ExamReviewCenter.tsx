@@ -18,6 +18,11 @@ interface ReviewItem {
   submittedAtIso: string; assessmentStage: 'test' | 'final_exam'; questions: ReviewQuestion[];
   reviewClaim: ReviewClaim | null; isClaimOwner: boolean; canClaim: boolean;
   draftGrades: Record<string, number>;
+  revisionRequest: {
+    requestedAtIso: string;
+    reason: string;
+    feedback: Array<{ questionId: string; feedback: string; label: string }>;
+  } | null;
 }
 
 const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
@@ -457,6 +462,18 @@ export const ExamReviewCenter: React.FC<{
           : <button type="button" disabled={Boolean(savingId)} onClick={() => void claimOrRelease(review, 'claim')} className="academy-action-primary disabled:opacity-50">{savingId === review.id ? 'Bitte warten …' : 'Vorgang beanspruchen'}</button>}
       </header>
       {review.reviewClaim?.warningStartedAtIso && review.isClaimOwner && <p role="status" className="exam-review-warning rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Wegen Inaktivität läuft die Freigabewarnung. Noch ca. {warningMinutesRemaining(review.reviewClaim)} Minuten bis zur automatischen Freigabe. Eine tatsächliche Bearbeitungsaktion setzt die Frist zurück.</p>}
+      {review.revisionRequest && <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100" aria-label="Revisionsanfrage">
+        <h4 className="font-semibold">Revisionsanfrage angenommen</h4>
+        <p className="mt-1">Admins oder Colonels haben die erneute Bewertung freigegeben. Der Vorgang steht jetzt wieder der gemeinsamen Prüferliste zur Verfügung.</p>
+        <p className="mt-1"><span className="font-semibold">Ursprüngliche Begründung:</span> {review.revisionRequest.reason}</p>
+        <p className="mt-1 text-xs opacity-80">Angefordert am {new Date(review.revisionRequest.requestedAtIso).toLocaleString('de-DE')}</p>
+        <ul className="mt-3 space-y-2 border-t border-amber-300/70 pt-3 dark:border-amber-800">
+          {review.revisionRequest.feedback.map(item => <li key={item.questionId}>
+            <p className="font-semibold">{item.label}</p>
+            <p className="mt-0.5 whitespace-pre-wrap">{item.feedback}</p>
+          </li>)}
+        </ul>
+      </section>}
       <div className="exam-review-workspace">
         <div className="exam-review-primary">
           {review.reviewClaim && !review.isClaimOwner

@@ -2,9 +2,9 @@
 
 > Zentrale fachliche Planungs- und Entscheidungsdokumentation für `MDP0063/rcpd-new`. Sie enthält nicht nur kurze Beschlusslisten, sondern auch ausführliche Ablaufregeln, Randbedingungen, Audit-Aufträge und nachvollziehbare offene Punkte.
 
-**Stand:** 17.11.2026  
-**Letzter verifizierter `main`-Stand:** `a1c20706616332b26d7b4dfa6002cbf3fa0d76b1`  
-**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung und Fokusführung (PR #293–#325 sowie #327 und #329 gemergt) vom 17.11.2026; Kursabschlussprüfungen öffnen im korrekten Kurskontext; Prüfungsmodus, Abgabebestätigung und responsive Fragenübersicht sind integriert. Der serverbestätigte Antwortfortschritt im Prüfungsrunner ist in PR #330 gemergt; konkrete Prüfungsvoraussetzungen werden vor Start und Fortsetzung angezeigt. Manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA bleibt für die gesamte Academy offen.
+**Stand:** 18.11.2026  
+**Letzter verifizierter `main`-Stand:** `cf3ca0a9fe88ad21e8c2554e644183b2381f9707`  
+**Letzte Fortschrittsaktualisierung:** Academy: semantisches Interaktionssystem, Notizenarbeitsbereich, Reader-Save-Queue, Kurs-/Lehrgangsverwaltung, Materialverwaltung, Taxonomieverwaltung, Fokusführung und einheitliche Aktionsdialoge (PR #293–#325 sowie #327 und #329 gemergt); Kursabschlussprüfungen öffnen im korrekten Kurskontext. Prüfungsmodus, Abgabebestätigung, responsive Fragenübersicht, serverbestätigter Antwortfortschritt (PR #330) und konkrete Prüfungsvoraussetzungen (PR #331) sind integriert. Der zweistufige Revisionsworkflow ist in PR #332 auf aktuellem main neu aufgebaut und bleibt bis zur unabhängigen Sicherheitsprüfung Draft. Manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA bleibt für die gesamte Academy offen.
 **Laufender Umsetzungs- und Abnahmestand:** siehe [PROGRESS.md](./PROGRESS.md).  
 **Dokumentationsstatus:** Umfangreiche Rekonstruktion des verfügbaren Projektgedächtnisses und der jüngsten Gespräche. Die Academy liegt als detaillierte Spezifikation vor. Die übrigen Portalmodule sind vollständig inventarisiert und in ihren Leitlinien/Audit-Aufträgen beschrieben, aber fachlich noch nicht alle bis ins Detail konzipiert.
 

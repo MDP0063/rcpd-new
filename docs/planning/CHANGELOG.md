@@ -504,7 +504,22 @@
 - Material-/Versions-IDs werden nicht mehr als Quellenbezeichnung angezeigt, wenn die bestehende API nur IDs und Status liefert.
 - Notizeditor erhält sichtbare Save-/Conflict-Rückmeldung. Bei 409 wird die aktuelle owner-private Fassung geladen, während lokale Eingaben erhalten bleiben; Übernahme nur nach expliziter Bestätigung.
 - Notiz löschen und Lesezeichen entfernen werden getrennt benannt. Keine neuen Berechtigungen, API-Verträge oder Datenmodelle.
-- Umsetzung auf `redesign/academy-notes-workspace`; CI und manuelle Browser-QA stehen noch aus.
+- PR #294 (Nachfolge von #291) ist auf aktuellem main neu aufgebaut und gemergt. CI, TypeScript, Produktionsbuild, Servertests und PR-Vorlagenprüfung waren erfolgreich. Die manuelle Browser-QA bleibt offen.
+
+
+## 2026-11-15 – Private Notizen: Reader-Speicherwarteschlange
+
+- Reader-Notizentwürfe werden pro Notiz in einer Speicherwarteschlange geführt; Materialwechsel löst den letzten Debounce-Save aus und neuere Eingaben werden nicht von einer älteren laufenden Antwort überschrieben.
+- HTTP-409-Konflikte blockieren automatische Schreibversuche, bis die aktuelle Serverfassung ausdrücklich geladen wurde.
+- Fehler-/Retry-, Lösch- und Quellenänderungspfade werden gegen konkurrierende Speichervorgänge abgesichert.
+- PR #295 ist gemergt; CI und Servertests erfolgreich. Reader-Unmount bei anschließendem Netzwerkfehler und Tab-Schließen bleiben Grenzen ohne private lokale Browserpersistenz und sind Teil der späteren manuellen Browser-QA.
+
+## 2026-11-15 – Examiner-Revisionsworkflow (in Prüfung)
+
+- Zweistufige Revisions-Action-Request nach bestätigter Option 2: Antrag durch aktuell kursberechtigte Prüfer; Annahme/Ablehnung ausschließlich durch Admins/Colonels; erst nach Annahme Rückkehr desselben Versuchs in die gemeinsame Prüferliste.
+- Zuletzt freigegebenes Ergebnis bleibt als Snapshot sichtbar, zählt während der Revision aber nicht als aktueller Kursabschlussnachweis; neue Freigabe stellt den Nachweis wieder her.
+- Revisionsbenachrichtigungen prüfen Empfängerstatus und aktuelle Rolle/Kursberechtigung erneut bei Zustellung.
+- Nachfolgeimplementierung auf aktuellem main: PR #332 auf Branch feat/exam-review-revision-requests-main-2026-11-18. Aktuelle CI erfolgreich; unabhängige Sicherheitsprüfung vor Merge erforderlich. Noch nicht als produktiv freigegeben betrachten.
 
 
 ## 2026-11-15 – Kurs- und Lehrgangsverwaltung: Katalogbedienung
@@ -776,3 +791,11 @@
 - Die UI behauptet nicht, dass eine Voraussetzung individuell erfüllt ist. Die tatsächliche Freigabe bleibt serverseitig.
 - Tests decken Abschlussmodus, Bestehensmodus, Mindestpunktzahl und nicht sichtbare Vorprüfungen ab.
 - Branch `feat/exam-prerequisites-current-main`; CI/Review ausstehend.
+
+
+## 2026-11-18 – Prüfungsvoraussetzungen vor Start und Fortsetzung (PR #331 gemergt)
+
+- Konkrete Abschluss-/Bestehensvoraussetzungen und Mindestpunktzahlen werden in Detailansicht und Start-/Fortsetzungsbestätigung angezeigt.
+- Prüfungstitel werden ausschließlich aus dem sichtbaren Teilnehmerkatalog aufgelöst; nicht sichtbare Vorprüfungen bleiben generisch.
+- Die UI leitet keinen individuellen Erfüllungsstatus ab; die serverseitige Startprüfung bleibt autoritativ.
+- **PR #331 am 18.11.2026 gemergt** (Merge-Commit `cf3ca0a9fe88ad21e8c2554e644183b2381f9707`); GitHub Actions inklusive Build-/Test- und Render-Autodeploy-Workflow erfolgreich.
