@@ -183,6 +183,7 @@ export const API_ENDPOINTS = {
   ACADEMY_COURSE_START: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}/participations`,
   ACADEMY_REQUALIFICATIONS: '/api/academy/requalifications',
   ACADEMY_COURSE_REQUALIFICATIONS: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}/requalifications`,
+  ACADEMY_REQUALIFICATION_CANDIDATES: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}/requalification-candidates`,
   ACADEMY_COURSE_EVIDENCE: (id: string) => `/api/academy/participations/${encodeURIComponent(id)}/evidence`,
   ACADEMY_COURSE_MATERIAL_VERSION: (participationId: string, materialId: string, materialVersionId: string) => `/api/academy/participations/${encodeURIComponent(participationId)}/materials/${encodeURIComponent(materialId)}/versions/${encodeURIComponent(materialVersionId)}`,
   ACADEMY_PROGRAMS: '/api/academy/programs',
