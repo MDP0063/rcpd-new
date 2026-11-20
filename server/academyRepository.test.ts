@@ -117,6 +117,29 @@ test('requalification creates a separate participation and preserves the origina
   assert.equal(locks[0].activeOrderId, secondOrder.id);
 }));
 
+test('a requalification requires a newly released final-exam result', async () => withRepository(async repository => {
+  const assessmentVersion = { ...version, completionRequirements: [{
+    id: 'req_assessment', type: 'required_assessment' as const, required: true,
+    targetId: 'exam-1', description: 'Kursabschlussprüfung'
+  }] };
+  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
+  await repository.create('academy_course_versions', assessmentVersion.id, assessmentVersion);
+  const participation: AcademyCourseParticipationDoc = {
+    id: 'requalification_exam_participation', userUid: 'learner-exam', courseId: master.id,
+    courseVersionId: assessmentVersion.id, kind: 'requalification', requalificationOrderId: 'requalification-exam-order',
+    status: 'in_progress', startedIso: '2026-11-06T12:00:00.000Z', lastActivityIso: now,
+    createdIso: now, updatedIso: now
+  };
+  await repository.create('academy_course_participations', participation.id, participation);
+  const oldProof = { attemptId: 'old-attempt', releasedAtIso: '2026-11-05T12:00:00.000Z', finalScoreBasisPoints: 10000 };
+  const stale = await resolveAcademyCourseCompletion(repository, participation, async () => oldProof);
+  assert.equal(stale.participation.status, 'in_progress');
+  const newProof = { attemptId: 'new-attempt', releasedAtIso: '2026-11-07T12:00:00.000Z', finalScoreBasisPoints: 10000 };
+  const fresh = await resolveAcademyCourseCompletion(repository, participation, async () => newProof);
+  assert.equal(fresh.participation.status, 'completed');
+  assert.equal(fresh.assessmentProofs.req_assessment.attemptId, 'new-attempt');
+}));
+
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
   await repository.create('academy_courses', publishedMaster.id, publishedMaster);
   await repository.create('academy_course_versions', version.id, version);
