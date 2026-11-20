@@ -1187,7 +1187,11 @@ async function startServer() {
         await saveDatabaseAndWait(state);
       }
     },
-    (uid, examId, courseCode) => getReleasedPassingFinalExam(getExamRepository(), uid, examId, courseCode)
+    (uid, examId, courseCode) => getReleasedPassingFinalExam(getExamRepository(), uid, examId, courseCode),
+    uid => {
+      const account = peekDatabase().accounts.find(item => item.uid === uid);
+      return account ? { displayName: account.publicProfile.displayName, badgeNumber: account.publicProfile.badgeNumber, role: account.publicProfile.role } : null;
+    }
   ));
 
   // ==========================================================================
