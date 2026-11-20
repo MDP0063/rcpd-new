@@ -177,6 +177,7 @@ Die folgenden Themen wurden als Audit-/Konzeptfelder oder Vorschläge angesproch
 36. **BESCHLOSSEN:** historischer Programmabschluss und aktuelle Qualifikationsgültigkeit getrennt. Offene Wiederqualifizierung setzt historischen Abschluss nicht zurück.
 37. **BESCHLOSSEN:** Wiederqualifizierungsanforderung definiert Umfang: betroffene Qualifikation/Kursversion/Kompetenz, Teilnehmer/Gruppe, Grund, erforderlicher neuer Nachweis, ggf. Frist. Normale Kursversionsänderung löst keine automatische Wiederqualifizierung aus.
 38. **BESCHLOSSEN:** neuer Qualifikationsnachweis zentral dokumentiert und von Programmen referenziert, die ihn anerkennen. Keine doppelten Wiederqualifizierungen; keine Überschreibung alter Kurs-/Programmabschlüsse.
+39. **BESCHLOSSEN – Klarstellung vom 21.11.2026:** Die Wiederqualifizierung bleibt ein eigener Vorgang mit einer separaten neuen Kursteilnahme. Der ursprüngliche Kursabschluss und seine Nachweise werden nicht zurückgesetzt, überschrieben oder als neue Teilnahme wiederverwendet. Der Vorgang wird zentral pro Teilnehmer und Kurs/Qualifikation geführt, damit mehrere Lehrgänge dieselbe Anforderung nutzen und keine parallelen Wiederholungen erzeugen. Die Teilnehmeroberfläche bleibt in einfacher Alltagssprache: Aufgabe, Grund, erforderlicher nächster Schritt, Frist und Status. Die technische Datenstruktur darf komplex sein, aber die Bedienung darf keine technischen Kenntnisse voraussetzen.
 
 ## G. Lernbibliothek, Dokumente, Reader, Notizen
 
