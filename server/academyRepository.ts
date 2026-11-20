@@ -264,7 +264,10 @@ export function validateAcademyRepositoryBackupSnapshot(value: unknown): Academy
   }
   const collections = {} as AcademyRepositoryBackupSnapshot['collections'];
   for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
-    const documents = value.collections[collection];
+    const rawDocuments = value.collections[collection];
+    const documents = rawDocuments === undefined && (collection === 'academy_requalification_orders' || collection === 'academy_requalification_locks')
+      ? []
+      : rawDocuments;
     if (!Array.isArray(documents)) throw new Error('ACADEMY_BACKUP_COLLECTION_MISSING');
     const seen = new Set<string>();
     for (const rawDocument of documents) {
