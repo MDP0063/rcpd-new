@@ -1268,10 +1268,17 @@ export function createAcademyApiRouter(
         repository.listCourseParticipations(course.id), repository.listCourseRequalificationOrders(course.id)
       ]);
       const openUserUids = new Set(existingOrders.filter(item => item.status === 'open').map(item => item.userUid));
-      const eligibleUids = [...new Set((await Promise.all(participations.filter(item => item.kind !== 'requalification' && !openUserUids.has(item.userUid)).map(async item => {
-        const completion = await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam);
-        return completion.participation.status === 'completed' ? item.userUid : null;
-      }))).filter((uid): uid is string => Boolean(uid)))];
+      const eligibleUidSet = new Set<string>();
+      const possibleCandidates = participations.filter(item => item.kind !== 'requalification' && !openUserUids.has(item.userUid));
+      for (let index = 0; index < possibleCandidates.length; index += 8) {
+        const batch = possibleCandidates.slice(index, index + 8);
+        const resolved = await Promise.all(batch.map(async item => {
+          const completion = await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam);
+          return completion.participation.status === 'completed' ? item.userUid : null;
+        }));
+        resolved.forEach(uid => { if (uid) eligibleUidSet.add(uid); });
+      }
+      const eligibleUids = [...eligibleUidSet];
       const candidates = eligibleUids.map(uid => {
         const profile = resolveParticipantLabel?.(uid);
         return profile ? { uid, ...profile } : null;
@@ -1340,15 +1347,16 @@ export function createAcademyApiRouter(
       const actor = getActor(req, res);
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
       const storedOrders = await repository.listOwnRequalificationOrders(actor.uid);
-      const orders = await Promise.all(storedOrders.map(async order => {
-        if (order.status !== 'open') return order;
+      const orders: AcademyRequalificationOrderDoc[] = [];
+      for (const order of storedOrders) {
+        if (order.status !== 'open') { orders.push(order); continue; }
         const participation = await repository.getCourseParticipation(order.participationId);
-        if (!participation) return order;
+        if (!participation) { orders.push(order); continue; }
         const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
-        return completion.participation.status === 'completed' && completion.participation.completedIso
-          ? repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso)
-          : order;
-      }));
+        orders.push(completion.participation.status === 'completed' && completion.participation.completedIso
+          ? await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso)
+          : order);
+      }
       res.json({ orders });
     } catch (error) { fail(res, error, next); }
   });
