@@ -76,7 +76,7 @@ function statusFor(error: unknown): number {
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') ||
       code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') ||
-      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('REQUALIFICATION_ALREADY_OPEN') || code.includes('REQUALIFICATION_ORDER_CONFLICT') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('REQUALIFICATION_REQUIREMENTS_MISMATCH') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
+      code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('REQUALIFICATION_ALREADY_OPEN') || code.includes('REQUALIFICATION_ORDER_CONFLICT') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('REQUALIFICATION_REQUIREMENTS_MISMATCH') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
       code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
       code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
   if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
@@ -1432,13 +1432,20 @@ export function createAcademyApiRouter(
         correctedIso: correction.correctedIso,
         ...(correction.invalidatedEvidenceIds ? { invalidatedEvidenceIds: correction.invalidatedEvidenceIds } : {})
       }));
+      const requalificationOrder = currentParticipation.kind === 'requalification' && currentParticipation.requalificationOrderId
+        ? await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', currentParticipation.requalificationOrderId)
+        : null;
       res.json({
         participation: currentParticipation,
         version: isManager ? version : participantCourseVersionView(version),
         evidence: visibleEvidence,
         corrections: visibleCorrections,
         assessmentProofs,
-        materials
+        materials,
+        ...(requalificationOrder ? { requalificationOrder: {
+          id: requalificationOrder.id, reason: requalificationOrder.reason, dueIso: requalificationOrder.dueIso,
+          orderedIso: requalificationOrder.orderedIso, status: requalificationOrder.status
+        } } : {})
       });
     } catch (error) { fail(res, error, next); }
   });
