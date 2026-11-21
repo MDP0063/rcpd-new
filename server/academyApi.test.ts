@@ -828,7 +828,10 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(managerLifecycleDetail.body!.participation.endReason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
     assert.equal(managerLifecycleDetail.body!.participation.lifecycleEvents.at(-1).actorUid, 'academy-admin');
     const managerLifecycleList = await request(`/api/academy/courses/${courseId}/participations`, admin);
-    assert.equal(managerLifecycleList.body!.participations.find((item: { id: string }) => item.id === lifecycleParticipationId).participant.displayName, 'AcademyOfficerTwo');
+    const managedLifecycleEntry = managerLifecycleList.body!.participations.find((item: { id: string }) => item.id === lifecycleParticipationId);
+    assert.equal(managedLifecycleEntry.participant.displayName, 'AcademyOfficerTwo');
+    assert.equal(managedLifecycleEntry.lifecycleEvents.at(-1).actor.displayName, 'AcademyAdmin');
+    assert.equal(managedLifecycleEntry.lifecycleEvents.at(-1).reason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
     const deniedParticipantResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, officer2, { method: 'POST' });
     assert.equal(deniedParticipantResume.status, 409);
     const administrativeResume = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-resume`, admin, {
@@ -836,6 +839,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     });
     assert.equal(administrativeResume.status, 200, JSON.stringify(administrativeResume.body));
     assert.equal(administrativeResume.body!.participation.status, 'in_progress');
+    const managerAfterReopen = await request(`/api/academy/participations/${lifecycleParticipationId}`, admin);
+    assert.equal(managerAfterReopen.body!.participation.lifecycleEvents.at(-1).reason, 'Die Teilnahme darf wieder aufgenommen werden.');
 
     const started = await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' });
     assert.equal(started.status, 201, JSON.stringify(started.body));
