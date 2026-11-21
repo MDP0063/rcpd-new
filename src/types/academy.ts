@@ -389,6 +389,13 @@ export interface AcademyCourseParticipationDoc {
   updatedIso: string;
 }
 
+export type AcademyParticipantCourseParticipationView = Omit<
+  AcademyCourseParticipationDoc,
+  'endedByUid' | 'endReason' | 'lifecycleEvents'
+> & {
+  lifecycleEvents?: Array<Pick<AcademyParticipationLifecycleEventDoc, 'id' | 'type' | 'occurredIso'>>;
+};
+
 export type AcademyRequalificationStatus = 'open' | 'completed' | 'cancelled';
 
 /** One central requalification requirement per person and qualification/course. */
