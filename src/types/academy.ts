@@ -397,6 +397,8 @@ export interface AcademyRequalificationOrderDoc {
   orderedByUid: string;
   orderedIso: string;
   completedIso?: string;
+  /** Latest audited reopening timestamp after an administrator corrects this requalification. */
+  reopenedIso?: string;
   cancelledIso?: string;
   cancelledByUid?: string;
   cancellationReason?: string;
