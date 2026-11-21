@@ -1240,13 +1240,13 @@ export class AcademyRepository {
       return participation;
     });
   }
-  async syncResolvedCourseCompletion(participationId: string, completedIso: string): Promise<AcademyCourseParticipationDoc> {
-    if (!participationId.trim() || !Number.isFinite(Date.parse(completedIso))) throw new Error('ACADEMY_COMPLETION_SYNC_INVALID');
+  async syncResolvedCourseCompletion(participationId: string, completedIso: string, expectedUpdatedIso: string): Promise<AcademyCourseParticipationDoc> {
+    if (!participationId.trim() || !Number.isFinite(Date.parse(completedIso)) || !expectedUpdatedIso.trim()) throw new Error('ACADEMY_COMPLETION_SYNC_INVALID');
     return this.runTransaction(async tx => {
       const participation = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
       if (!participation) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (participation.status === 'completed') return participation;
-      if (participation.status !== 'in_progress') throw new Error('ACADEMY_COMPLETION_SYNC_CONFLICT');
+      if (participation.status !== 'in_progress' || participation.updatedIso !== expectedUpdatedIso) throw new Error('ACADEMY_COMPLETION_SYNC_CONFLICT');
       const next: AcademyCourseParticipationDoc = { ...participation, status: 'completed', completedIso, updatedIso: completedIso };
       assertValid(validateCourseParticipation(next));
       await tx.update('academy_course_participations', participation.id, next);
@@ -1324,14 +1324,15 @@ export class AcademyRepository {
         throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       }
       if (order.status !== 'open') return order;
+      if (participation.status !== 'completed' || participation.completedIso !== completedIso) throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       const next = { ...order, status: 'completed' as const, completedIso };
       assertValid(validateRequalificationOrder(next));
       await tx.update('academy_requalification_orders', order.id, next);
       return next;
     });
   }
-  async reopenRequalificationOrder(orderId: string, participationId: string, reopenedIso: string): Promise<AcademyRequalificationOrderDoc> {
-    if (!orderId.trim() || !participationId.trim() || !Number.isFinite(Date.parse(reopenedIso))) throw new Error('ACADEMY_REQUALIFICATION_REOPEN_INVALID');
+  async reopenRequalificationOrder(orderId: string, participationId: string, reopenedIso: string, expectedUpdatedIso: string): Promise<AcademyRequalificationOrderDoc> {
+    if (!orderId.trim() || !participationId.trim() || !Number.isFinite(Date.parse(reopenedIso)) || !expectedUpdatedIso.trim()) throw new Error('ACADEMY_REQUALIFICATION_REOPEN_INVALID');
     return this.runTransaction(async tx => {
       const [order, participation] = await Promise.all([
         tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', orderId),
@@ -1343,6 +1344,7 @@ export class AcademyRepository {
         throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       }
       if (order.status !== 'completed') return order;
+      if (participation.updatedIso !== expectedUpdatedIso || !['completed', 'in_progress'].includes(participation.status)) throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       const { completedIso: _completedIso, ...openOrder } = order;
       const nextOrder: AcademyRequalificationOrderDoc = { ...openOrder, status: 'open', reopenedIso };
       const { completedIso: _participationCompletedIso, ...inProgress } = participation;
