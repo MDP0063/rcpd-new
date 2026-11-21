@@ -1657,6 +1657,72 @@ export function createAcademyApiRouter(
     } catch (error) { fail(res, error, next); }
   });
 
+  router.post('/participations/:participationId/end', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation || participation.userUid !== actor.uid) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const updated = await repository.transitionCourseParticipationLifecycle(participation.id, {
+        id: id('academy_participation_event'), type: 'voluntary_end', actorUid: actor.uid, occurredIso: new Date().toISOString()
+      });
+      res.json({ participation: participantCourseParticipationView(updated) });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/participations/:participationId/resume', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation || participation.userUid !== actor.uid) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const updated = await repository.transitionCourseParticipationLifecycle(participation.id, {
+        id: id('academy_participation_event'), type: 'voluntary_resume', actorUid: actor.uid, occurredIso: new Date().toISOString()
+      });
+      res.json({ participation: participantCourseParticipationView(updated) });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/participations/:participationId/admin-end', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_PARTICIPATION_END_BODY_INVALID' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+      if (!master || !canManage(actor, master.ownerUid)) { res.status(403).json({ error: 'ACADEMY_PARTICIPATION_LIFECYCLE_FORBIDDEN' }); return; }
+      const reason = boundedText(req.body.reason, 1000);
+      if (!reason || reason.length < 10) { res.status(400).json({ error: 'ACADEMY_PARTICIPATION_END_REASON_INVALID' }); return; }
+      const now = new Date().toISOString();
+      const updated = await repository.transitionCourseParticipationLifecycle(participation.id, {
+        id: id('academy_participation_event'), type: 'administrative_end', actorUid: actor.uid, occurredIso: now, reason
+      });
+      await recordAudit(actor.uid, 'Academy-Teilnahme administrativ beendet', master.code, `Teilnahme ${participation.id} administrativ beendet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+      res.json({ participation: updated });
+    } catch (error) { fail(res, error, next); }
+  });
+
+  router.post('/participations/:participationId/admin-resume', async (req, res, next) => {
+    try {
+      const actor = getActor(req, res);
+      if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
+      if (!isObject(req.body)) { res.status(400).json({ error: 'ACADEMY_PARTICIPATION_RESUME_BODY_INVALID' }); return; }
+      const participation = await repository.getCourseParticipation(req.params.participationId);
+      if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
+      const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
+      if (!master || !canManage(actor, master.ownerUid)) { res.status(403).json({ error: 'ACADEMY_PARTICIPATION_LIFECYCLE_FORBIDDEN' }); return; }
+      const reason = boundedText(req.body.reason, 1000);
+      if (!reason || reason.length < 10) { res.status(400).json({ error: 'ACADEMY_PARTICIPATION_RESUME_REASON_INVALID' }); return; }
+      const now = new Date().toISOString();
+      const updated = await repository.transitionCourseParticipationLifecycle(participation.id, {
+        id: id('academy_participation_event'), type: 'administrative_reopen', actorUid: actor.uid, occurredIso: now, reason
+      });
+      await recordAudit(actor.uid, 'Academy-Teilnahme administrativ wieder freigegeben', master.code, `Teilnahme ${participation.id} administrativ wieder freigegeben. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+      res.json({ participation: updated });
+    } catch (error) { fail(res, error, next); }
+  });
+
   router.post('/participations/:participationId/evidence', async (req, res, next) => {
     try {
       const actor = getActor(req, res);
