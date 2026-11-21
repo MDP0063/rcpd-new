@@ -243,7 +243,9 @@ export async function resolveAcademyCourseCompletion(
   const requalificationOrder = participation.kind === 'requalification' && participation.requalificationOrderId
     ? await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId)
     : null;
-  if (participation.kind === 'requalification' && (!requalificationOrder || requalificationOrder.participationId !== participation.id)) {
+  if (participation.kind === 'requalification' && (!requalificationOrder || requalificationOrder.participationId !== participation.id ||
+      requalificationOrder.userUid !== participation.userUid || requalificationOrder.courseId !== participation.courseId ||
+      requalificationOrder.courseVersionId !== participation.courseVersionId)) {
     throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
   }
   const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
