@@ -1375,7 +1375,7 @@ export function createAcademyApiRouter(
         if (typeof req.body.dueIso !== 'string' || !Number.isFinite(Date.parse(req.body.dueIso))) throw new Error('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID');
         dueIso = new Date(req.body.dueIso).toISOString();
       }
-      const userUid = boundedText(req.body?.userUid, 160);
+      const userUid = boundedText(req.body?.participantUid, 160);
       if (!userUid) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_REQUIRED');
       if (!resolveParticipantLabel?.(userUid)) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_NOT_FOUND');
       const now = new Date().toISOString();
