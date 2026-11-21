@@ -165,7 +165,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [managedParticipationsLoading, setManagedParticipationsLoading] = useState(false);
   const [managedParticipationsError, setManagedParticipationsError] = useState('');
   const [managedPanelOpen, setManagedPanelOpen] = useState(false);
-  const [managedCourseLoadedId, setManagedCourseLoadedId] = useState<string | null>(null);
   const [adminLifecycleAction, setAdminLifecycleAction] = useState<{ participationId: string; action: 'end' | 'resume' } | null>(null);
   const [adminLifecycleReason, setAdminLifecycleReason] = useState('');
 
@@ -235,7 +234,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     if (detailRequestIdRef.current !== requestId) return;
     if (response.ok && response.data) {
       setManagedCourseParticipations([...response.data.participations].sort((a, b) => Date.parse(b.updatedIso) - Date.parse(a.updatedIso)));
-      setManagedCourseLoadedId(courseId);
     } else {
       setManagedParticipationsError(response.error || 'Teilnahmen konnten nicht geladen werden.');
     }
@@ -415,7 +413,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       : entry;
     setSelectedCourse(effectiveEntry);
     setManagedCourseParticipations([]);
-    setManagedCourseLoadedId(null);
     setManagedPanelOpen(false);
     setManagedParticipationsError('');
     setManagedParticipationsLoading(false);
@@ -1037,7 +1034,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       onClick={() => {
                         const nextOpen = !managedPanelOpen;
                         setManagedPanelOpen(nextOpen);
-                        if (nextOpen && managedCourseLoadedId !== selectedCourse.master.id) {
+                        if (nextOpen) {
                           void loadManagedCourseParticipations(selectedCourse.master.id);
                         }
                       }}
