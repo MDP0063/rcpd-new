@@ -408,6 +408,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       ? { ...entry, version: pins[0].version }
       : entry;
     setSelectedCourse(effectiveEntry);
+    setManagedCourseParticipations([]);
+    setManagedCourseLoadedId(null);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
     setRequalificationCandidateError('');
