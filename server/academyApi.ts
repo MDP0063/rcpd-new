@@ -1288,7 +1288,7 @@ export function createAcademyApiRouter(
         const qualificationStatus = requalification?.order.status === 'open'
           ? 'requalification_required'
           : requalification?.order.status === 'completed'
-            ? (requalification.participation.status === 'completed' ? 'completed' : 'in_progress')
+            ? (requalification.participation?.status === 'completed' ? 'completed' : 'in_progress')
             : currentParticipation?.status || 'not_started';
         return {
           pin, version: courseVersion, participation: currentParticipation, qualificationStatus,
