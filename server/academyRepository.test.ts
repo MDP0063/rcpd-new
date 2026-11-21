@@ -599,6 +599,10 @@ test('course participation lifecycle preserves the same participation and full e
   assert.deepEqual(administrativelyReopened.lifecycleEvents?.map(event => event.type), [
     'voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'
   ]);
+  await repository.anonymizeDeletedUser('learner-1', 'anonymized-learner');
+  const anonymizedParticipation = await repository.getCourseParticipation(participation.id);
+  assert.equal(anonymizedParticipation?.userUid, 'anonymized-learner');
+  assert.equal(anonymizedParticipation?.lifecycleEvents?.[0].actorUid, 'anonymized-learner');
 }));
 
 test('updating a private note never recreates a note deleted after the initial read', async () => withRepository(async repository => {
