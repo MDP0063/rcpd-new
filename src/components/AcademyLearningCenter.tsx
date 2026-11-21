@@ -16,6 +16,7 @@ import type {
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
+  AcademyRequalificationOrderDoc,
   AcademyPrivateNoteDoc,
   AcademyCourseMaterialReaderItem
 } from '../types/academy';
@@ -59,6 +60,7 @@ interface CourseParticipationDetail {
   corrections: ParticipantCorrectionView[];
   assessmentProofs: Record<string, { attemptId: string; releasedAtIso: string; finalScoreBasisPoints: number }>;
   materials: AcademyCourseMaterialReaderItem[];
+  requalificationOrder?: Pick<AcademyRequalificationOrderDoc, 'id' | 'reason' | 'dueIso' | 'orderedIso' | 'status'>;
 }
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
@@ -78,6 +80,8 @@ interface ProgramParticipationDetail {
   };
 }
 type Screen = 'catalog' | 'course' | 'program';
+interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
+interface ParticipantRequalificationOrder { id: string; courseId: string; participationId: string; reason: string; dueIso?: string; status: 'open' | 'completed' | 'cancelled'; completedIso?: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted = 'text-sm text-slate-600 dark:text-slate-300';
@@ -113,6 +117,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
+  const [requalificationOrders, setRequalificationOrders] = useState<ParticipantRequalificationOrder[]>([]);
+  const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
+  const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
+  const [requalificationCandidateError, setRequalificationCandidateError] = useState('');
+  const [requalificationCandidateUid, setRequalificationCandidateUid] = useState('');
+  const [requalificationReason, setRequalificationReason] = useState('');
+  const [requalificationDueDate, setRequalificationDueDate] = useState('');
   const [programParticipations, setProgramParticipations] = useState<AcademyProgramParticipationDoc[]>([]);
   const [programDetails, setProgramDetails] = useState<ProgramParticipationDetail[]>([]);
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
@@ -175,8 +186,14 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   useEffect(() => () => onUnsavedChangesChange?.(false), [onUnsavedChangesChange]);
 
   const canCreate = currentUser.role === 'admin' || currentUser.role === 'colonel';
+  const canOrderRequalificationForCourse = (courseCode: string) => {
+    if (currentUser.role === 'admin' || currentUser.role === 'colonel') return true;
+    const permissions = currentUser.granularPermissions;
+    const assigned = permissions?.assignedCourseCodes || [];
+    return permissions?.canGradeAssignedCourses === true && (assigned.includes('*') || assigned.some(code => code.toUpperCase() === courseCode.toUpperCase()));
+  };
   const ownCourseParticipationByCourse = useMemo(
-    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.map(item => [item.courseId, item] as const)),
+    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
   const programPinByCourse = useMemo(() => {
@@ -194,19 +211,21 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setLoading(true);
     setLoadError('');
     try {
-      const [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse] = await Promise.all([
+      const [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse] = await Promise.all([
         apiFetch<{ courses: CourseEntry[] }>(API_ENDPOINTS.ACADEMY_COURSES),
         apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
         apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
-        apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS)
+        apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS),
+        apiFetch<{ orders: ParticipantRequalificationOrder[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
       ]);
       if (requestId !== contentLoadRequestIdRef.current) return;
-      const failed = [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse].find(item => !item.ok || !item.data);
+      const failed = [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse].find(item => !item.ok || !item.data);
       if (failed) throw new Error(failed.error || 'Academy-Daten konnten nicht geladen werden.');
       const nextCourses = courseResponse.data!.courses;
       const nextPrograms = programResponse.data!.programs;
       const nextCourseParticipations = courseParticipationResponse.data!.participations;
       const nextProgramParticipations = programParticipationResponse.data!.participations;
+      const nextRequalificationOrders = requalificationResponse.data!.orders;
 
       // Keep all program progress available for pinned course versions, but avoid
       // creating hundreds of simultaneous HTTP requests for long participation histories.
@@ -219,6 +238,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       setCourses(nextCourses);
       setPrograms(nextPrograms);
       setCourseParticipations(nextCourseParticipations);
+      setRequalificationOrders(nextRequalificationOrders);
       setProgramParticipations(nextProgramParticipations);
       setProgramDetails(detailsResponse.map(item => item.data!));
     } catch (error) {
@@ -349,6 +369,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       ? { ...entry, version: pins[0].version }
       : entry;
     setSelectedCourse(effectiveEntry);
+    setRequalificationCandidates([]);
+    setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
+    setRequalificationCandidateError('');
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
+      void apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(effectiveEntry.master.id)).then(candidateResponse => {
+        if (detailRequestIdRef.current !== requestId) return;
+        if (candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+        else setRequalificationCandidateError(candidateResponse.error || 'Teilnehmerliste konnte nicht geladen werden.');
+        setRequalificationCandidatesLoading(false);
+      });
+    }
     setCourseDetail(null);
     setSelectedProgram(null);
     setProgramDetail(null);
@@ -366,6 +400,63 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       setCourseDetail(response.data);
       setDetailLoading(false);
     }
+  };
+
+  const orderRequalification = async () => {
+    if (!selectedCourse || !requalificationCandidateUid || requalificationReason.trim().length < 10 || saving) return;
+    setSaving(true);
+    const response = await apiFetch<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }>(
+      API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
+      { method: 'POST', body: JSON.stringify({ userUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+    );
+    setSaving(false);
+    if (!response.ok || !response.data) {
+      onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
+      return;
+    }
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
+    if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
+    await loadLearningData();
+    onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
+  };
+  const openRequalification = async (order: ParticipantRequalificationOrder) => {
+    const entry = courses.find(item => item.master.id === order.courseId);
+    if (!entry) { onStatusToast('Der zugehörige Kurs ist derzeit nicht verfügbar.'); return; }
+    catalogOriginKeyRef.current = 'requalification:' + order.id;
+    pendingScreenFocusRef.current = 'detail';
+    const requestId = ++detailRequestIdRef.current;
+    setSelectedCourse(entry);
+    setRequalificationCandidates([]);
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    setRequalificationCandidateError('');
+    setRequalificationCandidatesLoading(canOrderRequalificationForCourse(entry.master.code));
+    if (canOrderRequalificationForCourse(entry.master.code)) {
+      void apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(entry.master.id)).then(candidateResponse => {
+        if (detailRequestIdRef.current !== requestId) return;
+        if (candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+        else setRequalificationCandidateError(candidateResponse.error || 'Teilnehmerliste konnte nicht geladen werden.');
+        setRequalificationCandidatesLoading(false);
+      });
+    }
+    setCourseDetail(null);
+    setSelectedProgram(null);
+    setProgramDetail(null);
+    setScreen('course');
+    setDetailLoading(true);
+    const response = await apiFetch<CourseParticipationDetail>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATION(order.participationId));
+    if (detailRequestIdRef.current !== requestId) return;
+    if (!response.ok || !response.data) {
+      setDetailLoading(false);
+      onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht geladen werden.');
+      return;
+    }
+    setCourseDetail(response.data);
+    setDetailLoading(false);
   };
 
   const startCourse = async () => {
@@ -609,6 +700,56 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 </div>
               ) : (
                 <>
+                  {requalificationOrders.some(order => order.status === 'open') && (
+                    <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-requalification-heading">
+                      <div>
+                        <h3 id="academy-requalification-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation erforderlich</h3>
+                        <p className={muted + ' mt-1'}>Für diese Qualifikation ist ein neuer Nachweis erforderlich. Dein bisheriger Abschluss bleibt in deiner Historie erhalten.</p>
+                      </div>
+                      <div className="space-y-2">
+                        {requalificationOrders.filter(order => order.status === 'open').map(order => {
+                          const course = courses.find(item => item.master.id === order.courseId);
+                          const participation = courseParticipations.find(item => item.id === order.participationId);
+                          return (
+                            <article key={order.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                  <h4 className="font-medium text-slate-900 dark:text-white">{course?.version?.title || course?.master.code || 'Qualifikation'}</h4>
+                                  <p className={muted + ' mt-1'}>{order.reason}</p>
+                                  {order.dueIso && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(order.dueIso)}</p>}
+                                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Status: {participation ? statusLabel(participation.status) : 'Noch offen'}</p>
+                                </div>
+                                <button type="button" className={primary} onClick={() => void openRequalification(order)}>Aufgabe öffnen</button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
+                  {requalificationOrders.some(order => order.status === 'completed') && (
+                    <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-requalification-history-heading">
+                      <div>
+                        <h3 id="academy-requalification-history-heading" className="font-semibold text-slate-900 dark:text-white">Abgeschlossene erneute Qualifikationen</h3>
+                        <p className={muted + ' mt-1'}>Diese Nachweise sind zusätzlich zu deinen ursprünglichen Kursabschlüssen gespeichert.</p>
+                      </div>
+                      <div className="space-y-2">
+                        {requalificationOrders.filter(order => order.status === 'completed').map(order => {
+                          const course = courses.find(item => item.master.id === order.courseId);
+                          return (
+                            <article key={order.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+                              <div className="min-w-0">
+                                <p className="font-medium text-slate-900 dark:text-white">{course?.version?.title || course?.master.code || 'Qualifikation'}</p>
+                                <p className={muted + ' mt-1'}>Abgeschlossen am {order.completedIso ? dateLabel(order.completedIso) : '–'}</p>
+                              </div>
+                              <button type="button" className={secondary} onClick={() => void openRequalification(order)}>Nachweis ansehen</button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
+
                   <section className="academy-courses-section space-y-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lehrgänge</h3>
@@ -709,6 +850,53 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <p className="academy-course-availability academy-course-availability--detail rounded-lg px-3 py-2 text-sm" role="status">
                   {availabilityNotice(selectedCourse.master)}
                 </p>
+              )}
+              {canOrderRequalificationForCourse(selectedCourse.master.code) && (
+                <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-order-requalification-heading">
+                  <div>
+                    <h3 id="academy-order-requalification-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation anordnen</h3>
+                    <p className={muted + ' mt-1'}>Wähle einen Teilnehmer mit früherem Kursabschluss. Sein bisheriger Abschluss bleibt erhalten; es wird eine neue Teilnahme angelegt.</p>
+                  </div>
+                  {requalificationCandidatesLoading ? (
+                    <p className={muted} role="status">Teilnehmer werden geladen …</p>
+                  ) : requalificationCandidateError ? (
+                    <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{requalificationCandidateError}</p>
+                  ) : requalificationCandidates.length === 0 ? (
+                    <p className={muted}>Aktuell gibt es keine Teilnehmer mit einem früheren Abschluss, für die eine neue Qualifikation angeordnet werden kann.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Teilnehmer</span>
+                        <select className={field} value={requalificationCandidateUid} onChange={event => setRequalificationCandidateUid(event.target.value)}>
+                          <option value="">Teilnehmer auswählen</option>
+                          {requalificationCandidates.map(candidate => <option key={candidate.uid} value={candidate.uid}>{candidate.displayName} · {candidate.badgeNumber}</option>)}
+                        </select>
+                      </label>
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Warum ist die erneute Qualifikation erforderlich?</span>
+                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Begründung für den Teilnehmer" />
+                      </label>
+                      <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <span>Frist (optional)</span>
+                        <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
+                      </label>
+                      <button type="button" className={primary} disabled={saving || !requalificationCandidateUid || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
+                        {saving ? 'Wird angeordnet …' : 'Wiederqualifizierung anordnen'}
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
+              {courseDetail?.participation.kind === 'requalification' && courseDetail.requalificationOrder && (
+                <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-requalification-detail-heading">
+                  <h3 id="academy-requalification-detail-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation</h3>
+                  <p className={muted}>Diese neue Teilnahme ist erforderlich, um deine Qualifikation erneut nachzuweisen. Dein früherer Kursabschluss bleibt unverändert in deiner Historie.</p>
+                  <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                    <p className="font-medium">Begründung</p>
+                    <p className="mt-1">{courseDetail.requalificationOrder.reason}</p>
+                  </div>
+                  {courseDetail.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(courseDetail.requalificationOrder.dueIso)}</p>}
+                </section>
               )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>

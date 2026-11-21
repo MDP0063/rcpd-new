@@ -148,7 +148,7 @@ test('version-4 JSON Academy stores without documentType assignments remain read
       version: number;
       collections: { academy_material_document_types?: Record<string, AcademyMaterialDocumentTypeDoc>; academy_material_document_type_assignments?: Record<string, unknown>; academy_materials?: Record<string, unknown>; academy_material_drafts?: Record<string, unknown>; academy_material_versions?: Record<string, unknown> };
     };
-    assert.equal(saved.version, 6);
+    assert.equal(saved.version, 8);
     assert.equal(Object.values(saved.collections.academy_material_document_types || {})[0]?.id, 'documentType-migrated');
     assert.deepEqual(saved.collections.academy_material_document_type_assignments, {});
     assert.deepEqual(saved.collections.academy_materials, {});

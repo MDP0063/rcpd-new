@@ -80,6 +80,22 @@ test('Academy backup restore replaces shared collections and preserves owner-pri
   }
 });
 
+test('Academy backup restore remains compatible with snapshots predating requalification collections', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'academy-backup-legacy-requalification-'));
+  try {
+    const repository = createJsonAcademyRepository(directory);
+    await repository.setMaintenanceMode(true);
+    const snapshot = await repository.exportSnapshot();
+    const legacyCollections = { ...snapshot.collections } as Record<string, unknown>;
+    delete legacyCollections.academy_requalification_orders;
+    delete legacyCollections.academy_requalification_locks;
+    await repository.restoreSnapshot({ formatVersion: 1, collections: legacyCollections } as typeof snapshot);
+    assert.deepEqual(await repository.listOwnRequalificationOrders('user-with-no-orders'), []);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('Academy backup validation rejects snapshots that contain private notes', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'academy-backup-invalid-'));
   try {
