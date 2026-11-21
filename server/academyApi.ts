@@ -1504,7 +1504,10 @@ export function createAcademyApiRouter(
       const participations = await Promise.all(storedParticipations.map(async item =>
         (await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam)).participation
       ));
-      res.json({ participations });
+      res.json({ participations: participations.map(item => ({
+        ...item,
+        participant: resolveParticipantLabel?.(item.userUid) || null
+      })) });
     } catch (error) { fail(res, error, next); }
   });
 
