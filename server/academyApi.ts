@@ -1370,13 +1370,15 @@ export function createAcademyApiRouter(
       const storedOrders = await repository.listOwnRequalificationOrders(actor.uid);
       const orders: AcademyRequalificationOrderDoc[] = [];
       for (const order of storedOrders) {
-        if (order.status !== 'open') { orders.push(order); continue; }
+        if (order.status === 'cancelled') { orders.push(order); continue; }
         const participation = await repository.getCourseParticipation(order.participationId);
         if (!participation) { orders.push(order); continue; }
         const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
         if (completion.participation.status === 'completed' && completion.participation.completedIso) {
           await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
           orders.push(await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso));
+        } else if (order.status === 'completed' && completion.participation.status === 'in_progress') {
+          orders.push(await repository.reopenRequalificationOrder(order.id, participation.id, new Date().toISOString()));
         } else orders.push(order);
       }
       res.json({ orders: orders.map(order => ({
@@ -1435,9 +1437,14 @@ export function createAcademyApiRouter(
       const isManager = Boolean(master && canManage(actor, master.ownerUid));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam, true);
-      if (participation.kind === 'requalification' && completion.participation.status === 'completed' && completion.participation.completedIso && participation.requalificationOrderId) {
-        await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
-        await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, completion.participation.completedIso);
+      if (participation.kind === 'requalification' && participation.requalificationOrderId) {
+        if (completion.participation.status === 'completed' && completion.participation.completedIso) {
+          await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
+          await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, completion.participation.completedIso);
+        } else if (completion.participation.status === 'in_progress') {
+          const currentOrder = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId);
+          if (currentOrder?.status === 'completed') await repository.reopenRequalificationOrder(currentOrder.id, participation.id, new Date().toISOString());
+        }
       }
       const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
       const references = version.chapters.flatMap(chapter => chapter.materialReferences.map(reference => ({ ...reference, chapterId: chapter.id, chapterTitle: chapter.title, chapterOrder: chapter.order })));
