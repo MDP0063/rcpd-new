@@ -224,9 +224,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     (currentUser.role === 'colonel' && selectedCourse.master.ownerUid === currentUser.uid)
   ));
   const loadManagedCourseParticipations = async (courseId: string) => {
+    const requestId = detailRequestIdRef.current;
     setManagedParticipationsLoading(true);
     setManagedParticipationsError('');
     const response = await apiFetch<{ participations: ManagedCourseParticipation[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPANTS(courseId));
+    if (detailRequestIdRef.current !== requestId) return;
     if (response.ok && response.data) {
       setManagedCourseParticipations([...response.data.participations].sort((a, b) => Date.parse(b.updatedIso) - Date.parse(a.updatedIso)));
       setManagedCourseLoadedId(courseId);
@@ -412,6 +414,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setManagedCourseLoadedId(null);
     setManagedPanelOpen(false);
     setManagedParticipationsError('');
+    setManagedParticipationsLoading(false);
     setAdminLifecycleAction(null);
     setAdminLifecycleReason('');
     setRequalificationCandidates([]);
