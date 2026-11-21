@@ -77,7 +77,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeAccount('academy-colonel', 'AcademyColonel', 'colonel'),
       makeAccount('academy-officer', 'AcademyOfficer', 'officer'),
       makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer'),
-      makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01'])
+      makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01']),
+      makeScopedAccount('academy-course-manager', 'AcademyCourseManager', ['SOP-HTTP-01'])
     ],
     applications: [],
     modules: [
@@ -142,6 +143,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const officer = await login(baseUrl, 'AcademyOfficer');
     const officer2 = await login(baseUrl, 'AcademyOfficerTwo');
     const scopedOfficer = await login(baseUrl, 'AcademyScopedOfficer');
+    const courseManager = await login(baseUrl, 'AcademyCourseManager');
     const request = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -1020,6 +1022,11 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const ownRequalificationOrders = await request('/api/academy/requalifications', officer);
     assert.equal(ownRequalificationOrders.body!.orders.length, 1);
     const requalificationParticipationId = ownRequalificationOrders.body!.orders[0].participationId as string;
+    const assignedManagerRequalificationDetail = await request(`/api/academy/participations/${requalificationParticipationId}`, courseManager);
+    assert.equal(assignedManagerRequalificationDetail.status, 200, JSON.stringify(assignedManagerRequalificationDetail.body));
+    assert.equal('publishedByUid' in assignedManagerRequalificationDetail.body!.version, true, 'assigned course managers receive the manager projection');
+    const unrelatedScopedManagerDetail = await request(`/api/academy/participations/${requalificationParticipationId}`, scopedOfficer);
+    assert.equal(unrelatedScopedManagerDetail.status, 404, 'course scope does not grant access to another course requalification');
     const requalificationSelfEvidence = await request(`/api/academy/participations/${requalificationParticipationId}/evidence`, officer, {
       method: 'POST', ...json({ requirementId: 'req-chapter' })
     });
