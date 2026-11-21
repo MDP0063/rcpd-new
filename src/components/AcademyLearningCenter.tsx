@@ -1037,6 +1037,93 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     </ul>
                   </section>
                 )}
+                {canManageSelectedCourse && selectedCourse && (
+                  <section className={panel + ' p-4 space-y-3'}>
+                    <button
+                      type="button"
+                      className="flex min-h-10 w-full items-center justify-between gap-3 text-left font-semibold text-slate-900 dark:text-white"
+                      aria-expanded={managedPanelOpen}
+                      aria-controls="academy-course-participation-management"
+                      onClick={() => {
+                        const nextOpen = !managedPanelOpen;
+                        setManagedPanelOpen(nextOpen);
+                        if (nextOpen && managedCourseLoadedId !== selectedCourse.master.id) {
+                          void loadManagedCourseParticipations(selectedCourse.master.id);
+                        }
+                      }}
+                    >
+                      <span>Teilnahmen verwalten</span>
+                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                        {managedCourseParticipations.length} Einträge <span aria-hidden="true">{managedPanelOpen ? '−' : '+'}</span>
+                      </span>
+                    </button>
+                    {managedPanelOpen && (
+                      <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten">
+                        {managedParticipationsLoading ? (
+                          <p className={muted} role="status">Teilnahmen werden geladen …</p>
+                        ) : managedParticipationsError ? (
+                          <div className="space-y-2">
+                            <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{managedParticipationsError}</p>
+                            <button type="button" className={secondary} onClick={() => void loadManagedCourseParticipations(selectedCourse.master.id)}>Erneut versuchen</button>
+                          </div>
+                        ) : managedCourseParticipations.filter(item => item.status !== 'completed').length === 0 ? (
+                          <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. {managedCourseParticipations.length} abgeschlossene Teilnahmen bleiben als Verlauf gespeichert.</p>
+                        ) : (
+                          <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                            {managedCourseParticipations.filter(item => item.status !== 'completed').map(item => (
+                              <article key={item.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                      {item.participant?.displayName || 'Unbekannter Teilnehmer'}
+                                      {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
+                                    </p>
+                                    <p className={muted + ' mt-1'}>
+                                      {item.kind === 'requalification' ? 'Erneute Qualifikation' : 'Reguläre Teilnahme'} · {statusLabel(item.status)}
+                                    </p>
+                                    {item.endReason && <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>}
+                                  </div>
+                                  {item.status === 'in_progress' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'end' }); setAdminLifecycleReason(''); }}>
+                                      Administrativ beenden
+                                    </button>
+                                  )}
+                                  {item.status === 'administratively_ended' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'resume' }); setAdminLifecycleReason(''); }}>
+                                      Wieder freigeben
+                                    </button>
+                                  )}
+                                </div>
+                                {adminLifecycleAction?.participationId === item.id && (
+                                  <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                                    <label className="block text-sm font-medium text-slate-800 dark:text-slate-200" htmlFor={`academy-lifecycle-reason-${item.id}`}>
+                                      {adminLifecycleAction.action === 'end' ? 'Begründung für die administrative Beendigung' : 'Begründung für die Wiederfreigabe'}
+                                    </label>
+                                    <textarea
+                                      id={`academy-lifecycle-reason-${item.id}`}
+                                      className={textAreaClass}
+                                      rows={2}
+                                      maxLength={1000}
+                                      value={adminLifecycleReason}
+                                      onChange={event => setAdminLifecycleReason(event.target.value)}
+                                      placeholder="Bitte mindestens 10 Zeichen eingeben."
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                      <button type="button" className={primary} disabled={saving || adminLifecycleReason.trim().length < 10} onClick={() => void submitAdminLifecycleAction()}>
+                                        {adminLifecycleAction.action === 'end' ? 'Teilnahme beenden' : 'Teilnahme freigeben'}
+                                      </button>
+                                      <button type="button" className={secondary} disabled={saving} onClick={() => { setAdminLifecycleAction(null); setAdminLifecycleReason(''); }}>Abbrechen</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                )}
                 {courseDetail.version.learningObjectives.length > 0 && (
                   <section className={`${panel} academy-course-panel p-4 space-y-3`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
