@@ -77,6 +77,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeAccount('academy-colonel', 'AcademyColonel', 'colonel'),
       makeAccount('academy-officer', 'AcademyOfficer', 'officer'),
       makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer'),
+      makeAccount('academy-officer-3', 'AcademyOfficerThree', 'officer'),
       makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01']),
       makeScopedAccount('academy-course-manager', 'AcademyCourseManager', ['SOP-HTTP-01'])
     ],
@@ -142,6 +143,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const colonel = await login(baseUrl, 'AcademyColonel');
     const officer = await login(baseUrl, 'AcademyOfficer');
     const officer2 = await login(baseUrl, 'AcademyOfficerTwo');
+    const officer3 = await login(baseUrl, 'AcademyOfficerThree');
     const scopedOfficer = await login(baseUrl, 'AcademyScopedOfficer');
     const courseManager = await login(baseUrl, 'AcademyCourseManager');
     const request = async (url: string, token?: string, init?: RequestInit) => {
@@ -988,6 +990,28 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(duplicateGroupAttempt.status, 200, JSON.stringify(duplicateGroupAttempt.body));
     assert.equal(duplicateGroupAttempt.body!.createdCount, 0);
     assert.equal(duplicateGroupAttempt.body!.skippedCount, 2);
+    const thirdParticipantStart = await request(`/api/academy/courses/${courseId}/participations`, officer3, { method: 'POST' });
+    assert.equal(thirdParticipantStart.status, 201, JSON.stringify(thirdParticipantStart.body));
+    const thirdParticipantChapterEvidence = await request(`/api/academy/participations/${thirdParticipantStart.body!.participation.id}/evidence`, officer3, {
+      method: 'POST', ...json({ requirementId: 'req-chapter' })
+    });
+    assert.equal(thirdParticipantChapterEvidence.status, 201, JSON.stringify(thirdParticipantChapterEvidence.body));
+    const thirdParticipantInstructorEvidence = await request(`/api/academy/participations/${thirdParticipantStart.body!.participation.id}/evidence`, admin, {
+      method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Praktische Leistung bestätigt.' })
+    });
+    assert.equal(thirdParticipantInstructorEvidence.status, 201, JSON.stringify(thirdParticipantInstructorEvidence.body));
+    const mixedGroupOrder = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
+      method: 'POST', ...json({ userUids: ['academy-officer', 'academy-officer-3'], reason: 'Die Qualifikation muss erneut nachgewiesen werden.' })
+    });
+    assert.equal(mixedGroupOrder.status, 201, JSON.stringify(mixedGroupOrder.body));
+    assert.equal(mixedGroupOrder.body!.createdCount, 1);
+    assert.equal(mixedGroupOrder.body!.skippedCount, 1);
+    assert.equal(mixedGroupOrder.body!.failedCount, 0);
+    assert.equal(mixedGroupOrder.body!.warningCount, 0);
+    assert.equal(mixedGroupOrder.body!.created[0].displayName, 'AcademyOfficerThree');
+    const thirdParticipantOrders = await request('/api/academy/requalifications', officer3);
+    assert.equal(thirdParticipantOrders.status, 200, JSON.stringify(thirdParticipantOrders.body));
+    assert.equal(thirdParticipantOrders.body!.orders.length, 1);
     const programAfterRequalificationOrder = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
     assert.equal(programAfterRequalificationOrder.status, 200, JSON.stringify(programAfterRequalificationOrder.body));
     assert.equal(programAfterRequalificationOrder.body!.progress.completedRequiredCourseCount, 0);
