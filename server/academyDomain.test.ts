@@ -172,6 +172,17 @@ test('participation lifecycle history enforces valid ordered transitions and pre
     ...validHistory,
     updatedIso: 'not-a-date'
   }).ok, false, 'the participation update timestamp must follow its history');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [null] as unknown as typeof validHistory.lifecycleEvents
+  }).ok, false, 'malformed history entries must be rejected safely');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [{
+      ...validHistory.lifecycleEvents[0],
+      reason: 42
+    }] as unknown as typeof validHistory.lifecycleEvents
+  }).ok, false, 'event reasons must be text when present');
 });
 
 test('private notes require owner and exact material version; bookmark cannot contain note text', () => {
