@@ -1373,9 +1373,10 @@ export function createAcademyApiRouter(
         const participation = await repository.getCourseParticipation(order.participationId);
         if (!participation) { orders.push(order); continue; }
         const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
-        orders.push(completion.participation.status === 'completed' && completion.participation.completedIso
-          ? await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso)
-          : order);
+        if (completion.participation.status === 'completed' && completion.participation.completedIso) {
+          await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
+          orders.push(await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso));
+        } else orders.push(order);
       }
       res.json({ orders });
     } catch (error) { fail(res, error, next); }
@@ -1431,6 +1432,7 @@ export function createAcademyApiRouter(
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam, true);
       if (participation.kind === 'requalification' && completion.participation.status === 'completed' && completion.participation.completedIso && participation.requalificationOrderId) {
+        await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
         await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, completion.participation.completedIso);
       }
       const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
