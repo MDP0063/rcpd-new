@@ -179,6 +179,7 @@ export const API_ENDPOINTS = {
   ACADEMY_COURSES: '/api/academy/courses',
   ACADEMY_COURSE: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}`,
   ACADEMY_COURSE_PARTICIPATIONS: '/api/academy/participations',
+  ACADEMY_COURSE_PARTICIPANTS: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}/participations`,
   ACADEMY_COURSE_PARTICIPATION: (id: string) => `/api/academy/participations/${encodeURIComponent(id)}`,
   ACADEMY_COURSE_START: (id: string) => `/api/academy/courses/${encodeURIComponent(id)}/participations`,
   ACADEMY_REQUALIFICATIONS: '/api/academy/requalifications',
