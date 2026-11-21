@@ -1505,7 +1505,11 @@ export function createAcademyApiRouter(
       ));
       res.json({ participations: participations.map(item => ({
         ...item,
-        participant: resolveParticipantLabel?.(item.userUid) || null
+        participant: resolveParticipantLabel?.(item.userUid) || null,
+        lifecycleEvents: item.lifecycleEvents?.map(event => ({
+          ...event,
+          actor: resolveParticipantLabel?.(event.actorUid) || null
+        }))
       })) });
     } catch (error) { fail(res, error, next); }
   });
