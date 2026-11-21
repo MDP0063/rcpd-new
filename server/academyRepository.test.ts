@@ -71,8 +71,9 @@ test('Academy repository creates, reads and filters documents', async () => with
 }));
 
 test('requalification creates a separate participation and preserves the original completion', async () => withRepository(async repository => {
-  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
-  await repository.create('academy_course_versions', version.id, version);
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
   const original = await repository.startCourseParticipation('learner-requal', master.id, now);
   await repository.recordProgressEvidence(original.id, {
     participationId: original.id, requirementId: 'req_chapter', evidenceType: 'required_chapter',
@@ -127,8 +128,9 @@ test('a requalification requires a newly released final-exam result', async () =
     id: 'req_assessment', type: 'required_assessment' as const, required: true,
     targetId: 'exam-1', description: 'Kursabschlussprüfung'
   }] };
-  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
-  await repository.create('academy_course_versions', assessmentVersion.id, assessmentVersion);
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, assessmentVersion, publishedMaster, 2, 'owner-1');
   const order: AcademyRequalificationOrderDoc = {
     id: 'requalification-exam-order', userUid: 'learner-exam', courseId: master.id,
     courseVersionId: assessmentVersion.id, participationId: 'requalification_exam_participation',
