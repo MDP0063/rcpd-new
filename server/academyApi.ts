@@ -1381,6 +1381,16 @@ export function createAcademyApiRouter(
           orders.push(await repository.reopenRequalificationOrder(order.id, participation.id, new Date().toISOString(), participation.updatedIso));
         } else orders.push(order);
       }
+      if (notifyMaterialReview) {
+        for (const order of orders) {
+          if (order.status !== 'open' || !order.reopenedIso) continue;
+          try {
+            await notifyMaterialReview(actor.uid, `academy-requalification-reopened-${order.id}-${Date.parse(order.reopenedIso)}`,
+              'Erneute Qualifikation wieder offen',
+              'Deine erneute Qualifikation wurde nach einer Prüfungskorrektur wieder geöffnet. Bitte öffne die Aufgabe und erbringe den neuen Nachweis.');
+          } catch { /* The open task remains visible; the deterministic notification ID makes a later retry safe. */ }
+        }
+      }
       res.json({ orders: orders.map(order => ({
         id: order.id, courseId: order.courseId, participationId: order.participationId,
         reason: order.reason, dueIso: order.dueIso, status: order.status, completedIso: order.completedIso
