@@ -131,7 +131,7 @@ test('version-3 JSON Academy stores without category assignments remain readable
       version: number;
       collections: { academy_material_categories?: Record<string, AcademyMaterialCategoryDoc>; academy_material_category_assignments?: Record<string, unknown>; academy_material_document_types?: Record<string, unknown>; academy_material_document_type_assignments?: Record<string, unknown>; academy_materials?: Record<string, unknown>; academy_material_drafts?: Record<string, unknown>; academy_material_versions?: Record<string, unknown> };
     };
-    assert.equal(saved.version, 6);
+    assert.equal(saved.version, 8);
     assert.equal(Object.values(saved.collections.academy_material_categories || {})[0]?.id, 'category-migrated');
     assert.deepEqual(saved.collections.academy_material_category_assignments, {});
     assert.deepEqual(saved.collections.academy_material_document_types, {});
