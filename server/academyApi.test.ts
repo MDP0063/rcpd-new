@@ -798,6 +798,45 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(participantCourse.version.title, 'HTTP Academy Course v2');
     assert.equal(participantCourse.draft, null);
 
+    const lifecycleStarted = await request(`/api/academy/courses/${courseId}/participations`, officer2, { method: 'POST' });
+    assert.equal(lifecycleStarted.status, 201, JSON.stringify(lifecycleStarted.body));
+    const lifecycleParticipationId = lifecycleStarted.body!.participation.id as string;
+    const voluntaryEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/end`, officer2, { method: 'POST' });
+    assert.equal(voluntaryEnd.status, 200, JSON.stringify(voluntaryEnd.body));
+    assert.equal(voluntaryEnd.body!.participation.status, 'voluntarily_ended');
+    assert.equal(voluntaryEnd.body!.participation.endReason, undefined);
+    assert.equal(voluntaryEnd.body!.participation.lifecycleEvents[0].actorUid, undefined);
+    assert.equal((await request(`/api/academy/participations/${lifecycleParticipationId}/end`, officer)).status, 404);
+    const voluntaryResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, officer2, { method: 'POST' });
+    assert.equal(voluntaryResume.status, 200);
+    assert.equal(voluntaryResume.body!.participation.status, 'in_progress');
+    const deniedAdminEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-end`, colonel, {
+      method: 'POST', ...json({ reason: 'Nicht berechtigt.' })
+    });
+    assert.equal(deniedAdminEnd.status, 403);
+    const administrativeEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-end`, admin, {
+      method: 'POST', ...json({ reason: 'Die Teilnahme wird aus organisatorischen Gründen beendet.' })
+    });
+    assert.equal(administrativeEnd.status, 200, JSON.stringify(administrativeEnd.body));
+    assert.equal(administrativeEnd.body!.participation.status, 'administratively_ended');
+    assert.equal(administrativeEnd.body!.participation.endReason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
+    const participantSafeLifecycleDetail = await request(`/api/academy/participations/${lifecycleParticipationId}`, officer2);
+    assert.equal(participantSafeLifecycleDetail.body!.participation.endReason, undefined);
+    assert.equal(participantSafeLifecycleDetail.body!.participation.endedByUid, undefined);
+    assert.equal(participantSafeLifecycleDetail.body!.participation.lifecycleEvents.at(-1).actorUid, undefined);
+    const managerLifecycleDetail = await request(`/api/academy/participations/${lifecycleParticipationId}`, admin);
+    assert.equal(managerLifecycleDetail.body!.participation.endReason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
+    assert.equal(managerLifecycleDetail.body!.participation.lifecycleEvents.at(-1).actorUid, 'academy-admin');
+    const managerLifecycleList = await request(`/api/academy/courses/${courseId}/participations`, admin);
+    assert.equal(managerLifecycleList.body!.participations.find((item: { id: string }) => item.id === lifecycleParticipationId).participant.displayName, 'AcademyOfficerTwo');
+    const deniedParticipantResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, officer2, { method: 'POST' });
+    assert.equal(deniedParticipantResume.status, 409);
+    const administrativeResume = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-resume`, admin, {
+      method: 'POST', ...json({ reason: 'Die Teilnahme darf wieder aufgenommen werden.' })
+    });
+    assert.equal(administrativeResume.status, 200, JSON.stringify(administrativeResume.body));
+    assert.equal(administrativeResume.body!.participation.status, 'in_progress');
+
     const started = await request(`/api/academy/courses/${courseId}/participations`, officer, { method: 'POST' });
     assert.equal(started.status, 201, JSON.stringify(started.body));
     const participationId = started.body!.participation.id as string;
