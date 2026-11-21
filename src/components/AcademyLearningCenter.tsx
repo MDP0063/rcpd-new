@@ -479,7 +479,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
     setManagedCourseParticipations([]);
-    setManagedCourseLoadedId(null);
     setManagedPanelOpen(false);
     setManagedParticipationsError('');
     setAdminLifecycleAction(null);
