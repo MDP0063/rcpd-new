@@ -1330,6 +1330,32 @@ export class AcademyRepository {
       return next;
     });
   }
+  async reopenRequalificationOrder(orderId: string, participationId: string, reopenedIso: string): Promise<AcademyRequalificationOrderDoc> {
+    if (!orderId.trim() || !participationId.trim() || !Number.isFinite(Date.parse(reopenedIso))) throw new Error('ACADEMY_REQUALIFICATION_REOPEN_INVALID');
+    return this.runTransaction(async tx => {
+      const [order, participation] = await Promise.all([
+        tx.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', orderId),
+        tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId)
+      ]);
+      if (!order || !participation || order.participationId !== participation.id ||
+          participation.kind !== 'requalification' || participation.requalificationOrderId !== order.id ||
+          participation.userUid !== order.userUid || participation.courseId !== order.courseId) {
+        throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+      }
+      if (order.status !== 'completed') return order;
+      const { completedIso: _completedIso, ...openOrder } = order;
+      const nextOrder: AcademyRequalificationOrderDoc = { ...openOrder, status: 'open', reopenedIso };
+      const { completedIso: _participationCompletedIso, ...inProgress } = participation;
+      const nextParticipation: AcademyCourseParticipationDoc = {
+        ...inProgress, status: 'in_progress', updatedIso: reopenedIso
+      };
+      assertValid(validateRequalificationOrder(nextOrder));
+      assertValid(validateCourseParticipation(nextParticipation));
+      await tx.update('academy_requalification_orders', order.id, nextOrder);
+      if (participation.status === 'completed') await tx.update('academy_course_participations', participation.id, nextParticipation);
+      return nextOrder;
+    });
+  }
   async listOwnRequalificationOrders(userUid: string): Promise<AcademyRequalificationOrderDoc[]> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
     const orders = await this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
