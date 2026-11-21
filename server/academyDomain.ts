@@ -493,8 +493,9 @@ export function validateCourseParticipation(
   if (participation.kind !== undefined && !['standard', 'requalification'].includes(participation.kind)) {
     return invalid('ACADEMY_PARTICIPATION_KIND_INVALID', 'Die Teilnahmeart ist ungültig.');
   }
-  if ((participation.kind === 'requalification') !== Boolean(participation.requalificationOrderId)) {
-    return invalid('ACADEMY_PARTICIPATION_REQUALIFICATION_REFERENCE_INVALID', 'Eine Wiederqualifizierung benötigt eine eindeutige Vorgangsreferenz.');
+  if ((participation.kind === 'requalification') !== Boolean(participation.requalificationOrderId) ||
+      (participation.kind === 'requalification' && !isNonEmpty(participation.startedIso))) {
+    return invalid('ACADEMY_PARTICIPATION_REQUALIFICATION_REFERENCE_INVALID', 'Eine Wiederqualifizierung benötigt eine eindeutige Vorgangsreferenz und einen Startzeitpunkt.');
   }
   return { ok: true };
 }
