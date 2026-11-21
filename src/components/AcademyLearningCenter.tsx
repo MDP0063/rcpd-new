@@ -32,7 +32,7 @@ interface Props {
   onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
-type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'archivedByUid' | 'archiveReason'> & { ownerUid?: string };
+type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'> & { ownerUid?: string };
 type ParticipantCourseVersion = Omit<AcademyCourseVersionDoc, 'createdByUid' | 'publishedByUid'>;
 type ParticipantProgramMaster = Omit<AcademyProgramMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
 type ParticipantProgramVersion = Omit<AcademyProgramVersionDoc, 'createdByUid' | 'publishedByUid'>;
