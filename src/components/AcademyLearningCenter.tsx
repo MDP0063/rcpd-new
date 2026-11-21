@@ -711,6 +711,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         })}
                       </div>
                     </section>
+                  )}
                   {requalificationOrders.some(order => order.status === 'completed') && (
                     <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-requalification-history-heading">
                       <div>
@@ -732,8 +733,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         })}
                       </div>
                     </section>
-                  )}
-
                   )}
 
                   <section className="academy-courses-section space-y-3">
