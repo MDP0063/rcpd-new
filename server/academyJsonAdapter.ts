@@ -116,7 +116,7 @@ export class JsonAcademyStorageAdapter implements AcademyStorageAdapter {
           Object.values(state.collections[collection]).map(document => clone(document))
         ])
       ) as AcademyRepositoryBackupSnapshot['collections'];
-      return { formatVersion: 1, collections };
+      return { formatVersion: 2, collections };
     });
   }
   async replaceSnapshot(snapshot: AcademyRepositoryBackupSnapshot): Promise<void> {
