@@ -252,7 +252,7 @@ export async function resolveAcademyCourseCompletion(
       for (const requirement of assessmentRequirements) {
         const proof = await resolveReleasedFinalExam(participation.userUid, requirement.targetId, courseMaster.code);
         const proofTimestamp = proof ? Date.parse(proof.releasedAtIso) : Number.NaN;
-        const participationStart = Date.parse(participation.startedIso);
+        const participationStart = participation.startedIso ? Date.parse(participation.startedIso) : Number.NaN;
         // A previous passing exam cannot satisfy a newly ordered requalification.
         if (proof && (participation.kind !== 'requalification' ||
             (Number.isFinite(proofTimestamp) && Number.isFinite(participationStart) && proofTimestamp >= participationStart))) {
