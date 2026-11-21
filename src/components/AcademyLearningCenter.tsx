@@ -409,7 +409,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setSaving(true);
     const response = await apiFetch<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }>(
       API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
-      { method: 'POST', body: JSON.stringify({ userUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+      { method: 'POST', body: JSON.stringify({ participantUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
     );
     setSaving(false);
     if (!response.ok || !response.data) {
