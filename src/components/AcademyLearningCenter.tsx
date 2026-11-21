@@ -618,7 +618,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     await loadManagedCourseParticipations(courseId);
     await loadLearningData();
     setSaving(false);
-    onStatusToast(action === 'end' ? 'Teilnahme wurde administrativ beendet.' : 'Teilnahme wurde wieder freigegeben.');
+    onStatusToast(action === 'end' ? 'Die Teilnahme wurde durch die Verwaltung beendet.' : 'Die Teilnahme wurde wieder freigegeben.');
   };
 
   const recordEvidence = async (requirementId: string, label: string) => {
