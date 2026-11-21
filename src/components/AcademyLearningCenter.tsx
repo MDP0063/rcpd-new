@@ -105,7 +105,7 @@ function statusLabel(status: string): string {
     case 'in_progress': return 'In Bearbeitung';
     case 'not_started': return 'Nicht begonnen';
     case 'voluntarily_ended': return 'Freiwillig beendet';
-    case 'administratively_ended': return 'Administrativ beendet';
+    case 'administratively_ended': return 'Von der Verwaltung beendet';
     default: return status;
   }
 }
@@ -113,8 +113,8 @@ function participationLifecycleLabel(type: string): string {
   switch (type) {
     case 'voluntary_end': return 'Teilnahme freiwillig beendet';
     case 'voluntary_resume': return 'Teilnahme freiwillig fortgesetzt';
-    case 'administrative_end': return 'Teilnahme administrativ beendet';
-    case 'administrative_reopen': return 'Teilnahme administrativ wieder freigegeben';
+    case 'administrative_end': return 'Teilnahme durch die Verwaltung beendet';
+    case 'administrative_reopen': return 'Teilnahme durch die Verwaltung wieder freigegeben';
     default: return 'Teilnahmestatus geändert';
   }
 }
@@ -1141,8 +1141,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 )}
                 {courseDetail.participation.status === 'administratively_ended' && (
                   <section className={panel + ' p-4 space-y-2'} role="status">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme administrativ beendet</h3>
-                    <p className={muted}>Dein bisheriger Fortschritt bleibt gespeichert. Eine Wiederaufnahme muss durch die Academy-Verwaltung freigegeben werden.</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme durch die Verwaltung beendet</h3>
+                    <p className={muted}>Dein bisheriger Fortschritt bleibt gespeichert. Wenn du weiterlernen sollst, kann die Academy-Verwaltung die Teilnahme wieder freigeben.</p>
                   </section>
                 )}
                 {courseDetail.participation.lifecycleEvents && courseDetail.participation.lifecycleEvents.length > 0 && (
