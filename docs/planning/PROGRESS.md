@@ -52,7 +52,7 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 
 Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. PR #142 ist gemergt; CI (TypeScript/Build und 451/451 Tests), PR-Vorlagenprüfung sowie Main-Workflow einschließlich Render-Deploy-Hook waren erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung bleibt offen.
 
-## 0.3 Wiederqualifizierung – Einzel- und Gruppenanordnung implementiert, Abnahme offen
+## 0.3 Wiederqualifizierung und Teilnahme-Lebenszyklus – implementiert, Abnahme offen
 
 - PR #334 wurde am 21.11.2026 in `main` gemergt. PR #336 ergänzt die Lehrgangsverknüpfung: Eine offene Wiederqualifizierung nimmt den betroffenen Pflichtkurs aus der Abschlusszählung aller Lehrgänge heraus, die denselben Kurs voraussetzen. Nach dem neuen Abschluss wird die Qualifikation wieder als erfüllt gewertet. Alle betroffenen Lehrgänge verweisen auf denselben zentralen Vorgang; die ursprüngliche Kursteilnahme bleibt unverändert.
 - PR #336 behebt zusätzlich einen API-Vertragsfehler der Anordnung: Die Zielperson wird ausdrücklich über `participantUid` übermittelt, damit die globale Sitzungs-Identitätsprüfung weiterhin fremde `userUid`-Angaben blockiert.
