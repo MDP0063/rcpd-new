@@ -569,8 +569,79 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
   };
 
-  const recordEvidence = async (requirementId: string, label: string) => {
+  const transitionParticipation = async (action: 'end' | 'resume') => {
     if (!courseDetail || saving) return;
+    const currentStatus = courseDetail.participation.status;
+    if ((action === 'end' && currentStatus !== 'in_progress') ||
+        (action === 'resume' && currentStatus !== 'voluntarily_ended')) return;
+    const confirmed = await confirm(
+      action === 'end'
+        ? 'Möchtest du diese Teilnahme wirklich freiwillig beenden? Dein bisheriger Fortschritt bleibt erhalten. Du kannst dieselbe Teilnahme später fortsetzen.'
+        : 'Möchtest du diese bestehende Teilnahme fortsetzen? Dein bisheriger Fortschritt bleibt erhalten.',
+      { title: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen', confirmLabel: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen' }
+    );
+    if (!confirmed) return;
+    const requestId = detailRequestIdRef.current;
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyParticipantCourseParticipationView }>(
+      action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_END(courseDetail.participation.id)
+        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(courseDetail.participation.id),
+      { method: 'POST' }
+    );
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || (action === 'end' ? 'Die Teilnahme konnte nicht beendet werden.' : 'Die Teilnahme konnte nicht fortgesetzt werden.'));
+      return;
+    }
+    if (detailRequestIdRef.current === requestId) {
+      setCourseDetail(current => current ? { ...current, participation: response.data!.participation } : current);
+    }
+    await refreshLearningDataIfActive();
+    setSaving(false);
+    if (detailRequestIdRef.current === requestId) {
+      onStatusToast(action === 'end'
+        ? 'Teilnahme wurde beendet. Dein Fortschritt bleibt erhalten.'
+        : 'Deine bestehende Teilnahme wurde fortgesetzt.');
+    }
+  };
+
+  const submitAdminLifecycleAction = async () => {
+    if (!adminLifecycleAction || !selectedCourse || !canManageSelectedCourse || saving) return;
+    const requestId = detailRequestIdRef.current;
+    const courseId = selectedCourse.master.id;
+    const reason = adminLifecycleReason.trim();
+    if (reason.length < 10 || reason.length > 1000) {
+      onStatusToast('Bitte gib eine nachvollziehbare Begründung mit mindestens 10 Zeichen ein.');
+      return;
+    }
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyCourseParticipationDoc }>(
+      adminLifecycleAction.action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_ADMIN_END(adminLifecycleAction.participationId)
+        : API_ENDPOINTS.ACADEMY_COURSE_ADMIN_RESUME(adminLifecycleAction.participationId),
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    );
+    if (detailRequestIdRef.current !== requestId) {
+      setSaving(false);
+      return;
+    }
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || 'Die Teilnahme konnte nicht geändert werden.');
+      return;
+    }
+    const action = adminLifecycleAction.action;
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
+    await loadManagedCourseParticipations(courseId);
+    await loadLearningData();
+    setSaving(false);
+    onStatusToast(action === 'end' ? 'Die Teilnahme wurde durch die Verwaltung beendet.' : 'Die Teilnahme wurde wieder freigegeben.');
+  };
+
+  const recordEvidence = async (requirementId: string, label: string) => {
+    if (!courseDetail || saving || courseDetail.participation.status !== 'in_progress') return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = await confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`, { title: 'Fortschrittsnachweis erfassen', confirmLabel: 'Nachweis erfassen' });
