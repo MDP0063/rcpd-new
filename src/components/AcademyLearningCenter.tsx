@@ -83,7 +83,7 @@ interface ProgramParticipationDetail {
 }
 type Screen = 'catalog' | 'course' | 'program';
 interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
-interface RequalificationBatchResult { created: Array<{ orderId: string; displayName: string }>; skipped: Array<{ displayName: string; reason: string }>; failed: Array<{ displayName: string; reason: string }>; createdCount: number; skippedCount: number; failedCount: number }
+interface RequalificationBatchResult { created: Array<{ orderId: string; displayName: string }>; skipped: Array<{ displayName: string; reason: string }>; failed: Array<{ displayName: string; reason: string }>; warnings: Array<{ displayName: string; reason: string }>; createdCount: number; skippedCount: number; failedCount: number; warningCount: number }
 interface ParticipantRequalificationOrder { id: string; courseId: string; participationId: string; reason: string; dueIso?: string; status: 'open' | 'completed' | 'cancelled'; completedIso?: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
@@ -919,9 +919,10 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   )}
                   {requalificationOrderResult && (
                     <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700" role="status" aria-live="polite">
-                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} Fehler</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} nicht angeordnet · {requalificationOrderResult.warningCount} Hinweise</p>
                       {requalificationOrderResult.skipped.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">{requalificationOrderResult.skipped.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                       {requalificationOrderResult.failed.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-rose-700 dark:text-rose-300">{requalificationOrderResult.failed.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
+                      {requalificationOrderResult.warnings.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-700 dark:text-amber-300">{requalificationOrderResult.warnings.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                     </div>
                   )}
                 </section>
