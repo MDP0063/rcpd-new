@@ -1375,8 +1375,8 @@ export function createAcademyApiRouter(
         if (!participation) { orders.push(order); continue; }
         const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam);
         if (completion.participation.status === 'completed' && completion.participation.completedIso) {
-          await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso, participation.updatedIso);
-          orders.push(await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso));
+          const synchronized = await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso, participation.updatedIso);
+          orders.push(await repository.completeRequalificationOrder(order.id, participation.id, synchronized.completedIso || completion.participation.completedIso));
         } else if (order.status === 'completed' && completion.participation.status === 'in_progress') {
           orders.push(await repository.reopenRequalificationOrder(order.id, participation.id, new Date().toISOString(), participation.updatedIso));
         } else orders.push(order);
@@ -1439,8 +1439,8 @@ export function createAcademyApiRouter(
       const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam, true);
       if (participation.kind === 'requalification' && participation.requalificationOrderId) {
         if (completion.participation.status === 'completed' && completion.participation.completedIso) {
-          await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso);
-          await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, completion.participation.completedIso);
+          const synchronized = await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso, participation.updatedIso);
+          await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, synchronized.completedIso || completion.participation.completedIso);
         } else if (completion.participation.status === 'in_progress') {
           const currentOrder = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId);
           if (currentOrder?.status === 'completed') await repository.reopenRequalificationOrder(currentOrder.id, participation.id, new Date().toISOString(), participation.updatedIso);
@@ -1560,8 +1560,8 @@ export function createAcademyApiRouter(
       const completion = await resolveAcademyCourseCompletion(repository, result.participation, resolveReleasedFinalExam, true);
       if (result.participation.kind === 'requalification' && result.participation.requalificationOrderId &&
           completion.participation.status === 'completed' && completion.participation.completedIso) {
-        await repository.syncResolvedCourseCompletion(result.participation.id, completion.participation.completedIso, result.participation.updatedIso);
-        await repository.completeRequalificationOrder(result.participation.requalificationOrderId, result.participation.id, completion.participation.completedIso);
+        const synchronized = await repository.syncResolvedCourseCompletion(result.participation.id, completion.participation.completedIso, result.participation.updatedIso);
+        await repository.completeRequalificationOrder(result.participation.requalificationOrderId, result.participation.id, synchronized.completedIso || completion.participation.completedIso);
       }
       await recordAudit(actor.uid, 'Academy-Fortschrittsnachweis erfasst', master?.code || participation.courseId, `Nachweis für Abschlussbedingung ${requirement.id} erfasst.`, 'ACADEMY_PROGRESS');
       res.status(201).json({ ...result, participation: completion.participation, assessmentProofs: completion.assessmentProofs });
