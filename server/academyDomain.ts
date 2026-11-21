@@ -6,6 +6,7 @@ import type {
   AcademyProgramDraftDoc,
   AcademyProgramVersionDoc,
   AcademyCourseParticipationDoc,
+  AcademyParticipationLifecycleEventDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
   AcademyRequalificationOrderDoc,
