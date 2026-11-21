@@ -164,6 +164,14 @@ test('participation lifecycle history enforces valid ordered transitions and pre
     }],
     updatedIso: resumedIso
   }).ok, false, 'a resume event requires a legacy ended state or a prior end event');
+  assert.equal(validateCourseParticipation({
+    ...legacyAdministrativeResume,
+    endedIso: 'not-a-date'
+  }).ok, false, 'legacy resume requires a valid previous end timestamp');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    updatedIso: 'not-a-date'
+  }).ok, false, 'the participation update timestamp must follow its history');
 });
 
 test('private notes require owner and exact material version; bookmark cannot contain note text', () => {
