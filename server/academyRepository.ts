@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyRequalificationLockDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyParticipationLifecycleEventDoc, AcademyProgressEvidenceDoc, AcademyCompletionCorrectionDoc, AcademyRequalificationOrderDoc, AcademyRequalificationLockDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyProgramVersionDoc, AcademyProgramParticipationDoc, AcademyProgramCoursePin, AcademyPrivateNoteDoc, AcademyMaterialCategoryDoc, AcademyMaterialCategoryAssignmentDoc, AcademyMaterialDocumentTypeDoc, AcademyMaterialDocumentTypeAssignmentDoc, AcademyMaterialMasterDoc, AcademyMaterialDraftDoc, AcademyMaterialVersionDoc } from '../src/types/academy.ts';
 import { validateCourseMaster, validateCourseDraft, validateCourseVersion, validateCourseVersionForPublication, validateProgramMaster, validateProgramDraft, validateProgramVersion, validatePrivateNote, validateCourseParticipation, validateProgressEvidence, validateCompletionCorrection, validateRequalificationOrder, validateProgramParticipation, validateMaterialCategory, validateMaterialCategoryAssignment, validateMaterialDocumentType, validateMaterialDocumentTypeAssignment, validateMaterialMaster, validateMaterialDraft, validateMaterialVersion } from './academyDomain.ts';
 import { ACADEMY_BACKUP_COLLECTIONS, type AcademyCollection, type AcademyDocument, type AcademyQuery, type AcademyStorageAdapter, type AcademyTransaction } from './academyRepositoryTypes.ts';
 import type { AcademyRepositoryBackupSnapshot } from '../src/types/academy.ts';
@@ -1449,6 +1449,48 @@ export class AcademyRepository {
   }
   async getCourseParticipation(participationId: string): Promise<AcademyCourseParticipationDoc | null> {
     return this.adapter.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+  }
+  async transitionCourseParticipationLifecycle(
+    participationId: string,
+    event: AcademyParticipationLifecycleEventDoc
+  ): Promise<AcademyCourseParticipationDoc> {
+    return this.runTransaction(async tx => {
+      const current = await tx.get<AcademyCourseParticipationDoc>('academy_course_participations', participationId);
+      if (!current) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
+      const existingEvent = current.lifecycleEvents?.find(item => item.id === event.id);
+      if (existingEvent) {
+        if (JSON.stringify(existingEvent) === JSON.stringify(event)) return current;
+        throw new Error('ACADEMY_PARTICIPATION_EVENT_ID_CONFLICT');
+      }
+      const transition = {
+        voluntary_end: { expected: 'in_progress', next: 'voluntarily_ended' },
+        administrative_end: { expected: 'in_progress', next: 'administratively_ended' },
+        voluntary_resume: { expected: 'voluntarily_ended', next: 'in_progress' },
+        administrative_reopen: { expected: 'administratively_ended', next: 'in_progress' }
+      } as const;
+      const rule = transition[event.type];
+      if (current.status !== rule.expected) throw new Error('ACADEMY_PARTICIPATION_LIFECYCLE_CONFLICT');
+      if ((event.type === 'voluntary_end' || event.type === 'voluntary_resume') && event.actorUid !== current.userUid) {
+        throw new Error('ACADEMY_PARTICIPATION_LIFECYCLE_FORBIDDEN');
+      }
+      const history = current.lifecycleEvents || [];
+      if (history.length >= 1000) throw new Error('ACADEMY_PARTICIPATION_HISTORY_LIMIT');
+      const next: AcademyCourseParticipationDoc = {
+        ...current,
+        status: rule.next,
+        updatedIso: event.occurredIso,
+        lifecycleEvents: [...history, event]
+      };
+      if (event.type === 'voluntary_end' || event.type === 'administrative_end') {
+        next.endedIso = event.occurredIso;
+        next.endedByUid = event.actorUid;
+        if (event.type === 'administrative_end') next.endReason = event.reason;
+        else delete next.endReason;
+      }
+      assertValid(validateCourseParticipation(next));
+      await tx.update('academy_course_participations', current.id, next);
+      return next;
+    });
   }
   async setCourseAvailability(
     courseId: string, availability: 'available' | 'unavailable', now: string
