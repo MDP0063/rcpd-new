@@ -31,7 +31,7 @@ interface Props {
   onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
-type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
+type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'archivedByUid' | 'archiveReason'> & { ownerUid?: string };
 type ParticipantCourseVersion = Omit<AcademyCourseVersionDoc, 'createdByUid' | 'publishedByUid'>;
 type ParticipantProgramMaster = Omit<AcademyProgramMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
 type ParticipantProgramVersion = Omit<AcademyProgramVersionDoc, 'createdByUid' | 'publishedByUid'>;
@@ -45,6 +45,9 @@ interface ProgramEntry {
   master: ParticipantProgramMaster;
   version: ParticipantProgramVersion | null;
   draft?: AcademyProgramDraftDoc | null;
+}
+interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
+  participant: { displayName: string; badgeNumber: string } | null;
 }
 type ParticipantCorrectionView = Pick<
   AcademyCompletionCorrectionDoc,
@@ -154,6 +157,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [loadError, setLoadError] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<CourseEntry | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseParticipationDetail | null>(null);
+  const [managedCourseParticipations, setManagedCourseParticipations] = useState<ManagedCourseParticipation[]>([]);
+  const [managedParticipationsLoading, setManagedParticipationsLoading] = useState(false);
+  const [managedParticipationsError, setManagedParticipationsError] = useState('');
+  const [managedPanelOpen, setManagedPanelOpen] = useState(false);
+  const [adminLifecycleAction, setAdminLifecycleAction] = useState<{ participationId: string; action: 'end' | 'resume' } | null>(null);
+  const [adminLifecycleReason, setAdminLifecycleReason] = useState('');
+
   const detailRequestIdRef = useRef(0);
   const [selectedProgram, setSelectedProgram] = useState<ProgramEntry | null>(null);
   const [programDetail, setProgramDetail] = useState<ProgramParticipationDetail | null>(null);
