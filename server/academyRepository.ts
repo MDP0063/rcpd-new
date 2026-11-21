@@ -1247,7 +1247,7 @@ export class AcademyRepository {
       if (!participation) throw new Error('ACADEMY_DOCUMENT_NOT_FOUND');
       if (participation.status === 'completed') return participation;
       if (participation.status !== 'in_progress' || participation.updatedIso !== expectedUpdatedIso) throw new Error('ACADEMY_COMPLETION_SYNC_CONFLICT');
-      const next: AcademyCourseParticipationDoc = { ...participation, status: 'completed', completedIso, updatedIso: completedIso };
+      const next: AcademyCourseParticipationDoc = { ...participation, status: 'completed', completedIso, updatedIso: Date.parse(completedIso) >= Date.parse(participation.updatedIso) ? completedIso : participation.updatedIso };
       assertValid(validateCourseParticipation(next));
       await tx.update('academy_course_participations', participation.id, next);
       return next;
