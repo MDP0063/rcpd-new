@@ -443,7 +443,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
     setRequalificationCandidates([]);
-    setRequalificationCandidateUid('');
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    setRequalificationOrderResult(null);
     setRequalificationReason('');
     setRequalificationDueDate('');
     setRequalificationCandidateError('');
