@@ -13,6 +13,7 @@ import type {
   AcademyProgramVersionDoc,
   AcademyProgramDraftDoc,
   AcademyCourseParticipationDoc,
+  AcademyParticipantCourseParticipationView,
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
@@ -54,7 +55,7 @@ type ParticipantEvidenceView = Omit<AcademyProgressEvidenceDoc, 'recordedByUid'>
 };
 
 interface CourseParticipationDetail {
-  participation: AcademyCourseParticipationDoc;
+  participation: AcademyParticipantCourseParticipationView;
   version: ParticipantCourseVersion;
   evidence: ParticipantEvidenceView[];
   corrections: ParticipantCorrectionView[];
@@ -65,7 +66,7 @@ interface CourseParticipationDetail {
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
   version: ParticipantCourseVersion;
-  participation: AcademyCourseParticipationDoc | null;
+  participation: AcademyParticipantCourseParticipationView | null;
   qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended' | 'requalification_required';
   requalificationOrder?: ParticipantRequalificationOrder;
 }
@@ -118,7 +119,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
-  const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
+  const [courseParticipations, setCourseParticipations] = useState<AcademyParticipantCourseParticipationView[]>([]);
   const [requalificationOrders, setRequalificationOrders] = useState<ParticipantRequalificationOrder[]>([]);
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
@@ -195,7 +196,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     return permissions?.canGradeAssignedCourses === true && (assigned.includes('*') || assigned.some(code => code.toUpperCase() === courseCode.toUpperCase()));
   };
   const ownCourseParticipationByCourse = useMemo(
-    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
+    () => new Map<string, AcademyParticipantCourseParticipationView>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
   const programPinByCourse = useMemo(() => {
@@ -216,7 +217,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       const [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse] = await Promise.all([
         apiFetch<{ courses: CourseEntry[] }>(API_ENDPOINTS.ACADEMY_COURSES),
         apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
-        apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
+        apiFetch<{ participations: AcademyParticipantCourseParticipationView[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
         apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS),
         apiFetch<{ orders: ParticipantRequalificationOrder[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
       ]);
