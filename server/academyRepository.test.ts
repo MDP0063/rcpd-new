@@ -161,7 +161,7 @@ test('group requalification keeps each participant process and progress independ
   assert.equal(secondOrders[0].status, 'open');
   assert.equal((await repository.getCourseParticipation(requalificationIds[1]))?.status, 'in_progress');
   for (const userUid of participants) {
-    const history = await repository.listCourseParticipationsForUser(userUid);
+    const history = await repository.listOwnCourseParticipations(userUid);
     assert.equal(history.find(item => item.kind !== 'requalification')?.status, 'completed');
   }
 }));
