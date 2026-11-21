@@ -694,6 +694,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       <div className="space-y-2">
                         {requalificationOrders.filter(order => order.status === 'open').map(order => {
                           const course = courses.find(item => item.master.id === order.courseId);
+                          const participation = courseParticipations.find(item => item.id === order.participationId);
                           return (
                             <article key={order.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -701,6 +702,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                   <h4 className="font-medium text-slate-900 dark:text-white">{course?.version?.title || course?.master.code || 'Qualifikation'}</h4>
                                   <p className={muted + ' mt-1'}>{order.reason}</p>
                                   {order.dueIso && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(order.dueIso)}</p>}
+                                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Status: {participation ? statusLabel(participation.status) : 'Noch offen'}</p>
                                 </div>
                                 <button type="button" className={primary} onClick={() => void openRequalification(order)}>Aufgabe öffnen</button>
                               </div>
