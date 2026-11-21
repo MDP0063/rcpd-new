@@ -573,19 +573,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const currentStatus = courseDetail.participation.status;
     if ((action === 'end' && currentStatus !== 'in_progress') ||
         (action === 'resume' && currentStatus !== 'voluntarily_ended')) return;
+    const requestId = detailRequestIdRef.current;
+    const participationId = courseDetail.participation.id;
     const confirmed = await confirm(
       action === 'end'
         ? 'Möchtest du diese Teilnahme wirklich freiwillig beenden? Dein bisheriger Fortschritt bleibt erhalten. Du kannst dieselbe Teilnahme später fortsetzen.'
         : 'Möchtest du diese bestehende Teilnahme fortsetzen? Dein bisheriger Fortschritt bleibt erhalten.',
       { title: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen', confirmLabel: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen' }
     );
-    if (!confirmed) return;
-    const requestId = detailRequestIdRef.current;
+    if (!confirmed || detailRequestIdRef.current !== requestId) return;
     setSaving(true);
     const response = await apiFetch<{ participation: AcademyParticipantCourseParticipationView }>(
       action === 'end'
-        ? API_ENDPOINTS.ACADEMY_COURSE_END(courseDetail.participation.id)
-        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(courseDetail.participation.id),
+        ? API_ENDPOINTS.ACADEMY_COURSE_END(participationId)
+        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(participationId),
       { method: 'POST' }
     );
     if (!response.ok || !response.data) {
