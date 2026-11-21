@@ -80,7 +80,7 @@ interface ProgramParticipationDetail {
   };
 }
 type Screen = 'catalog' | 'course' | 'program';
-interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string; role: string }
+interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted = 'text-sm text-slate-600 dark:text-slate-300';
