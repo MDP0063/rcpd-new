@@ -131,6 +131,11 @@ test('a requalification requires a newly released final-exam result', async () =
   await repository.create('academy_courses', master.id, master);
   await repository.saveCourseDraft(master.id, { ...courseDraft, completionRequirements: assessmentVersion.completionRequirements }, 1, 'owner-1');
   await repository.publishCourseVersion(master.id, assessmentVersion, publishedMaster, 2, 'owner-1');
+  const prior = await repository.startCourseParticipation('learner-exam', master.id, '2026-11-05T11:00:00.000Z');
+  const oldProof = { attemptId: 'old-attempt', releasedAtIso: '2026-11-05T12:00:00.000Z', finalScoreBasisPoints: 10000 };
+  const priorCompletion = await resolveAcademyCourseCompletion(repository, prior, async () => oldProof);
+  assert.equal(priorCompletion.participation.status, 'completed');
+  await repository.syncResolvedCourseCompletion(prior.id, oldProof.releasedAtIso, prior.updatedIso);
   const order: AcademyRequalificationOrderDoc = {
     id: 'requalification-exam-order', userUid: 'learner-exam', courseId: master.id,
     courseVersionId: assessmentVersion.id, participationId: 'requalification_exam_participation',
@@ -143,9 +148,7 @@ test('a requalification requires a newly released final-exam result', async () =
     status: 'in_progress', startedIso: '2026-11-06T12:00:00.000Z', lastActivityIso: now,
     createdIso: now, updatedIso: now
   };
-  await repository.create('academy_requalification_orders', order.id, order);
-  await repository.create('academy_course_participations', participation.id, participation);
-  const oldProof = { attemptId: 'old-attempt', releasedAtIso: '2026-11-05T12:00:00.000Z', finalScoreBasisPoints: 10000 };
+  await repository.createRequalificationOrder(order, participation, prior.id);
   const stale = await resolveAcademyCourseCompletion(repository, participation, async () => oldProof);
   assert.equal(stale.participation.status, 'in_progress');
   const newProof = { attemptId: 'new-attempt', releasedAtIso: '2026-11-07T12:00:00.000Z', finalScoreBasisPoints: 10000 };
