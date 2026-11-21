@@ -81,6 +81,7 @@ interface ProgramParticipationDetail {
 }
 type Screen = 'catalog' | 'course' | 'program';
 interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
+interface RequalificationBatchResult { created: Array<{ orderId: string; displayName: string }>; skipped: Array<{ displayName: string; reason: string }>; failed: Array<{ displayName: string; reason: string }>; createdCount: number; skippedCount: number; failedCount: number }
 interface ParticipantRequalificationOrder { id: string; courseId: string; participationId: string; reason: string; dueIso?: string; status: 'open' | 'completed' | 'cancelled'; completedIso?: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
@@ -121,7 +122,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
   const [requalificationCandidateError, setRequalificationCandidateError] = useState('');
-  const [requalificationCandidateUid, setRequalificationCandidateUid] = useState('');
+  const [selectedRequalificationCandidateUids, setSelectedRequalificationCandidateUids] = useState<string[]>([]);
+  const [requalificationSearch, setRequalificationSearch] = useState('');
+  const [requalificationOrderResult, setRequalificationOrderResult] = useState<RequalificationBatchResult | null>(null);
   const [requalificationReason, setRequalificationReason] = useState('');
   const [requalificationDueDate, setRequalificationDueDate] = useState('');
   const [programParticipations, setProgramParticipations] = useState<AcademyProgramParticipationDoc[]>([]);
@@ -372,7 +375,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setRequalificationCandidates([]);
     setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
     setRequalificationCandidateError('');
-    setRequalificationCandidateUid('');
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    setRequalificationOrderResult(null);
     setRequalificationReason('');
     setRequalificationDueDate('');
     if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
@@ -403,24 +408,32 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const orderRequalification = async () => {
-    if (!selectedCourse || !requalificationCandidateUid || requalificationReason.trim().length < 10 || saving) return;
+    if (!selectedCourse || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10 || saving) return;
     setSaving(true);
-    const response = await apiFetch<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }>(
+    const response = await apiFetch<RequalificationBatchResult>(
       API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
-      { method: 'POST', body: JSON.stringify({ userUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+      { method: 'POST', body: JSON.stringify({ userUids: selectedRequalificationCandidateUids, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
     );
     setSaving(false);
     if (!response.ok || !response.data) {
       onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
       return;
     }
-    setRequalificationCandidateUid('');
-    setRequalificationReason('');
-    setRequalificationDueDate('');
+    setRequalificationOrderResult(response.data);
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    if (response.data.createdCount > 0) {
+      setRequalificationReason('');
+      setRequalificationDueDate('');
+    }
     const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
     if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
     await loadLearningData();
-    onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
+    onStatusToast(response.data.createdCount === 1
+      ? 'Eine Wiederqualifizierung wurde angeordnet.'
+      : response.data.createdCount > 1
+        ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
+        : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
   };
   const openRequalification = async (order: ParticipantRequalificationOrder) => {
     const entry = courses.find(item => item.master.id === order.courseId);
