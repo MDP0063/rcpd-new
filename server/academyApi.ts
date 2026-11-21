@@ -88,7 +88,6 @@ function statusFor(error: unknown): number {
       code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('REQUALIFICATION_ALREADY_OPEN') || code.includes('REQUALIFICATION_ORDER_CONFLICT') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('REQUALIFICATION_REQUIREMENTS_MISMATCH') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
       code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
       code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
-  if (code.includes('PARTICIPATION_HISTORY_LIMIT')) return 503;
   if (code.includes('JSON_STORE_INVALID') || code.includes('FIRESTORE_DOCUMENT_INVALID') ||
       code.includes('TRANSACTION_READ_AFTER_WRITE')) return 500;
   if (code.startsWith('ACADEMY_')) return 400;
