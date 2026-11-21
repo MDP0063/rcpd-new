@@ -486,7 +486,7 @@ export interface AcademyPrivateNoteDoc {
  * Owner-private notes are deliberately excluded and must remain untouched on restore.
  */
 export interface AcademyRepositoryBackupSnapshot {
-  formatVersion: 1;
+  formatVersion: 2;
   collections: {
     academy_material_categories: AcademyMaterialCategoryDoc[];
     academy_material_category_assignments: AcademyMaterialCategoryAssignmentDoc[];
