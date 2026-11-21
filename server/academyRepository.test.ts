@@ -129,7 +129,7 @@ test('a requalification requires a newly released final-exam result', async () =
     targetId: 'exam-1', description: 'Kursabschlussprüfung'
   }] };
   await repository.create('academy_courses', master.id, master);
-  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.saveCourseDraft(master.id, { ...courseDraft, completionRequirements: assessmentVersion.completionRequirements }, 1, 'owner-1');
   await repository.publishCourseVersion(master.id, assessmentVersion, publishedMaster, 2, 'owner-1');
   const order: AcademyRequalificationOrderDoc = {
     id: 'requalification-exam-order', userUid: 'learner-exam', courseId: master.id,
