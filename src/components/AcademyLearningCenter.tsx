@@ -14,6 +14,7 @@ import type {
   AcademyProgramDraftDoc,
   AcademyCourseParticipationDoc,
   AcademyParticipantCourseParticipationView,
+  AcademyParticipationLifecycleEventDoc,
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
@@ -48,6 +49,9 @@ interface ProgramEntry {
 }
 interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
   participant: { displayName: string; badgeNumber: string } | null;
+  lifecycleEvents?: Array<AcademyParticipationLifecycleEventDoc & {
+    actor: { displayName: string; badgeNumber: string } | null;
+  }>;
 }
 type ParticipantCorrectionView = Pick<
   AcademyCompletionCorrectionDoc,
@@ -1101,7 +1105,18 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                     <p className={muted + ' mt-1'}>
                                       {item.kind === 'requalification' ? 'Erneute Qualifikation' : 'Reguläre Teilnahme'} · {statusLabel(item.status)}
                                     </p>
-                                    {item.endReason && <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>}
+                                    {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
+                                      <ul className="mt-2 space-y-1">
+                                        {item.lifecycleEvents.map(event => (
+                                          <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
+                                            {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
+                                            {event.reason ? <span> – Begründung: {event.reason}</span> : null}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : item.endReason ? (
+                                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>
+                                    ) : null}
                                   </div>
                                   {item.status === 'in_progress' && (
                                     <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'end' }); setAdminLifecycleReason(''); }}>
