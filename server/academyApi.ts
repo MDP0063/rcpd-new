@@ -361,7 +361,8 @@ export function createAcademyApiRouter(
     if (!storedParticipation) return { order, participation: null };
     if (storedParticipation.kind !== 'requalification' ||
         storedParticipation.requalificationOrderId !== order.id ||
-        storedParticipation.userUid !== order.userUid || storedParticipation.courseId !== order.courseId) {
+        storedParticipation.userUid !== order.userUid || storedParticipation.courseId !== order.courseId ||
+        storedParticipation.courseVersionId !== order.courseVersionId) {
       throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
     }
     const completion = await resolveAcademyCourseCompletion(repository, storedParticipation, resolveReleasedFinalExam);
