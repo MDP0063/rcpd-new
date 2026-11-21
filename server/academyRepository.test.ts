@@ -541,7 +541,10 @@ test('course participation pins the published version and completes only after e
 
 
 test('course participation lifecycle preserves the same participation and full end/resume history', async () => withRepository(async repository => {
-  const requirements = [{ id: 'req-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true }];
+  const requirements = [
+    { id: 'req-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true },
+    { id: 'req-instructor', type: 'instructor_confirmation' as const, targetId: 'practical-1', required: true }
+  ];
   const draft = { ...courseDraft, completionRequirements: requirements };
   const publishedVersion = { ...version, completionRequirements: requirements };
   await repository.create('academy_courses', master.id, master);
