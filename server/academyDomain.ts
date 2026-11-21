@@ -486,9 +486,11 @@ export function validateCourseParticipation(
   if (participation.status === 'completed' && !isNonEmpty(participation.completedIso)) {
     return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt Start- und Abschlusszeitpunkt.');
   }
+  const hasLifecycleHistory = Boolean(participation.lifecycleEvents?.length);
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
-      (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endedByUid))) {
-    return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt Zeitpunkt und verantwortliche Person.');
+      (!isNonEmpty(participation.endedIso) ||
+       (hasLifecycleHistory ? !isNonEmpty(participation.endedByUid) : !isNonEmpty(participation.endReason)))) {
+    return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt nachvollziehbare Verlaufsdaten.');
   }
   if (participation.status === 'administratively_ended' &&
       (!isNonEmpty(participation.endReason) || participation.endReason.trim().length < 10 || participation.endReason.length > 1000)) {
