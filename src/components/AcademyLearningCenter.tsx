@@ -1027,41 +1027,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   {courseDetail.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(courseDetail.requalificationOrder.dueIso)}</p>}
                 </section>
               )}
-              {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
-                <>
-                {courseDetail.participation.status === 'in_progress' && (
-                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-lifecycle-heading">
-                    <h3 id="academy-participation-lifecycle-heading" className="font-semibold text-slate-900 dark:text-white">Deine Teilnahme</h3>
-                    <p className={muted}>Du kannst die Teilnahme freiwillig beenden. Dein bisheriger Fortschritt bleibt gespeichert und lässt sich später in derselben Teilnahme fortsetzen.</p>
-                    <button type="button" className={secondary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('end')}>Teilnahme freiwillig beenden</button>
-                  </section>
-                )}
-                {courseDetail.participation.status === 'voluntarily_ended' && (
-                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-resume-heading">
-                    <h3 id="academy-participation-resume-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahme freiwillig beendet</h3>
-                    <p className={muted}>Dein bisheriger Fortschritt bleibt erhalten. Du kannst genau hier weitermachen.</p>
-                    <button type="button" className={primary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('resume')}>Teilnahme fortsetzen</button>
-                  </section>
-                )}
-                {courseDetail.participation.status === 'administratively_ended' && (
-                  <section className={panel + ' p-4 space-y-2'} role="status">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme administrativ beendet</h3>
-                    <p className={muted}>Dein bisheriger Fortschritt bleibt gespeichert. Eine Wiederaufnahme muss durch die Academy-Verwaltung freigegeben werden.</p>
-                  </section>
-                )}
-                {courseDetail.participation.lifecycleEvents && courseDetail.participation.lifecycleEvents.length > 0 && (
-                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-history-heading">
-                    <h3 id="academy-participation-history-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahmehistorie</h3>
-                    <ul className="space-y-2">
-                      {courseDetail.participation.lifecycleEvents.map(event => (
-                        <li key={event.id} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
-                          <span>{participationLifecycleLabel(event.type)}</span>
-                          <time className="text-xs text-slate-500 dark:text-slate-400" dateTime={event.occurredIso}>{dateLabel(event.occurredIso)}</time>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
                 {canManageSelectedCourse && selectedCourse && (
                   <section className={panel + ' p-4 space-y-3'}>
                     <button
@@ -1156,6 +1121,41 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                           </div>
                         )}
                     </div>
+                  </section>
+                )}
+              {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
+                <>
+                {courseDetail.participation.status === 'in_progress' && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-lifecycle-heading">
+                    <h3 id="academy-participation-lifecycle-heading" className="font-semibold text-slate-900 dark:text-white">Deine Teilnahme</h3>
+                    <p className={muted}>Du kannst die Teilnahme freiwillig beenden. Dein bisheriger Fortschritt bleibt gespeichert und lässt sich später in derselben Teilnahme fortsetzen.</p>
+                    <button type="button" className={secondary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('end')}>Teilnahme freiwillig beenden</button>
+                  </section>
+                )}
+                {courseDetail.participation.status === 'voluntarily_ended' && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-resume-heading">
+                    <h3 id="academy-participation-resume-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahme freiwillig beendet</h3>
+                    <p className={muted}>Dein bisheriger Fortschritt bleibt erhalten. Du kannst genau hier weitermachen.</p>
+                    <button type="button" className={primary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('resume')}>Teilnahme fortsetzen</button>
+                  </section>
+                )}
+                {courseDetail.participation.status === 'administratively_ended' && (
+                  <section className={panel + ' p-4 space-y-2'} role="status">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme administrativ beendet</h3>
+                    <p className={muted}>Dein bisheriger Fortschritt bleibt gespeichert. Eine Wiederaufnahme muss durch die Academy-Verwaltung freigegeben werden.</p>
+                  </section>
+                )}
+                {courseDetail.participation.lifecycleEvents && courseDetail.participation.lifecycleEvents.length > 0 && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-history-heading">
+                    <h3 id="academy-participation-history-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahmehistorie</h3>
+                    <ul className="space-y-2">
+                      {courseDetail.participation.lifecycleEvents.map(event => (
+                        <li key={event.id} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <span>{participationLifecycleLabel(event.type)}</span>
+                          <time className="text-xs text-slate-500 dark:text-slate-400" dateTime={event.occurredIso}>{dateLabel(event.occurredIso)}</time>
+                        </li>
+                      ))}
+                    </ul>
                   </section>
                 )}
                 {courseDetail.version.learningObjectives.length > 0 && (
