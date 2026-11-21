@@ -115,6 +115,11 @@ test('requalification creates a separate participation and preserves the origina
   const locks = await repository.list<AcademyRequalificationLockDoc>('academy_requalification_locks', { where: [{ field: 'userUid', value: 'learner-requal' }] });
   assert.equal(locks.length, 1);
   assert.equal(locks[0].activeOrderId, secondOrder.id);
+  assert.equal(locks[0].id.includes('learner-requal'), false);
+  await repository.anonymizeDeletedUser('learner-requal', 'anonymized-user');
+  const anonymizedLocks = await repository.list<AcademyRequalificationLockDoc>('academy_requalification_locks', { where: [{ field: 'userUid', value: 'anonymized-user' }] });
+  assert.equal(anonymizedLocks.length, 1);
+  assert.equal((await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', secondOrder.id))?.userUid, 'anonymized-user');
 }));
 
 test('a requalification requires a newly released final-exam result', async () => withRepository(async repository => {
