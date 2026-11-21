@@ -352,6 +352,21 @@ export interface AcademyProgramVersionDoc {
   workingRevision: number;
 }
 
+export type AcademyParticipationLifecycleEventType =
+  | 'voluntary_end'
+  | 'voluntary_resume'
+  | 'administrative_end'
+  | 'administrative_reopen';
+
+export interface AcademyParticipationLifecycleEventDoc {
+  id: string;
+  type: AcademyParticipationLifecycleEventType;
+  actorUid: string;
+  occurredIso: string;
+  /** Required for administrative end/reopen events; never shown to ordinary participants. */
+  reason?: string;
+}
+
 export interface AcademyCourseParticipationDoc {
   id: string;
   /** Legacy records omit this and are treated as standard course participations. */
@@ -368,9 +383,18 @@ export interface AcademyCourseParticipationDoc {
   endedIso?: string;
   endedByUid?: string;
   endReason?: string;
+  /** Append-only lifecycle history; optional for legacy participation records. */
+  lifecycleEvents?: AcademyParticipationLifecycleEventDoc[];
   createdIso: string;
   updatedIso: string;
 }
+
+export type AcademyParticipantCourseParticipationView = Omit<
+  AcademyCourseParticipationDoc,
+  'endedByUid' | 'endReason' | 'lifecycleEvents'
+> & {
+  lifecycleEvents?: Array<Pick<AcademyParticipationLifecycleEventDoc, 'id' | 'type' | 'occurredIso'>>;
+};
 
 export type AcademyRequalificationStatus = 'open' | 'completed' | 'cancelled';
 
