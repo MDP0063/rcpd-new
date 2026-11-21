@@ -711,6 +711,29 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         })}
                       </div>
                     </section>
+                  {requalificationOrders.some(order => order.status === 'completed') && (
+                    <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-requalification-history-heading">
+                      <div>
+                        <h3 id="academy-requalification-history-heading" className="font-semibold text-slate-900 dark:text-white">Abgeschlossene erneute Qualifikationen</h3>
+                        <p className={muted + ' mt-1'}>Diese Nachweise sind zusätzlich zu deinen ursprünglichen Kursabschlüssen gespeichert.</p>
+                      </div>
+                      <div className="space-y-2">
+                        {requalificationOrders.filter(order => order.status === 'completed').map(order => {
+                          const course = courses.find(item => item.master.id === order.courseId);
+                          return (
+                            <article key={order.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+                              <div className="min-w-0">
+                                <p className="font-medium text-slate-900 dark:text-white">{course?.version?.title || course?.master.code || 'Qualifikation'}</p>
+                                <p className={muted + ' mt-1'}>Abgeschlossen am {order.completedIso ? dateLabel(order.completedIso) : '–'}</p>
+                              </div>
+                              <button type="button" className={secondary} onClick={() => void openRequalification(order)}>Nachweis ansehen</button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
+
                   )}
 
                   <section className="academy-courses-section space-y-3">
