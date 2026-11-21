@@ -572,6 +572,34 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
   };
 
+  const submitAdminLifecycleAction = async () => {
+    if (!adminLifecycleAction || !selectedCourse || !canManageSelectedCourse || saving) return;
+    const reason = adminLifecycleReason.trim();
+    if (reason.length < 10 || reason.length > 1000) {
+      onStatusToast('Bitte gib eine nachvollziehbare Begründung mit mindestens 10 Zeichen ein.');
+      return;
+    }
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyCourseParticipationDoc }>(
+      adminLifecycleAction.action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_ADMIN_END(adminLifecycleAction.participationId)
+        : API_ENDPOINTS.ACADEMY_COURSE_ADMIN_RESUME(adminLifecycleAction.participationId),
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    );
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || 'Die Teilnahme konnte nicht geändert werden.');
+      return;
+    }
+    const action = adminLifecycleAction.action;
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
+    await loadManagedCourseParticipations(selectedCourse.master.id);
+    await loadLearningData();
+    setSaving(false);
+    onStatusToast(action === 'end' ? 'Teilnahme wurde administrativ beendet.' : 'Teilnahme wurde wieder freigegeben.');
+  };
+
   const recordEvidence = async (requirementId: string, label: string) => {
     if (!courseDetail || saving || courseDetail.participation.status !== 'in_progress') return;
     const requestId = detailRequestIdRef.current;
