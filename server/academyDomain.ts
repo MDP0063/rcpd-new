@@ -503,7 +503,7 @@ export function validateCourseParticipation(
 export function validateRequalificationOrder(order: AcademyRequalificationOrderDoc): AcademyValidationResult {
   if (!isRecord(order) || !isNonEmpty(order.id) || !isNonEmpty(order.userUid) ||
       !isNonEmpty(order.courseId) || !isNonEmpty(order.courseVersionId) ||
-      !isNonEmpty(order.participationId) || !isNonEmpty(order.orderedByUid) ||
+      !isNonEmpty(order.priorCompletionParticipationId) || !isNonEmpty(order.participationId) || !isNonEmpty(order.orderedByUid) ||
       !isNonEmpty(order.orderedIso) || !isNonEmpty(order.reason) ||
       order.reason.trim().length < 10 || order.reason.length > 1000 ||
       !Array.isArray(order.requiredEvidenceRequirementIds) ||
