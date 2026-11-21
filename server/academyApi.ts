@@ -240,6 +240,12 @@ export async function resolveAcademyCourseCompletion(
   resolveReleasedFinalExam?: FinalExamProofResolver,
   includeDetails = false
 ) {
+  const requalificationOrder = participation.kind === 'requalification' && participation.requalificationOrderId
+    ? await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId)
+    : null;
+  if (participation.kind === 'requalification' && (!requalificationOrder || requalificationOrder.participationId !== participation.id)) {
+    throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+  }
   const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
   if (!version || version.courseId !== participation.courseId) throw new Error('ACADEMY_PINNED_VERSION_MISSING');
   const assessmentRequirements = version.completionRequirements.filter(item =>
@@ -252,7 +258,10 @@ export async function resolveAcademyCourseCompletion(
       for (const requirement of assessmentRequirements) {
         const proof = await resolveReleasedFinalExam(participation.userUid, requirement.targetId, courseMaster.code);
         const proofTimestamp = proof ? Date.parse(proof.releasedAtIso) : Number.NaN;
-        const participationStart = participation.startedIso ? Date.parse(participation.startedIso) : Number.NaN;
+        const participationStart = Math.max(
+          participation.startedIso ? Date.parse(participation.startedIso) : Number.NaN,
+          requalificationOrder?.reopenedIso ? Date.parse(requalificationOrder.reopenedIso) : Number.NaN
+        );
         // A previous passing exam cannot satisfy a newly ordered requalification.
         if (proof && (participation.kind !== 'requalification' ||
             (Number.isFinite(proofTimestamp) && Number.isFinite(participationStart) && proofTimestamp >= participationStart))) {
