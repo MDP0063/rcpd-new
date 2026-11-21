@@ -1669,7 +1669,7 @@ export class AcademyRepository {
       if (requalificationOrder) {
         const updatedOrder: AcademyRequalificationOrderDoc = correction.correctedStatus === 'completed'
           ? { ...requalificationOrder, status: 'completed', completedIso: correction.correctedIso }
-          : (() => { const { completedIso: _completedIso, ...openOrder } = requalificationOrder; return { ...openOrder, status: 'open' as const }; })();
+          : (() => { const { completedIso: _completedIso, ...openOrder } = requalificationOrder; return { ...openOrder, status: 'open' as const, reopenedIso: correction.correctedIso }; })();
         await tx.update('academy_requalification_orders', requalificationOrder.id, updatedOrder);
       }
       return next;
