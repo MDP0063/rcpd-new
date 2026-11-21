@@ -497,8 +497,8 @@ export function validateCourseParticipation(
       (!isNonEmpty(participation.endReason) || participation.endReason.trim().length < 10 || participation.endReason.length > 1000)) {
     return invalid('ACADEMY_PARTICIPATION_END_REASON_MISSING', 'Eine administrative Beendigung benötigt eine nachvollziehbare Begründung.');
   }
-  if (participation.endReason !== undefined && participation.endReason.length > 1000) {
-    return invalid('ACADEMY_PARTICIPATION_END_REASON_INVALID', 'Die Begründung der Beendigung ist zu lang.');
+  if (participation.endReason !== undefined && (typeof participation.endReason !== 'string' || participation.endReason.length > 1000)) {
+    return invalid('ACADEMY_PARTICIPATION_END_REASON_INVALID', 'Die Begründung der Beendigung ist ungültig oder zu lang.');
   }
   if (participation.lifecycleEvents !== undefined) {
     const events = participation.lifecycleEvents;
@@ -525,11 +525,12 @@ export function validateCourseParticipation(
     let latestEndEvent: AcademyParticipationLifecycleEventDoc | undefined;
     for (const event of events) {
       const occurred = Date.parse(event.occurredIso);
-      if (!isNonEmpty(event.id) || eventIds.has(event.id) ||
+      if (!event || typeof event !== 'object' || Array.isArray(event) ||
+          !isNonEmpty(event.id) || eventIds.has(event.id) ||
           !['voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'].includes(event.type) ||
           !isNonEmpty(event.actorUid) || !isNonEmpty(event.occurredIso) || !Number.isFinite(occurred) ||
           occurred < previousOccurred ||
-          (event.reason !== undefined && event.reason.length > 1000) ||
+          (event.reason !== undefined && (typeof event.reason !== 'string' || event.reason.length > 1000)) ||
           (['administrative_end', 'administrative_reopen'].includes(event.type) &&
            (!isNonEmpty(event.reason) || event.reason.trim().length < 10)) ||
           (['voluntary_end', 'voluntary_resume'].includes(event.type) && event.actorUid !== participation.userUid)) {
