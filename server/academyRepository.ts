@@ -1343,7 +1343,7 @@ export class AcademyRepository {
           participation.userUid !== order.userUid || participation.courseId !== order.courseId) {
         throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       }
-      if (order.status !== 'completed') return order;
+      if (order.status === 'cancelled' || (order.status !== 'completed' && !(order.status === 'open' && participation.status === 'completed'))) return order;
       if (participation.updatedIso !== expectedUpdatedIso || !['completed', 'in_progress'].includes(participation.status)) throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
       const { completedIso: _completedIso, ...openOrder } = order;
       const nextOrder: AcademyRequalificationOrderDoc = { ...openOrder, status: 'open', reopenedIso };
@@ -1353,7 +1353,7 @@ export class AcademyRepository {
       };
       assertValid(validateRequalificationOrder(nextOrder));
       assertValid(validateCourseParticipation(nextParticipation));
-      await tx.update('academy_requalification_orders', order.id, nextOrder);
+      if (order.status !== 'open' || order.reopenedIso !== reopenedIso) await tx.update('academy_requalification_orders', order.id, nextOrder);
       if (participation.status === 'completed') await tx.update('academy_course_participations', participation.id, nextParticipation);
       return nextOrder;
     });
