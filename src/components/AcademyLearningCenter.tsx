@@ -66,6 +66,8 @@ interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
   version: ParticipantCourseVersion;
   participation: AcademyCourseParticipationDoc | null;
+  qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'requalification_required';
+  requalificationOrder?: ParticipantRequalificationOrder;
 }
 interface ProgramParticipationDetail {
   participation: AcademyProgramParticipationDoc;
@@ -1069,10 +1071,21 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {programDetail
                                   ? progressItem
-                                    ? progressItem.participation ? statusLabel(progressItem.participation.status) : 'Noch nicht begonnen'
+                                    ? progressItem.qualificationStatus === 'requalification_required'
+                                      ? 'Erneute Qualifikation erforderlich'
+                                      : progressItem.requalificationOrder?.status === 'completed'
+                                        ? 'Erneut qualifiziert'
+                                        : progressItem.participation ? statusLabel(progressItem.qualificationStatus) : 'Noch nicht begonnen'
                                     : 'Fortschritt nicht verfügbar'
                                   : 'Noch nicht begonnen'}
                               </p>
+                              {progressItem?.requalificationOrder?.status === 'open' && (
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-xs text-amber-700 dark:text-amber-300">{progressItem.requalificationOrder.reason}</p>
+                                  {progressItem.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(progressItem.requalificationOrder.dueIso)}</p>}
+                                  <button type="button" className={secondary} onClick={() => void openRequalification(progressItem.requalificationOrder!)}>Erneute Qualifikation öffnen</button>
+                                </div>
+                              )}
                             </div>
                             {courseEntry
                               ? <button type="button" className={secondary} onClick={() => void openCourse(courseEntry)}>Zum Kurs</button>
