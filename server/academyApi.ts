@@ -1342,7 +1342,7 @@ export function createAcademyApiRouter(
       const participationId = `requalification_participation_${encodeURIComponent(orderId)}`;
       const order: AcademyRequalificationOrderDoc = {
         id: orderId, userUid, courseId: course.id, courseVersionId: version.id,
-        participationId, reason, requiredEvidenceRequirementIds, ...(dueIso ? { dueIso } : {}),
+        priorCompletionParticipationId, participationId, reason, requiredEvidenceRequirementIds, ...(dueIso ? { dueIso } : {}),
         status: 'open', orderedByUid: actor.uid, orderedIso: now
       };
       const participation: AcademyCourseParticipationDoc = {
