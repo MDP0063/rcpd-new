@@ -319,7 +319,7 @@ export function createAcademyApiRouter(
   recordAudit: (actorUid: string, actionTitle: string, targetLabel: string, details: string, category?: 'ACADEMY_DOC' | 'ACADEMY_PROGRESS') => Promise<void>,
   notifyMaterialReview?: (recipientUid: string, notificationId: string, title: string, message: string) => Promise<void>,
   resolveReleasedFinalExam?: FinalExamProofResolver,
-  resolveParticipantLabel?: (uid: string) => { displayName: string; badgeNumber: string; role: OfficerRole } | null
+  resolveParticipantLabel?: (uid: string) => { displayName: string; badgeNumber: string } | null
 ) {
   const router = Router();
 
@@ -1288,7 +1288,7 @@ export function createAcademyApiRouter(
       const candidates = eligibleUids.map(uid => {
         const profile = resolveParticipantLabel?.(uid);
         return profile ? { uid, ...profile } : null;
-      }).filter((item): item is { uid: string; displayName: string; badgeNumber: string; role: OfficerRole } => Boolean(item));
+      }).filter((item): item is { uid: string; displayName: string; badgeNumber: string } => Boolean(item));
       candidates.sort((a, b) => a.displayName.localeCompare(b.displayName, 'de-DE'));
       res.json({ candidates });
     } catch (error) { fail(res, error, next); }
