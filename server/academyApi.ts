@@ -1552,7 +1552,7 @@ export function createAcademyApiRouter(
       if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const master = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
       const isOwner = participation.userUid === actor.uid;
-      const isManager = Boolean(master && canManage(actor, master.ownerUid));
+      const isManager = Boolean(master && (canManage(actor, master.ownerUid) || (participation.kind === 'requalification' && canManageMaterialCourse(actor, master.code))));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const completion = await resolveAcademyCourseCompletion(repository, participation, resolveReleasedFinalExam, true);
       if (participation.kind === 'requalification' && participation.requalificationOrderId) {
@@ -1617,7 +1617,7 @@ export function createAcademyApiRouter(
       if (!participation) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const courseMaster = await repository.get<AcademyCourseMasterDoc>('academy_courses', participation.courseId);
       const isOwner = participation.userUid === actor.uid;
-      const isManager = Boolean(courseMaster && canManage(actor, courseMaster.ownerUid));
+      const isManager = Boolean(courseMaster && (canManage(actor, courseMaster.ownerUid) || (participation.kind === 'requalification' && canManageMaterialCourse(actor, courseMaster.code))));
       if (!isOwner && !isManager) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       const courseVersion = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', participation.courseVersionId);
       if (!courseVersion || !courseVersionReferencesMaterial(courseVersion, req.params.materialId, req.params.materialVersionId)) {
