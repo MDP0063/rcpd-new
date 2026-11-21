@@ -884,16 +884,19 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <span>Teilnehmer suchen</span>
                         <input className={field} type="search" value={requalificationSearch} onChange={event => setRequalificationSearch(event.target.value)} placeholder="Name oder Dienstnummer" aria-label="Teilnehmer suchen" />
                       </label>
-                      <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700" aria-label="Teilnehmer auswählen">
-                        {requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
-                          <p className={muted + ' p-3'}>Keine passenden Teilnehmer gefunden.</p>
-                        ) : requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).map(candidate => (
-                          <label key={candidate.uid} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 dark:border-slate-800">
-                            <input type="checkbox" checked={selectedRequalificationCandidateUids.includes(candidate.uid)} onChange={() => setSelectedRequalificationCandidateUids(current => current.includes(candidate.uid) ? current.filter(uid => uid !== candidate.uid) : [...current, candidate.uid])} />
-                            <span className="min-w-0 text-sm text-slate-800 dark:text-slate-100">{candidate.displayName} <span className="text-slate-500 dark:text-slate-400">· {candidate.badgeNumber}</span></span>
-                          </label>
-                        ))}
-                      </div>
+                      <fieldset className="space-y-1">
+                        <legend className="text-sm font-medium text-slate-700 dark:text-slate-200">Teilnehmer auswählen</legend>
+                        <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                          {requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
+                            <p className={muted + ' p-3'}>Keine passenden Teilnehmer gefunden.</p>
+                          ) : requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).map(candidate => (
+                            <label key={candidate.uid} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 dark:border-slate-800">
+                              <input type="checkbox" checked={selectedRequalificationCandidateUids.includes(candidate.uid)} onChange={() => setSelectedRequalificationCandidateUids(current => current.includes(candidate.uid) ? current.filter(uid => uid !== candidate.uid) : [...current, candidate.uid])} />
+                              <span className="min-w-0 text-sm text-slate-800 dark:text-slate-100">{candidate.displayName} <span className="text-slate-500 dark:text-slate-400">· {candidate.badgeNumber}</span></span>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
                       <p className={muted}>{selectedRequalificationCandidateUids.length} von {requalificationCandidates.length} Teilnehmern ausgewählt.</p>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Warum ist die erneute Qualifikation erforderlich?</span>
@@ -911,7 +914,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   )}
                   {requalificationOrderResult && (
                     <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700" role="status" aria-live="polite">
-                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} mit Hinweis</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} Fehler</p>
                       {requalificationOrderResult.skipped.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">{requalificationOrderResult.skipped.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                       {requalificationOrderResult.failed.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-rose-700 dark:text-rose-300">{requalificationOrderResult.failed.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                     </div>
