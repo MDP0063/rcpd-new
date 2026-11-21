@@ -879,23 +879,39 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   ) : (
                     <div className="space-y-3">
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                        <span>Teilnehmer</span>
-                        <select className={field} value={requalificationCandidateUid} onChange={event => setRequalificationCandidateUid(event.target.value)}>
-                          <option value="">Teilnehmer auswählen</option>
-                          {requalificationCandidates.map(candidate => <option key={candidate.uid} value={candidate.uid}>{candidate.displayName} · {candidate.badgeNumber}</option>)}
-                        </select>
+                        <span>Teilnehmer suchen</span>
+                        <input className={field} type="search" value={requalificationSearch} onChange={event => setRequalificationSearch(event.target.value)} placeholder="Name oder Dienstnummer" aria-label="Teilnehmer suchen" />
                       </label>
+                      <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700" aria-label="Teilnehmer auswählen">
+                        {requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
+                          <p className={muted + ' p-3'}>Keine passenden Teilnehmer gefunden.</p>
+                        ) : requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).map(candidate => (
+                          <label key={candidate.uid} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 dark:border-slate-800">
+                            <input type="checkbox" checked={selectedRequalificationCandidateUids.includes(candidate.uid)} onChange={() => setSelectedRequalificationCandidateUids(current => current.includes(candidate.uid) ? current.filter(uid => uid !== candidate.uid) : [...current, candidate.uid])} />
+                            <span className="min-w-0 text-sm text-slate-800 dark:text-slate-100">{candidate.displayName} <span className="text-slate-500 dark:text-slate-400">· {candidate.badgeNumber}</span></span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className={muted}>{selectedRequalificationCandidateUids.length} von {requalificationCandidates.length} Teilnehmern ausgewählt.</p>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Warum ist die erneute Qualifikation erforderlich?</span>
-                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Begründung für den Teilnehmer" />
+                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Eine Begründung für alle ausgewählten Teilnehmer" />
+                        <span className={muted}>Diese Begründung gilt für alle ausgewählten Personen.</span>
                       </label>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Frist (optional)</span>
                         <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
                       </label>
-                      <button type="button" className={primary} disabled={saving || !requalificationCandidateUid || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
-                        {saving ? 'Wird angeordnet …' : 'Wiederqualifizierung anordnen'}
+                      <button type="button" className={primary} disabled={saving || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
+                        {saving ? 'Wird angeordnet …' : selectedRequalificationCandidateUids.length === 1 ? 'Wiederqualifizierung für 1 Person anordnen' : `Wiederqualifizierung für ${selectedRequalificationCandidateUids.length} Personen anordnen`}
                       </button>
+                    </div>
+                  )}
+                  {requalificationOrderResult && (
+                    <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700" role="status" aria-live="polite">
+                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} mit Hinweis</p>
+                      {requalificationOrderResult.skipped.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">{requalificationOrderResult.skipped.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
+                      {requalificationOrderResult.failed.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-rose-700 dark:text-rose-300">{requalificationOrderResult.failed.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                     </div>
                   )}
                 </section>
