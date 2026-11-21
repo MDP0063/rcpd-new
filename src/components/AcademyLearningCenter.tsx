@@ -13,6 +13,8 @@ import type {
   AcademyProgramVersionDoc,
   AcademyProgramDraftDoc,
   AcademyCourseParticipationDoc,
+  AcademyParticipantCourseParticipationView,
+  AcademyParticipationLifecycleEventDoc,
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
@@ -30,7 +32,7 @@ interface Props {
   onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
-type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
+type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'> & { ownerUid?: string };
 type ParticipantCourseVersion = Omit<AcademyCourseVersionDoc, 'createdByUid' | 'publishedByUid'>;
 type ParticipantProgramMaster = Omit<AcademyProgramMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
 type ParticipantProgramVersion = Omit<AcademyProgramVersionDoc, 'createdByUid' | 'publishedByUid'>;
@@ -54,7 +56,7 @@ type ParticipantEvidenceView = Omit<AcademyProgressEvidenceDoc, 'recordedByUid'>
 };
 
 interface CourseParticipationDetail {
-  participation: AcademyCourseParticipationDoc;
+  participation: AcademyParticipantCourseParticipationView;
   version: ParticipantCourseVersion;
   evidence: ParticipantEvidenceView[];
   corrections: ParticipantCorrectionView[];
@@ -65,9 +67,15 @@ interface CourseParticipationDetail {
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
   version: ParticipantCourseVersion;
-  participation: AcademyCourseParticipationDoc | null;
+  participation: AcademyParticipantCourseParticipationView | null;
   qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended' | 'requalification_required';
   requalificationOrder?: ParticipantRequalificationOrder;
+}
+interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
+  participant: { displayName: string; badgeNumber: string } | null;
+  lifecycleEvents?: Array<AcademyParticipationLifecycleEventDoc & {
+    actor: { displayName: string; badgeNumber: string } | null;
+  }>;
 }
 interface ProgramParticipationDetail {
   participation: AcademyProgramParticipationDoc;
@@ -98,8 +106,17 @@ function statusLabel(status: string): string {
     case 'in_progress': return 'In Bearbeitung';
     case 'not_started': return 'Nicht begonnen';
     case 'voluntarily_ended': return 'Freiwillig beendet';
-    case 'administratively_ended': return 'Administrativ beendet';
+    case 'administratively_ended': return 'Von der Verwaltung beendet';
     default: return status;
+  }
+}
+function participationLifecycleLabel(type: string): string {
+  switch (type) {
+    case 'voluntary_end': return 'Teilnahme freiwillig beendet';
+    case 'voluntary_resume': return 'Teilnahme freiwillig fortgesetzt';
+    case 'administrative_end': return 'Teilnahme durch die Verwaltung beendet';
+    case 'administrative_reopen': return 'Teilnahme durch die Verwaltung wieder freigegeben';
+    default: return 'Teilnahmestatus geändert';
   }
 }
 function dateLabel(value?: string): string {
@@ -119,7 +136,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
-  const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
+  const [courseParticipations, setCourseParticipations] = useState<AcademyParticipantCourseParticipationView[]>([]);
   const [requalificationOrders, setRequalificationOrders] = useState<ParticipantRequalificationOrder[]>([]);
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
@@ -147,6 +164,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [loadError, setLoadError] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<CourseEntry | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseParticipationDetail | null>(null);
+  const [managedCourseParticipations, setManagedCourseParticipations] = useState<ManagedCourseParticipation[]>([]);
+  const [managedParticipationsLoading, setManagedParticipationsLoading] = useState(false);
+  const [managedParticipationsError, setManagedParticipationsError] = useState('');
+  const [managedPanelOpen, setManagedPanelOpen] = useState(false);
+  const [adminLifecycleAction, setAdminLifecycleAction] = useState<{ participationId: string; action: 'end' | 'resume' } | null>(null);
+  const [adminLifecycleReason, setAdminLifecycleReason] = useState('');
+
   const detailRequestIdRef = useRef(0);
   const [selectedProgram, setSelectedProgram] = useState<ProgramEntry | null>(null);
   const [programDetail, setProgramDetail] = useState<ProgramParticipationDetail | null>(null);
