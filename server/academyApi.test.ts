@@ -77,6 +77,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       makeAccount('academy-colonel', 'AcademyColonel', 'colonel'),
       makeAccount('academy-officer', 'AcademyOfficer', 'officer'),
       makeAccount('academy-officer-2', 'AcademyOfficerTwo', 'officer'),
+      makeAccount('academy-lifecycle-user', 'AcademyLifecycleUser', 'officer'),
       makeScopedAccount('academy-scoped-officer', 'AcademyScopedOfficer', ['SCOPE-OPS-01'])
     ],
     applications: [],
@@ -141,6 +142,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     const colonel = await login(baseUrl, 'AcademyColonel');
     const officer = await login(baseUrl, 'AcademyOfficer');
     const officer2 = await login(baseUrl, 'AcademyOfficerTwo');
+    const lifecycleUser = await login(baseUrl, 'AcademyLifecycleUser');
     const scopedOfficer = await login(baseUrl, 'AcademyScopedOfficer');
     const request = async (url: string, token?: string, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
@@ -798,16 +800,16 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(participantCourse.version.title, 'HTTP Academy Course v2');
     assert.equal(participantCourse.draft, null);
 
-    const lifecycleStarted = await request(`/api/academy/courses/${courseId}/participations`, officer2, { method: 'POST' });
+    const lifecycleStarted = await request(`/api/academy/courses/${courseId}/participations`, lifecycleUser, { method: 'POST' });
     assert.equal(lifecycleStarted.status, 201, JSON.stringify(lifecycleStarted.body));
     const lifecycleParticipationId = lifecycleStarted.body!.participation.id as string;
-    const voluntaryEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/end`, officer2, { method: 'POST' });
+    const voluntaryEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/end`, lifecycleUser, { method: 'POST' });
     assert.equal(voluntaryEnd.status, 200, JSON.stringify(voluntaryEnd.body));
     assert.equal(voluntaryEnd.body!.participation.status, 'voluntarily_ended');
     assert.equal(voluntaryEnd.body!.participation.endReason, undefined);
     assert.equal(voluntaryEnd.body!.participation.lifecycleEvents[0].actorUid, undefined);
     assert.equal((await request(`/api/academy/participations/${lifecycleParticipationId}/end`, officer)).status, 404);
-    const voluntaryResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, officer2, { method: 'POST' });
+    const voluntaryResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, lifecycleUser, { method: 'POST' });
     assert.equal(voluntaryResume.status, 200);
     assert.equal(voluntaryResume.body!.participation.status, 'in_progress');
     const deniedAdminEnd = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-end`, colonel, {
@@ -820,7 +822,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(administrativeEnd.status, 200, JSON.stringify(administrativeEnd.body));
     assert.equal(administrativeEnd.body!.participation.status, 'administratively_ended');
     assert.equal(administrativeEnd.body!.participation.endReason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
-    const participantSafeLifecycleDetail = await request(`/api/academy/participations/${lifecycleParticipationId}`, officer2);
+    const participantSafeLifecycleDetail = await request(`/api/academy/participations/${lifecycleParticipationId}`, lifecycleUser);
     assert.equal(participantSafeLifecycleDetail.body!.participation.endReason, undefined);
     assert.equal(participantSafeLifecycleDetail.body!.participation.endedByUid, undefined);
     assert.equal(participantSafeLifecycleDetail.body!.participation.lifecycleEvents.at(-1).actorUid, undefined);
@@ -829,10 +831,10 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(managerLifecycleDetail.body!.participation.lifecycleEvents.at(-1).actorUid, 'academy-admin');
     const managerLifecycleList = await request(`/api/academy/courses/${courseId}/participations`, admin);
     const managedLifecycleEntry = managerLifecycleList.body!.participations.find((item: { id: string }) => item.id === lifecycleParticipationId);
-    assert.equal(managedLifecycleEntry.participant.displayName, 'AcademyOfficerTwo');
+    assert.equal(managedLifecycleEntry.participant.displayName, 'AcademyLifecycleUser');
     assert.equal(managedLifecycleEntry.lifecycleEvents.at(-1).actor.displayName, 'AcademyAdmin');
     assert.equal(managedLifecycleEntry.lifecycleEvents.at(-1).reason, 'Die Teilnahme wird aus organisatorischen Gründen beendet.');
-    const deniedParticipantResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, officer2, { method: 'POST' });
+    const deniedParticipantResume = await request(`/api/academy/participations/${lifecycleParticipationId}/resume`, lifecycleUser, { method: 'POST' });
     assert.equal(deniedParticipantResume.status, 409);
     const administrativeResume = await request(`/api/academy/participations/${lifecycleParticipationId}/admin-resume`, admin, {
       method: 'POST', ...json({ reason: 'Die Teilnahme darf wieder aufgenommen werden.' })
