@@ -161,6 +161,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [managedParticipationsLoading, setManagedParticipationsLoading] = useState(false);
   const [managedParticipationsError, setManagedParticipationsError] = useState('');
   const [managedPanelOpen, setManagedPanelOpen] = useState(false);
+  const [managedCourseLoadedId, setManagedCourseLoadedId] = useState<string | null>(null);
   const [adminLifecycleAction, setAdminLifecycleAction] = useState<{ participationId: string; action: 'end' | 'resume' } | null>(null);
   const [adminLifecycleReason, setAdminLifecycleReason] = useState('');
 
@@ -218,6 +219,22 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     () => new Map<string, AcademyParticipantCourseParticipationView>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
+  const canManageSelectedCourse = Boolean(selectedCourse && (
+    currentUser.role === 'admin' ||
+    (currentUser.role === 'colonel' && selectedCourse.master.ownerUid === currentUser.uid)
+  ));
+  const loadManagedCourseParticipations = async (courseId: string) => {
+    setManagedParticipationsLoading(true);
+    setManagedParticipationsError('');
+    const response = await apiFetch<{ participations: ManagedCourseParticipation[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPANTS(courseId));
+    if (response.ok && response.data) {
+      setManagedCourseParticipations([...response.data.participations].sort((a, b) => Date.parse(b.updatedIso) - Date.parse(a.updatedIso)));
+      setManagedCourseLoadedId(courseId);
+    } else {
+      setManagedParticipationsError(response.error || 'Teilnahmen konnten nicht geladen werden.');
+    }
+    setManagedParticipationsLoading(false);
+  };
   const programPinByCourse = useMemo(() => {
     const map = new Map<string, ProgramCourseProgress[]>();
     for (const detail of programDetails) {
