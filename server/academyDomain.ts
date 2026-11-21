@@ -515,6 +515,9 @@ export function validateRequalificationOrder(order: AcademyRequalificationOrderD
   if (order.dueIso !== undefined && (!isNonEmpty(order.dueIso) || !Number.isFinite(Date.parse(order.dueIso)))) {
     return invalid('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID', 'Die Frist ist ungültig.');
   }
+  if (order.reopenedIso !== undefined && (!isNonEmpty(order.reopenedIso) || !Number.isFinite(Date.parse(order.reopenedIso)))) {
+    return invalid('ACADEMY_REQUALIFICATION_REOPENED_AT_INVALID', 'Der erneute Öffnungszeitpunkt ist ungültig.');
+  }
   if (order.status === 'completed' && !isNonEmpty(order.completedIso)) {
     return invalid('ACADEMY_REQUALIFICATION_COMPLETION_MISSING', 'Ein abgeschlossener Vorgang benötigt einen Abschlusszeitpunkt.');
   }
