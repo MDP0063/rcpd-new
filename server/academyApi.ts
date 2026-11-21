@@ -84,7 +84,7 @@ function statusFor(error: unknown): number {
   if (code.includes('REVISION_CONFLICT') || code.includes('DRAFT_VERSION_MISMATCH') ||
       code.includes('ALREADY_EXISTS') || code.includes('ARCHIVED') || code.includes('APPEND_ONLY') ||
       code.includes('NOT_STARTABLE') || code.includes('NOT_ACTIVE') || code.includes('CORRECTION_CONFLICT') || code.includes('COMPLETION_SYNC_CONFLICT') ||
-      code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') || code.includes('PARTICIPATION_LIFECYCLE_CONFLICT') || code.includes('PARTICIPATION_HISTORY_LIMIT') ||
+      code.includes('EVIDENCE_EXTERNAL_SOURCE_REQUIRED') || code.includes('CORRECTION_EVIDENCE_CONFLICT') || code.includes('PARTICIPATION_LIFECYCLE_CONFLICT') || code.includes('PARTICIPATION_EVENT_ID_CONFLICT') || code.includes('PARTICIPATION_HISTORY_LIMIT') ||
       code.includes('REQUIRES_EVIDENCE_INVALIDATION') || code.includes('CORRECTION_EVIDENCE_INCOMPLETE') || code.includes('PROGRAM_NOT_STARTABLE') || code.includes('PROGRAM_PARTICIPATION_ALREADY_EXISTS') || code.includes('PROGRAM_REQUIRED_COURSE_NOT_STARTABLE') || code.includes('PROGRAM_COURSE_VERSION_CONFLICT') || code.includes('PROGRAM_COURSE_PARTICIPATION_ENDED') || code.includes('REQUALIFICATION_ALREADY_OPEN') || code.includes('REQUALIFICATION_ORDER_CONFLICT') || code.includes('REQUALIFICATION_COURSE_NOT_STARTABLE') || code.includes('REQUALIFICATION_REQUIREMENTS_MISMATCH') || code.includes('CATEGORY_STATE_UNCHANGED') || code.includes('CATEGORY_IN_USE') || code.includes('DOCUMENT_TYPE_STATE_UNCHANGED') || code.includes('DOCUMENT_TYPE_IN_USE') || code.includes('MATERIAL_VERSION_NOT_PUBLISHED') || code.includes('MATERIAL_VERSION_ALREADY_EXISTS') || code.includes('DRAFT_ALREADY_PUBLISHED') ||
       code.includes('MATERIAL_REVIEW_PENDING') || code.includes('MATERIAL_REVIEW_NOT_FOUND') ||
       code.includes('MATERIAL_REVIEW_VERSION_REQUIRED') || code.includes('ARCHIVED_MATERIAL_NOT_STARTABLE')) return 409;
@@ -1300,7 +1300,7 @@ export function createAcademyApiRouter(
             ? (requalification.participation?.status === 'completed' ? 'completed' : 'in_progress')
             : currentParticipation?.status || 'not_started';
         return {
-          pin, version: courseVersion, participation: currentParticipation, qualificationStatus,
+          pin, version: courseVersion, participation: currentParticipation ? participantCourseParticipationView(currentParticipation) : null, qualificationStatus,
           ...(requalification ? { requalificationOrder: {
             id: requalification.order.id, courseId: requalification.order.courseId,
             participationId: requalification.order.participationId, reason: requalification.order.reason,
@@ -1487,7 +1487,7 @@ export function createAcademyApiRouter(
       if (!actor) { res.status(401).json({ error: 'UNAUTHENTICATED' }); return; }
       const storedParticipations = await repository.listOwnCourseParticipations(actor.uid);
       const participations = await Promise.all(storedParticipations.map(async item =>
-        (await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam)).participation
+        participantCourseParticipationView((await resolveAcademyCourseCompletion(repository, item, resolveReleasedFinalExam)).participation)
       ));
       res.json({ participations });
     } catch (error) { fail(res, error, next); }
@@ -1559,7 +1559,7 @@ export function createAcademyApiRouter(
         ? await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', currentParticipation.requalificationOrderId)
         : null;
       res.json({
-        participation: currentParticipation,
+        participation: isManager ? currentParticipation : participantCourseParticipationView(currentParticipation),
         version: isManager ? version : participantCourseVersionView(version),
         evidence: visibleEvidence,
         corrections: visibleCorrections,
@@ -1712,7 +1712,7 @@ export function createAcademyApiRouter(
         await repository.completeRequalificationOrder(result.participation.requalificationOrderId, result.participation.id, synchronized.completedIso || completion.participation.completedIso);
       }
       await recordAudit(actor.uid, 'Academy-Fortschrittsnachweis erfasst', master?.code || participation.courseId, `Nachweis für Abschlussbedingung ${requirement.id} erfasst.`, 'ACADEMY_PROGRESS');
-      res.status(201).json({ ...result, participation: completion.participation, assessmentProofs: completion.assessmentProofs });
+      res.status(201).json({ ...result, participation: isInstructor ? completion.participation : participantCourseParticipationView(completion.participation), assessmentProofs: completion.assessmentProofs });
     } catch (error) { fail(res, error, next); }
   });
 
