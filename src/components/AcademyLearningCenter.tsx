@@ -81,6 +81,7 @@ interface ProgramParticipationDetail {
 }
 type Screen = 'catalog' | 'course' | 'program';
 interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
+interface ParticipantRequalificationOrder { id: string; courseId: string; participationId: string; reason: string; dueIso?: string; status: 'open' | 'completed' | 'cancelled'; completedIso?: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
 const muted = 'text-sm text-slate-600 dark:text-slate-300';
@@ -116,7 +117,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
   const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
-  const [requalificationOrders, setRequalificationOrders] = useState<AcademyRequalificationOrderDoc[]>([]);
+  const [requalificationOrders, setRequalificationOrders] = useState<ParticipantRequalificationOrder[]>([]);
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
   const [requalificationCandidateError, setRequalificationCandidateError] = useState('');
@@ -215,7 +216,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
         apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
         apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
         apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS),
-        apiFetch<{ orders: AcademyRequalificationOrderDoc[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
+        apiFetch<{ orders: ParticipantRequalificationOrder[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
       ]);
       if (requestId !== contentLoadRequestIdRef.current) return;
       const failed = [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse].find(item => !item.ok || !item.data);
@@ -421,7 +422,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     await loadLearningData();
     onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
   };
-  const openRequalification = async (order: AcademyRequalificationOrderDoc) => {
+  const openRequalification = async (order: ParticipantRequalificationOrder) => {
     const entry = courses.find(item => item.master.id === order.courseId);
     if (!entry) { onStatusToast('Der zugehörige Kurs ist derzeit nicht verfügbar.'); return; }
     catalogOriginKeyRef.current = 'requalification:' + order.id;
