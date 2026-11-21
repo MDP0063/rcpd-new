@@ -1332,15 +1332,17 @@ export class AcademyRepository {
   }
   async listOwnRequalificationOrders(userUid: string): Promise<AcademyRequalificationOrderDoc[]> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
-    return this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
-      where: [{ field: 'userUid', value: userUid }], limit: 1000, orderBy: 'orderedIso', orderDirection: 'desc'
+    const orders = await this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
+      where: [{ field: 'userUid', value: userUid }], limit: 1000
     });
+    return orders.sort((a, b) => Date.parse(b.orderedIso) - Date.parse(a.orderedIso));
   }
   async listCourseRequalificationOrders(courseId: string): Promise<AcademyRequalificationOrderDoc[]> {
     if (!courseId.trim()) throw new Error('ACADEMY_COURSE_REQUIRED');
-    return this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
-      where: [{ field: 'courseId', value: courseId }], limit: 1000, orderBy: 'orderedIso', orderDirection: 'desc'
+    const orders = await this.adapter.list<AcademyRequalificationOrderDoc>('academy_requalification_orders', {
+      where: [{ field: 'courseId', value: courseId }], limit: 1000
     });
+    return orders.sort((a, b) => Date.parse(b.orderedIso) - Date.parse(a.orderedIso));
   }
   async startProgramParticipation(userUid: string, programId: string, now: string): Promise<AcademyProgramParticipationDoc> {
     if (!userUid.trim()) throw new Error('ACADEMY_PARTICIPANT_REQUIRED');
