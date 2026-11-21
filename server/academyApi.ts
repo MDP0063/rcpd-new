@@ -1321,7 +1321,7 @@ export function createAcademyApiRouter(
         if (typeof req.body.dueIso !== 'string' || !Number.isFinite(Date.parse(req.body.dueIso))) throw new Error('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID');
         dueIso = new Date(req.body.dueIso).toISOString();
       }
-      const rawUserUids: unknown[] = Array.isArray(req.body?.userUids) ? req.body.userUids : [req.body?.userUid];
+      const rawUserUids: unknown[] = Array.isArray(req.body?.userUids) ? req.body.userUids : [req.body?.userUid ?? req.body?.participantUid];
       if (rawUserUids.length < 1 || rawUserUids.length > 100) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANTS_INVALID');
       const userUids = rawUserUids.map(value => typeof value === 'string' ? boundedText(value, 160) : null);
       if (userUids.some(uid => !uid) || new Set(userUids).size !== userUids.length) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANTS_INVALID');
