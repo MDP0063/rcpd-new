@@ -170,6 +170,12 @@ test('a requalification requires a newly released final-exam result', async () =
     attemptId: 'after-reopen-attempt', releasedAtIso: '2026-11-09T12:00:00.000Z', finalScoreBasisPoints: 10000
   }));
   assert.equal(afterReopenProof.participation.status, 'completed');
+  await repository.syncResolvedCourseCompletion(participation.id, '2026-11-09T12:00:00.000Z');
+  await repository.completeRequalificationOrder(order.id, participation.id, '2026-11-09T12:00:00.000Z');
+  const revoked = await repository.reopenRequalificationOrder(order.id, participation.id, '2026-11-10T12:00:00.000Z');
+  assert.equal(revoked.status, 'open');
+  assert.equal(revoked.reopenedIso, '2026-11-10T12:00:00.000Z');
+  assert.equal((await repository.getCourseParticipation(participation.id))?.status, 'in_progress');
 }));
 
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
