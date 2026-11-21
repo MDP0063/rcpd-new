@@ -86,7 +86,7 @@ test('requalification creates a separate participation and preserves the origina
   const participationId = 'requalification_participation_requalification-order-1';
   const order = {
     id: orderId, userUid: 'learner-requal', courseId: master.id, courseVersionId: version.id,
-    participationId, reason: 'Die praktische Qualifikation muss erneut nachgewiesen werden.',
+    priorCompletionParticipationId: original.id, participationId, reason: 'Die praktische Qualifikation muss erneut nachgewiesen werden.',
     requiredEvidenceRequirementIds: ['req_chapter'], status: 'open' as const,
     orderedByUid: 'manager-1', orderedIso: now
   };
@@ -138,7 +138,7 @@ test('a requalification requires a newly released final-exam result', async () =
   await repository.syncResolvedCourseCompletion(prior.id, oldProof.releasedAtIso, prior.updatedIso);
   const order: AcademyRequalificationOrderDoc = {
     id: 'requalification-exam-order', userUid: 'learner-exam', courseId: master.id,
-    courseVersionId: assessmentVersion.id, participationId: 'requalification_exam_participation',
+    courseVersionId: assessmentVersion.id, priorCompletionParticipationId: prior.id, participationId: 'requalification_exam_participation',
     reason: 'Die Prüfung muss erneut abgelegt werden.', requiredEvidenceRequirementIds: ['req_assessment'],
     status: 'open', orderedByUid: 'manager-1', orderedIso: '2026-11-06T12:00:00.000Z'
   };
