@@ -222,9 +222,26 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     return permissions?.canGradeAssignedCourses === true && (assigned.includes('*') || assigned.some(code => code.toUpperCase() === courseCode.toUpperCase()));
   };
   const ownCourseParticipationByCourse = useMemo(
-    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
+    () => new Map<string, AcademyParticipantCourseParticipationView>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
+  const canManageSelectedCourse = Boolean(selectedCourse && (
+    currentUser.role === 'admin' ||
+    (currentUser.role === 'colonel' && selectedCourse.master.ownerUid === currentUser.uid)
+  ));
+  const loadManagedCourseParticipations = async (courseId: string) => {
+    const requestId = detailRequestIdRef.current;
+    setManagedParticipationsLoading(true);
+    setManagedParticipationsError('');
+    const response = await apiFetch<{ participations: ManagedCourseParticipation[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPANTS(courseId));
+    if (detailRequestIdRef.current !== requestId) return;
+    if (response.ok && response.data) {
+      setManagedCourseParticipations([...response.data.participations].sort((a, b) => Date.parse(b.updatedIso) - Date.parse(a.updatedIso)));
+    } else {
+      setManagedParticipationsError(response.error || 'Teilnahmen konnten nicht geladen werden.');
+    }
+    setManagedParticipationsLoading(false);
+  };
   const programPinByCourse = useMemo(() => {
     const map = new Map<string, ProgramCourseProgress[]>();
     for (const detail of programDetails) {
@@ -243,7 +260,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       const [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse] = await Promise.all([
         apiFetch<{ courses: CourseEntry[] }>(API_ENDPOINTS.ACADEMY_COURSES),
         apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
-        apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
+        apiFetch<{ participations: AcademyParticipantCourseParticipationView[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
         apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS),
         apiFetch<{ orders: ParticipantRequalificationOrder[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
       ]);
