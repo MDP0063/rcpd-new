@@ -13,6 +13,8 @@ import type {
   AcademyProgramVersionDoc,
   AcademyProgramDraftDoc,
   AcademyCourseParticipationDoc,
+  AcademyParticipantCourseParticipationView,
+  AcademyParticipationLifecycleEventDoc,
   AcademyProgramParticipationDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
@@ -30,7 +32,7 @@ interface Props {
   onNavigateToExam?: (examId: string, courseCode: string) => void;
 }
 
-type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
+type ParticipantCourseMaster = Omit<AcademyCourseMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'> & { ownerUid?: string };
 type ParticipantCourseVersion = Omit<AcademyCourseVersionDoc, 'createdByUid' | 'publishedByUid'>;
 type ParticipantProgramMaster = Omit<AcademyProgramMasterDoc, 'ownerUid' | 'archivedByUid' | 'archiveReason'>;
 type ParticipantProgramVersion = Omit<AcademyProgramVersionDoc, 'createdByUid' | 'publishedByUid'>;
@@ -45,6 +47,12 @@ interface ProgramEntry {
   version: ParticipantProgramVersion | null;
   draft?: AcademyProgramDraftDoc | null;
 }
+interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
+  participant: { displayName: string; badgeNumber: string } | null;
+  lifecycleEvents?: Array<AcademyParticipationLifecycleEventDoc & {
+    actor: { displayName: string; badgeNumber: string } | null;
+  }>;
+}
 type ParticipantCorrectionView = Pick<
   AcademyCompletionCorrectionDoc,
   'id' | 'participationId' | 'previousStatus' | 'correctedStatus' | 'correctedIso' | 'invalidatedEvidenceIds'
@@ -54,7 +62,7 @@ type ParticipantEvidenceView = Omit<AcademyProgressEvidenceDoc, 'recordedByUid'>
 };
 
 interface CourseParticipationDetail {
-  participation: AcademyCourseParticipationDoc;
+  participation: AcademyParticipantCourseParticipationView;
   version: ParticipantCourseVersion;
   evidence: ParticipantEvidenceView[];
   corrections: ParticipantCorrectionView[];
@@ -65,7 +73,7 @@ interface CourseParticipationDetail {
 interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
   version: ParticipantCourseVersion;
-  participation: AcademyCourseParticipationDoc | null;
+  participation: AcademyParticipantCourseParticipationView | null;
   qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended' | 'requalification_required';
   requalificationOrder?: ParticipantRequalificationOrder;
 }
@@ -98,8 +106,17 @@ function statusLabel(status: string): string {
     case 'in_progress': return 'In Bearbeitung';
     case 'not_started': return 'Nicht begonnen';
     case 'voluntarily_ended': return 'Freiwillig beendet';
-    case 'administratively_ended': return 'Administrativ beendet';
+    case 'administratively_ended': return 'Von der Verwaltung beendet';
     default: return status;
+  }
+}
+function participationLifecycleLabel(type: string): string {
+  switch (type) {
+    case 'voluntary_end': return 'Teilnahme freiwillig beendet';
+    case 'voluntary_resume': return 'Teilnahme freiwillig fortgesetzt';
+    case 'administrative_end': return 'Teilnahme durch die Verwaltung beendet';
+    case 'administrative_reopen': return 'Teilnahme durch die Verwaltung wieder freigegeben';
+    default: return 'Teilnahmestatus geändert';
   }
 }
 function dateLabel(value?: string): string {
@@ -119,7 +136,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [screen, setScreen] = useState<Screen>('catalog');
   const [courses, setCourses] = useState<CourseEntry[]>([]);
   const [programs, setPrograms] = useState<ProgramEntry[]>([]);
-  const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
+  const [courseParticipations, setCourseParticipations] = useState<AcademyParticipantCourseParticipationView[]>([]);
   const [requalificationOrders, setRequalificationOrders] = useState<ParticipantRequalificationOrder[]>([]);
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
@@ -147,6 +164,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [loadError, setLoadError] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<CourseEntry | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseParticipationDetail | null>(null);
+  const [managedCourseParticipations, setManagedCourseParticipations] = useState<ManagedCourseParticipation[]>([]);
+  const [managedParticipationsLoading, setManagedParticipationsLoading] = useState(false);
+  const [managedParticipationsError, setManagedParticipationsError] = useState('');
+  const [managedPanelOpen, setManagedPanelOpen] = useState(false);
+  const [adminLifecycleAction, setAdminLifecycleAction] = useState<{ participationId: string; action: 'end' | 'resume' } | null>(null);
+  const [adminLifecycleReason, setAdminLifecycleReason] = useState('');
+
   const detailRequestIdRef = useRef(0);
   const [selectedProgram, setSelectedProgram] = useState<ProgramEntry | null>(null);
   const [programDetail, setProgramDetail] = useState<ProgramParticipationDetail | null>(null);
@@ -198,9 +222,26 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     return permissions?.canGradeAssignedCourses === true && (assigned.includes('*') || assigned.some(code => code.toUpperCase() === courseCode.toUpperCase()));
   };
   const ownCourseParticipationByCourse = useMemo(
-    () => new Map<string, AcademyCourseParticipationDoc>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
+    () => new Map<string, AcademyParticipantCourseParticipationView>(courseParticipations.filter(item => item.kind !== 'requalification').map(item => [item.courseId, item] as const)),
     [courseParticipations]
   );
+  const canManageSelectedCourse = Boolean(selectedCourse && (
+    currentUser.role === 'admin' ||
+    (currentUser.role === 'colonel' && selectedCourse.master.ownerUid === currentUser.uid)
+  ));
+  const loadManagedCourseParticipations = async (courseId: string) => {
+    const requestId = detailRequestIdRef.current;
+    setManagedParticipationsLoading(true);
+    setManagedParticipationsError('');
+    const response = await apiFetch<{ participations: ManagedCourseParticipation[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPANTS(courseId));
+    if (detailRequestIdRef.current !== requestId) return;
+    if (response.ok && response.data) {
+      setManagedCourseParticipations([...response.data.participations].sort((a, b) => Date.parse(b.updatedIso) - Date.parse(a.updatedIso)));
+    } else {
+      setManagedParticipationsError(response.error || 'Teilnahmen konnten nicht geladen werden.');
+    }
+    setManagedParticipationsLoading(false);
+  };
   const programPinByCourse = useMemo(() => {
     const map = new Map<string, ProgramCourseProgress[]>();
     for (const detail of programDetails) {
@@ -219,7 +260,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       const [courseResponse, programResponse, courseParticipationResponse, programParticipationResponse, requalificationResponse] = await Promise.all([
         apiFetch<{ courses: CourseEntry[] }>(API_ENDPOINTS.ACADEMY_COURSES),
         apiFetch<{ programs: ProgramEntry[] }>(API_ENDPOINTS.ACADEMY_PROGRAMS),
-        apiFetch<{ participations: AcademyCourseParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
+        apiFetch<{ participations: AcademyParticipantCourseParticipationView[] }>(API_ENDPOINTS.ACADEMY_COURSE_PARTICIPATIONS),
         apiFetch<{ participations: AcademyProgramParticipationDoc[] }>(API_ENDPOINTS.ACADEMY_PROGRAM_PARTICIPATIONS),
         apiFetch<{ orders: ParticipantRequalificationOrder[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATIONS)
       ]);
@@ -374,6 +415,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       ? { ...entry, version: pins[0].version }
       : entry;
     setSelectedCourse(effectiveEntry);
+    setManagedCourseParticipations([]);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setManagedParticipationsLoading(false);
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
     setRequalificationCandidateError('');
@@ -447,6 +494,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
+    setManagedCourseParticipations([]);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setSelectedRequalificationCandidateUids([]);
     setRequalificationSearch('');
@@ -516,8 +568,79 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     }
   };
 
-  const recordEvidence = async (requirementId: string, label: string) => {
+  const transitionParticipation = async (action: 'end' | 'resume') => {
     if (!courseDetail || saving) return;
+    const currentStatus = courseDetail.participation.status;
+    if ((action === 'end' && currentStatus !== 'in_progress') ||
+        (action === 'resume' && currentStatus !== 'voluntarily_ended')) return;
+    const confirmed = await confirm(
+      action === 'end'
+        ? 'Möchtest du diese Teilnahme wirklich freiwillig beenden? Dein bisheriger Fortschritt bleibt erhalten. Du kannst dieselbe Teilnahme später fortsetzen.'
+        : 'Möchtest du diese bestehende Teilnahme fortsetzen? Dein bisheriger Fortschritt bleibt erhalten.',
+      { title: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen', confirmLabel: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen' }
+    );
+    if (!confirmed) return;
+    const requestId = detailRequestIdRef.current;
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyParticipantCourseParticipationView }>(
+      action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_END(courseDetail.participation.id)
+        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(courseDetail.participation.id),
+      { method: 'POST' }
+    );
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || (action === 'end' ? 'Die Teilnahme konnte nicht beendet werden.' : 'Die Teilnahme konnte nicht fortgesetzt werden.'));
+      return;
+    }
+    if (detailRequestIdRef.current === requestId) {
+      setCourseDetail(current => current ? { ...current, participation: response.data!.participation } : current);
+    }
+    await refreshLearningDataIfActive();
+    setSaving(false);
+    if (detailRequestIdRef.current === requestId) {
+      onStatusToast(action === 'end'
+        ? 'Teilnahme wurde beendet. Dein Fortschritt bleibt erhalten.'
+        : 'Deine bestehende Teilnahme wurde fortgesetzt.');
+    }
+  };
+
+  const submitAdminLifecycleAction = async () => {
+    if (!adminLifecycleAction || !selectedCourse || !canManageSelectedCourse || saving) return;
+    const requestId = detailRequestIdRef.current;
+    const courseId = selectedCourse.master.id;
+    const reason = adminLifecycleReason.trim();
+    if (reason.length < 10 || reason.length > 1000) {
+      onStatusToast('Bitte gib eine nachvollziehbare Begründung mit mindestens 10 Zeichen ein.');
+      return;
+    }
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyCourseParticipationDoc }>(
+      adminLifecycleAction.action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_ADMIN_END(adminLifecycleAction.participationId)
+        : API_ENDPOINTS.ACADEMY_COURSE_ADMIN_RESUME(adminLifecycleAction.participationId),
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    );
+    if (detailRequestIdRef.current !== requestId) {
+      setSaving(false);
+      return;
+    }
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || 'Die Teilnahme konnte nicht geändert werden.');
+      return;
+    }
+    const action = adminLifecycleAction.action;
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
+    await loadManagedCourseParticipations(courseId);
+    await loadLearningData();
+    setSaving(false);
+    onStatusToast(action === 'end' ? 'Die Teilnahme wurde durch die Verwaltung beendet.' : 'Die Teilnahme wurde wieder freigegeben.');
+  };
+
+  const recordEvidence = async (requirementId: string, label: string) => {
+    if (!courseDetail || saving || courseDetail.participation.status !== 'in_progress') return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = await confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`, { title: 'Fortschrittsnachweis erfassen', confirmLabel: 'Nachweis erfassen' });
@@ -938,8 +1061,137 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   {courseDetail.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(courseDetail.requalificationOrder.dueIso)}</p>}
                 </section>
               )}
+                {canManageSelectedCourse && selectedCourse && (
+                  <section className={panel + ' p-4 space-y-3'}>
+                    <button
+                      type="button"
+                      className="flex min-h-10 w-full items-center justify-between gap-3 text-left font-semibold text-slate-900 dark:text-white"
+                      aria-expanded={managedPanelOpen}
+                      aria-controls="academy-course-participation-management"
+                      onClick={() => {
+                        const nextOpen = !managedPanelOpen;
+                        setManagedPanelOpen(nextOpen);
+                        if (nextOpen) {
+                          void loadManagedCourseParticipations(selectedCourse.master.id);
+                        }
+                      }}
+                    >
+                      <span>Teilnahmen verwalten</span>
+                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                        {managedCourseParticipations.length} Einträge <span aria-hidden="true">{managedPanelOpen ? '−' : '+'}</span>
+                      </span>
+                    </button>
+                    <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten" hidden={!managedPanelOpen}>
+                        {managedParticipationsLoading ? (
+                          <p className={muted} role="status">Teilnahmen werden geladen …</p>
+                        ) : managedParticipationsError ? (
+                          <div className="space-y-2">
+                            <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{managedParticipationsError}</p>
+                            <button type="button" className={secondary} onClick={() => void loadManagedCourseParticipations(selectedCourse.master.id)}>Erneut versuchen</button>
+                          </div>
+                        ) : managedCourseParticipations.filter(item => item.status !== 'completed').length === 0 ? (
+                          <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. {managedCourseParticipations.length} abgeschlossene Teilnahmen bleiben als Verlauf gespeichert.</p>
+                        ) : (
+                          <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                            {managedCourseParticipations.filter(item => item.status !== 'completed').map(item => (
+                              <article key={item.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                      {item.participant?.displayName || 'Unbekannter Teilnehmer'}
+                                      {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
+                                    </p>
+                                    <p className={muted + ' mt-1'}>
+                                      {item.kind === 'requalification' ? 'Erneute Qualifikation' : 'Reguläre Teilnahme'} · {statusLabel(item.status)}
+                                    </p>
+                                    {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
+                                      <ul className="mt-2 space-y-1">
+                                        {item.lifecycleEvents.map(event => (
+                                          <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
+                                            {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
+                                            {event.reason ? <span> – Begründung: {event.reason}</span> : null}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : item.endReason ? (
+                                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>
+                                    ) : null}
+                                  </div>
+                                  {item.status === 'in_progress' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'end' }); setAdminLifecycleReason(''); }}>
+                                      Administrativ beenden
+                                    </button>
+                                  )}
+                                  {item.status === 'administratively_ended' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'resume' }); setAdminLifecycleReason(''); }}>
+                                      Wieder freigeben
+                                    </button>
+                                  )}
+                                </div>
+                                {adminLifecycleAction?.participationId === item.id && (
+                                  <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                                    <label className="block text-sm font-medium text-slate-800 dark:text-slate-200" htmlFor={`academy-lifecycle-reason-${item.id}`}>
+                                      {adminLifecycleAction.action === 'end' ? 'Warum wird die Teilnahme beendet?' : 'Warum wird die Teilnahme wieder freigegeben?'}
+                                    </label>
+                                    <textarea
+                                      id={`academy-lifecycle-reason-${item.id}`}
+                                      className={field}
+                                      rows={2}
+                                      maxLength={1000}
+                                      value={adminLifecycleReason}
+                                      onChange={event => setAdminLifecycleReason(event.target.value)}
+                                      placeholder="Bitte mindestens 10 Zeichen eingeben."
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                      <button type="button" className={primary} disabled={saving || adminLifecycleReason.trim().length < 10} onClick={() => void submitAdminLifecycleAction()}>
+                                        {adminLifecycleAction.action === 'end' ? 'Teilnahme beenden' : 'Teilnahme freigeben'}
+                                      </button>
+                                      <button type="button" className={secondary} disabled={saving} onClick={() => { setAdminLifecycleAction(null); setAdminLifecycleReason(''); }}>Abbrechen</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  </section>
+                )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
+                {courseDetail.participation.status === 'in_progress' && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-lifecycle-heading">
+                    <h3 id="academy-participation-lifecycle-heading" className="font-semibold text-slate-900 dark:text-white">Deine Teilnahme</h3>
+                    <p className={muted}>Du kannst die Teilnahme freiwillig beenden. Dein bisheriger Fortschritt bleibt gespeichert und lässt sich später in derselben Teilnahme fortsetzen.</p>
+                    <button type="button" className={secondary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('end')}>Teilnahme freiwillig beenden</button>
+                  </section>
+                )}
+                {courseDetail.participation.status === 'voluntarily_ended' && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-resume-heading">
+                    <h3 id="academy-participation-resume-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahme freiwillig beendet</h3>
+                    <p className={muted}>Dein bisheriger Fortschritt bleibt erhalten. Du kannst genau hier weitermachen.</p>
+                    <button type="button" className={primary + ' min-h-10'} disabled={saving} onClick={() => void transitionParticipation('resume')}>Teilnahme fortsetzen</button>
+                  </section>
+                )}
+                {courseDetail.participation.status === 'administratively_ended' && (
+                  <section className={panel + ' p-4 space-y-2'} role="status">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Teilnahme durch die Verwaltung beendet</h3>
+                    <p className={muted}>Dein bisheriger Fortschritt bleibt gespeichert. Wenn du weiterlernen sollst, kann die Academy-Verwaltung die Teilnahme wieder freigeben.</p>
+                  </section>
+                )}
+                {courseDetail.participation.lifecycleEvents && courseDetail.participation.lifecycleEvents.length > 0 && (
+                  <section className={panel + ' p-4 space-y-2'} aria-labelledby="academy-participation-history-heading">
+                    <h3 id="academy-participation-history-heading" className="font-semibold text-slate-900 dark:text-white">Teilnahmehistorie</h3>
+                    <ul className="space-y-2">
+                      {courseDetail.participation.lifecycleEvents.map(event => (
+                        <li key={event.id} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <span>{participationLifecycleLabel(event.type)}</span>
+                          <time className="text-xs text-slate-500 dark:text-slate-400" dateTime={event.occurredIso}>{dateLabel(event.occurredIso)}</time>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
                 {courseDetail.version.learningObjectives.length > 0 && (
                   <section className={`${panel} academy-course-panel p-4 space-y-3`}>
                     <h3 className="font-semibold text-slate-900 dark:text-white">Lernziele</h3>
@@ -987,7 +1239,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             </div>
                             {matching.map(item => <p key={item.id} className="text-xs text-slate-500 dark:text-slate-400">Erfasst am {dateLabel(item.recordedIso)} · {item.evidenceType === 'accepted_self_confirmation' ? 'Selbstbestätigung' : item.recordedByParticipant ? 'Dein Nachweis' : 'Ausbildernachweis'}</p>)}
                             {assessmentProof && <p className="text-xs text-slate-500 dark:text-slate-400">Prüfung bestanden und offiziell freigegeben am {dateLabel(assessmentProof.releasedAtIso)}.</p>}
-                            {!matching.length && selfConfirmable && requirement.required && (
+                            {!matching.length && selfConfirmable && requirement.required && courseDetail.participation.status === 'in_progress' && (
                               <button type="button" className={secondary} disabled={saving} onClick={() => void recordEvidence(requirement.id, requirement.description || requirement.targetId)}>
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
@@ -995,7 +1247,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             {requirement.type === 'required_assessment' && (
                               <div className="space-y-2">
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>
-                                {!assessmentProof && onNavigateToExam && (
+                                {!assessmentProof && onNavigateToExam && courseDetail.participation.status === 'in_progress' && (
                                   <button
                                     type="button"
                                     className={secondary}
