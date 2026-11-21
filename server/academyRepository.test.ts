@@ -173,8 +173,9 @@ test('a requalification requires a newly released final-exam result', async () =
 }));
 
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
-  await repository.create('academy_courses', publishedMaster.id, publishedMaster);
-  await repository.create('academy_course_versions', version.id, version);
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
   const original = await repository.startCourseParticipation('learner-race', master.id, now);
   await repository.recordProgressEvidence(original.id, {
     participationId: original.id, requirementId: 'req_chapter', evidenceType: 'required_chapter',
@@ -374,7 +375,7 @@ test('JSON adapter upgrades legacy schema v1 without losing existing collections
     assert.deepEqual(await repository.get('academy_courses', 'legacy-course'), { id: 'legacy-course' });
     await repository.create('academy_courses', master.id, master);
     const upgraded = JSON.parse(await readFile(join(directory, 'academy-db.json'), 'utf8'));
-    assert.equal(upgraded.version, 6);
+    assert.equal(upgraded.version, 8);
     assert.deepEqual(upgraded.collections.academy_material_categories, {});
     assert.deepEqual(upgraded.collections.academy_material_category_assignments, {});
     assert.deepEqual(upgraded.collections.academy_material_document_types, {});
