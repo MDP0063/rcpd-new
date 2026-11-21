@@ -1401,7 +1401,12 @@ export function createAcademyApiRouter(
           } catch { /* The persisted task remains visible and notification delivery is retried on participant load. */ }
         }
       }
-      res.status(created.length ? 201 : 200).json({ created, skipped, failed, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length });
+      const summary = { created, skipped, failed, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length };
+      if (participantUids.length === 1 && created.length === 1 && skipped.length === 0 && failed.length === 0) {
+        const order = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', created[0].orderId);
+        const participation = order ? await repository.get<AcademyCourseParticipationDoc>('academy_course_participations', order.participationId) : null;
+        res.status(201).json({ ...summary, order, participation });
+      } else res.status(created.length ? 201 : 200).json(summary);
     } catch (error) { fail(res, error, next); }
   });
 
