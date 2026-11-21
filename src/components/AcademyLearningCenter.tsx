@@ -429,6 +429,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
+    setRequalificationCandidates([]);
+    setRequalificationCandidateUid('');
+    setRequalificationReason('');
+    setRequalificationDueDate('');
+    setRequalificationCandidateError('');
+    setRequalificationCandidatesLoading(canOrderRequalificationForCourse(entry.master.code));
+    if (canOrderRequalificationForCourse(entry.master.code)) {
+      void apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(entry.master.id)).then(candidateResponse => {
+        if (detailRequestIdRef.current !== requestId) return;
+        if (candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+        else setRequalificationCandidateError(candidateResponse.error || 'Teilnehmerliste konnte nicht geladen werden.');
+        setRequalificationCandidatesLoading(false);
+      });
+    }
     setCourseDetail(null);
     setSelectedProgram(null);
     setProgramDetail(null);
