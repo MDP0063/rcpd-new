@@ -89,7 +89,7 @@ test('Academy backup restore remains compatible with snapshots predating requali
     const legacyCollections = { ...snapshot.collections } as Record<string, unknown>;
     delete legacyCollections.academy_requalification_orders;
     delete legacyCollections.academy_requalification_locks;
-    await repository.restoreSnapshot({ formatVersion: 1, collections: legacyCollections } as typeof snapshot);
+    await repository.restoreSnapshot({ formatVersion: 1, collections: legacyCollections });
     assert.deepEqual(await repository.listOwnRequalificationOrders('user-with-no-orders'), []);
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -105,7 +105,7 @@ test('Academy backup V2 rejects missing requalification collections instead of s
     const collections = { ...snapshot.collections } as Record<string, unknown>;
     delete collections.academy_requalification_orders;
     await assert.rejects(
-      repository.restoreSnapshot({ formatVersion: 2, collections } as typeof snapshot),
+      repository.restoreSnapshot({ formatVersion: 2, collections }),
       /ACADEMY_BACKUP_COLLECTION_MISSING/
     );
   } finally {
