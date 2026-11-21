@@ -428,14 +428,20 @@ export const AdminPersonnelConsole: React.FC<AdminPersonnelConsoleProps> = ({
           'academy_progress_evidence',
           'academy_completion_corrections'
         ];
+        const requiredAcademyCollectionsV2 = [
+          ...requiredAcademyCollections,
+          'academy_requalification_orders',
+          'academy_requalification_locks'
+        ];
         if (
           (!isV4 && !isV5) ||
           !parsed.examRepository?.collections ||
           requiredExamCollections.some(name => !Array.isArray(parsed.examRepository.collections[name])) ||
           (isV5 && (
-            parsed.academyRepository?.formatVersion !== 1 ||
+            (parsed.academyRepository?.formatVersion !== 1 && parsed.academyRepository?.formatVersion !== 2) ||
             !parsed.academyRepository?.collections ||
-            requiredAcademyCollections.some(name => !Array.isArray(parsed.academyRepository.collections[name])) ||
+            (parsed.academyRepository?.formatVersion === 2 ? requiredAcademyCollectionsV2 : requiredAcademyCollections)
+              .some(name => !Array.isArray(parsed.academyRepository.collections[name])) ||
             Object.prototype.hasOwnProperty.call(parsed.academyRepository.collections, 'academy_private_notes')
           ))
         ) {
