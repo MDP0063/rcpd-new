@@ -506,15 +506,20 @@ export function validateCourseParticipation(
     }
     const eventIds = new Set<string>();
     let lifecycleState: 'in_progress' | 'voluntarily_ended' | 'administratively_ended' = 'in_progress';
-    let previousOccurred = Number.isFinite(Date.parse(participation.createdIso)) ? Date.parse(participation.createdIso) : Number.NEGATIVE_INFINITY;
+    const createdAt = Date.parse(participation.createdIso);
+    if (events.length > 0 && !Number.isFinite(createdAt)) {
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Der Teilnahmebeginn ist für die Verlaufsprüfung ungültig.');
+    }
+    let previousOccurred = Number.isFinite(createdAt) ? createdAt : Number.NEGATIVE_INFINITY;
     const firstEvent = events[0];
     if (firstEvent?.type === 'voluntary_resume' || firstEvent?.type === 'administrative_reopen') {
       lifecycleState = firstEvent.type === 'voluntary_resume' ? 'voluntarily_ended' : 'administratively_ended';
-      if (!isNonEmpty(participation.endedIso) ||
+      const previousEnd = Date.parse(participation.endedIso || '');
+      if (!isNonEmpty(participation.endedIso) || !Number.isFinite(previousEnd) ||
           (!isNonEmpty(participation.endedByUid) && !isNonEmpty(participation.endReason))) {
         return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Eine Wiederaufnahme benötigt einen nachvollziehbaren vorherigen Beendigungsstand.');
       }
-      previousOccurred = Date.parse(participation.endedIso);
+      previousOccurred = previousEnd;
     }
     let latestEndEvent: AcademyParticipationLifecycleEventDoc | undefined;
     for (const event of events) {
@@ -545,9 +550,11 @@ export function validateCourseParticipation(
       previousOccurred = occurred;
     }
     const expectedFinalState = participation.status === 'completed' ? 'in_progress' : participation.status;
+    const updatedAt = Date.parse(participation.updatedIso);
+    const completedAt = participation.status === 'completed' ? Date.parse(participation.completedIso || '') : Number.POSITIVE_INFINITY;
     if (lifecycleState !== expectedFinalState ||
-        (events.length > 0 && Date.parse(participation.updatedIso) < previousOccurred) ||
-        (participation.status === 'completed' && Date.parse(participation.completedIso || '') < previousOccurred)) {
+        (events.length > 0 && (!Number.isFinite(updatedAt) || updatedAt < previousOccurred)) ||
+        (participation.status === 'completed' && (!Number.isFinite(completedAt) || completedAt < previousOccurred))) {
       return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Teilnahmestatus und Historie widersprechen sich.');
     }
     if (latestEndEvent && (
