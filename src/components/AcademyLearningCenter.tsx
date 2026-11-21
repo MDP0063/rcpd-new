@@ -411,9 +411,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
 
   const orderRequalification = async () => {
     if (!selectedCourse || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10 || saving) return;
+    const courseId = selectedCourse.master.id;
+    const requestId = detailRequestIdRef.current;
     setSaving(true);
     const response = await apiFetch<RequalificationBatchResult>(
-      API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
+      API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(courseId),
       { method: 'POST', body: JSON.stringify({ userUids: selectedRequalificationCandidateUids, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
     );
     setSaving(false);
@@ -421,6 +423,13 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
       return;
     }
+    await loadLearningData();
+    onStatusToast(response.data.createdCount === 1
+      ? 'Eine Wiederqualifizierung wurde angeordnet.'
+      : response.data.createdCount > 1
+        ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
+        : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
+    if (detailRequestIdRef.current !== requestId) return;
     setRequalificationOrderResult(response.data);
     setSelectedRequalificationCandidateUids([]);
     setRequalificationSearch('');
@@ -428,14 +437,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       setRequalificationReason('');
       setRequalificationDueDate('');
     }
-    const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
-    if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
-    await loadLearningData();
-    onStatusToast(response.data.createdCount === 1
-      ? 'Eine Wiederqualifizierung wurde angeordnet.'
-      : response.data.createdCount > 1
-        ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
-        : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
+    const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(courseId));
+    if (detailRequestIdRef.current === requestId && candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
   };
   const openRequalification = async (order: ParticipantRequalificationOrder) => {
     const entry = courses.find(item => item.master.id === order.courseId);
