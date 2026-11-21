@@ -1377,7 +1377,7 @@ export function createAcademyApiRouter(
         if (completion.participation.status === 'completed' && completion.participation.completedIso) {
           const synchronized = await repository.syncResolvedCourseCompletion(participation.id, completion.participation.completedIso, participation.updatedIso);
           orders.push(await repository.completeRequalificationOrder(order.id, participation.id, synchronized.completedIso || completion.participation.completedIso));
-        } else if (order.status === 'completed' && completion.participation.status === 'in_progress') {
+        } else if (completion.participation.status === 'in_progress' && (order.status === 'completed' || participation.status === 'completed')) {
           orders.push(await repository.reopenRequalificationOrder(order.id, participation.id, new Date().toISOString(), participation.updatedIso));
         } else orders.push(order);
       }
@@ -1443,7 +1443,7 @@ export function createAcademyApiRouter(
           await repository.completeRequalificationOrder(participation.requalificationOrderId, participation.id, synchronized.completedIso || completion.participation.completedIso);
         } else if (completion.participation.status === 'in_progress') {
           const currentOrder = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', participation.requalificationOrderId);
-          if (currentOrder?.status === 'completed') await repository.reopenRequalificationOrder(currentOrder.id, participation.id, new Date().toISOString(), participation.updatedIso);
+          if (currentOrder && (currentOrder.status === 'completed' || participation.status === 'completed')) await repository.reopenRequalificationOrder(currentOrder.id, participation.id, new Date().toISOString(), participation.updatedIso);
         }
       }
       const { participation: currentParticipation, version, evidence, corrections, assessmentProofs } = completion;
