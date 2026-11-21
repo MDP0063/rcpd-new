@@ -1310,6 +1310,7 @@ export function createAcademyApiRouter(
       }
       const userUid = boundedText(req.body?.userUid, 160);
       if (!userUid) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_REQUIRED');
+      if (!resolveParticipantLabel?.(userUid)) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_NOT_FOUND');
       const now = new Date().toISOString();
       const versionId = course.currentPublishedVersionId;
       if (!versionId) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
