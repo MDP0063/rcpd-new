@@ -415,6 +415,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       ? { ...entry, version: pins[0].version }
       : entry;
     setSelectedCourse(effectiveEntry);
+    setManagedCourseParticipations([]);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setManagedParticipationsLoading(false);
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
     setRequalificationCandidateError('');
@@ -488,6 +494,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
+    setManagedCourseParticipations([]);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setManagedParticipationsLoading(false);
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setSelectedRequalificationCandidateUids([]);
     setRequalificationSearch('');
