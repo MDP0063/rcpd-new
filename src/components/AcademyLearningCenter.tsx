@@ -887,7 +887,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                       <fieldset className="space-y-1">
                         <legend className="text-sm font-medium text-slate-700 dark:text-slate-200">Teilnehmer auswählen</legend>
                         <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                          {requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
+                          {requalificationCandidates.filter(candidate => selectedRequalificationCandidateUids.includes(candidate.uid) || `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
                             <p className={muted + ' p-3'}>Keine passenden Teilnehmer gefunden.</p>
                           ) : requalificationCandidates.filter(candidate => `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).map(candidate => (
                             <label key={candidate.uid} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 dark:border-slate-800">
