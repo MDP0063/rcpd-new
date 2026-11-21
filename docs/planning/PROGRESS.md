@@ -63,7 +63,7 @@ Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar
 - Tests für getrennte Historie, erneuten Vorgang nach Abschluss und konkurrierende Anordnungen sind ergänzt. CI und unabhängige Sicherheitsprüfung stehen noch aus; die Funktion ist nicht gemergt oder produktiv abgenommen.
 - Noch offen: Gruppenanordnung, vollständige Benachrichtigungs-Zustellgarantie und die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA.
 - Zusätzliche Integrität: Ein freigegebener Prüfungserfolg muss nach der Anordnung bzw. nach der letzten Wiederöffnung liegen. Wird ein Prüfungsnachweis ungültig oder ein neuer Abschluss korrigiert, wird derselbe Vorgang wieder geöffnet; der nächste Nachweis muss danach liegen. Benachrichtigungen verwenden stabile IDs und werden beim Laden der Teilnehmeraufgaben erneut versucht. Abgeschlossene Wiederqualifizierungen bleiben in der Academy-Historie separat sichtbar.
-- CI-Zwischenstand: Commit `2c0b060` hatte TypeScript-/Produktionsbuild erfolgreich und 470/470 Tests bestanden. Nachfolgende Korrekturen an Synchronisierung, Wiederöffnung und Historienanzeige benötigen noch einen abschließenden CI-Lauf.
+- CI-Abnahme auf dem aktuellen Implementierungsstand: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 470/470 Tests bestanden. Die manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
 
 ## 1. Gesamtstatus
 
