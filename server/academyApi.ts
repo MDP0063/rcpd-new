@@ -1389,6 +1389,7 @@ export function createAcademyApiRouter(
       const courseParticipations = await repository.listCourseParticipations(course.id);
       const skipped: Array<{ displayName: string; reason: string }> = [];
       const failed: Array<{ displayName: string; reason: string }> = [];
+      const warnings: Array<{ displayName: string; reason: string }> = [];
       const eligible: Array<{ userUid: string; displayName: string; priorCompletionParticipationId: string }> = [];
       for (let index = 0; index < participantUids.length; index += 8) {
         const batch = participantUids.slice(index, index + 8);
@@ -1447,7 +1448,7 @@ export function createAcademyApiRouter(
           await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
             `Wiederqualifizierung für ${candidate.displayName} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
         } catch {
-          failed.push({ displayName: candidate.displayName, reason: 'Die Aufgabe wurde erstellt, aber der Audit-Eintrag konnte nicht bestätigt werden. Bitte informiere einen Administrator.' });
+          warnings.push({ displayName: candidate.displayName, reason: 'Die Aufgabe wurde erstellt, aber der zusätzliche Audit-Eintrag konnte nicht bestätigt werden. Bitte informiere einen Administrator.' });
         }
         if (notifyMaterialReview) {
           try {
@@ -1456,7 +1457,7 @@ export function createAcademyApiRouter(
           } catch { /* The persisted task remains visible and notification delivery is retried on participant load. */ }
         }
       }
-      const summary = { created, skipped, failed, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length };
+      const summary = { created, skipped, failed, warnings, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length, warningCount: warnings.length };
       if (participantUids.length === 1 && created.length === 1 && skipped.length === 0 && failed.length === 0) {
         const order = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', created[0].orderId);
         const participation = order ? await repository.get<AcademyCourseParticipationDoc>('academy_course_participations', order.participationId) : null;
