@@ -738,7 +738,7 @@ test('required_assessment dynamically completes a course only while a released f
 
   const voluntarilyEnded = {
     ...participation, status: 'voluntarily_ended' as const,
-    endedIso: '2026-11-10T12:30:00.000Z', endReason: 'Teilnahme freiwillig beendet'
+    endedIso: '2026-11-10T12:30:00.000Z', endedByUid: 'learner-1'
   };
   const voluntaryResult = await resolveAcademyCourseCompletion(fakeRepository, voluntarilyEnded, resolver);
   assert.equal(voluntaryResult.participation.status, 'voluntarily_ended');
@@ -746,7 +746,7 @@ test('required_assessment dynamically completes a course only while a released f
 
   const administrativelyEnded = {
     ...participation, status: 'administratively_ended' as const,
-    endedIso: '2026-11-10T12:45:00.000Z', endReason: 'Teilnahme administrativ beendet'
+    endedIso: '2026-11-10T12:45:00.000Z', endedByUid: 'admin-1', endReason: 'Teilnahme administrativ beendet'
   };
   const administrativeResult = await resolveAcademyCourseCompletion(fakeRepository, administrativelyEnded, resolver);
   assert.equal(administrativeResult.participation.status, 'administratively_ended');
