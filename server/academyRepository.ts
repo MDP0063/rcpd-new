@@ -260,18 +260,18 @@ function validateAcademyBackupReferences(
 }
 
 export function validateAcademyRepositoryBackupSnapshot(value: unknown): AcademyRepositoryBackupSnapshot {
-  if (!isRecord(value) || value.formatVersion !== 1 || !isRecord(value.collections)) {
+  if (!isRecord(value) || (value.formatVersion !== 1 && value.formatVersion !== 2) || !isRecord(value.collections)) {
     throw new Error('ACADEMY_BACKUP_INVALID');
   }
+  const legacySnapshot = value.formatVersion === 1;
   if (Object.prototype.hasOwnProperty.call(value.collections, 'academy_private_notes')) {
     throw new Error('ACADEMY_BACKUP_PRIVATE_NOTES_FORBIDDEN');
   }
   const collections = {} as AcademyRepositoryBackupSnapshot['collections'];
   for (const collection of ACADEMY_BACKUP_COLLECTIONS) {
     const rawDocuments = value.collections[collection];
-    const documents = rawDocuments === undefined && (collection === 'academy_requalification_orders' || collection === 'academy_requalification_locks')
-      ? []
-      : rawDocuments;
+    const isRequalificationCollection = collection === 'academy_requalification_orders' || collection === 'academy_requalification_locks';
+    const documents = rawDocuments === undefined && legacySnapshot && isRequalificationCollection ? [] : rawDocuments;
     if (!Array.isArray(documents)) throw new Error('ACADEMY_BACKUP_COLLECTION_MISSING');
     const seen = new Set<string>();
     for (const rawDocument of documents) {
@@ -288,7 +288,7 @@ export function validateAcademyRepositoryBackupSnapshot(value: unknown): Academy
     (collections as Record<string, AcademyDocument[]>)[collection] = documents as AcademyDocument[];
   }
   validateAcademyBackupReferences(collections);
-  return { formatVersion: 1, collections };
+  return { formatVersion: 2, collections };
 }
 function courseDraftMatchesVersion(draft: AcademyCourseDraftDoc, version: AcademyCourseVersionDoc): boolean {
   return draft.title === version.title &&
