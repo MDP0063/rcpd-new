@@ -524,7 +524,9 @@ export function validateCourseParticipation(
     }
     let latestEndEvent: AcademyParticipationLifecycleEventDoc | undefined;
     for (const event of events) {
-      const occurred = Date.parse(event.occurredIso);
+      const occurred = event && typeof event === 'object' && !Array.isArray(event) && typeof event.occurredIso === 'string'
+        ? Date.parse(event.occurredIso)
+        : Number.NaN;
       if (!event || typeof event !== 'object' || Array.isArray(event) ||
           !isNonEmpty(event.id) || eventIds.has(event.id) ||
           !['voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'].includes(event.type) ||
