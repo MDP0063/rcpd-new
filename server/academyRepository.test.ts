@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AcademyRepository, createJsonAcademyRepository } from './academyRepository.ts';
 import { resolveAcademyCourseCompletion } from './academyApi.ts';
-import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc, AcademyRequalificationLockDoc, AcademyRequalificationOrderDoc } from '../src/types/academy.ts';
+import type { AcademyCourseMasterDoc, AcademyCourseDraftDoc, AcademyCourseVersionDoc, AcademyCourseParticipationDoc, AcademyProgramMasterDoc, AcademyProgramDraftDoc, AcademyPrivateNoteDoc, AcademyRequalificationLockDoc, AcademyRequalificationOrderDoc, AcademyCompletionCorrectionDoc } from '../src/types/academy.ts';
 
 async function withRepository(run: (repository: AcademyRepository) => Promise<void>) {
   const directory = await mkdtemp(join(tmpdir(), 'academy-repository-'));
@@ -129,12 +129,19 @@ test('a requalification requires a newly released final-exam result', async () =
   }] };
   await repository.create('academy_courses', publishedMaster.id, publishedMaster);
   await repository.create('academy_course_versions', assessmentVersion.id, assessmentVersion);
+  const order: AcademyRequalificationOrderDoc = {
+    id: 'requalification-exam-order', userUid: 'learner-exam', courseId: master.id,
+    courseVersionId: assessmentVersion.id, participationId: 'requalification_exam_participation',
+    reason: 'Die Prüfung muss erneut abgelegt werden.', requiredEvidenceRequirementIds: ['req_assessment'],
+    status: 'open', orderedByUid: 'manager-1', orderedIso: '2026-11-06T12:00:00.000Z'
+  };
   const participation: AcademyCourseParticipationDoc = {
     id: 'requalification_exam_participation', userUid: 'learner-exam', courseId: master.id,
-    courseVersionId: assessmentVersion.id, kind: 'requalification', requalificationOrderId: 'requalification-exam-order',
+    courseVersionId: assessmentVersion.id, kind: 'requalification', requalificationOrderId: order.id,
     status: 'in_progress', startedIso: '2026-11-06T12:00:00.000Z', lastActivityIso: now,
     createdIso: now, updatedIso: now
   };
+  await repository.create('academy_requalification_orders', order.id, order);
   await repository.create('academy_course_participations', participation.id, participation);
   const oldProof = { attemptId: 'old-attempt', releasedAtIso: '2026-11-05T12:00:00.000Z', finalScoreBasisPoints: 10000 };
   const stale = await resolveAcademyCourseCompletion(repository, participation, async () => oldProof);
@@ -143,6 +150,24 @@ test('a requalification requires a newly released final-exam result', async () =
   const fresh = await resolveAcademyCourseCompletion(repository, participation, async () => newProof);
   assert.equal(fresh.participation.status, 'completed');
   assert.equal(fresh.assessmentProofs.req_assessment.attemptId, 'new-attempt');
+  await repository.syncResolvedCourseCompletion(participation.id, newProof.releasedAtIso);
+  await repository.completeRequalificationOrder(order.id, participation.id, newProof.releasedAtIso);
+  const correction: AcademyCompletionCorrectionDoc = {
+    id: 'requalification-exam-correction', participationId: participation.id,
+    previousStatus: 'completed', correctedStatus: 'in_progress',
+    reason: 'Der neue Prüfungsabschluss muss erneut erbracht werden.', actorUid: 'admin-1',
+    correctedIso: '2026-11-08T12:00:00.000Z'
+  };
+  await repository.correctCourseParticipation(participation.id, correction, 'completed');
+  const reopened = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', order.id);
+  assert.equal(reopened?.status, 'open');
+  assert.equal(reopened?.reopenedIso, correction.correctedIso);
+  const beforeReopenProof = await resolveAcademyCourseCompletion(repository, { ...participation, status: 'in_progress' }, async () => newProof);
+  assert.equal(beforeReopenProof.participation.status, 'in_progress');
+  const afterReopenProof = await resolveAcademyCourseCompletion(repository, { ...participation, status: 'in_progress' }, async () => ({
+    attemptId: 'after-reopen-attempt', releasedAtIso: '2026-11-09T12:00:00.000Z', finalScoreBasisPoints: 10000
+  }));
+  assert.equal(afterReopenProof.participation.status, 'completed');
 }));
 
 test('concurrent requalification orders cannot create duplicate open requirements', async () => withRepository(async repository => {
