@@ -897,17 +897,17 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                           ))}
                         </div>
                       </fieldset>
-                      <p className={muted}>{selectedRequalificationCandidateUids.length} von {requalificationCandidates.length} Teilnehmern ausgewählt.</p>
+                      <p className={muted}>{selectedRequalificationCandidateUids.length} von {requalificationCandidates.length} Teilnehmern ausgewählt (maximal 100 gleichzeitig).</p>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Warum ist die erneute Qualifikation erforderlich?</span>
                         <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Eine Begründung für alle ausgewählten Teilnehmer" />
-                        <span className={muted}>Diese Begründung gilt für alle ausgewählten Personen.</span>
+                        <span className={muted}>Diese Begründung gilt für alle ausgewählten Personen und muss mindestens 10 Zeichen enthalten.</span>
                       </label>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Frist (optional)</span>
                         <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
                       </label>
-                      <button type="button" className={primary} disabled={saving || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
+                      <button type="button" className={primary} disabled={saving || selectedRequalificationCandidateUids.length === 0 || selectedRequalificationCandidateUids.length > 100 || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
                         {saving ? 'Wird angeordnet …' : selectedRequalificationCandidateUids.length === 1 ? 'Wiederqualifizierung für 1 Person anordnen' : `Wiederqualifizierung für ${selectedRequalificationCandidateUids.length} Personen anordnen`}
                       </button>
                     </div>
