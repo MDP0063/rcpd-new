@@ -66,7 +66,7 @@ interface ProgramCourseProgress {
   pin: AcademyProgramParticipationDoc['requiredCoursePins'][number];
   version: ParticipantCourseVersion;
   participation: AcademyCourseParticipationDoc | null;
-  qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'requalification_required';
+  qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended' | 'requalification_required';
   requalificationOrder?: ParticipantRequalificationOrder;
 }
 interface ProgramParticipationDetail {
