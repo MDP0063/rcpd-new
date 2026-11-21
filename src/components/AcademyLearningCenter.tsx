@@ -1097,7 +1097,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                 {adminLifecycleAction?.participationId === item.id && (
                                   <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
                                     <label className="block text-sm font-medium text-slate-800 dark:text-slate-200" htmlFor={`academy-lifecycle-reason-${item.id}`}>
-                                      {adminLifecycleAction.action === 'end' ? 'Begründung für die administrative Beendigung' : 'Begründung für die Wiederfreigabe'}
+                                      {adminLifecycleAction.action === 'end' ? 'Warum wird die Teilnahme beendet?' : 'Warum wird die Teilnahme wieder freigegeben?'}
                                     </label>
                                     <textarea
                                       id={`academy-lifecycle-reason-${item.id}`}
