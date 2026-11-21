@@ -1383,12 +1383,18 @@ export function createAcademyApiRouter(
       }
       if (notifyMaterialReview) {
         for (const order of orders) {
-          if (order.status !== 'open' || !order.reopenedIso) continue;
+          if (order.status !== 'open') continue;
           try {
-            await notifyMaterialReview(actor.uid, `academy-requalification-reopened-${order.id}-${Date.parse(order.reopenedIso)}`,
-              'Erneute Qualifikation wieder offen',
-              'Deine erneute Qualifikation wurde nach einer Prüfungskorrektur wieder geöffnet. Bitte öffne die Aufgabe und erbringe den neuen Nachweis.');
-          } catch { /* The open task remains visible; the deterministic notification ID makes a later retry safe. */ }
+            if (order.reopenedIso) {
+              await notifyMaterialReview(actor.uid, `academy-requalification-reopened-${order.id}-${Date.parse(order.reopenedIso)}`,
+                'Erneute Qualifikation wieder offen',
+                'Deine erneute Qualifikation wurde nach einer Prüfungskorrektur wieder geöffnet. Bitte öffne die Aufgabe und erbringe den neuen Nachweis.');
+            } else {
+              await notifyMaterialReview(actor.uid, `academy-requalification-${order.id}`,
+                'Erneute Qualifikation erforderlich',
+                'Für eine deiner Qualifikationen ist ein neuer Nachweis erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.');
+            }
+          } catch { /* The open task remains visible; deterministic notification IDs make a later retry safe. */ }
         }
       }
       res.json({ orders: orders.map(order => ({
