@@ -352,6 +352,39 @@ export function createAcademyApiRouter(
     return { ...draft, chapters };
   }
 
+  async function resolveRequalificationOrderProgress(order: AcademyRequalificationOrderDoc): Promise<{
+    order: AcademyRequalificationOrderDoc;
+    participation: AcademyCourseParticipationDoc | null;
+  }> {
+    if (order.status === 'cancelled') return { order, participation: null };
+    const storedParticipation = await repository.getCourseParticipation(order.participationId);
+    if (!storedParticipation) return { order, participation: null };
+    if (storedParticipation.kind !== 'requalification' ||
+        storedParticipation.requalificationOrderId !== order.id ||
+        storedParticipation.userUid !== order.userUid || storedParticipation.courseId !== order.courseId ||
+        storedParticipation.courseVersionId !== order.courseVersionId) {
+      throw new Error('ACADEMY_REQUALIFICATION_ORDER_CONFLICT');
+    }
+    const completion = await resolveAcademyCourseCompletion(repository, storedParticipation, resolveReleasedFinalExam);
+    if (completion.participation.status === 'completed' && completion.participation.completedIso) {
+      const synchronized = await repository.syncResolvedCourseCompletion(
+        storedParticipation.id, completion.participation.completedIso, storedParticipation.updatedIso
+      );
+      const completedOrder = await repository.completeRequalificationOrder(
+        order.id, storedParticipation.id, synchronized.completedIso || completion.participation.completedIso
+      );
+      return { order: completedOrder, participation: synchronized };
+    }
+    if (completion.participation.status === 'in_progress' && order.status === 'completed') {
+      const reopenedOrder = await repository.reopenRequalificationOrder(
+        order.id, storedParticipation.id, new Date().toISOString(), storedParticipation.updatedIso
+      );
+      const reopenedParticipation = await repository.getCourseParticipation(storedParticipation.id);
+      return { order: reopenedOrder, participation: reopenedParticipation || completion.participation };
+    }
+    return { order, participation: completion.participation };
+  }
+
   async function dispatchPendingMaterialReviewNotifications(): Promise<void> {
     if (!notifyMaterialReview) return;
     try {
@@ -1229,6 +1262,7 @@ export function createAcademyApiRouter(
       if (!version || version.programId !== participation.programId) {
         res.status(404).json({ error: 'ACADEMY_PINNED_VERSION_MISSING' }); return;
       }
+      const userRequalificationOrders = await repository.listOwnRequalificationOrders(actor.uid);
       const requiredCourses = await Promise.all(participation.requiredCoursePins.map(async pin => {
         const [courseVersion, courseParticipation] = await Promise.all([
           repository.get<AcademyCourseVersionDoc>('academy_course_versions', pin.courseVersionId),
@@ -1242,10 +1276,31 @@ export function createAcademyApiRouter(
         const currentParticipation = courseParticipation
           ? (await resolveAcademyCourseCompletion(repository, courseParticipation, resolveReleasedFinalExam)).participation
           : null;
-        return { pin, version: courseVersion, participation: currentParticipation };
+        const currentOrder = userRequalificationOrders.find(item => item.courseId === pin.courseId && item.status !== 'cancelled');
+        let requalification: { order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc | null } | null = null;
+        if (currentOrder) {
+          if (currentOrder.priorCompletionParticipationId !== pin.courseParticipationId) {
+            throw new Error('ACADEMY_PROGRAM_REQUALIFICATION_LINK_CONFLICT');
+          }
+          requalification = await resolveRequalificationOrderProgress(currentOrder);
+          if (!requalification.participation) throw new Error('ACADEMY_PROGRAM_REQUALIFICATION_LINK_CONFLICT');
+        }
+        const qualificationStatus = requalification?.order.status === 'open'
+          ? 'requalification_required'
+          : requalification?.order.status === 'completed'
+            ? (requalification.participation?.status === 'completed' ? 'completed' : 'in_progress')
+            : currentParticipation?.status || 'not_started';
+        return {
+          pin, version: courseVersion, participation: currentParticipation, qualificationStatus,
+          ...(requalification ? { requalificationOrder: {
+            id: requalification.order.id, courseId: requalification.order.courseId,
+            participationId: requalification.order.participationId, reason: requalification.order.reason,
+            dueIso: requalification.order.dueIso, status: requalification.order.status
+          } } : {})
+        };
       }));
-      const completedCount = requiredCourses.filter(item => item.participation?.status === 'completed').length;
-      const startedCount = requiredCourses.filter(item => Boolean(item.participation)).length;
+      const completedCount = requiredCourses.filter(item => item.qualificationStatus === 'completed').length;
+      const startedCount = requiredCourses.filter(item => item.participation || item.requalificationOrder).length;
       const progress = {
         requiredCourseCount: requiredCourses.length,
         startedRequiredCourseCount: startedCount,
@@ -1320,7 +1375,7 @@ export function createAcademyApiRouter(
         if (typeof req.body.dueIso !== 'string' || !Number.isFinite(Date.parse(req.body.dueIso))) throw new Error('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID');
         dueIso = new Date(req.body.dueIso).toISOString();
       }
-      const userUid = boundedText(req.body?.userUid, 160);
+      const userUid = boundedText(req.body?.participantUid, 160);
       if (!userUid) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_REQUIRED');
       if (!resolveParticipantLabel?.(userUid)) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_NOT_FOUND');
       const now = new Date().toISOString();

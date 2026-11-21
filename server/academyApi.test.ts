@@ -974,6 +974,64 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal('publishedByUid' in programDetail.body!.requiredCourses[0].version, false);
     assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
 
+    const orderedRequalification = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
+      method: 'POST',
+      ...json({ participantUid: 'academy-officer', reason: 'Die aktuelle Qualifikation muss erneut nachgewiesen werden.' })
+    });
+    assert.equal(orderedRequalification.status, 201, JSON.stringify(orderedRequalification.body));
+    const programAfterRequalificationOrder = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
+    assert.equal(programAfterRequalificationOrder.status, 200, JSON.stringify(programAfterRequalificationOrder.body));
+    assert.equal(programAfterRequalificationOrder.body!.progress.completedRequiredCourseCount, 0);
+    assert.equal(programAfterRequalificationOrder.body!.progress.completionPercentage, 0);
+    assert.equal(programAfterRequalificationOrder.body!.progress.status, 'in_progress');
+    assert.equal(programAfterRequalificationOrder.body!.requiredCourses[0].participation.status, 'completed', 'the original historical course completion remains unchanged');
+    assert.equal(programAfterRequalificationOrder.body!.requiredCourses[0].qualificationStatus, 'requalification_required');
+    assert.equal(programAfterRequalificationOrder.body!.requiredCourses[0].requalificationOrder.status, 'open');
+    const secondProgram = await request('/api/academy/programs', admin, {
+      method: 'POST',
+      ...json({
+        code: 'PROGRAM-HTTP-02', title: 'Second HTTP Program', summary: '',
+        learningObjectives: [
+          { id: 'p2-1', description: 'Objective one' },
+          { id: 'p2-2', description: 'Objective two' },
+          { id: 'p2-3', description: 'Objective three' }
+        ],
+        courseReferences: [{ courseId, requirement: 'required', order: 0 }]
+      })
+    });
+    assert.equal(secondProgram.status, 201, JSON.stringify(secondProgram.body));
+    const secondProgramId = secondProgram.body!.master.id as string;
+    const secondProgramPublished = await request(`/api/academy/programs/${secondProgramId}/publish`, admin, {
+      method: 'POST', ...json({ expectedRevision: 1 })
+    });
+    assert.equal(secondProgramPublished.status, 201, JSON.stringify(secondProgramPublished.body));
+    const secondProgramStarted = await request(`/api/academy/programs/${secondProgramId}/participations`, officer, { method: 'POST' });
+    assert.equal(secondProgramStarted.status, 201, JSON.stringify(secondProgramStarted.body));
+    const secondProgramDuringRequalification = await request(`/api/academy/program-participations/${secondProgramStarted.body!.participation.id}`, officer);
+    assert.equal(secondProgramDuringRequalification.body!.progress.status, 'in_progress');
+    assert.equal(secondProgramDuringRequalification.body!.requiredCourses[0].requalificationOrder.id, programAfterRequalificationOrder.body!.requiredCourses[0].requalificationOrder.id, 'both programs reference the same central requalification order');
+    const ownRequalificationOrders = await request('/api/academy/requalifications', officer);
+    assert.equal(ownRequalificationOrders.body!.orders.length, 1);
+    const requalificationParticipationId = ownRequalificationOrders.body!.orders[0].participationId as string;
+    const requalificationSelfEvidence = await request(`/api/academy/participations/${requalificationParticipationId}/evidence`, officer, {
+      method: 'POST', ...json({ requirementId: 'req-chapter' })
+    });
+    assert.equal(requalificationSelfEvidence.status, 201, JSON.stringify(requalificationSelfEvidence.body));
+    const requalificationInstructorEvidence = await request(`/api/academy/participations/${requalificationParticipationId}/evidence`, admin, {
+      method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Neue praktische Leistung bestätigt.' })
+    });
+    assert.equal(requalificationInstructorEvidence.status, 201, JSON.stringify(requalificationInstructorEvidence.body));
+    const programAfterRequalificationCompletion = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
+    assert.equal(programAfterRequalificationCompletion.body!.progress.completedRequiredCourseCount, 1);
+    assert.equal(programAfterRequalificationCompletion.body!.progress.completionPercentage, 100);
+    assert.equal(programAfterRequalificationCompletion.body!.progress.status, 'completed');
+    assert.equal(programAfterRequalificationCompletion.body!.requiredCourses[0].qualificationStatus, 'completed');
+    assert.equal(programAfterRequalificationCompletion.body!.requiredCourses[0].requalificationOrder.status, 'completed');
+    const secondProgramAfterRequalification = await request(`/api/academy/program-participations/${secondProgramStarted.body!.participation.id}`, officer);
+    assert.equal(secondProgramAfterRequalification.body!.progress.status, 'completed');
+    assert.equal(secondProgramAfterRequalification.body!.requiredCourses[0].requalificationOrder.id, programAfterRequalificationCompletion.body!.requiredCourses[0].requalificationOrder.id);
+    assert.equal((await request(`/api/academy/participations/${participationId}`, officer)).body!.participation.status, 'completed');
+
     const optionalOnlyProgram = await request('/api/academy/programs', admin, {
       method: 'POST',
       ...json({
