@@ -583,6 +583,74 @@ test('course participation pins the published version and completes only after e
 }));
 
 
+test('course participation lifecycle preserves the same participation and full end/resume history', async () => withRepository(async repository => {
+  const requirements = [
+    { id: 'req-chapter', type: 'required_chapter' as const, targetId: 'chapter-1', required: true },
+    { id: 'req-instructor', type: 'instructor_confirmation' as const, targetId: 'practical-1', required: true }
+  ];
+  const draft = { ...courseDraft, completionRequirements: requirements };
+  const publishedVersion = { ...version, completionRequirements: requirements };
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, draft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, publishedVersion, publishedMaster, 2, 'owner-1');
+  const participation = await repository.startCourseParticipation('learner-1', master.id, now);
+  const evidence = {
+    participationId: participation.id, requirementId: 'req-chapter',
+    evidenceType: 'required_chapter' as const, sourceId: 'chapter-1',
+    recordedByUid: 'learner-1', recordedIso: now
+  };
+  await repository.recordProgressEvidence(participation.id, evidence, 'learner-1', false);
+  const originalLastActivity = participation.lastActivityIso;
+  const voluntaryEndIso = new Date(Date.parse(now) + 1000).toISOString();
+  const voluntarilyEnded = await repository.transitionCourseParticipationLifecycle(participation.id, {
+    id: 'lifecycle-voluntary-end', type: 'voluntary_end', actorUid: 'learner-1', occurredIso: voluntaryEndIso
+  });
+  assert.equal(voluntarilyEnded.status, 'voluntarily_ended');
+  assert.equal(voluntarilyEnded.endReason, undefined, 'a voluntary end does not require an administrative reason');
+  assert.equal(voluntarilyEnded.endedByUid, 'learner-1');
+  await assert.rejects(repository.recordProgressEvidence(participation.id, evidence, 'learner-1', false), /ACADEMY_PARTICIPATION_NOT_ACTIVE/);
+
+  const voluntaryResumeIso = new Date(Date.parse(now) + 2000).toISOString();
+  const voluntarilyResumed = await repository.transitionCourseParticipationLifecycle(participation.id, {
+    id: 'lifecycle-voluntary-resume', type: 'voluntary_resume', actorUid: 'learner-1', occurredIso: voluntaryResumeIso
+  });
+  assert.equal(voluntarilyResumed.status, 'in_progress');
+  assert.equal(voluntarilyResumed.id, participation.id);
+  assert.equal(voluntarilyResumed.courseVersionId, participation.courseVersionId);
+  assert.equal(voluntarilyResumed.lastActivityIso, originalLastActivity);
+  assert.equal(voluntarilyResumed.lifecycleEvents?.length, 2);
+  assert.equal((await repository.listParticipationEvidence(participation.id)).length, 1);
+
+  const adminEndIso = new Date(Date.parse(now) + 3000).toISOString();
+  const administrativelyEnded = await repository.transitionCourseParticipationLifecycle(participation.id, {
+    id: 'lifecycle-admin-end', type: 'administrative_end', actorUid: 'admin-1',
+    occurredIso: adminEndIso, reason: 'Die Teilnahme wurde aus organisatorischen Gründen beendet.'
+  });
+  assert.equal(administrativelyEnded.status, 'administratively_ended');
+  assert.equal(administrativelyEnded.endReason, 'Die Teilnahme wurde aus organisatorischen Gründen beendet.');
+  await assert.rejects(repository.transitionCourseParticipationLifecycle(participation.id, {
+    id: 'lifecycle-invalid-resume', type: 'voluntary_resume', actorUid: 'learner-1',
+    occurredIso: new Date(Date.parse(now) + 3500).toISOString()
+  }), /ACADEMY_PARTICIPATION_LIFECYCLE_CONFLICT/);
+
+  const adminResumeIso = new Date(Date.parse(now) + 4000).toISOString();
+  const administrativelyReopened = await repository.transitionCourseParticipationLifecycle(participation.id, {
+    id: 'lifecycle-admin-reopen', type: 'administrative_reopen', actorUid: 'admin-1',
+    occurredIso: adminResumeIso, reason: 'Die Teilnahme darf wieder aufgenommen werden.'
+  });
+  assert.equal(administrativelyReopened.status, 'in_progress');
+  assert.equal(administrativelyReopened.id, participation.id);
+  assert.equal(administrativelyReopened.endedIso, adminEndIso);
+  assert.equal(administrativelyReopened.endReason, 'Die Teilnahme wurde aus organisatorischen Gründen beendet.');
+  assert.deepEqual(administrativelyReopened.lifecycleEvents?.map(event => event.type), [
+    'voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'
+  ]);
+  await repository.anonymizeDeletedUser('learner-1', 'anonymized-learner');
+  const anonymizedParticipation = await repository.getCourseParticipation(participation.id);
+  assert.equal(anonymizedParticipation?.userUid, 'anonymized-learner');
+  assert.equal(anonymizedParticipation?.lifecycleEvents?.[0].actorUid, 'anonymized-learner');
+}));
+
 test('updating a private note never recreates a note deleted after the initial read', async () => withRepository(async repository => {
   const note: AcademyPrivateNoteDoc = {
     id: 'note-update-race', ownerUid: 'owner-1', materialId: 'material-1',
@@ -720,7 +788,7 @@ test('required_assessment dynamically completes a course only while a released f
 
   const voluntarilyEnded = {
     ...participation, status: 'voluntarily_ended' as const,
-    endedIso: '2026-11-10T12:30:00.000Z', endReason: 'Teilnahme freiwillig beendet'
+    endedIso: '2026-11-10T12:30:00.000Z', endedByUid: 'learner-1'
   };
   const voluntaryResult = await resolveAcademyCourseCompletion(fakeRepository, voluntarilyEnded, resolver);
   assert.equal(voluntaryResult.participation.status, 'voluntarily_ended');
@@ -728,7 +796,7 @@ test('required_assessment dynamically completes a course only while a released f
 
   const administrativelyEnded = {
     ...participation, status: 'administratively_ended' as const,
-    endedIso: '2026-11-10T12:45:00.000Z', endReason: 'Teilnahme administrativ beendet'
+    endedIso: '2026-11-10T12:45:00.000Z', endedByUid: 'admin-1', endReason: 'Teilnahme administrativ beendet'
   };
   const administrativeResult = await resolveAcademyCourseCompletion(fakeRepository, administrativelyEnded, resolver);
   assert.equal(administrativeResult.participation.status, 'administratively_ended');
