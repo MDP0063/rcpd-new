@@ -979,6 +979,13 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       ...json({ participantUid: 'academy-officer', reason: 'Die aktuelle Qualifikation muss erneut nachgewiesen werden.' })
     });
     assert.equal(orderedRequalification.status, 201, JSON.stringify(orderedRequalification.body));
+    assert.equal(orderedRequalification.body!.order.userUid, 'academy-officer', 'single-participant API compatibility remains available');
+    const duplicateGroupAttempt = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
+      method: 'POST', ...json({ userUids: ['academy-officer', 'missing-account'], reason: 'Die Qualifikation muss erneut nachgewiesen werden.' })
+    });
+    assert.equal(duplicateGroupAttempt.status, 200, JSON.stringify(duplicateGroupAttempt.body));
+    assert.equal(duplicateGroupAttempt.body!.createdCount, 0);
+    assert.equal(duplicateGroupAttempt.body!.skippedCount, 2);
     const programAfterRequalificationOrder = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
     assert.equal(programAfterRequalificationOrder.status, 200, JSON.stringify(programAfterRequalificationOrder.body));
     assert.equal(programAfterRequalificationOrder.body!.progress.completedRequiredCourseCount, 0);
