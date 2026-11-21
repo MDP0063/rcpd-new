@@ -1394,7 +1394,7 @@ export function createAcademyApiRouter(
         const batch = participantUids.slice(index, index + 8);
         const resolved = await Promise.all(batch.map(async userUid => {
           const profile = resolveParticipantLabel?.(userUid);
-          if (!profile) return { userUid, displayName: 'Unbekanntes Konto', reason: 'Das Benutzerkonto ist nicht mehr verfügbar.' };
+          if (!profile) return { eligible: false as const, userUid, displayName: 'Unbekanntes Konto', reason: 'Das Benutzerkonto ist nicht mehr verfügbar.' };
           const priorParticipations = courseParticipations.filter(item => item.userUid === userUid && item.kind !== 'requalification')
             .sort((a, b) => Date.parse(b.completedIso || b.updatedIso) - Date.parse(a.completedIso || a.updatedIso));
           for (const prior of priorParticipations) {
@@ -1402,16 +1402,16 @@ export function createAcademyApiRouter(
             if (completion.participation.status === 'completed' && completion.participation.completedIso) {
               try {
                 const synchronized = await repository.syncResolvedCourseCompletion(prior.id, completion.participation.completedIso, prior.updatedIso);
-                return { userUid, displayName: profile.displayName, priorCompletionParticipationId: synchronized.id };
+                return { eligible: true as const, userUid, displayName: profile.displayName, priorCompletionParticipationId: synchronized.id };
               } catch {
-                return { userUid, displayName: profile.displayName, reason: 'Der frühere Abschluss wurde gerade geändert. Bitte lade die Teilnehmerliste neu.' };
+                return { eligible: false as const, userUid, displayName: profile.displayName, reason: 'Der frühere Abschluss wurde gerade geändert. Bitte lade die Teilnehmerliste neu.' };
               }
             }
           }
-          return { userUid, displayName: profile.displayName, reason: 'Kein gültiger früherer Kursabschluss gefunden.' };
+          return { eligible: false as const, userUid, displayName: profile.displayName, reason: 'Kein gültiger früherer Kursabschluss gefunden.' };
         }));
         for (const item of resolved) {
-          if ('priorCompletionParticipationId' in item) eligible.push(item);
+          if (item.eligible) eligible.push({ userUid: item.userUid, displayName: item.displayName, priorCompletionParticipationId: item.priorCompletionParticipationId });
           else skipped.push({ displayName: item.displayName, reason: item.reason });
         }
       }
