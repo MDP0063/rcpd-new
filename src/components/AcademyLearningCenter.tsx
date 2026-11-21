@@ -474,6 +474,12 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     pendingScreenFocusRef.current = 'detail';
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
+    setManagedCourseParticipations([]);
+    setManagedCourseLoadedId(null);
+    setManagedPanelOpen(false);
+    setManagedParticipationsError('');
+    setAdminLifecycleAction(null);
+    setAdminLifecycleReason('');
     setRequalificationCandidates([]);
     setRequalificationCandidateUid('');
     setRequalificationReason('');
