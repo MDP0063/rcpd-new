@@ -118,6 +118,8 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [courseParticipations, setCourseParticipations] = useState<AcademyCourseParticipationDoc[]>([]);
   const [requalificationOrders, setRequalificationOrders] = useState<AcademyRequalificationOrderDoc[]>([]);
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
+  const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
+  const [requalificationCandidateError, setRequalificationCandidateError] = useState('');
   const [requalificationCandidateUid, setRequalificationCandidateUid] = useState('');
   const [requalificationReason, setRequalificationReason] = useState('');
   const [requalificationDueDate, setRequalificationDueDate] = useState('');
@@ -367,12 +369,17 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
       : entry;
     setSelectedCourse(effectiveEntry);
     setRequalificationCandidates([]);
+    setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
+    setRequalificationCandidateError('');
     setRequalificationCandidateUid('');
     setRequalificationReason('');
     setRequalificationDueDate('');
     if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
       void apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(effectiveEntry.master.id)).then(candidateResponse => {
-        if (detailRequestIdRef.current === requestId && candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+        if (detailRequestIdRef.current !== requestId) return;
+        if (candidateResponse.ok && candidateResponse.data) setRequalificationCandidates(candidateResponse.data.candidates);
+        else setRequalificationCandidateError(candidateResponse.error || 'Teilnehmerliste konnte nicht geladen werden.');
+        setRequalificationCandidatesLoading(false);
       });
     }
     setCourseDetail(null);
@@ -411,6 +418,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setRequalificationDueDate('');
     const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
     if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
+    await loadLearningData();
     onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
   };
   const openRequalification = async (order: AcademyRequalificationOrderDoc) => {
@@ -810,7 +818,11 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                     <h3 id="academy-order-requalification-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation anordnen</h3>
                     <p className={muted + ' mt-1'}>Wähle einen Teilnehmer mit früherem Kursabschluss. Sein bisheriger Abschluss bleibt erhalten; es wird eine neue Teilnahme angelegt.</p>
                   </div>
-                  {requalificationCandidates.length === 0 ? (
+                  {requalificationCandidatesLoading ? (
+                    <p className={muted} role="status">Teilnehmer werden geladen …</p>
+                  ) : requalificationCandidateError ? (
+                    <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{requalificationCandidateError}</p>
+                  ) : requalificationCandidates.length === 0 ? (
                     <p className={muted}>Aktuell gibt es keine Teilnehmer mit einem früheren Abschluss, für die eine neue Qualifikation angeordnet werden kann.</p>
                   ) : (
                     <div className="space-y-3">
