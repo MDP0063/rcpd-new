@@ -976,7 +976,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
 
     const orderedRequalification = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
       method: 'POST',
-      ...json({ userUid: 'academy-officer', reason: 'Die aktuelle Qualifikation muss erneut nachgewiesen werden.' })
+      ...json({ participantUid: 'academy-officer', reason: 'Die aktuelle Qualifikation muss erneut nachgewiesen werden.' })
     });
     assert.equal(orderedRequalification.status, 201, JSON.stringify(orderedRequalification.body));
     const programAfterRequalificationOrder = await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, officer);
