@@ -152,7 +152,7 @@ test('a requalification requires a newly released final-exam result', async () =
   const fresh = await resolveAcademyCourseCompletion(repository, participation, async () => newProof);
   assert.equal(fresh.participation.status, 'completed');
   assert.equal(fresh.assessmentProofs.req_assessment.attemptId, 'new-attempt');
-  await repository.syncResolvedCourseCompletion(participation.id, newProof.releasedAtIso);
+  await repository.syncResolvedCourseCompletion(participation.id, newProof.releasedAtIso, participation.updatedIso);
   await repository.completeRequalificationOrder(order.id, participation.id, newProof.releasedAtIso);
   const correction: AcademyCompletionCorrectionDoc = {
     id: 'requalification-exam-correction', participationId: participation.id,
@@ -170,9 +170,9 @@ test('a requalification requires a newly released final-exam result', async () =
     attemptId: 'after-reopen-attempt', releasedAtIso: '2026-11-09T12:00:00.000Z', finalScoreBasisPoints: 10000
   }));
   assert.equal(afterReopenProof.participation.status, 'completed');
-  await repository.syncResolvedCourseCompletion(participation.id, '2026-11-09T12:00:00.000Z');
+  await repository.syncResolvedCourseCompletion(participation.id, '2026-11-09T12:00:00.000Z', correction.correctedIso);
   await repository.completeRequalificationOrder(order.id, participation.id, '2026-11-09T12:00:00.000Z');
-  const revoked = await repository.reopenRequalificationOrder(order.id, participation.id, '2026-11-10T12:00:00.000Z');
+  const revoked = await repository.reopenRequalificationOrder(order.id, participation.id, '2026-11-10T12:00:00.000Z', '2026-11-09T12:00:00.000Z');
   assert.equal(revoked.status, 'open');
   assert.equal(revoked.reopenedIso, '2026-11-10T12:00:00.000Z');
   assert.equal((await repository.getCourseParticipation(participation.id))?.status, 'in_progress');
