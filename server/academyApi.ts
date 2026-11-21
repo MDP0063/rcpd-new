@@ -1378,7 +1378,10 @@ export function createAcademyApiRouter(
           orders.push(await repository.completeRequalificationOrder(order.id, participation.id, completion.participation.completedIso));
         } else orders.push(order);
       }
-      res.json({ orders });
+      res.json({ orders: orders.map(order => ({
+        id: order.id, courseId: order.courseId, participationId: order.participationId,
+        reason: order.reason, dueIso: order.dueIso, status: order.status, completedIso: order.completedIso
+      })) });
     } catch (error) { fail(res, error, next); }
   });
 
