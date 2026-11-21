@@ -546,7 +546,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const recordEvidence = async (requirementId: string, label: string) => {
-    if (!courseDetail || saving) return;
+    if (!courseDetail || saving || courseDetail.participation.status !== 'in_progress') return;
     const requestId = detailRequestIdRef.current;
     const participationId = courseDetail.participation.id;
     const confirmed = await confirm(`Möchtest du den Nachweis wirklich erfassen: „${label}“? Es wird eine nachvollziehbare Fortschrittsaktion gespeichert.`, { title: 'Fortschrittsnachweis erfassen', confirmLabel: 'Nachweis erfassen' });
@@ -1029,7 +1029,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             </div>
                             {matching.map(item => <p key={item.id} className="text-xs text-slate-500 dark:text-slate-400">Erfasst am {dateLabel(item.recordedIso)} · {item.evidenceType === 'accepted_self_confirmation' ? 'Selbstbestätigung' : item.recordedByParticipant ? 'Dein Nachweis' : 'Ausbildernachweis'}</p>)}
                             {assessmentProof && <p className="text-xs text-slate-500 dark:text-slate-400">Prüfung bestanden und offiziell freigegeben am {dateLabel(assessmentProof.releasedAtIso)}.</p>}
-                            {!matching.length && selfConfirmable && requirement.required && (
+                            {!matching.length && selfConfirmable && requirement.required && courseDetail.participation.status === 'in_progress' && (
                               <button type="button" className={secondary} disabled={saving} onClick={() => void recordEvidence(requirement.id, requirement.description || requirement.targetId)}>
                                 {requirement.type === 'accepted_self_confirmation' ? 'Selbstbestätigung abgeben' : 'Als erledigt markieren'}
                               </button>
@@ -1037,7 +1037,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             {requirement.type === 'required_assessment' && (
                               <div className="space-y-2">
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Der Nachweis wird erst nach bestandener und offiziell freigegebener Kursabschlussprüfung automatisch berücksichtigt.</p>
-                                {!assessmentProof && onNavigateToExam && (
+                                {!assessmentProof && onNavigateToExam && courseDetail.participation.status === 'in_progress' && (
                                   <button
                                     type="button"
                                     className={secondary}
