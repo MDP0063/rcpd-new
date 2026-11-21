@@ -1340,7 +1340,8 @@ export function createAcademyApiRouter(
         const resolved = await Promise.all(batch.map(async userUid => {
           const profile = resolveParticipantLabel?.(userUid);
           if (!profile) return { userUid, displayName: 'Unbekanntes Konto', reason: 'Das Benutzerkonto ist nicht mehr verfügbar.' };
-          const priorParticipations = courseParticipations.filter(item => item.userUid === userUid && item.kind !== 'requalification');
+          const priorParticipations = courseParticipations.filter(item => item.userUid === userUid && item.kind !== 'requalification')
+            .sort((a, b) => Date.parse(b.completedIso || b.updatedIso) - Date.parse(a.completedIso || a.updatedIso));
           for (const prior of priorParticipations) {
             const completion = await resolveAcademyCourseCompletion(repository, prior, resolveReleasedFinalExam);
             if (completion.participation.status === 'completed' && completion.participation.completedIso) {
