@@ -83,6 +83,7 @@ interface ProgramParticipationDetail {
 }
 type Screen = 'catalog' | 'course' | 'program';
 interface RequalificationCandidate { uid: string; displayName: string; badgeNumber: string }
+interface RequalificationBatchResult { created: Array<{ orderId: string; displayName: string }>; skipped: Array<{ displayName: string; reason: string }>; failed: Array<{ displayName: string; reason: string }>; createdCount: number; skippedCount: number; failedCount: number }
 interface ParticipantRequalificationOrder { id: string; courseId: string; participationId: string; reason: string; dueIso?: string; status: 'open' | 'completed' | 'cancelled'; completedIso?: string }
 
 const panel = 'rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900';
@@ -123,7 +124,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [requalificationCandidates, setRequalificationCandidates] = useState<RequalificationCandidate[]>([]);
   const [requalificationCandidatesLoading, setRequalificationCandidatesLoading] = useState(false);
   const [requalificationCandidateError, setRequalificationCandidateError] = useState('');
-  const [requalificationCandidateUid, setRequalificationCandidateUid] = useState('');
+  const [selectedRequalificationCandidateUids, setSelectedRequalificationCandidateUids] = useState<string[]>([]);
+  const [requalificationSearch, setRequalificationSearch] = useState('');
+  const [requalificationOrderResult, setRequalificationOrderResult] = useState<RequalificationBatchResult | null>(null);
   const [requalificationReason, setRequalificationReason] = useState('');
   const [requalificationDueDate, setRequalificationDueDate] = useState('');
   const [programParticipations, setProgramParticipations] = useState<AcademyProgramParticipationDoc[]>([]);
@@ -374,7 +377,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setRequalificationCandidates([]);
     setRequalificationCandidatesLoading(canOrderRequalificationForCourse(effectiveEntry.master.code));
     setRequalificationCandidateError('');
-    setRequalificationCandidateUid('');
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    setRequalificationOrderResult(null);
     setRequalificationReason('');
     setRequalificationDueDate('');
     if (canOrderRequalificationForCourse(effectiveEntry.master.code)) {
@@ -405,24 +410,32 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const orderRequalification = async () => {
-    if (!selectedCourse || !requalificationCandidateUid || requalificationReason.trim().length < 10 || saving) return;
+    if (!selectedCourse || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10 || saving) return;
     setSaving(true);
-    const response = await apiFetch<{ order: AcademyRequalificationOrderDoc; participation: AcademyCourseParticipationDoc }>(
+    const response = await apiFetch<RequalificationBatchResult>(
       API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(selectedCourse.master.id),
-      { method: 'POST', body: JSON.stringify({ participantUid: requalificationCandidateUid, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+      { method: 'POST', body: JSON.stringify({ userUids: selectedRequalificationCandidateUids, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
     );
     setSaving(false);
     if (!response.ok || !response.data) {
       onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
       return;
     }
-    setRequalificationCandidateUid('');
-    setRequalificationReason('');
-    setRequalificationDueDate('');
+    setRequalificationOrderResult(response.data);
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    if (response.data.createdCount > 0) {
+      setRequalificationReason('');
+      setRequalificationDueDate('');
+    }
     const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(selectedCourse.master.id));
     if (candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
     await loadLearningData();
-    onStatusToast('Die erneute Qualifikation wurde angeordnet. Der Teilnehmer erhält eine Aufgabe in seiner Academy.');
+    onStatusToast(response.data.createdCount === 1
+      ? 'Eine Wiederqualifizierung wurde angeordnet.'
+      : response.data.createdCount > 1
+        ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
+        : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
   };
   const openRequalification = async (order: ParticipantRequalificationOrder) => {
     const entry = courses.find(item => item.master.id === order.courseId);
@@ -432,7 +445,9 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const requestId = ++detailRequestIdRef.current;
     setSelectedCourse(entry);
     setRequalificationCandidates([]);
-    setRequalificationCandidateUid('');
+    setSelectedRequalificationCandidateUids([]);
+    setRequalificationSearch('');
+    setRequalificationOrderResult(null);
     setRequalificationReason('');
     setRequalificationDueDate('');
     setRequalificationCandidateError('');
@@ -868,23 +883,42 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   ) : (
                     <div className="space-y-3">
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                        <span>Teilnehmer</span>
-                        <select className={field} value={requalificationCandidateUid} onChange={event => setRequalificationCandidateUid(event.target.value)}>
-                          <option value="">Teilnehmer auswählen</option>
-                          {requalificationCandidates.map(candidate => <option key={candidate.uid} value={candidate.uid}>{candidate.displayName} · {candidate.badgeNumber}</option>)}
-                        </select>
+                        <span>Teilnehmer suchen</span>
+                        <input className={field} type="search" value={requalificationSearch} onChange={event => setRequalificationSearch(event.target.value)} placeholder="Name oder Dienstnummer" aria-label="Teilnehmer suchen" />
                       </label>
+                      <fieldset className="space-y-1">
+                        <legend className="text-sm font-medium text-slate-700 dark:text-slate-200">Teilnehmer auswählen</legend>
+                        <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                          {requalificationCandidates.filter(candidate => selectedRequalificationCandidateUids.includes(candidate.uid) || `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).length === 0 ? (
+                            <p className={muted + ' p-3'}>Keine passenden Teilnehmer gefunden.</p>
+                          ) : requalificationCandidates.filter(candidate => selectedRequalificationCandidateUids.includes(candidate.uid) || `${candidate.displayName} ${candidate.badgeNumber}`.toLocaleLowerCase('de-DE').includes(requalificationSearch.trim().toLocaleLowerCase('de-DE'))).map(candidate => (
+                            <label key={candidate.uid} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 dark:border-slate-800">
+                              <input type="checkbox" checked={selectedRequalificationCandidateUids.includes(candidate.uid)} onChange={() => setSelectedRequalificationCandidateUids(current => current.includes(candidate.uid) ? current.filter(uid => uid !== candidate.uid) : [...current, candidate.uid])} />
+                              <span className="min-w-0 text-sm text-slate-800 dark:text-slate-100">{candidate.displayName} <span className="text-slate-500 dark:text-slate-400">· {candidate.badgeNumber}</span></span>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <p className={muted}>{selectedRequalificationCandidateUids.length} von {requalificationCandidates.length} Teilnehmern ausgewählt (maximal 100 gleichzeitig).</p>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Warum ist die erneute Qualifikation erforderlich?</span>
-                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Begründung für den Teilnehmer" />
+                        <textarea className={field} rows={3} maxLength={1000} value={requalificationReason} onChange={event => setRequalificationReason(event.target.value)} placeholder="Eine Begründung für alle ausgewählten Teilnehmer" />
+                        <span className={muted}>Diese Begründung gilt für alle ausgewählten Personen und muss mindestens 10 Zeichen enthalten.</span>
                       </label>
                       <label className="block space-y-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         <span>Frist (optional)</span>
                         <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
                       </label>
-                      <button type="button" className={primary} disabled={saving || !requalificationCandidateUid || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
-                        {saving ? 'Wird angeordnet …' : 'Wiederqualifizierung anordnen'}
+                      <button type="button" className={primary} disabled={saving || selectedRequalificationCandidateUids.length === 0 || selectedRequalificationCandidateUids.length > 100 || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
+                        {saving ? 'Wird angeordnet …' : selectedRequalificationCandidateUids.length === 1 ? 'Wiederqualifizierung für 1 Person anordnen' : `Wiederqualifizierung für ${selectedRequalificationCandidateUids.length} Personen anordnen`}
                       </button>
+                    </div>
+                  )}
+                  {requalificationOrderResult && (
+                    <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700" role="status" aria-live="polite">
+                      <p className="font-medium text-slate-900 dark:text-white">{requalificationOrderResult.createdCount} angeordnet · {requalificationOrderResult.skippedCount} übersprungen · {requalificationOrderResult.failedCount} Fehler</p>
+                      {requalificationOrderResult.skipped.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">{requalificationOrderResult.skipped.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
+                      {requalificationOrderResult.failed.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-rose-700 dark:text-rose-300">{requalificationOrderResult.failed.map((item, index) => <li key={index}><strong>{item.displayName}:</strong> {item.reason}</li>)}</ul>}
                     </div>
                   )}
                 </section>
