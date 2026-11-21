@@ -1313,6 +1313,7 @@ export function createAcademyApiRouter(
       const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      if (course.publicationStatus !== 'published' || course.availability !== 'available' || !course.currentPublishedVersionId || course.materialReviewPending?.length || course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       const reason = boundedText(req.body?.reason, 1000);
       if (!reason || reason.length < 10) throw new Error('ACADEMY_REQUALIFICATION_REASON_INVALID');
       let dueIso: string | undefined;
@@ -1376,22 +1377,27 @@ export function createAcademyApiRouter(
         };
         try {
           await repository.createRequalificationOrder(order, participation, candidate.priorCompletionParticipationId);
-          created.push({ orderId, displayName: candidate.displayName });
-          await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
-            `Wiederqualifizierung für ${candidate.displayName} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
-          if (notifyMaterialReview) {
-            try {
-              await notifyMaterialReview(candidate.userUid, `academy-requalification-${orderId}`, 'Erneute Qualifikation erforderlich',
-                `Für ${version.title} ist eine erneute Qualifikation erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.${dueIso ? ` Frist: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(dueIso))}.` : ''}`);
-            } catch { /* The persisted task remains visible and notification delivery is retried on participant load. */ }
-          }
         } catch (error) {
           const code = error instanceof Error ? error.message : '';
           const reasonText = code.includes('ALREADY_OPEN') ? 'Für diese Person ist bereits eine offene Wiederqualifizierung vorhanden.'
             : code.includes('PRIOR_COMPLETION_REQUIRED') ? 'Der frühere Kursabschluss ist nicht mehr gültig.'
-            : 'Die Anordnung konnte nicht vollständig gespeichert werden. Bitte prüfe diese Person erneut.';
+            : 'Die Anordnung konnte nicht gespeichert werden. Bitte prüfe diese Person erneut.';
           if (code.includes('ALREADY_OPEN') || code.includes('PRIOR_COMPLETION_REQUIRED')) skipped.push({ displayName: candidate.displayName, reason: reasonText });
           else failed.push({ displayName: candidate.displayName, reason: reasonText });
+          continue;
+        }
+        created.push({ orderId, displayName: candidate.displayName });
+        try {
+          await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
+            `Wiederqualifizierung für ${candidate.displayName} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+        } catch {
+          failed.push({ displayName: candidate.displayName, reason: 'Die Aufgabe wurde erstellt, aber der Audit-Eintrag konnte nicht bestätigt werden. Bitte informiere einen Administrator.' });
+        }
+        if (notifyMaterialReview) {
+          try {
+            await notifyMaterialReview(candidate.userUid, `academy-requalification-${orderId}`, 'Erneute Qualifikation erforderlich',
+              `Für ${version.title} ist eine erneute Qualifikation erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.${dueIso ? ` Frist: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(dueIso))}.` : ''}`);
+          } catch { /* The persisted task remains visible and notification delivery is retried on participant load. */ }
         }
       }
       res.status(created.length ? 201 : 200).json({ created, skipped, failed, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length });
