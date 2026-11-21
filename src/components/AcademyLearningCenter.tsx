@@ -1057,8 +1057,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         {managedCourseParticipations.length} Einträge <span aria-hidden="true">{managedPanelOpen ? '−' : '+'}</span>
                       </span>
                     </button>
-                    {managedPanelOpen && (
-                      <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten">
+                    <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten" hidden={!managedPanelOpen}>
                         {managedParticipationsLoading ? (
                           <p className={muted} role="status">Teilnahmen werden geladen …</p>
                         ) : managedParticipationsError ? (
@@ -1101,7 +1100,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                                     </label>
                                     <textarea
                                       id={`academy-lifecycle-reason-${item.id}`}
-                                      className={textAreaClass}
+                                      className={field}
                                       rows={2}
                                       maxLength={1000}
                                       value={adminLifecycleReason}
@@ -1120,8 +1119,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             ))}
                           </div>
                         )}
-                      </div>
-                    )}
+                    </div>
                   </section>
                 )}
                 {courseDetail.version.learningObjectives.length > 0 && (
