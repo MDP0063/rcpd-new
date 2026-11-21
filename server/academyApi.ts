@@ -1279,6 +1279,7 @@ export function createAcademyApiRouter(
       const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      if (course.publicationStatus !== 'published' || course.availability !== 'available' || !course.currentPublishedVersionId || course.materialReviewPending?.length || course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       const [participations, existingOrders] = await Promise.all([
         repository.listCourseParticipations(course.id), repository.listCourseRequalificationOrders(course.id)
       ]);
