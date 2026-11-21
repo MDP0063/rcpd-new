@@ -195,7 +195,7 @@ test('concurrent requalification orders cannot create duplicate open requirement
     const participationId = `requalification_participation_${n}`;
     return {
       order: { id: orderId, userUid: 'learner-race', courseId: master.id, courseVersionId: version.id,
-        priorCompletionParticipationId: prior.id, participationId, reason: 'Erneuter Nachweis der Qualifikation ist erforderlich.',
+        priorCompletionParticipationId: original.id, participationId, reason: 'Erneuter Nachweis der Qualifikation ist erforderlich.',
         requiredEvidenceRequirementIds: ['req_chapter'], status: 'open' as const,
         orderedByUid: 'manager-1', orderedIso: now },
       participation: { id: participationId, userUid: 'learner-race', courseId: master.id,
