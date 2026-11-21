@@ -1091,7 +1091,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                             <button type="button" className={secondary} onClick={() => void loadManagedCourseParticipations(selectedCourse.master.id)}>Erneut versuchen</button>
                           </div>
                         ) : managedCourseParticipations.filter(item => item.status !== 'completed').length === 0 ? (
-                          <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. {managedCourseParticipations.length} abgeschlossene Teilnahmen bleiben als Verlauf gespeichert.</p>
+                          <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. Abgeschlossene Teilnahmen findest du im Verlauf darunter.</p>
                         ) : (
                           <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
                             {managedCourseParticipations.filter(item => item.status !== 'completed').map(item => (
@@ -1154,6 +1154,34 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                               </article>
                             ))}
                           </div>
+                        )}
+                        {managedCourseParticipations.some(item => item.status === 'completed') && (
+                          <details className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <summary className="cursor-pointer text-sm font-medium text-slate-800 dark:text-slate-100">
+                              Abgeschlossene Teilnahmen anzeigen ({managedCourseParticipations.filter(item => item.status === 'completed').length})
+                            </summary>
+                            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+                              {managedCourseParticipations.filter(item => item.status === 'completed').map(item => (
+                                <article key={item.id} className="rounded-md bg-slate-50 p-3 text-sm dark:bg-slate-800">
+                                  <p className="font-medium text-slate-900 dark:text-white">
+                                    {item.participant?.displayName || 'Unbekannter Teilnehmer'}
+                                    {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
+                                  </p>
+                                  <p className={muted + ' mt-1'}>Abgeschlossen{item.completedIso ? ` am ${dateLabel(item.completedIso)}` : ''}</p>
+                                  {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
+                                    <ul className="mt-2 space-y-1">
+                                      {item.lifecycleEvents.map(event => (
+                                        <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
+                                          {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
+                                          {event.reason ? <span> – Begründung: {event.reason}</span> : null}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Keine zusätzlichen Beendigungs- oder Wiederaufnahmeereignisse.</p>}
+                                </article>
+                              ))}
+                            </div>
+                          </details>
                         )}
                     </div>
                   </section>
