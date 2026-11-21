@@ -47,6 +47,12 @@ interface ProgramEntry {
   version: ParticipantProgramVersion | null;
   draft?: AcademyProgramDraftDoc | null;
 }
+interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
+  participant: { displayName: string; badgeNumber: string } | null;
+  lifecycleEvents?: Array<AcademyParticipationLifecycleEventDoc & {
+    actor: { displayName: string; badgeNumber: string } | null;
+  }>;
+}
 type ParticipantCorrectionView = Pick<
   AcademyCompletionCorrectionDoc,
   'id' | 'participationId' | 'previousStatus' | 'correctedStatus' | 'correctedIso' | 'invalidatedEvidenceIds'
@@ -70,12 +76,6 @@ interface ProgramCourseProgress {
   participation: AcademyParticipantCourseParticipationView | null;
   qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'voluntarily_ended' | 'administratively_ended' | 'requalification_required';
   requalificationOrder?: ParticipantRequalificationOrder;
-}
-interface ManagedCourseParticipation extends AcademyCourseParticipationDoc {
-  participant: { displayName: string; badgeNumber: string } | null;
-  lifecycleEvents?: Array<AcademyParticipationLifecycleEventDoc & {
-    actor: { displayName: string; badgeNumber: string } | null;
-  }>;
 }
 interface ProgramParticipationDetail {
   participation: AcademyProgramParticipationDoc;
@@ -497,7 +497,6 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setManagedCourseParticipations([]);
     setManagedPanelOpen(false);
     setManagedParticipationsError('');
-    setManagedParticipationsLoading(false);
     setAdminLifecycleAction(null);
     setAdminLifecycleReason('');
     setRequalificationCandidates([]);
@@ -574,19 +573,20 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     const currentStatus = courseDetail.participation.status;
     if ((action === 'end' && currentStatus !== 'in_progress') ||
         (action === 'resume' && currentStatus !== 'voluntarily_ended')) return;
+    const requestId = detailRequestIdRef.current;
+    const participationId = courseDetail.participation.id;
     const confirmed = await confirm(
       action === 'end'
         ? 'Möchtest du diese Teilnahme wirklich freiwillig beenden? Dein bisheriger Fortschritt bleibt erhalten. Du kannst dieselbe Teilnahme später fortsetzen.'
         : 'Möchtest du diese bestehende Teilnahme fortsetzen? Dein bisheriger Fortschritt bleibt erhalten.',
       { title: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen', confirmLabel: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen' }
     );
-    if (!confirmed) return;
-    const requestId = detailRequestIdRef.current;
+    if (!confirmed || detailRequestIdRef.current !== requestId) return;
     setSaving(true);
     const response = await apiFetch<{ participation: AcademyParticipantCourseParticipationView }>(
       action === 'end'
-        ? API_ENDPOINTS.ACADEMY_COURSE_END(courseDetail.participation.id)
-        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(courseDetail.participation.id),
+        ? API_ENDPOINTS.ACADEMY_COURSE_END(participationId)
+        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(participationId),
       { method: 'POST' }
     );
     if (!response.ok || !response.data) {
@@ -1062,100 +1062,130 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                   {courseDetail.requalificationOrder.dueIso && <p className="text-xs text-slate-500 dark:text-slate-400">Frist: {dateLabel(courseDetail.requalificationOrder.dueIso)}</p>}
                 </section>
               )}
-              {canManageSelectedCourse && selectedCourse && (
-                <section className={panel + ' p-4 space-y-3'}>
-                  <button
-                    type="button"
-                    className="flex min-h-10 w-full items-center justify-between gap-3 text-left font-semibold text-slate-900 dark:text-white"
-                    aria-expanded={managedPanelOpen}
-                    aria-controls="academy-course-participation-management"
-                    onClick={() => {
-                      const nextOpen = !managedPanelOpen;
-                      setManagedPanelOpen(nextOpen);
-                      if (nextOpen) void loadManagedCourseParticipations(selectedCourse.master.id);
-                    }}
-                  >
-                    <span>Teilnahmen verwalten</span>
-                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                      {managedCourseParticipations.length} Einträge <span aria-hidden="true">{managedPanelOpen ? '−' : '+'}</span>
-                    </span>
-                  </button>
-                  <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten" hidden={!managedPanelOpen}>
-                    {managedParticipationsLoading ? (
-                      <p className={muted} role="status">Teilnahmen werden geladen …</p>
-                    ) : managedParticipationsError ? (
-                      <div className="space-y-2">
-                        <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{managedParticipationsError}</p>
-                        <button type="button" className={secondary} onClick={() => void loadManagedCourseParticipations(selectedCourse.master.id)}>Erneut versuchen</button>
-                      </div>
-                    ) : managedCourseParticipations.filter(item => item.status !== 'completed').length === 0 ? (
-                      <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. {managedCourseParticipations.length} abgeschlossene Teilnahmen bleiben als Verlauf gespeichert.</p>
-                    ) : (
-                      <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
-                        {managedCourseParticipations.filter(item => item.status !== 'completed').map(item => (
-                          <article key={item.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                              <div className="min-w-0">
-                                <p className="font-medium text-slate-900 dark:text-white">
-                                  {item.participant?.displayName || 'Unbekannter Teilnehmer'}
-                                  {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
-                                </p>
-                                <p className={muted + ' mt-1'}>
-                                  {item.kind === 'requalification' ? 'Erneute Qualifikation' : 'Reguläre Teilnahme'} · {statusLabel(item.status)}
-                                </p>
-                                {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
-                                  <ul className="mt-2 space-y-1">
-                                    {item.lifecycleEvents.map(event => (
-                                      <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
-                                        {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
-                                        {event.reason ? <span> – Begründung: {event.reason}</span> : null}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : item.endReason ? (
-                                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>
-                                ) : null}
-                              </div>
-                              {item.status === 'in_progress' && (
-                                <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'end' }); setAdminLifecycleReason(''); }}>
-                                  Durch die Verwaltung beenden
-                                </button>
-                              )}
-                              {item.status === 'administratively_ended' && (
-                                <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'resume' }); setAdminLifecycleReason(''); }}>
-                                  Wieder freigeben
-                                </button>
-                              )}
-                            </div>
-                            {adminLifecycleAction?.participationId === item.id && (
-                              <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
-                                <label className="block text-sm font-medium text-slate-800 dark:text-slate-200" htmlFor={`academy-lifecycle-reason-${item.id}`}>
-                                  {adminLifecycleAction.action === 'end' ? 'Warum wird die Teilnahme beendet?' : 'Warum wird die Teilnahme wieder freigegeben?'}
-                                </label>
-                                <textarea
-                                  id={`academy-lifecycle-reason-${item.id}`}
-                                  className={field}
-                                  rows={2}
-                                  maxLength={1000}
-                                  value={adminLifecycleReason}
-                                  onChange={event => setAdminLifecycleReason(event.target.value)}
-                                  placeholder="Bitte mindestens 10 Zeichen eingeben."
-                                />
-                                <div className="flex flex-wrap gap-2">
-                                  <button type="button" className={primary} disabled={saving || adminLifecycleReason.trim().length < 10} onClick={() => void submitAdminLifecycleAction()}>
-                                    {adminLifecycleAction.action === 'end' ? 'Teilnahme beenden' : 'Teilnahme freigeben'}
-                                  </button>
-                                  <button type="button" className={secondary} disabled={saving} onClick={() => { setAdminLifecycleAction(null); setAdminLifecycleReason(''); }}>Abbrechen</button>
+                {canManageSelectedCourse && selectedCourse && (
+                  <section className={panel + ' p-4 space-y-3'}>
+                    <button
+                      type="button"
+                      className="flex min-h-10 w-full items-center justify-between gap-3 text-left font-semibold text-slate-900 dark:text-white"
+                      aria-expanded={managedPanelOpen}
+                      aria-controls="academy-course-participation-management"
+                      onClick={() => {
+                        const nextOpen = !managedPanelOpen;
+                        setManagedPanelOpen(nextOpen);
+                        if (nextOpen) {
+                          void loadManagedCourseParticipations(selectedCourse.master.id);
+                        }
+                      }}
+                    >
+                      <span>Teilnahmen verwalten</span>
+                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                        {managedCourseParticipations.length} Einträge <span aria-hidden="true">{managedPanelOpen ? '−' : '+'}</span>
+                      </span>
+                    </button>
+                    <div id="academy-course-participation-management" className="space-y-3" role="region" aria-label="Teilnahmen verwalten" hidden={!managedPanelOpen}>
+                        {managedParticipationsLoading ? (
+                          <p className={muted} role="status">Teilnahmen werden geladen …</p>
+                        ) : managedParticipationsError ? (
+                          <div className="space-y-2">
+                            <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">{managedParticipationsError}</p>
+                            <button type="button" className={secondary} onClick={() => void loadManagedCourseParticipations(selectedCourse.master.id)}>Erneut versuchen</button>
+                          </div>
+                        ) : managedCourseParticipations.filter(item => item.status !== 'completed').length === 0 ? (
+                          <p className={muted}>Aktuell gibt es keine offenen oder beendeten Teilnahmen. Abgeschlossene Teilnahmen findest du im Verlauf darunter.</p>
+                        ) : (
+                          <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                            {managedCourseParticipations.filter(item => item.status !== 'completed').map(item => (
+                              <article key={item.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                      {item.participant?.displayName || 'Unbekannter Teilnehmer'}
+                                      {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
+                                    </p>
+                                    <p className={muted + ' mt-1'}>
+                                      {item.kind === 'requalification' ? 'Erneute Qualifikation' : 'Reguläre Teilnahme'} · {statusLabel(item.status)}
+                                    </p>
+                                    {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
+                                      <ul className="mt-2 space-y-1">
+                                        {item.lifecycleEvents.map(event => (
+                                          <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
+                                            {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
+                                            {event.reason ? <span> – Begründung: {event.reason}</span> : null}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : item.endReason ? (
+                                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Begründung: {item.endReason}</p>
+                                    ) : null}
+                                  </div>
+                                  {item.status === 'in_progress' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'end' }); setAdminLifecycleReason(''); }}>
+                                      Administrativ beenden
+                                    </button>
+                                  )}
+                                  {item.status === 'administratively_ended' && (
+                                    <button type="button" className={secondary + ' min-h-10'} onClick={() => { setAdminLifecycleAction({ participationId: item.id, action: 'resume' }); setAdminLifecycleReason(''); }}>
+                                      Wieder freigeben
+                                    </button>
+                                  )}
                                 </div>
-                              </div>
-                            )}
-                          </article>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </section>
-              )}
+                                {adminLifecycleAction?.participationId === item.id && (
+                                  <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                                    <label className="block text-sm font-medium text-slate-800 dark:text-slate-200" htmlFor={`academy-lifecycle-reason-${item.id}`}>
+                                      {adminLifecycleAction.action === 'end' ? 'Warum wird die Teilnahme beendet?' : 'Warum wird die Teilnahme wieder freigegeben?'}
+                                    </label>
+                                    <textarea
+                                      id={`academy-lifecycle-reason-${item.id}`}
+                                      className={field}
+                                      rows={2}
+                                      maxLength={1000}
+                                      value={adminLifecycleReason}
+                                      onChange={event => setAdminLifecycleReason(event.target.value)}
+                                      placeholder="Bitte mindestens 10 Zeichen eingeben."
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                      <button type="button" className={primary} disabled={saving || adminLifecycleReason.trim().length < 10} onClick={() => void submitAdminLifecycleAction()}>
+                                        {adminLifecycleAction.action === 'end' ? 'Teilnahme beenden' : 'Teilnahme freigeben'}
+                                      </button>
+                                      <button type="button" className={secondary} disabled={saving} onClick={() => { setAdminLifecycleAction(null); setAdminLifecycleReason(''); }}>Abbrechen</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                        {managedCourseParticipations.some(item => item.status === 'completed') && (
+                          <details className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <summary className="cursor-pointer text-sm font-medium text-slate-800 dark:text-slate-100">
+                              Abgeschlossene Teilnahmen anzeigen ({managedCourseParticipations.filter(item => item.status === 'completed').length})
+                            </summary>
+                            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+                              {managedCourseParticipations.filter(item => item.status === 'completed').map(item => (
+                                <article key={item.id} className="rounded-md bg-slate-50 p-3 text-sm dark:bg-slate-800">
+                                  <p className="font-medium text-slate-900 dark:text-white">
+                                    {item.participant?.displayName || 'Unbekannter Teilnehmer'}
+                                    {item.participant?.badgeNumber ? <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">#{item.participant.badgeNumber}</span> : null}
+                                  </p>
+                                  <p className={muted + ' mt-1'}>Abgeschlossen{item.completedIso ? ` am ${dateLabel(item.completedIso)}` : ''}</p>
+                                  {item.lifecycleEvents && item.lifecycleEvents.length > 0 ? (
+                                    <ul className="mt-2 space-y-1">
+                                      {item.lifecycleEvents.map(event => (
+                                        <li key={event.id} className="text-xs text-slate-600 dark:text-slate-300">
+                                          {participationLifecycleLabel(event.type)} · {dateLabel(event.occurredIso)} · {event.actor?.displayName || 'Unbekannte Person'}
+                                          {event.reason ? <span> – Begründung: {event.reason}</span> : null}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Keine zusätzlichen Beendigungs- oder Wiederaufnahmeereignisse.</p>}
+                                </article>
+                              ))}
+                            </div>
+                          </details>
+                        )}
+                    </div>
+                  </section>
+                )}
               {detailLoading ? <p className={muted} role="status">Deine Kursteilnahme wird geladen …</p> : courseDetail ? (
                 <>
                 {courseDetail.participation.status === 'in_progress' && (

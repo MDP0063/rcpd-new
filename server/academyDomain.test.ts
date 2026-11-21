@@ -109,6 +109,82 @@ test('participation cannot be marked completed without a completion timestamp', 
   assert.equal(validateCourseParticipation({ ...participation, status: 'completed' }).ok, false);
 });
 
+test('participation lifecycle history enforces valid ordered transitions and preserves legacy resume compatibility', () => {
+  const endedIso = '2026-11-06T11:00:00.000Z';
+  const resumedIso = '2026-11-06T12:00:00.000Z';
+  const validHistory = {
+    ...participation,
+    endedIso,
+    endedByUid: 'user_1',
+    lifecycleEvents: [
+      { id: 'event-end', type: 'voluntary_end' as const, actorUid: 'user_1', occurredIso: endedIso },
+      { id: 'event-resume', type: 'voluntary_resume' as const, actorUid: 'user_1', occurredIso: resumedIso }
+    ],
+    updatedIso: resumedIso
+  };
+  assert.deepEqual(validateCourseParticipation(validHistory), { ok: true });
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [
+      validHistory.lifecycleEvents[0],
+      { id: 'invalid-reopen', type: 'administrative_reopen' as const, actorUid: 'admin_1', occurredIso: resumedIso, reason: 'Die Teilnahme darf wieder aufgenommen werden.' }
+    ]
+  }).ok, false, 'an administrative reopen cannot follow a voluntary end');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [
+      validHistory.lifecycleEvents[0],
+      { id: 'out-of-order', type: 'voluntary_resume' as const, actorUid: 'user_1', occurredIso: '2026-11-06T10:30:00.000Z' }
+    ]
+  }).ok, false, 'lifecycle timestamps cannot move backwards');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [
+      { id: 'wrong-actor', type: 'voluntary_end' as const, actorUid: 'admin_1', occurredIso: endedIso }
+    ],
+    status: 'voluntarily_ended',
+    endedByUid: 'admin_1',
+    updatedIso: endedIso
+  }).ok, false, 'voluntary actions must be attributed to the participant');
+  const legacyAdministrativeResume = {
+    ...participation,
+    endedIso,
+    endReason: 'Legacy administrative end reason.',
+    lifecycleEvents: [{
+      id: 'legacy-reopen', type: 'administrative_reopen' as const, actorUid: 'admin_1',
+      occurredIso: resumedIso, reason: 'Die Teilnahme darf wieder aufgenommen werden.'
+    }],
+    updatedIso: resumedIso
+  };
+  assert.deepEqual(validateCourseParticipation(legacyAdministrativeResume), { ok: true });
+  assert.equal(validateCourseParticipation({
+    ...participation,
+    lifecycleEvents: [{
+      id: 'orphan-resume', type: 'voluntary_resume' as const, actorUid: 'user_1', occurredIso: resumedIso
+    }],
+    updatedIso: resumedIso
+  }).ok, false, 'a resume event requires a legacy ended state or a prior end event');
+  assert.equal(validateCourseParticipation({
+    ...legacyAdministrativeResume,
+    endedIso: 'not-a-date'
+  }).ok, false, 'legacy resume requires a valid previous end timestamp');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    updatedIso: 'not-a-date'
+  }).ok, false, 'the participation update timestamp must follow its history');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [null] as unknown as typeof validHistory.lifecycleEvents
+  }).ok, false, 'malformed history entries must be rejected safely');
+  assert.equal(validateCourseParticipation({
+    ...validHistory,
+    lifecycleEvents: [{
+      ...validHistory.lifecycleEvents[0],
+      reason: 42
+    }] as unknown as typeof validHistory.lifecycleEvents
+  }).ok, false, 'event reasons must be text when present');
+});
+
 test('private notes require owner and exact material version; bookmark cannot contain note text', () => {
   assert.deepEqual(validatePrivateNote(note), { ok: true });
   assert.equal(validatePrivateNote({ ...note, materialVersionId: '' }).ok, false);

@@ -6,6 +6,7 @@ import type {
   AcademyProgramDraftDoc,
   AcademyProgramVersionDoc,
   AcademyCourseParticipationDoc,
+  AcademyParticipationLifecycleEventDoc,
   AcademyProgressEvidenceDoc,
   AcademyCompletionCorrectionDoc,
   AcademyRequalificationOrderDoc,
@@ -496,33 +497,77 @@ export function validateCourseParticipation(
       (!isNonEmpty(participation.endReason) || participation.endReason.trim().length < 10 || participation.endReason.length > 1000)) {
     return invalid('ACADEMY_PARTICIPATION_END_REASON_MISSING', 'Eine administrative Beendigung benötigt eine nachvollziehbare Begründung.');
   }
-  if (participation.endReason !== undefined && participation.endReason.length > 1000) {
-    return invalid('ACADEMY_PARTICIPATION_END_REASON_INVALID', 'Die Begründung der Beendigung ist zu lang.');
+  if (participation.endReason !== undefined && (typeof participation.endReason !== 'string' || participation.endReason.length > 1000)) {
+    return invalid('ACADEMY_PARTICIPATION_END_REASON_INVALID', 'Die Begründung der Beendigung ist ungültig oder zu lang.');
   }
   if (participation.lifecycleEvents !== undefined) {
-    if (!Array.isArray(participation.lifecycleEvents) || participation.lifecycleEvents.length > 1000) {
+    const events = participation.lifecycleEvents;
+    if (!Array.isArray(events) || events.length > 1000) {
       return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Die Teilnahmehistorie ist ungültig oder zu umfangreich.');
     }
     const eventIds = new Set<string>();
-    for (const event of participation.lifecycleEvents) {
-      if (!isNonEmpty(event.id) || eventIds.has(event.id) ||
+    let lifecycleState: 'in_progress' | 'voluntarily_ended' | 'administratively_ended' = 'in_progress';
+    const createdAt = Date.parse(participation.createdIso);
+    if (events.length > 0 && !Number.isFinite(createdAt)) {
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Der Teilnahmebeginn ist für die Verlaufsprüfung ungültig.');
+    }
+    let previousOccurred = Number.isFinite(createdAt) ? createdAt : Number.NEGATIVE_INFINITY;
+    const firstEvent = events[0];
+    if (firstEvent?.type === 'voluntary_resume' || firstEvent?.type === 'administrative_reopen') {
+      lifecycleState = firstEvent.type === 'voluntary_resume' ? 'voluntarily_ended' : 'administratively_ended';
+      const previousEnd = Date.parse(participation.endedIso || '');
+      if (!isNonEmpty(participation.endedIso) || !Number.isFinite(previousEnd) ||
+          (!isNonEmpty(participation.endedByUid) && !isNonEmpty(participation.endReason))) {
+        return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Eine Wiederaufnahme benötigt einen nachvollziehbaren vorherigen Beendigungsstand.');
+      }
+      previousOccurred = previousEnd;
+    }
+    let latestEndEvent: AcademyParticipationLifecycleEventDoc | undefined;
+    for (const event of events) {
+      const occurred = event && typeof event === 'object' && !Array.isArray(event) && typeof event.occurredIso === 'string'
+        ? Date.parse(event.occurredIso)
+        : Number.NaN;
+      if (!event || typeof event !== 'object' || Array.isArray(event) ||
+          !isNonEmpty(event.id) || eventIds.has(event.id) ||
           !['voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'].includes(event.type) ||
-          !isNonEmpty(event.actorUid) || !isNonEmpty(event.occurredIso) || !Number.isFinite(Date.parse(event.occurredIso)) ||
-          (event.reason !== undefined && event.reason.length > 1000) ||
+          !isNonEmpty(event.actorUid) || !isNonEmpty(event.occurredIso) || !Number.isFinite(occurred) ||
+          occurred < previousOccurred ||
+          (event.reason !== undefined && (typeof event.reason !== 'string' || event.reason.length > 1000)) ||
           (['administrative_end', 'administrative_reopen'].includes(event.type) &&
-           (!isNonEmpty(event.reason) || event.reason.trim().length < 10))) {
+           (!isNonEmpty(event.reason) || event.reason.trim().length < 10)) ||
+          (['voluntary_end', 'voluntary_resume'].includes(event.type) && event.actorUid !== participation.userUid)) {
         return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Ein Eintrag in der Teilnahmehistorie ist ungültig.');
       }
+      const transition = {
+        voluntary_end: { expected: 'in_progress', next: 'voluntarily_ended' },
+        administrative_end: { expected: 'in_progress', next: 'administratively_ended' },
+        voluntary_resume: { expected: 'voluntarily_ended', next: 'in_progress' },
+        administrative_reopen: { expected: 'administratively_ended', next: 'in_progress' }
+      } as const;
+      const rule = transition[event.type];
+      if (lifecycleState !== rule.expected) {
+        return invalid('ACADEMY_PARTICIPATION_HISTORY_SEQUENCE_INVALID', 'Die Teilnahmehistorie enthält einen unzulässigen Zustandswechsel.');
+      }
+      lifecycleState = rule.next;
+      if (event.type === 'voluntary_end' || event.type === 'administrative_end') latestEndEvent = event;
       eventIds.add(event.id);
+      previousOccurred = occurred;
     }
-    const latest = participation.lifecycleEvents.at(-1);
-    if (latest && (
-      (latest.type === 'voluntary_end' && participation.status !== 'voluntarily_ended') ||
-      (latest.type === 'administrative_end' && participation.status !== 'administratively_ended') ||
-      (['voluntary_resume', 'administrative_reopen'].includes(latest.type) &&
-       !['in_progress', 'completed'].includes(participation.status))
+    const expectedFinalState = participation.status === 'completed' ? 'in_progress' : participation.status;
+    const updatedAt = Date.parse(participation.updatedIso);
+    const completedAt = participation.status === 'completed' ? Date.parse(participation.completedIso || '') : Number.POSITIVE_INFINITY;
+    if (lifecycleState !== expectedFinalState ||
+        (events.length > 0 && (!Number.isFinite(updatedAt) || updatedAt < previousOccurred)) ||
+        (participation.status === 'completed' && (!Number.isFinite(completedAt) || completedAt < previousOccurred))) {
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Teilnahmestatus und Historie widersprechen sich.');
+    }
+    if (latestEndEvent && (
+      participation.endedIso !== latestEndEvent.occurredIso ||
+      participation.endedByUid !== latestEndEvent.actorUid ||
+      (latestEndEvent.type === 'administrative_end' && participation.endReason !== latestEndEvent.reason) ||
+      (latestEndEvent.type === 'voluntary_end' && participation.endReason !== undefined)
     )) {
-      return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Teilnahmestatus und letzter Historieneintrag widersprechen sich.');
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Der letzte Beendigungsnachweis stimmt nicht mit der Historie überein.');
     }
   }
   if (participation.kind !== undefined && !['standard', 'requalification'].includes(participation.kind)) {
