@@ -1368,6 +1368,7 @@ export function createAcademyApiRouter(
       const course = await repository.get<AcademyCourseMasterDoc>('academy_courses', req.params.courseId);
       if (!course) { res.status(404).json({ error: 'ACADEMY_DOCUMENT_NOT_FOUND' }); return; }
       if (!canManageMaterialCourse(actor, course.code)) { res.status(403).json({ error: 'ACADEMY_RESOURCE_FORBIDDEN' }); return; }
+      if (course.publicationStatus !== 'published' || course.availability !== 'available' || !course.currentPublishedVersionId || course.materialReviewPending?.length || course.materialReviewVersionRequired?.length) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       const reason = boundedText(req.body?.reason, 1000);
       if (!reason || reason.length < 10) throw new Error('ACADEMY_REQUALIFICATION_REASON_INVALID');
       let dueIso: string | undefined;
@@ -1375,48 +1376,92 @@ export function createAcademyApiRouter(
         if (typeof req.body.dueIso !== 'string' || !Number.isFinite(Date.parse(req.body.dueIso))) throw new Error('ACADEMY_REQUALIFICATION_DUE_DATE_INVALID');
         dueIso = new Date(req.body.dueIso).toISOString();
       }
-      const userUid = boundedText(req.body?.participantUid, 160);
-      if (!userUid) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_REQUIRED');
-      if (!resolveParticipantLabel?.(userUid)) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANT_NOT_FOUND');
-      const now = new Date().toISOString();
+      const rawUserUids: unknown[] = Array.isArray(req.body?.userUids) ? req.body.userUids : [req.body?.userUid ?? req.body?.participantUid];
+      if (rawUserUids.length < 1 || rawUserUids.length > 100) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANTS_INVALID');
+      const userUids = rawUserUids.map(value => typeof value === 'string' ? boundedText(value, 160) : null);
+      if (userUids.some(uid => !uid) || new Set(userUids).size !== userUids.length) throw new Error('ACADEMY_REQUALIFICATION_PARTICIPANTS_INVALID');
+      const participantUids = userUids as string[];
       const versionId = course.currentPublishedVersionId;
       if (!versionId) throw new Error('ACADEMY_REQUALIFICATION_COURSE_NOT_STARTABLE');
       const version = await repository.get<AcademyCourseVersionDoc>('academy_course_versions', versionId);
       if (!version || version.courseId !== course.id) throw new Error('ACADEMY_PUBLISHED_VERSION_MISSING');
       const requiredEvidenceRequirementIds = version.completionRequirements.filter(item => item.required).map(item => item.id);
-      const priorParticipations = (await repository.listCourseParticipations(course.id)).filter(item => item.userUid === userUid && item.kind !== 'requalification');
-      let priorCompletionParticipationId = '';
-      for (const prior of priorParticipations) {
-        const completion = await resolveAcademyCourseCompletion(repository, prior, resolveReleasedFinalExam);
-        if (completion.participation.status === 'completed' && completion.participation.completedIso) {
-          const synchronized = await repository.syncResolvedCourseCompletion(prior.id, completion.participation.completedIso, prior.updatedIso);
-          priorCompletionParticipationId = synchronized.id;
-          break;
+      const courseParticipations = await repository.listCourseParticipations(course.id);
+      const skipped: Array<{ displayName: string; reason: string }> = [];
+      const failed: Array<{ displayName: string; reason: string }> = [];
+      const eligible: Array<{ userUid: string; displayName: string; priorCompletionParticipationId: string }> = [];
+      for (let index = 0; index < participantUids.length; index += 8) {
+        const batch = participantUids.slice(index, index + 8);
+        const resolved = await Promise.all(batch.map(async userUid => {
+          const profile = resolveParticipantLabel?.(userUid);
+          if (!profile) return { eligible: false as const, userUid, displayName: 'Unbekanntes Konto', reason: 'Das Benutzerkonto ist nicht mehr verfügbar.' };
+          const priorParticipations = courseParticipations.filter(item => item.userUid === userUid && item.kind !== 'requalification')
+            .sort((a, b) => Date.parse(b.completedIso || b.updatedIso) - Date.parse(a.completedIso || a.updatedIso));
+          for (const prior of priorParticipations) {
+            const completion = await resolveAcademyCourseCompletion(repository, prior, resolveReleasedFinalExam);
+            if (completion.participation.status === 'completed' && completion.participation.completedIso) {
+              try {
+                const synchronized = await repository.syncResolvedCourseCompletion(prior.id, completion.participation.completedIso, prior.updatedIso);
+                return { eligible: true as const, userUid, displayName: profile.displayName, priorCompletionParticipationId: synchronized.id };
+              } catch {
+                return { eligible: false as const, userUid, displayName: profile.displayName, reason: 'Der frühere Abschluss wurde gerade geändert. Bitte lade die Teilnehmerliste neu.' };
+              }
+            }
+          }
+          return { eligible: false as const, userUid, displayName: profile.displayName, reason: 'Kein gültiger früherer Kursabschluss gefunden.' };
+        }));
+        for (const item of resolved) {
+          if (item.eligible) eligible.push({ userUid: item.userUid, displayName: item.displayName, priorCompletionParticipationId: item.priorCompletionParticipationId });
+          else skipped.push({ displayName: item.displayName, reason: item.reason });
         }
       }
-      if (!priorCompletionParticipationId) throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
-      const orderId = id('requalification');
-      const participationId = `requalification_participation_${encodeURIComponent(orderId)}`;
-      const order: AcademyRequalificationOrderDoc = {
-        id: orderId, userUid, courseId: course.id, courseVersionId: version.id,
-        priorCompletionParticipationId, participationId, reason, requiredEvidenceRequirementIds, ...(dueIso ? { dueIso } : {}),
-        status: 'open', orderedByUid: actor.uid, orderedIso: now
-      };
-      const participation: AcademyCourseParticipationDoc = {
-        id: participationId, userUid, courseId: course.id, courseVersionId: version.id,
-        kind: 'requalification', requalificationOrderId: orderId,
-        status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
-      };
-      const created = await repository.createRequalificationOrder(order, participation, priorCompletionParticipationId);
-      await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
-        `Wiederqualifizierung für Nutzer ${userUid} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
-      if (notifyMaterialReview) {
+      const created: Array<{ orderId: string; displayName: string }> = [];
+      for (const candidate of eligible) {
+        const now = new Date().toISOString();
+        const orderId = id('requalification');
+        const participationId = `requalification_participation_${encodeURIComponent(orderId)}`;
+        const order: AcademyRequalificationOrderDoc = {
+          id: orderId, userUid: candidate.userUid, courseId: course.id, courseVersionId: version.id,
+          priorCompletionParticipationId: candidate.priorCompletionParticipationId, participationId,
+          reason, requiredEvidenceRequirementIds, ...(dueIso ? { dueIso } : {}),
+          status: 'open', orderedByUid: actor.uid, orderedIso: now
+        };
+        const participation: AcademyCourseParticipationDoc = {
+          id: participationId, userUid: candidate.userUid, courseId: course.id, courseVersionId: version.id,
+          kind: 'requalification', requalificationOrderId: orderId,
+          status: 'in_progress', startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
+        };
         try {
-          await notifyMaterialReview(userUid, `academy-requalification-${orderId}`, 'Erneute Qualifikation erforderlich',
-            `Für ${version.title} ist eine erneute Qualifikation erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.${dueIso ? ` Frist: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(dueIso))}.` : ''}`);
-        } catch { /* The persisted order remains visible in the participant's Academy task list. */ }
+          await repository.createRequalificationOrder(order, participation, candidate.priorCompletionParticipationId);
+        } catch (error) {
+          const code = error instanceof Error ? error.message : '';
+          const reasonText = code.includes('ALREADY_OPEN') ? 'Für diese Person ist bereits eine offene Wiederqualifizierung vorhanden.'
+            : code.includes('PRIOR_COMPLETION_REQUIRED') ? 'Der frühere Kursabschluss ist nicht mehr gültig.'
+            : 'Die Anordnung konnte nicht gespeichert werden. Bitte prüfe diese Person erneut.';
+          if (code.includes('ALREADY_OPEN') || code.includes('PRIOR_COMPLETION_REQUIRED')) skipped.push({ displayName: candidate.displayName, reason: reasonText });
+          else failed.push({ displayName: candidate.displayName, reason: reasonText });
+          continue;
+        }
+        created.push({ orderId, displayName: candidate.displayName });
+        try {
+          await recordAudit(actor.uid, 'Academy-Wiederqualifizierung angeordnet', course.code,
+            `Wiederqualifizierung für ${candidate.displayName} angeordnet. Begründung: ${reason}`, 'ACADEMY_PROGRESS');
+        } catch {
+          failed.push({ displayName: candidate.displayName, reason: 'Die Aufgabe wurde erstellt, aber der Audit-Eintrag konnte nicht bestätigt werden. Bitte informiere einen Administrator.' });
+        }
+        if (notifyMaterialReview) {
+          try {
+            await notifyMaterialReview(candidate.userUid, `academy-requalification-${orderId}`, 'Erneute Qualifikation erforderlich',
+              `Für ${version.title} ist eine erneute Qualifikation erforderlich. Öffne die Academy, um die Aufgabe und den Grund zu sehen.${dueIso ? ` Frist: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(dueIso))}.` : ''}`);
+          } catch { /* The persisted task remains visible and notification delivery is retried on participant load. */ }
+        }
       }
-      res.status(201).json(created);
+      const summary = { created, skipped, failed, createdCount: created.length, skippedCount: skipped.length, failedCount: failed.length };
+      if (participantUids.length === 1 && created.length === 1 && skipped.length === 0 && failed.length === 0) {
+        const order = await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', created[0].orderId);
+        const participation = order ? await repository.get<AcademyCourseParticipationDoc>('academy_course_participations', order.participationId) : null;
+        res.status(201).json({ ...summary, order, participation });
+      } else res.status(created.length ? 201 : 200).json(summary);
     } catch (error) { fail(res, error, next); }
   });
 
