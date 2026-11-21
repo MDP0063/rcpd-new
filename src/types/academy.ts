@@ -389,6 +389,8 @@ export interface AcademyRequalificationOrderDoc {
   userUid: string;
   courseId: string;
   courseVersionId: string;
+  /** Exact historical completion that caused this new qualification requirement. */
+  priorCompletionParticipationId: string;
   participationId: string;
   reason: string;
   requiredEvidenceRequirementIds: string[];
