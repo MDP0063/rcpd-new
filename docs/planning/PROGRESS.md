@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 21.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PR #332 (zweistufige Revisionsanfragen für Prüfungsbewertungen) wurde am 21.11.2026 gemergt. Der Revisionsworkflow ist damit technisch integriert; die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt wie vereinbart bis zum Ende der Implementierungsphase zurückgestellt. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 21.11.2026 – Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. PR #332 (zweistufige Revisionsanfragen für Prüfungsbewertungen) und PR #334 (Einzelanordnung der Academy-Wiederqualifizierung) wurden am 21.11.2026 gemergt. Der Revisionsworkflow ist damit technisch integriert; die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt wie vereinbart bis zum Ende der Implementierungsphase zurückgestellt. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `4e2355651c9cb28010bb58f3fb8a4e782e13b5f2` (PR #332). Die fünf Academy-Bereiche und die zuvor integrierten Kurs-/Lehrgangs-, Bibliotheks-, Notiz-, Prüfungs- und Examiner-Funktionen bleiben Grundlage. Der zweistufige Revisionsworkflow ergänzt diese um Antrag durch aktuell kursberechtigte Prüfer, Entscheidung ausschließlich durch aktive Admins/Colonels, Wiederaufnahme desselben Versuchs in der Prüferliste sowie nachvollziehbare Historie und erneute Ergebnisfreigabe.
+**Aktueller Basisstand:** `main` bei `d396979a9b24a7fe952bd6020bf1e1e82796de34` (PR #334). Die fünf Academy-Bereiche und die zuvor integrierten Kurs-/Lehrgangs-, Bibliotheks-, Notiz-, Prüfungs- und Examiner-Funktionen bleiben Grundlage. Der zweistufige Revisionsworkflow ergänzt diese um Antrag durch aktuell kursberechtigte Prüfer, Entscheidung ausschließlich durch aktive Admins/Colonels, Wiederaufnahme desselben Versuchs in der Prüferliste sowie nachvollziehbare Historie und erneute Ergebnisfreigabe.
 
 **Aktueller Umsetzungsstand:** PR #332 wurde auf aktuellem `main` aufgebaut, unabhängig auf Session-/Rollenprüfungen, Datenminimierung, transaktionale Zustandsübergänge, Ergebnis-Snapshots und Benachrichtigungszustellung geprüft und nach erfolgreicher CI gemergt. TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung waren auf dem finalen PR-Head erfolgreich; auch der Post-Merge-Build auf `main` ist erfolgreich. Es wurde kein Produktionsdeployment behauptet. PR #277 wurde nicht gemergt und geschlossen; seine Nachfolgeimplementierung ist PR #295, der bereits in `main` integriert ist. Die zeitabhängigen Reader-/Autosave-Browserfälle bleiben Teil der späteren Gesamtabnahme.
 
@@ -52,18 +52,15 @@ Die fachlichen Beschlüsse vom 10.11.2026 sind in `DECISIONS.md` und `ACADEMY-DE
 
 Die Repository-Transaktion hält Materialveröffentlichung und Kurssperre atomar. Die Portal-Benachrichtigung liegt in einem getrennten Store; deshalb wird die Zustellung über einen persistenten Review-Marker wiederholt und über eine deterministische ID dedupliziert. PR #142 ist gemergt; CI (TypeScript/Build und 451/451 Tests), PR-Vorlagenprüfung sowie Main-Workflow einschließlich Render-Deploy-Hook waren erfolgreich. Manuelle Browser-/Live-Runtime-Prüfung bleibt offen.
 
-## 0.3 Wiederqualifizierung – laufende Umsetzung
+## 0.3 Wiederqualifizierung – Einzelanordnung in main, Gruppenanordnung in Umsetzung
 
-- Entwicklungsbranch: `feat/academy-requalification-records`; `main` bleibt unverändert.
-- Neue zentrale Vorgänge werden je Teilnehmer und Kurs/Qualifikation gespeichert und mit einer separaten neuen Kursteilnahme verknüpft. Reguläre historische Teilnahmen und ihre Nachweise bleiben erhalten.
-- Die Kursverwaltung kann berechtigten Verantwortlichen eine frühere Abschluss-Teilnahme auswählen lassen, eine Begründung verlangen und optional eine Frist setzen. Teilnehmer sehen eine verständliche Aufgabe mit Grund und Frist in der Kursübersicht; der Vorgang bleibt innerhalb der bestehenden Academy-Navigation.
-- Die API prüft Kurszuständigkeit und früheren Abschluss serverseitig. Die Repository-Transaktion pinnt eine konkrete veröffentlichte Kursversion, verhindert offene Doppelanforderungen und verwendet einen deterministischen Koordinationsdatensatz gegen konkurrierende Anordnungen.
-- Erforderliche Nachweise laufen über den vorhandenen Kursfortschritt. Bei Kursabschluss wird der zentrale Vorgang geschlossen; bei prüfungsabhängigem Abschluss wird der Status anhand des offiziell freigegebenen Prüfungsergebnisses beim Abruf synchronisiert.
-- JSON-Speicherschema v8 ergänzt die neue Sammlung rückwärtskompatibel. Backup-/Restore- und Anonymisierungswege werden berücksichtigt.
-- Tests für getrennte Historie, erneuten Vorgang nach Abschluss und konkurrierende Anordnungen sind ergänzt. CI und unabhängige Sicherheitsprüfung stehen noch aus; die Funktion ist nicht gemergt oder produktiv abgenommen.
-- Noch offen: Gruppenanordnung, vollständige Benachrichtigungs-Zustellgarantie und die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-QA.
-- Zusätzliche Integrität: Ein freigegebener Prüfungserfolg muss nach der Anordnung bzw. nach der letzten Wiederöffnung liegen. Wird ein Prüfungsnachweis ungültig oder ein neuer Abschluss korrigiert, wird derselbe Vorgang wieder geöffnet; der nächste Nachweis muss danach liegen. Benachrichtigungen verwenden stabile IDs und werden beim Laden der Teilnehmeraufgaben erneut versucht. Abgeschlossene Wiederqualifizierungen bleiben in der Academy-Historie separat sichtbar.
-- CI-Abnahme auf dem aktuellen Implementierungsstand: `bun run lint`, `bun run build` und `bun run test` erfolgreich; 470/470 Tests bestanden. Die manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt offen.
+- PR #334 ist in `main` integriert (Squash-Commit `d396979a9b24a7fe952bd6020bf1e1e82796de34`). Die Einzelanordnung je Teilnehmer und Kurs/Qualifikation, die separate neue Teilnahme, die Teilnehmeraufgabe und die getrennte Abschluss-Historie sind implementiert.
+- Aktueller Folgebranch: `feat/academy-requalification-groups`. Hier wird die Auswahl mehrerer berechtigter früherer Absolventen ergänzt. Jede Person erhält weiterhin einen eigenen zentralen Vorgang und eine eigene neue Teilnahme; es entstehen keine gruppenweiten geteilten Fortschrittsdaten.
+- Technische Integrität aus PR #334: veröffentlichte Kursversion wird gepinnt; frühere reguläre Teilnahmen bleiben unverändert; parallele offene Anordnungen werden transaktional verhindert; Prüfungsnachweise müssen nach Anordnung bzw. letzter Wiederöffnung freigegeben sein; Korrektur oder ungültiger Prüfungsnachweis kann denselben Vorgang erneut öffnen.
+- Benachrichtigungen nutzen stabile IDs und werden beim Laden der Teilnehmeraufgaben erneut versucht. Eine dauerhafte Hintergrund-Outbox bleibt als Restpunkt bestehen.
+- JSON-Speicherschema v8 sowie Backup-/Restore- und Anonymisierungspfade berücksichtigen die neuen Sammlungen; ältere Backups bleiben importierbar.
+- CI für PR #334: Lint, TypeScript, Produktionsbuild und 470/470 Tests erfolgreich; PR-Vorlagenprüfung erfolgreich. Nach dem Merge war auch der Main-Workflow einschließlich Render-Deploy-Hook erfolgreich.
+- Noch offen: Gruppenanordnung im aktuellen Branch sowie die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme. Die Live-Oberfläche wird bis zu dieser Prüfung nicht als manuell abgenommen bezeichnet.
 
 ## 1. Gesamtstatus
 
