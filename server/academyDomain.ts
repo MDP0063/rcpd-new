@@ -486,9 +486,44 @@ export function validateCourseParticipation(
   if (participation.status === 'completed' && !isNonEmpty(participation.completedIso)) {
     return invalid('ACADEMY_COMPLETION_TIMESTAMP_MISSING', 'Ein Kursabschluss benötigt Start- und Abschlusszeitpunkt.');
   }
+  const hasLifecycleHistory = Boolean(participation.lifecycleEvents?.length);
   if (['voluntarily_ended', 'administratively_ended'].includes(participation.status) &&
-      (!isNonEmpty(participation.endedIso) || !isNonEmpty(participation.endReason))) {
-    return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt Zeitpunkt und Begründung.');
+      (!isNonEmpty(participation.endedIso) ||
+       (hasLifecycleHistory ? !isNonEmpty(participation.endedByUid) : !isNonEmpty(participation.endReason)))) {
+    return invalid('ACADEMY_PARTICIPATION_END_AUDIT_MISSING', 'Eine beendete Teilnahme benötigt nachvollziehbare Verlaufsdaten.');
+  }
+  if (participation.status === 'administratively_ended' &&
+      (!isNonEmpty(participation.endReason) || participation.endReason.trim().length < 10 || participation.endReason.length > 1000)) {
+    return invalid('ACADEMY_PARTICIPATION_END_REASON_MISSING', 'Eine administrative Beendigung benötigt eine nachvollziehbare Begründung.');
+  }
+  if (participation.endReason !== undefined && participation.endReason.length > 1000) {
+    return invalid('ACADEMY_PARTICIPATION_END_REASON_INVALID', 'Die Begründung der Beendigung ist zu lang.');
+  }
+  if (participation.lifecycleEvents !== undefined) {
+    if (!Array.isArray(participation.lifecycleEvents) || participation.lifecycleEvents.length > 1000) {
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Die Teilnahmehistorie ist ungültig oder zu umfangreich.');
+    }
+    const eventIds = new Set<string>();
+    for (const event of participation.lifecycleEvents) {
+      if (!isNonEmpty(event.id) || eventIds.has(event.id) ||
+          !['voluntary_end', 'voluntary_resume', 'administrative_end', 'administrative_reopen'].includes(event.type) ||
+          !isNonEmpty(event.actorUid) || !isNonEmpty(event.occurredIso) || !Number.isFinite(Date.parse(event.occurredIso)) ||
+          (event.reason !== undefined && event.reason.length > 1000) ||
+          (['administrative_end', 'administrative_reopen'].includes(event.type) &&
+           (!isNonEmpty(event.reason) || event.reason.trim().length < 10))) {
+        return invalid('ACADEMY_PARTICIPATION_HISTORY_INVALID', 'Ein Eintrag in der Teilnahmehistorie ist ungültig.');
+      }
+      eventIds.add(event.id);
+    }
+    const latest = participation.lifecycleEvents.at(-1);
+    if (latest && (
+      (latest.type === 'voluntary_end' && participation.status !== 'voluntarily_ended') ||
+      (latest.type === 'administrative_end' && participation.status !== 'administratively_ended') ||
+      (['voluntary_resume', 'administrative_reopen'].includes(latest.type) &&
+       !['in_progress', 'completed'].includes(participation.status))
+    )) {
+      return invalid('ACADEMY_PARTICIPATION_HISTORY_STATE_MISMATCH', 'Teilnahmestatus und letzter Historieneintrag widersprechen sich.');
+    }
   }
   if (participation.kind !== undefined && !['standard', 'requalification'].includes(participation.kind)) {
     return invalid('ACADEMY_PARTICIPATION_KIND_INVALID', 'Die Teilnahmeart ist ungültig.');
