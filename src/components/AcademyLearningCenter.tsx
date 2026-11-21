@@ -102,6 +102,15 @@ function statusLabel(status: string): string {
     default: return status;
   }
 }
+function participationLifecycleLabel(type: string): string {
+  switch (type) {
+    case 'voluntary_end': return 'Teilnahme freiwillig beendet';
+    case 'voluntary_resume': return 'Teilnahme freiwillig fortgesetzt';
+    case 'administrative_end': return 'Teilnahme administrativ beendet';
+    case 'administrative_reopen': return 'Teilnahme administrativ wieder freigegeben';
+    default: return 'Teilnahmestatus geändert';
+  }
+}
 function dateLabel(value?: string): string {
   if (!value) return '—';
   const date = new Date(value);
@@ -496,6 +505,43 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
     setDetailLoading(false);
     if (await refreshLearningDataIfActive()) {
       onStatusToast('Kursteilnahme wurde gestartet. Die konkrete Kursversion ist jetzt fest zugeordnet.');
+    }
+  };
+
+  const transitionParticipation = async (action: 'end' | 'resume') => {
+    if (!courseDetail || saving) return;
+    const currentStatus = courseDetail.participation.status;
+    if ((action === 'end' && currentStatus !== 'in_progress') ||
+        (action === 'resume' && currentStatus !== 'voluntarily_ended')) return;
+    const confirmed = await confirm(
+      action === 'end'
+        ? 'Möchtest du diese Teilnahme wirklich freiwillig beenden? Dein bisheriger Fortschritt bleibt erhalten. Du kannst dieselbe Teilnahme später fortsetzen.'
+        : 'Möchtest du diese bestehende Teilnahme fortsetzen? Dein bisheriger Fortschritt bleibt erhalten.',
+      { title: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen', confirmLabel: action === 'end' ? 'Teilnahme beenden' : 'Teilnahme fortsetzen' }
+    );
+    if (!confirmed) return;
+    const requestId = detailRequestIdRef.current;
+    setSaving(true);
+    const response = await apiFetch<{ participation: AcademyParticipantCourseParticipationView }>(
+      action === 'end'
+        ? API_ENDPOINTS.ACADEMY_COURSE_END(courseDetail.participation.id)
+        : API_ENDPOINTS.ACADEMY_COURSE_RESUME(courseDetail.participation.id),
+      { method: 'POST' }
+    );
+    if (!response.ok || !response.data) {
+      setSaving(false);
+      onStatusToast(response.error || (action === 'end' ? 'Die Teilnahme konnte nicht beendet werden.' : 'Die Teilnahme konnte nicht fortgesetzt werden.'));
+      return;
+    }
+    if (detailRequestIdRef.current === requestId) {
+      setCourseDetail(current => current ? { ...current, participation: response.data!.participation } : current);
+    }
+    await refreshLearningDataIfActive();
+    setSaving(false);
+    if (detailRequestIdRef.current === requestId) {
+      onStatusToast(action === 'end'
+        ? 'Teilnahme wurde beendet. Dein Fortschritt bleibt erhalten.'
+        : 'Deine bestehende Teilnahme wurde fortgesetzt.');
     }
   };
 
