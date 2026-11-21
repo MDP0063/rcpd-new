@@ -123,6 +123,49 @@ test('requalification creates a separate participation and preserves the origina
   assert.equal((await repository.get<AcademyRequalificationOrderDoc>('academy_requalification_orders', secondOrder.id))?.userUid, 'anonymized-user');
 }));
 
+test('group requalification keeps each participant process and progress independent', async () => withRepository(async repository => {
+  await repository.create('academy_courses', master.id, master);
+  await repository.saveCourseDraft(master.id, courseDraft, 1, 'owner-1');
+  await repository.publishCourseVersion(master.id, version, publishedMaster, 2, 'owner-1');
+  const participants = ['group-learner-a', 'group-learner-b'];
+  const requalificationIds: string[] = [];
+  for (const userUid of participants) {
+    const original = await repository.startCourseParticipation(userUid, master.id, now);
+    await repository.recordProgressEvidence(original.id, {
+      participationId: original.id, requirementId: 'req_chapter', evidenceType: 'required_chapter',
+      sourceId: 'chapter-1', recordedByUid: userUid, recordedIso: now
+    }, userUid, false);
+    const orderId = `group-order-${userUid}`;
+    const participationId = `group-requalification-${userUid}`;
+    const order: AcademyRequalificationOrderDoc = {
+      id: orderId, userUid, courseId: master.id, courseVersionId: version.id,
+      priorCompletionParticipationId: original.id, participationId,
+      reason: 'Die Qualifikation muss erneut nachgewiesen werden.',
+      requiredEvidenceRequirementIds: ['req_chapter'], status: 'open', orderedByUid: 'manager-1', orderedIso: now
+    };
+    const requalification: AcademyCourseParticipationDoc = {
+      id: participationId, userUid, courseId: master.id, courseVersionId: version.id,
+      kind: 'requalification', requalificationOrderId: orderId, status: 'in_progress',
+      startedIso: now, lastActivityIso: now, createdIso: now, updatedIso: now
+    };
+    await repository.createRequalificationOrder(order, requalification, original.id);
+    requalificationIds.push(participationId);
+  }
+  await repository.recordProgressEvidence(requalificationIds[0], {
+    participationId: requalificationIds[0], requirementId: 'req_chapter', evidenceType: 'required_chapter',
+    sourceId: 'chapter-1', recordedByUid: participants[0], recordedIso: '2026-11-07T12:00:00.000Z'
+  }, participants[0], false);
+  const firstOrders = await repository.listOwnRequalificationOrders(participants[0]);
+  const secondOrders = await repository.listOwnRequalificationOrders(participants[1]);
+  assert.equal(firstOrders[0].status, 'completed');
+  assert.equal(secondOrders[0].status, 'open');
+  assert.equal((await repository.getCourseParticipation(requalificationIds[1]))?.status, 'in_progress');
+  for (const userUid of participants) {
+    const history = await repository.listOwnCourseParticipations(userUid);
+    assert.equal(history.find(item => item.kind !== 'requalification')?.status, 'completed');
+  }
+}));
+
 test('a requalification requires a newly released final-exam result', async () => withRepository(async repository => {
   const assessmentVersion = { ...version, completionRequirements: [{
     id: 'req_assessment', type: 'required_assessment' as const, required: true,
