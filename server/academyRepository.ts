@@ -1287,8 +1287,9 @@ export class AcademyRepository {
       if (lock && (lock.id !== lockId || lock.userUid !== order.userUid || lock.courseId !== order.courseId || !lock.updatedIso)) {
         throw new Error('ACADEMY_REQUALIFICATION_LOCK_INVALID');
       }
-      if (!priorCompletionParticipationId || !history.some(item => item.id === priorCompletionParticipationId &&
-          item.courseId === order.courseId && item.userUid === order.userUid && item.kind !== 'requalification' && item.status === 'completed')) {
+      if (!priorCompletionParticipationId || order.priorCompletionParticipationId !== priorCompletionParticipationId ||
+          !history.some(item => item.id === priorCompletionParticipationId &&
+            item.courseId === order.courseId && item.userUid === order.userUid && item.kind !== 'requalification' && item.status === 'completed')) {
         throw new Error('ACADEMY_REQUALIFICATION_PRIOR_COMPLETION_REQUIRED');
       }
       if (lock?.activeOrderId && (!activeOrder || activeOrder.userUid !== order.userUid || activeOrder.courseId !== order.courseId)) {
