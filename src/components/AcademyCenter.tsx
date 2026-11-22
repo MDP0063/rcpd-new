@@ -1298,7 +1298,7 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
           initialCourseCode={courseExamNavigationTarget?.courseCode || null}
         />
       )}
-      {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} />}
+      {activeTab === 'exam_corrections' && (currentUser.role === 'admin' || currentUser.role === 'colonel') && <ExamCorrectionCenter canReleaseResults={currentUser.role === 'admin'} roster={roster} />}
       {activeTab === 'exam_reviews' && canEditAcademy && <>
         <ExamReviewCenter currentUser={currentUser} roster={roster} initialAttemptId={initialReviewAttemptId} />
         <ExamReviewRevisionCenter currentUser={currentUser} />

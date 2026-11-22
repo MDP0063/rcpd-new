@@ -82,20 +82,19 @@ Vor Abschluss der Academy und vor späterer Modulimplementierung validieren:
 
 Die Portalbereiche sind im ergänzenden `MODULE-INVENTORY.md` systematisch erfasst. Das Inventar ersetzt noch kein vollständiges UX-/Funktionsaudit. Vor jeder Ausarbeitung sind vorhandene Funktionen, Daten, Rollen, Abläufe und Originalentscheidungen konkret zu prüfen. Keine Features aus Modulnamen ableiten.
 
-## 4. Technische Prüffelder (nicht als aktuelle Befunde missverstehen)
+## 4. Technische Prüffelder – aktueller Prüfstatus (22.11.2026)
 
-Die folgenden Punkte stammen aus früheren Prüfnotizen und müssen am aktuellen Branch/Commit neu verifiziert werden:
-- Grading Engine speichert vollständiges Review atomar und besitzt keine separaten Grader-Drafts.
-- Teilnehmer-Ergebnisprojektion basiert auf gespeicherten Attempts.
-- Korrekturen sind auf Admins/Colonels beschränkt.
-- Korrektur-Audit teilweise vorhanden; UI könnte User-ID und Punktlisten statt lesbarer Fragezuordnung zeigen.
-- History-Sortierung möglicherweise nach `submittedAtIso` statt tatsächlichem Bewertungsabschluss.
-- Completed-Manual-Review-Abfrage möglicherweise nur manuelle Freitextfälle.
-- Public Projection für Final Exams unterdrückt geschützte Fragendetails.
-- Keine Pagination/Infinite Loading; mögliche Begrenzung um 1.000 Einträge.
-- Zu prüfende Dateien aus früheren Notizen: `server/examReviewService.ts`, `server/examSubmitService.ts`, `server/examAttemptService.ts`, `src/components/ExamParticipantRunner.tsx`, `server.ts`, `server/examRepository.ts`, `server/examRepositoryRules.ts`, `src/components/ExamCorrectionCenter.tsx` sowie passende Tests.
+- **Bewertungs-Drafts und Finalisierung – CODEBEFUND:** Einzelne Entwurfsnoten werden im jeweiligen `exam_attempts`-Dokument gespeichert. Die abschließende manuelle Bewertung aktualisiert Noten, Status, Reviewer und Bewertungszeitpunkt gemeinsam innerhalb einer Repository-Transaktion. Es gibt keine separate Draft-Sammlung.
+- **Teilnehmer-Ergebnisprojektion – CODEBEFUND:** Die Ergebnisliste wird aus den gespeicherten `exam_attempts` aufgebaut. Vor einer erstmaligen Freigabe wird nur ein neutraler Wartezustand projiziert; bei einer erneuten Freigabe bleibt der zuvor veröffentlichte Snapshot sichtbar und wird als in Überarbeitung markiert.
+- **Final-Exam-Fragendetails – CODEBEFUND:** Die öffentliche Ergebnisprojektion gibt für `final_exam` keine einzelnen Frageergebnisse aus. Die Detailprojektion bleibt bei Übungstests möglich.
+- **Korrekturberechtigung – CODEBEFUND:** `GET /api/academy/exam-review-corrections` ist serverseitig auf Admins und Colonels begrenzt. Die UI-Eigenschaft `canReleaseResults` schaltet die zusätzliche Ergebnisfreigabe nur für Admins frei.
+- **Abfrage abgeschlossener manueller Bewertungen – CODEBEFUND:** Die Liste enthält nur abgeschlossene `passed`-/`failed`-Versuche mit Reviewer, Bewertungszeitpunkt und mindestens einer manuell bewerteten Freitextfrage. Offene Revisionsanfragen werden standardmäßig ausgeschlossen. Die Sortierung verwendet `reviewedAtIso`, nicht den Abgabezeitpunkt.
+- **Korrekturhistorie – bestätigter Verständlichkeitsmangel:** Die bisherige Verwaltungsansicht zeigte interne Reviewer-UIDs und unbeschriftete Punktelisten. Im Branch `fix/academy-correction-history-readable` wird dies durch Namen aus dem vorhandenen öffentlichen Personalbestand und eine nachvollziehbare Punkteänderung je Frage ersetzt. Die zugrunde liegenden Auditdaten und API-Verträge bleiben unverändert.
+- **Begrenzung – CODEBEFUND:** Die relevanten Review-/Historienabfragen verwenden eine Obergrenze von 1.000 Datensätzen. Eine Pagination ist nicht implementiert. Ob diese Grenze bei realer Nutzung erreicht wird, muss anhand tatsächlicher Bestandsgrößen bewertet werden; es werden keine Datenmengen angenommen.
 
-**Keiner dieser Punkte gilt ohne erneute Prüfung als bestätigter aktueller Codebefund.**
+**Weiterhin offen:** manuelle Rollen-/Browser-/Screenreader-/Live-Firestore-Abnahme, Verhalten bei sehr großen Historien sowie die vollständige fachliche Cutover-/Legacy-Abnahme der beiden Prüfungsdatenfamilien. Die Legacy-Prüfungsansichten und -Schreibwege werden nicht entfernt oder zusammengeführt, solange Migration, Datenbestand und kontrollierter Cutover nicht vollständig verifiziert sind.
+
+**Prüfgrundlage:** `server/examReviewService.ts`, `server/examSubmitService.ts`, `server/examAttemptService.ts`, `server/examRepository.ts`, `server/examRepositoryRules.ts`, `server.ts` und `src/components/ExamCorrectionCenter.tsx`.
 
 ## 5. UX-/Accessibility-Recherche
 
