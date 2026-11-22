@@ -152,7 +152,10 @@ export async function migrateLegacyExamData(
     }
 
     const examId = mapped.master.id;
-    const sourceFingerprint = fingerprint(legacy);
+    // Older records without a status field mean published; normalize them so an explicit
+    // published status does not create a pointless second migration version.
+    const normalizedLegacy = { ...legacy, status: legacy.status ?? 'published' };
+    const sourceFingerprint = fingerprint(normalizedLegacy);
     const masterFingerprint = fingerprint(mapped.master);
     const master = {
       ...mapped.master,
