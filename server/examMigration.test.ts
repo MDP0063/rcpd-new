@@ -72,6 +72,67 @@ test('Legacy-Migration importiert Master, unveränderliche Startversion und Fort
   });
 });
 
+test('Legacy-Migration übernimmt archivierte Prüfungen ausschließlich als archiviert und nicht startbar', async () => {
+  await withRepository(async repository => {
+    const result = await migrateLegacyExamData(repository, [legacyExam({ status: 'archived' })], [], '2026-11-05T12:00:00.000Z');
+    assert.equal(result.exams.imported, 1);
+    const master = await repository.get('exam_masters', 'exam-legacy-1');
+    assert.equal(master?.status, 'archived');
+    assert.equal(master?.startable, false);
+    const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
+    assert.equal(version?.startable, false);
+  });
+});
+
+test('Legacy-Migration erhält Entwurfsstatus und gibt Entwürfe nicht für Teilnehmer frei', async () => {
+  await withRepository(async repository => {
+    const result = await migrateLegacyExamData(repository, [legacyExam({ status: 'draft' })], [], '2026-11-05T12:00:00.000Z');
+    assert.equal(result.exams.imported, 1);
+    const master = await repository.get('exam_masters', 'exam-legacy-1');
+    assert.equal(master?.status, 'draft');
+    assert.equal(master?.startable, false);
+    const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
+    assert.equal(version?.startable, false);
+  });
+});
+
+test('Legacy-Migration synchronisiert eine spätere Archivierung auf den neuen Master', async () => {
+  await withRepository(async repository => {
+    await migrateLegacyExamData(repository, [legacyExam()], [], '2026-11-05T12:00:00.000Z');
+    const result = await migrateLegacyExamData(
+      repository,
+      [legacyExam({ status: 'archived', updatedIso: '2026-11-06T12:00:00.000Z' })],
+      [],
+      '2026-11-06T13:00:00.000Z'
+    );
+    assert.equal(result.exams.updated, 1);
+    const master = await repository.get('exam_masters', 'exam-legacy-1');
+    assert.equal(master?.status, 'archived');
+    assert.equal(master?.startable, false);
+    assert.equal(master?.currentPublishedVersionId, 'exam-legacy-1__v2');
+    assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v1'))?.startable, true);
+    assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v2'))?.startable, false);
+  });
+});
+
+test('Legacy-Migration behandelt fehlenden und expliziten published-Status identisch', async () => {
+  await withRepository(async repository => {
+    await migrateLegacyExamData(repository, [legacyExam()], [], '2026-11-05T12:00:00.000Z');
+    const result = await migrateLegacyExamData(repository, [legacyExam({ status: 'published' })], [], '2026-11-06T12:00:00.000Z');
+    assert.equal(result.exams.alreadyMigrated, 1);
+    assert.equal((await repository.list('exam_versions', { where: [{ field: 'examId', value: 'exam-legacy-1' }] })).length, 1);
+  });
+});
+
+test('Legacy-Migration lehnt unbekannte Veröffentlichungsstatus fail-closed ab', async () => {
+  await withRepository(async repository => {
+    const result = await migrateLegacyExamData(repository, [legacyExam({ status: 'suspended' as any })], [], '2026-11-05T12:00:00.000Z');
+    assert.equal(result.exams.skipped, 1);
+    assert.equal(result.issues[0]?.code, 'LEGACY_EXAM_INVALID');
+    assert.equal(await repository.get('exam_masters', 'exam-legacy-1'), null);
+  });
+});
+
 test('Legacy-Migration ist bei unveränderten Quelldaten idempotent', async () => {
   await withRepository(async repository => {
     const first = await migrateLegacyExamData(repository, [legacyExam()], [legacyProgress()], '2026-11-05T12:00:00.000Z');
