@@ -1028,6 +1028,8 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal(courseManagerCandidates.status, 200, JSON.stringify(courseManagerCandidates.body));
     assert.equal(courseManagerCandidates.body!.candidates.some((item: { uid: string }) => item.uid === 'academy-officer'), true,
       'assigned course managers may view eligible participants for their course');
+    assert.equal(courseManagerCandidates.body!.candidates.some((item: { uid: string }) => item.uid === 'academy-officer-3'), false,
+      'participants without a completed course history must not appear as candidates');
     const unrelatedManagerCandidates = await request(`/api/academy/courses/${courseId}/requalification-candidates`, scopedOfficer);
     assert.equal(unrelatedManagerCandidates.status, 403, 'a different course assignment must not expose participant candidates');
     const participantCandidates = await request(`/api/academy/courses/${courseId}/requalification-candidates`, officer);
