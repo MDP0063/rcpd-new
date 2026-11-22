@@ -1690,3 +1690,10 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Der zuvor als offen geführte Gruppenablauf ist seit PR #338 integriert; die Nachkorrekturen aus PR #340 sowie Teilnahme-Lebenszyklus und Historienvalidierung aus PR #343/#344 sind ebenfalls integriert. Die ältere Liste offener Arbeiten wurde entsprechend bereinigt.
 - Wiederqualifizierung: technische CI-/Integrationsprüfungen sind erfolgreich; manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt offen. Die Benachrichtigungszustellung hat einen wiederholbaren Versuch beim Laden der Teilnehmeraufgaben, aber keine unabhängig laufende, dauerhaft überwachte Hintergrund-Outbox. Diese Einschränkung bleibt offen und darf nicht als vollständig gelöst dargestellt werden.
 - Nächste Entwicklungsarbeit: systematischer Fehler-/Funktionsaudit der bereits implementierten Academy-Module. Persönliche Empfehlungen sind noch nicht implementiert; vor dem Datenmodell müssen die in `OPEN-QUESTIONS.md` genannten Punkte (Platzierung, automatische Auslöser/Nachweise, Rechte) geklärt werden. Kursmeldungen bleiben wegen ungeklärter Quelle und Erstellungs-/Rücknahmerechte unangetastet.
+
+
+### 22.11.2026 – Kleiner Verständlichkeitsfehler in der Gruppenanordnung behoben
+
+- Im Verwaltungsformular war der erklärende Satz trotz Mehrfachauswahl noch im Singular formuliert. Das konnte den Eindruck erwecken, dass nur eine Person ausgewählt werden kann.
+- Die Beschreibung nennt jetzt ausdrücklich mehrere mögliche Teilnehmer und erklärt, dass für jede Person eine eigene Teilnahme angelegt wird und frühere Abschlüsse erhalten bleiben.
+- Dies ist eine reine Textkorrektur; Datenmodell, API-Vertrag, Berechtigungen und fachlicher Ablauf bleiben unverändert. Der breitere Funktions-/Fehleraudit läuft weiter.
