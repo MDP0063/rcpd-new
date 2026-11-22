@@ -285,7 +285,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean; roste
             <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · Korrigiert von {reviewerLabel(entry.reviewerUid)}</p>
             <p className="mt-1 text-slate-500">Vorher bewertet von {reviewerLabel(entry.previousReviewerUid)} · {new Date(entry.previousReviewedAtIso).toLocaleString('de-DE')}</p>
             <p className="mt-1">Ergebnis: {entry.previousStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.previousScoreBasisPoints)}) → {entry.nextStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.nextScoreBasisPoints)})</p>
-            <p className="mt-2 font-semibold">Punkte je Frage</p>
+            <p className="mt-2 font-semibold">Punkte je Frage (vorher → nachher)</p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
               {entry.previousGrades.map(previousGrade => {
                 const questionIndex = review.questions.findIndex(question => question.questionId === previousGrade.questionId);
