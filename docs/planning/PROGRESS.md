@@ -1707,3 +1707,12 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Die Kandidatenliste enthält nur Personen mit einem gültigen früheren Abschluss; Teilnehmer ohne abgeschlossenen Kursverlauf werden ausgeschlossen.
 - PR #348 ist gemergt. CI auf dem PR-Stand und der Post-Merge-Workflow auf `main` waren erfolgreich: TypeScript-/Produktionsbuild, vollständige Testsuite und PR-Vorlagenprüfung. Der optionale Render-Deploy-Hook lief erfolgreich durch; daraus wird kein manueller Live-Abnahmestatus abgeleitet.
 - Keine Laufzeitänderung in diesem PR; die bestehende Zugriffskontrolle wurde mit HTTP-Regressionstests abgesichert.
+
+
+## 22.11.2026 – Prüfungs-Korrekturhistorie verständlicher darstellen (Audit-Folgearbeit)
+
+- Der Codeaudit der Prüfungsbewertung hat bestätigt: Bewertungsentwürfe liegen im jeweiligen Versuchsdokument; die finale manuelle Bewertung aktualisiert Status, Punkte und Reviewer in einer Repository-Transaktion. Die Teilnehmer-Ergebnisprojektion basiert auf gespeicherten Versuchen; vor Freigabe werden keine internen Bewertungsdetails offengelegt. Die öffentliche Projektion von Kursabschlussprüfungen unterdrückt Einzelfragen. Korrekturen sind serverseitig auf Admins/Colonels beschränkt.
+- Die Abfrage abgeschlossener manueller Bewertungen umfasst nur abgeschlossene Versuche mit manuell bewerteten Freitextfragen, schließt offene Revisionsanfragen aus und sortiert nach tatsächlichem Bewertungsabschluss (`reviewedAtIso`). Die technische Obergrenze von 1.000 Datensätzen bleibt ein dokumentierter Skalierungsprüfpunkt.
+- **Bestätigter Verständlichkeitsmangel:** Die bisherige Korrekturhistorie zeigte interne Reviewer-UIDs und unbeschriftete Punktelisten. Das ist für eine Verwaltungsansicht zwar technisch nachvollziehbar, aber ohne Kenntnis interner Kennungen unnötig schwer zu lesen.
+- Branch `fix/academy-correction-history-readable`: Korrekturhistorie zeigt Namen/Dienstnummern aus dem vorhandenen Personalbestand und ordnet vorherige/neue Punkte konkreten Fragen zu. Fehlt ein Profil, wird neutral „Name nicht verfügbar“ angezeigt. Keine API-, Datenmodell- oder Berechtigungsänderung.
+- CI und unabhängige Sichtprüfung des PR-Diffs stehen noch aus. Die manuelle Browser-/Screenreader-Abnahme bleibt Teil der gemeinsamen Academy-Abnahme.
