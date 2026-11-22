@@ -1024,6 +1024,17 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
     assert.equal('publishedByUid' in programDetail.body!.requiredCourses[0].version, false);
     assert.equal((await request(`/api/academy/program-participations/${programStarted.body!.participation.id}`, admin)).status, 404);
 
+    const courseManagerCandidates = await request(`/api/academy/courses/${courseId}/requalification-candidates`, courseManager);
+    assert.equal(courseManagerCandidates.status, 200, JSON.stringify(courseManagerCandidates.body));
+    assert.equal(courseManagerCandidates.body!.candidates.some((item: { uid: string }) => item.uid === 'academy-officer'), true,
+      'assigned course managers may view eligible participants for their course');
+    assert.equal(courseManagerCandidates.body!.candidates.some((item: { uid: string }) => item.uid === 'academy-officer-3'), false,
+      'participants without a completed course history must not appear as candidates');
+    const unrelatedManagerCandidates = await request(`/api/academy/courses/${courseId}/requalification-candidates`, scopedOfficer);
+    assert.equal(unrelatedManagerCandidates.status, 403, 'a different course assignment must not expose participant candidates');
+    const participantCandidates = await request(`/api/academy/courses/${courseId}/requalification-candidates`, officer);
+    assert.equal(participantCandidates.status, 403, 'ordinary participants must not access the manager candidate list');
+
     const orderedRequalification = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
       method: 'POST',
       ...json({ participantUid: 'academy-officer', reason: 'Die aktuelle Qualifikation muss erneut nachgewiesen werden.' })
@@ -1046,7 +1057,7 @@ test('Academy HTTP API enforces roles, ownership, revisions, publication and pri
       method: 'POST', ...json({ requirementId: 'req-instructor', details: 'Praktische Leistung bestätigt.' })
     });
     assert.equal(thirdParticipantInstructorEvidence.status, 201, JSON.stringify(thirdParticipantInstructorEvidence.body));
-    const mixedGroupOrder = await request(`/api/academy/courses/${courseId}/requalifications`, admin, {
+    const mixedGroupOrder = await request(`/api/academy/courses/${courseId}/requalifications`, courseManager, {
       method: 'POST', ...json({ userUids: ['academy-officer', 'academy-officer-3'], reason: 'Die Qualifikation muss erneut nachgewiesen werden.' })
     });
     assert.equal(mixedGroupOrder.status, 201, JSON.stringify(mixedGroupOrder.body));
