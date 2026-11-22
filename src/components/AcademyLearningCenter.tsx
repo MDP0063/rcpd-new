@@ -999,7 +999,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                 <section className={panel + ' p-4 space-y-3'} aria-labelledby="academy-order-requalification-heading">
                   <div>
                     <h3 id="academy-order-requalification-heading" className="font-semibold text-slate-900 dark:text-white">Erneute Qualifikation anordnen</h3>
-                    <p className={muted + ' mt-1'}>Wähle einen Teilnehmer mit früherem Kursabschluss. Sein bisheriger Abschluss bleibt erhalten; es wird eine neue Teilnahme angelegt.</p>
+                    <p className={muted + ' mt-1'}>Wähle einen oder mehrere Teilnehmer mit früherem Kursabschluss. Für jede Person wird eine eigene neue Teilnahme angelegt; frühere Abschlüsse bleiben erhalten.</p>
                   </div>
                   {requalificationCandidatesLoading ? (
                     <p className={muted} role="status">Teilnehmer werden geladen …</p>
