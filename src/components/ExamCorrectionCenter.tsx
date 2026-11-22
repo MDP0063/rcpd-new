@@ -126,7 +126,7 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean; roste
 
   const reviewerLabel = (uid: string) => {
     const profile = roster.find(person => person.uid === uid);
-    return profile ? profile.displayName + ' (' + profile.badgeNumber + ')' : 'Nicht mehr im Personalbestand';
+    return profile ? profile.displayName + ' (' + profile.badgeNumber + ')' : 'Name nicht verfügbar';
   };
 
   useEffect(() => { void load(); }, [load]);
