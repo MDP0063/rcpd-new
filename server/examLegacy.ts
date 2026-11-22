@@ -42,7 +42,7 @@ export interface MigratedExamMaster {
   assignedCourseCodes: string[];
   assessmentStage: AssessmentStage;
   /** Der Legacy-Veröffentlichungsstatus bleibt erhalten; fehlender Status bedeutet veröffentlicht (§19.5). */
-  status: 'draft' | 'published' | 'archived';
+  status: 'published' | 'archived';
   passingScoreBasisPoints: number;
   minClearance: number;
   timeLimitMinutes: number;
@@ -128,6 +128,9 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   if (legacy.status !== undefined && !['draft', 'published', 'archived'].includes(legacy.status)) {
     errors.push('Unbekannter Veröffentlichungsstatus der Legacy-Prüfung.');
   }
+  if (legacy.status === 'draft') {
+    errors.push('Legacy-Entwürfe erhalten gemäß Migrationsregeln keinen veröffentlichten Prüfungssnapshot.');
+  }
   if (typeof legacy.title !== 'string' || !legacy.title.trim()) errors.push('Der Titel fehlt.');
   if (legacy.examFormat !== 'structured_quiz' && legacy.examFormat !== 'interactive_code') {
     errors.push('Unbekanntes Prüfungsformat.');
@@ -157,7 +160,7 @@ export function mapLegacyExam(legacy: LegacyExamInput): LegacyExamMapping {
   if (!code) warnings.push('Der Lehrgangscode ist ungültig; die Prüfung ist keinem Lehrgang zugewiesen.');
 
   const isInteractive = legacy.examFormat === 'interactive_code';
-  const status = legacy.status ?? 'published';
+  const status: 'published' | 'archived' = legacy.status === 'archived' ? 'archived' : 'published';
   const master: MigratedExamMaster = {
     id: legacy.id,
     title: legacy.title,
