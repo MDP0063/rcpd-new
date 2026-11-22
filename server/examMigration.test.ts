@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
+import { startExamAttempt } from './examAttemptService.ts';
 import { createLegacyVerificationDoc } from './examLegacy.ts';
 import { listParticipantExamCatalog } from './examParticipantCatalog.ts';
 import { migrateLegacyExamData } from './examMigration.ts';
@@ -83,6 +84,7 @@ test('Legacy-Migration übernimmt archivierte Prüfungen ausschließlich als arc
     const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
     assert.equal(version?.startable, false);
     assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
+    await assert.rejects(startExamAttempt(repository, 'exam-legacy-1', { uid: 'learner-1', displayName: 'Teilnehmer', clearanceLevel: 10 }, 'SOP-01', Date.parse('2026-11-05T12:01:00.000Z')), /EXAM_NOT_STARTABLE/);
   });
 });
 
@@ -114,6 +116,7 @@ test('Legacy-Migration synchronisiert eine spätere Archivierung auf den neuen M
     assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v1'))?.startable, true);
     assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v2'))?.startable, false);
     assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
+    await assert.rejects(startExamAttempt(repository, 'exam-legacy-1', { uid: 'learner-1', displayName: 'Teilnehmer', clearanceLevel: 10 }, 'SOP-01', Date.parse('2026-11-06T13:01:00.000Z')), /EXAM_NOT_STARTABLE/);
   });
 });
 
