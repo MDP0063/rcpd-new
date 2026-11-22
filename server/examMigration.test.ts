@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { createJsonExamRepository } from './examRepository.ts';
 import { createLegacyVerificationDoc } from './examLegacy.ts';
+import { listParticipantExamCatalog } from './examParticipantCatalog.ts';
 import { migrateLegacyExamData } from './examMigration.ts';
 import type { LegacyExamInput } from './examLegacy.ts';
 import type { LegacyProgressRecord } from './examTypes.ts';
@@ -81,6 +82,7 @@ test('Legacy-Migration übernimmt archivierte Prüfungen ausschließlich als arc
     assert.equal(master?.startable, false);
     const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
     assert.equal(version?.startable, false);
+    assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
   });
 });
 
@@ -93,6 +95,7 @@ test('Legacy-Migration erhält Entwurfsstatus und gibt Entwürfe nicht für Teil
     assert.equal(master?.startable, false);
     const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
     assert.equal(version?.startable, false);
+    assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
   });
 });
 
