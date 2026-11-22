@@ -386,8 +386,9 @@ Bestehende Prüfungen und Fortschrittsreferenzen müssen erhalten bleiben.
 
 - Bestehende IDs und Progress-Referenzen bleiben erhalten.
 - Legacy-Fragen ohne Typ werden als `single_choice` interpretiert.
-- Vorhandene aktive Prüfungen erhalten eine initiale Snapshot-Version, sofern noch keine existiert.
-- Entwürfe erhalten keinen Snapshot.
+- Vorhandene aktive Prüfungen erhalten eine initiale Snapshot-Version, sofern noch keine existiert. Ein fehlendes Legacy-Statusfeld bedeutet aus Kompatibilitätsgründen `published`.
+- Archivierte Prüfungen werden mit `status: archived` und `startable: false` übernommen; auch eine nachträgliche Archivierung einer bereits migrierten Legacy-Prüfung muss in den neuen Master übernommen werden.
+- Entwürfe erhalten keinen Snapshot und werden nicht als veröffentlichte Prüfung migriert.
 - `interactive_code` bleibt für Altprüfungen lesbar, ist für Neuanlagen gesperrt.
 - Nicht verifizierte Legacy-Bestehenswerte erfüllen keine `passed`-Voraussetzung.
 
@@ -595,7 +596,7 @@ Voraussetzungen werden primär aus den neuen, nicht invalidierten Versuchen im s
 - Ein historisches `passed` erfüllt eine Bestehensvoraussetzung nur nach expliziter Admin-Verifikation. Die Verifikation wird nicht in den Legacy-Progress-Datensatz zurückgeschrieben, sondern als eigener Datensatz in `exam_legacy_verifications` gespeichert. Er enthält mindestens `id`, `legacyProgressId`, `userId`, `examId`, optional `attemptCourseCode`, `verifiedStatus: 'passed'`, `verifiedByUid`, `verifiedAtIso` und eine verpflichtende Begründung. Die Dokumente sind create-only; eine doppelte Verifikation desselben Legacy-Nachweises wird verhindert. Die Voraussetzungsauswertung berücksichtigt nur eine gültige, eindeutig zuordenbare Verifikation für genau den betreffenden Nutzer, die Prüfung und – sofern vorhanden – den Lehrgang. Die Verifikation bindet zusätzlich den tatsächlich geprüften Score sowie – sofern vorhanden – den Änderungszeitpunkt des Legacy-Datensatzes, damit spätere Änderungen am alten Fortschritt nicht rückwirkend als geprüft gelten.
 - Phase 1 definiert den Typ dieses Verifikationsdatensatzes sowie die reine Auswertungsfunktion, die verifizierte Legacy-Nachweise von unverifizierten unterscheidet. Phase 2 ergänzt Repository-Lese-/Schreibmethoden und die Admin-Verifikationsroute.
 - Ein vorhandener Legacy-`attempts`-Zähler bleibt bei der Migration als historische Statistik erhalten, soweit er eine positive sichere Ganzzahl ist. Er wird nicht auf das neue Versuchskontingent angerechnet, da das Altsystem dieses Limit nicht serverseitig durchgesetzt hat. Das neue Kontingent gilt ausschließlich für neue Versuche und wird je Nutzer, Prüfung und `attemptCourseCode` getrennt geführt. Die Migration darf den historischen Zähler nicht stillschweigend auf null setzen. Nicht rekonstruierbare Versuchseinzelheiten werden als Legacy-Lücke dokumentiert, nicht erfunden.
-- Bestehende aktive Prüfungen ohne Statusfeld werden bei erfolgreicher Migration als `published` übernommen; Entwürfe werden nur dann als `draft` behandelt, wenn ihr Entwurfsstatus tatsächlich belegt ist.
+- Bestehende aktive Prüfungen ohne Statusfeld werden bei erfolgreicher Migration als `published` übernommen. Ein ausdrücklich gespeicherter Status bleibt erhalten: `archived` wird als archiviert und nicht startbar migriert; `draft` erhält keinen Snapshot und wird übersprungen. Unbekannte Statuswerte werden fail-closed abgewiesen.
 
 ### 19.6 Vollständige Antwortschemas, Bewertung und Veröffentlichungsvalidierung
 
