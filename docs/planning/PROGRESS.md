@@ -1,8 +1,8 @@
 # RCPD – Aktueller Planungs- und Redesignstand
 
-**Stand:** 21.11.2026 – PR #332 (zweistufige Revisionsanfragen), PR #334 (Einzel-Wiederqualifizierung), PR #336 (verknüpfte Lehrgänge), PR #337 (Backup-V2-Integrität), PR #338 (Gruppenanordnung), PR #340 (Wiederqualifizierungs-Auditkorrekturen) PR #343 (Teilnahme-Lebenszyklus) und PR #344 (Lebenszyklus-Historienaudit) sind gemergt. Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. Die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt ausdrücklich offen. PDF-Infrastruktur bleibt zurückgestellt.
+**Stand:** 22.11.2026 – PR #332 (zweistufige Revisionsanfragen), PR #334 (Einzel-Wiederqualifizierung), PR #336 (verknüpfte Lehrgänge), PR #337 (Backup-V2-Integrität), PR #338 (Gruppenanordnung), PR #340 (Wiederqualifizierungs-Auditkorrekturen) PR #343 (Teilnahme-Lebenszyklus) und PR #344 (Lebenszyklus-Historienaudit) und PR #345 (Fortschrittsdokumentation) sind gemergt. Der systematische Academy-Funktions-/Fehleraudit und das vollständige Usability-Redesign laufen weiter. Die gemeinsame Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt ausdrücklich offen. PDF-Infrastruktur bleibt zurückgestellt.
 
-**Aktueller Basisstand:** `main` bei `b21c640fa747b9e70ce43e73ba065c599bac6664` (nach PR #344). Die fünf Academy-Bereiche und die zuvor integrierten Kurs-/Lehrgangs-, Bibliotheks-, Notiz-, Prüfungs- und Examiner-Funktionen bleiben Grundlage. Der zweistufige Revisionsworkflow ergänzt diese um Antrag durch aktuell kursberechtigte Prüfer, Entscheidung ausschließlich durch aktive Admins/Colonels, Wiederaufnahme desselben Versuchs in der Prüferliste sowie nachvollziehbare Historie und erneute Ergebnisfreigabe.
+**Aktueller Basisstand:** `main` bei `4823ee0bfadeb69d584e6c2cbf7e60add7077cf7` (nach PR #345). Die fünf Academy-Bereiche und die zuvor integrierten Kurs-/Lehrgangs-, Bibliotheks-, Notiz-, Prüfungs- und Examiner-Funktionen bleiben Grundlage. Der zweistufige Revisionsworkflow ergänzt diese um Antrag durch aktuell kursberechtigte Prüfer, Entscheidung ausschließlich durch aktive Admins/Colonels, Wiederaufnahme desselben Versuchs in der Prüferliste sowie nachvollziehbare Historie und erneute Ergebnisfreigabe.
 
 **Aktueller Umsetzungsstand:** PR #332 wurde auf aktuellem `main` aufgebaut, unabhängig auf Session-/Rollenprüfungen, Datenminimierung, transaktionale Zustandsübergänge, Ergebnis-Snapshots und Benachrichtigungszustellung geprüft und nach erfolgreicher CI gemergt. TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung waren auf dem finalen PR-Head erfolgreich; auch der Post-Merge-Build auf `main` ist erfolgreich. Es wurde kein Produktionsdeployment behauptet. PR #277 wurde nicht gemergt und geschlossen; seine Nachfolgeimplementierung ist PR #295, der bereits in `main` integriert ist. Die zeitabhängigen Reader-/Autosave-Browserfälle bleiben Teil der späteren Gesamtabnahme.
 
@@ -126,7 +126,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 5. Noch offene Hauptarbeiten
 
-1. Wiederqualifizierung ist mit PR #334 implementiert. Offen bleiben Gruppenanordnung, eine dauerhaft retry-fähige Benachrichtigungs-Outbox und die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme.
+1. Wiederqualifizierung einschließlich Gruppenanordnung (PR #334, #336, #338), Berechtigungs-/UI-Nachkorrekturen (#340) und Teilnahme-Lebenszyklus samt Historienvalidierung (#343, #344) ist in `main` integriert. Offen bleiben eine verlässlich retry-fähige Benachrichtigungszustellung, Kurs-/Lehrgangsarchivierung und die gemeinsame manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme.
 2. Die beschlossene persönliche Empfehlungsfunktion fehlt noch vollständig im aktuellen Code. Sie muss nach Abschnitt 8 der Academy-Spezifikation umgesetzt werden: manuelle und nachvollziehbar regelbasierte Empfehlungen, Deduplizierung, Priorisierung, Lebenszyklus, Ausblenden und Historie.
 3. Die Kursmeldungslogik aus Abschnitt 9 ist noch nicht implementiert. Die Option-C-Lesestatusregeln sind beschlossen; Quelle, Erstellung/Berechtigung und Lebenszyklus der Meldungen müssen vor einer neuen Datenmodellentscheidung geklärt werden.
 4. Den restlichen Funktions-/Fehleraudit für Kurse/Lehrgänge, Bibliothek/Materialverwaltung, private Notizen, Prüfungen und Examiner am aktuellen `main` abschließen. Bereits umgesetzte Funktionen nicht erneut bauen; nur nachgewiesene Lücken oder Fehler korrigieren.
@@ -136,7 +136,7 @@ Die Detailregeln, Abläufe und Sonderfälle sind in `ACADEMY-DETAILED-SPECIFICAT
 
 ## 6. Noch offene nächste Schritte
 
-1. Empfehlungsfunktion: fehlende Platzierung und präzise automatische Auslöser/Abschlussnachweise aus den bereits beschlossenen Regeln ableiten bzw. bei echten fachlichen Unklarheiten mit dem Projektinhaber klären.
+1. Systematischen Audit der bereits implementierten Academy-Funktionen fortsetzen. Danach die Empfehlungsfunktion vorbereiten: Platzierung, automatische Auslöser/Abschlussnachweise und Ersteller-/Empfängerrechte müssen vor dem Datenmodell anhand der bestehenden IA, tatsächlichen Datenquellen und Rollen geklärt werden.
 2. Kursmeldungen: zuerst Quelle und Erstellungs-/Rücknahmeregeln festlegen; danach den bereits beschlossenen Einzel-Lesestatus und die dezente Kennzeichnung an Kurs, Prüfungsergebnis und Material umsetzen.
 3. Kurs-/Lehrgangs-, Bibliotheks-/Notiz- und Prüfungsabläufe weiter gegen die Detail-Spezifikation prüfen und nur verifizierte Fehler beheben.
 4. Verbleibende UI-/Responsive-/Accessibility-Details im Rahmen der bestehenden Designfreigabe umsetzen.
@@ -1210,7 +1210,7 @@ Für diese PRs waren die jeweils aktuellen TypeScript-/Produktionsbuild-/Test-Wo
 
 ### Noch offene PRs
 
-- **Stand 21.11.2026: keine offenen Pull Requests.**
+- **Stand 22.11.2026: keine offenen Pull Requests.**
 - **PR #332** wurde am 21.11.2026 gemergt. Der zweistufige Revisionsworkflow ist integriert; CI und unabhängiger Code-/Sicherheitsreview sind abgeschlossen. Die manuelle Rollen-/Browser-/Live-Firestore-Abnahme bleibt Teil des gemeinsamen Academy-Tests.
 - **PR #277** wurde geschlossen, nicht gemergt. Die Nachfolgeimplementierung **PR #295** ist gemergt; die verbleibenden zeitabhängigen Reader-Speicherfälle sind keine offene PR, sondern ein QA-Punkt für die spätere Browserabnahme.
 
@@ -1682,3 +1682,18 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - Bereits gespeicherte Antworten bleiben sichtbar, wenn eine spätere Änderung fehlschlägt; boolesches `false` ist eine gültige Antwort, leere Texte/Listen sind unbeantwortet.
 - **PR #330 ist am 17.11.2026 gemergt** (Merge-Commit `a1c20706616332b26d7b4dfa6002cbf3fa0d76b1`). GitHub Actions: TypeScript/Lint, Produktionsbuild, Tests und PR-Vorlagenprüfung erfolgreich. Kein Render-Deploy-Hook durch PR-Merge.
 - **Noch offen:** manuelle echte Versuche, parallele Tabs, Netzwerkunterbrechung und Fortsetzung; diese Szenarien gehören zur abschließenden Academy-Abnahme.
+
+
+## 22.11.2026 – Wiederaufnahme nach PR #345
+
+- Verifizierter aktueller `main`-Stand: `4823ee0bfadeb69d584e6c2cbf7e60add7077cf7` (PR #345). Keine offenen Pull Requests.
+- Der zuvor als offen geführte Gruppenablauf ist seit PR #338 integriert; die Nachkorrekturen aus PR #340 sowie Teilnahme-Lebenszyklus und Historienvalidierung aus PR #343/#344 sind ebenfalls integriert. Die ältere Liste offener Arbeiten wurde entsprechend bereinigt.
+- Wiederqualifizierung: technische CI-/Integrationsprüfungen sind erfolgreich; manuelle Browser-/Responsive-/Keyboard-/Screenreader-/Live-Firestore-Abnahme bleibt offen. Die Benachrichtigungszustellung hat einen wiederholbaren Versuch beim Laden der Teilnehmeraufgaben, aber keine unabhängig laufende, dauerhaft überwachte Hintergrund-Outbox. Diese Einschränkung bleibt offen und darf nicht als vollständig gelöst dargestellt werden.
+- Nächste Entwicklungsarbeit: systematischer Fehler-/Funktionsaudit der bereits implementierten Academy-Module. Persönliche Empfehlungen sind noch nicht implementiert; vor dem Datenmodell müssen die in `OPEN-QUESTIONS.md` genannten Punkte (Platzierung, automatische Auslöser/Nachweise, Rechte) geklärt werden. Kursmeldungen bleiben wegen ungeklärter Quelle und Erstellungs-/Rücknahmerechte unangetastet.
+
+
+### 22.11.2026 – Kleiner Verständlichkeitsfehler in der Gruppenanordnung behoben
+
+- Im Verwaltungsformular war der erklärende Satz trotz Mehrfachauswahl noch im Singular formuliert. Das konnte den Eindruck erwecken, dass nur eine Person ausgewählt werden kann.
+- Die Beschreibung nennt jetzt ausdrücklich mehrere mögliche Teilnehmer und erklärt, dass für jede Person eine eigene Teilnahme angelegt wird und frühere Abschlüsse erhalten bleiben.
+- Dies ist eine reine Textkorrektur; Datenmodell, API-Vertrag, Berechtigungen und fachlicher Ablauf bleiben unverändert. Der breitere Funktions-/Fehleraudit läuft weiter.
