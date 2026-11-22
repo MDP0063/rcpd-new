@@ -151,6 +151,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   const [notes, setNotes] = useState<AcademyPrivateNoteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const requalificationSubmitRef = useRef(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const contentLoadRequestIdRef = useRef(0);
   const areaRef = useRef(area);
@@ -457,35 +458,43 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
   };
 
   const orderRequalification = async () => {
-    if (!selectedCourse || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10 || saving) return;
+    if (!selectedCourse || selectedRequalificationCandidateUids.length === 0 || requalificationReason.trim().length < 10 || saving || requalificationSubmitRef.current) return;
     const courseId = selectedCourse.master.id;
     const requestId = detailRequestIdRef.current;
+    requalificationSubmitRef.current = true;
     setSaving(true);
-    const response = await apiFetch<RequalificationBatchResult>(
-      API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(courseId),
-      { method: 'POST', body: JSON.stringify({ userUids: selectedRequalificationCandidateUids, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
-    );
-    setSaving(false);
-    if (!response.ok || !response.data) {
-      onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
-      return;
+    try {
+      const response = await apiFetch<RequalificationBatchResult>(
+        API_ENDPOINTS.ACADEMY_COURSE_REQUALIFICATIONS(courseId),
+        { method: 'POST', body: JSON.stringify({ userUids: selectedRequalificationCandidateUids, reason: requalificationReason.trim(), ...(requalificationDueDate ? { dueIso: new Date(requalificationDueDate + 'T12:00:00').toISOString() } : {}) }) }
+      );
+      if (!response.ok || !response.data) {
+        onStatusToast(response.error || 'Die Wiederqualifizierung konnte nicht angeordnet werden.');
+        return;
+      }
+      if (detailRequestIdRef.current === requestId) {
+        setRequalificationOrderResult(response.data);
+        setSelectedRequalificationCandidateUids([]);
+        setRequalificationSearch('');
+        if (response.data.createdCount > 0) {
+          setRequalificationReason('');
+          setRequalificationDueDate('');
+        }
+      }
+      await loadLearningData();
+      if (detailRequestIdRef.current === requestId) {
+        const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(courseId));
+        if (detailRequestIdRef.current === requestId && candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
+      }
+      onStatusToast(response.data.createdCount === 1
+        ? 'Eine Wiederqualifizierung wurde angeordnet.'
+        : response.data.createdCount > 1
+          ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
+          : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
+    } finally {
+      requalificationSubmitRef.current = false;
+      setSaving(false);
     }
-    await loadLearningData();
-    onStatusToast(response.data.createdCount === 1
-      ? 'Eine Wiederqualifizierung wurde angeordnet.'
-      : response.data.createdCount > 1
-        ? `${response.data.createdCount} Wiederqualifizierungen wurden angeordnet.`
-        : 'Es wurde keine Wiederqualifizierung angeordnet. Bitte prüfe die Hinweise.');
-    if (detailRequestIdRef.current !== requestId) return;
-    setRequalificationOrderResult(response.data);
-    setSelectedRequalificationCandidateUids([]);
-    setRequalificationSearch('');
-    if (response.data.createdCount > 0) {
-      setRequalificationReason('');
-      setRequalificationDueDate('');
-    }
-    const candidates = await apiFetch<{ candidates: RequalificationCandidate[] }>(API_ENDPOINTS.ACADEMY_REQUALIFICATION_CANDIDATES(courseId));
-    if (detailRequestIdRef.current === requestId && candidates.ok && candidates.data) setRequalificationCandidates(candidates.data.candidates);
   };
   const openRequalification = async (order: ParticipantRequalificationOrder) => {
     const entry = courses.find(item => item.master.id === order.courseId);
@@ -1037,7 +1046,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
                         <input className={field} type="date" value={requalificationDueDate} onChange={event => setRequalificationDueDate(event.target.value)} />
                       </label>
                       <button type="button" className={primary} disabled={saving || selectedRequalificationCandidateUids.length === 0 || selectedRequalificationCandidateUids.length > 100 || requalificationReason.trim().length < 10} onClick={() => void orderRequalification()}>
-                        {saving ? 'Wird angeordnet …' : selectedRequalificationCandidateUids.length === 1 ? 'Wiederqualifizierung für 1 Person anordnen' : `Wiederqualifizierung für ${selectedRequalificationCandidateUids.length} Personen anordnen`}
+                        {saving ? 'Wird verarbeitet …' : selectedRequalificationCandidateUids.length === 1 ? 'Wiederqualifizierung für 1 Person anordnen' : `Wiederqualifizierung für ${selectedRequalificationCandidateUids.length} Personen anordnen`}
                       </button>
                     </div>
                   )}
