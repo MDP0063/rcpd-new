@@ -1716,3 +1716,13 @@ Arbeitsbranch: `redesign/academy-notes-workspace`, abgeleitet von `main` nach Me
 - **Bestätigter Verständlichkeitsmangel:** Die bisherige Korrekturhistorie zeigte interne Reviewer-UIDs und unbeschriftete Punktelisten. Das ist für eine Verwaltungsansicht zwar technisch nachvollziehbar, aber ohne Kenntnis interner Kennungen unnötig schwer zu lesen.
 - PR #349 ist in `main` integriert. Die Korrekturhistorie zeigt Namen/Dienstnummern aus dem vorhandenen Personalbestand und ordnet vorherige/neue Punkte konkreten Fragen zu. Fehlt ein Profil, wird neutral „Name nicht verfügbar“ angezeigt. Keine API-, Datenmodell- oder Berechtigungsänderung.
 - CI auf dem finalen PR-Head und Post-Merge-Workflow erfolgreich: TypeScript-/Produktionsbuild und 474/474 Tests; PR-Vorlagenprüfung erfolgreich. Der optionale Render-Deploy-Hook ist nicht gesetzt; der Workflow meldet automatischen Render-Deploy über den `main`-Branch. Manuelle Browser-/Screenreader-Abnahme bleibt Teil der gemeinsamen Academy-Abnahme.
+
+
+## 22.11.2026 – Legacy-Prüfungsstatus bei Migration erhalten (Folge des Funktionsaudits)
+
+- **Bestätigter Migrationsfehler:** `LegacyExamInput` enthielt den alten Veröffentlichungsstatus nicht. `mapLegacyExam` setzte daher jeden importierten Master auf `published`, auch wenn die Quelldatei `status: archived` trug. Bei einer Migration hätte eine archivierte Prüfung erneut im Teilnehmerkatalog erscheinen können.
+- Branch `fix/exam-legacy-status-migration`: Der Status wird nun übernommen. Ein fehlendes Statusfeld bleibt aus Kompatibilitätsgründen `published`; explizit archivierte Prüfungen werden als `archived` und nicht startbar übernommen; Entwürfe erhalten gemäß Architekturvorgabe keinen Snapshot und werden übersprungen; unbekannte Werte werden fail-closed abgewiesen.
+- Eine nachträgliche Archivierung wird beim idempotenten erneuten Migrationslauf auf den neuen Master übertragen. Die Quell-Fingerprint-Normalisierung verhindert eine unnötige neue Version, wenn ein historischer Datensatz nur von fehlendem zu explizitem `published` wechselt.
+- Regressionstests decken archivierte Erstübernahme, spätere Archivierung, Draft-Skip ohne Snapshot, unbekannte Statuswerte, Teilnehmerkatalog-Ausschluss und die Normalisierung des Defaultstatus ab.
+- Keine produktiven Daten wurden gelesen oder verändert. Der tatsächliche Migrationsstand des Firestore-Produktivbestands bleibt unbekannt und muss vor einem Legacy-Cutover separat verifiziert werden.
+- TypeScript-/Build-/Servertests und PR-Review stehen noch aus.
