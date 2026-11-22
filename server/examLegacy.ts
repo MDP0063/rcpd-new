@@ -41,7 +41,7 @@ export interface MigratedExamMaster {
   moduleCode: string;
   assignedCourseCodes: string[];
   assessmentStage: AssessmentStage;
-  /** Bestehende aktive Prüfungen ohne Statusfeld werden als veröffentlicht übernommen (§19.5). */
+  /** Der Legacy-Veröffentlichungsstatus bleibt erhalten; fehlender Status bedeutet veröffentlicht (§19.5). */
   status: 'draft' | 'published' | 'archived';
   passingScoreBasisPoints: number;
   minClearance: number;
@@ -49,7 +49,7 @@ export interface MigratedExamMaster {
   maxAttempts: number | null;
   examFormat: 'structured_quiz' | 'interactive_code';
   isLegacyFormat: boolean;
-  /** false für interactive_code: Bewertung beruht auf einem Client-Ergebnis und darf nicht neu gestartet werden (§19.2). */
+  /** Nur veröffentlichte, automatisch bewertbare Legacy-Prüfungen können neu gestartet werden (§19.2). */
   startable: boolean;
   interactiveWidgetCode: string;
   authorUid?: string;
