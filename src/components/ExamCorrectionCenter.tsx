@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch } from '../lib/api';
 import './ExamCorrectionCenter.css';
+import type { UserPublicProfile } from '../types/portal';
 
 interface CorrectionGrade { questionId: string; pointsEarnedMilli: number }
 interface PendingRelease {
@@ -53,7 +54,7 @@ const fieldClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2
 const formatPoints = (milli: number) => (milli / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
 const formatScore = (basisPoints: number | null) => basisPoints === null ? '–' : `${(basisPoints / 100).toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`;
 
-export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = ({ canReleaseResults = false }) => {
+export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean; roster?: UserPublicProfile[] }> = ({ canReleaseResults = false, roster = [] }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [pendingReleases, setPendingReleases] = useState<PendingRelease[]>([]);
   const [grades, setGrades] = useState<Record<string, Record<string, string>>>({});
@@ -121,6 +122,11 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
     setExamTypeFilter('all');
     setStatusFilter('all');
     setParticipantFilter('');
+  };
+
+  const reviewerLabel = (uid: string) => {
+    const profile = roster.find(person => person.uid === uid);
+    return profile ? profile.displayName + ' (' + profile.badgeNumber + ')' : 'Nicht mehr im Personalbestand';
   };
 
   useEffect(() => { void load(); }, [load]);
@@ -276,11 +282,25 @@ export const ExamCorrectionCenter: React.FC<{ canReleaseResults?: boolean }> = (
         {review.reviewCorrections.length > 0 && <details className="exam-correction-history space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
           <summary className="text-sm font-semibold">Korrekturhistorie ({review.reviewCorrections.length})</summary>
           {review.reviewCorrections.map((entry, index) => <div key={entry.atIso + index} className="exam-correction-history-entry rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-950">
-            <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · korrigiert von {entry.reviewerUid}</p>
-            <p className="mt-1 text-slate-500">Vorherige Bewertung: {entry.previousReviewerUid} · {new Date(entry.previousReviewedAtIso).toLocaleString('de-DE')}</p>
+            <p className="font-semibold">{new Date(entry.atIso).toLocaleString('de-DE')} · Korrigiert von {reviewerLabel(entry.reviewerUid)}</p>
+            <p className="mt-1 text-slate-500">Vorher bewertet von {reviewerLabel(entry.previousReviewerUid)} · {new Date(entry.previousReviewedAtIso).toLocaleString('de-DE')}</p>
             <p className="mt-1">Ergebnis: {entry.previousStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.previousScoreBasisPoints)}) → {entry.nextStatus === 'passed' ? 'Bestanden' : 'Nicht bestanden'} ({formatScore(entry.nextScoreBasisPoints)})</p>
-            <p className="mt-1 whitespace-pre-wrap">Begründung: {entry.reason}</p>
-            <p className="mt-1 text-slate-500">Punkte: {entry.previousGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')} → {entry.nextGrades.map(grade => formatPoints(grade.pointsEarnedMilli)).join(', ')}</p>
+            <p className="mt-2 font-semibold">Punkte je Frage</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              {entry.previousGrades.map(previousGrade => {
+                const questionIndex = review.questions.findIndex(question => question.questionId === previousGrade.questionId);
+                const question = questionIndex >= 0 ? review.questions[questionIndex] : null;
+                const nextGrade = entry.nextGrades.find(grade => grade.questionId === previousGrade.questionId);
+                if (!nextGrade) return null;
+                const maxPoints = question ? ' / ' + formatPoints(question.pointsMilli) : '';
+                return <li key={previousGrade.questionId}>
+                  <span className="font-medium">{question ? 'Frage ' + (questionIndex + 1) : 'Frage nicht mehr verfügbar'}:</span>{' '}
+                  {formatPoints(previousGrade.pointsEarnedMilli)}{maxPoints} → {formatPoints(nextGrade.pointsEarnedMilli)}{maxPoints}
+                  {question?.question ? <span className="block text-slate-500">{question.question}</span> : null}
+                </li>;
+              })}
+            </ul>
+            <p className="mt-2 whitespace-pre-wrap">Begründung: {entry.reason}</p>
           </div>)}
         </details>}
       </article>)}
