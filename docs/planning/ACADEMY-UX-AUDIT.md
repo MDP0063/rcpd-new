@@ -529,3 +529,14 @@ Die Bestätigung zeigt nur Daten aus dem tatsächlichen veröffentlichten Prüfu
 - Fokus wird beim Öffnen auf die Panelüberschrift gesetzt und beim Abbrechen zum jeweiligen Trigger zurückgeführt.
 - Der sekundäre Vorgangskontext in offenen Bewertungen und die Korrekturhistorie in abgeschlossenen Bewertungen sind standardmäßig eingeklappt. Alle Inhalte bleiben über native Disclosure-Elemente direkt erreichbar.
 - **Status:** PR #255 gemergt; CI erfolgreich (TypeScript, Produktionsbuild, 455/455 Tests, PR-Vorlagenprüfung). Manuelle Tastatur-/Screenreader-Abnahme bleibt offen.
+
+
+## 16. Prüfungs-Korrekturhistorie – verständliche Zuordnung (22.11.2026)
+
+**TECHNISCHER BEFUND:** Die serverseitige Korrekturhistorie enthält Reviewer-UIDs sowie vorherige und neue Punktwerte je `questionId`. Die Korrekturansicht (`ExamCorrectionCenter.tsx`) zeigte bislang die UIDs direkt und gab die Punktwerte lediglich als zwei kommaseparierte Listen aus. Damit war nicht erkennbar, welche Punktänderung zu welcher Frage gehört. Das ist besonders für Personen ohne Kenntnis der internen Kontokennungen unnötig schwer verständlich.
+
+**Fachlich/UX-seitig:** Die Audit-Historie muss ohne Kenntnis interner Datenbegriffe lesbar bleiben. Namen und Dienstnummern aus dem bereits geladenen öffentlichen Personalbestand reichen für die sichtbare Zuordnung; die unveränderten UIDs bleiben im gespeicherten Audit als stabile Referenz erhalten. Punkteänderungen werden je Frage mit vorherigem und neuem Wert sowie erreichbarer Höchstpunktzahl dargestellt.
+
+**UMSETZUNG IM BRANCH `fix/academy-correction-history-readable`:** `ExamCorrectionCenter` erhält den vorhandenen Personalbestand als Anzeigequelle. Die Korrekturhistorie zeigt die zugehörigen Namen/Dienstnummern und ordnet jeden vorherigen/neuen Punktwert einer konkreten Frage zu. Ist ein Profil nicht verfügbar, erscheint „Name nicht verfügbar“. Es gibt keine Änderung an API, Datenmodell, Berechtigungen, Bewertungslogik oder Audit-Aufbewahrung.
+
+**ABNAHME:** TypeScript-/Build-/Testsuite und Diff-Review stehen vor dem PR aus. Browser-/Responsive-/Keyboard-/Screenreader-Abnahme bleibt Teil des gemeinsamen Academy-Abschlussaudits.
