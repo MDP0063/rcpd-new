@@ -86,15 +86,13 @@ test('Legacy-Migration übernimmt archivierte Prüfungen ausschließlich als arc
   });
 });
 
-test('Legacy-Migration erhält Entwurfsstatus und gibt Entwürfe nicht für Teilnehmer frei', async () => {
+test('Legacy-Migration überspringt Entwürfe ohne einen Prüfungssnapshot anzulegen', async () => {
   await withRepository(async repository => {
     const result = await migrateLegacyExamData(repository, [legacyExam({ status: 'draft' })], [], '2026-11-05T12:00:00.000Z');
-    assert.equal(result.exams.imported, 1);
-    const master = await repository.get('exam_masters', 'exam-legacy-1');
-    assert.equal(master?.status, 'draft');
-    assert.equal(master?.startable, false);
-    const version = await repository.get('exam_versions', 'exam-legacy-1__v1');
-    assert.equal(version?.startable, false);
+    assert.equal(result.exams.skipped, 1);
+    assert.equal(result.issues[0]?.code, 'LEGACY_EXAM_INVALID');
+    assert.equal(await repository.get('exam_masters', 'exam-legacy-1'), null);
+    assert.equal(await repository.get('exam_versions', 'exam-legacy-1__v1'), null);
     assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
   });
 });
