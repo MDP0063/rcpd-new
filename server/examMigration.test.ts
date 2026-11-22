@@ -115,6 +115,7 @@ test('Legacy-Migration synchronisiert eine spätere Archivierung auf den neuen M
     assert.equal(master?.currentPublishedVersionId, 'exam-legacy-1__v2');
     assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v1'))?.startable, true);
     assert.equal((await repository.get('exam_versions', 'exam-legacy-1__v2'))?.startable, false);
+    assert.deepEqual(await listParticipantExamCatalog(repository, 10), []);
   });
 });
 
