@@ -33,7 +33,8 @@ export const AcademyMaterialReader:React.FC<Props>=({participationId,materials})
   if(result.status!=='resolved')return result.status;
   const selection=window.getSelection();
   selection?.removeAllRanges();selection?.addRange(result.range);
-  result.range.startContainer.parentElement?.scrollIntoView({behavior:'smooth',block:'center'});
+  const scrollBehavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  result.range.startContainer.parentElement?.scrollIntoView({behavior:scrollBehavior,block:'center'});
   return 'resolved';
  };
  const captureTextAnchor=(event:React.MouseEvent<HTMLElement>,kind:'markdown'|'code')=>{

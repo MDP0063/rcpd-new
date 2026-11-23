@@ -1501,6 +1501,7 @@ export const AcademyLearningCenter: React.FC<Props> = ({ currentUser, area, onSt
               <div className={`${panel} academy-note-source-context p-4 space-y-2`}>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Verknüpfte Quellen</h3>
                 <AcademyPrivateNoteSources
+                  key={editingNote.id}
                   noteId={editingNote.id}
                   sources={editingNote.sources?.length ? editingNote.sources : [{ materialId: editingNote.materialId, materialVersionId: editingNote.materialVersionId }]}
                 />
