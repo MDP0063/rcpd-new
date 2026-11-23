@@ -9,21 +9,25 @@ export class CoalescedRequestRunner {
   private queuedTask: CoalescedAsyncTask | null = null;
 
   run(task: CoalescedAsyncTask): Promise<void> {
-    if (this.activePromise) {
-      this.queuedTask = task;
-      return this.waitForIdle();
-    }
-
-    return this.start(task);
+    if (this.activePromise) this.queuedTask = task;
+    else this.start(task);
+    return this.waitForIdle();
   }
 
   /** Waits for the active task and every coalesced follow-up without adding work. */
   waitForIdle(): Promise<void> {
     const active = this.activePromise;
-    return active ? active.then(() => this.waitForIdle()) : Promise.resolve();
+    if (!active) return Promise.resolve();
+    return active.then(
+      () => this.waitForIdle(),
+      error => this.waitForIdle().then(
+        () => { throw error; },
+        () => { throw error; }
+      )
+    );
   }
 
-  private start(task: CoalescedAsyncTask): Promise<void> {
+  private start(task: CoalescedAsyncTask): void {
     const execution = Promise.resolve().then(() => this.drain(task));
     const tracked = execution.finally(() => {
       if (this.activePromise !== tracked) return;
@@ -36,7 +40,6 @@ export class CoalescedRequestRunner {
       else this.activePromise = null;
     });
     this.activePromise = tracked;
-    return tracked;
   }
 
   private async drain(firstTask: CoalescedAsyncTask): Promise<void> {
