@@ -86,6 +86,7 @@ test('runs a refresh queued after the drain observes an empty queue', async () =
   let releaseFirst!: () => void;
   const firstGate = new Promise<void>(resolve => { releaseFirst = resolve; });
   const calls: string[] = [];
+  let trailingFinished = false;
 
   const first = runner.run(async () => {
     calls.push('first');
@@ -99,11 +100,15 @@ test('runs a refresh queued after the drain observes an empty queue', async () =
   releaseFirst();
   let trailing: Promise<void> | null = null;
   queueMicrotask(() => {
-    trailing = runner.run(async () => { calls.push('trailing'); });
+    trailing = runner.run(async () => {
+      calls.push('trailing');
+      trailingFinished = true;
+    });
   });
 
   await first;
   assert.ok(trailing);
+  assert.equal(trailingFinished, true);
   await trailing;
   assert.deepEqual(calls, ['first', 'trailing']);
   assert.equal(await runner.waitForIdle(), undefined);
