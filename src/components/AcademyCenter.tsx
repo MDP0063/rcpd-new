@@ -209,7 +209,8 @@ export const AcademyCenter: React.FC<AcademyCenterProps> = ({
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(result.range);
-    result.range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const scrollBehavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    result.range.startContainer.parentElement?.scrollIntoView({ behavior: scrollBehavior, block: 'center' });
     return 'resolved';
   };
 
