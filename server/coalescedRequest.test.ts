@@ -79,3 +79,37 @@ test('a burst of autosave triggers retains only one latest follow-up', async () 
 
   assert.deepEqual(calls, [0, 100]);
 });
+
+
+test('runs a refresh queued after the drain observes an empty queue', async () => {
+  const runner = new CoalescedRequestRunner();
+  let releaseFirst!: () => void;
+  const firstGate = new Promise<void>(resolve => { releaseFirst = resolve; });
+  const calls: string[] = [];
+  let trailingFinished = false;
+
+  const first = runner.run(async () => {
+    calls.push('first');
+    await firstGate;
+  });
+  await Promise.resolve();
+
+  // Resolving first schedules drain() before this microtask. The drain then
+  // finishes with an empty queue, while this request still arrives before its
+  // promise finalizer. It must become a real trailing execution.
+  releaseFirst();
+  let trailing: Promise<void> | null = null;
+  queueMicrotask(() => {
+    trailing = runner.run(async () => {
+      calls.push('trailing');
+      trailingFinished = true;
+    });
+  });
+
+  await first;
+  assert.ok(trailing);
+  assert.equal(trailingFinished, true);
+  await trailing;
+  assert.deepEqual(calls, ['first', 'trailing']);
+  assert.equal(await runner.waitForIdle(), undefined);
+});

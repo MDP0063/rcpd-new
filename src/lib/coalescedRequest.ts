@@ -9,22 +9,37 @@ export class CoalescedRequestRunner {
   private queuedTask: CoalescedAsyncTask | null = null;
 
   run(task: CoalescedAsyncTask): Promise<void> {
-    if (this.activePromise) {
-      this.queuedTask = task;
-      return this.activePromise;
-    }
-
-    const execution = Promise.resolve().then(() => this.drain(task));
-    const tracked = execution.finally(() => {
-      if (this.activePromise === tracked) this.activePromise = null;
-    });
-    this.activePromise = tracked;
-    return tracked;
+    if (this.activePromise) this.queuedTask = task;
+    else this.start(task);
+    return this.waitForIdle();
   }
 
-  /** Waits for the active task and its latest coalesced follow-up, without queuing another task. */
+  /** Waits for the active task and every coalesced follow-up without adding work. */
   waitForIdle(): Promise<void> {
-    return this.activePromise ?? Promise.resolve();
+    const active = this.activePromise;
+    if (!active) return Promise.resolve();
+    return active.then(
+      () => this.waitForIdle(),
+      error => this.waitForIdle().then(
+        () => { throw error; },
+        () => { throw error; }
+      )
+    );
+  }
+
+  private start(task: CoalescedAsyncTask): void {
+    const execution = Promise.resolve().then(() => this.drain(task));
+    const tracked = execution.finally(() => {
+      if (this.activePromise !== tracked) return;
+
+      // A request can arrive after drain() observes an empty queue but before
+      // this finalizer runs. Start that trailing task instead of stranding it.
+      const queued = this.queuedTask;
+      this.queuedTask = null;
+      if (queued) this.start(queued);
+      else this.activePromise = null;
+    });
+    this.activePromise = tracked;
   }
 
   private async drain(firstTask: CoalescedAsyncTask): Promise<void> {
